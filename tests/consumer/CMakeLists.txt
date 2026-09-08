@@ -1,0 +1,36 @@
+cmake_minimum_required(VERSION 3.20)
+
+project(imkit-consumer LANGUAGES CXX)
+
+if(NOT DEFINED IMKIT_SOURCE_DIR OR NOT DEFINED IMGUI_SOURCE_DIR)
+    message(FATAL_ERROR "IMKIT_SOURCE_DIR and IMGUI_SOURCE_DIR are required.")
+endif()
+
+add_library(consumer_imgui STATIC
+    "${IMGUI_SOURCE_DIR}/imgui.cpp"
+    "${IMGUI_SOURCE_DIR}/imgui_draw.cpp"
+    "${IMGUI_SOURCE_DIR}/imgui_tables.cpp"
+    "${IMGUI_SOURCE_DIR}/imgui_widgets.cpp"
+)
+target_compile_features(consumer_imgui PUBLIC cxx_std_20)
+target_include_directories(consumer_imgui PUBLIC "${IMGUI_SOURCE_DIR}")
+
+set(IMKIT_IMGUI_TARGET consumer_imgui)
+set(IMKIT_BUILD_GALLERY OFF)
+set(IMKIT_BUILD_TESTS OFF)
+add_subdirectory("${IMKIT_SOURCE_DIR}" imkit-subbuild)
+
+if(TARGET glfw OR TARGET OpenGL::GL OR TARGET imkit_gallery_backends)
+    message(FATAL_ERROR "Library-only consumption unexpectedly created a gallery dependency target.")
+endif()
+
+get_target_property(imkit_sources imkit SOURCES)
+list(LENGTH imkit_sources imkit_source_count)
+if(NOT imkit_source_count EQUAL 1 OR NOT imkit_sources MATCHES "widgets\\.cpp$")
+    message(FATAL_ERROR "The imkit target must compile only its wrapper implementation.")
+endif()
+
+add_executable(imkit_consumer main.cpp)
+target_compile_features(imkit_consumer PRIVATE cxx_std_20)
+target_link_libraries(imkit_consumer PRIVATE imkit::imkit)
+
