@@ -1,20 +1,26 @@
-# Architecture
+# Architecture / 設計
 
-## Boundary
+Precision Layers separates semantic design, native behavior and host state.
 
-`imkit` is a static C++20 library containing public declarations and direct calls to six public Dear ImGui widget functions. Its public link to the target named by `IMKIT_IMGUI_TARGET` supplies both the Dear ImGui headers exposed by `imkit` and the implementation selected by the host. The library does not compile Dear ImGui sources and does not link GLFW, OpenGL, a renderer backend, or an operating-system API.
+| Layer | Responsibility / 責務 |
+|---|---|
+| `version.h` | Explicit baseline guard; no silent cross-version ABI claim / 対応版を明示 |
+| `theme.h`, `theme.cpp` | Copyable palette/metrics/fonts/motion, deterministic style derivation, nested RAII / 値型と適用・復元 |
+| `native.h` | Exact overload sets imported from the host's public header / 標準overloadの透過公開 |
+| `widgets.h`, `widgets.cpp` | Original six compatible functions, pointer Selectable, selection/tree/tab markers / 公開DrawListで装飾 |
+| `components.h`, `components.cpp` | Small native compositions, explicitly passed optional theme/animation / 明示的な合成部品 |
+| Catalog host | Context, fonts, GLFW/OpenGL, image capture and representative inputs / 所有と実行環境 |
 
-The host creates, selects, and destroys every `ImGuiContext`. It also starts and ends frames and owns all values passed to widgets. `imkit` has no initialization or shutdown API and stores no mutable global or per-context state.
+`imkit` compiles only its own implementation. It does not compile Dear ImGui, link a backend, initialize a context, discover fonts, persist settings or spawn workers. Public wrappers preserve native Begin/End, focus, callback, disabled, clipping and ID contracts. Decoration submits no replacement item; compound controls use native groups.
 
-## Standalone development
+ライブラリ本体は自身の実装だけをコンパイルします。Dear ImGui本体・backend・OS・font loaderへの依存を内包しません。新しい部品でも入力を再実装せず、意味別token、公開widget、公開DrawListの順で設計します。将来の追加は他の部品の所有権を変えない小さなAPIとして行います。
 
-When this repository is the top-level project and no external target is named, `cmake/Dependencies.cmake` fetches the pinned Dear ImGui source and creates the development-only `imkit_bundled_imgui` target. This target remains separate from `imkit`.
+There is no global theme registry. `Theme` is a copyable host-owned preset, `FontSet` contains non-owning references, and `AnimationState` is fixed-capacity storage whose lifecycle is explicitly controlled by the host. A scope must end before its context is destroyed. The static SDK binds to the consumer's already-created ImGui target through an imported interface adapter.
 
-`imkit_gallery` is a host application. It owns GLFW, the OpenGL context, the Dear ImGui context, backend lifecycle, frame loop, and demo values. Its backend adapter target is the only ImKit-owned target that links GLFW and OpenGL. Tests own their contexts in the same manner but create no operating-system window.
+グローバルなTheme registryはありません。Themeの保存はホスト、FontSetは非所有参照、AnimationStateはホストが寿命を管理する固定容量状態です。scopeより先にContextを破棄しないでください。SDKは利用者が先に作成したImGui targetへ依存adapterで接続します。
 
-When added as a subdirectory, Gallery and tests default to off and `IMKIT_IMGUI_TARGET` is mandatory. This path neither downloads dependencies nor modifies the host's Dear ImGui configuration.
+## Extension policy / 拡張方針
 
-## Deferred design
+Add overloads only after comparing the pinned public signature, preserving defaults and return semantics. Regenerate the API inventory and compile/link fixture with `tools/generate_api.py`. An unsupported new Dear ImGui version requires deliberate adapter/style review, not just relaxing the version guard. Keep rendering dimensions derived from theme/font size, state bounded, and native editing intact. Do not introduce host-specific data or services into this library.
 
-Themes, modern styling, animation state, composite controls, internal widget rendering, and any state-management class are deferred until their concrete requirements are known. They are not represented by placeholder abstractions in this foundation.
-
+新しいDear ImGui版への対応では署名・style・font契約を比較し、対応表とcompile/link fixtureを更新します。version guardを緩めるだけでは対応完了にしません。寸法はThemeと文字サイズから導出し、状態容量を制限し、ホスト固有の情報・サービスを持ち込みません。

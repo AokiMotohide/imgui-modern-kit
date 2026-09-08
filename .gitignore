@@ -5,4 +5,5 @@
 /CMakeUserPresets.json
 *.user
 imgui.ini
-
+/docs/precision-layers-implementation-prompt.md
+/docs/completion-plan.md

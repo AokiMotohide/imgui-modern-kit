@@ -1,0 +1,4132 @@
+[
+  {
+    "name": "CreateContext",
+    "signature": "ImGuiContext* CreateContext(ImFontAtlas* shared_font_atlas = NULL)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DestroyContext",
+    "signature": "void DestroyContext(ImGuiContext* ctx = NULL)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetCurrentContext",
+    "signature": "ImGuiContext* GetCurrentContext()",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetCurrentContext",
+    "signature": "void SetCurrentContext(ImGuiContext* ctx)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetIO",
+    "signature": "ImGuiIO& GetIO()",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetPlatformIO",
+    "signature": "ImGuiPlatformIO& GetPlatformIO()",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetStyle",
+    "signature": "ImGuiStyle& GetStyle()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "NewFrame",
+    "signature": "void NewFrame()",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "EndFrame",
+    "signature": "void EndFrame()",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Render",
+    "signature": "void Render()",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetDrawData",
+    "signature": "ImDrawData* GetDrawData()",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ShowDemoWindow",
+    "signature": "void ShowDemoWindow(bool* p_open = NULL)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ShowMetricsWindow",
+    "signature": "void ShowMetricsWindow(bool* p_open = NULL)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ShowDebugLogWindow",
+    "signature": "void ShowDebugLogWindow(bool* p_open = NULL)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ShowIDStackToolWindow",
+    "signature": "void ShowIDStackToolWindow(bool* p_open = NULL)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ShowAboutWindow",
+    "signature": "void ShowAboutWindow(bool* p_open = NULL)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ShowStyleEditor",
+    "signature": "void ShowStyleEditor(ImGuiStyle* ref = NULL)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ShowStyleSelector",
+    "signature": "bool ShowStyleSelector(const char* label)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ShowFontSelector",
+    "signature": "void ShowFontSelector(const char* label)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ShowUserGuide",
+    "signature": "void ShowUserGuide()",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetVersion",
+    "signature": "const char* GetVersion()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "StyleColorsDark",
+    "signature": "void StyleColorsDark(ImGuiStyle* dst = NULL)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "StyleColorsLight",
+    "signature": "void StyleColorsLight(ImGuiStyle* dst = NULL)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "StyleColorsClassic",
+    "signature": "void StyleColorsClassic(ImGuiStyle* dst = NULL)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Begin",
+    "signature": "bool Begin(const char* name, bool* p_open = NULL, ImGuiWindowFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "End",
+    "signature": "void End()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginChild",
+    "signature": "bool BeginChild(const char* str_id, const ImVec2& size = ImVec2(0, 0), ImGuiChildFlags child_flags = 0, ImGuiWindowFlags window_flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginChild",
+    "signature": "bool BeginChild(ImGuiID id, const ImVec2& size = ImVec2(0, 0), ImGuiChildFlags child_flags = 0, ImGuiWindowFlags window_flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "EndChild",
+    "signature": "void EndChild()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsWindowAppearing",
+    "signature": "bool IsWindowAppearing()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsWindowCollapsed",
+    "signature": "bool IsWindowCollapsed()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsWindowFocused",
+    "signature": "bool IsWindowFocused(ImGuiFocusedFlags flags=0)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsWindowHovered",
+    "signature": "bool IsWindowHovered(ImGuiHoveredFlags flags=0)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetWindowDrawList",
+    "signature": "ImDrawList* GetWindowDrawList()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetWindowDpiScale",
+    "signature": "float GetWindowDpiScale()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetWindowPos",
+    "signature": "ImVec2 GetWindowPos()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetWindowSize",
+    "signature": "ImVec2 GetWindowSize()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetWindowWidth",
+    "signature": "float GetWindowWidth()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetWindowHeight",
+    "signature": "float GetWindowHeight()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetWindowViewport",
+    "signature": "ImGuiViewport* GetWindowViewport()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetNextWindowPos",
+    "signature": "void SetNextWindowPos(const ImVec2& pos, ImGuiCond cond = 0, const ImVec2& pivot = ImVec2(0, 0))",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetNextWindowSize",
+    "signature": "void SetNextWindowSize(const ImVec2& size, ImGuiCond cond = 0)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetNextWindowSizeConstraints",
+    "signature": "void SetNextWindowSizeConstraints(const ImVec2& size_min, const ImVec2& size_max, ImGuiSizeCallback custom_callback = NULL, void* custom_callback_data = NULL)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetNextWindowContentSize",
+    "signature": "void SetNextWindowContentSize(const ImVec2& size)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetNextWindowCollapsed",
+    "signature": "void SetNextWindowCollapsed(bool collapsed, ImGuiCond cond = 0)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetNextWindowFocus",
+    "signature": "void SetNextWindowFocus()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetNextWindowScroll",
+    "signature": "void SetNextWindowScroll(const ImVec2& scroll)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetNextWindowBgAlpha",
+    "signature": "void SetNextWindowBgAlpha(float alpha)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetNextWindowViewport",
+    "signature": "void SetNextWindowViewport(ImGuiID viewport_id)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetWindowPos",
+    "signature": "void SetWindowPos(const ImVec2& pos, ImGuiCond cond = 0)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetWindowSize",
+    "signature": "void SetWindowSize(const ImVec2& size, ImGuiCond cond = 0)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetWindowCollapsed",
+    "signature": "void SetWindowCollapsed(bool collapsed, ImGuiCond cond = 0)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetWindowFocus",
+    "signature": "void SetWindowFocus()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetWindowPos",
+    "signature": "void SetWindowPos(const char* name, const ImVec2& pos, ImGuiCond cond = 0)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetWindowSize",
+    "signature": "void SetWindowSize(const char* name, const ImVec2& size, ImGuiCond cond = 0)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetWindowCollapsed",
+    "signature": "void SetWindowCollapsed(const char* name, bool collapsed, ImGuiCond cond = 0)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetWindowFocus",
+    "signature": "void SetWindowFocus(const char* name)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetScrollX",
+    "signature": "float GetScrollX()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetScrollY",
+    "signature": "float GetScrollY()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetScrollX",
+    "signature": "void SetScrollX(float scroll_x)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetScrollY",
+    "signature": "void SetScrollY(float scroll_y)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetScrollMaxX",
+    "signature": "float GetScrollMaxX()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetScrollMaxY",
+    "signature": "float GetScrollMaxY()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetScrollHereX",
+    "signature": "void SetScrollHereX(float center_x_ratio = 0.5f)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetScrollHereY",
+    "signature": "void SetScrollHereY(float center_y_ratio = 0.5f)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetScrollFromPosX",
+    "signature": "void SetScrollFromPosX(float local_x, float center_x_ratio = 0.5f)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetScrollFromPosY",
+    "signature": "void SetScrollFromPosY(float local_y, float center_y_ratio = 0.5f)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PushFont",
+    "signature": "void PushFont(ImFont* font, float font_size_base_unscaled)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PopFont",
+    "signature": "void PopFont()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetFont",
+    "signature": "ImFont* GetFont()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetFontSize",
+    "signature": "float GetFontSize()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetFontBaked",
+    "signature": "ImFontBaked* GetFontBaked()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PushStyleColor",
+    "signature": "void PushStyleColor(ImGuiCol idx, ImU32 col)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PushStyleColor",
+    "signature": "void PushStyleColor(ImGuiCol idx, const ImVec4& col)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PopStyleColor",
+    "signature": "void PopStyleColor(int count = 1)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PushStyleVar",
+    "signature": "void PushStyleVar(ImGuiStyleVar idx, float val)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PushStyleVar",
+    "signature": "void PushStyleVar(ImGuiStyleVar idx, const ImVec2& val)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PushStyleVarX",
+    "signature": "void PushStyleVarX(ImGuiStyleVar idx, float val_x)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PushStyleVarY",
+    "signature": "void PushStyleVarY(ImGuiStyleVar idx, float val_y)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PopStyleVar",
+    "signature": "void PopStyleVar(int count = 1)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PushItemFlag",
+    "signature": "void PushItemFlag(ImGuiItemFlags option, bool enabled)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PopItemFlag",
+    "signature": "void PopItemFlag()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PushItemWidth",
+    "signature": "void PushItemWidth(float item_width)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PopItemWidth",
+    "signature": "void PopItemWidth()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetNextItemWidth",
+    "signature": "void SetNextItemWidth(float item_width)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "CalcItemWidth",
+    "signature": "float CalcItemWidth()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PushTextWrapPos",
+    "signature": "void PushTextWrapPos(float wrap_local_pos_x = 0.0f)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PopTextWrapPos",
+    "signature": "void PopTextWrapPos()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetFontTexUvWhitePixel",
+    "signature": "ImVec2 GetFontTexUvWhitePixel()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetColorU32",
+    "signature": "ImU32 GetColorU32(ImGuiCol idx, float alpha_mul = 1.0f)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetColorU32",
+    "signature": "ImU32 GetColorU32(const ImVec4& col)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetColorU32",
+    "signature": "ImU32 GetColorU32(ImU32 col, float alpha_mul = 1.0f)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetStyleColorVec4",
+    "signature": "const ImVec4& GetStyleColorVec4(ImGuiCol idx)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetCursorScreenPos",
+    "signature": "ImVec2 GetCursorScreenPos()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetCursorScreenPos",
+    "signature": "void SetCursorScreenPos(const ImVec2& pos)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetContentRegionAvail",
+    "signature": "ImVec2 GetContentRegionAvail()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetCursorPos",
+    "signature": "ImVec2 GetCursorPos()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetCursorPosX",
+    "signature": "float GetCursorPosX()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetCursorPosY",
+    "signature": "float GetCursorPosY()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetCursorPos",
+    "signature": "void SetCursorPos(const ImVec2& local_pos)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetCursorPosX",
+    "signature": "void SetCursorPosX(float local_x)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetCursorPosY",
+    "signature": "void SetCursorPosY(float local_y)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetCursorStartPos",
+    "signature": "ImVec2 GetCursorStartPos()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Separator",
+    "signature": "void Separator()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SameLine",
+    "signature": "void SameLine(float offset_from_start_x=0.0f, float spacing=-1.0f)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "NewLine",
+    "signature": "void NewLine()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Spacing",
+    "signature": "void Spacing()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Dummy",
+    "signature": "void Dummy(const ImVec2& size)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Indent",
+    "signature": "void Indent(float indent_w = 0.0f)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Unindent",
+    "signature": "void Unindent(float indent_w = 0.0f)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginGroup",
+    "signature": "void BeginGroup()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "EndGroup",
+    "signature": "void EndGroup()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "AlignTextToFramePadding",
+    "signature": "void AlignTextToFramePadding()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetTextLineHeight",
+    "signature": "float GetTextLineHeight()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetTextLineHeightWithSpacing",
+    "signature": "float GetTextLineHeightWithSpacing()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetFrameHeight",
+    "signature": "float GetFrameHeight()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetFrameHeightWithSpacing",
+    "signature": "float GetFrameHeightWithSpacing()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PushID",
+    "signature": "void PushID(const char* str_id)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PushID",
+    "signature": "void PushID(const char* str_id_begin, const char* str_id_end)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PushID",
+    "signature": "void PushID(const void* ptr_id)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PushID",
+    "signature": "void PushID(int int_id)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PopID",
+    "signature": "void PopID()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetID",
+    "signature": "ImGuiID GetID(const char* str_id)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetID",
+    "signature": "ImGuiID GetID(const char* str_id_begin, const char* str_id_end)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetID",
+    "signature": "ImGuiID GetID(const void* ptr_id)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetID",
+    "signature": "ImGuiID GetID(int int_id)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TextUnformatted",
+    "signature": "void TextUnformatted(const char* text, const char* text_end = NULL)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Text",
+    "signature": "void Text(const char* fmt, ...)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TextV",
+    "signature": "void TextV(const char* fmt, va_list args)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TextColored",
+    "signature": "void TextColored(const ImVec4& col, const char* fmt, ...)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TextColoredV",
+    "signature": "void TextColoredV(const ImVec4& col, const char* fmt, va_list args)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TextDisabled",
+    "signature": "void TextDisabled(const char* fmt, ...)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TextDisabledV",
+    "signature": "void TextDisabledV(const char* fmt, va_list args)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TextWrapped",
+    "signature": "void TextWrapped(const char* fmt, ...)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TextWrappedV",
+    "signature": "void TextWrappedV(const char* fmt, va_list args)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "LabelText",
+    "signature": "void LabelText(const char* label, const char* fmt, ...)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "LabelTextV",
+    "signature": "void LabelTextV(const char* label, const char* fmt, va_list args)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BulletText",
+    "signature": "void BulletText(const char* fmt, ...)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BulletTextV",
+    "signature": "void BulletTextV(const char* fmt, va_list args)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SeparatorText",
+    "signature": "void SeparatorText(const char* label)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Button",
+    "signature": "bool Button(const char* label, const ImVec2& size = ImVec2(0, 0))",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SmallButton",
+    "signature": "bool SmallButton(const char* label)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "InvisibleButton",
+    "signature": "bool InvisibleButton(const char* str_id, const ImVec2& size, ImGuiButtonFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ArrowButton",
+    "signature": "bool ArrowButton(const char* str_id, ImGuiDir dir)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Checkbox",
+    "signature": "bool Checkbox(const char* label, bool* v)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "CheckboxFlags",
+    "signature": "bool CheckboxFlags(const char* label, int* flags, int flags_value)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "CheckboxFlags",
+    "signature": "bool CheckboxFlags(const char* label, unsigned int* flags, unsigned int flags_value)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "RadioButton",
+    "signature": "bool RadioButton(const char* label, bool active)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "RadioButton",
+    "signature": "bool RadioButton(const char* label, int* v, int v_button)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ProgressBar",
+    "signature": "void ProgressBar(float fraction, const ImVec2& size_arg = ImVec2(-FLT_MIN, 0), const char* overlay = NULL)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Bullet",
+    "signature": "void Bullet()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TextLink",
+    "signature": "bool TextLink(const char* label)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TextLinkOpenURL",
+    "signature": "bool TextLinkOpenURL(const char* label, const char* url = NULL)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Image",
+    "signature": "void Image(ImTextureRef tex_ref, const ImVec2& image_size, const ImVec2& uv0 = ImVec2(0, 0), const ImVec2& uv1 = ImVec2(1, 1))",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ImageWithBg",
+    "signature": "void ImageWithBg(ImTextureRef tex_ref, const ImVec2& image_size, const ImVec2& uv0 = ImVec2(0, 0), const ImVec2& uv1 = ImVec2(1, 1), const ImVec4& bg_col = ImVec4(0, 0, 0, 0), const ImVec4& tint_col = ImVec4(1, 1, 1, 1))",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ImageButton",
+    "signature": "bool ImageButton(const char* str_id, ImTextureRef tex_ref, const ImVec2& image_size, const ImVec2& uv0 = ImVec2(0, 0), const ImVec2& uv1 = ImVec2(1, 1), const ImVec4& bg_col = ImVec4(0, 0, 0, 0), const ImVec4& tint_col = ImVec4(1, 1, 1, 1))",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginCombo",
+    "signature": "bool BeginCombo(const char* label, const char* preview_value, ImGuiComboFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "EndCombo",
+    "signature": "void EndCombo()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Combo",
+    "signature": "bool Combo(const char* label, int* current_item, const char* const items[], int items_count, int popup_max_height_in_items = -1)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Combo",
+    "signature": "bool Combo(const char* label, int* current_item, const char* items_separated_by_zeros, int popup_max_height_in_items = -1)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Combo",
+    "signature": "bool Combo(const char* label, int* current_item, const char* (*getter)(void* user_data, int idx), void* user_data, int items_count, int popup_max_height_in_items = -1)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DragFloat",
+    "signature": "bool DragFloat(const char* label, float* v, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = \"%.3f\", ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DragFloat2",
+    "signature": "bool DragFloat2(const char* label, float v[2], float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = \"%.3f\", ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DragFloat3",
+    "signature": "bool DragFloat3(const char* label, float v[3], float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = \"%.3f\", ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DragFloat4",
+    "signature": "bool DragFloat4(const char* label, float v[4], float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = \"%.3f\", ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DragFloatRange2",
+    "signature": "bool DragFloatRange2(const char* label, float* v_current_min, float* v_current_max, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = \"%.3f\", const char* format_max = NULL, ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DragInt",
+    "signature": "bool DragInt(const char* label, int* v, float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* format = \"%d\", ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DragInt2",
+    "signature": "bool DragInt2(const char* label, int v[2], float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* format = \"%d\", ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DragInt3",
+    "signature": "bool DragInt3(const char* label, int v[3], float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* format = \"%d\", ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DragInt4",
+    "signature": "bool DragInt4(const char* label, int v[4], float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* format = \"%d\", ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DragIntRange2",
+    "signature": "bool DragIntRange2(const char* label, int* v_current_min, int* v_current_max, float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* format = \"%d\", const char* format_max = NULL, ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DragScalar",
+    "signature": "bool DragScalar(const char* label, ImGuiDataType data_type, void* p_data, float v_speed = 1.0f, const void* p_min = NULL, const void* p_max = NULL, const char* format = NULL, ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DragScalarN",
+    "signature": "bool DragScalarN(const char* label, ImGuiDataType data_type, void* p_data, int components, float v_speed = 1.0f, const void* p_min = NULL, const void* p_max = NULL, const char* format = NULL, ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SliderFloat",
+    "signature": "bool SliderFloat(const char* label, float* v, float v_min, float v_max, const char* format = \"%.3f\", ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SliderFloat2",
+    "signature": "bool SliderFloat2(const char* label, float v[2], float v_min, float v_max, const char* format = \"%.3f\", ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SliderFloat3",
+    "signature": "bool SliderFloat3(const char* label, float v[3], float v_min, float v_max, const char* format = \"%.3f\", ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SliderFloat4",
+    "signature": "bool SliderFloat4(const char* label, float v[4], float v_min, float v_max, const char* format = \"%.3f\", ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SliderAngle",
+    "signature": "bool SliderAngle(const char* label, float* v_rad, float v_degrees_min = -360.0f, float v_degrees_max = +360.0f, const char* format = \"%.0f deg\", ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SliderInt",
+    "signature": "bool SliderInt(const char* label, int* v, int v_min, int v_max, const char* format = \"%d\", ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SliderInt2",
+    "signature": "bool SliderInt2(const char* label, int v[2], int v_min, int v_max, const char* format = \"%d\", ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SliderInt3",
+    "signature": "bool SliderInt3(const char* label, int v[3], int v_min, int v_max, const char* format = \"%d\", ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SliderInt4",
+    "signature": "bool SliderInt4(const char* label, int v[4], int v_min, int v_max, const char* format = \"%d\", ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SliderScalar",
+    "signature": "bool SliderScalar(const char* label, ImGuiDataType data_type, void* p_data, const void* p_min, const void* p_max, const char* format = NULL, ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SliderScalarN",
+    "signature": "bool SliderScalarN(const char* label, ImGuiDataType data_type, void* p_data, int components, const void* p_min, const void* p_max, const char* format = NULL, ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "VSliderFloat",
+    "signature": "bool VSliderFloat(const char* label, const ImVec2& size, float* v, float v_min, float v_max, const char* format = \"%.3f\", ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "VSliderInt",
+    "signature": "bool VSliderInt(const char* label, const ImVec2& size, int* v, int v_min, int v_max, const char* format = \"%d\", ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "VSliderScalar",
+    "signature": "bool VSliderScalar(const char* label, const ImVec2& size, ImGuiDataType data_type, void* p_data, const void* p_min, const void* p_max, const char* format = NULL, ImGuiSliderFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "InputText",
+    "signature": "bool InputText(const char* label, char* buf, size_t buf_size, ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = NULL, void* user_data = NULL)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "InputTextMultiline",
+    "signature": "bool InputTextMultiline(const char* label, char* buf, size_t buf_size, const ImVec2& size = ImVec2(0, 0), ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = NULL, void* user_data = NULL)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "InputTextWithHint",
+    "signature": "bool InputTextWithHint(const char* label, const char* hint, char* buf, size_t buf_size, ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = NULL, void* user_data = NULL)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "InputFloat",
+    "signature": "bool InputFloat(const char* label, float* v, float step = 0.0f, float step_fast = 0.0f, const char* format = \"%.3f\", ImGuiInputTextFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "InputFloat2",
+    "signature": "bool InputFloat2(const char* label, float v[2], const char* format = \"%.3f\", ImGuiInputTextFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "InputFloat3",
+    "signature": "bool InputFloat3(const char* label, float v[3], const char* format = \"%.3f\", ImGuiInputTextFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "InputFloat4",
+    "signature": "bool InputFloat4(const char* label, float v[4], const char* format = \"%.3f\", ImGuiInputTextFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "InputInt",
+    "signature": "bool InputInt(const char* label, int* v, int step = 1, int step_fast = 100, ImGuiInputTextFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "InputInt2",
+    "signature": "bool InputInt2(const char* label, int v[2], ImGuiInputTextFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "InputInt3",
+    "signature": "bool InputInt3(const char* label, int v[3], ImGuiInputTextFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "InputInt4",
+    "signature": "bool InputInt4(const char* label, int v[4], ImGuiInputTextFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "InputDouble",
+    "signature": "bool InputDouble(const char* label, double* v, double step = 0.0, double step_fast = 0.0, const char* format = \"%.6f\", ImGuiInputTextFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "InputScalar",
+    "signature": "bool InputScalar(const char* label, ImGuiDataType data_type, void* p_data, const void* p_step = NULL, const void* p_step_fast = NULL, const char* format = NULL, ImGuiInputTextFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "InputScalarN",
+    "signature": "bool InputScalarN(const char* label, ImGuiDataType data_type, void* p_data, int components, const void* p_step = NULL, const void* p_step_fast = NULL, const char* format = NULL, ImGuiInputTextFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Numeric / Units",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ColorEdit3",
+    "signature": "bool ColorEdit3(const char* label, float col[3], ImGuiColorEditFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ColorEdit4",
+    "signature": "bool ColorEdit4(const char* label, float col[4], ImGuiColorEditFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ColorPicker3",
+    "signature": "bool ColorPicker3(const char* label, float col[3], ImGuiColorEditFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ColorPicker4",
+    "signature": "bool ColorPicker4(const char* label, float col[4], ImGuiColorEditFlags flags = 0, const float* ref_col = NULL)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ColorButton",
+    "signature": "bool ColorButton(const char* desc_id, const ImVec4& col, ImGuiColorEditFlags flags = 0, const ImVec2& size = ImVec2(0, 0))",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TreeNode",
+    "signature": "bool TreeNode(const char* label)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TreeNode",
+    "signature": "bool TreeNode(const char* str_id, const char* fmt, ...)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TreeNode",
+    "signature": "bool TreeNode(const void* ptr_id, const char* fmt, ...)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TreeNodeV",
+    "signature": "bool TreeNodeV(const char* str_id, const char* fmt, va_list args)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TreeNodeV",
+    "signature": "bool TreeNodeV(const void* ptr_id, const char* fmt, va_list args)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TreeNodeEx",
+    "signature": "bool TreeNodeEx(const char* label, ImGuiTreeNodeFlags flags = 0)",
+    "included": true,
+    "implementation": "native behavior + public DrawList marker",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Theme + selection underline",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TreeNodeEx",
+    "signature": "bool TreeNodeEx(const char* str_id, ImGuiTreeNodeFlags flags, const char* fmt, ...)",
+    "included": true,
+    "implementation": "native behavior + public DrawList marker",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Theme + selection underline",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TreeNodeEx",
+    "signature": "bool TreeNodeEx(const void* ptr_id, ImGuiTreeNodeFlags flags, const char* fmt, ...)",
+    "included": true,
+    "implementation": "native behavior + public DrawList marker",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Theme + selection underline",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TreeNodeExV",
+    "signature": "bool TreeNodeExV(const char* str_id, ImGuiTreeNodeFlags flags, const char* fmt, va_list args)",
+    "included": true,
+    "implementation": "native behavior + public DrawList marker",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Theme + selection underline",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TreeNodeExV",
+    "signature": "bool TreeNodeExV(const void* ptr_id, ImGuiTreeNodeFlags flags, const char* fmt, va_list args)",
+    "included": true,
+    "implementation": "native behavior + public DrawList marker",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Theme + selection underline",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TreePush",
+    "signature": "void TreePush(const char* str_id)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TreePush",
+    "signature": "void TreePush(const void* ptr_id)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TreePop",
+    "signature": "void TreePop()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetTreeNodeToLabelSpacing",
+    "signature": "float GetTreeNodeToLabelSpacing()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "CollapsingHeader",
+    "signature": "bool CollapsingHeader(const char* label, ImGuiTreeNodeFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "CollapsingHeader",
+    "signature": "bool CollapsingHeader(const char* label, bool* p_visible, ImGuiTreeNodeFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetNextItemOpen",
+    "signature": "void SetNextItemOpen(bool is_open, ImGuiCond cond = 0)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetNextItemStorageID",
+    "signature": "void SetNextItemStorageID(ImGuiID storage_id)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TreeNodeGetOpen",
+    "signature": "bool TreeNodeGetOpen(ImGuiID storage_id)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Selectable",
+    "signature": "bool Selectable(const char* label, bool selected = false, ImGuiSelectableFlags flags = 0, const ImVec2& size = ImVec2(0, 0))",
+    "included": true,
+    "implementation": "native behavior + public DrawList marker",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Theme + selection underline",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Selectable",
+    "signature": "bool Selectable(const char* label, bool* p_selected, ImGuiSelectableFlags flags = 0, const ImVec2& size = ImVec2(0, 0))",
+    "included": true,
+    "implementation": "native behavior + public DrawList marker",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Theme + selection underline",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginMultiSelect",
+    "signature": "ImGuiMultiSelectIO* BeginMultiSelect(ImGuiMultiSelectFlags flags, int selection_size = -1, int items_count = -1)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "EndMultiSelect",
+    "signature": "ImGuiMultiSelectIO* EndMultiSelect()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetNextItemSelectionUserData",
+    "signature": "void SetNextItemSelectionUserData(ImGuiSelectionUserData selection_user_data)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsItemToggledSelection",
+    "signature": "bool IsItemToggledSelection()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginListBox",
+    "signature": "bool BeginListBox(const char* label, const ImVec2& size = ImVec2(0, 0))",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "EndListBox",
+    "signature": "void EndListBox()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ListBox",
+    "signature": "bool ListBox(const char* label, int* current_item, const char* const items[], int items_count, int height_in_items = -1)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ListBox",
+    "signature": "bool ListBox(const char* label, int* current_item, const char* (*getter)(void* user_data, int idx), void* user_data, int items_count, int height_in_items = -1)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PlotLines",
+    "signature": "void PlotLines(const char* label, const float* values, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0, 0), int stride = sizeof(float))",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PlotLines",
+    "signature": "void PlotLines(const char* label, float(*values_getter)(void* data, int idx), void* data, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0, 0))",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PlotHistogram",
+    "signature": "void PlotHistogram(const char* label, const float* values, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0, 0), int stride = sizeof(float))",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PlotHistogram",
+    "signature": "void PlotHistogram(const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0, 0))",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Value",
+    "signature": "void Value(const char* prefix, bool b)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Value",
+    "signature": "void Value(const char* prefix, int v)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Value",
+    "signature": "void Value(const char* prefix, unsigned int v)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Value",
+    "signature": "void Value(const char* prefix, float v, const char* float_format = NULL)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginMenuBar",
+    "signature": "bool BeginMenuBar()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "EndMenuBar",
+    "signature": "void EndMenuBar()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginMainMenuBar",
+    "signature": "bool BeginMainMenuBar()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "EndMainMenuBar",
+    "signature": "void EndMainMenuBar()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginMenu",
+    "signature": "bool BeginMenu(const char* label, bool enabled = true)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "EndMenu",
+    "signature": "void EndMenu()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "MenuItem",
+    "signature": "bool MenuItem(const char* label, const char* shortcut = NULL, bool selected = false, bool enabled = true)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "MenuItem",
+    "signature": "bool MenuItem(const char* label, const char* shortcut, bool* p_selected, bool enabled = true)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginTooltip",
+    "signature": "bool BeginTooltip()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "EndTooltip",
+    "signature": "void EndTooltip()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetTooltip",
+    "signature": "void SetTooltip(const char* fmt, ...)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetTooltipV",
+    "signature": "void SetTooltipV(const char* fmt, va_list args)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginItemTooltip",
+    "signature": "bool BeginItemTooltip()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetItemTooltip",
+    "signature": "void SetItemTooltip(const char* fmt, ...)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetItemTooltipV",
+    "signature": "void SetItemTooltipV(const char* fmt, va_list args)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginPopup",
+    "signature": "bool BeginPopup(const char* str_id, ImGuiWindowFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginPopupModal",
+    "signature": "bool BeginPopupModal(const char* name, bool* p_open = NULL, ImGuiWindowFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "EndPopup",
+    "signature": "void EndPopup()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "OpenPopup",
+    "signature": "bool OpenPopup(const char* str_id, ImGuiPopupFlags popup_flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "OpenPopup",
+    "signature": "bool OpenPopup(ImGuiID id, ImGuiPopupFlags popup_flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "OpenPopupOnItemClick",
+    "signature": "bool OpenPopupOnItemClick(const char* str_id = NULL, ImGuiPopupFlags popup_flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "CloseCurrentPopup",
+    "signature": "void CloseCurrentPopup()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginPopupContextItem",
+    "signature": "bool BeginPopupContextItem(const char* str_id = NULL, ImGuiPopupFlags popup_flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginPopupContextWindow",
+    "signature": "bool BeginPopupContextWindow(const char* str_id = NULL, ImGuiPopupFlags popup_flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginPopupContextVoid",
+    "signature": "bool BeginPopupContextVoid(const char* str_id = NULL, ImGuiPopupFlags popup_flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsPopupOpen",
+    "signature": "bool IsPopupOpen(const char* str_id, ImGuiPopupFlags flags = 0)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginTable",
+    "signature": "bool BeginTable(const char* str_id, int columns, ImGuiTableFlags flags = 0, const ImVec2& outer_size = ImVec2(0.0f, 0.0f), float inner_width = 0.0f)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "EndTable",
+    "signature": "void EndTable()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TableNextRow",
+    "signature": "void TableNextRow(ImGuiTableRowFlags row_flags = 0, float min_row_height = 0.0f)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TableNextColumn",
+    "signature": "bool TableNextColumn()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TableSetColumnIndex",
+    "signature": "bool TableSetColumnIndex(int column_n)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TableSetupColumn",
+    "signature": "void TableSetupColumn(const char* label, ImGuiTableColumnFlags flags = 0, float init_width_or_weight = 0.0f, ImGuiID user_data = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TableSetupScrollFreeze",
+    "signature": "void TableSetupScrollFreeze(int cols, int rows)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TableHeader",
+    "signature": "void TableHeader(const char* label)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TableHeadersRow",
+    "signature": "void TableHeadersRow()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TableAngledHeadersRow",
+    "signature": "void TableAngledHeadersRow()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TableGetSortSpecs",
+    "signature": "ImGuiTableSortSpecs* TableGetSortSpecs()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TableGetColumnCount",
+    "signature": "int TableGetColumnCount()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TableGetColumnIndex",
+    "signature": "int TableGetColumnIndex()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TableGetRowIndex",
+    "signature": "int TableGetRowIndex()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TableGetColumnName",
+    "signature": "const char* TableGetColumnName(int column_n = -1)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TableGetColumnFlags",
+    "signature": "ImGuiTableColumnFlags TableGetColumnFlags(int column_n = -1)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TableSetColumnEnabled",
+    "signature": "void TableSetColumnEnabled(int column_n, bool v)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TableGetHoveredColumn",
+    "signature": "int TableGetHoveredColumn()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TableSetBgColor",
+    "signature": "void TableSetBgColor(ImGuiTableBgTarget target, ImU32 color, int column_n = -1)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Columns",
+    "signature": "void Columns(int count = 1, const char* id = NULL, bool borders = true)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "NextColumn",
+    "signature": "void NextColumn()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetColumnIndex",
+    "signature": "int GetColumnIndex()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetColumnWidth",
+    "signature": "float GetColumnWidth(int column_index = -1)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetColumnWidth",
+    "signature": "void SetColumnWidth(int column_index, float width)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetColumnOffset",
+    "signature": "float GetColumnOffset(int column_index = -1)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetColumnOffset",
+    "signature": "void SetColumnOffset(int column_index, float offset_x)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetColumnsCount",
+    "signature": "int GetColumnsCount()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginTabBar",
+    "signature": "bool BeginTabBar(const char* str_id, ImGuiTabBarFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "EndTabBar",
+    "signature": "void EndTabBar()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginTabItem",
+    "signature": "bool BeginTabItem(const char* label, bool* p_open = NULL, ImGuiTabItemFlags flags = 0)",
+    "included": true,
+    "implementation": "native behavior + public DrawList marker",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Theme + selection underline",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "EndTabItem",
+    "signature": "void EndTabItem()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "TabItemButton",
+    "signature": "bool TabItemButton(const char* label, ImGuiTabItemFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetTabItemClosed",
+    "signature": "void SetTabItemClosed(const char* tab_or_docked_window_label)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Hierarchy / Table",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DockSpace",
+    "signature": "ImGuiID DockSpace(ImGuiID dockspace_id, const ImVec2& size = ImVec2(0, 0), ImGuiDockNodeFlags flags = 0, const ImGuiWindowClass* window_class = NULL)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DockSpaceOverViewport",
+    "signature": "ImGuiID DockSpaceOverViewport(ImGuiID dockspace_id = 0, const ImGuiViewport* viewport = NULL, ImGuiDockNodeFlags flags = 0, const ImGuiWindowClass* window_class = NULL)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetNextWindowDockID",
+    "signature": "void SetNextWindowDockID(ImGuiID dock_id, ImGuiCond cond = 0)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetNextWindowClass",
+    "signature": "void SetNextWindowClass(const ImGuiWindowClass* window_class)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetWindowDockID",
+    "signature": "ImGuiID GetWindowDockID()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsWindowDocked",
+    "signature": "bool IsWindowDocked()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "LogToTTY",
+    "signature": "void LogToTTY(int auto_open_depth = -1)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "LogToFile",
+    "signature": "void LogToFile(int auto_open_depth = -1, const char* filename = NULL)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "LogToClipboard",
+    "signature": "void LogToClipboard(int auto_open_depth = -1)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "LogFinish",
+    "signature": "void LogFinish()",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "LogButtons",
+    "signature": "void LogButtons()",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "LogText",
+    "signature": "void LogText(const char* fmt, ...)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "LogTextV",
+    "signature": "void LogTextV(const char* fmt, va_list args)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginDragDropSource",
+    "signature": "bool BeginDragDropSource(ImGuiDragDropFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetDragDropPayload",
+    "signature": "bool SetDragDropPayload(const char* type, const void* data, size_t sz, ImGuiCond cond = 0)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "EndDragDropSource",
+    "signature": "void EndDragDropSource()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginDragDropTarget",
+    "signature": "bool BeginDragDropTarget()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "AcceptDragDropPayload",
+    "signature": "const ImGuiPayload* AcceptDragDropPayload(const char* type, ImGuiDragDropFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "EndDragDropTarget",
+    "signature": "void EndDragDropTarget()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetDragDropPayload",
+    "signature": "const ImGuiPayload* GetDragDropPayload()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "BeginDisabled",
+    "signature": "void BeginDisabled(bool disabled = true)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "EndDisabled",
+    "signature": "void EndDisabled()",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PushClipRect",
+    "signature": "void PushClipRect(const ImVec2& clip_rect_min, const ImVec2& clip_rect_max, bool intersect_with_current_clip_rect)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "PopClipRect",
+    "signature": "void PopClipRect()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetItemDefaultFocus",
+    "signature": "void SetItemDefaultFocus()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetKeyboardFocusHere",
+    "signature": "void SetKeyboardFocusHere(int offset = 0)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetNavCursorVisible",
+    "signature": "void SetNavCursorVisible(bool visible)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetNextItemAllowOverlap",
+    "signature": "void SetNextItemAllowOverlap()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsItemHovered",
+    "signature": "bool IsItemHovered(ImGuiHoveredFlags flags = 0)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsItemActive",
+    "signature": "bool IsItemActive()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsItemFocused",
+    "signature": "bool IsItemFocused()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsItemClicked",
+    "signature": "bool IsItemClicked(ImGuiMouseButton mouse_button = 0)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsItemVisible",
+    "signature": "bool IsItemVisible()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsItemEdited",
+    "signature": "bool IsItemEdited()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsItemActivated",
+    "signature": "bool IsItemActivated()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsItemDeactivated",
+    "signature": "bool IsItemDeactivated()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsItemDeactivatedAfterEdit",
+    "signature": "bool IsItemDeactivatedAfterEdit()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsItemToggledOpen",
+    "signature": "bool IsItemToggledOpen()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsAnyItemHovered",
+    "signature": "bool IsAnyItemHovered()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsAnyItemActive",
+    "signature": "bool IsAnyItemActive()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsAnyItemFocused",
+    "signature": "bool IsAnyItemFocused()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetItemID",
+    "signature": "ImGuiID GetItemID()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetItemRectMin",
+    "signature": "ImVec2 GetItemRectMin()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetItemRectMax",
+    "signature": "ImVec2 GetItemRectMax()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetItemRectSize",
+    "signature": "ImVec2 GetItemRectSize()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetItemFlags",
+    "signature": "ImGuiItemFlags GetItemFlags()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetItemClickedCountWithSingleClickDelay",
+    "signature": "int GetItemClickedCountWithSingleClickDelay(ImGuiMouseButton mouse_button = 0, float delay = -1.0f)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetMainViewport",
+    "signature": "ImGuiViewport* GetMainViewport()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetBackgroundDrawList",
+    "signature": "ImDrawList* GetBackgroundDrawList(ImGuiViewport* viewport = NULL)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetForegroundDrawList",
+    "signature": "ImDrawList* GetForegroundDrawList(ImGuiViewport* viewport = NULL)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsRectVisible",
+    "signature": "bool IsRectVisible(const ImVec2& size)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsRectVisible",
+    "signature": "bool IsRectVisible(const ImVec2& rect_min, const ImVec2& rect_max)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetTime",
+    "signature": "double GetTime()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetFrameCount",
+    "signature": "int GetFrameCount()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetDrawListSharedData",
+    "signature": "ImDrawListSharedData* GetDrawListSharedData()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetStyleColorName",
+    "signature": "const char* GetStyleColorName(ImGuiCol idx)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetStateStorage",
+    "signature": "void SetStateStorage(ImGuiStorage* storage)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetStateStorage",
+    "signature": "ImGuiStorage* GetStateStorage()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "CalcTextSize",
+    "signature": "ImVec2 CalcTextSize(const char* text, const char* text_end = NULL, bool hide_text_after_double_hash = false, float wrap_width = -1.0f)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ColorConvertU32ToFloat4",
+    "signature": "ImVec4 ColorConvertU32ToFloat4(ImU32 in)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ColorConvertFloat4ToU32",
+    "signature": "ImU32 ColorConvertFloat4ToU32(const ImVec4& in)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ColorConvertRGBtoHSV",
+    "signature": "void ColorConvertRGBtoHSV(float r, float g, float b, float& out_h, float& out_s, float& out_v)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ColorConvertHSVtoRGB",
+    "signature": "void ColorConvertHSVtoRGB(float h, float s, float v, float& out_r, float& out_g, float& out_b)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsKeyDown",
+    "signature": "bool IsKeyDown(ImGuiKey key)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsKeyPressed",
+    "signature": "bool IsKeyPressed(ImGuiKey key, bool repeat = true)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsKeyReleased",
+    "signature": "bool IsKeyReleased(ImGuiKey key)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsKeyChordPressed",
+    "signature": "bool IsKeyChordPressed(ImGuiKeyChord key_chord)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetKeyPressedAmount",
+    "signature": "int GetKeyPressedAmount(ImGuiKey key, float repeat_delay, float rate)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetKeyName",
+    "signature": "const char* GetKeyName(ImGuiKey key)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetNextFrameWantCaptureKeyboard",
+    "signature": "void SetNextFrameWantCaptureKeyboard(bool want_capture_keyboard)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "Shortcut",
+    "signature": "bool Shortcut(ImGuiKeyChord key_chord, ImGuiInputFlags flags = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetNextItemShortcut",
+    "signature": "void SetNextItemShortcut(ImGuiKeyChord key_chord, ImGuiInputFlags flags = 0)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetItemKeyOwner",
+    "signature": "bool SetItemKeyOwner(ImGuiKey key)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsMouseDown",
+    "signature": "bool IsMouseDown(ImGuiMouseButton button)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsMouseClicked",
+    "signature": "bool IsMouseClicked(ImGuiMouseButton button, bool repeat = false)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsMouseReleased",
+    "signature": "bool IsMouseReleased(ImGuiMouseButton button)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsMouseDoubleClicked",
+    "signature": "bool IsMouseDoubleClicked(ImGuiMouseButton button)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsMouseReleasedWithDelay",
+    "signature": "bool IsMouseReleasedWithDelay(ImGuiMouseButton button, float delay=-1.f)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetMouseClickedCount",
+    "signature": "int GetMouseClickedCount(ImGuiMouseButton button)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsMouseHoveringRect",
+    "signature": "bool IsMouseHoveringRect(const ImVec2& r_min, const ImVec2& r_max, bool clip = true)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsMousePosValid",
+    "signature": "bool IsMousePosValid(const ImVec2* mouse_pos = NULL)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsAnyMouseDown",
+    "signature": "bool IsAnyMouseDown()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetMousePos",
+    "signature": "ImVec2 GetMousePos()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetMousePosOnOpeningCurrentPopup",
+    "signature": "ImVec2 GetMousePosOnOpeningCurrentPopup()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "IsMouseDragging",
+    "signature": "bool IsMouseDragging(ImGuiMouseButton button, float lock_threshold = -1.0f)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetMouseDragDelta",
+    "signature": "ImVec2 GetMouseDragDelta(ImGuiMouseButton button = 0, float lock_threshold = -1.0f)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "ResetMouseDragDelta",
+    "signature": "void ResetMouseDragDelta(ImGuiMouseButton button = 0)",
+    "included": true,
+    "implementation": "semantic Theme + native behavior",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "Current themed native rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetMouseCursor",
+    "signature": "ImGuiMouseCursor GetMouseCursor()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetMouseCursor",
+    "signature": "void SetMouseCursor(ImGuiMouseCursor cursor_type)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetNextFrameWantCaptureMouse",
+    "signature": "void SetNextFrameWantCaptureMouse(bool want_capture_mouse)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetClipboardText",
+    "signature": "const char* GetClipboardText()",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetClipboardText",
+    "signature": "void SetClipboardText(const char* text)",
+    "included": true,
+    "implementation": "transparent public helper",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No standalone appearance",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "LoadIniSettingsFromDisk",
+    "signature": "void LoadIniSettingsFromDisk(const char* ini_filename)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "LoadIniSettingsFromMemory",
+    "signature": "void LoadIniSettingsFromMemory(const char* ini_data, size_t ini_size=0)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SaveIniSettingsToDisk",
+    "signature": "void SaveIniSettingsToDisk(const char* ini_filename)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SaveIniSettingsToMemory",
+    "signature": "const char* SaveIniSettingsToMemory(size_t* out_ini_size = NULL)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DebugTextEncoding",
+    "signature": "void DebugTextEncoding(const char* text)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Basic / Selection",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DebugFlashStyleColor",
+    "signature": "void DebugFlashStyleColor(ImGuiCol idx)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Input / Media",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DebugStartItemPicker",
+    "signature": "void DebugStartItemPicker()",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DebugCheckVersionAndDataLayout",
+    "signature": "bool DebugCheckVersionAndDataLayout(const char* version_str, size_t sz_io, size_t sz_style, size_t sz_vec2, size_t sz_vec4, size_t sz_drawvert, size_t sz_drawidx)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DebugLog",
+    "signature": "void DebugLog(const char* fmt, ...)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DebugLogV",
+    "signature": "void DebugLogV(const char* fmt, va_list args)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "SetAllocatorFunctions",
+    "signature": "void SetAllocatorFunctions(ImGuiMemAllocFunc alloc_func, ImGuiMemFreeFunc free_func, void* user_data = NULL)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "GetAllocatorFunctions",
+    "signature": "void GetAllocatorFunctions(ImGuiMemAllocFunc* p_alloc_func, ImGuiMemFreeFunc* p_free_func, void** p_user_data)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "MemAlloc",
+    "signature": "void* MemAlloc(size_t size)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "MemFree",
+    "signature": "void MemFree(void* ptr)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "UpdatePlatformWindows",
+    "signature": "void UpdatePlatformWindows()",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "RenderPlatformWindowsDefault",
+    "signature": "void RenderPlatformWindowsDefault(void* platform_render_arg = NULL, void* renderer_render_arg = NULL)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "DestroyPlatformWindows",
+    "signature": "void DestroyPlatformWindows()",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Overlay / Layout",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "FindViewportByID",
+    "signature": "ImGuiViewport* FindViewportByID(ImGuiID viewport_id)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  },
+  {
+    "name": "FindViewportByPlatformHandle",
+    "signature": "ImGuiViewport* FindViewportByPlatformHandle(void* platform_handle)",
+    "included": false,
+    "implementation": "excluded: host / debug",
+    "category": "Shared layout / helpers",
+    "version": "1.92.9b docking (19291)",
+    "visual_scope": "No imkit rendering",
+    "limitations": "See docs/validation.md; native behavior is not exhaustively retested"
+  }
+]

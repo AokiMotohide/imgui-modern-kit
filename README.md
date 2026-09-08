@@ -1,131 +1,62 @@
 # imgui-modern-kit
 
-This repository is the development foundation for a Dear ImGui extension library. The current widgets delegate directly to standard Dear ImGui; modern visual design is not implemented.
+[日本語](README.ja.md) · [User guide](docs/guide.md) · [API coverage](docs/api-coverage.md) · [Release v0.2.0](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v0.2.0)
 
-## Requirements
+**Precision Layers** is a modern, compact design system for Dear ImGui: neutral layered surfaces, 28 px controls, 6 px spacing, 4 px corners, restrained borders, clear selection marks, and distinct action variants. Light and dark palettes are editable values.
 
-- Windows
-- Visual Studio 2026 with the Desktop development with C++ workload
-- CMake 3.20 or newer (`windows-debug` uses a CMake version that supports the Visual Studio 18 2026 generator)
-- Git and network access for the first standalone dependency fetch
+ImKit is a **C++20 static extension library**, not a runtime plugin or a replacement renderer. It exposes the current public GUI API through exact native overload sets and a small set of decorated wrappers. The theme styles native rendering; composite controls add switches, mixed selection, segments, searchable selection, unit inputs, settings rows, badges, notifications and toolbars. See the [overload-level inventory](docs/api-coverage.md) for implementation boundaries.
 
-## Standalone build and Gallery
+![Precision Layers dark](docs/images/precision-dark.png)
 
-```powershell
-cmake --preset windows-debug
-cmake --build --preset windows-debug --parallel
-ctest --test-dir build/windows-debug -C Debug --output-on-failure
-./build/windows-debug/Debug/imkit_gallery.exe
-```
+## Quick start
 
-The standalone configuration downloads pinned Dear ImGui and GLFW revisions into `build/`. It does not install them globally.
-
-## Use with a host-owned Dear ImGui target
-
-Create the Dear ImGui target before adding this repository. Library-only subdirectory use performs no downloads and does not require GLFW or OpenGL.
+Supported baseline: **Dear ImGui v1.92.9b-docking**, commit `b48d1afbe8ee8b238e2961dc363a949dd7304e23`. Other revisions are rejected rather than silently treated as ABI compatible. Source integration is the recommended route.
 
 ```cmake
-add_library(host_imgui STATIC
-    ${imgui_SOURCE_DIR}/imgui.cpp
-    ${imgui_SOURCE_DIR}/imgui_draw.cpp
-    ${imgui_SOURCE_DIR}/imgui_tables.cpp
-    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
-)
-target_include_directories(host_imgui PUBLIC ${imgui_SOURCE_DIR})
-
+# host_imgui already contains your matching Dear ImGui core sources.
 set(IMKIT_IMGUI_TARGET host_imgui)
-add_subdirectory(path/to/imgui-modern-kit)
-target_link_libraries(my_app PRIVATE imkit::imkit)
+add_subdirectory(external/imgui-modern-kit)
+target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
-
-To build the Gallery against a host target, its public include paths must expose the matching official `backends/` directory, and the target must provide `ImGui::ShowDemoWindow` (normally by compiling `imgui_demo.cpp`).
-
-## Current API
 
 ```cpp
 #include <imkit/imkit.h>
 
-bool enabled = false;
-float amount = 0.5F;
-char name[64] = "Sample text";
+// Keep this value in the host; save/copy it as your application requires.
+auto theme = imkit::MakePrecisionTheme(imkit::ColorScheme::Dark);
+imkit::SetAccent(theme, ImVec4(0.53f, 0.79f, 0.73f, 1.0f));
 
-imkit::Button("Button");
-imkit::Checkbox("Enabled", &enabled);
-imkit::SliderFloat("Amount", &amount, 0.0F, 1.0F);
-imkit::InputText("Name", name, sizeof(name));
-imkit::Selectable("Item", false);
-imkit::ProgressBar(amount);
+// After the host creates its context; before NewFrame:
+imkit::ApplyTheme(theme);
+// Inside the host's frame:
+if (imkit::Begin("Settings")) {
+    static bool enabled = true;
+    imkit::Checkbox("Enabled", &enabled);
+    imkit::ActionButton("Apply", imkit::ActionVariant::Primary, {}, {&theme});
+}
+imkit::End(); // Required even when Begin() returns false.
 ```
 
-The host owns the current Dear ImGui context, frame lifecycle, and all edited values.
+The host owns context, frame lifecycle, font atlas, renderer, IDs and edited values. ImKit does not create contexts, load fonts, search operating-system paths, persist settings or start threads. Library-only integration creates no GLFW/OpenGL/capture targets and downloads nothing.
 
-## Not implemented
+## Catalog and build
 
-Modern styling, custom drawing, custom widgets, wrappers for the complete Dear ImGui API, host-application integration, installation, packaging, and release automation are outside this foundation stage.
-
----
-
-# imgui-modern-kit（日本語）
-
-このリポジトリは、Dear ImGui拡張ライブラリを開発するための基盤です。現在の部品は標準Dear ImGuiへ直接処理を委譲しており、モダンな外観の設計・実装はまだ行っていません。
-
-## 必要な開発環境
-
-- Windows
-- 「C++によるデスクトップ開発」ワークロードを含むVisual Studio 2026
-- CMake 3.20以降（`windows-debug`プリセットにはVisual Studio 18 2026ジェネレーターを扱えるCMakeが必要）
-- スタンドアロン構成で依存を初回取得するためのGitとネットワーク接続
-
-## スタンドアロンのビルドとGallery起動
+On Windows with Visual Studio 2026 C++ and a CMake version supporting its generator:
 
 ```powershell
 cmake --preset windows-debug
-cmake --build --preset windows-debug --parallel
-ctest --test-dir build/windows-debug -C Debug --output-on-failure
-./build/windows-debug/Debug/imkit_gallery.exe
+cmake --build build/windows-debug --config Debug --target imkit_gallery imkit_api_compile imkit_context_smoke
+./build/windows-debug/catalog/Debug/imkit_gallery.exe
 ```
 
-スタンドアロン構成では、固定したDear ImGuiとGLFWのリビジョンを`build/`内へ取得します。システム全体へのインストールは行いません。
+The catalog uses shipped APIs in six categories and includes Japanese text, palette editing and scale. `--capture --output out/catalog` captures actual OpenGL frames; `--verify` runs representative public IO interactions. The optional `IMKIT_BUILD_DESIGN_GALLERY` target preserves earlier design comparisons; it is not the production catalog.
 
-## ホスト所有のDear ImGuiターゲットを使用する
+## Installation and distribution
 
-このリポジトリを追加する前に、ホスト側でDear ImGuiターゲットを作成してください。ライブラリだけをサブディレクトリとして利用する場合、依存のダウンロードは行わず、GLFWとOpenGLも要求しません。
+The release provides a source archive and a Windows x64 SDK containing separate Debug/Release static libraries, CMake config, manifest and SHA256SUMS. The SDK requires the exact documented compiler/CRT/ImGui configuration. See [installed consumption](docs/guide.md#installed-sdk). Do not combine arbitrary ImGui binaries with it.
 
-```cmake
-add_library(host_imgui STATIC
-    ${imgui_SOURCE_DIR}/imgui.cpp
-    ${imgui_SOURCE_DIR}/imgui_draw.cpp
-    ${imgui_SOURCE_DIR}/imgui_tables.cpp
-    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
-)
-target_include_directories(host_imgui PUBLIC ${imgui_SOURCE_DIR})
+Documentation: [guide](docs/guide.md), [architecture](docs/architecture.md), [API coverage](docs/api-coverage.md), [validation and limitations](docs/validation.md), [changelog](CHANGELOG.md).
 
-set(IMKIT_IMGUI_TARGET host_imgui)
-add_subdirectory(path/to/imgui-modern-kit)
-target_link_libraries(my_app PRIVATE imkit::imkit)
-```
+## License
 
-ホスト側のDear ImGuiターゲットを使ってGalleryをビルドする場合、公開includeパスから対応する公式`backends/`ディレクトリを参照でき、ターゲットが`ImGui::ShowDemoWindow`を提供している必要があります。通常は`imgui_demo.cpp`をコンパイルして提供します。
-
-## 現在のAPI
-
-```cpp
-#include <imkit/imkit.h>
-
-bool enabled = false;
-float amount = 0.5F;
-char name[64] = "Sample text";
-
-imkit::Button("Button");
-imkit::Checkbox("Enabled", &enabled);
-imkit::SliderFloat("Amount", &amount, 0.0F, 1.0F);
-imkit::InputText("Name", name, sizeof(name));
-imkit::Selectable("Item", false);
-imkit::ProgressBar(amount);
-```
-
-現在のDear ImGui Context、フレームのライフサイクル、編集対象の値はすべてホストが所有します。
-
-## 未実装の範囲
-
-モダンなスタイル、独自描画、独自部品、Dear ImGui API全体のラッパー、ホストアプリへの組み込み、インストール、パッケージ化、自動リリースは、この基盤段階の対象外です。
+ImKit code is MIT. Dear ImGui and GLFW have their own licenses; optional Inter and Noto Sans JP catalog fonts use SIL OFL 1.1. Complete records and pinned hashes are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). No affiliation with Dear ImGui or the design references is implied.

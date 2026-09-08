@@ -1,26 +1,14 @@
-# Development status
+# Development status / 開発状況
 
-## Implemented
+Precision Layers 0.2.0 covers the pinned Dear ImGui public GUI API through 365 overloads, semantic light/dark themes and explicit composite controls. Context, renderer, fonts, frame lifecycle and edited data remain host-owned. The six-category production catalog calls the shipped library.
 
-- Static `imkit` library and `imkit::imkit` consumer target
-- Host-provided Dear ImGui target contract and standalone pinned dependency path
-- Direct standard delegation for Button, Checkbox, SliderFloat, InputText, Selectable, and ProgressBar
-- Standard-versus-wrapper Gallery with independent state, reset, and official demo toggle
-- Windowless context smoke test and external-target consumer fixture
-- Architecture, dependency, license, and widget inventory documentation
+Precision Layers 0.2.0は固定版の公開GUI API 365 overload、light/darkテーマ、汎用合成部品を提供します。Context・renderer・font・frame・編集値はホスト所有です。6カテゴリのカタログは配布ライブラリを呼び出します。
 
-## Verification
+- [API coverage / 対応表](api-coverage.md): exact overloads, implementation and exclusions.
+- [Validation / 検証](validation.md): Debug/Release, ownership, public IO interactions, actual GPU captures and relocated SDK consumer.
+- [User guide / English](guide.md) / [利用ガイド / 日本語](guide.ja.md): source integration, theme/font/DPI, installed SDK and lifetime contracts.
+- [Release v0.2.0](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v0.2.0): source, Windows x64 Debug/Release SDK, manifest, checksums and capture evidence.
 
-- Environment: Windows, Visual Studio Community 2026 18.9.2, MSVC 19.51.36256.0, CMake 4.3.0-rc1
-- `cmake --preset windows-debug`: passed; pinned Dear ImGui and GLFW sources were fetched into `build/windows-debug`
-- `cmake --build --preset windows-debug --parallel`: passed for `imkit`, `imkit_gallery`, `imkit_context_smoke`, and their development dependencies
-- `imkit.context_smoke`: passed after preparing a font atlas independently for each host-selected context
-- `imkit.consumer_build`: passed with `imkit/imkit.h` included directly; Gallery and tests disabled; no GLFW or OpenGL target created; no Dear ImGui source compiled by `imkit`
-- Tests-only top-level configure (`IMKIT_BUILD_GALLERY=OFF`, `IMKIT_BUILD_TESTS=ON`): passed without resolving GLFW or OpenGL
-- `imkit_gallery.exe`: launched successfully and exposed a top-level window titled `ImKit Development Gallery`
+Supported baseline is Dear ImGui 1.92.9b docking on Windows x64/MSVC v145. Native OS/IME acceptance, other platforms, older forks and integration into another application are not verified. Earlier design-comparison documents are historical experiments, not alternative supported themes.
 
-The available automation surface could not inspect native application content. Widget interaction and screenshot capture were not performed. Manual acceptance remains: compare both columns, edit all stateful widgets, use Reset, and toggle the official Dear ImGui demo.
-
-## Not implemented
-
-Modern design, complete standard-widget coverage, custom widgets, integration into an existing application, GitHub publication, packaging, installation, and automated releases have not started.
+対応基準はDear ImGui 1.92.9b docking、Windows x64/MSVC v145です。native OS/IME、他OS、旧fork、他アプリへの導入は未検証です。以前の比較文書は実験の履歴であり、複数の正式テーマを提供するものではありません。

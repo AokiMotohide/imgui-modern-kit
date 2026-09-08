@@ -1,22 +1,45 @@
 #pragma once
-
+#include <imkit/imkit.h>
+#include <map>
+#include <string>
+#include <array>
+#include <cstdint>
+#include <vector>
 namespace imkit::gallery {
-
-struct ColumnState {
-    int buttonClicks = 0;
-    bool checked = false;
-    float value = 0.5F;
-    char text[64] = "Sample text";
-    bool selected = false;
+struct Probe {
+    ImVec2 min, max;
+    ImVec2 Center() const {
+        return {(min.x + max.x) / 2, (min.y + max.y) / 2};
+    }
 };
-
 struct GalleryState {
-    ColumnState standard;
-    ColumnState wrapper;
-    bool showDearImGuiDemo = false;
+    Theme theme = MakePrecisionTheme();
+    FontSet fonts{};
+    AnimationState animation;
+    int page = 0;
+    float scale = 1;
+    bool dark = false, palette = false;
+    bool focusApply = false, applyFocused = false;
+    bool checked = true, toggle = false, selected = false;
+    int radio = 0, combo = 1, segment = 0, clicks = 0;
+    CheckState mixed = CheckState::Mixed;
+    float scalar = .5f, vector[4] = {1, 2, 3, 4}, lower = 20, upper = 80;
+    int integers[4] = {1, 2, 3, 4};
+    std::int64_t integer64 = 9007199254740993LL;
+    double precise = .125;
+    char name[128] = "Display / 表示", notes[512] = "Line one\n日本語の入力例", search[96] = "",
+         validation[64] = "";
+    bool treeOpen = false, tabOpen = true, modalVisible = false, popupVisible = false, notice = true;
+    int selectedRow = 1, inlineActions = 0, tab = 0, callbackCount = 0;
+    std::array<int, 3> rows = {24, 64, 96};
+    std::vector<char> growing = std::vector<char>(8, 0);
+    bool imageActivated = false;
+    bool modalLauncherFocused = false;
+    float tableScroll = 0;
+    ImVec4 color{.42f, .32f, .72f, 1};
+    ImTextureRef texture{};
+    std::map<std::string, Probe> probes;
 };
-
-void Show(GalleryState& state);
-
-}  // namespace imkit::gallery
-
+void Show(GalleryState &s);
+void Record(GalleryState &s, const char *name);
+} // namespace imkit::gallery

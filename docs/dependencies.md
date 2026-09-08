@@ -18,3 +18,4 @@ Full upstream license texts are preserved in `THIRD_PARTY_NOTICES.md`.
 
 The minimum project version is CMake 3.20. This covers the selected preset schema, `FetchContent_MakeAvailable`, target aliases, and the dependency requirements used here without requiring the locally installed CMake release number.
 
+`imkit` 0.2.0 requires the pinned 1.92.9b docking ABI. Older font/style/API contracts are not supported. Optional catalogs also ship Inter 4.1 and Noto Sans JP 2.004; font provenance, hashes and OFL texts are in THIRD_PARTY_NOTICES.md. The library target never loads these assets.

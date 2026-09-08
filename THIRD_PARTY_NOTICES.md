@@ -1,5 +1,52 @@
 # Third-party notices
 
+## Inter 4.1 (optional catalogs only)
+
+- Official source: https://github.com/rsms/inter/releases/tag/v4.1
+- Release archive: https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip
+- Unmodified files: `extras/ttf/Inter-Regular.ttf`, `extras/ttf/Inter-SemiBold.ttf`
+- Copyright (c) 2016 The Inter Project Authors (https://github.com/rsms/inter)
+- License: SIL Open Font License 1.1. Complete original text: [OFL.txt](examples/design_gallery/assets/OFL.txt).
+- Font files and the complete license are copied to `design-assets` beside the development executable.
+- These fonts are development assets, not a library runtime dependency. The repository code license does not replace the font license.
+
+| File | SHA256 |
+|---|---|
+| Inter-Regular.ttf | 40d692fce188e4471e2b3cba937be967878f631ad3ebbbdcd587687c7ebe0c82 |
+| Inter-SemiBold.ttf | 78a843fade9d4612a5567302fb595b56976eb5fcebf4fea5a5912d638bafcde3 |
+| OFL.txt | 262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a |
+
+## Noto Sans JP 2.004 (optional catalogs only)
+
+- Official source: https://github.com/notofonts/noto-cjk/tree/Sans2.004
+- Pinned commit: `523d033d6cb47f4a80c58a35753646f5c3608a78`.
+- Unmodified Japanese subset font: `Sans/SubsetOTF/JP/NotoSansJP-Regular.otf`.
+- Embedded font copyright: © 2014-2021 Adobe (http://www.adobe.com/).
+- Original license: repository-root `LICENSE`, saved as [NotoSansJP-OFL.txt](examples/design_gallery/assets/NotoSansJP-OFL.txt); SIL Open Font License 1.1.
+- Font and full license are copied to `design-assets` only for optional catalog targets. They are not embedded in `imkit` or loaded by the library.
+- Inter remains the primary Latin source. Noto Sans JP Regular supplies missing Japanese glyphs for both body and headings; Japanese headings are not synthesized bold.
+
+| File | SHA256 |
+|---|---|
+| NotoSansJP-Regular.otf | dff723ba59d57d136764a04b9b2d03205544f7cd785a711442d6d2d085ac5073 |
+| NotoSansJP-OFL.txt | 6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2 |
+
+## Design benchmarks (reference only; no incorporated software or assets)
+
+The Design Gallery references general principles from the official documentation of the following projects. Their source code, CSS, screenshots, logos, icons, font assets, and example data are not incorporated. Colors, dimensions, drawing code, and geometric icons in the Gallery were authored for these proposals. The projects are not dependencies and no affiliation or endorsement is implied.
+
+Repository license files were checked on 2026-09-09. These repository licenses are not treated as a blanket license for website content, branding, trademarks, or separately licensed assets.
+
+| Reference | Official repository license | Use in this project |
+|---|---|---|
+| shadcn/ui | [MIT](https://raw.githubusercontent.com/shadcn-ui/ui/main/LICENSE.md) | Semantic color roles and action hierarchy |
+| Base UI | [MIT](https://raw.githubusercontent.com/mui/base-ui/master/LICENSE) | Separation of behavior and rendering; composition |
+| Radix Themes | [MIT](https://raw.githubusercontent.com/radix-ui/themes/main/LICENSE) | Consistent variants, spacing, radius, and elevation tokens |
+| React Aria | [Apache-2.0](https://raw.githubusercontent.com/adobe/react-spectrum/main/LICENSE) | Distinguishing hover, press, focus, and disabled states |
+| Mantine | [MIT](https://raw.githubusercontent.com/mantinedev/mantine/master/LICENSE) | Shared theme values across input and overlay families |
+
+For any future source or asset reuse, review the exact file's license and preserve required notices before incorporation. Current benchmark references do not add runtime or production dependencies.
+
 ## Dear ImGui
 
 - Source: https://github.com/ocornut/imgui
