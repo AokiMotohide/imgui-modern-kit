@@ -57,6 +57,7 @@ editor::AssetProvider Assets(EditorWorkspaces &s) {
         }};
 }
 editor::CurveProvider Curves(EditorWorkspaces &s) {
+    s.curve.bindings=std::span(s.bindings).first(s.bindingCount);
     return {&s, s.revision, [](void *u, editor::CurveQuery q) {
                 auto &s = *static_cast<EditorWorkspaces *>(u);
                 return s.QueryKeys(q);
@@ -66,7 +67,7 @@ editor::CurveProvider Curves(EditorWorkspaces &s) {
                     if (s.keys[first].channel==id)
                         return editor::Evaluate(std::span<const editor::Keyframe>(s.keys).subspan(first,last-first),tick,mode);
                 return 0.;
-            }};
+            },s.curveBounds};
 }
 void Options(EditorWorkspaces &s) {
     bool large = s.large;
@@ -154,6 +155,15 @@ void EditorWorkspaces::RebuildKeyIndex() {
     std::sort(keys.begin(),keys.end(),[](const auto &a,const auto &b) {
         return a.channel!=b.channel ? a.channel<b.channel : a.tick<b.tick;
     });
+    curveBounds={};
+    if (!keys.empty()) {
+        curveBounds.min=curveBounds.max={editor::Seconds(keys.front().tick),-keys.front().value};
+        for (const auto &key:keys) {
+            const double time=editor::Seconds(key.tick),value=-key.value;
+            curveBounds.min.x=(std::min)(curveBounds.min.x,time);curveBounds.max.x=(std::max)(curveBounds.max.x,time);
+            curveBounds.min.y=(std::min)(curveBounds.min.y,value);curveBounds.max.y=(std::max)(curveBounds.max.y,value);
+        }
+    }
     keyChannels.clear();
     for (std::size_t first=0;first<keys.size();) {
         std::size_t last=first+1;

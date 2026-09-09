@@ -177,3 +177,7 @@ Curveのkeyを右クリックすると補間とhandle modeのメニューを開�
 Optional `CurveProvider.sample` evaluates a complete host channel at an exact tick and requested extrapolation mode. With this callback, CurveEditor samples across the visible width and exposes Constant/Linear/Repeat in its context menu through `CurveState.extrapolation`. Gallery provides indexed complete-channel evaluation, including portions outside the key range.
 
 任意の `CurveProvider.sample` は正確なtickと指定extrapolationでホストの全channelを評価します。callbackがある場合、CurveEditorは可視幅を描画し、context menuから `CurveState.extrapolation` のConstant/Linear/Repeatを切り替えます。Galleryはkey範囲外も含む全channel評価を索引経由で提供します。
+
+Curve Fit uses optional complete-channel `CurveProvider.bounds` in seconds/negative-value coordinates. `CurveState.bindings` supplies the remappable Fit command; the context menu shares this action. Flat ranges expand by one unit before fitting. Gallery caches bounds during index rebuild.
+
+Curve Fitは秒/負の値座標による全channelの `CurveProvider.bounds` を使います。`CurveState.bindings` から変更可能なFit commandを渡し、context menuも同じ処理を使います。幅のない範囲は1単位に広げて表示し、Galleryはindex更新時に範囲を保持します。

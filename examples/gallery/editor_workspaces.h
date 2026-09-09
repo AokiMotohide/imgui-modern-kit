@@ -18,6 +18,7 @@ struct EditorWorkspaces {
     std::vector<video::ClipView> clips;
     std::vector<editor::Keyframe> keys, visibleKeys;
     std::vector<std::pair<std::size_t,std::size_t>> keyChannels;
+    editor::Rect curveBounds{};
     void RebuildKeyIndex();
     std::span<const editor::Keyframe> QueryKeys(editor::CurveQuery query);
     std::array<cg::ObjectView, 4> objects{};

@@ -585,6 +585,16 @@ double Evaluate(std::span<const Keyframe> keys, Tick tick, Extrapolation extrapo
 }
 void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, Selection &selection,
                  EventBuffer &out, const Theme &t, ImVec2 size) {
+    if (CommandPressed(Command::Fit,s.bindings,ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)))
+        s.fitRequested=true;
+    if (s.fitRequested && provider.bounds) {
+        auto bounds=*provider.bounds;
+        if (bounds.max.x==bounds.min.x) {bounds.min.x-=.5;bounds.max.x+=.5;}
+        if (bounds.max.y==bounds.min.y) {bounds.min.y-=.5;bounds.max.y+=.5;}
+        Fit(s.canvas,bounds,{size.x>0?size.x:ImGui::GetContentRegionAvail().x,
+            size.y>0?size.y:ImGui::GetContentRegionAvail().y});
+    }
+    s.fitRequested=false;
     auto view = BeginCanvas(id, s.canvas, size, t);
     s.view = view;
     detail::ResumeTerminal(s.drag, provider.revision, out);
@@ -671,6 +681,7 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
         ImGui::OpenPopup("key settings");
     }
     if (ImGui::BeginPopup("key settings")) {
+        if (ImGui::MenuItem("Fit all channels",nullptr,false,provider.bounds.has_value())) s.fitRequested=true;
         ImGui::Checkbox("Ghost other channels",&s.ghostOtherChannels);
         if (provider.sample) {
             int mode=static_cast<int>(s.extrapolation);
