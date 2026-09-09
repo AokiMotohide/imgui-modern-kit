@@ -95,6 +95,7 @@ struct EditorWorkspaces {
     editor::AssetState assetState;
     cg::ViewportState viewport;
     cg::Vec3 cursorPivot{};
+    cg::Vec3 SelectionPivot(cg::Pivot mode) const;
     std::vector<cg::ObjectView> gizmoSelection;
     std::vector<editor::SelectablePoint> viewportSelectionPoints;
     std::array<editor::Point,1024> viewportSelectionPath{};

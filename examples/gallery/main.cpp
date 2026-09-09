@@ -653,6 +653,12 @@ int VerifyInspectorModel() {
         affine.ApplyEvents();const auto &result=affine.objects[0].transform;
         check(result.scale.x==2 && result.rotation.z==.4 && result.shear.x==.5 && result.shear.z==.7,
               "host scale Commit preserves affine rotation and shear payload");
+        const auto object=std::find_if(affine.objects.begin(),affine.objects.end(),[](const auto &o){return o.geometry!=0;});
+        affine.objectSelection.Set(object->id);object->transform={{10,0,0},{},{1,1,1},{1,0,0}};
+        affine.geometries.at(object->geometry).vertices={{{2,0,0}},{{4,2,0}}};
+        const auto bounds=affine.SelectionPivot(cg::Pivot::Bounds),median=affine.SelectionPivot(cg::Pivot::Median);
+        check(bounds.x==14 && bounds.y==1 && bounds.z==0,"Bounds pivot uses sheared geometry without including external object origin");
+        check(median.x==10 && median.y==0,"Median pivot retains object-origin semantics");
     }
     {
         auto linkedStorage=std::make_unique<gallery::EditorWorkspaces>();

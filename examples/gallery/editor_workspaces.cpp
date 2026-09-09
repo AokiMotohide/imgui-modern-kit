@@ -1287,6 +1287,33 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     ImGui::EndChild();
     s.ApplyEvents();
 }
+cg::Vec3 EditorWorkspaces::SelectionPivot(cg::Pivot mode) const {
+    if (mode==cg::Pivot::Cursor) return cursorPivot;
+    cg::Vec3 sum{},low{},high{};std::size_t count=0;bool haveBounds=false;
+    const auto include=[&](cg::Vec3 point) {
+        if (!haveBounds) {low=high=point;haveBounds=true;}
+        else {
+            low={std::min(low.x,point.x),std::min(low.y,point.y),std::min(low.z,point.z)};
+            high={std::max(high.x,point.x),std::max(high.y,point.y),std::max(high.z,point.z)};
+        }
+    };
+    for (const auto &object:objects) if (objectSelection.Contains(object.id)) {
+        const auto p=object.transform.translation;sum.x+=p.x;sum.y+=p.y;sum.z+=p.z;++count;
+        if (mode!=cg::Pivot::Bounds) continue;
+        const auto geometry=geometries.find(object.geometry);
+        if (!object.geometry || geometry==geometries.end() || geometry->second.vertices.empty()) {include(p);continue;}
+        const auto basis=cg::LinearBasis(object.transform);
+        for (const auto &vertex:geometry->second.vertices) {
+            const auto x=vertex.position[0],y=vertex.position[1],z=vertex.position[2];
+            include({p.x+basis.x.x*x+basis.y.x*y+basis.z.x*z,
+                     p.y+basis.x.y*x+basis.y.y*y+basis.z.y*z,
+                     p.z+basis.x.z*x+basis.y.z*y+basis.z.z*z});
+        }
+    }
+    if (!count) return {};
+    return mode==cg::Pivot::Bounds ? cg::Vec3{(low.x+high.x)/2,(low.y+high.y)/2,(low.z+high.z)/2} :
+        cg::Vec3{sum.x/count,sum.y/count,sum.z/count};
+}
 void EditorWorkspaces::RebuildOutlinerRows() {
     outlinerRows.clear();outlinerRows.reserve(objects.size());
     orderedObjects.assign(objects.begin(),objects.end());
@@ -1348,36 +1375,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     s.viewport.selectionPoints=s.viewportSelectionPoints;
     s.viewport.selectionCanvas.selectionPath=s.viewportSelectionPath;
     cg::ViewportObjects(view, s.objects, s.viewport, s.objectSelection, s.revision, s.events, theme);
-    if (!s.viewport.drag.active) {
-        if (s.viewport.pivot==cg::Pivot::Cursor) s.viewport.pivotPosition=s.cursorPivot;
-        else {
-            cg::Vec3 sum{},low{},high{};int count=0;
-            for (const auto &object:s.objects) if (s.objectSelection.Contains(object.id)) {
-                const auto p=object.transform.translation;
-                sum.x+=p.x;sum.y+=p.y;sum.z+=p.z;
-                if (!count) low=high=p;
-                else {low={std::min(low.x,p.x),std::min(low.y,p.y),std::min(low.z,p.z)};
-                      high={std::max(high.x,p.x),std::max(high.y,p.y),std::max(high.z,p.z)};}
-                if (object.geometry && s.viewport.pivot==cg::Pivot::Bounds) {
-                    const auto basis=cg::OrientationBasis(cg::Orientation::Local,object.transform,{});
-                    for (const auto &vertex:s.geometries.at(object.geometry).vertices) {
-                        const double x=vertex.position[0]*object.transform.scale.x,
-                                     y=vertex.position[1]*object.transform.scale.y,
-                                     z=vertex.position[2]*object.transform.scale.z;
-                        const cg::Vec3 point{p.x+basis.x.x*x+basis.y.x*y+basis.z.x*z,
-                                             p.y+basis.x.y*x+basis.y.y*y+basis.z.y*z,
-                                             p.z+basis.x.z*x+basis.y.z*y+basis.z.z*z};
-                        low={std::min(low.x,point.x),std::min(low.y,point.y),std::min(low.z,point.z)};
-                        high={std::max(high.x,point.x),std::max(high.y,point.y),std::max(high.z,point.z)};
-                    }
-                }
-                ++count;
-            }
-            if (count) s.viewport.pivotPosition=s.viewport.pivot==cg::Pivot::Bounds ?
-                cg::Vec3{(low.x+high.x)/2,(low.y+high.y)/2,(low.z+high.z)/2} :
-                cg::Vec3{sum.x/count,sum.y/count,sum.z/count};
-        }
-    }
+    if (!s.viewport.drag.active) s.viewport.pivotPosition=s.SelectionPivot(s.viewport.pivot);
     s.gizmoSelection.resize(s.objects.size());
     if (!s.viewport.drag.active) s.gizmoCompanions.resize(s.objects.size()-1);
     std::size_t selectedCount=0;
