@@ -82,6 +82,12 @@ editor::CurveProvider Curves(EditorWorkspaces &s) {
                     return key==begin?nullptr:&*--key;
                 }
                 return nullptr;
+            },[](void *u,editor::Rect bounds) {
+                auto &s=*static_cast<EditorWorkspaces*>(u);
+                auto keys=s.QueryKeys({{editor::FromSeconds(bounds.min.x),editor::FromSeconds(bounds.max.x)},-bounds.max.y,-bounds.min.y});
+                s.curveSelectionPoints.clear();
+                for (const auto &key:keys) s.curveSelectionPoints.push_back({key.id,{editor::Seconds(key.tick),-key.value},key.locked});
+                return std::span<const editor::SelectablePoint>(s.curveSelectionPoints);
             }};
 }
 void Options(EditorWorkspaces &s) {
@@ -229,6 +235,7 @@ void EditorWorkspaces::Initialize() {
     timeline.memberDrags = clipDrags;
     curveCompanions.resize(1024);
     curve.companionDrags=curveCompanions;
+    curve.canvas.selectionPath=curveSelectionPath;
     viewport.cameraView=&sceneCamera;
     preview::Cube(cubeVertices, cubeIndices);
     const char *names[] = {"Collection", "Hero cube", "Fill light", "Camera"};

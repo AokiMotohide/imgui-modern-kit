@@ -209,3 +209,7 @@ CurveのDeleteはホストbindingまたはcontext menuから選択keyごとにRe
 Curve AddKey inserts at host `CurveState.time` on the active channel (`KeyInsert` target is the channel ID). Optional `neighbor` locates previous/next keys without a full scan; navigation events carry the key ID and exact tick. Gallery updates playhead/selection and avoids duplicate keys at the same channel/time.
 
 CurveのAddKeyはホストの `CurveState.time` とactive channelへ追加します（`KeyInsert` のtargetはchannel ID）。任意の `neighbor` から全件走査せず前後keyを取得し、key IDと正確なtickをNavigateで返します。Galleryはplayhead/選択を反映し、同じchannel/時刻にkeyを重複追加しません。
+
+Curve box/lasso selection uses optional `selectionQuery` and the shared CanvasSelection widget. Gallery supplies query results and lasso path scratch. Selection/event capacity is preflighted; insufficient capacity leaves the old selection intact, and an exhausted lasso path cancels rather than selecting from a truncated polygon.
+
+Curveのbox/lasso選択は任意の `selectionQuery` と共通CanvasSelectionを使います。Galleryはquery結果とlasso用bufferを提供します。選択/event容量を先に確認し、不足時は元の選択を保持します。lasso pathを使い切った場合も途中のpolygonで選択せず中止します。

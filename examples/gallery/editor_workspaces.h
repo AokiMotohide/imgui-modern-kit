@@ -19,6 +19,8 @@ struct EditorWorkspaces {
     std::vector<editor::Keyframe> keys, visibleKeys, curvePreviewKeys, selectedCurveKeys;
     std::vector<std::pair<std::size_t,std::size_t>> keyChannels;
     editor::Rect curveBounds{};
+    std::vector<editor::SelectablePoint> curveSelectionPoints;
+    std::array<editor::Point,1024> curveSelectionPath{};
     void RebuildKeyIndex();
     std::span<const editor::Keyframe> QueryKeys(editor::CurveQuery query);
     std::array<cg::ObjectView, 4> objects{};
