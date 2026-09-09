@@ -136,6 +136,7 @@ enum class IconId : std::uint16_t {
     SelectPointer,
     BoxSelect,
     LassoSelect,
+    HandPan,
     Count
 };
 struct IconInfo {

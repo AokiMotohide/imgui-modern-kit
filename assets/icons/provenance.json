@@ -1903,5 +1903,20 @@
       990,
       985
     ]
+  },
+  {
+    "name": "HandPan",
+    "source": "assets/icons/originals/HandPan.png",
+    "sha256": "cc1600db242dfb1af19651f1692b7b3b24b14eb1a4f6c8bb58b43acb9d0534e8",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      257,
+      199,
+      1049,
+      1091
+    ]
   }
 ]

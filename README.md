@@ -62,7 +62,7 @@ Documentation: [guide](docs/guide.md), [architecture](docs/architecture.md), [AP
 ImKit code is MIT. Dear ImGui and GLFW have their own licenses; optional Inter and Noto Sans JP catalog fonts use SIL OFL 1.1. Complete records and pinned hashes are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). No affiliation with Dear ImGui or the design references is implied.
 ## Modern icons
 
-127 generated outline icons support theme tint, custom color, size, icon buttons and
+128 generated outline icons support theme tint, custom color, size, icon buttons and
 label buttons. GPU textures remain host-owned. See [icon integration](docs/icons.md)
 and the **Icons** page in the native Gallery.
 
