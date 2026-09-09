@@ -885,6 +885,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         (s.activeVideoPanel == 1 ? 380.f * ImGui::GetFontSize()/14 : 230.f));
     s.timelineOrigin = ImGui::GetCursorScreenPos();
     s.timeline.keySelection=&s.keySelection;
+    s.timeline.keyCompanions=s.clipKeyCompanions;
     video::Timeline("Timeline", p, s.timeline, s.selection, s.events, theme, {0, timelineHeight});
     ImGui::BeginChild("Audio color", {0, 0}, ImGuiChildFlags_Borders);
     if (ImGui::BeginTabBar("audio color")) {

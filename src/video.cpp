@@ -15,6 +15,18 @@ TransitionEdit EditTransition(const ClipView &clip, bool end, Tick delta) {
     return result;
 }
 namespace {
+void EndClipKeys(TimelineState &s,std::uint64_t revision,bool cancel,editor::EventBuffer &out) {
+    if (!s.keyDrag.active) return;
+    cancel |= revision!=s.keyDrag.draft.revision || s.keyDrag.draft.phase==editor::Phase::Cancel;
+    s.keyDrag.draft.phase=cancel ? editor::Phase::Cancel : editor::Phase::Commit;
+    for (auto &member:s.keyCompanions.first(s.keyCompanionCount)) member.draft.phase=s.keyDrag.draft.phase;
+    if (out.storage.size()-out.count<1+s.keyCompanionCount) {out.overflow=true;return;}
+    if (cancel) s.keyDrag.Cancel(out);else s.keyDrag.Commit(revision,out);
+    for (auto &member:s.keyCompanions.first(s.keyCompanionCount)) {
+        if (cancel) member.Cancel(out);else member.Commit(revision,out);
+    }
+    s.keyCompanionCount=0;
+}
 editor::Value Value(const ClipView &c) {
     return {c.start, c.start + c.duration, c.sourceIn, c.track, c.speed};
 }
@@ -243,8 +255,9 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     }
     if (!s.captionDrag.active) s.editingCaption=0;
     bool captionSeen=false;
-    detail::ResumeTerminal(s.keyDrag,p.revision,out);
-    if (s.keyDrag.active && ImGui::IsKeyPressed(ImGuiKey_Escape)) s.keyDrag.Cancel(out);
+    if (s.keyDrag.active && (s.keyDrag.draft.phase==editor::Phase::Cancel || s.keyDrag.draft.phase==editor::Phase::Commit ||
+        s.keyDrag.draft.revision!=p.revision || ImGui::IsKeyPressed(ImGuiKey_Escape)))
+        EndClipKeys(s,p.revision,ImGui::IsKeyPressed(ImGuiKey_Escape),out);
     bool keySeen=false;
     detail::ResumeTerminal(s.heightDrag,p.revision,out);
     if (s.heightDrag.active && ImGui::IsKeyPressed(ImGuiKey_Escape)) s.heightDrag.Cancel(out);
@@ -403,21 +416,40 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                               ImGui::GetColorU32(theme.colors.text));
             }
             bool keyHit=false;
-            for (const auto &key : clip.keys) {
-                const bool editing=s.keyDrag.active && s.keyDrag.draft.target==key.id && s.keyDrag.draft.original.parent==clip.id;
-                Tick tick=key.tick;
-                if (editing) {
-                    keySeen=true;
-                    if (key.locked || clip.locked || track.locked) s.keyDrag.Cancel(out);
-                    else if (s.keyDrag.draft.phase!=editor::Phase::Cancel && s.keyDrag.draft.phase!=editor::Phase::Commit) {
-                        auto proposed=s.keyDrag.draft.original;
-                        const auto delta=editor::FromSeconds((io.MousePos.x-s.keyMouseStart)/s.canvas.scale.x);
-                        proposed.first+=std::clamp(delta,-proposed.first,std::max(Tick{0},clip.duration)-proposed.first);
-                        if (s.snapping && s.snapToFrame)
-                            proposed.first=std::clamp(editor::FrameToTick(editor::TickToFrame(proposed.first,s.time.rate),s.time.rate),Tick{0},std::max(Tick{0},clip.duration));
-                        if (!(proposed==s.keyDrag.draft.proposed)) s.keyDrag.Update(p.revision,proposed,out);
+            if (s.keyDrag.active && s.keyDrag.draft.original.parent==clip.id) {
+                keySeen=true;
+                bool valid=!clip.locked && !track.locked;
+                auto validate=[&](const editor::Transaction &drag) {
+                    auto found=std::find_if(clip.keys.begin(),clip.keys.end(),[&](const auto &k){return k.id==drag.draft.target;});
+                    valid &= found!=clip.keys.end() && !found->locked;
+                };
+                Tick minTick=s.keyDrag.draft.original.first,maxTick=minTick;
+                validate(s.keyDrag);
+                for (const auto &member:s.keyCompanions.first(s.keyCompanionCount)) {
+                    validate(member);minTick=std::min(minTick,member.draft.original.first);maxTick=std::max(maxTick,member.draft.original.first);
+                }
+                if (!valid || minTick<0 || maxTick>clip.duration) EndClipKeys(s,p.revision,true,out);
+                else if (s.keyDrag.draft.phase!=editor::Phase::Cancel && s.keyDrag.draft.phase!=editor::Phase::Commit) {
+                    Tick delta=editor::FromSeconds((io.MousePos.x-s.keyMouseStart)/s.canvas.scale.x);
+                    delta=std::clamp(delta,-minTick,clip.duration-maxTick);
+                    if (s.snapping && s.snapToFrame) {
+                        const Tick candidate=s.keyDrag.draft.original.first+delta;
+                        delta=std::clamp(editor::FrameToTick(editor::TickToFrame(candidate,s.time.rate),s.time.rate)-s.keyDrag.draft.original.first,-minTick,clip.duration-maxTick);
                     }
-                    if (s.keyDrag.draft.phase!=editor::Phase::Cancel) tick=s.keyDrag.draft.proposed.first;
+                    if (out.storage.size()-out.count<1+s.keyCompanionCount) out.overflow=true;
+                    else {
+                        auto update=[&](editor::Transaction &drag) {auto value=drag.draft.original;value.first+=delta;
+                            if (!(value==drag.draft.proposed)) drag.Update(p.revision,value,out);};
+                        update(s.keyDrag);for (auto &member:s.keyCompanions.first(s.keyCompanionCount)) update(member);
+                    }
+                }
+            }
+            for (const auto &key : clip.keys) {
+                Tick tick=key.tick;
+                if (s.keyDrag.active && s.keyDrag.draft.original.parent==clip.id && s.keyDrag.draft.phase!=editor::Phase::Cancel) {
+                    if (s.keyDrag.draft.target==key.id) tick=s.keyDrag.draft.proposed.first;
+                    for (const auto &member:s.keyCompanions.first(s.keyCompanionCount))
+                        if (member.draft.target==key.id) tick=member.draft.proposed.first;
                 }
                 if (tick<0 || tick>clip.duration) continue;
                 const float kx=x+float(editor::Seconds(tick)*s.canvas.scale.x),ky=b.y-9;
@@ -425,19 +457,37 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 draw->AddQuadFilled({kx,ky-4},{kx+4,ky},{kx,ky+4},{kx-4,ky},
                     ImGui::GetColorU32(selectedKey ? theme.editor.selectedKey : theme.editor.key));
                 if (selectedKey) draw->AddCircle({kx,ky},7,ImGui::GetColorU32(theme.colors.focus));
-                const bool hovered=view.hovered && kx>=view.min.x+s.headerWidth &&
-                    std::abs(io.MousePos.x-kx)<=6 && std::abs(io.MousePos.y-ky)<=6;
+                bool hovered=false;
+                if (kx>=view.min.x+s.headerWidth && kx<=view.max.x && ky>=view.min.y && ky<=view.max.y) {
+                    const auto cursor=ImGui::GetCursorScreenPos();
+                    ImGui::SetCursorScreenPos({kx-6,ky-6});
+                    ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(clip.id)));
+                    ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(key.id)));
+                    ImGui::InvisibleButton("key",{12,12});hovered=ImGui::IsItemHovered();
+                    ImGui::PopID();ImGui::PopID();ImGui::SetCursorScreenPos(cursor);
+                }
                 keyHit |= hovered;
                 if (hovered) {
                     ImGui::SetTooltip("Drag keyframe time");
                     if (ImGui::IsMouseClicked(0) && !key.locked && !clip.locked && !track.locked &&
                         !s.keyDrag.active && !s.drag.active && !s.transitionDrag.active && !s.captionDrag.active) {
-                        if (out.count==out.storage.size() || (s.keySelection && !s.keySelection->Set(key.id,io.KeyCtrl,io.KeyCtrl))) out.overflow=true;
-                        else {
-                            editor::Value original;original.first=key.tick;original.x=key.value;original.parent=clip.id;
-                            if (s.keyDrag.Begin(key.id,p.revision,editor::EditKind::Keyframe,original,editor::CurrentModifiers(),out)) {
-                                s.keyMouseStart=io.MousePos.x;keySeen=true;
-                            }
+                        bool selected=true;
+                        if (s.keySelection && (!s.keySelection->Contains(key.id) || io.KeyCtrl))
+                            selected=s.keySelection->Set(key.id,io.KeyCtrl,io.KeyCtrl);
+                        std::size_t count=0;bool valid=selected;
+                        for (const auto &member:clip.keys) if (member.id!=key.id && s.keySelection && s.keySelection->Contains(member.id)) {
+                            ++count;valid &= !member.locked && member.tick>=0 && member.tick<=clip.duration;
+                        }
+                        if (!selected || count>s.keyCompanions.size() || out.storage.size()-out.count<count+1) out.overflow=true;
+                        else if (valid) {
+                            auto begin=[&](editor::Transaction &drag,const editor::Keyframe &k) {
+                                editor::Value original;original.first=k.tick;original.x=k.value;original.parent=clip.id;
+                                drag.Begin(k.id,p.revision,editor::EditKind::Keyframe,original,editor::CurrentModifiers(),out);
+                            };
+                            begin(s.keyDrag,key);s.keyCompanionCount=0;
+                            for (const auto &member:clip.keys) if (member.id!=key.id && s.keySelection && s.keySelection->Contains(member.id))
+                                begin(s.keyCompanions[s.keyCompanionCount++],member);
+                            s.keyMouseStart=io.MousePos.x;keySeen=true;
                         }
                     }
                 }
@@ -597,8 +647,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         draw->PopClipRect();
     }
     if (s.keyDrag.active) {
-        if (!keySeen) s.keyDrag.Cancel(out);
-        else if (!out.overflow && !ImGui::IsMouseDown(0) && s.keyDrag.draft.phase!=editor::Phase::Cancel) s.keyDrag.Commit(p.revision,out);
+        if (!keySeen) EndClipKeys(s,p.revision,true,out);
+        else if (!out.overflow && !ImGui::IsMouseDown(0) && s.keyDrag.draft.phase!=editor::Phase::Cancel) EndClipKeys(s,p.revision,false,out);
     }
     if (s.captionDrag.active && !captionSeen) {
         s.captionDrag.draft.proposedText=s.captionDrag.draft.originalText;s.captionDrag.Cancel(out);
