@@ -233,6 +233,33 @@ int main() {
     stripKey(ImGuiKey_Enter);stripKey(ImGuiKey_RightArrow);stripKey(ImGuiKey_Escape);
     check(stripSettingsCancels==1 && stripSettingsCommits==1 && !stripDrag.active,
         "strip settings Escape cancels without a second commit");
+    UVProvider allUV;
+    allUV.all=[](void *,UVSelection)->std::span<const imkit::editor::StableId> {
+        static constexpr std::array<imkit::editor::StableId,3> ids{8101,8202,8303};return ids;
+    };
+    UVState allUVState;
+    std::array uvBindings{imkit::editor::Binding{imkit::editor::Command::SelectAll,ImGuiKey_F10}};
+    allUVState.bindings=uvBindings;
+    std::array<imkit::editor::StableId,3> uvIds{};imkit::editor::Selection uvSelected{uvIds};
+    auto uvFrame=[&] {
+        dopeEvents.Clear();ImGui::NewFrame();
+        ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({800,600});ImGui::Begin("UV selection");
+        UVEditor("uv",allUV,{},allUVState,uvSelected,dopeEvents,
+            imkit::MakePrecisionTheme(imkit::ColorScheme::Dark),{700,400});
+        ImGui::End();ImGui::Render();
+    };
+    uvFrame();uvFrame();
+    io.AddMousePosEvent(allUVState.view.min.x+25,allUVState.view.min.y+25);uvFrame();
+    io.AddMouseButtonEvent(0,true);uvFrame();io.AddMouseButtonEvent(0,false);uvFrame();
+    io.AddKeyEvent(ImGuiKey_F10,true);uvFrame();
+    check(uvSelected.count==3 && uvSelected.Contains(8303) && dopeEvents.count==3,
+        "UV remapped Select All includes provider IDs outside visible query");
+    io.AddKeyEvent(ImGuiKey_F10,false);uvFrame();
+    uvSelected.Clear();uvSelected.storage=std::span(uvIds).first(1);uvSelected.Set(9999);
+    io.AddKeyEvent(ImGuiKey_F10,true);uvFrame();
+    check(dopeEvents.overflow && dopeEvents.count==0 && uvSelected.count==1 && uvSelected.Contains(9999),
+        "UV Select All preserves old selection on insufficient storage");
+    io.AddKeyEvent(ImGuiKey_F10,false);uvFrame();
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
