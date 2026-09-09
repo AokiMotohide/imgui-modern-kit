@@ -104,6 +104,7 @@ struct TimelineState {
     editor::Transaction heightDrag;
     const IconAtlas *icons = nullptr; // Non-owning host atlas.
     bool snapToFrame = false;
+    editor::AutoScroll autoScroll = editor::AutoScroll::Smooth;
     std::uint32_t snapKinds = 0x7f; // Bit positions are editor::SnapKind.
 };
 // Resolves both moving edges; ignores every selected clip and filters disabled kinds.

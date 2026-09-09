@@ -193,6 +193,9 @@ struct Marker {
     Tick tick = 0;
     const char *label = "";
 };
+enum class AutoScroll { Off, Smooth, Page };
+// Origin/width/head are seconds. Invalid or non-positive width leaves origin unchanged.
+double FollowPlayhead(double origin, double width, double head, AutoScroll mode);
 struct TimeState {
     Tick playhead = 0;
     Range work{0, TicksPerSecond * 10}, inOut{0, TicksPerSecond * 10};
