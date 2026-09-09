@@ -487,6 +487,34 @@ void BenchmarkEditors(Host &h,const std::filesystem::path &out) {
     if (!allPassed) throw std::runtime_error("Editor benchmark did not meet interaction, size, query or P95 gates; see report");
 }
 
+void VerifyMonitors(Host &h,const std::filesystem::path &out) {
+    using namespace imkit;
+    auto &s=h.s.editors;h.Page(8);
+    s.timeline.time.playhead=0;s.markers[0]={s.nextId++,0,"Opening cue / 開始の合図"};s.markerCount=1;
+    std::ofstream log(out/"monitor-interaction.txt");
+    const auto timelineScale=s.timeline.canvas.scale.x,timelineOrigin=s.timeline.canvas.origin.x;
+    for (int preset:{0,2,1}) {
+        h.mouse={(s.programMonitorMin.x+s.programMonitorMax.x)*.5f,
+                 (s.programMonitorMin.y+s.programMonitorMax.y)*.5f};h.Frame();
+        h.Frame([](auto &io){io.AddMouseButtonEvent(1,true);});
+        h.Frame([](auto &io){io.AddMouseButtonEvent(1,false);});
+        h.mouse={-100,-100};h.Frame();h.Key(ImGuiKey_Home);
+        for (int i=0;i<preset;++i) h.Key(ImGuiKey_DownArrow);
+        h.Key(ImGuiKey_Enter);
+        const bool ok=static_cast<int>(s.monitorMetadata)==preset;
+        log<<(ok ? "PASS " : "FAIL ")<<"Program Monitor context preset "<<preset<<'\n';log.flush();
+        if (!ok) throw std::runtime_error("Monitor context preset public IO failed");
+        const bool unchanged=s.timeline.canvas.scale.x==timelineScale && s.timeline.canvas.origin.x==timelineOrigin;
+        log<<(unchanged ? "PASS " : "FAIL ")<<"popup navigation does not invoke Timeline shortcuts\n";log.flush();
+        if (!unchanged) throw std::runtime_error("Popup input leaked into editor commands");
+    }
+    s.monitorMetadata=video::MonitorMetadataPreset::Details;
+    h.Frame({},out/"monitor-details-light.png");
+    h.s.dark=true;h.s.theme=MakePrecisionTheme(ColorScheme::Dark);h.s.scale=1.5f;h.Settle();
+    h.Frame({},out/"monitor-details-dark-150.png");
+    log<<"Public ImGui IO and native GL capture; native OS/IME input not tested.\n";
+}
+
 void VerifyColor(Host &h, const std::filesystem::path &out) {
     auto &s=h.s.editors;
     s.videoPanel=1; h.Page(8); h.Settle(4);
@@ -756,7 +784,7 @@ int VerifyInspectorModel() {
     return failures?1:0;
 }
 int main(int argc, char **argv) {
-    bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false, benchmarkEditors = false;
+    bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false, benchmarkEditors = false, verifyMonitors = false;
     int capturePage = -1, animationPage = -1;
     std::string iconSearch;
     std::filesystem::path out = "out/catalog";
@@ -769,6 +797,7 @@ int main(int argc, char **argv) {
         else if (a == "--verify")
             verify = true;
         else if (a == "--capture-editors") { capture = true; capturePage = -2; }
+        else if (a == "--verify-monitors") verifyMonitors=true;
         else if (a == "--benchmark-editors") benchmarkEditors=true;
         else if (a == "--verify-editors")
             verifyEditors = true;
@@ -797,10 +826,10 @@ int main(int argc, char **argv) {
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_VISIBLE, capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors ? GLFW_FALSE : GLFW_TRUE);
+    glfwWindowHint(GLFW_VISIBLE, capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors ? GLFW_FALSE : GLFW_TRUE);
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
     Host h;
-    h.automated = capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors;
+    h.automated = capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors;
     h.window = glfwCreateWindow(1920, 1440, "ImKit Precision Layers", nullptr, nullptr);
     if (!h.window) {
         glfwTerminate();
@@ -926,6 +955,7 @@ int main(int argc, char **argv) {
             if (verify)
                 Verify(h, out);
             if (benchmarkEditors) BenchmarkEditors(h,out);
+            if (verifyMonitors) VerifyMonitors(h,out);
             if (verifyEditors)
                 VerifyEditors(h, out, previewFunctions);
             if (verifyColor)

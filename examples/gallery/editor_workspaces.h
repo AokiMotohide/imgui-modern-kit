@@ -112,6 +112,7 @@ struct EditorWorkspaces {
     std::uint64_t monitorRevision=0;
     editor::StableId monitorClipId=0;
     std::size_t monitorClipIndex=0;
+    ImVec2 programMonitorMin{},programMonitorMax{};
     std::uint64_t revision = 1;
     std::size_t queryCount = 0, queriedClips = 0, commits = 0;
     bool initialized = false, large = false, japanese = false, narrow = false, useGL = true;
