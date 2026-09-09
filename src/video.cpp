@@ -353,7 +353,12 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 ImGui::SameLine(0,4);
             }
         }
-        ImGui::TextUnformatted(track.label);
+        const auto nameMin=ImGui::GetCursorScreenPos();
+        const float nameWidth=std::max(1.f,view.min.x+s.headerWidth-4-nameMin.x);
+        ImGui::InvisibleButton("track-name",{nameWidth,ImGui::GetFontSize()},ImGuiButtonFlags_MouseButtonRight);
+        const ImVec4 nameClip{nameMin.x,y,view.min.x+s.headerWidth-4,y+rowHeight};
+        draw->AddText(ImGui::GetFont(),ImGui::GetFontSize(),nameMin,ImGui::GetColorU32(theme.colors.text),track.label,nullptr,0,&nameClip);
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s",track.label);
         if (ImGui::BeginPopupContextItem("track layout")) {
             float height=s.heightDrag.active && s.heightDrag.draft.target==track.id ?
                          static_cast<float>(s.heightDrag.draft.proposed.x) : track.height;

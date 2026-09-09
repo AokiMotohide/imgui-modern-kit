@@ -489,7 +489,8 @@ void BenchmarkEditors(Host &h,const std::filesystem::path &out) {
 
 void VerifyTrackControls(Host &h,const std::filesystem::path &out) {
     using namespace imkit;
-    auto &s=h.s.editors;s.japanese=false;s.timeline.headerWidth=340;h.Page(8);
+    auto &s=h.s.editors;s.japanese=false;s.timeline.headerWidth=340;
+    s.tracks.front().label="Picture / a long production track name / 映像トラックの長い名前";h.Page(8);
     std::ofstream log(out/"track-controls.txt");
     auto require=[&](bool ok,const char *label) {
         log<<(ok ? "PASS " : "FAIL ")<<label<<'\n';log.flush();
