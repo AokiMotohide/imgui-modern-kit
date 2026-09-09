@@ -1353,6 +1353,9 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
         l.vertexNormals="頂点法線";l.faceNormals="面法線";
         l.boxSelect="矩形選択";l.lassoSelect="投げ縄選択";
         l.alignView="軸をクリックして視点を整列";
+        l.overlays="表示";l.axes="軸";l.origins="原点";
+        l.cameraFrame="カメラ枠";l.safeFrame="安全枠";l.renderRegion="レンダー領域";
+        l.passepartout="枠外を暗くする";l.measurement="寸法";
     }
 
     s.curve.icons=s.icons;
@@ -1388,6 +1391,14 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     s.viewportSelectionPoints.resize(s.objects.size());
     s.viewport.selectionPoints=s.viewportSelectionPoints;
     s.viewport.selectionCanvas.selectionPath=s.viewportSelectionPath;
+    if (s.viewport.measurement) {
+        s.viewport.measurementStart={};s.viewport.measurementEnd={};
+        int endpoints=0;
+        for (const auto &object:s.objects) if (s.objectSelection.Contains(object.id)) {
+            if (endpoints++==0) s.viewport.measurementEnd=object.transform.translation;
+            else {s.viewport.measurementStart=object.transform.translation;break;}
+        }
+    }
     cg::ViewportObjects(view, s.objects, s.viewport, s.objectSelection, s.revision, s.events, theme);
     if (!s.viewport.drag.active) s.viewport.pivotPosition=s.SelectionPivot(s.viewport.pivot);
     s.gizmoSelection.resize(s.objects.size());
