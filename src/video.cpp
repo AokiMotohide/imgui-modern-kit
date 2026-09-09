@@ -43,6 +43,11 @@ void EndClipKeys(TimelineState &s,std::uint64_t revision,bool cancel,editor::Eve
     }
     s.keyCompanionCount=0;
 }
+const editor::Keyframe *FindClipKey(std::span<const editor::Keyframe> keys,Tick tick,StableId id) {
+    auto key=std::lower_bound(keys.begin(),keys.end(),tick,[](const auto &key,Tick value){return key.tick<value;});
+    for (;key!=keys.end() && key->tick==tick;++key) if (key->id==id) return &*key;
+    return nullptr;
+}
 editor::Value Value(const ClipView &c) {
     return {c.start, c.start + c.duration, c.sourceIn, c.track, c.speed};
 }
@@ -605,8 +610,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 keySeen=true;
                 bool valid=!clip.locked && !track.locked;
                 auto validate=[&](const editor::Transaction &drag) {
-                    auto found=std::find_if(clip.keys.begin(),clip.keys.end(),[&](const auto &k){return k.id==drag.draft.target;});
-                    valid &= found!=clip.keys.end() && !found->locked;
+                    const auto found=FindClipKey(clip.keys,drag.draft.original.first,drag.draft.target);
+                    valid &= found && !found->locked;
                 };
                 Tick minTick=s.keyDrag.draft.original.first,maxTick=minTick;
                 validate(s.keyDrag);
@@ -629,14 +634,18 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     }
                 }
             }
-            for (const auto &key : clip.keys) {
+            const auto firstTick=editor::FromSeconds((view.min.x+s.headerWidth-7-x)/s.canvas.scale.x);
+            const auto lastTick=editor::FromSeconds((view.max.x+7-x)/s.canvas.scale.x);
+            auto visibleFirst=std::lower_bound(clip.keys.begin(),clip.keys.end(),firstTick,[](const auto &key,Tick tick){return key.tick<tick;});
+            auto visibleLast=std::upper_bound(visibleFirst,clip.keys.end(),lastTick,[](Tick tick,const auto &key){return tick<key.tick;});
+            auto drawKey=[&](const editor::Keyframe &key) {
                 Tick tick=key.tick;
                 if (s.keyDrag.active && s.keyDrag.draft.original.parent==clip.id && s.keyDrag.draft.phase!=editor::Phase::Cancel) {
                     if (s.keyDrag.draft.target==key.id) tick=s.keyDrag.draft.proposed.first;
                     for (const auto &member:s.keyCompanions.first(s.keyCompanionCount))
                         if (member.draft.target==key.id) tick=member.draft.proposed.first;
                 }
-                if (tick<0 || tick>clip.duration) continue;
+                if (tick<0 || tick>clip.duration) return;
                 const float kx=x+float(editor::Seconds(tick)*s.canvas.scale.x),ky=b.y-9;
                 const bool selectedKey=s.keySelection && s.keySelection->Contains(key.id);
                 draw->AddQuadFilled({kx,ky-4},{kx+4,ky},{kx,ky+4},{kx-4,ky},
@@ -660,7 +669,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                         if (s.keySelection && (!s.keySelection->Contains(key.id) || io.KeyCtrl))
                             selected=s.keySelection->Set(key.id,io.KeyCtrl,io.KeyCtrl);
                         if (selected && s.keySelection && !s.keySelection->Contains(key.id))
-                            continue; // Ctrl-click removed this key; selection changes do not begin edits.
+                            return; // Ctrl-click removed this key; selection changes do not begin edits.
                         std::size_t count=0;bool valid=selected;
                         for (const auto &member:clip.keys) if (member.id!=key.id && s.keySelection && s.keySelection->Contains(member.id)) {
                             ++count;valid &= !member.locked && member.tick>=0 && member.tick<=clip.duration;
@@ -678,6 +687,14 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                         }
                     }
                 }
+            };
+            for (auto key=visibleFirst;key!=visibleLast;++key) drawKey(*key);
+            if (s.keyDrag.active && s.keyDrag.draft.original.parent==clip.id) {
+                auto drawMoved=[&](const editor::Transaction &drag) {
+                    const auto key=FindClipKey(clip.keys,drag.draft.original.first,drag.draft.target);
+                    if (key && (key->tick<firstTick || key->tick>lastTick)) drawKey(*key);
+                };
+                drawMoved(s.keyDrag);for (const auto &drag:s.keyCompanions.first(s.keyCompanionCount)) drawMoved(drag);
             }
             Tick transitionIn=clip.transitionIn,transitionOut=clip.transitionOut;
             const bool editingTransition=s.transitionDrag.active && s.transitionDrag.draft.target==clip.id;

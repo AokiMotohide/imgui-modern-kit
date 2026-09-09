@@ -1,3 +1,4 @@
+#include <vector>
 #include <imkit/video.h>
 #include <array>
 #include <cmath>
@@ -490,6 +491,15 @@ int main() {
     check(small.overflow && small.count==0,"transition picker rejects partial Begin Commit delivery");
     transitionFixture.clip.locked=true;chooseTransition(0,2,full);
     check(full.count==0,"locked transition picker emits no edit");transitionFixture.clip.locked=false;
+    {
+        std::vector<editor::Keyframe> denseKeys(100000);
+        for (std::size_t i=0;i<denseKeys.size();++i) denseKeys[i]={10000+i,7100,editor::FromSeconds(double(i)),double(i)};
+        transitionFixture.clip.keys=denseKeys;transitionFixture.clip.duration=editor::FromSeconds(100000);
+        transitionFixture.clip.envelope={};transitionFixture.track.kind=video::TrackKind::Video;
+        timeline={};timeline.canvas.scale.x=100;full.Clear();frame(full);frame(full);
+        check(ImGui::GetDrawData()->TotalVtxCount<10000,"100k inline keys emit geometry only for visible interval");
+        transitionFixture.clip.keys={};
+    }
     video::ColorValues hostColors;
     video::ColorPropertyIds colorIds{101,307,509,701,907,1103};
     video::ColorState colorState;

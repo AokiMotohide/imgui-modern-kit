@@ -32,7 +32,7 @@ struct ClipView {
     ImTextureRef thumbnail{};
     bool proxy = false, missing = false, offline = false, locked = false;
     std::span<const float> waveform;
-    std::span<const editor::Keyframe> keys;
+    std::span<const editor::Keyframe> keys; // Sorted by clip-local tick; borrowed draw/edit keys.
     Tick transitionIn = 0, transitionOut = 0;
     std::span<const AudioBucket> audioBuckets;
     TransitionKind transitionInKind=TransitionKind::Dissolve,transitionOutKind=TransitionKind::Dissolve;
