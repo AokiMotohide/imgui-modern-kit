@@ -520,3 +520,8 @@ Galleryはkey索引の再構築で、空channelを含む各clipの明示`keyChan
 Gallery's six-track cycle now contains Video, Audio, Caption, Effect, Adjustment, and Group rather than repeating the first three roles. Effect/adjustment/group clip ranges use the same public move/trim and track controls. `EditorPalette::effectClip`, `adjustmentClip`, and `groupClip` are distinct semantic fill tokens used by Timeline; original palette fields remain in their existing order. These track kinds do not add an effect processor or nested sequence playback engine.
 
 Galleryの6 track構成をVideo・Audio・Caption・Effect・Adjustment・Groupへ揃えました。effect／adjustment／groupのclip範囲は共通の公開move／trimとtrack操作を使用します。Timelineの塗りに`EditorPalette::effectClip`・`adjustmentClip`・`groupClip`を接続し、既存paletteフィールドの順序を維持しました。track種類の追加によってeffect処理や入れ子sequenceの再生エンジンを提供するものではありません。
+
+
+Monitor title and timecode now use opaque theme-surface plates with theme text color, preserving readability over host textures. Padding scales with font size; text is clipped to the plate, and a short monitor omits the lower timecode rather than overlapping its title. Native light 100% and dark 150% appearance was inspected in `out/monitor-label-contrast/`.
+
+Monitorの見出しとtimecodeは、不透明なtheme surface背景とtheme text色でhost texture上の可読性を確保します。font sizeに合わせて余白を調整し、文字を背景範囲内へclipします。高さが足りない場合は下部timecodeを省き、見出しとの重複を防ぎます。`out/monitor-label-contrast/`でnative light 100%とdark 150%の表示を確認しました。
