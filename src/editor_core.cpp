@@ -643,6 +643,34 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
             initial = {k.tick, 0, 0, 0, k.value};
         }
     }
+    ImGui::PushID(id);
+    if (view.hovered && hit && ImGui::IsMouseReleased(1) && !s.drag.active) {
+        s.contextKey=hit;
+        ImGui::OpenPopup("key settings");
+    }
+    if (ImGui::BeginPopup("key settings")) {
+        auto key=std::find_if(keys.begin(),keys.end(),[&](const auto &value){return value.id==s.contextKey;});
+        if (key!=keys.end()) {
+            ImGui::BeginDisabled(key->locked);
+            if (ImGui::BeginMenu("Interpolation")) {
+                const char *names[]={"Constant","Linear","Bezier"};
+                for (int i=0;i<3;++i) if (ImGui::MenuItem(names[i],nullptr,static_cast<int>(key->interpolation)==i))
+                    Action(out,key->id,provider.revision,EditKind::KeyInterpolation,
+                        Value{0,0,0,0,static_cast<double>(key->interpolation)},Value{0,0,0,0,static_cast<double>(i)});
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Handle mode")) {
+                const char *names[]={"Auto","Auto Clamped","Vector","Aligned","Free"};
+                for (int i=0;i<5;++i) if (ImGui::MenuItem(names[i],nullptr,static_cast<int>(key->handles)==i))
+                    Action(out,key->id,provider.revision,EditKind::KeyHandleMode,
+                        Value{0,0,0,0,static_cast<double>(key->handles)},Value{0,0,0,0,static_cast<double>(i)});
+                ImGui::EndMenu();
+            }
+            ImGui::EndDisabled();
+        }
+        ImGui::EndPopup();
+    }
+    ImGui::PopID();
     if (view.hovered && hit && ImGui::IsMouseClicked(0) && !s.drag.active) {
         selection.Set(hit, ImGui::GetIO().KeyCtrl);
         s.side = side;
