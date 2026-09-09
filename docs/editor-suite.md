@@ -424,3 +424,7 @@ Gizmo gestures cancel the complete transform batch when a participating object b
 Curve and UV context menus use `BoxSelect` and `LassoSelect` when the host supplies `CurveState::icons` or `UVState::icons`. The active mode has an explicit text indicator and selected background. Mode buttons are disabled during a drag or area selection. The atlas is non-owning; null retains the text checkbox. Gallery supplies its atlas to both editors.
 
 Curve／UVのcontext menuは、ホストが`CurveState::icons`／`UVState::icons`を渡した場合に`BoxSelect`／`LassoSelect`を表示します。activeモードを文字と選択背景で示し、drag・領域選択中はモードボタンを無効にします。atlasは非所有で、nullでは従来の文字checkboxを使用します。Galleryは両部品へatlasを渡します。
+
+The external Debug source consumer now compiles and runs the Component Stack type/owner options, Curve/UV host atlas fields, UV face query, and continuous gizmo state through the public editor targets. This is source-consumption evidence; it does not establish installed-package, Release, GPU, or native menu interaction coverage.
+
+外部Debug source consumerで、Component Stackのtype／owner options、Curve／UVのホストatlas、UV face query、連続回転ギズモの状態を公開editor target経由でコンパイル・実行しました。これはsource導入の検証であり、install済みpackage、Release、GPU、native menu操作の検証ではありません。
