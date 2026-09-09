@@ -339,6 +339,56 @@ int main() {
             dopeEvents.count==3 && std::abs(dopeEvents.Events()[2].proposed.x-.3)<.001,
             "UV face and island drag expands to every constituent vertex");
     }
+    ViewportState handleState;
+    handleState.camera.projection=Projection::Orthographic;
+    handleState.camera.orthographicHeight=5;
+    ObjectView handleObject; handleObject.id=0x100000055ull;
+    imkit::editor::Event handleStorage[8];
+    imkit::editor::EventBuffer handleEvents{handleStorage};
+    const ViewportView handleView{{20,50},{700,500},true};
+    auto handleFrame=[&] {
+        handleEvents.Clear(); ImGui::NewFrame();
+        ImGui::SetNextWindowPos({0,0}); ImGui::SetNextWindowSize({800,600});
+        ImGui::Begin("Transform handles");
+        TransformGizmo(handleView,handleObject,handleState,7,handleEvents,
+                       imkit::MakePrecisionTheme(imkit::ColorScheme::Dark));
+        ImGui::End(); ImGui::Render();
+    };
+    for (Axis plane:{Axis::XY,Axis::YZ,Axis::ZX,Axis::Screen}) {
+        handleState.drag={};
+        AlignCamera(handleState.camera,plane==Axis::YZ ? Axis::X : plane==Axis::ZX ? Axis::Y : Axis::Z);
+        const auto origin=Project({},handleState.camera,handleView.min,handleView.size).screen;
+        const Vec3 units[3]={{1,0,0},{0,1,0},{0,0,1}};
+        const int a=plane==Axis::Screen ? 0 : static_cast<int>(plane)-static_cast<int>(Axis::XY);
+        const int b=(a+1)%3;
+        auto first=Project(units[a],handleState.camera,handleView.min,handleView.size).screen;
+        auto second=Project(units[b],handleState.camera,handleView.min,handleView.size).screen;
+        ImVec2 start=origin;
+        if (plane!=Axis::Screen) {
+            auto la=std::hypot(first.x-origin.x,first.y-origin.y);
+            auto lb=std::hypot(second.x-origin.x,second.y-origin.y);
+            start={float(origin.x+26*(first.x-origin.x)/la+26*(second.x-origin.x)/lb),
+                   float(origin.y+26*(first.y-origin.y)/la+26*(second.y-origin.y)/lb)};
+        }
+        io.AddMousePosEvent(start.x,start.y); handleFrame();handleFrame();
+        io.AddMouseButtonEvent(0,true);handleFrame();
+        check(handleState.drag.active && handleState.activeAxis==plane,"plane/screen handle hit begins transaction");
+        const double dx=plane==Axis::Screen ? 20 : .2*(first.x-origin.x)+.35*(second.x-origin.x);
+        const double dy=plane==Axis::Screen ? -35 : .2*(first.y-origin.y)+.35*(second.y-origin.y);
+        io.AddMousePosEvent(float(start.x+dx),float(start.y+dy));handleFrame();
+        double values[3]{};
+        if (plane==Axis::Screen) {values[0]=.2;values[1]=.35;}
+        else {values[a]=.2;values[b]=.35;}
+        const auto proposed=handleState.drag.draft.proposed;
+        check(std::abs(proposed.x-values[0])<1e-5 && std::abs(proposed.y-values[1])<1e-5 &&
+              std::abs(proposed.z-values[2])<1e-5,"plane/screen independent two dimensional translation");
+        io.AddMouseButtonEvent(0,false);handleFrame();
+        check(!handleState.drag.active && handleEvents.Events().size()==1 &&
+              handleEvents.Events()[0].phase==imkit::editor::Phase::Commit,
+              "plane/screen commits once without mutating host transform");
+        check(handleObject.transform.translation.x==0 && handleObject.transform.translation.y==0 &&
+              handleObject.transform.translation.z==0,"gizmo leaves host data unchanged");
+    }
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
