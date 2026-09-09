@@ -124,7 +124,7 @@ void Options(EditorWorkspaces &s) {
 } // namespace
 void EditorWorkspaces::Dataset(bool big) {
     transitionHistory.clear();transitionHistoryCursor=0;
-    clipEnvelopes.clear();
+    clipEnvelopes.clear();clipProperties.clear();clipPropertyOwners.clear();clipPropertyRevision=0;
     large = big;
     tracks.clear();
     clips.clear();
@@ -200,7 +200,7 @@ void EditorWorkspaces::Dataset(bool big) {
     curve.companionCount=0;
     for (auto &drag:curveCompanions) drag.active=false;
     RebuildTrackLayout();
-    ++revision;
+    ++revision;SyncClipProperties();
 }
 void EditorWorkspaces::RebuildKeyIndex() {
     std::sort(keys.begin(),keys.end(),[](const auto &a,const auto &b) {
@@ -366,6 +366,21 @@ bool EditorWorkspaces::UndoTransition(bool redo) {
     clip->transitionOutKind=static_cast<video::TransitionKind>(static_cast<int>(value.y));
     if (redo) ++transitionHistoryCursor;else --transitionHistoryCursor;
     ++revision;return true;
+}
+void EditorWorkspaces::SyncClipProperties() {
+    if (clipPropertySelection==selection.active && clipPropertyRevision==revision) return;
+    clipPropertySelection=selection.active;clipPropertyRevision=revision;
+    clipPropertyIds={};clipPropertyValues={1,1,0,1};clipInspectorLocked=true;
+    auto clip=std::find_if(clips.begin(),clips.end(),[&](const auto &c){return c.id==selection.active;});
+    if (clip==clips.end()) return;
+    auto [entry,created]=clipProperties.try_emplace(clip->id);
+    if (created) for (std::size_t i=0;i<entry->second.ids.size();++i) {
+        const auto id=nextId++;entry->second.ids[i]=id;clipPropertyOwners.emplace(id,std::pair{clip->id,i});
+    }
+    entry->second.values[3]=clip->speed;
+    clipPropertyIds=entry->second.ids;clipPropertyValues=entry->second.values;
+    const auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==clip->track;});
+    clipInspectorLocked=clip->locked || track==tracks.end() || track->locked;
 }
 void EditorWorkspaces::ApplyEvents() {
     bool changed = false;
@@ -739,7 +754,14 @@ void EditorWorkspaces::ApplyEvents() {
                 asset.label = renamedLabels[e.target].c_str();
                 changed = true;
             }
-        bool isProperty=e.target>=700001 && e.target<=700004;
+        const auto clipProperty=clipPropertyOwners.find(e.target);
+        if (clipProperty!=clipPropertyOwners.end()) {
+            const auto owner=std::find_if(clips.begin(),clips.end(),[&](const auto &c){return c.id==clipProperty->second.first;});
+            if (owner==clips.end() || owner->locked || owner->id!=selection.active) continue;
+            const auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==owner->track;});
+            if (track==tracks.end() || track->locked) continue;
+        }
+        bool isProperty=clipProperty!=clipPropertyOwners.end();
         for (const auto &object:objects)
             for (int component=0;component<9;++component)
                 isProperty |= e.target==ObjectPropertyId(*this, object.id,component);
@@ -769,10 +791,20 @@ void EditorWorkspaces::ApplyEvents() {
                 changed=true;
             }
         }
-        if (e.target >= 700001 && e.target <= 700004 &&
-            (e.kind == editor::EditKind::Property || e.kind == editor::EditKind::Reset)) {
-            clipPropertyValues[e.target - 700001] = e.proposed.x;
-            changed = true;
+        if (clipProperty!=clipPropertyOwners.end() &&
+            (e.kind==editor::EditKind::Property || e.kind==editor::EditKind::Reset) && std::isfinite(e.proposed.x) &&
+            !(propertyFlags[e.target]&16u)) {
+            const auto [owner,component]=clipProperty->second;
+            if ((component==0 && (e.proposed.x<0 || e.proposed.x>1)) ||
+                ((component==1 || component==3) && e.proposed.x<=0)) continue;
+            auto &value=clipProperties.at(owner).values[component];
+            if (value!=e.proposed.x) {
+                value=e.proposed.x;changed=true;
+                if (component==3) {
+                    auto clip=std::find_if(clips.begin(),clips.end(),[&](const auto &c){return c.id==owner;});
+                    clip->speed=value;
+                }
+            }
         }
     }
     if (changed) {
@@ -783,13 +815,13 @@ void EditorWorkspaces::ApplyEvents() {
         });
         RebuildKeyIndex();
     }
-    events.Clear();
+    events.Clear();SyncClipProperties();
 }
 void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) {
     s.curve.icons=s.icons;
     s.uvState.icons=s.icons;
     s.Initialize();
-    Options(s);
+    Options(s);s.SyncClipProperties();
     float available = ImGui::GetContentRegionAvail().x;
     float side = (s.narrow ? 180 : 260) * ImGui::GetFontSize()/14;
     float top = (std::max)(220.f, ImGui::GetContentRegionAvail().y * .4f);
@@ -847,10 +879,10 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     ImGui::SameLine();
     ImGui::BeginChild("Clip Inspector", {0, top}, ImGuiChildFlags_Borders);
     ImGui::SeparatorText("Clip Inspector");
-    editor::PropertyView props[] = {{700001, "Opacity", "Video", 1, 1, editor::PropertyFlags::Animated},
-                                    {700002, "Scale", "Transform", 1, 1},
-                                    {700003, "Position X", "Transform", 0, 0},
-                                    {700004, "Speed", "Retiming", 1, 1}};
+    editor::PropertyView props[] = {{s.clipPropertyIds[0], "Opacity", "Video", 1, 1, editor::PropertyFlags::Animated},
+                                    {s.clipPropertyIds[1], "Scale", "Transform", 1, 1},
+                                    {s.clipPropertyIds[2], "Position X", "Transform", 0, 0},
+                                    {s.clipPropertyIds[3], "Speed", "Retiming", 1, 1}};
     for (int i = 0; i < 4; ++i) {
         props[i].value = s.clipPropertyValues[i];
         props[i].flags=static_cast<editor::PropertyFlags>(static_cast<unsigned>(props[i].flags)|
@@ -867,7 +899,11 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     }
     PropertyRows visibleProperties{std::span(props).first(FilterProperties(props,s.videoProperties.search))};
     editor::PropertyProvider properties{&visibleProperties,s.revision,static_cast<int>(visibleProperties.rows.size()),PropertyRows::Query};
-    editor::PropertyGrid("clip", properties, s.videoProperties, s.events);
+    if (s.clipPropertyIds[0]) {
+        ImGui::BeginDisabled(s.clipInspectorLocked);
+        editor::PropertyGrid("clip",properties,s.videoProperties,s.events);
+        ImGui::EndDisabled();
+    } else ImGui::TextUnformatted(s.japanese ? "クリップを選択" : "Select a clip");
     ImGui::EndChild();
     video::TimelineProvider p{&s, s.revision, static_cast<int>(s.tracks.size())};
     p.tracks = [](void *u, int a, int n) {

@@ -57,6 +57,14 @@ struct EditorWorkspaces {
         keySelection{keySelectionStorage}, uvSelection{uvSelectionStorage};
     std::array<editor::Event, 128> eventStorage{};
     std::array<double, 4> clipPropertyValues{1, 1, 0, 1};
+    struct ClipProperties {std::array<editor::StableId,4> ids{};std::array<double,4> values{1,1,0,1};};
+    std::map<editor::StableId,ClipProperties> clipProperties;
+    std::map<editor::StableId,std::pair<editor::StableId,std::size_t>> clipPropertyOwners;
+    std::array<editor::StableId,4> clipPropertyIds{};
+    editor::StableId clipPropertySelection=0;
+    std::uint64_t clipPropertyRevision=0;
+    bool clipInspectorLocked=false;
+    void SyncClipProperties();
     std::array<editor::Marker, 64> markers{};
     std::size_t markerCount = 0;
     std::array<editor::SnapCandidate, 256> snapCandidates{};
