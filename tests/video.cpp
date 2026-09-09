@@ -343,6 +343,16 @@ int main() {
     check(!timeline.captionDrag.active && full.count==1 && full.Events()[0].phase==editor::Phase::Cancel &&
           full.Events()[0].proposedText==full.Events()[0].originalText,"caption Escape restores original text in Cancel");
     transitionFixture.track.kind=video::TrackKind::Video;
+    timeline.tool=video::Tool::Hand;full.Clear();frame(full);
+    const auto panOrigin=timeline.view.min;const double timeOrigin=timeline.canvas.origin.x;
+    const auto selectedClips=selection.count;
+    io.AddMousePosEvent(panOrigin.x+timeline.headerWidth+130,panOrigin.y+25);frame(full);
+    io.AddMouseButtonEvent(0,true);frame(full);
+    io.AddMousePosEvent(panOrigin.x+timeline.headerWidth+170,panOrigin.y+25);frame(full);
+    io.AddMouseButtonEvent(0,false);frame(full);
+    check(timeline.canvas.origin.x<timeOrigin && timeline.view.min.x==panOrigin.x && timeline.view.min.y==panOrigin.y &&
+          full.count==0 && selection.count==selectedClips,"Hand pan scrolls time without moving window or selecting clip");
+    timeline.tool=video::Tool::Select;
     ImVec2 pickerOrigin{};
     auto pickerFrame=[&](editor::EventBuffer &events) {
         ImGui::NewFrame();ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({780,580});

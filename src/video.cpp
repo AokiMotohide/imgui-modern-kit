@@ -266,8 +266,16 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     const bool removeKeys=editor::CommandPressed(editor::Command::Delete,s.bindings,keyCommands);
     detail::ResumeTerminal(s.heightDrag,p.revision,out);
     if (s.heightDrag.active && ImGui::IsKeyPressed(ImGuiKey_Escape)) s.heightDrag.Cancel(out);
-    if (view.hovered && s.tool == Tool::Hand && ImGui::IsMouseDragging(0))
-        s.canvas.origin.x -= io.MouseDelta.x / s.canvas.scale.x;
+    if (s.tool==Tool::Hand && view.max.x>view.min.x+s.headerWidth) {
+        const auto cursor=ImGui::GetCursorScreenPos();
+        ImGui::SetCursorScreenPos({view.min.x+s.headerWidth,view.min.y});
+        ImGui::InvisibleButton("hand-pan",{view.max.x-view.min.x-s.headerWidth,view.max.y-view.min.y});
+        if (ImGui::IsItemActive() && ImGui::IsMouseDragging(0)) {
+            s.canvas.origin.x-=io.MouseDelta.x/s.canvas.scale.x;
+            s.verticalScroll=std::max(0.,s.verticalScroll-io.MouseDelta.y);
+        }
+        ImGui::SetCursorScreenPos(cursor);ImGui::Dummy({0,0});
+    }
     // Track rows are indexed independently from time; no all-track query or clip scan.
     if (view.hovered && io.MouseWheel && !io.KeyCtrl)
         s.verticalScroll = (std::max)(0., s.verticalScroll - io.MouseWheel * s.rowHeight);
@@ -583,7 +591,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 ImGui::EndPopup();
             }
             ImGui::PopID();
-            if (hit && !transitionHit && !s.transitionDrag.active && !s.captionDrag.active &&
+            if (hit && s.tool!=Tool::Hand && !transitionHit && !s.transitionDrag.active && !s.captionDrag.active &&
                 track.kind==TrackKind::Caption && ImGui::IsMouseDoubleClicked(0) && !track.locked && !clip.locked) {
                 EndDrags(s,p.revision,true,out);
                 if (std::strlen(clip.label)>=sizeof(s.caption)) out.overflow=true;
@@ -597,7 +605,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     }
                 }
             }
-            if (hit && !keyHit && !s.keyDrag.active && !transitionHit && !s.transitionDrag.active && s.editingCaption != clip.id && ImGui::IsMouseClicked(0) && !track.locked &&
+            if (hit && s.tool!=Tool::Hand && !keyHit && !s.keyDrag.active && !transitionHit && !s.transitionDrag.active && s.editingCaption != clip.id && ImGui::IsMouseClicked(0) && !track.locked &&
                 !clip.locked && !s.drag.active) {
                 if (!selection.Contains(clip.id) || io.KeyCtrl)
                     selection.Set(clip.id, io.KeyCtrl, io.KeyCtrl);
