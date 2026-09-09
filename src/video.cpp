@@ -190,10 +190,11 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     for (int i = 0; i < 7; ++i) {
         if (i)
             ImGui::SameLine();
-        if (i==0 && s.icons) {
-            const bool active=s.tool==Tool::Select;
+        if ((i==0 || i==6) && s.icons) {
+            const bool active=s.tool==(i==0 ? Tool::Select : Tool::Hand);
             if (active) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-            if (IconButton("select-tool",*s.icons,IconId::SelectPointer,"Select clips")) s.tool=Tool::Select;
+            if (IconButton(i==0 ? "select-tool" : "pan-tool",*s.icons,i==0 ? IconId::SelectPointer : IconId::HandPan,
+                           i==0 ? "Select clips" : "Pan timeline")) s.tool=i==0 ? Tool::Select : Tool::Hand;
             if (active) ImGui::PopStyleColor();
         } else if (ImGui::Selectable(tools[i], static_cast<int>(s.tool) == i, 0, {56, 24}))
             s.tool = static_cast<Tool>(i);

@@ -1,0 +1,4 @@
+Use case: logo-brand. Asset: one individual toolbar icon named HandPan for a C++ editor UI. Draw a minimal open hand outline representing canvas panning: upright palm with four gently rounded fingers and one outward thumb. Thin consistent black monoline, rounded caps and joins, no palm creases, no shading, no letters, no surrounding arrows, no frame. Transparent RGBA background, black stroke only. Match a 24-unit UI icon with 1.75-unit stroke and generous 3-unit margins, centered and optically balanced. A single isolated glyph, legible when reduced to 16 pixels. No contact sheet, no additional glyphs.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/HandPan.png

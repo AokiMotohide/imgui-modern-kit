@@ -33,12 +33,13 @@
     },
     {
       "operation": "HandPan",
-      "widget": "CanvasSelection",
+      "widget": "Timeline Hand tool; Icon Gallery",
       "disposition": "new",
       "icon": "HandPan",
-      "tooltip": "Hand Pan",
+      "tooltip": "Pan timeline",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "generated and connected; native 16px light and 150% dark appearance inspected",
+      "evidence": "out/hand-pan-native/icons-16-light.png; out/hand-pan-native/page-6-dark-150.png (local captures, not distributed)"
     },
     {
       "operation": "FrameSelected",
