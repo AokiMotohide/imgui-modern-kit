@@ -492,3 +492,9 @@ clip本体はkey・transition controlの後に、可視範囲で切り取った�
 Core canvas/grid/ruler/marker and Timeline track-header, video/audio/caption fill, snap guide, missing/offline/proxy/locked indicators now consume their `Theme::editor` semantic colors. Clip fill multiplies the host alpha by the selection-state opacity instead of replacing it. Core and Video direct regressions pass; this change has no new native capture.
 
 Coreのcanvas／grid／ruler／markerと、Timelineのtrack header・video／audio／caption塗り・snap guide・missing／offline／proxy／locked表示に`Theme::editor`の意味色を適用しました。clip塗りはホストのalphaを置換せず、選択状態の不透明度を乗じます。Core／Videoの直接回帰テストが合格しています。今回の変更後のnative captureは未実施です。
+
+### Clip volume envelope / clipのvolume envelope
+
+`ClipView::envelope` borrows time-sorted `EnvelopePoint` values with stable IDs, clip-local ticks, gain, and lock state. Timeline draws connected gain points in the waveform band; dragging changes time within adjacent points and gain within 0–2. `AudioEnvelope` transactions carry point ID, clip ID in `parent`, tick in `first`, and gain in `x`. Revision changes, Escape, locks, and disappearance cancel; terminal delivery is retained on shortage. `EvaluateEnvelope` provides linear gain interpolation with constant endpoint extension and unity for an empty envelope. Gallery owns a three-point example and applies Commit values. Pure interpolation and public-IO drag/Commit tests pass. Point insertion/removal, playback gain application, and native envelope capture remain unverified or unfinished.
+
+`ClipView::envelope`は、StableId・clip内tick・gain・lockを持つ時刻順の`EnvelopePoint`を非所有spanで受けます。Timelineはwaveform帯へ点と線を描き、dragで隣接点間の時刻と0～2のgainを編集します。`AudioEnvelope`はpoint IDをtarget、clip IDを`parent`、tickを`first`、gainを`x`へ格納します。revision変更・Escape・ロック・対象消失で取り消し、容量不足時は終了イベントを保持します。`EvaluateEnvelope`は線形補間、範囲外の端点値、空envelopeでgain 1を返します。Galleryは3点の例を所有しCommitを適用します。純粋補間と公開IOのdrag／Commitテストが合格しました。点の追加・削除、再生gain適用、native envelope captureは未検証または未完了です。

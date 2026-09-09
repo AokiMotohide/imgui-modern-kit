@@ -16,6 +16,7 @@ struct EditorWorkspaces {
     editor::StableId mixerTrack = 0;
     editor::PropertyState mixerState;
     std::vector<video::ClipView> clips;
+    std::array<video::EnvelopePoint,3> volumeEnvelope{};
     struct TransitionHistory {editor::StableId id;editor::Value before,after;};
     std::vector<TransitionHistory> transitionHistory;
     std::size_t transitionHistoryCursor=0;

@@ -5,6 +5,15 @@
 #include <cstdio>
 #include <cstring>
 namespace imkit::video {
+double EvaluateEnvelope(std::span<const EnvelopePoint> points,Tick tick) {
+    if (points.empty()) return 1;
+    auto next=std::upper_bound(points.begin(),points.end(),tick,[](auto t,const auto &point){return t<point.tick;});
+    if (next==points.begin()) return next->gain;
+    if (next==points.end()) return points.back().gain;
+    const auto &previous=*(next-1);
+    const double f=(double(tick)-double(previous.tick))/(double(next->tick)-double(previous.tick));
+    return previous.gain+(next->gain-previous.gain)*f;
+}
 TransitionEdit EditTransition(const ClipView &clip, bool end, Tick delta) {
     if (clip.locked || clip.duration<=0 || clip.transitionIn<0 || clip.transitionOut<0 ||
         clip.transitionIn>clip.duration || clip.transitionOut>clip.duration-clip.transitionIn) return {};
@@ -259,9 +268,12 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     if (s.keyDrag.active && (s.keyDrag.draft.phase==editor::Phase::Cancel || s.keyDrag.draft.phase==editor::Phase::Commit ||
         s.keyDrag.draft.revision!=p.revision || ImGui::IsKeyPressed(ImGuiKey_Escape)))
         EndClipKeys(s,p.revision,ImGui::IsKeyPressed(ImGuiKey_Escape),out);
+    detail::ResumeTerminal(s.envelopeDrag,p.revision,out);
+    if (s.envelopeDrag.active && ImGui::IsKeyPressed(ImGuiKey_Escape)) s.envelopeDrag.Cancel(out);
+    bool envelopeSeen=false;
     bool keySeen=false;
     const bool keyCommands=ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows) && !io.WantTextInput &&
-        !s.keyDrag.active && !s.drag.active && !s.transitionDrag.active && !s.captionDrag.active;
+        !s.keyDrag.active && !s.envelopeDrag.active && !s.drag.active && !s.transitionDrag.active && !s.captionDrag.active;
     const bool duplicateKeys=editor::CommandPressed(editor::Command::Duplicate,s.bindings,keyCommands);
     const bool removeKeys=editor::CommandPressed(editor::Command::Delete,s.bindings,keyCommands);
     detail::ResumeTerminal(s.heightDrag,p.revision,out);
@@ -446,6 +458,61 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     }
                 }
             }
+            bool envelopeHit=false;
+            if (track.expanded && !clip.envelope.empty()) {
+                const float top=waveformTop,bottom=b.y-2,height=std::max(1.f,bottom-top);
+                auto proposedPoint=[&](const EnvelopePoint &point) {
+                    auto result=point;
+                    if (s.envelopeDrag.active && s.envelopeDrag.draft.target==point.id &&
+                        s.envelopeDrag.draft.original.parent==clip.id && s.envelopeDrag.draft.phase!=editor::Phase::Cancel) {
+                        result.tick=s.envelopeDrag.draft.proposed.first;result.gain=s.envelopeDrag.draft.proposed.x;
+                    }
+                    return result;
+                };
+                auto screen=[&](const EnvelopePoint &point) {return ImVec2{x+float(editor::Seconds(point.tick)*s.canvas.scale.x),
+                    bottom-float(std::clamp(point.gain,0.,2.)*.5)*height};};
+                ImVec2 previous{};bool havePrevious=false;
+                for (std::size_t index=0;index<clip.envelope.size();++index) {
+                    const auto &point=clip.envelope[index];
+                    if (s.envelopeDrag.active && s.envelopeDrag.draft.target==point.id && s.envelopeDrag.draft.original.parent==clip.id) {
+                        envelopeSeen=true;
+                        if (clip.locked || track.locked || point.locked) s.envelopeDrag.Cancel(out);
+                        else if (s.envelopeDrag.draft.phase!=editor::Phase::Cancel && s.envelopeDrag.draft.phase!=editor::Phase::Commit) {
+                            auto value=s.envelopeDrag.draft.original;
+                            const Tick low=index ? clip.envelope[index-1].tick : 0;
+                            const Tick high=index+1<clip.envelope.size() ? clip.envelope[index+1].tick : clip.duration;
+                            if (low>high) s.envelopeDrag.Cancel(out);
+                            else {
+                                const Tick delta=editor::FromSeconds((io.MousePos.x-s.envelopeMouseStart.x)/s.canvas.scale.x);
+                                value.first+=std::clamp(delta,low-value.first,high-value.first);
+                                value.x=std::clamp(value.x-(io.MousePos.y-s.envelopeMouseStart.y)*2/height,0.,2.);
+                                if (!(value==s.envelopeDrag.draft.proposed)) s.envelopeDrag.Update(p.revision,value,out);
+                            }
+                        }
+                    }
+                    const auto position=screen(proposedPoint(point));
+                    if (havePrevious) draw->AddLine(previous,position,ImGui::GetColorU32(theme.editor.scope),2);
+                    previous=position;havePrevious=true;
+                    draw->AddCircleFilled(position,3,ImGui::GetColorU32(theme.editor.scope));
+                    if (position.x<view.min.x+s.headerWidth || position.x>view.max.x || position.y<view.min.y || position.y>view.max.y) continue;
+                    const auto cursor=ImGui::GetCursorScreenPos();ImGui::SetCursorScreenPos({position.x-5,position.y-5});
+                    ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(clip.id)));
+                    ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(point.id)));
+                    ImGui::InvisibleButton("envelope",{10,10});const bool hovered=ImGui::IsItemHovered();
+                    ImGui::PopID();ImGui::PopID();ImGui::SetCursorScreenPos(cursor);ImGui::Dummy({0,0});
+                    envelopeHit |= hovered;
+                    if (hovered) {
+                        ImGui::SetTooltip("Volume envelope: %.2f",proposedPoint(point).gain);
+                        if (ImGui::IsMouseClicked(0) && !clip.locked && !track.locked && !point.locked &&
+                            !s.drag.active && !s.keyDrag.active && !s.transitionDrag.active && !s.envelopeDrag.active) {
+                            editor::Value original;original.first=point.tick;original.x=point.gain;original.parent=clip.id;
+                            if (s.envelopeDrag.Begin(point.id,p.revision,editor::EditKind::AudioEnvelope,original,editor::CurrentModifiers(),out)) {
+                                s.envelopeMouseStart={io.MousePos.x,io.MousePos.y};envelopeSeen=true;
+                            }
+                        }
+                    }
+                }
+            }
             bool keyHit=false;
             if (s.keyDrag.active && s.keyDrag.draft.original.parent==clip.id) {
                 keySeen=true;
@@ -613,7 +680,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     }
                 }
             }
-            if (hit && s.tool!=Tool::Hand && !keyHit && !s.keyDrag.active && !transitionHit && !s.transitionDrag.active && s.editingCaption != clip.id && ImGui::IsMouseClicked(0) && !track.locked &&
+            if (hit && s.tool!=Tool::Hand && !envelopeHit && !s.envelopeDrag.active && !keyHit && !s.keyDrag.active && !transitionHit && !s.transitionDrag.active && s.editingCaption != clip.id && ImGui::IsMouseClicked(0) && !track.locked &&
                 !clip.locked && !s.drag.active) {
                 if ((!selection.Contains(clip.id) || io.KeyCtrl) && !selection.Set(clip.id,io.KeyCtrl,io.KeyCtrl)) {
                     out.overflow=true;continue;
@@ -691,6 +758,11 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             }
         }
         draw->PopClipRect();
+    }
+    if (s.envelopeDrag.active) {
+        if (!envelopeSeen) s.envelopeDrag.Cancel(out);
+        else if (!out.overflow && !ImGui::IsMouseDown(0) && s.envelopeDrag.draft.phase!=editor::Phase::Cancel)
+            s.envelopeDrag.Commit(p.revision,out);
     }
     if (s.keyDrag.active) {
         if (!keySeen) EndClipKeys(s,p.revision,true,out);

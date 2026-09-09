@@ -73,7 +73,8 @@ enum class EditKind {
     LinkGeometry,
     ComponentAdd,
     TransitionDuration, // first=in duration, last=out duration; target=clip ID.
-    TransitionType // first=in kind, last=out kind; target=clip ID.
+    TransitionType, // first=in kind, last=out kind; target=clip ID.
+    AudioEnvelope // first=clip-local tick, x=gain, parent=clip ID; target=point ID.
 };
 // Exact integer/time fields must never travel through floating point channels.
 struct Value {
