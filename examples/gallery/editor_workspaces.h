@@ -17,7 +17,10 @@ struct EditorWorkspaces {
     std::vector<video::ClipView> clips;
     std::vector<editor::Keyframe> keys;
     std::array<cg::ObjectView, 4> objects{};
-    std::array<editor::AssetView, 8> assets{};
+    std::array<editor::AssetView, 8> assets{}, filteredAssets{};
+    std::size_t filteredAssetCount=0;
+    std::array<editor::StableId,2> assetPathIds{880001,880002};
+    int assetPathDepth=2;
     std::array<cg::UVVertex, 4> uv{};
     std::array<cg::UVEdge, 4> edges{};
     std::array<editor::StableId, 1024> selectionStorage{}, objectSelectionStorage{}, keySelectionStorage{},
