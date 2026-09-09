@@ -145,3 +145,7 @@ Asset breadcrumbは `AssetState.breadcrumbIds` のホスト指定IDをtarget、i
 The CG Gallery Inspector exposes all nine translation, rotation and scale components. Rotation values are radians; reset restores translation/rotation to zero and scale to one. Each component has an explicit host-assigned property ID and shares property lock, favorite, override and keyframe handling.
 
 CG Gallery Inspectorは移動・回転・scaleの全9成分を公開します。回転の単位はradianで、resetは移動・回転を0、scaleを1へ戻します。各成分はホストが明示したproperty IDを持ち、lock・favorite・override・keyframe操作を共用します。
+
+CG Inspector component edits and reset apply an absolute value to the selected objects. Different values display Mixed. A locked object/property rejects the whole edit, and changing selection during a gesture rejects its commit.
+
+CG Inspectorの成分編集とresetは選択objectへ同じ絶対値を適用します。値が異なる場合はMixed表示になります。locked object/propertyを含む場合は一括編集全体を拒否し、gesture中に選択が変わった場合もcommitを拒否します。

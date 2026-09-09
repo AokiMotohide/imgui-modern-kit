@@ -48,6 +48,7 @@ struct EditorWorkspaces {
     std::array<video::ClipView, 64> selectedClips{};
     editor::CurveState curve;
     editor::PropertyState videoProperties, objectProperties;
+    std::vector<editor::StableId> propertyGestureSelection;
     editor::AssetState assetState;
     cg::ViewportState viewport;
     cg::Camera sceneCamera{{0,0,0},0,.15,10,.65,5,cg::Projection::Perspective};

@@ -23,6 +23,12 @@ struct PropertyRows {
         return rows.subspan(begin,(std::min)(rows.size()-begin,static_cast<std::size_t>((std::max)(0,count))));
     }
 };
+double &TransformComponent(cg::Transform &transform,int component) {
+    double *fields[]={&transform.translation.x,&transform.translation.y,&transform.translation.z,
+        &transform.rotation.x,&transform.rotation.y,&transform.rotation.z,
+        &transform.scale.x,&transform.scale.y,&transform.scale.z};
+    return *fields[component];
+}
 editor::StableId ObjectPropertyId(const EditorWorkspaces &state, editor::StableId object, int component) {
     if (component<0 || component>=9) return 0;
     for (std::size_t i=0;i<state.objects.size();++i)
@@ -215,6 +221,8 @@ void EditorWorkspaces::RenderPreview() {
 void EditorWorkspaces::ApplyEvents() {
     bool changed = false;
     for (const auto &e : events.Events()) {
+        if (e.phase==editor::Phase::Begin && e.kind==editor::EditKind::Property)
+            propertyGestureSelection.assign(objectSelection.storage.begin(),objectSelection.storage.begin()+objectSelection.count);
         if (e.phase != editor::Phase::Commit || e.revision != revision)
             continue;
         ++commits;
@@ -328,11 +336,20 @@ void EditorWorkspaces::ApplyEvents() {
             for (int component = 0; component < 9; ++component)
                 if (e.target == ObjectPropertyId(*this, o.id, component) &&
                     (e.kind == editor::EditKind::Property || e.kind == editor::EditKind::Reset)) {
-                    double *fields[] = {&o.transform.translation.x, &o.transform.translation.y,
-                                        &o.transform.translation.z, &o.transform.rotation.x, &o.transform.rotation.y,
-                                        &o.transform.rotation.z, &o.transform.scale.x, &o.transform.scale.y, &o.transform.scale.z};
-                    *fields[component] = e.proposed.x;
-                    changed = true;
+                    bool allowed=true;
+                    if (e.kind==editor::EditKind::Property) {
+                        auto selected=objectSelection.storage.first(objectSelection.count);
+                        allowed=selected.size()==propertyGestureSelection.size() &&
+                            std::equal(selected.begin(),selected.end(),propertyGestureSelection.begin());
+                    }
+                    for (auto &target:objects)
+                        if (target.id==o.id || objectSelection.Contains(target.id))
+                            allowed &= !target.locked && !(propertyFlags[ObjectPropertyId(*this,target.id,component)]&16u);
+                    if (allowed) for (auto &target:objects)
+                        if (target.id==o.id || objectSelection.Contains(target.id)) {
+                            TransformComponent(target.transform,component)=e.proposed.x;
+                            changed=true;
+                        }
                 }
         }
         if (e.kind == editor::EditKind::Property) {
@@ -691,6 +708,14 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
         for (auto &row:rows)
             row.flags=static_cast<editor::PropertyFlags>(s.propertyFlags[row.id]|
                 (row.value!=row.defaultValue?2u:0u)|(object->locked?16u:0u));
+        for (int component=0;component<9;++component) {
+            unsigned flags=static_cast<unsigned>(rows[component].flags);
+            for (auto &target:s.objects) if (s.objectSelection.Contains(target.id)) {
+                if (TransformComponent(target.transform,component)!=rows[component].value) flags|=1u;
+                if (target.locked || (s.propertyFlags[ObjectPropertyId(s,target.id,component)]&16u)) flags|=16u;
+            }
+            rows[component].flags=static_cast<editor::PropertyFlags>(flags);
+        }
         s.objectProperties.icons=s.icons;
         s.objectProperties.time=s.timeline.time.playhead;
         for (auto &row:rows) {
