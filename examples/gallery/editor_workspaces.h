@@ -38,6 +38,7 @@ struct EditorWorkspaces {
     editor::PropertyState videoProperties, objectProperties;
     editor::AssetState assetState;
     cg::ViewportState viewport;
+    cg::Camera sceneCamera{{0,0,0},0,.15,10,.65,5,cg::Projection::Perspective};
     cg::OutlinerState outliner;
     cg::UVState uvState;
     std::array<preview::Vertex, 24> cubeVertices{};

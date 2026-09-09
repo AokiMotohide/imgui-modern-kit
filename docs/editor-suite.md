@@ -145,6 +145,21 @@ CGは投影・navigation・object origin選択・軸gizmo・Outlinerの制限/re
 Dope Sheet・animation strip移動を提供します。orientationは純粋関数で計算し、pivotPositionは
 ホストが計算します。scene geometry・階層検証・選択・animation runtimeは所有しません。
 
+`NavigateCamera` applies screen-pixel orbit/pan and wheel zoom. Pan uses the view
+basis and projected world units per pixel; orthographic zoom updates visible height,
+perspective zoom updates distance. `AlignCamera` provides all six axis views.
+The viewport navigation gizmo calls this operation and consumes clicks within its
+overlay. Optional `ViewportState::cameraView` points to a host-owned camera, copied
+when Camera view is selected; free navigation leaves it unchanged. Gallery shading
+selects Wireframe/Solid on both DrawList and OpenGL meshes. Material/Rendered modes
+remain outside this preview implementation and are not exposed as selectable modes.
+NavigateCameraはpixel単位のorbit/panとwheel zoomを処理します。panはview基底と画面倍率に従い、
+orthographic zoomは表示高、perspective zoomは距離を変更します。AlignCameraは6軸方向を指定できます。
+Viewport右上のnavigation gizmoが同じ操作を呼び、overlayへのクリックはscene選択へ流しません。
+任意のcameraViewはホスト所有cameraへの非所有参照で、Camera表示時に反映し、自由navigationでは変更しません。
+GalleryのWireframe/Solid切替はDrawListとOpenGL双方のmeshへ反映します。Material/RenderedはPreviewの対象外で、
+選択可能なモードとして表示しません。
+
 ## Preview / 簡易描画
 
 `DrawListPreview` belongs to `imkit::cg`. It projects indexed non-owning mesh spans,

@@ -30,6 +30,10 @@ struct ProjectionResult {
     bool visible = false;
 };
 ProjectionResult Project(Vec3 world, const Camera &camera, ImVec2 origin, ImVec2 size);
+// Orbit/pan are screen pixel deltas. Orthographic zoom changes the visible height.
+void NavigateCamera(Camera &camera, editor::Point orbitPixels, editor::Point panPixels,
+                    double wheel, double viewportHeight);
+void AlignCamera(Camera &camera, Axis axis, bool negative = false);
 Transform TransformDelta(const Transform &original, TransformTool tool, Axis axis, Vec3 delta,
                          const Basis &basis, double snap = 0, bool fine = false);
 struct ObjectView {
@@ -61,6 +65,8 @@ struct ViewportState {
     Basis customBasis{};
     Basis parentBasis{};
     Vec3 pivotPosition{}; // Host-computed median/bounds/cursor for non-individual pivots.
+    const Camera *cameraView = nullptr; // Optional non-owning host camera; valid throughout the call.
+    bool navigationGizmo = true;
 };
 struct ViewportView {
     ImVec2 min{}, size{};
