@@ -14,6 +14,19 @@ Vec3 Mul(Vec3 a, double f) {
 double Dot(Vec3 a, Vec3 b) {
     return a.x * b.x + a.y * b.y + a.z * b.z;
 }
+Vec3 RotateVector(Vec3 value, Vec3 rotation) {
+    const double angle=std::sqrt(Dot(rotation,rotation));
+    if (angle<1e-12) return value;
+    const Vec3 axis=Mul(rotation,1/angle);
+    const Vec3 cross{axis.y*value.z-axis.z*value.y,axis.z*value.x-axis.x*value.z,axis.x*value.y-axis.y*value.x};
+    return Add(Add(Mul(value,std::cos(angle)),Mul(cross,std::sin(angle))),Mul(axis,Dot(axis,value)*(1-std::cos(angle))));
+}
+Vec3 EulerFromBasis(const Basis &basis) {
+    const double y=std::asin(std::clamp(-basis.x.z,-1.,1.));
+    if (std::abs(std::cos(y))>1e-8)
+        return {std::atan2(basis.y.z,basis.z.z),y,std::atan2(basis.x.y,basis.x.x)};
+    return {std::atan2(-basis.z.y,basis.y.y),y,0};
+}
 double Quantize(double v, double snap) {
     return snap > 0 ? std::round(v / snap) * snap : v;
 }
@@ -86,11 +99,28 @@ Transform TransformDelta(const Transform &original, TransformTool tool, Axis axi
     Vec3 oriented = Add(Add(Mul(basis.x, delta.x), Mul(basis.y, delta.y)), Mul(basis.z, delta.z));
     if (tool == TransformTool::Translate || tool == TransformTool::Unified)
         result.translation = Add(original.translation, oriented);
-    if (tool == TransformTool::Rotate)
-        result.rotation = Add(original.rotation, oriented);
+    if (tool == TransformTool::Rotate) {
+        const auto local=OrientationBasis(Orientation::Local,original,{});
+        result.rotation=EulerFromBasis({RotateVector(local.x,oriented),RotateVector(local.y,oriented),RotateVector(local.z,oriented)});
+    }
     if (tool == TransformTool::Scale)
         result.scale = {original.scale.x * (1 + delta.x), original.scale.y * (1 + delta.y),
                         original.scale.z * (1 + delta.z)};
+    return result;
+}
+Transform TransformAroundPivot(const Transform &original, TransformTool tool, Axis axis, Vec3 delta,
+                               const Basis &basis, Vec3 pivot, double snap, bool fine) {
+    auto result=TransformDelta(original,tool,axis,delta,basis,snap,fine);
+    const Vec3 offset=Add(original.translation,Mul(pivot,-1));
+    if (tool==TransformTool::Rotate) {
+        const auto rotation=TransformDelta({},TransformTool::Translate,axis,delta,basis,snap,fine).translation;
+        result.translation=Add(pivot,RotateVector(offset,rotation));
+    } else if (tool==TransformTool::Scale) {
+        const auto scale=TransformDelta({},TransformTool::Scale,axis,delta,{},snap,fine).scale;
+        const Vec3 scaled=Add(Add(Mul(basis.x,Dot(offset,basis.x)*scale.x),
+                                 Mul(basis.y,Dot(offset,basis.y)*scale.y)),Mul(basis.z,Dot(offset,basis.z)*scale.z));
+        result.translation=Add(pivot,scaled);
+    }
     return result;
 }
 Basis OrientationBasis(Orientation orientation, const Transform &object, const Camera &camera,

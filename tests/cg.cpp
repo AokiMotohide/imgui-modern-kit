@@ -53,6 +53,18 @@ int main() {
     check(std::abs(uv.x) < 1e-12 && std::abs(uv.y - 1) < 1e-12, "UV rotation");
     uv = TransformUV({.13, .37}, {0, 0}, {0, 0}, 0, {2, 2}, .25);
     check(uv.x == .25 && uv.y == .75, "UV scale snap");
+    Transform orbitObject;orbitObject.translation={3,1,0};orbitObject.rotation={.3,.4,.5};
+    auto pivoted=TransformAroundPivot(orbitObject,TransformTool::Rotate,Axis::Z,{0,0,3.141592653589793/2},{},{1,1,0});
+    check(std::abs(pivoted.translation.x-1)<1e-12 && std::abs(pivoted.translation.y-3)<1e-12,
+          "rotation moves offset around external pivot");
+    auto beforeBasis=OrientationBasis(Orientation::Local,orbitObject,{});
+    auto afterBasis=OrientationBasis(Orientation::Local,pivoted,{});
+    check(std::abs(afterBasis.x.x+beforeBasis.x.y)<1e-12 && std::abs(afterBasis.x.y-beforeBasis.x.x)<1e-12 &&
+          std::abs(afterBasis.x.z-beforeBasis.x.z)<1e-12,"world rotation composes existing orientation");
+    Basis turned{{0,1,0},{-1,0,0},{0,0,1}};
+    pivoted=TransformAroundPivot(orbitObject,TransformTool::Scale,Axis::Y,{0,1,0},turned,{1,1,0});
+    check(std::abs(pivoted.translation.x-5)<1e-12 && std::abs(pivoted.translation.y-1)<1e-12,
+          "pivot scale follows chosen orientation basis");
     auto *context = ImGui::CreateContext();
     auto &io = ImGui::GetIO();
     io.IniFilename = nullptr;

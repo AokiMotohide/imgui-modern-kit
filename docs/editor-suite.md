@@ -160,6 +160,16 @@ CGは投影・navigation・object origin選択・軸gizmo・Outlinerの制限/re
 Dope Sheet・animation strip移動を提供します。orientationは純粋関数で計算し、pivotPositionは
 ホストが計算します。scene geometry・階層検証・選択・animation runtimeは所有しません。
 
+`TransformAroundPivot` returns a complete TRS value with the object's position rotated
+or scaled about a supplied pivot. Its orthonormal basis determines constrained offset
+movement. Rotation composes the existing orientation rather than adding Euler angles.
+The pure calculation is available for host application; gizmo pivot-event integration
+is still pending. TRS does not represent shear from arbitrary affine transforms.
+TransformAroundPivotは指定pivotの周りに位置を回転・拡大縮小したTRSを返します。
+直交正規basisで変位を拘束し、回転はEuler角の加算ではなく既存姿勢との合成で計算します。
+ホストが使える純粋計算であり、gizmoのpivot eventへの接続は未完了です。
+TRSは任意のアフィン変換によるshearを表現しません。
+
 `TransformGizmo` draws translation axes, XY/YZ/ZX plane handles and a screen handle;
 Scale adds square axis tips, independent plane scaling and uniform screen scaling.
 Rotate uses projected axis rings and an outer view-normal ring. Unified displays
