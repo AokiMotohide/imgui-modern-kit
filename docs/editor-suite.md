@@ -460,3 +460,7 @@ captionのdouble-clickはホストへRenameのBeginを返し、標準InputText�
 `Transaction::Cancel` restores both `proposed` and `proposedText` from their original values before attempting delivery. Revision-driven cancellation and retries after buffer shortage therefore have the same text contract as explicit Escape. Core, caption, and Outliner focused regressions pass.
 
 `Transaction::Cancel`は送信前に`proposed`と`proposedText`を元の値へ戻します。revision変更による取消しとbuffer不足後の再送も、明示的なEscapeと同じ文字列契約になります。Core・caption・Outlinerの直接回帰テストが合格しています。
+
+Transition handles and hit regions follow font scale. Clips with nonzero transitions reserve a separate label band for type badges; audio waveform uses the space below the clip label. Gallery includes a nonzero Dissolve/Fade example. Native backbuffer captures are in `out/transition-native-fit/` (local evidence, not distributed); 100% light and 150% dark were inspected while correcting handle size and label/waveform collisions. This does not verify the picker popup or native OS input.
+
+transition handleとhit領域をfont scaleへ追従させました。長さゼロ以外のtransitionがあるclipでは種類badgeとclip名の帯を分け、audio waveformはclip名より下へ収めます。GalleryにDissolve／Fadeの非ゼロ長例を追加しました。native backbuffer captureは`out/transition-native-fit/`（ローカル検証用、非配布）にあり、100% lightと150% darkを見ながらhandle寸法とlabel／waveformの重なりを修正しました。picker popupとnative OS入力の検証ではありません。
