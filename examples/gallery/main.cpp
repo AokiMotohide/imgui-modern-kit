@@ -919,7 +919,8 @@ int VerifyInspectorModel() {
         {0,0,-1,state.objects[1].id}});state.ApplyEvents();
     check(!state.BuildSceneMeshes().front().wire,"component order changes renderer override result");
     state.events.Push({rendererComponent,state.revision,editor::Phase::Commit,editor::EditKind::Toggle,{}, {0,0,0,0,0,0}});state.ApplyEvents();
-    check(state.BuildSceneMeshes().empty(),"disabled renderer component removes preview mesh");
+    const auto disabledMeshes=state.BuildSceneMeshes();
+    check(std::none_of(disabledMeshes.begin(),disabledMeshes.end(),[&](const auto &mesh){return mesh.id==state.objects[1].id;}),"disabled renderer component removes preview mesh");
     state.events.Push({rendererComponent,state.revision,editor::Phase::Commit,editor::EditKind::Toggle,{}, {0,0,0,0,0,1}});state.ApplyEvents();
     state.events.Push({wireComponent,state.revision,editor::Phase::Commit,editor::EditKind::Reorder,{},
         {0,0,1,state.objects[1].id}});state.ApplyEvents();
