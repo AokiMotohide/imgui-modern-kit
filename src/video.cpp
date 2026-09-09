@@ -464,7 +464,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(clip.id)));
                     ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(key.id)));
                     ImGui::InvisibleButton("key",{12,12});hovered=ImGui::IsItemHovered();
-                    ImGui::PopID();ImGui::PopID();ImGui::SetCursorScreenPos(cursor);
+                    ImGui::PopID();ImGui::PopID();ImGui::SetCursorScreenPos(cursor);ImGui::Dummy({0,0});
                 }
                 keyHit |= hovered;
                 if (hovered) {
@@ -530,8 +530,14 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                               side ? ImVec2{end,a.y} : ImVec2{handleX,b.y},ImGui::GetColorU32(theme.colors.text),2);
                 draw->AddRect({handle.x-radius,handle.y-radius},{handle.x+radius,handle.y+radius},
                               ImGui::GetColorU32(theme.editor.marker),1,0,editingTransition ? 2.f : 1.f);
-                const bool hovered=view.hovered && handleX>=view.min.x+s.headerWidth &&
-                    std::abs(io.MousePos.x-handle.x)<=6*handleScale && std::abs(io.MousePos.y-handle.y)<=6*handleScale;
+                bool hovered=false;
+                if (handleX>=view.min.x+s.headerWidth && handleX<=view.max.x && handle.y>=view.min.y && handle.y<=view.max.y) {
+                    const auto cursor=ImGui::GetCursorScreenPos();
+                    ImGui::SetCursorScreenPos({handle.x-6*handleScale,handle.y-6*handleScale});
+                    ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(clip.id)));
+                    ImGui::InvisibleButton(side ? "transition-out" : "transition-in",{12*handleScale,12*handleScale});
+                    hovered=ImGui::IsItemHovered();ImGui::PopID();ImGui::SetCursorScreenPos(cursor);ImGui::Dummy({0,0});
+                }
                 transitionHit |= hovered;
                 if (hovered) {
                     ImGui::SetTooltip(side ? "Transition out duration" : "Transition in duration");
