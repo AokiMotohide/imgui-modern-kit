@@ -631,6 +631,13 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
                         ImGui::BeginDisabled(row.locked || s.renameTransaction.active);
                         if (ImGui::MenuItem("Rename")) beginRename();
                         if (ImGui::MenuItem("Duplicate")) Emit(out,row.id,p.revision,editor::EditKind::Duplicate);
+                        if (row.geometry) {
+                            if (ImGui::MenuItem("Linked duplicate")) Emit(out,row.id,p.revision,editor::EditKind::Duplicate,{},editor::Value{0,0,1});
+                            if (selection.active && selection.active!=row.id && ImGui::MenuItem("Link geometry to active"))
+                                Emit(out,row.id,p.revision,editor::EditKind::LinkGeometry,editor::Value{0,0,0,row.geometry},editor::Value{0,0,0,selection.active});
+                            if (ImGui::MenuItem("Make geometry single user"))
+                                Emit(out,row.id,p.revision,editor::EditKind::LinkGeometry,editor::Value{0,0,0,row.geometry},{});
+                        }
                         if (ImGui::MenuItem("Move up")) Emit(out,row.id,p.revision,editor::EditKind::Reorder,{},editor::Value{0,0,-1,row.parent});
                         if (ImGui::MenuItem("Move down")) Emit(out,row.id,p.revision,editor::EditKind::Reorder,{},editor::Value{0,0,1,row.parent});
                         if (row.parent && ImGui::MenuItem("Move to root")) Emit(out,row.id,p.revision,editor::EditKind::Reparent,editor::Value{0,0,0,row.parent},{});

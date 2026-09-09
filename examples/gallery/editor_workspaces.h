@@ -25,7 +25,8 @@ struct EditorWorkspaces {
     std::span<const editor::Keyframe> QueryKeys(editor::CurveQuery query);
     std::vector<cg::ObjectView> objects=std::vector<cg::ObjectView>(4);
     std::vector<cg::ObjectView> outlinerRows, orderedObjects;
-    std::vector<bool> objectIsMesh{false,true,false,false};
+    struct GeometryData {std::vector<preview::Vertex> vertices;std::vector<std::uint32_t> indices;};
+    std::map<editor::StableId,GeometryData> geometries;
     std::vector<preview::Mesh> sceneMeshes;
     std::span<const preview::Mesh> BuildSceneMeshes();
     std::vector<editor::StableId> objectOrder=std::vector<editor::StableId>(4);

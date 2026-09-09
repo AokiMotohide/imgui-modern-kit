@@ -265,6 +265,8 @@ void EditorWorkspaces::Initialize() {
         objects[i].hasChildren = i == 0;
         objects[i].transform.translation = {static_cast<double>(i - 1) * 1.5, 0, 0};
     }
+    objects[1].geometry=nextId++;
+    geometries[objects[1].geometry]={{cubeVertices.begin(),cubeVertices.end()},{cubeIndices.begin(),cubeIndices.end()}};
     objects[1].transform.scale = {.7, .7, .7};
     objectSelection.Set(objects[1].id);
     const char *assetNames[] = {"Studio take", "Ambience",     "Title",      "Surface",
@@ -306,8 +308,10 @@ void EditorWorkspaces::RenderPreview() {
 }
 std::span<const preview::Mesh> EditorWorkspaces::BuildSceneMeshes() {
     sceneMeshes.clear();sceneMeshes.reserve(objects.size());
-    for (std::size_t i=0;i<objects.size();++i) if (objectIsMesh[i] && objects[i].visible) {
-        preview::Mesh mesh{objects[i].id,cubeVertices,cubeIndices,objects[i].transform};
+    for (std::size_t i=0;i<objects.size();++i) if (objects[i].geometry && objects[i].visible) {
+        const auto data=geometries.find(objects[i].geometry);
+        if (data==geometries.end()) continue;
+        preview::Mesh mesh{objects[i].id,data->second.vertices,data->second.indices,objects[i].transform};
         mesh.wire=viewport.shading==cg::Shading::Wireframe;
         ApplyGizmoPreview(mesh,viewport);sceneMeshes.push_back(mesh);
     }
@@ -356,16 +360,30 @@ void EditorWorkspaces::ApplyEvents() {
         if (e.kind==editor::EditKind::Duplicate) {
             auto source=std::find_if(objects.begin(),objects.end(),[&](const auto &v){return v.id==e.target;});
             if (source!=objects.end() && !source->locked) {
-                const auto index=static_cast<std::size_t>(source-objects.begin());
                 auto copy=*source;copy.id=nextId++;copy.hasChildren=false;
                 renamedLabels[copy.id]=std::string(source->label)+" copy";copy.label=renamedLabels[copy.id].c_str();
                 std::array<editor::StableId,9> properties;
                 for (auto &property:properties) property=nextId++;
-                const bool mesh=objectIsMesh[index];
-                objects.push_back(copy);objectIsMesh.push_back(mesh);objectPropertyIds.push_back(properties);
+                if (copy.geometry && e.proposed.offset!=1) {
+                    const auto sourceGeometry=copy.geometry;copy.geometry=nextId++;
+                    geometries[copy.geometry]=geometries.at(sourceGeometry);
+                }
+                objects.push_back(copy);objectPropertyIds.push_back(properties);
                 auto position=std::find(objectOrder.begin(),objectOrder.end(),e.target);
                 objectOrder.insert(position==objectOrder.end() ? position : position+1,copy.id);
                 objectSelection.Set(copy.id);changed=true;
+            }
+        }
+        if (e.kind==editor::EditKind::LinkGeometry) {
+            auto target=std::find_if(objects.begin(),objects.end(),[&](const auto &v){return v.id==e.target;});
+            if (target!=objects.end() && !target->locked && target->geometry) {
+                if (e.proposed.parent) {
+                    const auto source=std::find_if(objects.begin(),objects.end(),[&](const auto &v){return v.id==e.proposed.parent;});
+                    if (source!=objects.end() && source->geometry) {target->geometry=source->geometry;changed=true;}
+                } else {
+                    const auto newGeometry=nextId++;geometries[newGeometry]=geometries.at(target->geometry);
+                    target->geometry=newGeometry;changed=true;
+                }
             }
         }
         if (e.kind == editor::EditKind::Rename)
@@ -901,9 +919,9 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
                 if (!count) low=high=p;
                 else {low={std::min(low.x,p.x),std::min(low.y,p.y),std::min(low.z,p.z)};
                       high={std::max(high.x,p.x),std::max(high.y,p.y),std::max(high.z,p.z)};}
-                if (s.objectIsMesh[static_cast<std::size_t>(&object-s.objects.data())] && s.viewport.pivot==cg::Pivot::Bounds) {
+                if (object.geometry && s.viewport.pivot==cg::Pivot::Bounds) {
                     const auto basis=cg::OrientationBasis(cg::Orientation::Local,object.transform,{});
-                    for (const auto &vertex:s.cubeVertices) {
+                    for (const auto &vertex:s.geometries.at(object.geometry).vertices) {
                         const double x=vertex.position[0]*object.transform.scale.x,
                                      y=vertex.position[1]*object.transform.scale.y,
                                      z=vertex.position[2]*object.transform.scale.z;

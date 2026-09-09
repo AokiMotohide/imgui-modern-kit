@@ -578,6 +578,26 @@ int VerifyInspectorModel() {
         {0,0,0,0,12,0,0}});state.ApplyEvents();
     check(state.objects.back().transform.translation.x==12 && state.objects[1].transform.translation.x==sourceX,
           "duplicate transform edit preserves source object");
+    const auto independentGeometry=state.objects.back().geometry, sourceGeometry=state.objects[1].geometry;
+    const auto independentX=state.geometries.at(independentGeometry).vertices.front().position[0];
+    editor::Event linked{sourceId,state.revision,editor::Phase::Commit,editor::EditKind::Duplicate};linked.proposed.offset=1;
+    state.events.Push(linked);state.ApplyEvents();
+    const auto linkedId=state.objects.back().id;
+    check(state.objects.back().geometry==sourceGeometry && independentGeometry!=sourceGeometry,
+          "linked duplicate shares geometry while ordinary duplicate owns copied data");
+    state.geometries.at(sourceGeometry).vertices.front().position[0]+=.25f;
+    auto meshes=state.BuildSceneMeshes();
+    auto linkedMesh=std::find_if(meshes.begin(),meshes.end(),[&](const auto &v){return v.id==linkedId;});
+    check(linkedMesh!=meshes.end() && linkedMesh->vertices.front().position[0]==independentX+.25f &&
+          state.geometries.at(independentGeometry).vertices.front().position[0]==independentX,
+          "geometry edits reach linked preview and preserve independent duplicate");
+    state.events.Push({linkedId,state.revision,editor::Phase::Commit,editor::EditKind::LinkGeometry});state.ApplyEvents();
+    check(state.objects.back().geometry!=sourceGeometry &&
+          state.geometries.at(state.objects.back().geometry).vertices.front().position[0]==independentX+.25f,
+          "make single user copies current shared geometry");
+    editor::Event relink{linkedId,state.revision,editor::Phase::Commit,editor::EditKind::LinkGeometry};relink.proposed.parent=sourceId;
+    state.events.Push(relink);state.ApplyEvents();
+    check(state.objects.back().geometry==sourceGeometry,"link geometry reconnects to active object data");
     std::puts("Evidence: host model/event application; no native OS or GUI input.");
     return failures?1:0;
 }
