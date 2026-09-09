@@ -24,6 +24,8 @@ struct EditorWorkspaces {
     void RebuildKeyIndex();
     std::span<const editor::Keyframe> QueryKeys(editor::CurveQuery query);
     std::array<cg::ObjectView, 4> objects{};
+    std::vector<cg::ObjectView> outlinerRows;
+    void RebuildOutlinerRows();
     std::array<std::array<editor::StableId,9>,4> objectPropertyIds{{
         {930011,930023,930037,931013,931027,931039,932003,932017,932029},
         {930049,930061,930079,931051,931067,931081,932041,932053,932071},

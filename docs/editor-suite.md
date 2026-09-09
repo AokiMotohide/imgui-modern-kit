@@ -167,6 +167,18 @@ CGは投影・navigation・object origin選択・軸gizmo・Outlinerの制限/re
 Dope Sheet・animation strip移動を提供します。orientationは純粋関数で計算し、pivotPositionは
 ホストが計算します。scene geometry・階層検証・選択・animation runtimeは所有しません。
 
+Gallery builds Outliner rows from parent StableIds, recalculating depth and child
+indicators after reparenting. Collapsed branches hide descendants. Search retains
+matching rows and their ancestors, revealing matches inside collapsed branches.
+Expand/Collapse hierarchy context actions update the host subtree. Reparent rejects
+cycles, nonexistent parents and locked source/destination objects. Focused host-model
+checks cover row construction, collapse, search ancestry and changed parent depth.
+Galleryはparent StableIdからOutliner行を構築し、reparent後の深さ・子の有無を再計算します。
+閉じた枝の子孫は非表示になり、検索中は一致行と祖先を表示して閉じた枝の一致も見せます。
+階層全体の展開・折り畳みmenuはホストの子孫状態へ反映します。reparentはcycle・存在しない親・
+lockedな移動元／移動先を拒否します。行構築・折り畳み・検索の祖先保持・親変更後の深さを
+ホストmodel検証で確認しています。
+
 Outliner starts inline rename from its context menu or a double click. The public
 InputText widget edits the UTF-8 draft; Enter commits and Escape cancels. Rename
 events preserve original/proposed text and starting revision; terminal overflow is
