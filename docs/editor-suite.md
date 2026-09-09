@@ -719,3 +719,7 @@ Oriented nonuniform scale now retains the full linear transform through rotation
 Gallery vertex/face normal toggles now call public DrawMeshNormals over OpenGL or DrawList preview. Focused tests verify segment counts for a sheared triangle, independent face mode and zero-length suppression; the external consumer compiles and runs the API. `--verify-normals` captures light and dark 150% views of a sheared mesh. These are display captures, not OS-input acceptance; normal lines do not use depth occlusion.
 
 Galleryの頂点・面normal切替を公開DrawMeshNormalsへ接続しました。OpenGL／DrawList preview上で使用します。shear付き三角形の線分数、面だけの表示、長さ0の抑止が回帰で合格し、外部consumerもAPIを実行しました。`--verify-normals`はshear付きmeshのlight・dark 150%画面をcaptureします。表示確認でありOS入力の受入検証ではありません。normal線はdepth遮蔽を行いません。
+
+Gallery Bounds pivot uses selected mesh vertices transformed by the full affine basis, without expanding mesh bounds to include an unrelated object origin. Objects without geometry contribute their origin. Median remains the average of selected object origins, and Cursor uses the host cursor. Host-model regression verifies asymmetric sheared geometry and the distinct Median result.
+
+GalleryのBounds pivotは選択mesh頂点へ全アフィン基底を適用して求め、mesh外のobject原点で範囲を広げません。geometryのないobjectは原点を使います。Medianは選択object原点の平均、Cursorはホストのcursor位置です。非対称なshear付きgeometryと、Medianとの違いをホストモデル回帰で確認しました。
