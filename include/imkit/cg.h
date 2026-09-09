@@ -103,6 +103,7 @@ struct UVProvider {
     std::uint64_t revision = 0;
     std::span<const UVVertex> (*vertices)(void *, editor::Rect) = nullptr;
     std::span<const UVEdge> (*edges)(void *, editor::Rect) = nullptr;
+    std::span<const StableId> (*all)(void *, UVSelection) = nullptr;
 };
 struct UVState {
     editor::CanvasState canvas{{-.1, -.1}, {300, 300}};
@@ -110,6 +111,7 @@ struct UVState {
     editor::Point mouseStart{};
     UVSelection selection = UVSelection::Vertex;
     UVCoordinates coordinates = UVCoordinates::Normalized;
+    std::span<const editor::Binding> bindings;
     TransformTool tool = TransformTool::Translate;
     double snap = 0;
     editor::Point pivot{.5, .5};

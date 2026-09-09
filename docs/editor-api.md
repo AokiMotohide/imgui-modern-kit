@@ -226,3 +226,10 @@ Animation strip `Reorder` uses the neighboring strip StableId in `proposed.paren
 and direction (-1/+1) in `proposed.offset`. The Gallery swaps the adjacent strips.
 Animation stripの`Reorder`は隣接stripのStableIdを`proposed.parent`、方向（-1/+1）を
 `proposed.offset`で返します。Galleryは隣接stripを交換します。
+
+UV Select All uses `UVState::bindings` and `UVProvider::all(user, selectionMode)`.
+Return unique selectable IDs for the entire mode, including offscreen elements.
+Missing provider or insufficient selection/event storage preserves the old selection and sets overflow.
+UVの全選択は`UVState::bindings`と`UVProvider::all(user, selectionMode)`を使用します。
+画面外も含む、その選択単位の一意な選択可能IDを返してください。provider未設定や
+選択・イベント容量不足では元の選択を保持し、overflowを通知します。
