@@ -149,7 +149,8 @@ Theme MakePrecisionTheme(ColorScheme scheme) {
                 t.colors.accent,t.colors.success,t.colors.warning,t.colors.text,t.colors.warning,
                 t.colors.warning,t.colors.focus,Hex(0xdb6565),Hex(0x5cab72),Hex(0x6699e0),
                 t.colors.accent,t.colors.success,t.colors.destructive,t.colors.warning,
-                t.colors.destructive,t.colors.muted};
+                t.colors.destructive,t.colors.muted,
+                Hex(d ? 0xc791c9 : 0x864c8e),Hex(d ? 0x72b7c6 : 0x347080),Hex(d ? 0x9ca2b0 : 0x626979)};
     return t;
 }
 void SetAccent(Theme &t, ImVec4 accent) {

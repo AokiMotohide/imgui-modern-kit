@@ -515,3 +515,8 @@ Timelineのclipは名前行に幅がある場合、durationのtimecodeとspeed�
 Gallery preserves each clip's explicit `keyChannel` when rebuilding key indices, including empty channels, and refreshes borrowed key spans for every referencing clip after host storage changes. The initial first-six-key override has been removed: each span contains only that channel's keys in the clip-local duration. Host-model tests cover channel exhaustion, reinsertion, and multiple clips referencing one channel.
 
 Galleryはkey索引の再構築で、空channelを含む各clipの明示`keyChannel`を維持します。ホストの格納領域変更後は、参照する全clipの非所有key spanを更新します。初期表示を先頭6 keyで上書きする処理を除き、そのchannelのclip内durationに含まれるkeyを渡します。channel内全削除後のID維持・再追加・複数clipからの参照をホストモデル検証で確認しました。
+
+
+Gallery's six-track cycle now contains Video, Audio, Caption, Effect, Adjustment, and Group rather than repeating the first three roles. Effect/adjustment/group clip ranges use the same public move/trim and track controls. `EditorPalette::effectClip`, `adjustmentClip`, and `groupClip` are distinct semantic fill tokens used by Timeline; original palette fields remain in their existing order. These track kinds do not add an effect processor or nested sequence playback engine.
+
+Galleryの6 track構成をVideo・Audio・Caption・Effect・Adjustment・Groupへ揃えました。effect／adjustment／groupのclip範囲は共通の公開move／trimとtrack操作を使用します。Timelineの塗りに`EditorPalette::effectClip`・`adjustmentClip`・`groupClip`を接続し、既存paletteフィールドの順序を維持しました。track種類の追加によってeffect処理や入れ子sequenceの再生エンジンを提供するものではありません。

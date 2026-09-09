@@ -138,10 +138,9 @@ void EditorWorkspaces::Dataset(bool big) {
     for (int t = 0; t < trackCount; ++t) {
         video::TrackView track;
         track.id = t + 1;
-        track.label = t % 3 == 0 ? "V  Picture" : t % 3 == 1 ? "A  Sound" : "T  Caption";
-        track.kind = t % 3 == 0   ? video::TrackKind::Video
-                     : t % 3 == 1 ? video::TrackKind::Audio
-                                  : video::TrackKind::Caption;
+        constexpr const char *trackLabels[]={"V  Picture","A  Sound","T  Caption","FX  Effect","ADJ  Adjustment","GRP  Group"};
+        track.label=trackLabels[t%6];
+        track.kind=static_cast<video::TrackKind>(t%6);
         tracks.push_back(track);
         if (track.kind == video::TrackKind::Audio) {
             video::AudioStripView strip;
@@ -153,9 +152,9 @@ void EditorWorkspaces::Dataset(bool big) {
             video::ClipView clip;
             clip.id = 1000 + t * clipsPerTrack + i;
             clip.track = track.id;
-            clip.label = t % 3 == 0   ? "Studio / Main take"
-                         : t % 3 == 1 ? "Ambient / stereo"
-                                      : "A quiet afternoon";
+            constexpr const char *clipLabels[]={"Studio / Main take","Ambient / stereo","A quiet afternoon",
+                "Blur / effect range","Exposure / adjustment range","Sequence / group range"};
+            clip.label=clipLabels[t%6];
             clip.start = editor::FromSeconds(i * 4. + (t % 2) * .5);
             clip.duration = editor::FromSeconds(3.5);
             clip.sourceIn = editor::TicksPerSecond * 5;

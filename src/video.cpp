@@ -406,6 +406,9 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             bool selected = selection.Contains(clip.id);
             auto color = track.kind == TrackKind::Audio     ? theme.editor.audioClip
                          : track.kind == TrackKind::Caption ? theme.editor.captionClip
+                         : track.kind == TrackKind::Effect ? theme.editor.effectClip
+                         : track.kind == TrackKind::Adjustment ? theme.editor.adjustmentClip
+                         : track.kind == TrackKind::Group ? theme.editor.groupClip
                                                             : theme.editor.videoClip;
             color.w *= selected ? .8f : .35f;
             draw->AddRectFilled(a, b, ImGui::GetColorU32(color), 4);
