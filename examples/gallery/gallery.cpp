@@ -15,7 +15,7 @@ void Heading(GalleryState &s, const char *text) {
     Separator();
 }
 void Icons(GalleryState &s) {
-    Heading(s, "Icons / 120 generated outline glyphs");
+    Heading(s, "Icons / Generated outline glyphs");
     SetNextItemWidth(210);
     InputText("Search", s.iconSearch, sizeof(s.iconSearch));
     Record(s, "icon-search");

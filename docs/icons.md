@@ -88,6 +88,17 @@ and produces PNG variants plus `src/icons_data.inc`. Missing originals are error
 Run `python tools/build_icons.py --check` for image/atlas validation. Python and Pillow
 are not build or runtime dependencies for C++ consumers.
 
+Atlas rows are derived from catalog length. `metadata.json` records dimensions,
+categories and asset counts, and the C++ UV calculations use the generated layout.
+`stable-ids.json` freezes the original 120 names in order; new IDs must be appended.
+The generator checks the complete public enum against the catalog and validates
+original hashes, every derived image and every atlas region.
+
+atlasの行数はcatalog件数から算出します。`metadata.json`に寸法・カテゴリ数・資産数を記録し、
+C++のUV計算も生成した配置を使用します。`stable-ids.json`は既存120個の順序を固定し、
+新規IDは末尾へ追加します。生成処理は公開enumとcatalogの一致、原画hash、全派生画像、
+全atlas領域を検査します。原画や派生物の追加なしに件数だけを増やすことはできません。
+
 ## Native Gallery
 
 Open the **Icons** page for name/category search, 16–64px sizes, custom tint, copyable
