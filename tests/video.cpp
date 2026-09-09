@@ -353,6 +353,19 @@ int main() {
     check(timeline.canvas.origin.x<timeOrigin && timeline.view.min.x==panOrigin.x && timeline.view.min.y==panOrigin.y &&
           full.count==0 && selection.count==selectedClips,"Hand pan scrolls time without moving window or selecting clip");
     timeline.tool=video::Tool::Select;
+    timeline.canvas.origin.x=0;full.Clear();frame(full);
+    const auto clipOrigin=timeline.view.min;
+    io.AddMousePosEvent(clipOrigin.x+timeline.headerWidth+100,clipOrigin.y+25);frame(full);
+    full.Clear();io.AddMouseButtonEvent(0,true);frame(full);
+    check(full.overflow && !timeline.drag.active,"clip selection scratch shortage prevents edit Begin");
+    io.AddMouseButtonEvent(0,false);frame(full);
+    editor::StableId clipIds[4];selection.storage=clipIds;selection.Clear();
+    full.Clear();io.AddMouseButtonEvent(0,true);frame(full);
+    io.AddMousePosEvent(clipOrigin.x+timeline.headerWidth+140,clipOrigin.y+25);frame(full);
+    check(timeline.drag.active && timeline.view.min.x==clipOrigin.x && timeline.view.min.y==clipOrigin.y,
+          "clip body drag keeps parent window stationary");
+    io.AddMouseButtonEvent(0,false);frame(full);
+    check(!timeline.drag.active && full.Events().back().phase==editor::Phase::Commit,"clip body drag commits normally");
     ImVec2 pickerOrigin{};
     auto pickerFrame=[&](editor::EventBuffer &events) {
         ImGui::NewFrame();ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({780,580});

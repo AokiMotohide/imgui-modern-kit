@@ -580,8 +580,16 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     }
                 }
             }
-            bool hit = view.hovered && io.MousePos.x >= (std::max)(x, view.min.x + s.headerWidth) &&
-                       io.MousePos.x < end && io.MousePos.y >= a.y && io.MousePos.y < b.y;
+            bool hit=false;
+            const ImVec2 hitMin{std::max(x,view.min.x+s.headerWidth),std::max(a.y,view.min.y)};
+            const ImVec2 hitMax{std::min(end,view.max.x),std::min(b.y,view.max.y)};
+            if (hitMax.x>hitMin.x && hitMax.y>hitMin.y) {
+                const auto cursor=ImGui::GetCursorScreenPos();ImGui::SetCursorScreenPos(hitMin);
+                ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(clip.id)));
+                ImGui::InvisibleButton("clip-body",{hitMax.x-hitMin.x,hitMax.y-hitMin.y});
+                hit=ImGui::IsItemHovered();ImGui::PopID();
+                ImGui::SetCursorScreenPos(cursor);ImGui::Dummy({0,0});
+            }
             if (hit)
                 s.hovered = clip.id;
             ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(clip.id)));
@@ -607,8 +615,9 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             }
             if (hit && s.tool!=Tool::Hand && !keyHit && !s.keyDrag.active && !transitionHit && !s.transitionDrag.active && s.editingCaption != clip.id && ImGui::IsMouseClicked(0) && !track.locked &&
                 !clip.locked && !s.drag.active) {
-                if (!selection.Contains(clip.id) || io.KeyCtrl)
-                    selection.Set(clip.id, io.KeyCtrl, io.KeyCtrl);
+                if ((!selection.Contains(clip.id) || io.KeyCtrl) && !selection.Set(clip.id,io.KeyCtrl,io.KeyCtrl)) {
+                    out.overflow=true;continue;
+                }
                 auto kind = io.KeyAlt ? editor::EditKind::Duplicate : editor::EditKind::Move;
                 if (io.MousePos.x - x < 7)
                     kind = editor::EditKind::TrimStart;
