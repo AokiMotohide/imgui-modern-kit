@@ -424,9 +424,13 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
         }
     }
     auto *d = ImGui::GetWindowDrawList();
-    if (texture.GetTexID())
+    if (s.checker) for (int y=0;y<8;++y) for (int x=0;x<8;++x) {
+        const auto a=UVScreen({x/8.,y/8.},s.canvas,view.min),b=UVScreen({(x+1)/8.,(y+1)/8.},s.canvas,view.min);
+        d->AddRectFilled(a,b,ImGui::GetColorU32((x+y)%2?theme.colors.surface:theme.colors.border));
+    }
+    if (s.showTexture && texture.GetTexID())
         d->AddImage(texture, UVScreen({0, 0}, s.canvas, view.min), UVScreen({1, 1}, s.canvas, view.min));
-    editor::DrawGrid(view, s.canvas, {.1, .1}, theme);
+    if (s.grid) editor::DrawGrid(view, s.canvas, {.1, .1}, theme);
     auto vertices = p.vertices ? p.vertices(p.user, view.visible) : std::span<const UVVertex>{};
     auto edges = p.edges ? p.edges(p.user, view.visible) : std::span<const UVEdge>{};
     auto preview=[&](StableId vertexId,editor::Point original) {
@@ -537,6 +541,9 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
     ImGui::PushID(id);
     if (view.hovered && ImGui::IsMouseReleased(1) && !s.drag.active) ImGui::OpenPopup("UV selection options");
     if (ImGui::BeginPopup("UV selection options")) {
+        ImGui::Checkbox("Checker",&s.checker);
+        ImGui::Checkbox("Texture",&s.showTexture);
+        ImGui::Checkbox("Grid",&s.grid);
         ImGui::Checkbox("Lasso selection",&s.lassoSelect);
         int coordinates=static_cast<int>(s.coordinates);
         if (ImGui::Combo("Coordinates",&coordinates,"Normalized\0Pixel\0UDIM\0"))
