@@ -1,0 +1,4 @@
+Use case: logo-brand. Generate ONE individual software toolbar icon. Black 1.75-unit monoline on a 24-unit grid, rounded line ends and joins, generous three-unit margins. True transparent RGBA background, fully opaque black strokes, no lettering, no shading, no background fill. Square canvas; optical balance and legibility at 16px. One technical UI glyph, not a scene or contact sheet. Name FaceNormals. Subject: shallow triangular mesh face in lower half, with ONE long upward arrow emerging from the CENTER of the triangular face. No vertex arrows. Minimal clear geometry.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/FaceNormals.png

@@ -232,8 +232,21 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
     ImGui::Checkbox(s.labels.gizmo, &s.gizmo);
     ImGui::SameLine();
     ImGui::Checkbox(s.labels.snap, &s.snap);
-    ImGui::SameLine();ImGui::Checkbox(s.labels.vertexNormals,&s.normals);
-    ImGui::SameLine();ImGui::Checkbox(s.labels.faceNormals,&s.faceNormals);
+    const auto normalToggle=[&](const char *id,IconId icon,const char *label,bool &enabled) {
+        ImGui::SameLine();
+        if (!s.icons) {ImGui::Checkbox(label,&enabled);return;}
+        const bool wasEnabled=enabled;
+        if (wasEnabled) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+        if (IconLabelButton(id,*s.icons,icon,label,{16*ImGui::GetFontSize()/14})) enabled=!enabled;
+        if (enabled) {
+            const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
+            ImGui::GetWindowDrawList()->AddLine({a.x+3,b.y-2},{b.x-3,b.y-2},ImGui::GetColorU32(theme.colors.accent),2);
+        }
+        if (wasEnabled) ImGui::PopStyleColor();
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s",label);
+    };
+    normalToggle("vertex-normals",IconId::VertexNormals,s.labels.vertexNormals,s.normals);
+    normalToggle("face-normals",IconId::FaceNormals,s.labels.faceNormals,s.faceNormals);
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImGui::GetFontSize()*8);
     int orientation = static_cast<int>(s.orientation);

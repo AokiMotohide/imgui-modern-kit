@@ -546,5 +546,13 @@
   {
     "name": "AdjustmentTrack",
     "category": "Editor"
+  },
+  {
+    "name": "VertexNormals",
+    "category": "Editor"
+  },
+  {
+    "name": "FaceNormals",
+    "category": "Editor"
   }
 ]

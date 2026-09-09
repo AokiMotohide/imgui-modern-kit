@@ -1311,8 +1311,8 @@
       "disposition": "new",
       "icon": "VertexNormals",
       "tooltip": "Vertex Normals",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "labeled toggle, active background and underline, focus and tooltip",
+      "status": "integrated; native light 16px capture inspected; dark 150% capture generated"
     },
     {
       "operation": "FaceNormals",
@@ -1320,8 +1320,8 @@
       "disposition": "new",
       "icon": "FaceNormals",
       "tooltip": "Face Normals",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "labeled toggle, active background and underline, focus and tooltip",
+      "status": "integrated; native light 16px capture inspected; dark 150% capture generated"
     },
     {
       "operation": "Measurement",
