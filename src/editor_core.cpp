@@ -665,9 +665,22 @@ void PropertyGrid(const char *id, const PropertyProvider &p, PropertyState &s, E
                 ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(row.id)));
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
-                ImGui::TextUnformatted(row.label);
-                if (ImGui::IsItemHovered())
-                    ImGui::SetTooltip("%s", row.category);
+                const bool locked=Flag(row.flags,PropertyFlags::Locked);
+                ImGui::Text("%s%s%s%s%s", Flag(row.flags,PropertyFlags::Favorite)?"* ":"",
+                    row.label,Flag(row.flags,PropertyFlags::Modified)?" (modified)":"",
+                    Flag(row.flags,PropertyFlags::Override)?" (override)":"",locked?" [locked]":"");
+                if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", row.category);
+                if (ImGui::BeginPopupContextItem("property state")) {
+                    for (auto flag:{PropertyFlags::Favorite,PropertyFlags::Locked,PropertyFlags::Override}) {
+                        const char *label=flag==PropertyFlags::Favorite?"Favorite":flag==PropertyFlags::Locked?"Locked":"Override";
+                        bool enabled=Flag(row.flags,flag);
+                        if (ImGui::MenuItem(label,nullptr,enabled))
+                            Action(out,row.id,p.revision,EditKind::Toggle,
+                                Value{0,0,0,0,static_cast<double>(flag),enabled?1.:0.},
+                                Value{0,0,0,0,static_cast<double>(flag),enabled?0.:1.});
+                    }
+                    ImGui::EndPopup();
+                }
                 ImGui::TableNextColumn();
                 ImGui::BeginDisabled(Flag(row.flags, PropertyFlags::Locked));
                 double draft = s.drag.active && s.drag.draft.target == row.id ? s.draft : row.value;
@@ -699,7 +712,9 @@ void PropertyGrid(const char *id, const PropertyProvider &p, PropertyState &s, E
                     ImGui::EndPopup();
                 }
                 ImGui::TableNextColumn();
-                if (ImGui::SmallButton(Flag(row.flags, PropertyFlags::Keyed) ? "<>" : "+"))
+                if (s.icons ? IconButton("keyframe",*s.icons,IconId::Keyframe,
+                        Flag(row.flags,PropertyFlags::Keyed)?"Remove keyframe":"Add keyframe",{ImGui::GetFontSize()})
+                    : ImGui::SmallButton(Flag(row.flags, PropertyFlags::Keyed) ? "<>" : "+"))
                     Action(out, row.id, p.revision, EditKind::Keyframe);
                 ImGui::EndDisabled();
                 ImGui::PopID();

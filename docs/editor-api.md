@@ -129,3 +129,7 @@ The `Transport(state, bindings, const IconAtlas*)` overload uses host-owned icon
 Transport J/K/L uses `PlayReverse`/`Pause`/`PlayForward` bindings. K holds the current playhead; the Stop button rewinds to In. Empty bindings disable keyboard playback. The host can remap every transport command, including Loop.
 
 TransportのJ/K/Lは `PlayReverse` / `Pause` / `PlayForward` bindingを使います。Kは現在位置で一時停止し、StopボタンはInへ戻します。空のbindingではキーボード再生を無効にします。Loopを含む再生commandはホストが変更できます。
+
+Property labels expose Favorite, Locked and Override context actions even while values are locked. Toggle events identify the `PropertyFlags` bit in `Value.x` and the requested state in `Value.y`; the host applies it. Modified/override/locked states use textual indicators in addition to styling. Gallery filters property labels and categories on the following frame and applies object Reset events. `PropertyState.icons` optionally supplies the host atlas for keyframe buttons.
+
+Property名のcontext menuは値がロック中でもFavorite・Locked・Overrideを操作できます。Toggleイベントの `Value.x` は `PropertyFlags` のbit、`Value.y` は変更先の状態で、ホストが反映します。modified・override・lockedは文字でも表示します。Galleryは次フレームで名前とカテゴリの検索を反映し、objectのResetも適用します。`PropertyState.icons` にホストatlasを渡すとkeyframeアイコンを表示します。

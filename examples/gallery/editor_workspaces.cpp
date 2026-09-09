@@ -4,6 +4,25 @@
 #include <cstdio>
 namespace imkit::gallery {
 namespace {
+template<std::size_t N>
+int FilterProperties(editor::PropertyView (&rows)[N],const char *search) {
+    ImGuiTextFilter filter(search);
+    int count=0;
+    for (auto row:rows) {
+        char text[512];
+        std::snprintf(text,sizeof(text),"%s %s",row.category,row.label);
+        if (filter.PassFilter(text)) rows[count++]=row;
+    }
+    return count;
+}
+struct PropertyRows {
+    std::span<const editor::PropertyView> rows;
+    static std::span<const editor::PropertyView> Query(void *user,int first,int count,std::string_view) {
+        auto rows=static_cast<PropertyRows*>(user)->rows;
+        auto begin=(std::min)(rows.size(),static_cast<std::size_t>((std::max)(0,first)));
+        return rows.subspan(begin,(std::min)(rows.size()-begin,static_cast<std::size_t>((std::max)(0,count))));
+    }
+};
 editor::StableId ObjectPropertyId(editor::StableId object, int component) {
     return object * 100 + component;
 }
@@ -290,7 +309,8 @@ void EditorWorkspaces::ApplyEvents() {
                 }
             }
             for (int component = 0; component < 3; ++component)
-                if (e.target == ObjectPropertyId(o.id, component) && e.kind == editor::EditKind::Property) {
+                if (e.target == ObjectPropertyId(o.id, component) &&
+                    (e.kind == editor::EditKind::Property || e.kind == editor::EditKind::Reset)) {
                     double *fields[] = {&o.transform.translation.x, &o.transform.translation.y,
                                         &o.transform.translation.z};
                     *fields[component] = e.proposed.x;
@@ -338,6 +358,18 @@ void EditorWorkspaces::ApplyEvents() {
                 asset.label = renamedLabels[e.target].c_str();
                 changed = true;
             }
+        bool isProperty=e.target>=700001 && e.target<=700004;
+        for (const auto &object:objects)
+            for (int component=0;component<3;++component)
+                isProperty |= e.target==ObjectPropertyId(object.id,component);
+        if (isProperty && e.kind==editor::EditKind::Toggle) {
+            unsigned flag=static_cast<unsigned>(e.proposed.x);
+            if (flag==8 || flag==16 || flag==4) {
+                if (e.proposed.y) propertyFlags[e.target] |= flag;
+                else propertyFlags[e.target] &= ~flag;
+                changed=true;
+            }
+        }
         if (e.target >= 700001 && e.target <= 700004 &&
             (e.kind == editor::EditKind::Property || e.kind == editor::EditKind::Reset)) {
             clipPropertyValues[e.target - 700001] = e.proposed.x;
@@ -386,13 +418,14 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
                                     {700002, "Scale", "Transform", 1, 1},
                                     {700003, "Position X", "Transform", 0, 0},
                                     {700004, "Speed", "Retiming", 1, 1}};
-    for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i) {
         props[i].value = s.clipPropertyValues[i];
-    editor::PropertyProvider properties{props, s.revision, 4, [](void *u, int a, int n, std::string_view) {
-                                            return std::span<const editor::PropertyView>(
-                                                       static_cast<editor::PropertyView *>(u), 4)
-                                                .subspan(a, (std::min)(n, 4 - a));
-                                        }};
+        props[i].flags=static_cast<editor::PropertyFlags>(static_cast<unsigned>(props[i].flags)|
+            s.propertyFlags[props[i].id]|(props[i].value!=props[i].defaultValue?2u:0u));
+    }
+    s.videoProperties.icons=s.icons;
+    PropertyRows visibleProperties{std::span(props).first(FilterProperties(props,s.videoProperties.search))};
+    editor::PropertyProvider properties{&visibleProperties,s.revision,static_cast<int>(visibleProperties.rows.size()),PropertyRows::Query};
     editor::PropertyGrid("clip", properties, s.videoProperties, s.events);
     ImGui::EndChild();
     video::TimelineProvider p{&s, s.revision, static_cast<int>(s.tracks.size())};
@@ -599,11 +632,12 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
             {ObjectPropertyId(object->id, 0), "Position X", "Transform", object->transform.translation.x, 0},
             {ObjectPropertyId(object->id, 1), "Position Y", "Transform", object->transform.translation.y, 0},
             {ObjectPropertyId(object->id, 2), "Position Z", "Transform", object->transform.translation.z, 0}};
-        editor::PropertyProvider properties{rows, s.revision, 3, [](void *u, int a, int n, std::string_view) {
-                                                return std::span<const editor::PropertyView>(
-                                                           static_cast<editor::PropertyView *>(u), 3)
-                                                    .subspan(a, (std::min)(n, 3 - a));
-                                            }};
+        for (auto &row:rows)
+            row.flags=static_cast<editor::PropertyFlags>(s.propertyFlags[row.id]|
+                (row.value!=row.defaultValue?2u:0u)|(object->locked?16u:0u));
+        s.objectProperties.icons=s.icons;
+        PropertyRows visibleProperties{std::span(rows).first(FilterProperties(rows,s.objectProperties.search))};
+        editor::PropertyProvider properties{&visibleProperties,s.revision,static_cast<int>(visibleProperties.rows.size()),PropertyRows::Query};
         editor::PropertyGrid("object", properties, s.objectProperties, s.events);
     }
     ImGui::EndChild();
