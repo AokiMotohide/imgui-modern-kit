@@ -54,6 +54,10 @@ struct SceneProvider {
     int visibleCount = 0;
     std::span<const ObjectView> (*query)(void *, int first, int count, std::string_view filter) = nullptr;
 };
+struct TransformCompanion {
+    Transform original{};
+    editor::Transaction transform, position;
+};
 struct ViewportState {
     Camera camera{};
     TransformTool tool = TransformTool::Translate;
@@ -72,6 +76,9 @@ struct ViewportState {
     const Camera *cameraView = nullptr; // Optional non-owning host camera; valid throughout the call.
     bool navigationGizmo = true;
     editor::Transaction pivotDrag; // Position companion for rotation/scale around an external pivot.
+    std::span<const ObjectView> selectedObjects; // Complete host selection, including offscreen objects.
+    std::span<TransformCompanion> companions; // Host storage; keep stable throughout a gesture.
+    std::size_t companionCount=0;
 };
 struct ViewportView {
     ImVec2 min{}, size{};

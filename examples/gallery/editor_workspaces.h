@@ -64,6 +64,8 @@ struct EditorWorkspaces {
     editor::AssetState assetState;
     cg::ViewportState viewport;
     cg::Vec3 cursorPivot{};
+    std::array<cg::ObjectView,4> gizmoSelection{};
+    std::array<cg::TransformCompanion,3> gizmoCompanions{};
     cg::Camera sceneCamera{{0,0,0},0,.15,10,.65,5,cg::Projection::Perspective};
     cg::OutlinerState outliner;
     cg::UVState uvState;

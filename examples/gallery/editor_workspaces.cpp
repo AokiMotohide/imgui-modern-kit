@@ -5,12 +5,16 @@
 namespace imkit::gallery {
 namespace {
 void ApplyGizmoPreview(preview::Mesh &mesh,const cg::ViewportState &viewport) {
-    for (const auto *transaction:{&viewport.drag,&viewport.pivotDrag}) {
-        if (!transaction->active || transaction->draft.target!=mesh.id || transaction->draft.phase==editor::Phase::Cancel) continue;
+    auto apply=[&](const editor::Transaction *transaction) {
+        if (!transaction->active || transaction->draft.target!=mesh.id || transaction->draft.phase==editor::Phase::Cancel) return;
         const auto &v=transaction->draft.proposed;
         if (transaction->draft.kind==editor::EditKind::Translate) mesh.transform.translation={v.x,v.y,v.z};
         if (transaction->draft.kind==editor::EditKind::Rotate) mesh.transform.rotation={v.x,v.y,v.z};
         if (transaction->draft.kind==editor::EditKind::Scale) mesh.transform.scale={v.x,v.y,v.z};
+    };
+    apply(&viewport.drag);apply(&viewport.pivotDrag);
+    for (std::size_t i=0;i<viewport.companionCount;++i) {
+        apply(&viewport.companions[i].transform);apply(&viewport.companions[i].position);
     }
 }
 template<std::size_t N>
@@ -846,6 +850,10 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
                 cg::Vec3{sum.x/count,sum.y/count,sum.z/count};
         }
     }
+    std::size_t selectedCount=0;
+    for (const auto &object:s.objects) if (s.objectSelection.Contains(object.id)) s.gizmoSelection[selectedCount++]=object;
+    s.viewport.selectedObjects={s.gizmoSelection.data(),selectedCount};
+    s.viewport.companions=s.gizmoCompanions;
     for (const auto &o : s.objects)
         if (o.id == s.objectSelection.active) {
             cg::TransformGizmo(view, o, s.viewport, s.revision, s.events, theme);
