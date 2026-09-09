@@ -70,6 +70,14 @@ int main() {
     check(!video::SplitClip(invalidSplit,std::numeric_limits<editor::Tick>::max()-5,bounds).valid,
           "split rejects overflowing timeline end");
     check(!video::SplitClip(c,120,{0,100,0}).valid,"split rejects invalid minimum duration");
+    auto extreme=c;extreme.start=std::numeric_limits<editor::Tick>::max()-100;
+    check(!video::EditClip(extreme,editor::EditKind::Move,100,bounds).valid,"move rejects overflowing timeline end");
+    extreme=c;extreme.speed=1e-20;
+    check(video::EditClip(extreme,editor::EditKind::Move,10,bounds).valid,"slow clip saturates unused source handles safely");
+    extreme=c;extreme.sourceIn=std::numeric_limits<editor::Tick>::min()+100;
+    check(video::EditClip(extreme,editor::EditKind::Slip,10,
+          {std::numeric_limits<editor::Tick>::min(),std::numeric_limits<editor::Tick>::max(),1}).sourceIn==extreme.sourceIn+10,
+          "wide signed media bounds preserve exact unit-speed source movement");
     video::ClipView right = c;
     right.start = 150;
     auto roll = video::RollClips(c, right, 100, bounds, bounds);
