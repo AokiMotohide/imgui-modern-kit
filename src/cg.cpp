@@ -685,8 +685,21 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
     ImGui::PopID();
 }
 void ComponentStack(const char *id,std::span<const ComponentView> components,
-                    std::uint64_t revision,editor::EventBuffer &out) {
+                    std::uint64_t revision,editor::EventBuffer &out,const ComponentStackOptions &options) {
     ImGui::PushID(id);
+    if (options.owner && !options.availableTypes.empty()) {
+        ImGui::BeginDisabled(options.locked);
+        if (ImGui::Button("Add component")) ImGui::OpenPopup("add");
+        if (ImGui::BeginPopup("add")) {
+            for (const auto &type:options.availableTypes) {
+                ImGui::PushID(reinterpret_cast<void*>(static_cast<std::uintptr_t>(type.id)));
+                if (ImGui::MenuItem(type.label)) Emit(out,options.owner,revision,editor::EditKind::ComponentAdd,{},editor::Value{0,0,0,type.id});
+                ImGui::PopID();
+            }
+            ImGui::EndPopup();
+        }
+        ImGui::EndDisabled();
+    }
     if (ImGui::BeginTable("components",3,ImGuiTableFlags_RowBg|ImGuiTableFlags_SizingStretchProp)) {
         ImGui::TableSetupColumn("Enabled",ImGuiTableColumnFlags_WidthFixed,ImGui::GetFrameHeight());
         ImGui::TableSetupColumn("Component",ImGuiTableColumnFlags_WidthStretch);
@@ -694,7 +707,7 @@ void ComponentStack(const char *id,std::span<const ComponentView> components,
         for (const auto &component:components) {
             ImGui::PushID(reinterpret_cast<void*>(static_cast<std::uintptr_t>(component.id)));
             ImGui::TableNextRow();ImGui::TableNextColumn();
-            bool enabled=component.enabled;ImGui::BeginDisabled(component.locked);
+            bool enabled=component.enabled;ImGui::BeginDisabled(component.locked || options.locked);
             if (ImGui::Checkbox("##enabled",&enabled))
                 Emit(out,component.id,revision,editor::EditKind::Toggle,Value({0,component.enabled?1.:0.,0}),Value({0,enabled?1.:0.,0}));
             ImGui::EndDisabled();ImGui::TableNextColumn();
@@ -704,9 +717,11 @@ void ComponentStack(const char *id,std::span<const ComponentView> components,
             ImGui::TableNextColumn();
             if (ImGui::Button("...")) ImGui::OpenPopup("actions");
             if (ImGui::BeginPopup("actions")) {
+                ImGui::BeginDisabled(options.locked);
                 if (ImGui::MenuItem(component.locked?"Unlock":"Lock"))
                     Emit(out,component.id,revision,editor::EditKind::Toggle,Value({2,component.locked?1.:0.,0}),Value({2,component.locked?0.:1.,0}));
-                ImGui::BeginDisabled(component.locked);
+                ImGui::EndDisabled();
+                ImGui::BeginDisabled(component.locked || options.locked);
                 if (ImGui::MenuItem("Move up")) Emit(out,component.id,revision,editor::EditKind::Reorder,{},editor::Value{0,0,-1,component.owner});
                 if (ImGui::MenuItem("Move down")) Emit(out,component.id,revision,editor::EditKind::Reorder,{},editor::Value{0,0,1,component.owner});
                 if (ImGui::MenuItem("Remove")) Emit(out,component.id,revision,editor::EditKind::Remove);

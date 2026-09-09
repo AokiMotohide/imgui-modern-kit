@@ -229,6 +229,17 @@ Mesh rendererとWireframe overrideを両previewへ接続し、stack順を保持�
 新しいIDでcomponentもコピーします。model検証で有効化・override順・renderer無効化の結果を確認し、
 API fixtureで公開widgetを使用しています。
 
+`ComponentStackOptions` supplies the owner, available `ComponentTypeView` IDs/labels
+and owner lock state. Add component emits `ComponentAdd` targeting the owner, with
+the selected type ID in proposed.parent. Gallery creates a fresh component ID for
+Mesh renderer or Wireframe override. Owner lock prevents addition and mutation;
+expansion remains a view operation. Public IO verifies type selection, while host
+model checks verify construction and locked-owner rejection.
+ComponentStackOptionsはowner、追加可能なComponentTypeViewのID・表示名、owner lockを渡します。
+追加はownerを対象とし、proposed.parentに選択type IDを持つComponentAddを返します。Galleryは
+Mesh rendererまたはWireframe overrideへ新しいcomponent IDを割り当てます。owner lockでは追加・変更を
+拒否し、展開だけは表示操作として許可します。公開IOでtype選択、host modelで生成とlock拒否を確認しています。
+
 Outliner starts inline rename from its context menu or a double click. The public
 InputText widget edits the UTF-8 draft; Enter commits and Escape cancels. Rename
 events preserve original/proposed text and starting revision; terminal overflow is

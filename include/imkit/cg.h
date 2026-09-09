@@ -106,9 +106,17 @@ struct ComponentView {
     const char *label="", *description="";
     bool enabled=true, expanded=false, locked=false;
 };
+struct ComponentTypeView {StableId id=0;const char *label="";};
+struct ComponentStackOptions {
+    StableId owner=0;
+    std::span<const ComponentTypeView> availableTypes;
+    bool locked=false;
+};
 // Toggle fields: 0 enabled, 1 expanded, 2 locked. Reorder carries owner and offset -1/+1.
+// ComponentAdd targets options.owner and carries the chosen type ID in proposed.parent.
 void ComponentStack(const char *id, std::span<const ComponentView> components,
-                    std::uint64_t revision, editor::EventBuffer &events);
+                    std::uint64_t revision, editor::EventBuffer &events,
+                    const ComponentStackOptions &options = {});
 struct UVVertex {
     StableId id = 0, island = 0;
     editor::Point uv{};

@@ -575,11 +575,11 @@ int main() {
     check(contextActions==7 && contextResult.kind==imkit::editor::EditKind::LinkGeometry && contextResult.proposed.parent==0,
           "Single user context action requests private geometry copy");
     ComponentView stackComponent{0x100000123ull,0x100000234ull,"Renderer","Host component"};
-    ImVec2 stackOrigin{};
+    ImVec2 stackOrigin{};ComponentStackOptions stackOptions{};
     auto stackFrame=[&] {
         handleEvents.Clear();ImGui::NewFrame();ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({800,600});
         ImGui::Begin("Component stack");stackOrigin=ImGui::GetCursorScreenPos();
-        ComponentStack("stack",{&stackComponent,1},9,handleEvents);
+        ComponentStack("stack",{&stackComponent,1},9,handleEvents,stackOptions);
         ImGui::End();ImGui::Render();
     };
     stackFrame();stackFrame();
@@ -591,6 +591,18 @@ int main() {
     stackComponent.locked=true;stackFrame();
     io.AddMouseButtonEvent(0,true);stackFrame();io.AddMouseButtonEvent(0,false);stackFrame();
     check(handleEvents.count==0 && stackComponent.enabled,"locked ComponentStack rejects enabled edit");
+    const ComponentTypeView stackTypes[]={{901,"Renderer"},{902,"Wire override"}};
+    stackOptions={stackComponent.owner,stackTypes,false};stackComponent.locked=false;stackFrame();
+    io.AddMousePosEvent(stackOrigin.x+12,stackOrigin.y+10);stackFrame();
+    io.AddMouseButtonEvent(0,true);stackFrame();io.AddMouseButtonEvent(0,false);stackFrame();stackFrame();
+    io.AddMousePosEvent(790,590);stackFrame();
+    io.AddKeyEvent(ImGuiKey_Home,true);stackFrame();io.AddKeyEvent(ImGuiKey_Home,false);stackFrame();
+    io.AddKeyEvent(ImGuiKey_DownArrow,true);stackFrame();io.AddKeyEvent(ImGuiKey_DownArrow,false);stackFrame();
+    io.AddKeyEvent(ImGuiKey_Enter,true);stackFrame();
+    check(handleEvents.count==1 && handleEvents.Events()[0].kind==imkit::editor::EditKind::ComponentAdd &&
+          handleEvents.Events()[0].target==stackComponent.owner && handleEvents.Events()[0].proposed.parent==902,
+          "ComponentStack add menu preserves owner and chosen type ID");
+    io.AddKeyEvent(ImGuiKey_Enter,false);stackFrame();
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
