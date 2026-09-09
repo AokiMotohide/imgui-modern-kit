@@ -318,6 +318,16 @@ void EditorWorkspaces::ApplyEvents() {
         }
         for (auto &strip:animationStrips) if (strip.id==e.target) {
             if (e.kind==editor::EditKind::StripSettings) {
+                if (strip.locked) {
+                    if (!(e.proposed.offset&2) && e.proposed.x==strip.scale && e.proposed.y==strip.repeat &&
+                        e.proposed.z==strip.blend && ((e.proposed.offset&1)!=0)==strip.muted) {
+                        strip.locked=false;changed=true;
+                    }
+                    continue;
+                }
+                if (!std::isfinite(e.proposed.x) || !std::isfinite(e.proposed.y) || !std::isfinite(e.proposed.z) ||
+                    e.proposed.x<.001 || e.proposed.x>1000 || e.proposed.y<.001 || e.proposed.y>1000 ||
+                    e.proposed.z<0 || e.proposed.z>1) continue;
                 strip.scale=e.proposed.x;strip.repeat=e.proposed.y;strip.blend=e.proposed.z;
                 strip.muted=(e.proposed.offset&1)!=0;strip.locked=(e.proposed.offset&2)!=0;changed=true;
             } else if ((e.kind==editor::EditKind::Move || e.kind==editor::EditKind::TrimStart ||
