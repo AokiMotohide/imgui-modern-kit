@@ -1,0 +1,4 @@
+Use case: logo-brand. Generate one individual software toolbar icon: SlideEdit. Geometry: one small central rectangular timeline clip outline, with a short left arrow outside its left edge and a short right arrow outside its right edge. Symmetric horizontal arrangement. It means shifting the entire central clip between two neighbors. Black 1.75-unit monoline on a 24-unit grid, round line ends, generous three-unit margins. True transparent RGBA background, fully opaque black strokes, no fill except the strokes, no lettering, no shading, no extra symbols. Square canvas. Optical balance and legibility at 16px. A technical UI glyph, not a scene or contact sheet.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/SlideEdit.png

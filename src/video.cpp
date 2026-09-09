@@ -206,9 +206,9 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     for (int i = 0; i < 7; ++i) {
         if (i)
             ImGui::SameLine();
-        if ((i==0 || i==1 || i==2 || i==4 || i==6) && s.icons) {
-            const IconId glyphs[]={IconId::SelectPointer,IconId::Razor,IconId::RippleEdit,IconId::Count,IconId::SlipEdit,IconId::Count,IconId::HandPan};
-            const char *tips[]={"Select clips","Razor: split clip at cursor","Ripple: trim and shift following clips","","Slip: change source range without moving clip","","Pan timeline"};
+        if (s.icons) {
+            const IconId glyphs[]={IconId::SelectPointer,IconId::Razor,IconId::RippleEdit,IconId::RollingEdit,IconId::SlipEdit,IconId::SlideEdit,IconId::HandPan};
+            const char *tips[]={"Select clips","Razor: split clip at cursor","Ripple: trim and shift following clips","Roll: move the boundary between adjacent clips","Slip: change source range without moving clip","Slide: move clip and trim its neighbors","Pan timeline"};
             const bool active=static_cast<int>(s.tool)==i;
             if (active) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
             if (IconButton(tools[i],*s.icons,glyphs[i],tips[i])) s.tool=static_cast<Tool>(i);

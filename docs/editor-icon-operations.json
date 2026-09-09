@@ -154,12 +154,13 @@
     },
     {
       "operation": "RollingEdit",
-      "widget": "Timeline",
+      "widget": "Timeline tool selector; Icon Gallery",
       "disposition": "new",
       "icon": "RollingEdit",
       "tooltip": "Rolling Edit",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "generated and connected; native 16px light and 150% dark inspected",
+      "evidence": "out/roll-slide-icons/icons-16-light.png; out/roll-slide-icons/page-6-dark-150.png (local captures, not distributed)"
     },
     {
       "operation": "SlipEdit",
@@ -173,12 +174,13 @@
     },
     {
       "operation": "SlideEdit",
-      "widget": "Timeline",
+      "widget": "Timeline tool selector; Icon Gallery",
       "disposition": "new",
       "icon": "SlideEdit",
       "tooltip": "Slide Edit",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "generated and connected; native 16px light and 150% dark inspected",
+      "evidence": "out/roll-slide-icons/icons-16-light.png; out/roll-slide-icons/page-6-dark-150.png (local captures, not distributed)"
     },
     {
       "operation": "Magnet",

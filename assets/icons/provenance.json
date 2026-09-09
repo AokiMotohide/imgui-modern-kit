@@ -1963,5 +1963,35 @@
       1110,
       796
     ]
+  },
+  {
+    "name": "RollingEdit",
+    "source": "assets/icons/originals/RollingEdit.png",
+    "sha256": "1f4e4221ced36c6e219218a39655880fa49b8f5e5693e80cc3b2039f96f7b145",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      218,
+      282,
+      1037,
+      972
+    ]
+  },
+  {
+    "name": "SlideEdit",
+    "source": "assets/icons/originals/SlideEdit.png",
+    "sha256": "1f6ca6656a5de7750ac474215684fafc24a38bba99518ce816d4acbc91e9834e",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      227,
+      538,
+      1027,
+      736
+    ]
   }
 ]
