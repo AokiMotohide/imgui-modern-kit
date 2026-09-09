@@ -71,6 +71,7 @@ struct ViewportState {
     Vec3 pivotPosition{}; // Host-computed median/bounds/cursor for non-individual pivots.
     const Camera *cameraView = nullptr; // Optional non-owning host camera; valid throughout the call.
     bool navigationGizmo = true;
+    editor::Transaction pivotDrag; // Position companion for rotation/scale around an external pivot.
 };
 struct ViewportView {
     ImVec2 min{}, size{};

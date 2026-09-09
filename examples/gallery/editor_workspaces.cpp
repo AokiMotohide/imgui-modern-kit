@@ -299,6 +299,10 @@ void EditorWorkspaces::RenderPreview() {
         if (viewport.drag.draft.kind == editor::EditKind::Scale)
             mesh.transform.scale = {v.x, v.y, v.z};
     }
+    if (viewport.pivotDrag.active && viewport.pivotDrag.draft.target==mesh.id) {
+        const auto &position=viewport.pivotDrag.draft.proposed;
+        mesh.transform.translation={position.x,position.y,position.z};
+    }
     previewRenderer.Render({&mesh, 1}, viewport.camera);
 }
 void EditorWorkspaces::ApplyEvents() {

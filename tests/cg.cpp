@@ -458,6 +458,22 @@ int main() {
         check(!handleState.drag.active && handleEvents.count==1 && handleEvents.Events()[0].kind==kind,
               "Unified preserves operation through commit");
     }
+    handleState.tool=TransformTool::Rotate;handleState.pivot=Pivot::Cursor;
+    handleState.pivotPosition={};handleObject.transform.translation={2,0,0};
+    io.AddMousePosEvent(ringCenter.x+88,ringCenter.y);handleFrame();handleFrame();
+    io.AddMouseButtonEvent(0,true);handleFrame();
+    check(handleState.drag.active && handleState.pivotDrag.active && handleEvents.count==2,
+          "external pivot begins rotation and position atomically");
+    io.AddMousePosEvent(ringCenter.x,ringCenter.y-88);handleFrame();
+    check(std::abs(handleState.pivotDrag.draft.proposed.x)<1e-6 &&
+          std::abs(handleState.pivotDrag.draft.proposed.y-2)<1e-6,"external pivot previews rotated position");
+    handleEvents.storage={handleStorage,1};io.AddMouseButtonEvent(0,false);handleFrame();
+    check(handleEvents.overflow && handleEvents.count==0 && handleState.drag.active && handleState.pivotDrag.active,
+          "short terminal buffer retains complete pivot transaction");
+    handleEvents.storage=handleStorage;handleFrame();
+    check(!handleState.drag.active && !handleState.pivotDrag.active && handleEvents.count==2 &&
+          handleEvents.Events()[0].phase==imkit::editor::Phase::Commit &&
+          handleEvents.Events()[1].phase==imkit::editor::Phase::Commit,"pivot terminal batch retries intact");
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
