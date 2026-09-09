@@ -355,21 +355,23 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
     if (s.drag.active) for (std::size_t i=0;i<s.companionCount;++i) {
         const auto target=s.companions[i].transform.draft.target;
         auto found=std::find_if(s.selectedObjects.begin(),s.selectedObjects.end(),[&](const auto &o){return o.id==target;});
-        selectionChanged |= found==s.selectedObjects.end() || found->locked;
+        selectionChanged |= found==s.selectedObjects.end() || found->locked || !found->visible;
     }
-    if (s.drag.active && (selectionChanged || revision!=s.drag.draft.revision || object.id!=s.drag.draft.target || object.locked ||
+    if (s.drag.active && (selectionChanged || revision!=s.drag.draft.revision || object.id!=s.drag.draft.target || object.locked || !object.visible ||
                          !s.gizmo || s.tool==TransformTool::Select || ImGui::IsKeyPressed(ImGuiKey_Escape))) {
         finish(true);return;
     }
     if (s.drag.active && (s.drag.draft.phase==editor::Phase::Commit || s.drag.draft.phase==editor::Phase::Cancel)) {
         finish(s.drag.draft.phase==editor::Phase::Cancel);return;
     }
-    if (!s.gizmo || s.tool == TransformTool::Select || object.locked)
+    if (!s.gizmo || s.tool == TransformTool::Select || object.locked || !object.visible)
         return;
     auto pivot = s.pivot == Pivot::Individual ? object.transform.translation : s.pivotPosition;
     auto center = Project(pivot, s.camera, v.min, v.size);
-    if (!center.visible)
+    if (!center.visible) {
+        if (s.drag.active) finish(true);
         return;
+    }
     auto basis = OrientationBasis(s.orientation, object.transform, s.camera, s.parentBasis, s.customBasis);
     auto *d = ImGui::GetWindowDrawList();
     const Vec3 axes[] = {basis.x, basis.y, basis.z};

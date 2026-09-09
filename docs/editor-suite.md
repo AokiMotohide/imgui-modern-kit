@@ -416,3 +416,7 @@ Dope Sheetは既存の複数キー選択をドラッグ時に維持します。�
 Axis and screen rotation rings accumulate the signed angular difference between consecutive mouse samples. Crossing ±180 degrees or completing multiple turns no longer resets the gesture angle; snap and fine adjustment use this accumulated angle. `ViewportState::rotationMouse` and `rotationAngle` are gesture state owned by the host. Rotation events still contain the resulting Euler orientation, not a revolution count. As with sampled pointer input, an angular jump greater than 180 degrees between samples is interpreted as the shorter arc.
 
 軸・screen回転リングは、隣接するマウス入力間の符号付き角度差を積算します。±180度の通過や複数周回で操作角度をリセットせず、snap・fineにも積算角度を使用します。`ViewportState::rotationMouse`と`rotationAngle`はホスト所有の操作状態です。回転イベントは周回数ではなく結果のEuler姿勢を返します。入力サンプル間で180度を超えて移動した場合は短い側の弧として解釈します。公開ImGui IOテストでscreenリングの810度までの連続操作を確認しています。
+
+Gizmo gestures cancel the complete transform batch when a participating object becomes hidden, or when the pivot cannot be projected (behind the near plane or in a zero-size viewport). An insufficient event buffer retains the pending Cancel batch for retry. Ordinary movement outside the viewport rectangle remains projectable and does not cancel the gesture.
+
+ギズモ操作は、参加対象の非表示化、またはpivotの投影不能（near planeより後方、Viewport寸法ゼロ）で変換バッチ全体をCancelします。event buffer不足時はCancel一式を保持して再送します。Viewport矩形の外への通常移動は投影可能なため取消しません。
