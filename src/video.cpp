@@ -558,12 +558,15 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 };
                 auto screen=[&](const EnvelopePoint &point) {return ImVec2{x+float(editor::Seconds(point.tick)*s.canvas.scale.x),
                     bottom-float(std::clamp(point.gain,0.,2.)*.5)*height};};
-                ImVec2 previous{};bool havePrevious=false;
-                for (std::size_t index=0;index<clip.envelope.size();++index) {
-                    const auto &point=clip.envelope[index];
-                    if (s.envelopeDrag.active && s.envelopeDrag.draft.target==point.id && s.envelopeDrag.draft.original.parent==clip.id) {
+                if (s.envelopeDrag.active && s.envelopeDrag.draft.original.parent==clip.id) {
+                    const auto tick=s.envelopeDrag.draft.original.first;
+                    auto point=std::lower_bound(clip.envelope.begin(),clip.envelope.end(),tick,
+                        [](const auto &p,Tick t){return p.tick<t;});
+                    while (point!=clip.envelope.end() && point->tick==tick && point->id!=s.envelopeDrag.draft.target) ++point;
+                    if (point!=clip.envelope.end() && point->tick==tick && point->id==s.envelopeDrag.draft.target) {
                         envelopeSeen=true;
-                        if (clip.locked || track.locked || point.locked) s.envelopeDrag.Cancel(out);
+                        const auto index=static_cast<std::size_t>(point-clip.envelope.begin());
+                        if (clip.locked || track.locked || point->locked) s.envelopeDrag.Cancel(out);
                         else if (s.envelopeDrag.draft.phase!=editor::Phase::Cancel && s.envelopeDrag.draft.phase!=editor::Phase::Commit) {
                             auto value=s.envelopeDrag.draft.original;
                             const Tick low=index ? clip.envelope[index-1].tick : 0;
@@ -577,6 +580,16 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                             }
                         }
                     }
+                }
+                const auto firstTick=editor::FromSeconds((view.min.x+s.headerWidth-5-x)/s.canvas.scale.x);
+                const auto lastTick=editor::FromSeconds((view.max.x+5-x)/s.canvas.scale.x);
+                auto first=std::lower_bound(clip.envelope.begin(),clip.envelope.end(),firstTick,[](const auto &p,Tick tick){return p.tick<tick;});
+                auto last=std::upper_bound(first,clip.envelope.end(),lastTick,[](Tick tick,const auto &p){return tick<p.tick;});
+                if (first!=clip.envelope.begin()) --first;
+                if (last!=clip.envelope.end()) ++last;
+                ImVec2 previous{};bool havePrevious=false;
+                for (auto current=first;current!=last;++current) {
+                    const auto &point=*current;
                     const auto position=screen(proposedPoint(point));
                     if (havePrevious) draw->AddLine(previous,position,ImGui::GetColorU32(theme.editor.scope),2);
                     previous=position;havePrevious=true;
