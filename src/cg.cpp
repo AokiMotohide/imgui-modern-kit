@@ -189,7 +189,7 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
     ImGui::PushID(id);
     ImGui::BeginChild("viewport", size, ImGuiChildFlags_Borders,
                       ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-    const char *tools[] = {"Select", "Translate", "Rotate", "Scale", "Unified"};
+    const auto &tools = s.labels.tools;
     for (int i = 0; i < 5; ++i) {
         if (i)
             ImGui::SameLine();
@@ -198,7 +198,7 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
     }
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImGui::GetFontSize()*9);
-    const char *projections[]={"Perspective","Orthographic","Camera"};
+    const auto &projections=s.labels.projections;
     if (ImGui::BeginCombo("##projection",projections[static_cast<int>(s.camera.projection)])) {
         for (int i=0;i<3;++i) {
             ImGui::BeginDisabled(i==2 && !s.cameraView);
@@ -212,27 +212,27 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
         s.camera=*s.cameraView;
         s.camera.projection=Projection::Camera;
     }
-    ImGui::Checkbox("Grid", &s.grid);
+    ImGui::Checkbox(s.labels.grid, &s.grid);
     ImGui::SameLine();
-    ImGui::Checkbox("Gizmo", &s.gizmo);
+    ImGui::Checkbox(s.labels.gizmo, &s.gizmo);
     ImGui::SameLine();
-    ImGui::Checkbox("Snap", &s.snap);
-    ImGui::SameLine();ImGui::Checkbox("Vertex normals",&s.normals);
-    ImGui::SameLine();ImGui::Checkbox("Face normals",&s.faceNormals);
+    ImGui::Checkbox(s.labels.snap, &s.snap);
+    ImGui::SameLine();ImGui::Checkbox(s.labels.vertexNormals,&s.normals);
+    ImGui::SameLine();ImGui::Checkbox(s.labels.faceNormals,&s.faceNormals);
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImGui::GetFontSize()*8);
     int orientation = static_cast<int>(s.orientation);
-    if (ImGui::Combo("##orientation", &orientation, "World\0Local\0View\0Parent\0Custom\0"))
+    if (ImGui::Combo("##orientation", &orientation, s.labels.orientations.data(), 5))
         s.orientation = static_cast<Orientation>(orientation);
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImGui::GetFontSize()*9);
     int pivot = static_cast<int>(s.pivot);
-    if (ImGui::Combo("##pivot", &pivot, "Individual\0Median\0Bounds\0Cursor\0"))
+    if (ImGui::Combo("##pivot", &pivot, s.labels.pivots.data(), 4))
         s.pivot = static_cast<Pivot>(pivot);
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImGui::GetFontSize()*7);
     int shading=s.shading==Shading::Wireframe ? 0 : 1;
-    if (ImGui::Combo("##shading",&shading,"Wireframe\0Solid\0"))
+    if (ImGui::Combo("##shading",&shading,s.labels.shading.data(), 2))
         s.shading=shading==0 ? Shading::Wireframe : Shading::Solid;
     if (s.tool==TransformTool::Select) {
         if (s.icons) {
@@ -241,10 +241,10 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
                 const bool active=s.lassoSelection==(i==1);
                 if (active) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
                 if (IconLabelButton(i ? "lasso" : "box",*s.icons,i ? IconId::LassoSelect : IconId::BoxSelect,
-                                    i ? "Lasso select" : "Box select",{16*ImGui::GetFontSize()/14})) s.lassoSelection=i==1;
+                                    i ? s.labels.lassoSelect : s.labels.boxSelect,{16*ImGui::GetFontSize()/14})) s.lassoSelection=i==1;
                 if (active) ImGui::PopStyleColor();
             }
-        } else ImGui::Checkbox("Lasso selection",&s.lassoSelection);
+        } else ImGui::Checkbox(s.labels.lassoSelect,&s.lassoSelection);
     }
     ViewportView v{ImGui::GetCursorScreenPos(), ImGui::GetContentRegionAvail(), ImGui::IsWindowHovered()};
     auto *d = ImGui::GetWindowDrawList();
@@ -302,7 +302,7 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
         }
         if (navigationHovered && hit>=0 && ImGui::IsMouseClicked(0))
             AlignCamera(s.camera,static_cast<Axis>(hit/2+1),hit%2!=0);
-        if (navigationHovered) ImGui::SetTooltip("Align view: click an axis");
+        if (navigationHovered) ImGui::SetTooltip("%s",s.labels.alignView);
         ImGui::SetCursorScreenPos(v.min);
     }
     if (v.hovered && !navigationHovered && ImGui::GetIO().MousePos.y >= v.min.y) {

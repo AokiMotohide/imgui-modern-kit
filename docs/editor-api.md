@@ -331,3 +331,13 @@ The same context menu creates link/group sets for multiple selected clips and th
 `preview::DrawMeshNormals` draws borrowed mesh vertex and/or face normals over either preview path, using `NormalOverlayOptions`. Length is in world units after normalization; vertex directions use inverse-transpose affine transforms and face directions use transformed triangle geometry. Invalid indices and zero/invalid lengths are skipped. It returns emitted segments, clips to the viewport and does not perform depth occlusion. Gallery connects ViewportState::normals/faceNormals to this overlay.
 
 `preview::DrawMeshNormals`は借用meshの頂点・面normalを両preview上へ描く公開DrawList APIで、`NormalOverlayOptions`で選択します。長さは正規化後のworld単位、頂点方向はアフィン変換の逆転置、面方向は変換後の三角形から計算します。無効indexや0・無効な長さを除外し、描いた線分数を返します。viewportでclipしますが、depthによる遮蔽は行いません。GalleryはViewportState::normals／faceNormalsをこの表示へ接続します。
+
+### Viewport labels / Viewportの表示文字列
+
+`cg::ViewportState::labels` accepts borrowed UTF-8 strings for tools, projection,
+orientation, pivot, shading, overlays and navigation hints. The host retains string
+storage through each viewport submission. Defaults are English; Gallery supplies Japanese.
+
+`cg::ViewportState::labels`でツール、投影、orientation、pivot、shading、overlay、
+navigationの表示文字列をUTF-8で指定できます。文字列は非所有参照で、ホストが描画中の寿命を保証します。
+既定は英語、Galleryは日本語切替に接続しています。
