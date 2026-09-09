@@ -8,7 +8,8 @@
       "icon": "SelectPointer",
       "tooltip": "Select clips",
       "state": "button background, focus outline and disabled styling",
-      "status": "generated and connected; native appearance review pending"
+      "status": "generated and connected; native dark 100% and light 150% appearance inspected",
+      "evidence": "out/select-pointer-native/page-8-dark.png; out/select-pointer-native/page-8-light-150.png (local captures, not distributed)"
     },
     {
       "operation": "BoxSelect",
