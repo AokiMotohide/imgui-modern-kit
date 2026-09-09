@@ -506,6 +506,9 @@ void VerifyTrackControls(Host &h,const std::filesystem::path &out) {
     h.mouse={-100,-100};h.Frame({},out/"track-menu-japanese-dark-150.png");
     h.Key(ImGuiKey_Home);h.Key(ImGuiKey_DownArrow);h.Key(ImGuiKey_Enter);
     require(s.tracks.front().mute,"native Japanese icon menu applies mute to host track");
+    h.ClickAt({s.timeline.view.min.x+15,s.timeline.view.min.y+38});h.mouse={-100,-100};h.Frame();
+    h.Key(ImGuiKey_Home);h.Key(ImGuiKey_DownArrow);h.Key(ImGuiKey_DownArrow);h.Key(ImGuiKey_Enter);
+    require(s.tracks.front().solo,"native Solo glyph menu applies solo to host track");
     log<<"Public ImGui IO and native GL backbuffer; native OS/IME input not tested.\n";
 }
 
