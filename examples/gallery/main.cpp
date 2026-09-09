@@ -591,6 +591,22 @@ int VerifyInspectorModel() {
         if (!ok) ++failures;
     };
     {
+        auto linkedStorage=std::make_unique<gallery::EditorWorkspaces>();
+        auto &linked=*linkedStorage;linked.Initialize();
+        linked.clips.resize(3);
+        linked.clips[0].linked=123;linked.clips[1].linked=123;
+        linked.clips[1].group=456;linked.clips[2].group=456;
+        const std::array ids{linked.clips[0].id};
+        auto members=linked.QuerySelectedClips(ids);
+        check(members.size()==3,"selected clip query resolves transitive linked and group membership");
+        linked.tracks.front().locked=true;members=linked.QuerySelectedClips(ids);
+        check(members.size()==3 && std::all_of(members.begin(),members.end(),[](const auto &c){return c.locked;}),
+              "related clip query propagates locked owner tracks");
+        const auto model=linked.clips.front();
+        for (int i=0;i<64;++i) {auto copy=model;copy.id=80000+i;linked.clips.push_back(copy);}
+        check(linked.QuerySelectedClips(ids).empty(),"related selection scratch overflow returns no partial members");
+    }
+    {
         auto queryStorage=std::make_unique<gallery::EditorWorkspaces>();
         auto &query=*queryStorage;
         for (int i=0;i<100000;++i) {

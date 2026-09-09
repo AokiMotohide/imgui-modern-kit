@@ -204,6 +204,31 @@ void EditorWorkspaces::Dataset(bool big) {
     RebuildTrackLayout();
     ++revision;SyncClipProperties();
 }
+std::span<const video::ClipView> EditorWorkspaces::QuerySelectedClips(std::span<const editor::StableId> ids) {
+    std::size_t count=0;
+    const auto append=[&](const video::ClipView &clip) {
+        if (std::any_of(selectedClips.begin(),selectedClips.begin()+count,
+            [&](const auto &selected){return selected.id==clip.id;})) return true;
+        if (count==selectedClips.size()) return false;
+        selectedClips[count]=clip;
+        const auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==clip.track;});
+        selectedClips[count++].locked=clip.locked || track==tracks.end() || track->locked;
+        return true;
+    };
+    for (const auto id:ids) {
+        const auto clip=std::find_if(clips.begin(),clips.end(),[&](const auto &c){return c.id==id;});
+        if (clip==clips.end() || !append(*clip)) return {};
+    }
+    // Link and group IDs identify sets; traverse their union transitively on edit start only.
+    for (std::size_t i=0;i<count;++i) {
+        const auto member=selectedClips[i];
+        if (!member.linked && !member.group) continue;
+        for (const auto &clip:clips)
+            if ((member.linked && member.linked==clip.linked) || (member.group && member.group==clip.group))
+                if (!append(clip)) return {};
+    }
+    return std::span<const video::ClipView>(selectedClips).first(count);
+}
 void EditorWorkspaces::RebuildClipIndex() {
     std::sort(clips.begin(),clips.end(),[](const auto &a,const auto &b) {
         return a.track!=b.track ? a.track<b.track : a.start<b.start;
@@ -1061,18 +1086,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         });
     };
     p.selected = [](void *u, std::span<const editor::StableId> ids) {
-        auto &s = *static_cast<EditorWorkspaces *>(u);
-        std::size_t n = 0;
-        for (auto id : ids) {
-            auto it = std::find_if(s.clips.begin(), s.clips.end(), [&](const auto &c) { return c.id == id; });
-            if (it != s.clips.end() && n < s.selectedClips.size()) {
-                s.selectedClips[n] = *it;
-                auto track = std::find_if(s.tracks.begin(), s.tracks.end(),
-                                          [&](const auto &t) { return t.id == it->track; });
-                s.selectedClips[n++].locked = it->locked || (track != s.tracks.end() && track->locked);
-            }
-        }
-        return std::span<const video::ClipView>(s.selectedClips).first(n);
+        return static_cast<EditorWorkspaces *>(u)->QuerySelectedClips(ids);
     };
     s.timeline.labels={};
     s.timeline.trackLabels={};

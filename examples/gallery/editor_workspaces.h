@@ -82,6 +82,7 @@ struct EditorWorkspaces {
     video::TimelineState timeline;
     std::array<video::TimelineState::MemberDrag, 32> clipDrags{};
     std::array<video::ClipView, 64> selectedClips{};
+    std::span<const video::ClipView> QuerySelectedClips(std::span<const editor::StableId> ids);
     editor::CurveState curve;
     std::array<cg::StripView,3> animationStrips{};
     editor::CanvasState stripCanvas;
