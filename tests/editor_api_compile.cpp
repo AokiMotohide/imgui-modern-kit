@@ -30,6 +30,7 @@ int main() {
     cg::ViewportState viewport;
     cg::OutlinerState outliner;
     cg::UVState uv;
+    video::ClipView evaluationClip;evaluationClip.keyEvaluation={};
     video::TimelineProvider gate;gate.canBeginEdit=[](void *,editor::StableId,editor::EditKind){return true;};
     timeline.trackLabels.controls="Track actions";timeline.trackLabels.names[0]="Visibility";
     curve.icons=&icons;uv.icons=&icons;viewport.icons=&icons;timeline.icons=&icons;

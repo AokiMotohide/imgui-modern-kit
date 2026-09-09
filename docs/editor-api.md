@@ -295,3 +295,7 @@ Timelineの`AddKey`はtarget=channel、parent=clip、first=clip内tick、x=値�
 `TimelineProvider::canBeginEdit(user, clip, kind)` is an optional host preflight for clip-body tools and Razor. Returning false suppresses their edit Begin without reporting a buffer shortage. It runs on gesture start, not steady frames. The host can inspect nonlocal constraints such as locked ripple followers; revision changes still cancel active transactions. Caption, envelope, transition and key tools retain their own contracts.
 
 `TimelineProvider::canBeginEdit(user, clip, kind)`はclip本体の編集toolとRazor向けの任意ホスト判定です。falseなら容量不足扱いにせず編集Beginを抑止します。定常フレームでは呼ばず、操作開始時に後続clipのlockなど非局所制約を確認できます。操作中のrevision変更は既存契約に従ってCancelします。caption、envelope、transition、keyの操作はそれぞれの契約を維持します。
+
+`ClipView::keyEvaluation` optionally borrows the full sorted local-time channel for key insertion evaluation. `keys` continues to supply drawable/editable clip-local keys. Empty evaluation context falls back to `keys`, then `keyDefaultValue`. The evaluator uses binary search and neighboring tangents; it does not draw or select off-clip context. Both spans remain host-owned.
+
+`ClipView::keyEvaluation`はkey挿入値の評価用に、ローカル時刻順の全channelを非所有参照できます。`keys`は引き続き描画・編集対象のclip内keyです。評価context未指定時は`keys`、さらに空なら`keyDefaultValue`を使用します。評価は二分探索と隣接接線を使用し、clip外contextを描画・選択しません。両spanともホスト所有です。
