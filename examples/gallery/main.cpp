@@ -599,6 +599,15 @@ int VerifyInspectorModel() {
         const std::array ids{linked.clips[0].id};
         auto members=linked.QuerySelectedClips(ids);
         check(members.size()==3,"selected clip query resolves transitive linked and group membership");
+        const auto firstStart=linked.clips.front().start;const auto revisionBefore=linked.revision;
+        linked.clips[1].locked=true;
+        for (const auto &clip:linked.clips)
+            linked.events.Push({clip.id,linked.revision,editor::Phase::Commit,editor::EditKind::Move,{},
+                editor::Value{clip.start+100,clip.start+clip.duration+100,clip.sourceIn,clip.track,clip.speed}});
+        linked.ApplyEvents();
+        check(linked.clips.front().start==firstStart && linked.revision==revisionBefore,
+              "late locked member rejects entire host clip commit batch before mutation");
+        linked.clips[1].locked=false;
         const auto sourceCount=linked.clips.size();
         for (const auto &clip:linked.clips)
             linked.events.Push({clip.id,linked.revision,editor::Phase::Commit,editor::EditKind::Duplicate,{},
