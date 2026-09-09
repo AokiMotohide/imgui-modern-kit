@@ -76,3 +76,16 @@ existing Gallery interaction runner passed (`out/editor-transaction-debug/`).
 transaction回帰はoverflow後の終端保持、Commit待機中の値変更拒否、CancelのCommit化防止を検証します。
 公開Timelineへ容量1のbufferを渡し、2 clipの終了を部分送信せず、容量回復後にrelease・revision cancelを
 まとめて完了することを確認しました。Debug Core/Videoテストと既存Gallery操作は合格です。
+
+## Color controls / 色操作
+
+Debug `imkit.video` verifies RGB waveform channel/column placement, rejects partial
+RGB buffers, and drives all three wheels through public ImGui IO. It checks RGB
+proposals, deferred host Commit and revision Cancel. `imkit.editor_api_compile`
+and the incremental external `imkit_editor_consumer` target compile the new overloads.
+The focused native `--verify-color` runner applies all three wheel commits to Gallery
+host values and captures light/dark backbuffers (`out/editor-color-debug/`).
+DebugのvideoテストはRGB waveformのchannel/横位置、不完全bufferの拒否、3つのwheelの公開IO操作、
+RGB提案値・host Commit・revision Cancelを確認します。API fixtureと外部consumerの増分ビルドも成功しました。
+専用の--verify-colorは3つのwheelをGalleryのhost値へ適用し、light/darkの実backbufferを保存します。
+画像でwheel・RGB paradeの描画を確認しました。native OS/IME・色管理の検証ではありません。

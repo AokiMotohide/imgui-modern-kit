@@ -47,6 +47,11 @@ int main() {
     video::LevelMeter("meter", {}, {}, {20, 100}, theme);
     video::Histogram("histogram", {}, {100, 50}, theme);
     video::ScopeImage("scope", {}, 0, 0, {100, 50}, theme);
+    video::ScopeImage("tinted scope", {}, 0, 0, {100,50}, theme, {1,0,0,1});
+    video::ColorValues colorValues;
+    video::ColorState colorState;
+    video::ColorControls("Color draft", colorValues);
+    video::ColorControls("Color events", colorValues, {101,203,307,409,503,607}, 1, colorState, events);
     auto view = cg::BeginViewport("viewport", viewport, {}, {300, 100}, theme);
     cg::ViewportObjects(view, {}, viewport, selection, 1, events, theme);
     cg::TransformGizmo(view, {}, viewport, 1, events, theme);

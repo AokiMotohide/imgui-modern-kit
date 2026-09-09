@@ -1,4 +1,5 @@
 #include <imkit/video.h>
+#include "transaction_support.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -538,19 +539,33 @@ bool BuildScopes(std::span<const Rgba> pixels, int w, int h, ScopeBuffers out) {
         out.green.size() != 256 || out.blue.size() != 256 || out.luma.size() != 256 ||
         out.waveform.size() != static_cast<std::size_t>(w) * 256 || out.vectorscope.size() != 65536)
         return false;
-    for (auto span : {out.red, out.green, out.blue, out.luma, out.waveform, out.vectorscope})
+    const auto waveSize = static_cast<std::size_t>(w) * 256;
+    const bool rgb = !out.redWaveform.empty() || !out.greenWaveform.empty() || !out.blueWaveform.empty();
+    if (rgb && (out.redWaveform.size() != waveSize || out.greenWaveform.size() != waveSize ||
+                out.blueWaveform.size() != waveSize))
+        return false;
+    for (auto span : {out.red, out.green, out.blue, out.luma, out.waveform, out.vectorscope,
+                     out.redWaveform, out.greenWaveform, out.blueWaveform})
         std::fill(span.begin(), span.end(), 0);
     auto bin = [](float value) {
         return static_cast<int>(std::clamp(std::isfinite(value) ? value : 0.f, 0.f, 1.f) * 255);
     };
     for (std::size_t i = 0; i < pixels.size(); ++i) {
         auto p = pixels[i];
+        p.r = std::isfinite(p.r) ? p.r : 0.f;
+        p.g = std::isfinite(p.g) ? p.g : 0.f;
+        p.b = std::isfinite(p.b) ? p.b : 0.f;
         float y = .2126f * p.r + .7152f * p.g + .0722f * p.b;
         ++out.red[bin(p.r)];
         ++out.green[bin(p.g)];
         ++out.blue[bin(p.b)];
         ++out.luma[bin(y)];
         ++out.waveform[bin(y) * w + i % w];
+        if (rgb) {
+            ++out.redWaveform[bin(p.r) * w + i % w];
+            ++out.greenWaveform[bin(p.g) * w + i % w];
+            ++out.blueWaveform[bin(p.b) * w + i % w];
+        }
         ++out.vectorscope[bin(.5f + (p.r - y) * .635f) * 256 + bin(.5f + (p.b - y) * .539f)];
     }
     return true;
@@ -570,6 +585,10 @@ void Histogram(const char *id, std::span<const std::uint32_t> bins, ImVec2 size,
 }
 void ScopeImage(const char *id, std::span<const std::uint32_t> bins, int w, int h, ImVec2 size,
                 const Theme &t) {
+    ScopeImage(id, bins, w, h, size, t, t.colors.success);
+}
+void ScopeImage(const char *id, std::span<const std::uint32_t> bins, int w, int h, ImVec2 size,
+                const Theme &, ImVec4 tint) {
     auto p = ImGui::GetCursorScreenPos();
     ImGui::InvisibleButton(id, size);
     if (w <= 0 || h <= 0 || bins.size() != static_cast<std::size_t>(w) * h)
@@ -581,22 +600,151 @@ void ScopeImage(const char *id, std::span<const std::uint32_t> bins, int w, int 
     for (int y = 0; y < h; ++y)
         for (int x = 0; x < w; ++x)
             if (bins[y * w + x]) {
-                auto c = t.colors.success;
-                c.w = static_cast<float>(std::log1p(bins[y * w + x]) / std::log1p(max));
+                auto c = tint;
+                c.w *= static_cast<float>(std::log1p(bins[y * w + x]) / std::log1p(max));
                 d->AddRectFilled({p.x + x * size.x / w, p.y + (h - 1 - y) * size.y / h},
                                  {p.x + (x + 1) * size.x / w, p.y + (h - y) * size.y / h},
                                  ImGui::GetColorU32(c));
             }
 }
-bool ColorControls(const char *id, ColorValues &draft) {
+namespace {
+editor::Value ColorValue(const float *rgb) { return {0,0,0,0,rgb[0],rgb[1],rgb[2]}; }
+void ColorEvent(StableId target, editor::Value original, editor::Value proposed, bool changed,
+                std::uint64_t revision, ColorState *state, editor::EventBuffer *events) {
+    if (!state || !events || !target)
+        return;
+    auto &drag = state->drag;
+    if (ImGui::IsItemActivated() && !drag.active)
+        drag.Begin(target, revision, editor::EditKind::Property, original, editor::CurrentModifiers(), *events);
+    if (drag.active && drag.draft.target == target) {
+        if (changed)
+            drag.Update(revision, proposed, *events);
+        if (ImGui::IsItemDeactivated())
+            drag.Commit(revision, *events);
+    }
+}
+bool Wheel(float *rgb, float diameter, ImVec2 &center) {
+    constexpr float pi = 3.14159265358979323846f;
+    const auto p = ImGui::GetCursorScreenPos();
+    float radius = diameter * .5f - 4;
+    center = {p.x + diameter * .5f, p.y + diameter * .5f};
+    ImGui::InvisibleButton("wheel", {diameter,diameter});
+    const float mean = (rgb[0] + rgb[1] + rgb[2]) / 3;
+    float x = rgb[0] - mean, y = (rgb[1] - rgb[2]) / std::sqrt(3.f);
+    bool changed = false;
+    if (ImGui::IsItemActive() && ImGui::IsMouseDown(0)) {
+        auto mouse = ImGui::GetIO().MousePos;
+        x = (mouse.x - center.x) / radius;
+        y = (center.y - mouse.y) / radius;
+        float length = std::hypot(x,y);
+        if (length > 1) { x /= length; y /= length; }
+        if (ImGui::IsMouseDoubleClicked(0)) x = y = 0;
+        float candidate[] = {mean + x, mean - .5f*x + std::sqrt(3.f)*.5f*y,
+                             mean - .5f*x - std::sqrt(3.f)*.5f*y};
+        for (int i=0; i<3; ++i) {
+            changed |= rgb[i] != candidate[i];
+            rgb[i] = candidate[i];
+        }
+    }
+    auto *draw = ImGui::GetWindowDrawList();
+    for (int ring=0; ring<8; ++ring)
+        for (int sector=0; sector<48; ++sector) {
+            float a = sector * 2*pi/48, b = (sector+1) * 2*pi/48;
+            float inner = radius*ring/8, outer = radius*(ring+1)/8;
+            float hue = (sector+.5f)/48, saturation = (ring+.5f)/8;
+            ImVec4 color;
+            ImGui::ColorConvertHSVtoRGB(hue,saturation,.85f,color.x,color.y,color.z);
+            color.w = 1;
+            auto point = [&](float angle, float r) {
+                return ImVec2{center.x+std::cos(angle)*r, center.y-std::sin(angle)*r};
+            };
+            draw->AddQuadFilled(point(a,inner),point(a,outer),point(b,outer),point(b,inner),
+                                ImGui::GetColorU32(color));
+        }
+    const auto border = ImGui::GetColorU32(ImGuiCol_Border);
+    draw->AddCircle(center,radius,border,64,1.5f);
+    draw->AddLine({center.x-4,center.y},{center.x+4,center.y},border);
+    draw->AddLine({center.x,center.y-4},{center.x,center.y+4},border);
+    float length = std::hypot(x,y);
+    if (length>1) { x/=length; y/=length; }
+    ImVec2 thumb{center.x+x*radius,center.y-y*radius};
+    draw->AddCircleFilled(thumb,5,ImGui::GetColorU32(ImGuiCol_WindowBg));
+    draw->AddCircle(thumb,5,ImGui::GetColorU32(ImGuiCol_Text),16,2);
+    if (ImGui::IsItemFocused())
+        draw->AddRect(p,{p.x+diameter,p.y+diameter},ImGui::GetColorU32(ImGuiCol_NavCursor),4.f,2.f,ImDrawFlags_None);
+    return changed;
+}
+bool ColorPanel(const char *id, ColorValues &draft, const ColorValues &original,
+                const ColorPropertyIds &ids, std::uint64_t revision, ColorState *state,
+                editor::EventBuffer *events, const ColorLabels &labels) {
     ImGui::PushID(id);
-    bool changed = ImGui::ColorEdit3("Lift", draft.lift);
-    changed |= ImGui::ColorEdit3("Gamma", draft.gamma);
-    changed |= ImGui::ColorEdit3("Gain", draft.gain);
-    changed |= ImGui::SliderFloat("Temperature", &draft.temperature, -1, 1);
-    changed |= ImGui::SliderFloat("Tint", &draft.tint, -1, 1);
-    changed |= ImGui::SliderFloat("Exposure", &draft.exposure, -10, 10);
+    bool changed = false;
+    float *rgb[] = {draft.lift,draft.gamma,draft.gain};
+    const float *source[] = {original.lift,original.gamma,original.gain};
+    const StableId targets[] = {ids.lift,ids.gamma,ids.gain};
+    const char *names[] = {labels.lift,labels.gamma,labels.gain};
+    const int columns = ImGui::GetContentRegionAvail().x < ImGui::GetFontSize()*30 ? 1 : 3;
+    if (ImGui::BeginTable("wheels",columns)) {
+        for (int i=0; i<3; ++i) {
+            ImGui::TableNextColumn();
+            ImGui::PushID(i);
+            ImGui::TextUnformatted(names[i]);
+            ImGui::BeginDisabled(state && !targets[i]);
+            float diameter = std::clamp(ImGui::GetContentRegionAvail().x, 64.f, ImGui::GetFontSize()*8);
+            ImVec2 center;
+            bool edited = Wheel(rgb[i],diameter,center);
+            ColorEvent(targets[i],ColorValue(source[i]),ColorValue(rgb[i]),edited,revision,state,events);
+            changed |= edited;
+            if (state) { state->wheelCenters[i]=center; state->wheelRadius=diameter*.5f-4; }
+            ImGui::SetNextItemWidth(diameter);
+            float mean = (rgb[i][0]+rgb[i][1]+rgb[i][2])/3, before = mean;
+            edited = ImGui::SliderFloat(labels.level,&mean,i==0 ? -1.f : .01f,i==0 ? 1.f : 4.f);
+            if (edited) for (int c=0;c<3;++c) rgb[i][c] += mean-before;
+            ColorEvent(targets[i],ColorValue(source[i]),ColorValue(rgb[i]),edited,revision,state,events);
+            changed |= edited;
+            ImGui::EndDisabled();
+            ImGui::PopID();
+        }
+        ImGui::EndTable();
+    }
+    float *scalars[] = {&draft.temperature,&draft.tint,&draft.exposure};
+    float values[] = {original.temperature,original.tint,original.exposure};
+    StableId scalarIds[] = {ids.temperature,ids.tint,ids.exposure};
+    const char *scalarNames[] = {labels.temperature,labels.tint,labels.exposure};
+    for (int i=0; i<3; ++i) {
+        ImGui::PushID(i+3);
+        ImGui::BeginDisabled(state && !scalarIds[i]);
+        bool edited = ImGui::SliderFloat(scalarNames[i],scalars[i],i==2 ? -10.f : -1.f,i==2 ? 10.f : 1.f);
+        ColorEvent(scalarIds[i],{0,0,0,0,values[i]},{0,0,0,0,*scalars[i]},edited,revision,state,events);
+        changed |= edited;
+        ImGui::EndDisabled();
+        ImGui::PopID();
+    }
     ImGui::PopID();
     return changed;
+}
+}
+bool ColorControls(const char *id, ColorValues &draft) {
+    const ColorValues original = draft;
+    return ColorPanel(id,draft,original,{},0,nullptr,nullptr,{});
+}
+void ColorControls(const char *id, const ColorValues &values, const ColorPropertyIds &ids,
+                   std::uint64_t revision, ColorState &state, editor::EventBuffer &events,
+                   const ColorLabels &labels) {
+    detail::ResumeTerminal(state.drag,revision,events);
+    if (state.drag.active && ImGui::IsKeyPressed(ImGuiKey_Escape)) state.drag.Cancel(events);
+    auto draft = values;
+    if (state.drag.active) {
+        const auto &event = state.drag.draft;
+        float *rgb = event.target == ids.lift ? draft.lift : event.target == ids.gamma ? draft.gamma :
+                     event.target == ids.gain ? draft.gain : nullptr;
+        if (rgb) { rgb[0]=static_cast<float>(event.proposed.x); rgb[1]=static_cast<float>(event.proposed.y);
+                   rgb[2]=static_cast<float>(event.proposed.z); }
+        else if (event.target == ids.temperature) draft.temperature=static_cast<float>(event.proposed.x);
+        else if (event.target == ids.tint) draft.tint=static_cast<float>(event.proposed.x);
+        else if (event.target == ids.exposure) draft.exposure=static_cast<float>(event.proposed.x);
+        else state.drag.Cancel(events);
+    }
+    ColorPanel(id,draft,values,ids,revision,&state,&events,labels);
 }
 } // namespace imkit::video

@@ -402,9 +402,33 @@ void VerifyEditors(Host &h, const std::filesystem::path &out, const imkit::previ
     log<<"Public IO and actual GPU; native OS/IME and media decode not tested.\n";
 }
 
+void VerifyColor(Host &h, const std::filesystem::path &out) {
+    auto &s=h.s.editors;
+    s.videoPanel=1; h.Page(8); h.Settle(4);
+    std::ofstream log(out/"color-interaction.txt");
+    for (int wheel=0; wheel<3; ++wheel) {
+        auto center=s.colorState.wheelCenters[wheel];
+        auto before=s.commits;
+        h.mouse=center; h.Frame();
+        h.Frame([](auto &io){io.AddMouseButtonEvent(0,true);});
+        h.mouse={center.x+s.colorState.wheelRadius*.5f,center.y}; h.Frame();
+        h.Frame([](auto &io){io.AddMouseButtonEvent(0,false);});
+        h.Settle(2);
+        const float *rgb=wheel==0 ? s.colors.lift : wheel==1 ? s.colors.gamma : s.colors.gain;
+        if (s.commits<=before || rgb[0]<=rgb[1])
+            throw std::runtime_error("Color wheel host application failed");
+        log<<"PASS wheel "<<wheel<<" public IO RGB host commit\n";
+    }
+    for (int dark=0;dark<2;++dark) {
+        h.s.dark=dark!=0;
+        h.s.theme=imkit::MakePrecisionTheme(dark ? imkit::ColorScheme::Dark : imkit::ColorScheme::Light);
+        h.Settle(2);
+        h.Frame({},out/(dark ? "color-dark.png" : "color-light.png"));
+    }
+}
 } // namespace
 int main(int argc, char **argv) {
-    bool capture = false, verify = false, verifyIcons = false, verifyEditors = false;
+    bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false;
     int capturePage = -1;
     std::filesystem::path out = "out/catalog";
     for (int i = 1; i < argc; ++i) {
@@ -418,6 +442,8 @@ int main(int argc, char **argv) {
             verifyEditors = true;
         else if (a == "--verify-icons")
             verifyIcons = true;
+        else if (a == "--verify-color")
+            verifyColor = true;
         else if (a == "--output" && i + 1 < argc)
             out = argv[++i];
         else if (a == "--page" && i + 1 < argc)
@@ -434,10 +460,10 @@ int main(int argc, char **argv) {
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_VISIBLE, capture || verify || verifyIcons || verifyEditors ? GLFW_FALSE : GLFW_TRUE);
+    glfwWindowHint(GLFW_VISIBLE, capture || verify || verifyIcons || verifyEditors || verifyColor ? GLFW_FALSE : GLFW_TRUE);
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
     Host h;
-    h.automated = capture || verify || verifyIcons || verifyEditors;
+    h.automated = capture || verify || verifyIcons || verifyEditors || verifyColor;
     h.window = glfwCreateWindow(1920, 1440, "ImKit Precision Layers", nullptr, nullptr);
     if (!h.window) {
         glfwTerminate();
@@ -562,6 +588,8 @@ int main(int argc, char **argv) {
                 Verify(h, out);
             if (verifyEditors)
                 VerifyEditors(h, out, previewFunctions);
+            if (verifyColor)
+                VerifyColor(h, out);
             if (verifyIcons)
                 VerifyIcons(h, out);
             if (capture) {

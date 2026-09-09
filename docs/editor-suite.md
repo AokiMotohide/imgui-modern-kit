@@ -94,6 +94,30 @@ host responsibilities. Monitor flipY explicitly selects texture UV orientation.
 PCMはinterleaved spanとchannelを指定します。scopeはCPU RGBAだけを集計し、decode・再生・
 resample・色管理は行いません。衝突方針・Undo・media loading・保存もホスト責務です。
 
+`ScopeBuffers` accepts optional red/green/blue waveform spans, each `width * 256`
+bins. Supply all three or leave all empty. Histogram and waveform bin ranges are
+clamped to [0,1]; nonfinite components become zero. The tinted `ScopeImage` overload
+supports RGB parade rendering. Existing luma/vectorscope buffers remain required.
+ScopeBuffersのRGB waveformは各width×256 binで、3本とも指定するかすべて空にします。
+binは[0,1]へclampし、非有限成分は0として集計します。色指定のScopeImage overloadでRGB paradeを
+描画できます。既存のluma/vectorscope領域は引き続き必須です。
+
+Three-way ColorControls now provide hue/chroma disks plus independent neutral-level
+sliders for Lift/Gamma/Gain, and Temperature/Tint/Exposure sliders. Disk edits
+preserve the RGB mean; double-click centers chroma. The original overload edits a
+host-owned draft. The event overload accepts immutable `ColorValues`, six explicit
+`ColorPropertyIds`, host-owned `ColorState`, revision and `EventBuffer`; it emits
+Begin/Update/Commit/Cancel without mutating source values. Zero property IDs disable
+their controls. RGB properties use `Value::x/y/z`, scalar properties use x. Supply
+UTF-8 `ColorLabels` for localization. These are grading controls, not a color-managed
+image processing or playback engine.
+ColorControlsはLift/Gamma/Gainそれぞれの色相・彩度diskと独立した平均level、Temperature/Tint/Exposureを
+操作できます。disk編集はRGB平均を維持し、double-clickで彩度を中心へ戻します。既存overloadはホスト所有の
+draftを編集します。event overloadは不変ColorValues・明示的な6つのproperty ID・ホスト所有state・revision・
+event bufferを受け、元データを変更せずBegin/Update/Commit/Cancelを返します。IDが0の操作はdisabledです。
+RGBはValueのx/y/z、scalarはxを使い、表示文字列はUTF-8のColorLabelsで指定できます。色管理・画像処理・再生
+engineを提供するものではありません。GalleryのColorタブはeventを合成ホストの色設定へ適用します。
+
 ## CG / CG編集
 
 `imkit::cg` provides camera projection, navigation, object-origin picking, axis gizmo,
@@ -148,13 +172,13 @@ revisionを進め、object選択を同期します。100k切替は256 track・10
 The requested 1.0 suite is **not complete**. Remaining work includes fully integrated
 box/lasso and multi-key workflows, per-track variable heights, complete track flags,
 transition handles/picker, linked/group sample policy, audio envelope editing,
-RGB waveform and three-way wheels, gizmo plane/screen handles and full pivot rotation,
+gizmo plane/screen handles and full pivot rotation,
 navigation gizmo, hierarchy rename/reorder and stack inspector, UV edge/face/island
 interaction, strip scale/repeat/blend editing, editor-specific icon expansion,
 complete localization and all requested representative input checks. Provider search
 controls exist, but the Gallery's sample providers do not yet apply every filter.
 依頼された1.0 Suiteは**未完成**です。box/lassoと複数key操作の統合、可変track高と全flag、
-transition編集/picker、linked/groupのsample処理、audio envelope、RGB waveform/three-way wheel、
+transition編集/picker、linked/groupのsample処理、audio envelope、
 gizmoのplane/screen handleとpivot回転、navigation gizmo、階層rename/reorderとstack inspector、
 UVのedge/face/island操作、strip scale/repeat/blend、editor icon追加、完全な表示文字列差替え、
 全代表操作の検証が残っています。Gallery providerでは全検索条件の適用も未完了です。

@@ -130,14 +130,34 @@ struct ScopeBuffers {
     std::span<std::uint32_t> red, green, blue, luma; // 256 histogram bins each.
     std::span<std::uint32_t> waveform;               // width * 256 luma bins.
     std::span<std::uint32_t> vectorscope;            // 256 * 256 chroma bins.
+    // Optional RGB parade: provide all three width * 256 buffers, or leave all empty.
+    std::span<std::uint32_t> redWaveform, greenWaveform, blueWaveform;
 };
 bool BuildScopes(std::span<const Rgba> pixels, int width, int height, ScopeBuffers output);
 void Histogram(const char *id, std::span<const std::uint32_t> bins, ImVec2 size, const Theme &theme);
 void ScopeImage(const char *id, std::span<const std::uint32_t> bins, int width, int height, ImVec2 size,
                 const Theme &theme);
+void ScopeImage(const char *id, std::span<const std::uint32_t> bins, int width, int height, ImVec2 size,
+                const Theme &theme, ImVec4 tint);
 struct ColorValues {
     float lift[3]{}, gamma[3]{1, 1, 1}, gain[3]{1, 1, 1};
     float temperature = 0, tint = 0, exposure = 0;
 };
 bool ColorControls(const char *id, ColorValues &hostDraft);
+struct ColorPropertyIds {
+    StableId lift = 0, gamma = 0, gain = 0, temperature = 0, tint = 0, exposure = 0;
+};
+struct ColorLabels {
+    const char *lift = "Lift", *gamma = "Gamma", *gain = "Gain";
+    const char *temperature = "Temperature", *tint = "Tint", *exposure = "Exposure", *level = "Level";
+};
+struct ColorState {
+    editor::Transaction drag;
+    std::array<ImVec2, 3> wheelCenters{}; // Last layout, for host overlays and public IO automation.
+    float wheelRadius = 0;
+};
+// RGB edits use Value::x/y/z; scalar edits use x. IDs are explicit, unique and nonzero.
+void ColorControls(const char *id, const ColorValues &values, const ColorPropertyIds &ids,
+                   std::uint64_t revision, ColorState &state, editor::EventBuffer &events,
+                   const ColorLabels &labels = {});
 } // namespace imkit::video

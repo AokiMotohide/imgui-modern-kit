@@ -58,6 +58,21 @@ handleは相対秒/値のx/y、reparentはparentを使います。Galleryの適�
 
 ## GL pass contract / GL pass契約
 
+Color API inventory / 色操作API一覧:
+
+| Signature / 署名 | Contract / 契約 |
+|---|---|
+| `ScopeBuffers::redWaveform/greenWaveform/blueWaveform` | Optional three `width * 256` spans; all-or-none / RGB binは3本一括指定 |
+| `ScopeImage(..., const Theme&, ImVec4 tint)` | Tinted CPU scope drawing, no texture ownership / 指定色でbin描画 |
+| `bool ColorControls(const char*, ColorValues&)` | Host draft editing; compatible existing signature / 既存draft編集 |
+| `void ColorControls(const char*, const ColorValues&, const ColorPropertyIds&, uint64_t, ColorState&, EventBuffer&, const ColorLabels& = {})` | Immutable source and typed RGB/scalar transactions; six independent IDs / 不変sourceと明示IDのtransaction |
+
+Both ColorControls overloads render actual draggable three-way wheels and level
+sliders. ColorState records current wheel centers/radius for host overlays and
+public-IO automation. Neither overload provides a color management pipeline.
+両overloadはthree-way wheelとlevel sliderを描画します。ColorStateの中心座標・半径はホストのoverlay・
+公開IO自動操作に使えます。色管理pipelineは含みません。
+
 Populate every function pointer from the current OpenGL 3.3 context, initialize the
 renderer, render non-owning mesh views and pass `Texture()` to the host UI. Use flipped
 UVs for the FBO image. `Pick(x,y)` accepts top-left coordinates. Always call Shutdown
