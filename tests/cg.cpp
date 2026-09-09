@@ -107,6 +107,44 @@ int main() {
     navigationFrame();
     check(navigation.camera.distance==12 && navigation.camera.yaw==.2,
           "camera view consumes the non-owning host camera");
+    std::array<imkit::editor::Keyframe,2> dopeKeys{{{901,1,imkit::editor::FromSeconds(1),.2},
+        {902,1,imkit::editor::FromSeconds(2),.7}}};
+    imkit::editor::CurveProvider dopeProvider;
+    dopeProvider.user=&dopeKeys;dopeProvider.revision=1;
+    dopeProvider.query=[](void *u,imkit::editor::CurveQuery) {
+        return std::span<const imkit::editor::Keyframe>(*static_cast<decltype(dopeKeys)*>(u));
+    };
+    dopeProvider.selected=[](void *u,std::span<const imkit::editor::StableId>) {
+        return std::span<const imkit::editor::Keyframe>(*static_cast<decltype(dopeKeys)*>(u));
+    };
+    imkit::editor::CurveState dopeState;
+    std::array<imkit::editor::Transaction,1> dopeCompanions{};dopeState.companionDrags=dopeCompanions;
+    std::array<imkit::editor::StableId,2> dopeIds{901,902};
+    imkit::editor::Selection dopeSelection{dopeIds,2,901};
+    std::array<imkit::editor::Event,8> dopeStorage{};imkit::editor::EventBuffer dopeEvents{dopeStorage};
+    auto dopeFrame=[&] {
+        dopeEvents.Clear();ImGui::NewFrame();
+        ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({800,600});ImGui::Begin("Dope test");
+        DopeSheet("dope",dopeProvider,dopeState,dopeSelection,dopeEvents,
+            imkit::MakePrecisionTheme(imkit::ColorScheme::Dark),{700,400});
+        ImGui::End();ImGui::Render();
+    };
+    dopeFrame();dopeFrame();
+    auto gesture=[&](float pixels) {
+        const auto x=dopeState.view.min.x+100,y=dopeState.view.min.y+15;
+        io.AddMousePosEvent(x,y);dopeFrame();io.AddMouseButtonEvent(0,true);dopeFrame();
+        io.AddMousePosEvent(x+pixels,y);dopeFrame();io.AddMouseButtonEvent(0,false);dopeFrame();
+    };
+    gesture(25);
+    check(dopeEvents.count==2 && dopeEvents.Events()[0].proposed.first==imkit::editor::FromSeconds(1.25) &&
+        dopeEvents.Events()[1].proposed.first==imkit::editor::FromSeconds(2.25),"Dope Sheet moves selected keys together");
+    dopeState.scaleTime=true;gesture(100);
+    check(dopeEvents.count==2 && dopeEvents.Events()[0].kind==imkit::editor::EditKind::KeyScale &&
+        dopeEvents.Events()[1].proposed.first==imkit::editor::FromSeconds(3),"Dope Sheet scales selected timing");
+    io.AddKeyEvent(ImGuiMod_Alt,true);dopeFrame();gesture(25);
+    check(dopeEvents.count==2 && dopeEvents.Events()[0].kind==imkit::editor::EditKind::Duplicate &&
+        dopeEvents.Events()[1].kind==imkit::editor::EditKind::Duplicate,"Dope Sheet Alt duplicates selection");
+    io.AddKeyEvent(ImGuiMod_Alt,false);dopeFrame();
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
