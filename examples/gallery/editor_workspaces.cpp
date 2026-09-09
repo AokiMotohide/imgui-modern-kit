@@ -551,8 +551,10 @@ void EditorWorkspaces::ApplyEvents() {
                        e.kind == editor::EditKind::TrimEnd || e.kind == editor::EditKind::Slip ||
                        e.kind == editor::EditKind::Ripple || e.kind == editor::EditKind::Roll ||
                        e.kind == editor::EditKind::Slide) {
+                const auto oldEnd=clip->start+clip->duration;
+                if (clip->start==e.proposed.first && oldEnd==e.proposed.last && clip->sourceIn==e.proposed.offset)
+                    continue;
                 auto track = clip->track;
-                auto oldEnd = clip->start + clip->duration;
                 clip->start = e.proposed.first;
                 clip->duration = e.proposed.last - e.proposed.first;
                 clip->sourceIn = e.proposed.offset;
