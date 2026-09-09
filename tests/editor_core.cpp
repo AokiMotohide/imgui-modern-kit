@@ -144,6 +144,55 @@ int main() {
     const bool beforeLoop=transport.loop;
     press(ImGuiKey_F7,loopBinding);
     check(transport.loop!=beforeLoop,"loop command is applied");
+    PropertyView property{92371,"Opacity","Video",.75,1};
+    PropertyState propertyState;
+    propertyState.time=FrameToTick(12,{24,1});
+    std::array<Event,16> propertyStorage{};
+    EventBuffer propertyEvents{propertyStorage};
+    int adds=0,removes=0,toggles=0;
+    PropertyProvider propertyProvider{&property,1,1,[](void *user,int first,int count,std::string_view) {
+        return first==0 && count>0 ? std::span<const PropertyView>(static_cast<PropertyView*>(user),1)
+                                  : std::span<const PropertyView>{};
+    }};
+    auto propertyFrame=[&] {
+        propertyEvents.Clear();
+        ImGui::NewFrame();
+        ImGui::SetNextWindowPos({0,0}); ImGui::SetNextWindowSize({780,300});
+        ImGui::Begin("Property actions");
+        PropertyGrid("inspector",propertyProvider,propertyState,propertyEvents);
+        ImGui::End(); ImGui::Render();
+        for (const auto &event:propertyEvents.Events()) {
+            check(event.target==property.id,"property action preserves explicit ID");
+            if (event.kind==EditKind::PropertyKey) {
+                check(event.proposed.first==propertyState.time && event.proposed.x==.75,
+                      "property key carries exact playhead and value");
+                auto action=static_cast<PropertyKeyAction>(event.proposed.offset);
+                if (action==PropertyKeyAction::Add) {++adds;property.flags=PropertyFlags::Keyed;}
+                if (action==PropertyKeyAction::Remove) {++removes;property.flags=PropertyFlags::None;}
+            }
+            if (event.kind==EditKind::Toggle) {
+                ++toggles;
+                unsigned flags=static_cast<unsigned>(property.flags), bit=static_cast<unsigned>(event.proposed.x);
+                property.flags=static_cast<PropertyFlags>(event.proposed.y ? flags|bit : flags&~bit);
+            }
+        }
+    };
+    propertyFrame(); propertyFrame();
+    auto clickProperty=[&](float x,float y,int button=0) {
+        io.AddMousePosEvent(x,y); propertyFrame();
+        io.AddMouseButtonEvent(button,true); propertyFrame();
+        io.AddMouseButtonEvent(button,false); propertyFrame();
+    };
+    clickProperty(760,57);
+    check(adds==1,"property add key button public IO");
+    clickProperty(760,57);
+    check(removes==1,"property remove key button public IO");
+    property.flags=PropertyFlags::Locked;
+    clickProperty(760,57);
+    check(adds==1 && removes==1,"locked property blocks key changes");
+    clickProperty(40,57,1); propertyFrame();
+    clickProperty(80,93);
+    check(toggles==1 && property.flags==PropertyFlags::None,"locked property can be unlocked from label menu");
     ImGui::DestroyContext(context);
     std::puts(failures ? "FAIL editor core"
                        : "PASS timebase, drop-frame, snap, transaction, canvas and curves");
