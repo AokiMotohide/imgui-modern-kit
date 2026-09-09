@@ -633,20 +633,20 @@ Gallery clip queries use an end-time segment tree rebuilt after host edits. Trac
 
 Galleryのclip検索はホスト編集後に再構築する終了時刻のsegment treeを使用します。track・開始時刻の範囲と部分木の最大終了時刻で範囲外を除外し、固定秒数の探索制限をなくしました。返却spanは再構築時に確保したホスト領域を借用します。10万clipの回帰で長いclip、track分離、duration変更、疎な検索の訪問node数150未満、作業領域の容量不変を確認しています。これは検索契約の検証であり、最終Releaseフレーム計測は別途必要です。
 
-### Interval-index performance checkpoint / 区間索引の性能確認
+### Related-edit performance checkpoint / 関連編集の性能確認
 
-Release, 1920×1440, 256 tracks, 100,096 clips and 100,000 keys; 20 warm-up and 180 measured frames per operation. Public ImGui IO drives the native GL window. The wall-time boundary includes host apply, preview render, ImGui, GL submission and swap with vsync off. This checkpoint includes the interval clip index and selected-clip completeness guards; it does not establish completion of the whole suite.
+Release, 1920×1440, 256 tracks, 100,096 clips and 100,000 keys; 20 warm-up and 180 measured frames per operation. Public ImGui IO drives the native GL window. The wall-time boundary includes host apply, preview render, ImGui, GL submission and swap with vsync off. This checkpoint includes the interval/ID indices, related edits and relationship context actions; it does not establish completion of the whole suite.
 
-Release・1920×1440・256 track・100,096 clip・100,000 keyで、操作ごとに20 warm-up frame後の180 frameを測定しました。公開ImGui IOでnative GL windowを操作し、ホスト適用・preview描画・ImGui・GL送信・swapを含むwall時間です。vsyncは無効です。区間索引と選択clipの完全性検査を含む時点の測定であり、Suite全体の完成を証明するものではありません。
+Release・1920×1440・256 track・100,096 clip・100,000 keyで、操作ごとに20 warm-up frame後の180 frameを測定しました。公開ImGui IOでnative GL windowを操作し、ホスト適用・preview描画・ImGui・GL送信・swapを含むwall時間です。vsyncは無効です。区間・ID索引、関連編集、関係context actionを含む時点の測定であり、Suite全体の完成を証明するものではありません。
 
 | Operation / 操作 | P95 ms | Max ms | Terminal frame ms / 確定frame |
 |---|---:|---:|---:|
-| Pan | 1.8873 | 2.5984 | 1.0424 |
-| Zoom | 1.6569 | 2.5332 | 1.7151 |
-| Selection | 1.6229 | 2.1567 | 0.9766 |
-| Clip drag | 1.6642 | 1.8953 | 8.5416 |
-| Clip trim | 1.6272 | 2.2675 | 7.1264 |
-| Keyframe drag | 1.5771 | 3.0091 | 9.3691 |
+| Pan | 1.6822 | 2.2616 | 1.9811 |
+| Zoom | 1.7300 | 2.9294 | 0.9631 |
+| Selection | 1.7890 | 2.4931 | 1.0157 |
+| Clip drag | 1.8730 | 2.4208 | 9.2084 |
+| Clip trim | 1.6781 | 2.3307 | 8.3003 |
+| Keyframe drag | 1.7585 | 2.1366 | 9.3105 |
 
 Every operation passed its interaction check. Per-frame maxima were 7 queries, 30 returned clips, 8 returned editing keys and 6 returned track rows. Keys count clip-local editing spans and Curve query neighbors per return; full borrowed evaluation channels are excluded. C++ new and ImGui allocator counts were both zero during the measured interval; driver/OS allocations are excluded. The benchmark now enforces these allocation gates as well as P95 and bounded query results.
 
@@ -707,3 +707,7 @@ Unit-speed EditClip and SplitClip keep source-range checks, source handles and s
 Link/group context actions reuse Link/Layers icons, with explicit create/detach labels and disabled styling. The operation map records the four integrated Timeline actions. Native public-IO creation and removal checks passed with the icons; the Japanese menu backbuffer was visually inspected.
 
 link／groupのcontext actionはLink／Layersを再利用し、作成・解除を操作名とdisabled表示で区別します。対応表へTimelineの4操作の統合を記録しました。アイコン付きの作成・解除はnative公開IO検証が合格し、日本語メニューのbackbufferを目視確認しています。
+
+Relationship ID remapping uses empty vectors until an actual duplicate/split needs entries. This removes the four per-frame C++ allocations caused by empty MSVC maps. The six-operation Release benchmark and host-model regressions pass after the change, with zero measured steady C++/ImGui allocations.
+
+関係ID変換は複製・分割で要素が必要になるまで空のvectorを使用します。MSVCの空mapによる毎frame 4回のC++ allocationを解消しました。修正後はReleaseの6操作測定とホストモデル回帰が合格し、測定対象の定常C++／ImGui allocationは0です。
