@@ -426,7 +426,7 @@ void BenchmarkEditors(Host &h,const std::filesystem::path &out) {
     const char *names[]={"pan","zoom","selection","clip_drag","clip_trim","keyframe_drag"};
     bool allPassed=width==1920 && height==1440;
     for (int operation=0;operation<6;++operation) {
-        s.Dataset(true);s.timeline={};s.timeline.snapping=false;
+        s.Dataset(true);s.selection.Clear();s.timeline={};s.timeline.snapping=false;
         h.Page(8);h.Settle(20);
         const auto &clip=s.clips.front();const auto clipId=clip.id;
         const auto startTick=clip.start,originalDuration=clip.duration;
@@ -474,7 +474,7 @@ void BenchmarkEditors(Host &h,const std::filesystem::path &out) {
         const auto found=std::find_if(s.clips.begin(),s.clips.end(),[&](const auto &c){return c.id==clipId;});
         if (operation==0) gestureValid &= s.timeline.canvas.origin.x!=origin;
         if (operation==1) gestureValid &= s.timeline.canvas.scale.x!=scale;
-        if (operation==2) gestureValid &= s.selection.count>0;
+        if (operation==2) gestureValid &= s.selection.count==1 && s.selection.active==s.clips[1].id;
         if (operation==3) gestureValid &= found!=s.clips.end() && found->start!=startTick;
         if (operation==4) gestureValid &= found!=s.clips.end() && found->duration!=originalDuration;
         if (operation==5) gestureValid &= std::any_of(s.keys.begin(),s.keys.end(),[&](const auto &key){return key.id==editedKey && key.tick!=oldKeyTick;});
@@ -522,6 +522,14 @@ int VerifyInspectorModel() {
         std::printf("%s %s\n",ok?"PASS":"FAIL",name);
         if (!ok) ++failures;
     };
+    const auto unchangedRevision=state.revision;
+    const auto &unchangedClip=state.clips.front();
+    editor::Value sameClip{unchangedClip.start,unchangedClip.start+unchangedClip.duration,unchangedClip.sourceIn,unchangedClip.track,unchangedClip.speed};
+    for (auto kind:{editor::EditKind::Move,editor::EditKind::TrimStart,editor::EditKind::TrimEnd,
+                   editor::EditKind::Ripple,editor::EditKind::Roll,editor::EditKind::Slip,editor::EditKind::Slide}) {
+        state.events.Push({unchangedClip.id,state.revision,editor::Phase::Commit,kind,sameClip,sameClip});state.ApplyEvents();
+        check(state.revision==unchangedRevision,"unchanged clip edit preserves host revision and skips index rebuild");
+    }
     const auto clipChannel=state.clips.front().keyChannel;
     const auto countBeforeInsert=state.keys.size();
     editor::Event clipInsert{clipChannel,state.revision,editor::Phase::Commit,editor::EditKind::KeyInsert};
