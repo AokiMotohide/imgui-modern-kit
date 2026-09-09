@@ -353,7 +353,7 @@ void DrawGrid(const CanvasView &v, const CanvasState &s, Point spacing, const Th
 }
 std::size_t MakeBindings(ShortcutPreset preset, std::span<Binding> dst) {
     const Binding defaults[] = {{Command::PlayPause, ImGuiKey_Space},
-                                {Command::Stop, ImGuiKey_K},
+                                {Command::Pause, ImGuiKey_K},
                                 {Command::PreviousFrame, ImGuiKey_LeftArrow},
                                 {Command::NextFrame, ImGuiKey_RightArrow},
                                 {Command::SetIn, ImGuiKey_I},
@@ -368,7 +368,9 @@ std::size_t MakeBindings(ShortcutPreset preset, std::span<Binding> dst) {
                                 {Command::PreviousKey, ImGuiKey_UpArrow},
                                 {Command::NextKey, ImGuiKey_DownArrow},
                                 {Command::Undo, ImGuiMod_Ctrl | ImGuiKey_Z},
-                                {Command::Redo, ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_Z}};
+                                {Command::Redo, ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_Z},
+                                {Command::PlayReverse, ImGuiKey_J},
+                                {Command::PlayForward, ImGuiKey_L}};
     auto n = (std::min)(dst.size(), std::size(defaults));
     std::copy_n(defaults, n, dst.begin());
     for (auto &b : dst.first(n)) {
@@ -396,11 +398,11 @@ void Transport(TimeState &s, std::span<const Binding> bindings, const IconAtlas 
     };
     bool focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
     if (focused && !ImGui::GetIO().WantTextInput && !ImGui::IsAnyItemActive()) {
-        if (ImGui::IsKeyPressed(ImGuiKey_J)) {
+        if (CommandPressed(Command::PlayReverse, bindings, focused)) {
             s.playbackRate = s.playing && s.playbackRate < 0 ? s.playbackRate * 2 : -1;
             s.playing = true;
         }
-        if (ImGui::IsKeyPressed(ImGuiKey_L)) {
+        if (CommandPressed(Command::PlayForward, bindings, focused)) {
             s.playbackRate = s.playing && s.playbackRate > 0 ? s.playbackRate * 2 : 1;
             s.playing = true;
         }
@@ -425,6 +427,8 @@ void Transport(TimeState &s, std::span<const Binding> bindings, const IconAtlas 
     if (ImGui::Button("Out") || CommandPressed(Command::SetOut, bindings, focused))
         s.inOut.last = (std::max)(s.playhead, s.inOut.first);
     ImGui::SameLine();
+    if (CommandPressed(Command::Pause, bindings, focused)) s.playing = false;
+    if (CommandPressed(Command::Loop, bindings, focused)) s.loop = !s.loop;
     ImGui::Checkbox("Loop", &s.loop);
     char text[32];
     FormatTimecode(s.playhead, s.rate, s.dropFrame, text);

@@ -175,7 +175,10 @@ enum class Command {
     PreviousKey,
     NextKey,
     Undo,
-    Redo
+    Redo,
+    PlayReverse,
+    PlayForward,
+    Pause
 };
 enum class ShortcutPreset { CapCut, Premiere, Blender };
 struct Binding {

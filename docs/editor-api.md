@@ -125,3 +125,7 @@ The `Transport(state, bindings, const IconAtlas*)` overload uses host-owned icon
 `ResolveTimelineSnap` resolves moving clip edges, ignores moving IDs and applies `snapKinds`. `snapping` is the master switch; `magnet` controls provider targets and `snapToFrame` controls frame grid attraction within eight screen pixels. `SnapResult.tick` is the primary anchor; `candidate.tick` is the guide position. The optional `TimelineState.icons` atlas remains host-owned.
 
 `ResolveTimelineSnap` は移動するclipの両端を評価し、移動対象IDと無効な `snapKinds` を除外します。`snapping` が全体切替、`magnet` がprovider候補、`snapToFrame` が8画面pixel以内のフレーム吸着を制御します。`SnapResult.tick` は主端点、`candidate.tick` はguide位置です。任意の `TimelineState.icons` はホスト所有です。
+
+Transport J/K/L uses `PlayReverse`/`Pause`/`PlayForward` bindings. K holds the current playhead; the Stop button rewinds to In. Empty bindings disable keyboard playback. The host can remap every transport command, including Loop.
+
+TransportのJ/K/Lは `PlayReverse` / `Pause` / `PlayForward` bindingを使います。Kは現在位置で一時停止し、StopボタンはInへ戻します。空のbindingではキーボード再生を無効にします。Loopを含む再生commandはホストが変更できます。

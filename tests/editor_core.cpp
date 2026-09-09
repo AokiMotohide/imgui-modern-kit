@@ -102,6 +102,49 @@ int main() {
     automatic = MoveHandle(ResolveHandles(extrema, 1), false, {.25, .5});
     check(automatic.handles == HandleMode::Free && automatic.left.y == 0 && automatic.right.y == .5,
           "manual auto handle edit preserves resolved opposite handle and becomes free");
+    auto *context=ImGui::CreateContext();
+    auto &io=ImGui::GetIO();
+    io.IniFilename=nullptr;
+    io.DisplaySize={800,600};
+    io.DeltaTime=1.f/60;
+    unsigned char *fontPixels=nullptr; int fontWidth=0,fontHeight=0;
+    io.Fonts->GetTexDataAsRGBA32(&fontPixels,&fontWidth,&fontHeight);
+    TimeState transport;
+    std::array<Binding,32> defaults{};
+    auto bindingCount=MakeBindings(ShortcutPreset::Premiere,defaults);
+    auto frame=[&](std::span<const Binding> bindings) {
+        ImGui::NewFrame();
+        ImGui::SetNextWindowPos({0,0}); ImGui::SetNextWindowSize({780,300});
+        ImGui::Begin("Transport bindings");
+        Transport(transport,bindings);
+        ImGui::End(); ImGui::Render();
+    };
+    auto bindings=std::span(defaults).first(bindingCount);
+    frame(bindings); frame(bindings);
+    auto press=[&](ImGuiKey key,std::span<const Binding> map) {
+        io.AddKeyEvent(key,true); frame(map);
+        io.AddKeyEvent(key,false); frame(map);
+    };
+    press(ImGuiKey_J,bindings);
+    check(transport.playing && transport.playbackRate==-1,"J reverse through preset binding");
+    press(ImGuiKey_J,bindings);
+    check(transport.playbackRate==-2,"repeated reverse accelerates");
+    transport.playhead=FrameToTick(18,transport.rate);
+    press(ImGuiKey_K,bindings);
+    check(!transport.playing && transport.playhead==FrameToTick(18,transport.rate),"K pauses without rewinding");
+    press(ImGuiKey_L,bindings);
+    check(transport.playing && transport.playbackRate==1,"L changes playback direction");
+    transport.playing=false;
+    press(ImGuiKey_J,{}); press(ImGuiKey_L,{});
+    check(!transport.playing,"empty binding map disables J and L");
+    std::array custom{Binding{Command::PlayReverse,ImGuiKey_F6}};
+    press(ImGuiKey_F6,custom);
+    check(transport.playing && transport.playbackRate==-1,"host remaps reverse command");
+    std::array loopBinding{Binding{Command::Loop,ImGuiKey_F7}};
+    const bool beforeLoop=transport.loop;
+    press(ImGuiKey_F7,loopBinding);
+    check(transport.loop!=beforeLoop,"loop command is applied");
+    ImGui::DestroyContext(context);
     std::puts(failures ? "FAIL editor core"
                        : "PASS timebase, drop-frame, snap, transaction, canvas and curves");
     return failures ? 1 : 0;
