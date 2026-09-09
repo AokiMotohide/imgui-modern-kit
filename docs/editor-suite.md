@@ -179,6 +179,15 @@ Galleryはparent StableIdからOutliner行を構築し、reparent後の深さ・
 lockedな移動元／移動先を拒否します。行構築・折り畳み・検索の祖先保持・親変更後の深さを
 ホストmodel検証で確認しています。
 
+Outliner context actions emit `Reorder` with the current parent and offset -1/+1
+for sibling movement, or `Reparent` with parent 0 for Move to root. Gallery keeps
+StableId order separate from object storage, swaps only siblings, and rejects locked
+neighbors. Host-model tests confirm reordered rows and unchanged object identities.
+OutlinerのMove up/downは現在のparentとoffset -1/+1を持つReorderを返し、Move to rootは
+parent 0のReparentを返します。GalleryはStableIdの表示順をobject保存位置と別に管理し、
+同じ親の行だけを交換します。lockedな隣接行は越えません。ホストmodel検証で行順変更と
+object ID・保存位置の維持を確認しています。
+
 Outliner starts inline rename from its context menu or a double click. The public
 InputText widget edits the UTF-8 draft; Enter commits and Escape cancels. Rename
 events preserve original/proposed text and starting revision; terminal overflow is

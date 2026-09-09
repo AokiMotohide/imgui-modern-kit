@@ -454,6 +454,16 @@ int VerifyInspectorModel() {
     check(state.outlinerRows.size()==4 && state.outlinerRows[2].id==state.objects[3].id &&
           state.outlinerRows[2].depth==2 && state.outlinerRows[1].hasChildren,"Outliner rebuild reflects reparented hierarchy");
     state.objects[3].parent=oldParent;
+    const auto initialOrder=state.objectOrder;
+    editor::Event reorderObject{state.objects[2].id,state.revision,editor::Phase::Commit,editor::EditKind::Reorder};
+    reorderObject.proposed.parent=state.objects[2].parent;reorderObject.proposed.offset=-1;
+    state.events.Push(reorderObject);state.ApplyEvents();state.RebuildOutlinerRows();
+    check(state.outlinerRows[1].id==state.objects[2].id && state.objects[1].id==1000001,
+          "Outliner sibling reorder preserves object storage identity");
+    state.objects[1].locked=true;reorderObject.revision=state.revision;reorderObject.proposed.offset=1;
+    state.events.Push(reorderObject);state.ApplyEvents();
+    check(state.objectOrder[1]==state.objects[2].id,"Outliner reorder cannot cross locked sibling");
+    state.objects[1].locked=false;state.objectOrder=initialOrder;
     state.objectSelection.Set(state.objects[1].id);
     state.objectSelection.Set(state.objects[2].id,true);
     auto send=[&](editor::Phase phase,int component,double value,editor::EditKind kind=editor::EditKind::Property) {
