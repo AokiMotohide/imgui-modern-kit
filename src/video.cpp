@@ -303,6 +303,38 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         !s.keyDrag.active && !s.envelopeDrag.active && !s.drag.active && !s.transitionDrag.active && !s.captionDrag.active;
     for (int i=0;i<7;++i) if (editor::CommandPressed(toolCommands[i],s.bindings,keyCommands && !s.heightDrag.active))
         s.tool=static_cast<Tool>(i);
+    if (editor::CommandPressed(editor::Command::Split,s.bindings,keyCommands && !s.heightDrag.active) &&
+        selection.count && p.selected) {
+        const auto ids=selection.storage.first(selection.count);
+        const auto clips=p.selected(p.user,ids);
+        bool available=true;
+        for (const auto id:ids)
+            if (std::none_of(clips.begin(),clips.end(),[&](const auto &clip){return clip.id==id;})) {
+                out.overflow=true;available=false;
+            }
+        std::size_t count=0;
+        const auto eligible=[&](const ClipView &clip) {
+            return s.time.playhead>clip.start &&
+                static_cast<long double>(s.time.playhead)-clip.start<clip.duration;
+        };
+        for (std::size_t i=0;i<clips.size();++i) {
+            const auto &clip=clips[i];
+            if (!eligible(clip) || std::any_of(clips.begin(),clips.begin()+i,
+                [&](const auto &other){return other.id==clip.id;})) continue;
+            ++count;
+            available &= SplitClip(clip,s.time.playhead,p.constraints ? p.constraints(p.user,clip.id) : ClipConstraints{}).valid;
+            if (p.canBeginEdit && !p.canBeginEdit(p.user,clip.id,editor::EditKind::Split)) available=false;
+        }
+        if (available && ReserveEvents(out,count*2))
+            for (std::size_t i=0;i<clips.size();++i) {
+                const auto &clip=clips[i];
+                if (!eligible(clip) || std::any_of(clips.begin(),clips.begin()+i,
+                    [&](const auto &other){return other.id==clip.id;})) continue;
+                editor::Transaction edit;
+                edit.Begin(clip.id,p.revision,editor::EditKind::Split,Value(clip),editor::CurrentModifiers(),out);
+                edit.draft.proposed.first=s.time.playhead;edit.Commit(p.revision,out);
+            }
+    }
     const bool duplicateKeys=editor::CommandPressed(editor::Command::Duplicate,s.bindings,keyCommands);
     const bool removeKeys=editor::CommandPressed(editor::Command::Delete,s.bindings,keyCommands);
     const bool addKey=editor::CommandPressed(editor::Command::AddKey,s.bindings,keyCommands);
