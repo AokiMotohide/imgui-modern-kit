@@ -273,6 +273,21 @@ int main() {
         transitionFixture.track.locked=false;
         io.AddKeyEvent(ImGuiKey_Escape,false);io.AddMouseButtonEvent(0,false);full.Clear();frame(full);
     }
+    editor::Keyframe clipKey;clipKey.id=1901;clipKey.tick=editor::FromSeconds(1);clipKey.value=.7;
+    transitionFixture.clip.keys={&clipKey,1};
+    editor::StableId keyIds[4];editor::Selection keySelection{keyIds};timeline.keySelection=&keySelection;
+    full.Clear();frame(full);
+    const float keyX=timeline.view.min.x+timeline.headerWidth+100;
+    const float keyY=timeline.view.min.y+video::TrackExtent(transitionFixture.track)-16;
+    io.AddMousePosEvent(keyX,keyY);frame(full);io.AddMouseButtonEvent(0,true);full.Clear();frame(full);
+    check(timeline.keyDrag.active && keySelection.Contains(clipKey.id) && !timeline.drag.active,"clip key hit begins key edit without clip movement");
+    io.AddMousePosEvent(keyX+50,keyY);full.Clear();frame(full);
+    check(timeline.keyDrag.draft.proposed.first==editor::FromSeconds(1.5) && clipKey.tick==editor::FromSeconds(1),"clip key preview preserves host data");
+    full.Clear();io.AddMouseButtonEvent(0,false);frame(full);
+    check(full.count==1 && full.Events()[0].kind==editor::EditKind::Keyframe && full.Events()[0].target==clipKey.id &&
+          full.Events()[0].proposed.parent==transitionFixture.clip.id && full.Events()[0].phase==editor::Phase::Commit,
+          "clip key commits local time with owner ID");
+    transitionFixture.clip.keys={};timeline.keySelection=nullptr;
     transitionFixture.track.kind=video::TrackKind::Caption;
     auto beginCaption=[&] {
         io.DeltaTime=.4f;frame(full);io.DeltaTime=1.f/60;
