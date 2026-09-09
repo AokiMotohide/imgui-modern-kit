@@ -180,6 +180,27 @@ int main() {
     io.AddKeyEvent(ImGuiKey_F9,true);dopeFrame();
     check(dopeEvents.count==0,"Dope Sheet locked member blocks full Delete batch");
     io.AddKeyEvent(ImGuiKey_F9,false);dopeFrame();
+    std::array<StripView,1> testStrips{{{7101,1,"Motion",{0,imkit::editor::FromSeconds(4)}}}};
+    imkit::editor::CanvasState stripCanvas;stripCanvas.scale={100,1};
+    imkit::editor::Transaction stripDrag;
+    ImVec2 stripOrigin{};
+    auto stripFrame=[&] {
+        dopeEvents.Clear();ImGui::NewFrame();
+        ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({800,600});ImGui::Begin("Strip test");
+        stripOrigin=ImGui::GetCursorScreenPos();
+        AnimationStrips("strips",testStrips,1,stripCanvas,stripDrag,dopeEvents,
+            imkit::MakePrecisionTheme(imkit::ColorScheme::Dark),{700,400});
+        ImGui::End();ImGui::Render();
+    };
+    stripFrame();stripFrame();
+    io.AddMousePosEvent(stripOrigin.x+50,stripOrigin.y+12);stripFrame();
+    io.AddMouseButtonEvent(0,true);stripFrame();
+    io.AddMousePosEvent(stripOrigin.x+75,stripOrigin.y+12);stripFrame();
+    check(stripDrag.active && stripDrag.draft.proposed.first==imkit::editor::FromSeconds(.25) &&
+        testStrips[0].range.first==0,"strip preview leaves host range unchanged");
+    io.AddMouseButtonEvent(0,false);stripFrame();
+    check(dopeEvents.count==1 && dopeEvents.Events()[0].phase==imkit::editor::Phase::Commit &&
+        dopeEvents.Events()[0].proposed.last==imkit::editor::FromSeconds(4.25),"strip move commits translated range");
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
