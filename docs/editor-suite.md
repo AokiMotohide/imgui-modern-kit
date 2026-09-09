@@ -691,3 +691,7 @@ Galleryの分割は左側に元のlinked／group集合IDを保持し、同じ分
 The small Gallery dataset includes a linked video/audio pair at 8 seconds, with the audio grouped with caption and effect clips. Dragging one expands to four related clips. `--verify-linked-clips --output out/linked-clips-native` drives a native public-IO move and checks all four host start times advance by 0.5 seconds; it writes a backbuffer capture and result log. The large benchmark dataset remains unlinked. Debug build, the focused native verifier and host-model regressions passed. This is not native OS/IME evidence.
 
 通常Galleryデータは8秒位置に映像・音声のlinkedペアを置き、音声をcaption・effectとgroup化しています。1つをdragすると4 clipが連動します。`--verify-linked-clips --output out/linked-clips-native`はnative公開IOで操作し、4対象のホスト開始時刻が同じ0.5秒進むことを検証してbackbuffer captureと結果ログを保存します。大規模測定データにはこの関連付けを加えていません。Debugビルド、対象native検証、ホストモデル回帰は合格しました。native OS／IMEの検証ではありません。
+
+Clip headers reuse Link and Layers glyphs for linked/group membership when a host atlas is available. Name placement reserves badge width; narrow clips omit badges when space is insufficient, retaining the underline and existing relationship tooltip. The native linked-clips verifier passed with the badges, and its light backbuffer was visually inspected.
+
+clip headerはホストatlasがあればLinkとLayersをlinked／group表示へ再利用します。名前の位置はbadge幅を避け、狭いclipではbadgeを省略して下線と既存の関係tooltipを残します。badge付きのnative連動移動検証は合格し、lightのbackbufferを目視確認しました。
