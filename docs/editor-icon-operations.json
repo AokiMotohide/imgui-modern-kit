@@ -1,0 +1,1805 @@
+{
+  "status": "In progress; planned new names are not public IconIds.",
+  "operations": [
+    {
+      "operation": "SelectPointer",
+      "widget": "CanvasSelection",
+      "disposition": "new",
+      "icon": "SelectPointer",
+      "tooltip": "Select Pointer",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "BoxSelect",
+      "widget": "CanvasSelection",
+      "disposition": "new",
+      "icon": "BoxSelect",
+      "tooltip": "Box Select",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "LassoSelect",
+      "widget": "CanvasSelection",
+      "disposition": "new",
+      "icon": "LassoSelect",
+      "tooltip": "Lasso Select",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "HandPan",
+      "widget": "CanvasSelection",
+      "disposition": "new",
+      "icon": "HandPan",
+      "tooltip": "Hand Pan",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "FrameSelected",
+      "widget": "CanvasSelection",
+      "disposition": "reuse",
+      "icon": "FitView",
+      "tooltip": "Frame Selected",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Group",
+      "widget": "CanvasSelection",
+      "disposition": "new",
+      "icon": "Group",
+      "tooltip": "Group",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Ungroup",
+      "widget": "CanvasSelection",
+      "disposition": "new",
+      "icon": "Ungroup",
+      "tooltip": "Ungroup",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "LinkItems",
+      "widget": "CanvasSelection",
+      "disposition": "reuse",
+      "icon": "Link",
+      "tooltip": "Link Items",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "UnlinkItems",
+      "widget": "CanvasSelection",
+      "disposition": "new",
+      "icon": "UnlinkItems",
+      "tooltip": "Unlink Items",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Rename",
+      "widget": "CanvasSelection",
+      "disposition": "reuse",
+      "icon": "Edit",
+      "tooltip": "Rename",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Razor",
+      "widget": "Timeline",
+      "disposition": "new",
+      "icon": "Razor",
+      "tooltip": "Razor",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "SplitClip",
+      "widget": "Timeline",
+      "disposition": "new",
+      "icon": "SplitClip",
+      "tooltip": "Split Clip",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "TrimStart",
+      "widget": "Timeline",
+      "disposition": "new",
+      "icon": "TrimStart",
+      "tooltip": "Trim Start",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "TrimEnd",
+      "widget": "Timeline",
+      "disposition": "new",
+      "icon": "TrimEnd",
+      "tooltip": "Trim End",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "RippleEdit",
+      "widget": "Timeline",
+      "disposition": "new",
+      "icon": "RippleEdit",
+      "tooltip": "Ripple Edit",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "RippleDelete",
+      "widget": "Timeline",
+      "disposition": "new",
+      "icon": "RippleDelete",
+      "tooltip": "Ripple Delete",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "RollingEdit",
+      "widget": "Timeline",
+      "disposition": "new",
+      "icon": "RollingEdit",
+      "tooltip": "Rolling Edit",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "SlipEdit",
+      "widget": "Timeline",
+      "disposition": "new",
+      "icon": "SlipEdit",
+      "tooltip": "Slip Edit",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "SlideEdit",
+      "widget": "Timeline",
+      "disposition": "new",
+      "icon": "SlideEdit",
+      "tooltip": "Slide Edit",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Magnet",
+      "widget": "Timeline",
+      "disposition": "reuse",
+      "icon": "Magnet",
+      "tooltip": "Magnet",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "SnapToFrame",
+      "widget": "Timeline",
+      "disposition": "new",
+      "icon": "SnapToFrame",
+      "tooltip": "Snap To Frame",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "SnapToMarker",
+      "widget": "Timeline",
+      "disposition": "new",
+      "icon": "SnapToMarker",
+      "tooltip": "Snap To Marker",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "SnapToClipEdge",
+      "widget": "Timeline",
+      "disposition": "new",
+      "icon": "SnapToClipEdge",
+      "tooltip": "Snap To Clip Edge",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "SnapToKeyframe",
+      "widget": "Timeline",
+      "disposition": "new",
+      "icon": "SnapToKeyframe",
+      "tooltip": "Snap To Keyframe",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "SnapToSelection",
+      "widget": "Timeline",
+      "disposition": "new",
+      "icon": "SnapToSelection",
+      "tooltip": "Snap To Selection",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "LinkedClips",
+      "widget": "Timeline",
+      "disposition": "new",
+      "icon": "LinkedClips",
+      "tooltip": "Linked Clips",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "TrackHeight",
+      "widget": "Timeline",
+      "disposition": "new",
+      "icon": "TrackHeight",
+      "tooltip": "Track Height",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "FitTimeline",
+      "widget": "Timeline",
+      "disposition": "reuse",
+      "icon": "FitView",
+      "tooltip": "Fit Timeline",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "VideoTrack",
+      "widget": "TrackHeader",
+      "disposition": "reuse",
+      "icon": "Video",
+      "tooltip": "Video Track",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "AudioTrack",
+      "widget": "TrackHeader",
+      "disposition": "reuse",
+      "icon": "Audio",
+      "tooltip": "Audio Track",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "CaptionTrack",
+      "widget": "TrackHeader",
+      "disposition": "reuse",
+      "icon": "Text",
+      "tooltip": "Caption Track",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "EffectTrack",
+      "widget": "TrackHeader",
+      "disposition": "new",
+      "icon": "EffectTrack",
+      "tooltip": "Effect Track",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "AdjustmentTrack",
+      "widget": "TrackHeader",
+      "disposition": "new",
+      "icon": "AdjustmentTrack",
+      "tooltip": "Adjustment Track",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "GroupTrack",
+      "widget": "TrackHeader",
+      "disposition": "reuse",
+      "icon": "Layers",
+      "tooltip": "Group Track",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "TrackAdd",
+      "widget": "TrackHeader",
+      "disposition": "reuse",
+      "icon": "LayerAdd",
+      "tooltip": "Track Add",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Solo",
+      "widget": "TrackHeader",
+      "disposition": "new",
+      "icon": "Solo",
+      "tooltip": "Solo",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "SourcePatch",
+      "widget": "TrackHeader",
+      "disposition": "new",
+      "icon": "SourcePatch",
+      "tooltip": "Source Patch",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "TrackTarget",
+      "widget": "TrackHeader",
+      "disposition": "new",
+      "icon": "TrackTarget",
+      "tooltip": "Track Target",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "PreviousFrame",
+      "widget": "Transport / TimeRuler",
+      "disposition": "reuse",
+      "icon": "PreviousFrame",
+      "tooltip": "Previous Frame",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "NextFrame",
+      "widget": "Transport / TimeRuler",
+      "disposition": "reuse",
+      "icon": "NextFrame",
+      "tooltip": "Next Frame",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "GoToStart",
+      "widget": "Transport / TimeRuler",
+      "disposition": "new",
+      "icon": "GoToStart",
+      "tooltip": "Go To Start",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "GoToEnd",
+      "widget": "Transport / TimeRuler",
+      "disposition": "new",
+      "icon": "GoToEnd",
+      "tooltip": "Go To End",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "PlayReverse",
+      "widget": "Transport / TimeRuler",
+      "disposition": "new",
+      "icon": "PlayReverse",
+      "tooltip": "Play Reverse",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Rewind",
+      "widget": "Transport / TimeRuler",
+      "disposition": "new",
+      "icon": "Rewind",
+      "tooltip": "Rewind",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "FastForward",
+      "widget": "Transport / TimeRuler",
+      "disposition": "new",
+      "icon": "FastForward",
+      "tooltip": "Fast Forward",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "SetInPoint",
+      "widget": "Transport / TimeRuler",
+      "disposition": "new",
+      "icon": "SetInPoint",
+      "tooltip": "Set In Point",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "SetOutPoint",
+      "widget": "Transport / TimeRuler",
+      "disposition": "new",
+      "icon": "SetOutPoint",
+      "tooltip": "Set Out Point",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "ClearInOut",
+      "widget": "Transport / TimeRuler",
+      "disposition": "new",
+      "icon": "ClearInOut",
+      "tooltip": "Clear In Out",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "WorkRange",
+      "widget": "Transport / TimeRuler",
+      "disposition": "new",
+      "icon": "WorkRange",
+      "tooltip": "Work Range",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "LoopRange",
+      "widget": "Transport / TimeRuler",
+      "disposition": "new",
+      "icon": "LoopRange",
+      "tooltip": "Loop Range",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Timecode",
+      "widget": "Transport / TimeRuler",
+      "disposition": "new",
+      "icon": "Timecode",
+      "tooltip": "Timecode",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Marker",
+      "widget": "Transport / TimeRuler",
+      "disposition": "new",
+      "icon": "Marker",
+      "tooltip": "Marker",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "MarkerAdd",
+      "widget": "Transport / TimeRuler",
+      "disposition": "new",
+      "icon": "MarkerAdd",
+      "tooltip": "Marker Add",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "MarkerRemove",
+      "widget": "Transport / TimeRuler",
+      "disposition": "new",
+      "icon": "MarkerRemove",
+      "tooltip": "Marker Remove",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "PreviousMarker",
+      "widget": "Transport / TimeRuler",
+      "disposition": "new",
+      "icon": "PreviousMarker",
+      "tooltip": "Previous Marker",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "NextMarker",
+      "widget": "Transport / TimeRuler",
+      "disposition": "new",
+      "icon": "NextMarker",
+      "tooltip": "Next Marker",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Keyframe",
+      "widget": "CurveEditor / PropertyGrid",
+      "disposition": "reuse",
+      "icon": "Keyframe",
+      "tooltip": "Keyframe",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "KeyframeAdd",
+      "widget": "CurveEditor / PropertyGrid",
+      "disposition": "new",
+      "icon": "KeyframeAdd",
+      "tooltip": "Keyframe Add",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "KeyframeRemove",
+      "widget": "CurveEditor / PropertyGrid",
+      "disposition": "new",
+      "icon": "KeyframeRemove",
+      "tooltip": "Keyframe Remove",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "PreviousKeyframe",
+      "widget": "CurveEditor / PropertyGrid",
+      "disposition": "new",
+      "icon": "PreviousKeyframe",
+      "tooltip": "Previous Keyframe",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "NextKeyframe",
+      "widget": "CurveEditor / PropertyGrid",
+      "disposition": "new",
+      "icon": "NextKeyframe",
+      "tooltip": "Next Keyframe",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "AutoKeyframe",
+      "widget": "CurveEditor / PropertyGrid",
+      "disposition": "new",
+      "icon": "AutoKeyframe",
+      "tooltip": "Auto Keyframe",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "InterpolationConstant",
+      "widget": "CurveEditor / PropertyGrid",
+      "disposition": "new",
+      "icon": "InterpolationConstant",
+      "tooltip": "Interpolation Constant",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "InterpolationLinear",
+      "widget": "CurveEditor / PropertyGrid",
+      "disposition": "new",
+      "icon": "InterpolationLinear",
+      "tooltip": "Interpolation Linear",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "InterpolationBezier",
+      "widget": "CurveEditor / PropertyGrid",
+      "disposition": "new",
+      "icon": "InterpolationBezier",
+      "tooltip": "Interpolation Bezier",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "HandleAuto",
+      "widget": "CurveEditor / PropertyGrid",
+      "disposition": "new",
+      "icon": "HandleAuto",
+      "tooltip": "Handle Auto",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "HandleAutoClamped",
+      "widget": "CurveEditor / PropertyGrid",
+      "disposition": "new",
+      "icon": "HandleAutoClamped",
+      "tooltip": "Handle Auto Clamped",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "HandleVector",
+      "widget": "CurveEditor / PropertyGrid",
+      "disposition": "new",
+      "icon": "HandleVector",
+      "tooltip": "Handle Vector",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "HandleAligned",
+      "widget": "CurveEditor / PropertyGrid",
+      "disposition": "new",
+      "icon": "HandleAligned",
+      "tooltip": "Handle Aligned",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "HandleFree",
+      "widget": "CurveEditor / PropertyGrid",
+      "disposition": "new",
+      "icon": "HandleFree",
+      "tooltip": "Handle Free",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "TangentLinked",
+      "widget": "CurveEditor / PropertyGrid",
+      "disposition": "new",
+      "icon": "TangentLinked",
+      "tooltip": "Tangent Linked",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "TangentBroken",
+      "widget": "CurveEditor / PropertyGrid",
+      "disposition": "new",
+      "icon": "TangentBroken",
+      "tooltip": "Tangent Broken",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "ExtrapolateConstant",
+      "widget": "CurveEditor / PropertyGrid",
+      "disposition": "new",
+      "icon": "ExtrapolateConstant",
+      "tooltip": "Extrapolate Constant",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "ExtrapolateLinear",
+      "widget": "CurveEditor / PropertyGrid",
+      "disposition": "new",
+      "icon": "ExtrapolateLinear",
+      "tooltip": "Extrapolate Linear",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "ExtrapolateRepeat",
+      "widget": "CurveEditor / PropertyGrid",
+      "disposition": "new",
+      "icon": "ExtrapolateRepeat",
+      "tooltip": "Extrapolate Repeat",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "GhostCurve",
+      "widget": "CurveEditor / PropertyGrid",
+      "disposition": "new",
+      "icon": "GhostCurve",
+      "tooltip": "Ghost Curve",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "CurveEditor",
+      "widget": "CurveEditor / PropertyGrid",
+      "disposition": "new",
+      "icon": "CurveEditor",
+      "tooltip": "Curve Editor",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "SourceMonitor",
+      "widget": "Monitor / AssetBrowser / Timeline",
+      "disposition": "new",
+      "icon": "SourceMonitor",
+      "tooltip": "Source Monitor",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "ProgramMonitor",
+      "widget": "Monitor / AssetBrowser / Timeline",
+      "disposition": "new",
+      "icon": "ProgramMonitor",
+      "tooltip": "Program Monitor",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "SafeArea",
+      "widget": "Monitor / AssetBrowser / Timeline",
+      "disposition": "new",
+      "icon": "SafeArea",
+      "tooltip": "Safe Area",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Guides",
+      "widget": "Monitor / AssetBrowser / Timeline",
+      "disposition": "new",
+      "icon": "Guides",
+      "tooltip": "Guides",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "MetadataOverlay",
+      "widget": "Monitor / AssetBrowser / Timeline",
+      "disposition": "new",
+      "icon": "MetadataOverlay",
+      "tooltip": "Metadata Overlay",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "TransformBounds",
+      "widget": "Monitor / AssetBrowser / Timeline",
+      "disposition": "new",
+      "icon": "TransformBounds",
+      "tooltip": "Transform Bounds",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "AnchorPoint",
+      "widget": "Monitor / AssetBrowser / Timeline",
+      "disposition": "new",
+      "icon": "AnchorPoint",
+      "tooltip": "Anchor Point",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "ProxyMedia",
+      "widget": "Monitor / AssetBrowser / Timeline",
+      "disposition": "new",
+      "icon": "ProxyMedia",
+      "tooltip": "Proxy Media",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "MissingMedia",
+      "widget": "Monitor / AssetBrowser / Timeline",
+      "disposition": "reuse",
+      "icon": "Warning",
+      "tooltip": "Missing Media",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "OfflineMedia",
+      "widget": "Monitor / AssetBrowser / Timeline",
+      "disposition": "reuse",
+      "icon": "Disconnected",
+      "tooltip": "Offline Media",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "RelinkMedia",
+      "widget": "Monitor / AssetBrowser / Timeline",
+      "disposition": "reuse",
+      "icon": "Link",
+      "tooltip": "Relink Media",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Transition",
+      "widget": "Monitor / AssetBrowser / Timeline",
+      "disposition": "new",
+      "icon": "Transition",
+      "tooltip": "Transition",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Dissolve",
+      "widget": "Monitor / AssetBrowser / Timeline",
+      "disposition": "new",
+      "icon": "Dissolve",
+      "tooltip": "Dissolve",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "FadeIn",
+      "widget": "Monitor / AssetBrowser / Timeline",
+      "disposition": "new",
+      "icon": "FadeIn",
+      "tooltip": "Fade In",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "FadeOut",
+      "widget": "Monitor / AssetBrowser / Timeline",
+      "disposition": "new",
+      "icon": "FadeOut",
+      "tooltip": "Fade Out",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Crossfade",
+      "widget": "Monitor / AssetBrowser / Timeline",
+      "disposition": "new",
+      "icon": "Crossfade",
+      "tooltip": "Crossfade",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "TransitionDuration",
+      "widget": "Monitor / AssetBrowser / Timeline",
+      "disposition": "new",
+      "icon": "TransitionDuration",
+      "tooltip": "Transition Duration",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Caption",
+      "widget": "Monitor / AssetBrowser / Timeline",
+      "disposition": "reuse",
+      "icon": "Text",
+      "tooltip": "Caption",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "CaptionAdd",
+      "widget": "Monitor / AssetBrowser / Timeline",
+      "disposition": "new",
+      "icon": "CaptionAdd",
+      "tooltip": "Caption Add",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "PlaybackSpeed",
+      "widget": "Monitor / AssetBrowser / Timeline",
+      "disposition": "new",
+      "icon": "PlaybackSpeed",
+      "tooltip": "Playback Speed",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "SpeedCurve",
+      "widget": "Monitor / AssetBrowser / Timeline",
+      "disposition": "new",
+      "icon": "SpeedCurve",
+      "tooltip": "Speed Curve",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Waveform",
+      "widget": "AudioMixer",
+      "disposition": "new",
+      "icon": "Waveform",
+      "tooltip": "Waveform",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "VolumeEnvelope",
+      "widget": "AudioMixer",
+      "disposition": "new",
+      "icon": "VolumeEnvelope",
+      "tooltip": "Volume Envelope",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "StereoMeter",
+      "widget": "AudioMixer",
+      "disposition": "new",
+      "icon": "StereoMeter",
+      "tooltip": "Stereo Meter",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "PeakHold",
+      "widget": "AudioMixer",
+      "disposition": "new",
+      "icon": "PeakHold",
+      "tooltip": "Peak Hold",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "AudioClipping",
+      "widget": "AudioMixer",
+      "disposition": "new",
+      "icon": "AudioClipping",
+      "tooltip": "Audio Clipping",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Pan",
+      "widget": "AudioMixer",
+      "disposition": "new",
+      "icon": "Pan",
+      "tooltip": "Pan",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Fader",
+      "widget": "AudioMixer",
+      "disposition": "new",
+      "icon": "Fader",
+      "tooltip": "Fader",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "AudioFadeIn",
+      "widget": "AudioMixer",
+      "disposition": "new",
+      "icon": "AudioFadeIn",
+      "tooltip": "Audio Fade In",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "AudioFadeOut",
+      "widget": "AudioMixer",
+      "disposition": "new",
+      "icon": "AudioFadeOut",
+      "tooltip": "Audio Fade Out",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "AudioCrossfade",
+      "widget": "AudioMixer",
+      "disposition": "new",
+      "icon": "AudioCrossfade",
+      "tooltip": "Audio Crossfade",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Histogram",
+      "widget": "ColorControls / ColorScopes",
+      "disposition": "new",
+      "icon": "Histogram",
+      "tooltip": "Histogram",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "LumaWaveform",
+      "widget": "ColorControls / ColorScopes",
+      "disposition": "new",
+      "icon": "LumaWaveform",
+      "tooltip": "Luma Waveform",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "RGBWaveform",
+      "widget": "ColorControls / ColorScopes",
+      "disposition": "new",
+      "icon": "RGBWaveform",
+      "tooltip": "RGBWaveform",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Vectorscope",
+      "widget": "ColorControls / ColorScopes",
+      "disposition": "new",
+      "icon": "Vectorscope",
+      "tooltip": "Vectorscope",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "ColorWheel",
+      "widget": "ColorControls / ColorScopes",
+      "disposition": "new",
+      "icon": "ColorWheel",
+      "tooltip": "Color Wheel",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Lift",
+      "widget": "ColorControls / ColorScopes",
+      "disposition": "native",
+      "icon": null,
+      "tooltip": "Lift",
+      "state": "native geometry, label and focus outline",
+      "status": "native interaction review pending"
+    },
+    {
+      "operation": "Gamma",
+      "widget": "ColorControls / ColorScopes",
+      "disposition": "native",
+      "icon": null,
+      "tooltip": "Gamma",
+      "state": "native geometry, label and focus outline",
+      "status": "native interaction review pending"
+    },
+    {
+      "operation": "Gain",
+      "widget": "ColorControls / ColorScopes",
+      "disposition": "native",
+      "icon": null,
+      "tooltip": "Gain",
+      "state": "native geometry, label and focus outline",
+      "status": "native interaction review pending"
+    },
+    {
+      "operation": "Temperature",
+      "widget": "ColorControls / ColorScopes",
+      "disposition": "native",
+      "icon": null,
+      "tooltip": "Temperature",
+      "state": "native geometry, label and focus outline",
+      "status": "native interaction review pending"
+    },
+    {
+      "operation": "Tint",
+      "widget": "ColorControls / ColorScopes",
+      "disposition": "native",
+      "icon": null,
+      "tooltip": "Tint",
+      "state": "native geometry, label and focus outline",
+      "status": "native interaction review pending"
+    },
+    {
+      "operation": "Exposure",
+      "widget": "ColorControls / ColorScopes",
+      "disposition": "native",
+      "icon": null,
+      "tooltip": "Exposure",
+      "state": "native geometry, label and focus outline",
+      "status": "native interaction review pending"
+    },
+    {
+      "operation": "ColorCurves",
+      "widget": "ColorControls / ColorScopes",
+      "disposition": "new",
+      "icon": "ColorCurves",
+      "tooltip": "Color Curves",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "PerspectiveView",
+      "widget": "BeginViewport",
+      "disposition": "new",
+      "icon": "PerspectiveView",
+      "tooltip": "Perspective View",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "OrthographicView",
+      "widget": "BeginViewport",
+      "disposition": "new",
+      "icon": "OrthographicView",
+      "tooltip": "Orthographic View",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "CameraView",
+      "widget": "BeginViewport",
+      "disposition": "reuse",
+      "icon": "Camera",
+      "tooltip": "Camera View",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "ViewFront",
+      "widget": "BeginViewport",
+      "disposition": "new",
+      "icon": "ViewFront",
+      "tooltip": "View Front",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "ViewBack",
+      "widget": "BeginViewport",
+      "disposition": "new",
+      "icon": "ViewBack",
+      "tooltip": "View Back",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "ViewLeft",
+      "widget": "BeginViewport",
+      "disposition": "new",
+      "icon": "ViewLeft",
+      "tooltip": "View Left",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "ViewRight",
+      "widget": "BeginViewport",
+      "disposition": "new",
+      "icon": "ViewRight",
+      "tooltip": "View Right",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "ViewTop",
+      "widget": "BeginViewport",
+      "disposition": "new",
+      "icon": "ViewTop",
+      "tooltip": "View Top",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "ViewBottom",
+      "widget": "BeginViewport",
+      "disposition": "new",
+      "icon": "ViewBottom",
+      "tooltip": "View Bottom",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Orbit",
+      "widget": "BeginViewport",
+      "disposition": "new",
+      "icon": "Orbit",
+      "tooltip": "Orbit",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "AxisAlignment",
+      "widget": "BeginViewport",
+      "disposition": "new",
+      "icon": "AxisAlignment",
+      "tooltip": "Axis Alignment",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "NavigationGizmo",
+      "widget": "BeginViewport",
+      "disposition": "native",
+      "icon": null,
+      "tooltip": "Navigation Gizmo",
+      "state": "native geometry, label and focus outline",
+      "status": "native interaction review pending"
+    },
+    {
+      "operation": "WireframeShading",
+      "widget": "BeginViewport",
+      "disposition": "new",
+      "icon": "WireframeShading",
+      "tooltip": "Wireframe Shading",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "SolidShading",
+      "widget": "BeginViewport",
+      "disposition": "new",
+      "icon": "SolidShading",
+      "tooltip": "Solid Shading",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Overlay",
+      "widget": "BeginViewport",
+      "disposition": "new",
+      "icon": "Overlay",
+      "tooltip": "Overlay",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "ObjectOrigin",
+      "widget": "BeginViewport",
+      "disposition": "new",
+      "icon": "ObjectOrigin",
+      "tooltip": "Object Origin",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "SelectionOutline",
+      "widget": "BeginViewport",
+      "disposition": "new",
+      "icon": "SelectionOutline",
+      "tooltip": "Selection Outline",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "VertexNormals",
+      "widget": "BeginViewport",
+      "disposition": "new",
+      "icon": "VertexNormals",
+      "tooltip": "Vertex Normals",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "FaceNormals",
+      "widget": "BeginViewport",
+      "disposition": "new",
+      "icon": "FaceNormals",
+      "tooltip": "Face Normals",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Measurement",
+      "widget": "BeginViewport",
+      "disposition": "reuse",
+      "icon": "Ruler",
+      "tooltip": "Measurement",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "CameraFrame",
+      "widget": "BeginViewport",
+      "disposition": "reuse",
+      "icon": "Camera",
+      "tooltip": "Camera Frame",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "RenderRegion",
+      "widget": "BeginViewport",
+      "disposition": "new",
+      "icon": "RenderRegion",
+      "tooltip": "Render Region",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Passepartout",
+      "widget": "BeginViewport",
+      "disposition": "new",
+      "icon": "Passepartout",
+      "tooltip": "Passepartout",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "UnifiedTransform",
+      "widget": "Gizmo",
+      "disposition": "new",
+      "icon": "UnifiedTransform",
+      "tooltip": "Unified Transform",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "AxisX",
+      "widget": "Gizmo",
+      "disposition": "native",
+      "icon": null,
+      "tooltip": "Axis X",
+      "state": "native geometry, label and focus outline",
+      "status": "native interaction review pending"
+    },
+    {
+      "operation": "AxisY",
+      "widget": "Gizmo",
+      "disposition": "native",
+      "icon": null,
+      "tooltip": "Axis Y",
+      "state": "native geometry, label and focus outline",
+      "status": "native interaction review pending"
+    },
+    {
+      "operation": "AxisZ",
+      "widget": "Gizmo",
+      "disposition": "native",
+      "icon": null,
+      "tooltip": "Axis Z",
+      "state": "native geometry, label and focus outline",
+      "status": "native interaction review pending"
+    },
+    {
+      "operation": "PlaneXY",
+      "widget": "Gizmo",
+      "disposition": "native",
+      "icon": null,
+      "tooltip": "Plane XY",
+      "state": "native geometry, label and focus outline",
+      "status": "native interaction review pending"
+    },
+    {
+      "operation": "PlaneYZ",
+      "widget": "Gizmo",
+      "disposition": "native",
+      "icon": null,
+      "tooltip": "Plane YZ",
+      "state": "native geometry, label and focus outline",
+      "status": "native interaction review pending"
+    },
+    {
+      "operation": "PlaneZX",
+      "widget": "Gizmo",
+      "disposition": "native",
+      "icon": null,
+      "tooltip": "Plane ZX",
+      "state": "native geometry, label and focus outline",
+      "status": "native interaction review pending"
+    },
+    {
+      "operation": "ScreenPlane",
+      "widget": "Gizmo",
+      "disposition": "native",
+      "icon": null,
+      "tooltip": "Screen Plane",
+      "state": "native geometry, label and focus outline",
+      "status": "native interaction review pending"
+    },
+    {
+      "operation": "OrientationWorld",
+      "widget": "Gizmo",
+      "disposition": "new",
+      "icon": "OrientationWorld",
+      "tooltip": "Orientation World",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "OrientationLocal",
+      "widget": "Gizmo",
+      "disposition": "new",
+      "icon": "OrientationLocal",
+      "tooltip": "Orientation Local",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "OrientationView",
+      "widget": "Gizmo",
+      "disposition": "new",
+      "icon": "OrientationView",
+      "tooltip": "Orientation View",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "OrientationParent",
+      "widget": "Gizmo",
+      "disposition": "new",
+      "icon": "OrientationParent",
+      "tooltip": "Orientation Parent",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "OrientationCustom",
+      "widget": "Gizmo",
+      "disposition": "new",
+      "icon": "OrientationCustom",
+      "tooltip": "Orientation Custom",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "PivotIndividual",
+      "widget": "Gizmo",
+      "disposition": "new",
+      "icon": "PivotIndividual",
+      "tooltip": "Pivot Individual",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "PivotMedian",
+      "widget": "Gizmo",
+      "disposition": "new",
+      "icon": "PivotMedian",
+      "tooltip": "Pivot Median",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "PivotBounds",
+      "widget": "Gizmo",
+      "disposition": "new",
+      "icon": "PivotBounds",
+      "tooltip": "Pivot Bounds",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "PivotCursor",
+      "widget": "Gizmo",
+      "disposition": "new",
+      "icon": "PivotCursor",
+      "tooltip": "Pivot Cursor",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "TransformSnap",
+      "widget": "Gizmo",
+      "disposition": "new",
+      "icon": "TransformSnap",
+      "tooltip": "Transform Snap",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Hierarchy",
+      "widget": "Hierarchy / PropertyGrid / AssetBrowser",
+      "disposition": "new",
+      "icon": "Hierarchy",
+      "tooltip": "Hierarchy",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Collection",
+      "widget": "Hierarchy / PropertyGrid / AssetBrowser",
+      "disposition": "reuse",
+      "icon": "Folder",
+      "tooltip": "Collection",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "CollectionAdd",
+      "widget": "Hierarchy / PropertyGrid / AssetBrowser",
+      "disposition": "reuse",
+      "icon": "LayerAdd",
+      "tooltip": "Collection Add",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "SceneObject",
+      "widget": "Hierarchy / PropertyGrid / AssetBrowser",
+      "disposition": "reuse",
+      "icon": "Cube",
+      "tooltip": "Scene Object",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Mesh",
+      "widget": "Hierarchy / PropertyGrid / AssetBrowser",
+      "disposition": "new",
+      "icon": "Mesh",
+      "tooltip": "Mesh",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Light",
+      "widget": "Hierarchy / PropertyGrid / AssetBrowser",
+      "disposition": "new",
+      "icon": "Light",
+      "tooltip": "Light",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Component",
+      "widget": "Hierarchy / PropertyGrid / AssetBrowser",
+      "disposition": "reuse",
+      "icon": "Layers",
+      "tooltip": "Component",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "ComponentAdd",
+      "widget": "Hierarchy / PropertyGrid / AssetBrowser",
+      "disposition": "reuse",
+      "icon": "LayerAdd",
+      "tooltip": "Component Add",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Modifier",
+      "widget": "Hierarchy / PropertyGrid / AssetBrowser",
+      "disposition": "new",
+      "icon": "Modifier",
+      "tooltip": "Modifier",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "ModifierAdd",
+      "widget": "Hierarchy / PropertyGrid / AssetBrowser",
+      "disposition": "new",
+      "icon": "ModifierAdd",
+      "tooltip": "Modifier Add",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Reparent",
+      "widget": "Hierarchy / PropertyGrid / AssetBrowser",
+      "disposition": "new",
+      "icon": "Reparent",
+      "tooltip": "Reparent",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "LinkedDuplicate",
+      "widget": "Hierarchy / PropertyGrid / AssetBrowser",
+      "disposition": "new",
+      "icon": "LinkedDuplicate",
+      "tooltip": "Linked Duplicate",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Selectable",
+      "widget": "Hierarchy / PropertyGrid / AssetBrowser",
+      "disposition": "new",
+      "icon": "Selectable",
+      "tooltip": "Selectable",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Unselectable",
+      "widget": "Hierarchy / PropertyGrid / AssetBrowser",
+      "disposition": "new",
+      "icon": "Unselectable",
+      "tooltip": "Unselectable",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Renderable",
+      "widget": "Hierarchy / PropertyGrid / AssetBrowser",
+      "disposition": "new",
+      "icon": "Renderable",
+      "tooltip": "Renderable",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "NonRenderable",
+      "widget": "Hierarchy / PropertyGrid / AssetBrowser",
+      "disposition": "new",
+      "icon": "NonRenderable",
+      "tooltip": "Non Renderable",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "PropertyOverride",
+      "widget": "Hierarchy / PropertyGrid / AssetBrowser",
+      "disposition": "native",
+      "icon": null,
+      "tooltip": "Property Override",
+      "state": "native geometry, label and focus outline",
+      "status": "native interaction review pending"
+    },
+    {
+      "operation": "MixedValue",
+      "widget": "Hierarchy / PropertyGrid / AssetBrowser",
+      "disposition": "native",
+      "icon": null,
+      "tooltip": "Mixed Value",
+      "state": "native geometry, label and focus outline",
+      "status": "native interaction review pending"
+    },
+    {
+      "operation": "ArrayProperty",
+      "widget": "Hierarchy / PropertyGrid / AssetBrowser",
+      "disposition": "new",
+      "icon": "ArrayProperty",
+      "tooltip": "Array Property",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "AnimationTimeline",
+      "widget": "DopeSheet / CurveEditor / AnimationStrips",
+      "disposition": "new",
+      "icon": "AnimationTimeline",
+      "tooltip": "Animation Timeline",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "DopeSheet",
+      "widget": "DopeSheet / CurveEditor / AnimationStrips",
+      "disposition": "new",
+      "icon": "DopeSheet",
+      "tooltip": "Dope Sheet",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "GraphEditor",
+      "widget": "DopeSheet / CurveEditor / AnimationStrips",
+      "disposition": "new",
+      "icon": "GraphEditor",
+      "tooltip": "Graph Editor",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "ChannelList",
+      "widget": "DopeSheet / CurveEditor / AnimationStrips",
+      "disposition": "reuse",
+      "icon": "List",
+      "tooltip": "Channel List",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "SummaryRow",
+      "widget": "DopeSheet / CurveEditor / AnimationStrips",
+      "disposition": "new",
+      "icon": "SummaryRow",
+      "tooltip": "Summary Row",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "AnimationStrip",
+      "widget": "DopeSheet / CurveEditor / AnimationStrips",
+      "disposition": "new",
+      "icon": "AnimationStrip",
+      "tooltip": "Animation Strip",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "StripScale",
+      "widget": "DopeSheet / CurveEditor / AnimationStrips",
+      "disposition": "reuse",
+      "icon": "Scale",
+      "tooltip": "Strip Scale",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "StripRepeat",
+      "widget": "DopeSheet / CurveEditor / AnimationStrips",
+      "disposition": "reuse",
+      "icon": "Repeat",
+      "tooltip": "Strip Repeat",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "StripBlend",
+      "widget": "DopeSheet / CurveEditor / AnimationStrips",
+      "disposition": "new",
+      "icon": "StripBlend",
+      "tooltip": "Strip Blend",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "UVEditor",
+      "widget": "UVEditor",
+      "disposition": "new",
+      "icon": "UVEditor",
+      "tooltip": "UVEditor",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "SelectVertex",
+      "widget": "UVEditor",
+      "disposition": "new",
+      "icon": "SelectVertex",
+      "tooltip": "Select Vertex",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "SelectEdge",
+      "widget": "UVEditor",
+      "disposition": "new",
+      "icon": "SelectEdge",
+      "tooltip": "Select Edge",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "SelectFace",
+      "widget": "UVEditor",
+      "disposition": "new",
+      "icon": "SelectFace",
+      "tooltip": "Select Face",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "SelectIsland",
+      "widget": "UVEditor",
+      "disposition": "new",
+      "icon": "SelectIsland",
+      "tooltip": "Select Island",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "UVSeam",
+      "widget": "UVEditor",
+      "disposition": "new",
+      "icon": "UVSeam",
+      "tooltip": "UVSeam",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "UVOverlap",
+      "widget": "UVEditor",
+      "disposition": "new",
+      "icon": "UVOverlap",
+      "tooltip": "UVOverlap",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "UVCoordinatesPixel",
+      "widget": "UVEditor",
+      "disposition": "native",
+      "icon": null,
+      "tooltip": "UVCoordinates Pixel",
+      "state": "native geometry, label and focus outline",
+      "status": "native interaction review pending"
+    },
+    {
+      "operation": "UVCoordinatesNormalized",
+      "widget": "UVEditor",
+      "disposition": "native",
+      "icon": null,
+      "tooltip": "UVCoordinates Normalized",
+      "state": "native geometry, label and focus outline",
+      "status": "native interaction review pending"
+    },
+    {
+      "operation": "UDIMTiles",
+      "widget": "UVEditor",
+      "disposition": "new",
+      "icon": "UDIMTiles",
+      "tooltip": "UDIMTiles",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    },
+    {
+      "operation": "Checkerboard",
+      "widget": "UVEditor",
+      "disposition": "new",
+      "icon": "Checkerboard",
+      "tooltip": "Checkerboard",
+      "state": "button background, focus outline and disabled styling",
+      "status": "original and integration pending"
+    }
+  ]
+}
