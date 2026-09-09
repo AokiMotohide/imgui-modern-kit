@@ -311,6 +311,24 @@ void VerifyEditors(Host &h, const std::filesystem::path &out, const imkit::previ
     check(imkit::preview::Sphere(sphereVertices,sphereIndices),"Sphere primitive generation");
     imkit::preview::Mesh sphere{99,sphereVertices,sphereIndices};
     check(renderer.Render({&sphere,1},camera) && renderer.Pick(320,240)==99,"GL sphere rendering and picking");
+    imkit::preview::Vertex normalVertices[3] = {
+        {{-1,-1,0},{1,1,1}}, {{1,-1,0},{1,1,1}}, {{0,1,0},{1,1,1}}};
+    const std::uint32_t normalIndices[] = {0,1,2};
+    imkit::preview::Mesh normalMesh{100, normalVertices, normalIndices};
+    normalMesh.transform.scale = {2,1,.5};
+    normalMesh.transform.rotation.z = 3.141592653589793 / 2;
+    check(renderer.Render({&normalMesh,1},camera) && renderer.Pick(320,240)==100,
+          "GL rotated nonuniform mesh picking");
+    auto getTexImage = reinterpret_cast<void (*)(unsigned,int,unsigned,unsigned,void*)>(
+        glfwGetProcAddress("glGetTexImage"));
+    check(getTexImage != nullptr, "GL texture readback available");
+    std::vector<unsigned char> normalPixels(640*480*4);
+    functions.BindTexture(0x0DE1, renderer.Texture());
+    getTexImage(0x0DE1,0,0x1908,0x1401,normalPixels.data());
+    functions.BindTexture(0x0DE1,0);
+    int expectedNormal = static_cast<int>(std::lround(255 * (.25 + .75 * 1.1 / std::sqrt(5.25 * .98))));
+    check(std::abs(static_cast<int>(normalPixels[(240*640+320)*4]) - expectedNormal) <= 2,
+          "GL inverse transpose normal under rotation and nonuniform scale");
     h.Page(8);
     auto drag = [&](ImVec2 from, ImVec2 to) {
         h.mouse = from; h.Frame();

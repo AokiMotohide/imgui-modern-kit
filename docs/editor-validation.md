@@ -54,3 +54,15 @@ Raw logs and captures are under `out/editor-release/`.
 2026-09-09のRelease pan fixtureはP95 **3.3495 ms**、最大**9 query / 40可視clip**、
 C++ new／ImGui allocationはともに**0**でした。このpan fixtureは16.7 ms目標を満たしますが、
 全編集操作の性能合格を意味しません。実ログ・captureはout/editor-release/配下です。
+
+## Normal transform regression / normal変換の回帰確認
+
+2026-09-09 Debug: `imkit.cg` checks DrawList triangle color against a known
+inverse-transpose normal under rotation and nonuniform scale. The native
+`--verify-editors` runner reads the OpenGL color texture for the same transform
+and checks the expected Lambert result and exact object ID. Both passed, together
+with the existing GPU lifecycle and representative public-IO checks.
+Evidence: `out/editor-normal-debug/editors-interaction.txt`.
+Debugのimkit.cgで回転・非等方scale後のDrawListの色を既知のnormalから計算した期待値と比較し、
+実Galleryで同じ変換のOpenGL textureを読み戻してLambertの期待値とobject IDを確認しました。
+両方合格し、既存のGPU lifecycleと代表公開IO操作も通過しました。native OS/IME確認ではありません。
