@@ -45,6 +45,10 @@ int main() {
     video::Monitor("monitor", {}, {100, 80}, time, {}, theme);
     video::Waveform("waveform", {}, {100, 20}, theme);
     video::LevelMeter("meter", {}, {}, {20, 100}, theme);
+    video::AudioStripView audioStrip;
+    audioStrip.id=37; audioStrip.gainId=1011; audioStrip.panId=3027;
+    editor::PropertyState audioState;
+    video::AudioStrip(audioStrip,1,audioState,events);
     video::Histogram("histogram", {}, {100, 50}, theme);
     video::ScopeImage("scope", {}, 0, 0, {100, 50}, theme);
     video::ScopeImage("tinted scope", {}, 0, 0, {100,50}, theme, {1,0,0,1});

@@ -47,6 +47,7 @@ void EditorWorkspaces::Dataset(bool big) {
     tracks.clear();
     clips.clear();
     keys.clear();
+    audioStrips.clear();
     int trackCount = large ? 256 : 6;
     clipsPerTrack = large ? 391 : 12;
     tracks.reserve(trackCount);
@@ -60,6 +61,12 @@ void EditorWorkspaces::Dataset(bool big) {
                      : t % 3 == 1 ? video::TrackKind::Audio
                                   : video::TrackKind::Caption;
         tracks.push_back(track);
+        if (track.kind == video::TrackKind::Audio) {
+            video::AudioStripView strip;
+            strip.id=track.id; strip.label=track.label;
+            strip.gainId=nextId++; strip.panId=nextId++;
+            audioStrips.push_back(strip);
+        }
         for (int i = 0; i < clipsPerTrack; ++i) {
             video::ClipView clip;
             clip.id = 1000 + t * clipsPerTrack + i;
@@ -71,6 +78,7 @@ void EditorWorkspaces::Dataset(bool big) {
             clip.duration = editor::FromSeconds(3.5);
             clip.sourceIn = editor::TicksPerSecond * 5;
             clip.proxy = i % 7 == 0;
+            if (track.kind == video::TrackKind::Audio) clip.audioBuckets=audio;
             clips.push_back(clip);
         }
     }
@@ -89,6 +97,8 @@ void EditorWorkspaces::Dataset(bool big) {
     selection.Clear();
     selection.Set(1000);
     timeline.drag.active = false;
+    mixerTrack = audioStrips.empty() ? 0 : audioStrips.front().id;
+    mixerState.drag.active = false;
     curve.drag.active = false;
     ++revision;
 }
@@ -211,6 +221,11 @@ void EditorWorkspaces::ApplyEvents() {
                 changed = true;
             }
         }
+        for (auto &strip : audioStrips)
+            if (e.kind == editor::EditKind::Property) {
+                if (e.target==strip.gainId) { strip.gain=e.proposed.x; changed=true; }
+                if (e.target==strip.panId) { strip.pan=e.proposed.x; changed=true; }
+            }
         for (auto &track : tracks)
             if (track.id == e.target && e.kind == editor::EditKind::Toggle) {
                 bool *fields[] = {&track.visible, &track.mute,   &track.solo,
@@ -434,7 +449,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         return std::span<const editor::SnapCandidate>(s.snapCandidates).first(n);
     };
     float remaining = ImGui::GetContentRegionAvail().y;
-    float timelineHeight = (std::max)(140.f, remaining -
+    float timelineHeight = (std::max)(140.f, remaining - 2*ImGui::GetFrameHeightWithSpacing() -
         (s.activeVideoPanel == 1 ? 380.f * ImGui::GetFontSize()/14 : 230.f));
     s.timelineOrigin = ImGui::GetCursorScreenPos();
     video::Timeline("Timeline", p, s.timeline, s.selection, s.events, theme, {0, timelineHeight});
@@ -442,9 +457,44 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     if (ImGui::BeginTabBar("audio color")) {
         if (ImGui::BeginTabItem("Audio")) {
             s.activeVideoPanel = 0;
-            video::Waveform("wave", s.audio, {ImGui::GetContentRegionAvail().x - 80, 90}, theme);
+            auto mixer=std::find_if(s.audioStrips.begin(),s.audioStrips.end(),
+                                   [&](const auto &v){return v.id==s.mixerTrack;});
+            ImGui::SetNextItemWidth(220);
+            if (ImGui::BeginCombo("Channel",mixer==s.audioStrips.end() ? "" : mixer->label)) {
+                for (const auto &channel:s.audioStrips) {
+                    ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(channel.id)));
+                    if (ImGui::Selectable(channel.label,channel.id==s.mixerTrack)) s.mixerTrack=channel.id;
+                    ImGui::PopID();
+                }
+                ImGui::EndCombo();
+            }
+            if (mixer!=s.audioStrips.end()) {
+                auto view=*mixer;
+                auto track=std::find_if(s.tracks.begin(),s.tracks.end(),[&](const auto &v){return v.id==view.id;});
+                if (track!=s.tracks.end()) {
+                    view.mute=track->mute; view.solo=track->solo; view.record=track->record; view.locked=track->locked;
+                }
+                video::AudioStrip(view,s.revision,s.mixerState,s.events);
+                bool anotherSolo=std::any_of(s.tracks.begin(),s.tracks.end(),
+                                             [&](const auto &v){return v.solo && v.id!=view.id;});
+                double gain=s.mixerState.drag.active && s.mixerState.drag.draft.target==view.gainId ?
+                            s.mixerState.drag.draft.proposed.x : view.gain;
+                double pan=s.mixerState.drag.active && s.mixerState.drag.draft.target==view.panId ?
+                           s.mixerState.drag.draft.proposed.x : view.pan;
+                double angle=(std::clamp(pan,-1.,1.)+1)*3.141592653589793/4;
+                if (view.mute || (anotherSolo && !view.solo)) gain=0;
+                std::array<float,512> left{},right{};
+                for (std::size_t i=0;i<s.pcm.size();++i) {
+                    left[i]=static_cast<float>(s.pcm[i]*gain*std::cos(angle));
+                    right[i]=static_cast<float>(s.pcm[i]*gain*std::sin(angle));
+                }
+                video::UpdateMeter(s.meter,left,ImGui::GetIO().DeltaTime);
+                video::UpdateMeter(s.rightMeter,right,ImGui::GetIO().DeltaTime);
+                ImGui::SameLine();
+            }
+            video::Waveform("wave", s.audio, {(std::max)(60.f,ImGui::GetContentRegionAvail().x - 80), 100}, theme);
             ImGui::SameLine();
-            video::LevelMeter("meter", s.meter, s.meter, {50, 90}, theme);
+            video::LevelMeter("meter", s.meter, s.rightMeter, {50, 100}, theme);
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Color", nullptr, s.videoPanel == 1 ? ImGuiTabItemFlags_SetSelected : 0)) {

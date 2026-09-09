@@ -249,6 +249,14 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 draw->AddLine({wx, y + 40 - amplitude}, {wx, y + 40 + amplitude},
                               ImGui::GetColorU32(theme.colors.text));
             }
+            for (std::size_t j = 0; j < clip.audioBuckets.size(); ++j) {
+                float wx = x + (end-x) * static_cast<float>(j) / clip.audioBuckets.size();
+                float centerY = (a.y+b.y)*.5f + 5;
+                float amplitude = (b.y-a.y-26)*.5f;
+                draw->AddLine({wx,centerY-amplitude*clip.audioBuckets[j].maximum},
+                              {wx,centerY-amplitude*clip.audioBuckets[j].minimum},
+                              ImGui::GetColorU32(theme.colors.text));
+            }
             for (const auto &key : clip.keys) {
                 float kx = x + static_cast<float>(editor::Seconds(key.tick) * s.canvas.scale.x);
                 float ky = b.y - 9;
@@ -468,7 +476,8 @@ void BuildAudioBuckets(std::span<const float> pcm, int channels, int channel, st
         if (first == last)
             continue;
         auto &b = out[i];
-        b.minimum = b.maximum = pcm[first * channels + channel];
+        float firstSample = pcm[first * channels + channel];
+        b.minimum = b.maximum = std::isfinite(firstSample) ? firstSample : 0.f;
         double sum = 0;
         for (auto j = first; j < last; ++j) {
             float v = pcm[j * channels + channel];
@@ -525,14 +534,55 @@ void LevelMeter(const char *id, const MeterState &left, const MeterState &right,
 }
 void AudioStrip(const AudioStripView &v, std::uint64_t revision, editor::PropertyState &s,
                 editor::EventBuffer &out) {
-    editor::PropertyView properties[] = {{v.id, "Gain", "Audio", v.gain, 1},
-                                         {v.id + 1, "Pan", "Audio", v.pan, 0}};
-    editor::PropertyProvider p{properties, revision, 2, [](void *u, int first, int count, std::string_view) {
-                                   return std::span<const editor::PropertyView>(
-                                              static_cast<editor::PropertyView *>(u), 2)
-                                       .subspan(first, (std::min)(count, 2 - first));
-                               }};
-    editor::PropertyGrid(v.label, p, s, out);
+    detail::ResumeTerminal(s.drag, revision, out);
+    if (s.drag.active && (v.locked || ImGui::IsKeyPressed(ImGuiKey_Escape) ||
+                         (s.drag.draft.target != v.gainId && s.drag.draft.target != v.panId)))
+        s.drag.Cancel(out);
+    ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(v.id)));
+    ImGui::BeginGroup();
+    ImGui::TextUnformatted(v.label);
+    ImGui::BeginDisabled(v.locked);
+    auto process = [&](StableId target,double original,double draft,bool changed) {
+        if (!target) return;
+        if (ImGui::IsItemActivated() && !s.drag.active)
+            s.drag.Begin(target,revision,editor::EditKind::Property,{0,0,0,0,original},
+                         editor::CurrentModifiers(),out);
+        if (s.drag.active && s.drag.draft.target==target) {
+            if (changed) s.drag.Update(revision,{0,0,0,0,draft},out);
+            if (ImGui::IsItemDeactivated()) s.drag.Commit(revision,out);
+        }
+    };
+    double gain=s.drag.active && s.drag.draft.target==v.gainId ? s.drag.draft.proposed.x : v.gain;
+    double minimum=0,maximum=4;
+    ImGui::BeginDisabled(!v.gainId);
+    bool changed=ImGui::VSliderScalar(v.gainLabel,{32,100},ImGuiDataType_Double,&gain,&minimum,&maximum,"%.2f");
+    process(v.gainId,v.gain,gain,changed);
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    ImGui::BeginGroup();
+    double pan=s.drag.active && s.drag.draft.target==v.panId ? s.drag.draft.proposed.x : v.pan;
+    minimum=-1;maximum=1;
+    ImGui::SetNextItemWidth(ImGui::GetFontSize()*10);
+    ImGui::BeginDisabled(!v.panId || v.panId==v.gainId);
+    changed=ImGui::SliderScalar(v.panLabel,ImGuiDataType_Double,&pan,&minimum,&maximum,"%.2f");
+    process(v.panId,v.pan,pan,changed);
+    ImGui::EndDisabled();
+    const bool flags[]={v.mute,v.solo,v.record};
+    const TrackControl controls[]={TrackControl::Mute,TrackControl::Solo,TrackControl::Record};
+    const char *labels[]={v.muteLabel,v.soloLabel,v.recordLabel};
+    for (int i=0;i<3;++i) {
+        bool value=flags[i];
+        ImGui::PushID(i);
+        if (ImGui::Checkbox(labels[i],&value))
+            out.Push({v.id,revision,editor::Phase::Commit,editor::EditKind::Toggle,
+                      {0,0,0,0,static_cast<double>(controls[i]),flags[i] ? 1. : 0.},
+                      {0,0,0,0,static_cast<double>(controls[i]),value ? 1. : 0.},editor::CurrentModifiers()});
+        ImGui::PopID();
+    }
+    ImGui::EndGroup();
+    ImGui::EndDisabled();
+    ImGui::EndGroup();
+    ImGui::PopID();
 }
 bool BuildScopes(std::span<const Rgba> pixels, int w, int h, ScopeBuffers out) {
     if (w <= 0 || h <= 0 || pixels.size() != static_cast<std::size_t>(w) * h || out.red.size() != 256 ||
