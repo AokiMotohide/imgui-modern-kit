@@ -173,3 +173,7 @@ Curveのkeyを右クリックすると補間とhandle modeのメニューを開�
 `CurveState.activeChannel` follows clicked keys. With `ghostOtherChannels`, inactive channels draw as faint dashed curves with hollow key diamonds and no tangent handles; clicking a key activates its channel. The canvas context menu toggles ghost display.
 
 `CurveState.activeChannel` はクリックしたkeyのchannelへ切り替わります。`ghostOtherChannels` 有効時は他channelを薄い破線と中空diamondで描画し、接線handleを隠します。keyクリックでchannelをactiveにでき、canvas context menuからghost表示を切り替えられます。
+
+Optional `CurveProvider.sample` evaluates a complete host channel at an exact tick and requested extrapolation mode. With this callback, CurveEditor samples across the visible width and exposes Constant/Linear/Repeat in its context menu through `CurveState.extrapolation`. Gallery provides indexed complete-channel evaluation, including portions outside the key range.
+
+任意の `CurveProvider.sample` は正確なtickと指定extrapolationでホストの全channelを評価します。callbackがある場合、CurveEditorは可視幅を描画し、context menuから `CurveState.extrapolation` のConstant/Linear/Repeatを切り替えます。Galleryはkey範囲外も含む全channel評価を索引経由で提供します。

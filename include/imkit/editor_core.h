@@ -235,6 +235,8 @@ struct CurveProvider {
     std::uint64_t revision = 0;
     // Return visible keys plus two neighbors on each side per channel, sorted by channel/time.
     std::span<const Keyframe> (*query)(void *, CurveQuery) = nullptr;
+    // Optional complete-channel evaluation, including extrapolation beyond visible keys.
+    double (*sample)(void *, StableId channel, Tick, Extrapolation) = nullptr;
 };
 struct CurveState {
     CanvasState canvas{{0, -1}, {100, 100}};
@@ -243,6 +245,7 @@ struct CurveState {
     StableId contextKey = 0;
     StableId activeChannel = 0;
     bool ghostOtherChannels = true;
+    Extrapolation extrapolation = Extrapolation::Constant;
     int side = 0;
     Point mouseStart{};
     CanvasView view{};
