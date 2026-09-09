@@ -687,3 +687,7 @@ Razorもクリック対象をselected providerで解決してlinked／groupの�
 Gallery Split preserves original linked/group set IDs on left halves and assigns new shared IDs to right halves within the split batch. Editing one side no longer pulls the other side into its related selection. Host-model regression verifies two related clips split into independent left/right sets.
 
 Galleryの分割は左側に元のlinked／group集合IDを保持し、同じ分割バッチの右側同士へ新しい共通IDを割り当てます。片側の関連選択に反対側が混ざらなくなります。ホストモデル回帰で、関連する2 clipが左右それぞれ独立した集合になることを確認しています。
+
+The small Gallery dataset includes a linked video/audio pair at 8 seconds, with the audio grouped with caption and effect clips. Dragging one expands to four related clips. `--verify-linked-clips --output out/linked-clips-native` drives a native public-IO move and checks all four host start times advance by 0.5 seconds; it writes a backbuffer capture and result log. The large benchmark dataset remains unlinked. Debug build, the focused native verifier and host-model regressions passed. This is not native OS/IME evidence.
+
+通常Galleryデータは8秒位置に映像・音声のlinkedペアを置き、音声をcaption・effectとgroup化しています。1つをdragすると4 clipが連動します。`--verify-linked-clips --output out/linked-clips-native`はnative公開IOで操作し、4対象のホスト開始時刻が同じ0.5秒進むことを検証してbackbuffer captureと結果ログを保存します。大規模測定データにはこの関連付けを加えていません。Debugビルド、対象native検証、ホストモデル回帰は合格しました。native OS／IMEの検証ではありません。

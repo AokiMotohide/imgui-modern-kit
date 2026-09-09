@@ -136,6 +136,7 @@ void EditorWorkspaces::Dataset(bool big) {
     tracks.reserve(trackCount);
     clips.reserve(trackCount * clipsPerTrack + 64);
     keys.reserve(large ? 100000 : 12);
+    const auto exampleLink=nextId++,exampleGroup=nextId++;
     for (int t = 0; t < trackCount; ++t) {
         video::TrackView track;
         track.id = t + 1;
@@ -158,6 +159,11 @@ void EditorWorkspaces::Dataset(bool big) {
             clip.label=clipLabels[t%6];
             clip.start = editor::FromSeconds(i * 4. + (t % 2) * .5);
             clip.duration = editor::FromSeconds(3.5);
+            if (!large && i==2 && t<4) {
+                clip.start=editor::FromSeconds(8);
+                if (t<2) clip.linked=exampleLink;
+                if (t>0) clip.group=exampleGroup;
+            }
             clip.sourceIn = editor::TicksPerSecond * 5;
             if (t==0 && i==1) {
                 clip.transitionIn=editor::FromSeconds(.4);clip.transitionOut=editor::FromSeconds(.6);

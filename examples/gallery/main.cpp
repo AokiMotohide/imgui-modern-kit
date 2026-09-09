@@ -489,6 +489,27 @@ void BenchmarkEditors(Host &h,const std::filesystem::path &out) {
     if (!allPassed) throw std::runtime_error("Editor benchmark did not meet interaction, size, query or P95 gates; see report");
 }
 
+void VerifyLinkedClips(Host &h,const std::filesystem::path &out) {
+    using namespace imkit;
+    auto &s=h.s.editors;s.Dataset(false);h.Page(8);h.Settle();
+    s.timeline.canvas.origin.x=7;s.timeline.canvas.scale.x=100;s.timeline.snapping=false;
+    h.Settle();
+    const auto target=s.clips[2].id;
+    const auto members=s.QuerySelectedClips(std::span<const editor::StableId>(&target,1));
+    if (members.size()!=4) throw std::runtime_error("linked sample requires four related clips");
+    std::array<video::ClipView,4> before;std::copy(members.begin(),members.end(),before.begin());
+    h.mouse={s.timeline.view.min.x+s.timeline.headerWidth+150,s.timeline.view.min.y+25};h.Frame();
+    h.Frame([](auto &io){io.AddMouseButtonEvent(0,true);});
+    h.mouse.x+=50;h.Frame();h.Frame([](auto &io){io.AddMouseButtonEvent(0,false);});h.Settle(2);
+    std::ofstream log(out/"linked-clips.txt");
+    for (const auto &original:before) {
+        const auto clip=std::find_if(s.clips.begin(),s.clips.end(),[&](const auto &c){return c.id==original.id;});
+        const bool ok=clip!=s.clips.end() && clip->start==original.start+editor::FromSeconds(.5);
+        log<<(ok ? "PASS " : "FAIL ")<<"related clip moved "<<original.id<<'\n';log.flush();
+        if (!ok) throw std::runtime_error("linked native move did not apply to all members");
+    }
+    h.mouse={-100,-100};h.Frame({},out/"linked-clips-light.png");
+}
 void VerifyTrackControls(Host &h,const std::filesystem::path &out) {
     using namespace imkit;
     auto &s=h.s.editors;s.japanese=false;s.timeline.headerWidth=340;
@@ -1022,7 +1043,7 @@ int VerifyInspectorModel() {
     return failures?1:0;
 }
 int main(int argc, char **argv) {
-    bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false, benchmarkEditors = false, verifyMonitors = false, verifyTrackControls = false;
+    bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false, benchmarkEditors = false, verifyMonitors = false, verifyTrackControls = false, verifyLinkedClips = false;
     int capturePage = -1, animationPage = -1;
     std::string iconSearch;
     std::filesystem::path out = "out/catalog";
@@ -1035,6 +1056,7 @@ int main(int argc, char **argv) {
         else if (a == "--verify")
             verify = true;
         else if (a == "--capture-editors") { capture = true; capturePage = -2; }
+        else if (a == "--verify-linked-clips") verifyLinkedClips=true;
         else if (a == "--verify-track-controls") verifyTrackControls=true;
         else if (a == "--verify-monitors") verifyMonitors=true;
         else if (a == "--benchmark-editors") benchmarkEditors=true;
@@ -1065,10 +1087,10 @@ int main(int argc, char **argv) {
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_VISIBLE, capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls ? GLFW_FALSE : GLFW_TRUE);
+    glfwWindowHint(GLFW_VISIBLE, capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls || verifyLinkedClips ? GLFW_FALSE : GLFW_TRUE);
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
     Host h;
-    h.automated = capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls;
+    h.automated = capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls || verifyLinkedClips;
     h.window = glfwCreateWindow(1920, 1440, "ImKit Precision Layers", nullptr, nullptr);
     if (!h.window) {
         glfwTerminate();
@@ -1195,6 +1217,7 @@ int main(int argc, char **argv) {
                 Verify(h, out);
             if (benchmarkEditors) BenchmarkEditors(h,out);
             if (verifyTrackControls) VerifyTrackControls(h,out);
+            if (verifyLinkedClips) VerifyLinkedClips(h,out);
             if (verifyMonitors) VerifyMonitors(h,out);
             if (verifyEditors)
                 VerifyEditors(h, out, previewFunctions);
