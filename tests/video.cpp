@@ -194,6 +194,19 @@ int main() {
     clickTrack({sourceX+5,timeline.view.min.y+35});
     check(full.count==1 && full.Events()[0].proposed.x==static_cast<double>(video::TrackControl::Source) &&
               full.Events()[0].proposed.y==1,"source patch button emits a distinct control");
+    timeline.headerWidth=100;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    full.Clear();frame(full);
+    clickTrack({timeline.view.min.x+15,timeline.view.min.y+35});
+    full.Clear();
+    io.AddKeyEvent(ImGuiKey_DownArrow,true);frame(full);
+    io.AddKeyEvent(ImGuiKey_DownArrow,false);frame(full);
+    io.AddKeyEvent(ImGuiKey_Enter,true);frame(full);
+    io.AddKeyEvent(ImGuiKey_Enter,false);frame(full);
+    check(full.count==1 && full.Events()[0].target==100 &&
+        full.Events()[0].kind==editor::EditKind::Toggle,
+        "narrow track control menu emits host event through public IO");
+    timeline.headerWidth=180;
     provider.contentRange={editor::FromSeconds(-10),editor::FromSeconds(10)};
     provider.clips=[](void *u,editor::StableId,editor::Range range) {
         static_cast<LayoutFixture*>(u)->queriedTime=range;
