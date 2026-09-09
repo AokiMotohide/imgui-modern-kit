@@ -808,9 +808,36 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
                    {true, false, true, false, "Source / Studio"}, theme);
     ImGui::EndGroup();
     ImGui::SameLine();
+    if (s.monitorRevision!=s.revision || s.monitorClipId!=s.selection.active) {
+        s.monitorRevision=s.revision;s.monitorClipId=s.selection.active;
+        auto clip=std::find_if(s.clips.begin(),s.clips.end(),[&](const auto &c){return c.id==s.monitorClipId;});
+        s.monitorClipIndex=static_cast<std::size_t>(clip-s.clips.begin());
+    }
+    video::MonitorOptions program{true,true,true,true,s.japanese ? "プログラム" : "Program",{.5f,.5f},true};
+    program.metadataPreset=s.monitorMetadata;
+    char timing[96]{},source[96]{};
+    const char *metadata[]={timing,source};
+    if (s.monitorClipIndex<s.clips.size()) {
+        const auto &clip=s.clips[s.monitorClipIndex];program.clipName=clip.label;
+        char duration[40]{};editor::FormatTimecode(clip.duration,s.timeline.time.rate,false,duration);
+        std::snprintf(timing,sizeof(timing),"%s  %.3gx",duration,clip.speed);
+        std::snprintf(source,sizeof(source),"%s / track %llu",clip.offline ? "Offline" : clip.missing ? "Missing" : clip.proxy ? "Proxy" : "Original",
+            static_cast<unsigned long long>(clip.track));
+        program.metadata=metadata;
+    }
+    for (const auto &marker:std::span(s.markers).first(s.markerCount))
+        if (editor::TickToFrame(marker.tick,s.timeline.time.rate)==editor::TickToFrame(s.timeline.time.playhead,s.timeline.time.rate)) {
+            program.markerComment=marker.label;break;
+        }
     video::Monitor("Program", ImTextureRef(static_cast<ImTextureID>(s.previewRenderer.Texture())),
-                   {width * .48f, monitorHeight}, s.timeline.time,
-                   {true, true, true, true, s.japanese ? "プログラム" : "Program", {.5f,.5f}, true}, theme);
+                   {width*.48f,monitorHeight},s.timeline.time,program,theme);
+    if (ImGui::BeginPopupContextItem("monitor metadata")) {
+        const char *labels[]={s.japanese ? "非表示" : "No metadata",s.japanese ? "クリップ" : "Clip metadata",s.japanese ? "詳細" : "Detailed metadata"};
+        for (int i=0;i<3;++i)
+            if (ImGui::MenuItem(labels[i],nullptr,static_cast<int>(s.monitorMetadata)==i))
+                s.monitorMetadata=static_cast<video::MonitorMetadataPreset>(i);
+        ImGui::EndPopup();
+    }
     editor::Transport(s.timeline.time, std::span(s.bindings).first(s.bindingCount), s.icons);
     ImGui::EndChild();
     ImGui::SameLine();

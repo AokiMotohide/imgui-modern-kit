@@ -995,6 +995,21 @@ void Monitor(const char *id, ImTextureRef texture, ImVec2 size, const editor::Ti
         d->AddText(ImGui::GetFont(),ImGui::GetFontSize(),{bounds.x,bounds.y},ImGui::GetColorU32(theme.colors.text),label,nullptr,0,&bounds);
     };
     overlayText(p.y+padding,o.label);
+    if (o.metadataPreset!=MonitorMetadataPreset::Off) {
+        float top=p.y+padding+((o.label && *o.label) ? lineHeight+padding : 0);
+        const float bottom=p.y+size.y-padding-(o.showTimecode ? lineHeight+padding : 0);
+        auto line=[&](const char *label) {
+            if (label && *label && top+lineHeight<=bottom) {
+                overlayText(top,label);top+=lineHeight+padding;
+            }
+        };
+        line(o.clipName);line(o.markerComment);
+        if (o.metadataPreset==MonitorMetadataPreset::Details)
+            for (const char *label:o.metadata) {
+                if (top+lineHeight>bottom) break;
+                line(label);
+            }
+    }
     if (o.showTimecode && (!o.label || !*o.label || size.y>=2*lineHeight+3*padding)) {
         char label[32]{};
         editor::FormatTimecode(time.playhead, time.rate, time.dropFrame, label);

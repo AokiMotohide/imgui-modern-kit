@@ -52,6 +52,10 @@ int main() {
     (void)editor::EditKind::TransitionDuration;
     video::TransitionPicker("transition types",{},1,events);
     (void)video::EvaluateEnvelope({},0);
+    const char *monitorLines[]={"1920 x 1080","Proxy"};
+    video::MonitorOptions monitorOptions;monitorOptions.metadataPreset=video::MonitorMetadataPreset::Details;
+    monitorOptions.clipName="Clip";monitorOptions.markerComment="Marker comment";monitorOptions.metadata=monitorLines;
+    video::Monitor("metadata monitor",{},ImVec2{200,120},time,monitorOptions,theme);
     video::EnvelopePoint envelopePoint{8001,0,1};
     (void)envelopePoint;
     video::TrackView trackView;
