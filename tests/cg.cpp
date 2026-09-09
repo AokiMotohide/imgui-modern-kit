@@ -65,6 +65,17 @@ int main() {
     pivoted=TransformAroundPivot(orbitObject,TransformTool::Scale,Axis::Y,{0,1,0},turned,{1,1,0});
     check(std::abs(pivoted.translation.x-5)<1e-12 && std::abs(pivoted.translation.y-1)<1e-12,
           "pivot scale follows chosen orientation basis");
+    Transform affine;affine.rotation={.3,.4,.7};affine.scale={2,3,4};affine.shear={.2,.1,-.3};
+    const auto oldLinear=LinearBasis(affine);
+    const auto stretched=TransformDelta(affine,TransformTool::Scale,Axis::X,{1,0,0},{});
+    const auto newLinear=LinearBasis(stretched);
+    const auto correct=[](Vec3 a,Vec3 b){return std::abs(b.x-2*a.x)<1e-10 && std::abs(b.y-a.y)<1e-10 && std::abs(b.z-a.z)<1e-10;};
+    check(correct(oldLinear.x,newLinear.x) && correct(oldLinear.y,newLinear.y) && correct(oldLinear.z,newLinear.z),
+          "world nonuniform scale preserves full affine transform including shear");
+    const auto normal=NormalBasis(stretched);
+    const auto dot=[](Vec3 a,Vec3 b){return a.x*b.x+a.y*b.y+a.z*b.z;};
+    check(std::abs(dot(normal.x,newLinear.x)-1)<1e-10 && std::abs(dot(normal.x,newLinear.y))<1e-10 &&
+          std::abs(dot(normal.y,newLinear.z))<1e-10,"sheared normal matrix is inverse transpose");
     auto *context = ImGui::CreateContext();
     auto &io = ImGui::GetIO();
     io.IniFilename = nullptr;
@@ -398,6 +409,7 @@ int main() {
             for (double &value:values) value+=1;
         }
         const auto proposed=handleState.drag.draft.proposed;
+        if (tool==TransformTool::Scale) check(proposed.hasAffine,"scale IO event carries affine rotation and shear payload");
         check(std::abs(proposed.x-values[0])<1e-5 && std::abs(proposed.y-values[1])<1e-5 &&
               std::abs(proposed.z-values[2])<1e-5,"plane/screen independent two dimensional translation");
         io.AddMouseButtonEvent(0,false);handleFrame();

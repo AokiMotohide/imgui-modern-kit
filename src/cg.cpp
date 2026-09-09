@@ -14,6 +14,10 @@ Vec3 Mul(Vec3 a, double f) {
 double Dot(Vec3 a, Vec3 b) {
     return a.x * b.x + a.y * b.y + a.z * b.z;
 }
+Vec3 Cross(Vec3 a,Vec3 b) {return {a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x};}
+Vec3 Unit(Vec3 value,Vec3 fallback) {
+    const auto length=std::hypot(value.x,value.y,value.z);return length>0 ? Mul(value,1/length) : fallback;
+}
 Vec3 RotateVector(Vec3 value, Vec3 rotation) {
     const double angle=std::sqrt(Dot(rotation,rotation));
     if (angle<1e-12) return value;
@@ -33,6 +37,13 @@ double Quantize(double v, double snap) {
 editor::Value Value(Vec3 v) {
     return {0, 0, 0, 0, v.x, v.y, v.z};
 }
+editor::Value TransformValue(const Transform &t,TransformTool tool) {
+    auto value=Value(tool==TransformTool::Rotate ? t.rotation : tool==TransformTool::Scale ? t.scale : t.translation);
+    if (tool==TransformTool::Scale) {
+        value.affine={t.rotation.x,t.rotation.y,t.rotation.z,t.shear.x,t.shear.y,t.shear.z};value.hasAffine=true;
+    }
+    return value;
+}
 ImVec2 UVScreen(editor::Point p, const editor::CanvasState &s, ImVec2 origin) {
     auto v = editor::ToScreen(p, s, {origin.x, origin.y});
     return {static_cast<float>(v.x), static_cast<float>(v.y)};
@@ -42,6 +53,17 @@ void Emit(editor::EventBuffer &out, StableId id, std::uint64_t revision, editor:
     out.Push({id, revision, editor::Phase::Commit, kind, original, proposed, editor::CurrentModifiers()});
 }
 } // namespace
+Basis LinearBasis(const Transform &t) {
+    const auto r=OrientationBasis(Orientation::Local,t,{});
+    return {Mul(r.x,t.scale.x),Add(Mul(r.x,t.shear.x),Mul(r.y,t.scale.y)),
+        Add(Add(Mul(r.x,t.shear.y),Mul(r.y,t.shear.z)),Mul(r.z,t.scale.z))};
+}
+Basis NormalBasis(const Transform &t) {
+    const auto b=LinearBasis(t);const auto x=Cross(b.y,b.z),y=Cross(b.z,b.x),z=Cross(b.x,b.y);
+    const auto determinant=Dot(b.x,x);
+    if (determinant==0 || !std::isfinite(determinant)) return {{0,0,0},{0,0,0},{0,0,0}};
+    return {Mul(x,1/determinant),Mul(y,1/determinant),Mul(z,1/determinant)};
+}
 ProjectionResult Project(Vec3 world, const Camera &c, ImVec2 origin, ImVec2 size) {
     Vec3 right{std::cos(c.yaw), 0, -std::sin(c.yaw)},
         up{-std::sin(c.yaw) * std::sin(c.pitch), std::cos(c.pitch), -std::cos(c.yaw) * std::sin(c.pitch)};
@@ -103,9 +125,21 @@ Transform TransformDelta(const Transform &original, TransformTool tool, Axis axi
         const auto local=OrientationBasis(Orientation::Local,original,{});
         result.rotation=EulerFromBasis({RotateVector(local.x,oriented),RotateVector(local.y,oriented),RotateVector(local.z,oriented)});
     }
-    if (tool == TransformTool::Scale)
-        result.scale = {original.scale.x * (1 + delta.x), original.scale.y * (1 + delta.y),
-                        original.scale.z * (1 + delta.z)};
+    if (tool == TransformTool::Scale) {
+        const auto transform=[&](Vec3 v) {return Add(Add(Mul(basis.x,Dot(v,basis.x)*(1+delta.x)),
+            Mul(basis.y,Dot(v,basis.y)*(1+delta.y))),Mul(basis.z,Dot(v,basis.z)*(1+delta.z)));};
+        const auto old=LinearBasis(original),rotation=OrientationBasis(Orientation::Local,original,{});
+        const auto a=transform(old.x),b=transform(old.y),c=transform(old.z);
+        auto x=Unit(a,rotation.x);if (Dot(x,rotation.x)<0) x=Mul(x,-1);
+        auto fallback=Add(rotation.y,Mul(x,-Dot(x,rotation.y)));
+        if (Dot(fallback,fallback)<1e-20) fallback=Cross(std::abs(x.x)<.8 ? Vec3{1,0,0} : Vec3{0,1,0},x);
+        auto y=Unit(Add(b,Mul(x,-Dot(x,b))),Unit(fallback,{0,1,0}));
+        if (Dot(y,rotation.y)<0) y=Mul(y,-1);
+        const auto z=Unit(Cross(x,y),rotation.z);
+        result.rotation=EulerFromBasis({x,y,z});
+        result.scale={Dot(x,a),Dot(y,b),Dot(z,c)};
+        result.shear={Dot(x,b),Dot(x,c),Dot(y,c)};
+    }
     return result;
 }
 Transform TransformAroundPivot(const Transform &original, TransformTool tool, Axis axis, Vec3 delta,
@@ -494,17 +528,14 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
         auto kind = operation == TransformTool::Rotate  ? editor::EditKind::Rotate
                     : operation == TransformTool::Scale ? editor::EditKind::Scale
                                                      : editor::EditKind::Translate;
-        auto value = Value(operation == TransformTool::Rotate  ? object.transform.rotation
-                           : operation == TransformTool::Scale ? object.transform.scale
-                                                            : object.transform.translation);
+        auto value = TransformValue(object.transform,operation);
         s.drag.Begin(object.id, revision, kind, value, editor::CurrentModifiers(), out);
         if (needsPosition) s.pivotDrag.Begin(object.id,revision,editor::EditKind::Translate,
                                             Value(object.transform.translation),editor::CurrentModifiers(),out);
         for (const auto &member:s.selectedObjects) if (member.id!=object.id) {
             auto &companion=s.companions[s.companionCount++];companion.original=member.transform;
             companion.transform.Begin(member.id,revision,kind,
-                Value(operation==TransformTool::Rotate ? member.transform.rotation :
-                      operation==TransformTool::Scale ? member.transform.scale : member.transform.translation),editor::CurrentModifiers(),out);
+                TransformValue(member.transform,operation),editor::CurrentModifiers(),out);
             if (memberPosition) companion.position.Begin(member.id,revision,editor::EditKind::Translate,
                 Value(member.transform.translation),editor::CurrentModifiers(),out);
         }
@@ -565,9 +596,7 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
         if (operation == TransformTool::Rotate) s.rotationMouse={mouse.x,mouse.y};
         auto result = TransformAroundPivot(s.original, operation, s.activeAxis, dv, basis, pivot, s.snap ? .1 : 0,
                                      ImGui::GetIO().KeyShift);
-        auto value = Value(operation == TransformTool::Rotate  ? result.rotation
-                           : operation == TransformTool::Scale ? result.scale
-                                                            : result.translation);
+        auto value = TransformValue(result,operation);
         if (ImGui::IsMouseDown(0)) {
             const auto position=Value(result.translation);
             const bool mainChanged=!(value==s.drag.draft.proposed);
@@ -585,8 +614,7 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
                         OrientationBasis(s.orientation,member.original,s.camera,s.parentBasis,s.customBasis) : basis;
                     const auto transformed=TransformAroundPivot(member.original,operation,s.activeAxis,dv,memberBasis,
                                                                memberPivot,s.snap ? .1 : 0,ImGui::GetIO().KeyShift);
-                    const auto memberValue=Value(operation==TransformTool::Rotate ? transformed.rotation :
-                        operation==TransformTool::Scale ? transformed.scale : transformed.translation);
+                    const auto memberValue=TransformValue(transformed,operation);
                     if (!(memberValue==member.transform.draft.proposed)) member.transform.Update(revision,memberValue,out);
                     const auto memberLocation=Value(transformed.translation);
                     if (member.position.active && !(memberLocation==member.position.draft.proposed))

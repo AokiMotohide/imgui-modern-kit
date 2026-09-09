@@ -30,3 +30,7 @@ Add overloads only after comparing the pinned public signature, preserving defau
 Editor Core, Video and CG consume non-owning provider views and emit fixed-buffer events. They do not own edited scene/media data, selection, undo, worker or context. The explicitly constructed optional OpenGL3 preview object owns its own graphics resources only; its context and GL function table originate from the host. See [Editor Suite contracts](editor-suite.md).
 
 Editor Core・Video・CGのproviderは非所有です。scene/mediaデータ・選択・Undo・worker・Contextはホスト所有です。任意のOpenGL3 preview objectだけが自身の描画resourceを所有し、Contextと関数表はホストが渡します。詳細は上記契約を参照してください。
+
+CG transforms retain rotation, scale and upper-triangular shear for oriented nonuniform scaling. Scale events carry the affine terms explicitly; the host applies them atomically with scale. Both preview paths use the same full linear map and inverse-transpose normals.
+
+CGの変換は任意方向の非均等scaleに必要なrotation・scale・上三角shearを保持する。Scaleイベントはアフィン成分を明示し、ホストがscaleとまとめて適用する。両previewは同じ線形変換と逆転置normalを使う。
