@@ -534,6 +534,26 @@ void DopeSheet(const char *id, const editor::CurveProvider &p, editor::CurveStat
     int row = -1;
     editor::Value original{};
     auto mouse = ImGui::GetIO().MousePos;
+    if (s.drag.active && s.drag.draft.phase!=editor::Phase::Cancel &&
+        s.drag.draft.phase!=editor::Phase::Commit && capacity(1+s.companionCount)) {
+        const double dx=(mouse.x-s.mouseStart.x)/s.canvas.scale.x;
+        auto delta=editor::FromSeconds(dx);
+        if (s.snapToFrame && !s.scaling)
+            delta=editor::FrameToTick(editor::TickToFrame(s.drag.draft.original.first+delta,s.rate),s.rate)-
+                s.drag.draft.original.first;
+        auto update=[&](editor::Transaction &drag) {
+            auto value=drag.draft.original;
+            if (s.scaling) {
+                const double factor=std::exp2(std::clamp(dx*s.canvas.scale.x/100.,-16.,16.));
+                value.first=s.scalePivot+static_cast<editor::Tick>(std::llround(
+                    static_cast<long double>(value.first-s.scalePivot)*factor));
+                if (s.snapToFrame) value.first=editor::FrameToTick(editor::TickToFrame(value.first,s.rate),s.rate);
+            } else value.first+=delta;
+            if (ImGui::IsMouseDown(0) && !(value==drag.draft.proposed)) drag.Update(p.revision,value,out);
+        };
+        update(s.drag);
+        for (auto &drag:s.companionDrags.first(s.companionCount)) update(drag);
+    }
     for (const auto &key : keys) {
         if (key.channel != channel || row < 0) {
             channel = key.channel;
@@ -544,8 +564,14 @@ void DopeSheet(const char *id, const editor::CurveProvider &p, editor::CurveStat
         float y = view.min.y + row * 30 + 15;
         if (y > view.max.y)
             break;
+        auto tick=key.tick;
+        if (s.drag.active && s.drag.draft.phase!=editor::Phase::Cancel) {
+            if (s.drag.draft.target==key.id) tick=s.drag.draft.proposed.first;
+            for (const auto &drag:s.companionDrags.first(s.companionCount))
+                if (drag.draft.target==key.id) {tick=drag.draft.proposed.first;break;}
+        }
         float x = view.min.x +
-                  static_cast<float>((editor::Seconds(key.tick) - s.canvas.origin.x) * s.canvas.scale.x);
+                  static_cast<float>((editor::Seconds(tick) - s.canvas.origin.x) * s.canvas.scale.x);
         auto color =
             ImGui::GetColorU32(selection.Contains(key.id) ? theme.colors.warning : theme.colors.text);
         d->AddQuadFilled({x, y - 5}, {x + 5, y}, {x, y + 5}, {x - 5, y}, color);
@@ -554,6 +580,15 @@ void DopeSheet(const char *id, const editor::CurveProvider &p, editor::CurveStat
             original = {key.tick, 0, 0, 0, key.value};
         }
     }
+    ImGui::PushID(id);
+    if (view.hovered && ImGui::IsMouseReleased(ImGuiMouseButton_Right) && !s.drag.active)
+        ImGui::OpenPopup("dope-options");
+    if (ImGui::BeginPopup("dope-options")) {
+        ImGui::Checkbox("Scale key timing",&s.scaleTime);
+        ImGui::Checkbox("Snap to frame",&s.snapToFrame);
+        ImGui::EndPopup();
+    }
+    ImGui::PopID();
     if (view.hovered && hit && ImGui::IsMouseClicked(0) && !s.drag.active) {
         if (!selection.Contains(hit) || ImGui::GetIO().KeyCtrl)
             selection.Set(hit, ImGui::GetIO().KeyCtrl, ImGui::GetIO().KeyCtrl);
@@ -574,27 +609,7 @@ void DopeSheet(const char *id, const editor::CurveProvider &p, editor::CurveStat
                     {key.tick,0,0,0,key.value},editor::CurrentModifiers(),out);
         }
     }
-    if (s.drag.active && s.drag.draft.phase!=editor::Phase::Cancel &&
-        s.drag.draft.phase!=editor::Phase::Commit && capacity(1+s.companionCount)) {
-        const double dx=(mouse.x-s.mouseStart.x)/s.canvas.scale.x;
-        auto delta=editor::FromSeconds(dx);
-        if (s.snapToFrame && !s.scaling)
-            delta=editor::FrameToTick(editor::TickToFrame(s.drag.draft.original.first+delta,s.rate),s.rate)-
-                s.drag.draft.original.first;
-        auto update=[&](editor::Transaction &drag) {
-            auto value=drag.draft.original;
-            if (s.scaling) {
-                const double factor=std::exp2(std::clamp(dx*s.canvas.scale.x/100.,-16.,16.));
-                value.first=s.scalePivot+static_cast<editor::Tick>(std::llround(
-                    static_cast<long double>(value.first-s.scalePivot)*factor));
-                if (s.snapToFrame) value.first=editor::FrameToTick(editor::TickToFrame(value.first,s.rate),s.rate);
-            } else value.first+=delta;
-            if (ImGui::IsMouseDown(0) && !(value==drag.draft.proposed)) drag.Update(p.revision,value,out);
-        };
-        update(s.drag);
-        for (auto &drag:s.companionDrags.first(s.companionCount)) update(drag);
-        if (!ImGui::IsMouseDown(0)) finish(false);
-    }
+    if (s.drag.active && !ImGui::IsMouseDown(0)) finish(false);
     editor::EndCanvas();
 }
 } // namespace imkit::cg
