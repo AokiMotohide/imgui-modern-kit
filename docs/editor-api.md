@@ -240,3 +240,10 @@ box/polygon containment test. Lasso requires host storage in `UVState::canvas.se
 UVのbox/lassoは`UVProvider::selectionQuery`へUV座標の範囲と選択単位を渡します。
 一意な代表点を返すと、CanvasSelectionが矩形・多角形の内外判定を行います。
 lassoには`UVState::canvas.selectionPath`へホストの作業領域を設定してください。
+
+Multi-vertex UV transforms require `UVProvider::selected` to return the complete selection
+and `UVState::companionDrags` to hold the other vertex transactions. Insufficient buffers
+reject Begin or retain the complete terminal batch for retry; no partial Commit is emitted.
+UVの複数頂点変換では`UVProvider::selected`で選択全体を返し、他の頂点のtransactionを
+`UVState::companionDrags`へ確保します。容量不足はBeginを拒否するか、終了イベント全体を
+再試行用に保持します。Commitの一部だけを返すことはありません。
