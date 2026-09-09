@@ -221,3 +221,8 @@ Commit and retains its source data during Update. A locked strip still exposes U
 `EditKind::StripSettings`はrangeを`first/last`、channelを`parent`、scale/repeat/blendを
 `x/y/z`、mute/lockを`offset`のbit 1/2で返します。ホストはCommit時に適用し、Update中は
 元データを維持します。ロック中も解除操作は可能です。
+
+Animation strip `Reorder` uses the neighboring strip StableId in `proposed.parent`
+and direction (-1/+1) in `proposed.offset`. The Gallery swaps the adjacent strips.
+Animation stripの`Reorder`は隣接stripのStableIdを`proposed.parent`、方向（-1/+1）を
+`proposed.offset`で返します。Galleryは隣接stripを交換します。
