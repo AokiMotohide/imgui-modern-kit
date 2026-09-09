@@ -108,3 +108,9 @@ freely, subject to the following restrictions:
 3. This notice may not be removed or altered from any source
    distribution.
 
+## Generated icon assets
+
+The 120 icons under `assets/icons` were individually generated with the built-in
+OpenAI image generation tool for this project. They are not copied from the design
+reference projects mentioned above. Their prompts and source hashes accompany the
+assets. These project assets are distributed under the repository MIT license.

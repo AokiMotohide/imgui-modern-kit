@@ -1,5 +1,12 @@
 # Changelog / 変更履歴
 
+## Unreleased — Modern icons
+
+- Add 120 individually generated outline icons, six PNG sizes, embedded tintable atlases and host-owned texture bindings.
+- Add `Icon`, icon-ID `IconButton`, `IconLabelButton`, catalogue metadata and the native Icons Gallery page.
+- Preserve the direction-arrow button overload and the host-owned renderer/context contract.
+- 120種類のアイコン、色・サイズ指定API、実Gallery一覧とアイコン専用検証を追加。
+
 ## 0.2.0 — Precision Layers
 
 - Adopt Precision Layers across public GUI families, with light/dark semantic palettes and explicit scale/font scopes.

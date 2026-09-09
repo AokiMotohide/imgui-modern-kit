@@ -1,0 +1,1802 @@
+[
+  {
+    "name": "Add",
+    "source": "assets/icons/originals/Add.png",
+    "sha256": "42d7991c37ea47d7f6d6949dbf126e02b082a9e011900a5d262dde9f0cf2d5f2",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      276,
+      276,
+      978,
+      978
+    ]
+  },
+  {
+    "name": "Delete",
+    "source": "assets/icons/originals/Delete.png",
+    "sha256": "a3def8b8d4d1babb995fc11d23707f48e3be4cfa41183980d2b1c2ffafdd62fb",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      261,
+      221,
+      993,
+      1033
+    ]
+  },
+  {
+    "name": "Close",
+    "source": "assets/icons/originals/Close.png",
+    "sha256": "5e35b7d4ad2f4545cec8ee0f309619bad2a30fbe031c8e83caaade6cef24ed31",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      252,
+      266,
+      1002,
+      1014
+    ]
+  },
+  {
+    "name": "Check",
+    "source": "assets/icons/originals/Check.png",
+    "sha256": "ed701f4a53a680630cddca7e8896b847988643a11c95e0e92416c7e217ed369d",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      316,
+      412,
+      950,
+      869
+    ]
+  },
+  {
+    "name": "Edit",
+    "source": "assets/icons/originals/Edit.png",
+    "sha256": "e2e607cbd2627cfc59022ec0243eee8c98263c68057ac560ef22e91fc97b7d72",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      185,
+      168,
+      1091,
+      1070
+    ]
+  },
+  {
+    "name": "Search",
+    "source": "assets/icons/originals/Search.png",
+    "sha256": "afb6bc288fa1ad013fee5846ef83c68366ff6c373c60f6f7a7542931048ce01e",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      256,
+      280,
+      998,
+      1012
+    ]
+  },
+  {
+    "name": "Settings",
+    "source": "assets/icons/originals/Settings.png",
+    "sha256": "af2cada1961891745d4d7604548c44591a042717fa1690a9c82adef00d542839",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      184,
+      187,
+      1069,
+      1070
+    ]
+  },
+  {
+    "name": "More",
+    "source": "assets/icons/originals/More.png",
+    "sha256": "e429932fa510110b37de3d07d04e2f0cf25d6f6b239794f4d4d773738c03dd27",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      332,
+      557,
+      922,
+      707
+    ]
+  },
+  {
+    "name": "Refresh",
+    "source": "assets/icons/originals/Refresh.png",
+    "sha256": "3ab860542c9e0f566812122e80e4ab2c1b58fb7cfe6986f76a70c68fd24ab338",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      171,
+      239,
+      1089,
+      1017
+    ]
+  },
+  {
+    "name": "Reset",
+    "source": "assets/icons/originals/Reset.png",
+    "sha256": "14c9b283e9c41c2cf8b150e2455edfe3f46d6b38d21b82ee25aedcf3e24f7547",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      233,
+      265,
+      994,
+      989
+    ]
+  },
+  {
+    "name": "ArrowUp",
+    "source": "assets/icons/originals/ArrowUp.png",
+    "sha256": "c26c6d0ea3c164b192902289f8ebec7462134f9a68753ea0afbfb455cdb0d393",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      331,
+      287,
+      923,
+      966
+    ]
+  },
+  {
+    "name": "ArrowDown",
+    "source": "assets/icons/originals/ArrowDown.png",
+    "sha256": "be14b702ed5f49e8b48b3e8584ad43d7beae25734b934fe4122dbf6498d6a938",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      337,
+      261,
+      917,
+      1016
+    ]
+  },
+  {
+    "name": "ArrowLeft",
+    "source": "assets/icons/originals/ArrowLeft.png",
+    "sha256": "e0723f86f6e491828651e34e73ec4ccf3736405556405d23d72d466d595ba555",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      342,
+      395,
+      915,
+      1174
+    ]
+  },
+  {
+    "name": "ArrowRight",
+    "source": "assets/icons/originals/ArrowRight.png",
+    "sha256": "8bbf2d332df430b8b794715d1b067d243e169d60057615af8431f51fad9ccccf",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      331,
+      389,
+      923,
+      888
+    ]
+  },
+  {
+    "name": "Back",
+    "source": "assets/icons/originals/Back.png",
+    "sha256": "d311abc0e8c527bca25393c80ccc7562d8f3abbdff36a6484c6bf101cb34d423",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      500,
+      414,
+      743,
+      848
+    ]
+  },
+  {
+    "name": "Forward",
+    "source": "assets/icons/originals/Forward.png",
+    "sha256": "5b16d77702a2bc2d5151c7b732aadb24f3a0628016295d060af9d3bfa1550c98",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      514,
+      398,
+      764,
+      855
+    ]
+  },
+  {
+    "name": "Home",
+    "source": "assets/icons/originals/Home.png",
+    "sha256": "af89dc2911a9df39910f09768714268604150b382f0efad7a60acb2dd0b2b966",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      211,
+      259,
+      1042,
+      1003
+    ]
+  },
+  {
+    "name": "Menu",
+    "source": "assets/icons/originals/Menu.png",
+    "sha256": "8e9ecdb30c2347dbf818a677bcf16f71834c2001db12d7cfcaf136cdaa0189bf",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      381,
+      460,
+      873,
+      794
+    ]
+  },
+  {
+    "name": "ExternalLink",
+    "source": "assets/icons/originals/ExternalLink.png",
+    "sha256": "e537b5a177a16855f60e9cce423929b9906d1ca16d8e42c4a821855e22576c53",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      335,
+      339,
+      942,
+      940
+    ]
+  },
+  {
+    "name": "Logout",
+    "source": "assets/icons/originals/Logout.png",
+    "sha256": "c6c8a5076c9da81a5de1022a4a815708ccabf8c362af3a4676909f3c43d983d5",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      248,
+      246,
+      1005,
+      1008
+    ]
+  },
+  {
+    "name": "FileNew",
+    "source": "assets/icons/originals/FileNew.png",
+    "sha256": "60c9a6e0481517b710a1fa3920b9ef88718cf328af3ae328c81291778a63324f",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      265,
+      184,
+      990,
+      1070
+    ]
+  },
+  {
+    "name": "File",
+    "source": "assets/icons/originals/File.png",
+    "sha256": "9a369501390287a201a6f397d6b830dde4d7c2d4d7d8cbc1c15f745b409c0c18",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      378,
+      276,
+      877,
+      979
+    ]
+  },
+  {
+    "name": "Folder",
+    "source": "assets/icons/originals/Folder.png",
+    "sha256": "3f3c3002bcccf1237c69a3188cfbc57a9b75d8e5342be967d0a6386b4a3a252a",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      122,
+      210,
+      1134,
+      1040
+    ]
+  },
+  {
+    "name": "FolderOpen",
+    "source": "assets/icons/originals/FolderOpen.png",
+    "sha256": "d165f4326ae696b260b5aff9daf6a46ae70ac2f7f1a585869987bd3653453de0",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      169,
+      274,
+      1151,
+      1022
+    ]
+  },
+  {
+    "name": "Save",
+    "source": "assets/icons/originals/Save.png",
+    "sha256": "ace537d48a7942bea5bec176dee91e410217f6198dd3e52d6e5f87ef4c3c85c3",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      198,
+      204,
+      1056,
+      1050
+    ]
+  },
+  {
+    "name": "SaveAs",
+    "source": "assets/icons/originals/SaveAs.png",
+    "sha256": "b03b0893a41b5570e723dce52bbe8c188907848c6d7eb0a931e2ce97c37b7058",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      210,
+      223,
+      1102,
+      1055
+    ]
+  },
+  {
+    "name": "Import",
+    "source": "assets/icons/originals/Import.png",
+    "sha256": "6f07e40159dee20e73177dd8428ac5dbbbf02a1c76a18cb0ea9364ccb0abc60c",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      261,
+      258,
+      995,
+      996
+    ]
+  },
+  {
+    "name": "Export",
+    "source": "assets/icons/originals/Export.png",
+    "sha256": "5c29f4ca5de07317cea4c47cb034aeb174b2c4aecbada1c95a06451e8a2b3306",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      278,
+      254,
+      1114,
+      1013
+    ]
+  },
+  {
+    "name": "Download",
+    "source": "assets/icons/originals/Download.png",
+    "sha256": "402ce08f856a92090cd078fc65664fa014876bb7535d84aac43da078cad8e492",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      347,
+      340,
+      907,
+      927
+    ]
+  },
+  {
+    "name": "Upload",
+    "source": "assets/icons/originals/Upload.png",
+    "sha256": "2f648f64421ac901f7140fb95537e56e1ea2020dbd108777d0bbc67c014f83b1",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      268,
+      186,
+      986,
+      1068
+    ]
+  },
+  {
+    "name": "Undo",
+    "source": "assets/icons/originals/Undo.png",
+    "sha256": "90a5ae725d302508f64880cccaddee79768203a7705de286d4c16ec823e8b1c8",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      222,
+      267,
+      1029,
+      1018
+    ]
+  },
+  {
+    "name": "Redo",
+    "source": "assets/icons/originals/Redo.png",
+    "sha256": "cb839a1000bba4b5cb7cb220b4bf53924c7777445171caf4b5bcaf4fae67eb39",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      205,
+      261,
+      1067,
+      993
+    ]
+  },
+  {
+    "name": "Cut",
+    "source": "assets/icons/originals/Cut.png",
+    "sha256": "54418b3cf18329e2a72eaf0785abe80f4e6b407a860136d8463de9fb576d6ede",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      225,
+      270,
+      1027,
+      987
+    ]
+  },
+  {
+    "name": "Copy",
+    "source": "assets/icons/originals/Copy.png",
+    "sha256": "e4b9c4f6b4c677dcd473b58f0a5dc1f8c52277aa03d889e6273dbb4ba66c7e31",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      227,
+      190,
+      1027,
+      1090
+    ]
+  },
+  {
+    "name": "Paste",
+    "source": "assets/icons/originals/Paste.png",
+    "sha256": "2baf43b30acd8fec4a4b19eab37f95d061c0f46426db36767e7bb33986fedd6d",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      267,
+      194,
+      988,
+      1063
+    ]
+  },
+  {
+    "name": "Duplicate",
+    "source": "assets/icons/originals/Duplicate.png",
+    "sha256": "d4ca00713f66b15a6191ba56d294b6c2441108b4d977a1d22c4ca657b3134331",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      286,
+      225,
+      1001,
+      1041
+    ]
+  },
+  {
+    "name": "SelectAll",
+    "source": "assets/icons/originals/SelectAll.png",
+    "sha256": "e2f6588d10a44685cc1b47ea0b14309f00d35ed3b72c821dfe5242cb7abee6dc",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      263,
+      268,
+      987,
+      973
+    ]
+  },
+  {
+    "name": "Deselect",
+    "source": "assets/icons/originals/Deselect.png",
+    "sha256": "a1c154d11d7b0ed83c700fb08621a51d8f70e0bd9f979c386c761d3e12ca8125",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      230,
+      230,
+      1010,
+      1023
+    ]
+  },
+  {
+    "name": "Lock",
+    "source": "assets/icons/originals/Lock.png",
+    "sha256": "ef143119bbca23a7fa93fcdebe781ddb413c88883c150a86521c8f4037448e46",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      281,
+      197,
+      973,
+      1078
+    ]
+  },
+  {
+    "name": "Unlock",
+    "source": "assets/icons/originals/Unlock.png",
+    "sha256": "3e6b95a8a529312d732d583f2768dae0907bdc58b337b09adceeeb38f259523a",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      276,
+      141,
+      1070,
+      1132
+    ]
+  },
+  {
+    "name": "Eye",
+    "source": "assets/icons/originals/Eye.png",
+    "sha256": "3f75463509f61bf1cadc9a406a6400fc92e1e3040972344ab205f4b8c7d485e8",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      162,
+      354,
+      1092,
+      909
+    ]
+  },
+  {
+    "name": "EyeOff",
+    "source": "assets/icons/originals/EyeOff.png",
+    "sha256": "b4bfb4e15b008bcd41fcb0519ab4dcaf4bdee6f01aecf9b1931ebe2da70c5f78",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      166,
+      247,
+      1087,
+      1028
+    ]
+  },
+  {
+    "name": "ZoomIn",
+    "source": "assets/icons/originals/ZoomIn.png",
+    "sha256": "85da62f05bf381c09cf65202baf57ff2fd8446ad5a0a179e22f4e7abcc5ccf33",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      193,
+      204,
+      1053,
+      1051
+    ]
+  },
+  {
+    "name": "ZoomOut",
+    "source": "assets/icons/originals/ZoomOut.png",
+    "sha256": "369f7cd859ba58bc1183fd140ad6506b5d3719a21f5aa4c55fd303630841dfb8",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      177,
+      207,
+      1080,
+      1091
+    ]
+  },
+  {
+    "name": "FitView",
+    "source": "assets/icons/originals/FitView.png",
+    "sha256": "0e882eb209643ac2c5d87ccc8bd399e223876ba4006a4e76c6daa5497ad8fc38",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      251,
+      268,
+      1003,
+      977
+    ]
+  },
+  {
+    "name": "ActualSize",
+    "source": "assets/icons/originals/ActualSize.png",
+    "sha256": "9c79dbd1deecf9ff6a6a0464e455bad527f7efdad2061180800375ee1312bd3a",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      210,
+      197,
+      1053,
+      1060
+    ]
+  },
+  {
+    "name": "Fullscreen",
+    "source": "assets/icons/originals/Fullscreen.png",
+    "sha256": "2b99e40e9ca5a7ab27defa0589ff76c013ef25ea3ae1341d113b40f8306aea38",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      248,
+      251,
+      1006,
+      1003
+    ]
+  },
+  {
+    "name": "ExitFullscreen",
+    "source": "assets/icons/originals/ExitFullscreen.png",
+    "sha256": "718acb2878acd713f1b3d4abc05727ea680acf91588d728d51e1fb1ce1ee1441",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      237,
+      258,
+      1017,
+      1001
+    ]
+  },
+  {
+    "name": "Grid",
+    "source": "assets/icons/originals/Grid.png",
+    "sha256": "1d21543dffb48d5980a9606541698c925e83493c53d3aa725dd975d85699cff0",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      294,
+      321,
+      960,
+      977
+    ]
+  },
+  {
+    "name": "List",
+    "source": "assets/icons/originals/List.png",
+    "sha256": "2004923e65841974c5edc97e9d34af5dc8e6460ce74c08952fc1f4236e3ae877",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      289,
+      399,
+      965,
+      879
+    ]
+  },
+  {
+    "name": "SidebarLeft",
+    "source": "assets/icons/originals/SidebarLeft.png",
+    "sha256": "207ed129e8bbbe1adf679932ba83ad4f2a70b7153b457cacc064ed440fb0c309",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      244,
+      277,
+      1011,
+      977
+    ]
+  },
+  {
+    "name": "SidebarRight",
+    "source": "assets/icons/originals/SidebarRight.png",
+    "sha256": "e551bcb1682105e726710647aaefaa017afd319698980dbee25892de57f9c8aa",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      225,
+      239,
+      1029,
+      1016
+    ]
+  },
+  {
+    "name": "PanelBottom",
+    "source": "assets/icons/originals/PanelBottom.png",
+    "sha256": "dbdf6b5a0bc484f3b2443d7e88d1062713056095ac8fbca51b456a8c33d98906",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      222,
+      246,
+      1032,
+      1012
+    ]
+  },
+  {
+    "name": "SplitHorizontal",
+    "source": "assets/icons/originals/SplitHorizontal.png",
+    "sha256": "c117025b11a93d94af8c8fa819a1f8e3cdc7bb8cfb1d36e4696722aa8331828a",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      321,
+      338,
+      933,
+      916
+    ]
+  },
+  {
+    "name": "SplitVertical",
+    "source": "assets/icons/originals/SplitVertical.png",
+    "sha256": "66b786bfe0c3a48f95bf94815d4a583d7d3e32b9ee702aa28a8af8280d8e8e74",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      252,
+      307,
+      1002,
+      947
+    ]
+  },
+  {
+    "name": "AlignLeft",
+    "source": "assets/icons/originals/AlignLeft.png",
+    "sha256": "921be683e905812d313c331c9ab615a48f193d6ef1ae5bec532a210efa6107ba",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      279,
+      380,
+      975,
+      918
+    ]
+  },
+  {
+    "name": "AlignCenter",
+    "source": "assets/icons/originals/AlignCenter.png",
+    "sha256": "182f03a03bd833bc56b24f22eac7d23358e4bd682659c2de9b8b72a2cc10c35b",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      228,
+      424,
+      1027,
+      829
+    ]
+  },
+  {
+    "name": "AlignRight",
+    "source": "assets/icons/originals/AlignRight.png",
+    "sha256": "7e00ec0bc5a43560a113e189338f62abadaa25b0b1675367061cbc8c1315d328",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      225,
+      357,
+      1030,
+      923
+    ]
+  },
+  {
+    "name": "AlignTop",
+    "source": "assets/icons/originals/AlignTop.png",
+    "sha256": "bde61ad2c9efae5d62183d9eaa0104e1be4e1c91a3bb121b1d593aac3c36f0fb",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      171,
+      192,
+      1083,
+      1094
+    ]
+  },
+  {
+    "name": "AlignBottom",
+    "source": "assets/icons/originals/AlignBottom.png",
+    "sha256": "e8d63090525956e0ef0563260f02a3117657264becdd7849667da1884725adf2",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      178,
+      325,
+      1076,
+      929
+    ]
+  },
+  {
+    "name": "Play",
+    "source": "assets/icons/originals/Play.png",
+    "sha256": "2c0ff2da2f536d26a16f22943063cdb50388abf5749fb11fe4615d662820a281",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      317,
+      279,
+      938,
+      976
+    ]
+  },
+  {
+    "name": "Pause",
+    "source": "assets/icons/originals/Pause.png",
+    "sha256": "359b6691d27dc3bef468666af14d4a2d4489af2279a576c8946ae3de6db2928d",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      430,
+      363,
+      823,
+      891
+    ]
+  },
+  {
+    "name": "Stop",
+    "source": "assets/icons/originals/Stop.png",
+    "sha256": "b04bc7933f6846ceac2b994071a20fa805d5b6f72ec0b96a416fa0571b63be51",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      199,
+      211,
+      1055,
+      1043
+    ]
+  },
+  {
+    "name": "Record",
+    "source": "assets/icons/originals/Record.png",
+    "sha256": "c6dcb7a46eaef3b6ae88694b40dc5b3f01d62a2c65ec2a35072943d479e55256",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      260,
+      265,
+      992,
+      994
+    ]
+  },
+  {
+    "name": "PreviousTrack",
+    "source": "assets/icons/originals/PreviousTrack.png",
+    "sha256": "4d954f633184f75d43bc29a5184e421bd4e1369e329f797add47a305c83ce7af",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      284,
+      260,
+      970,
+      999
+    ]
+  },
+  {
+    "name": "NextTrack",
+    "source": "assets/icons/originals/NextTrack.png",
+    "sha256": "ad0e0a6a8561906603ff9387a59688fc0bbf76edac833fbafd2bce0fe8e0607c",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      355,
+      357,
+      897,
+      911
+    ]
+  },
+  {
+    "name": "Repeat",
+    "source": "assets/icons/originals/Repeat.png",
+    "sha256": "ab1b8be255b3a9ec8949e0708561bd67ed305d6e49985f021c387ad3298a0282",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      278,
+      316,
+      976,
+      938
+    ]
+  },
+  {
+    "name": "Shuffle",
+    "source": "assets/icons/originals/Shuffle.png",
+    "sha256": "5d27f15afb22f8218103177bce788b40bddc86e7b86671f196121abb71f663bf",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      204,
+      336,
+      1051,
+      918
+    ]
+  },
+  {
+    "name": "Volume",
+    "source": "assets/icons/originals/Volume.png",
+    "sha256": "97b5dc26e0fae5892cefca38f1fa3929d11c4a21325b9469ecc9e7478167380b",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      189,
+      267,
+      1079,
+      987
+    ]
+  },
+  {
+    "name": "Mute",
+    "source": "assets/icons/originals/Mute.png",
+    "sha256": "1390b55db2727efa18781c10a3f434413ce160c22d2e91c8334120016512a016",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      237,
+      250,
+      1018,
+      1028
+    ]
+  },
+  {
+    "name": "Image",
+    "source": "assets/icons/originals/Image.png",
+    "sha256": "8354b23096ee455b58d3f96670ce68668addaf9f9c13796bce1a0357a6cc78a6",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      190,
+      250,
+      1064,
+      1004
+    ]
+  },
+  {
+    "name": "Video",
+    "source": "assets/icons/originals/Video.png",
+    "sha256": "1024cce893abbb1750e2b8fc40ad7bc8262447c65c6f474ba09ec6c6bb2dd58f",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      192,
+      370,
+      1062,
+      884
+    ]
+  },
+  {
+    "name": "Audio",
+    "source": "assets/icons/originals/Audio.png",
+    "sha256": "b6bb86c6b900d99ebc72b0d3f954eceae42030fdad7d0549fa42ff36804d5c63",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      378,
+      381,
+      876,
+      897
+    ]
+  },
+  {
+    "name": "Camera",
+    "source": "assets/icons/originals/Camera.png",
+    "sha256": "342ac1192aa26af9dcfa76459b3c5e04b4f0dbc9f52f660b06db0cf60bd06f10",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      153,
+      251,
+      1103,
+      1034
+    ]
+  },
+  {
+    "name": "Microphone",
+    "source": "assets/icons/originals/Microphone.png",
+    "sha256": "7170a4551231d8d6ee07eff65185ff008901852618d532a3b3a5a2d01a6e2d19",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      355,
+      219,
+      900,
+      1036
+    ]
+  },
+  {
+    "name": "Text",
+    "source": "assets/icons/originals/Text.png",
+    "sha256": "2dc30a3f4ad74a56245969521554d6dd0d2a261e42b0f9f4c13ee8fe0ddb95b1",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      241,
+      389,
+      1013,
+      945
+    ]
+  },
+  {
+    "name": "Code",
+    "source": "assets/icons/originals/Code.png",
+    "sha256": "9a6daef461b6750078f634febdcebf04966e89e8674156c6edfd9c27a0ab5c9b",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      183,
+      338,
+      1071,
+      916
+    ]
+  },
+  {
+    "name": "Link",
+    "source": "assets/icons/originals/Link.png",
+    "sha256": "2ab14c2b179a839b1e779acb8ed75e57b0a13a233b0b9a9849c1bbeff8e45db8",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      240,
+      246,
+      1033,
+      1039
+    ]
+  },
+  {
+    "name": "Attachment",
+    "source": "assets/icons/originals/Attachment.png",
+    "sha256": "9eb1df8f108a93b6c6e587756ef74c8e520cfb1ef290eaff8f78f348f55a23e4",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      234,
+      228,
+      1047,
+      1063
+    ]
+  },
+  {
+    "name": "Palette",
+    "source": "assets/icons/originals/Palette.png",
+    "sha256": "e91bb1732cabfd3c4ca1029fd24ad2ef62034b8927470b1edf51a8a4efa74c58",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      170,
+      175,
+      1081,
+      1089
+    ]
+  },
+  {
+    "name": "Info",
+    "source": "assets/icons/originals/Info.png",
+    "sha256": "96dd62326158b2eec81d866fe6d8e8110bcdcbd98b364a4cc232c4da6cac391b",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      157,
+      164,
+      1093,
+      1102
+    ]
+  },
+  {
+    "name": "Help",
+    "source": "assets/icons/originals/Help.png",
+    "sha256": "e83fd5644f24bc1c8a8d2ccab10750cdacdea228d1fc89211ab7ea523a8e80dc",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      209,
+      223,
+      1045,
+      1049
+    ]
+  },
+  {
+    "name": "Warning",
+    "source": "assets/icons/originals/Warning.png",
+    "sha256": "c286cf33cbc0f4ed25ebdd90b73c03f0a0689a679eacee997c38f489f944eaa0",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      189,
+      259,
+      1063,
+      1021
+    ]
+  },
+  {
+    "name": "Error",
+    "source": "assets/icons/originals/Error.png",
+    "sha256": "89c586527f8eb7cc25b31d2c3ac47d5bba77cf9a386cbc74098696b528c35e44",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      199,
+      213,
+      1055,
+      1056
+    ]
+  },
+  {
+    "name": "Success",
+    "source": "assets/icons/originals/Success.png",
+    "sha256": "e18503849030bd9709d2c200c97354d75088c5014492d9effbb699e8f1f6c209",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      175,
+      182,
+      1079,
+      1087
+    ]
+  },
+  {
+    "name": "Loading",
+    "source": "assets/icons/originals/Loading.png",
+    "sha256": "86d078f11c92b5440aee694127eab15210d3f9fdea09c5d5cc05c7aa5805191a",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      292,
+      293,
+      962,
+      961
+    ]
+  },
+  {
+    "name": "Bell",
+    "source": "assets/icons/originals/Bell.png",
+    "sha256": "cac91b383e35a096538326e1979760f39700a9e436359278aaa5e099bccf80ac",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      294,
+      232,
+      960,
+      1048
+    ]
+  },
+  {
+    "name": "BellOff",
+    "source": "assets/icons/originals/BellOff.png",
+    "sha256": "be12dac76e52d60bc5f209e84caec88b88b4368139404e09a9c6be88c179174c",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      247,
+      179,
+      1017,
+      1071
+    ]
+  },
+  {
+    "name": "Connected",
+    "source": "assets/icons/originals/Connected.png",
+    "sha256": "9d695bb083a7eb3b4e8adaa51d0a52ee2f3e940a7aba4a6ac4819c9346e3250b",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      123,
+      423,
+      1131,
+      829
+    ]
+  },
+  {
+    "name": "Disconnected",
+    "source": "assets/icons/originals/Disconnected.png",
+    "sha256": "04b601745a76a6d0175d57e1fd6624c46f6cdca9f797d2affd61ccef40b92961",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      233,
+      245,
+      1025,
+      1030
+    ]
+  },
+  {
+    "name": "Filter",
+    "source": "assets/icons/originals/Filter.png",
+    "sha256": "4e74fcdc84ebf9d3025cd80d9255348e661a02d8a22e30d4e3246f62dfe7ca4b",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      234,
+      278,
+      1020,
+      976
+    ]
+  },
+  {
+    "name": "SortAscending",
+    "source": "assets/icons/originals/SortAscending.png",
+    "sha256": "9d92b7ba6ce8d44dbe590618a6d4ab2c5e49870cc8feca31e5a49740707532f7",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      260,
+      311,
+      995,
+      942
+    ]
+  },
+  {
+    "name": "SortDescending",
+    "source": "assets/icons/originals/SortDescending.png",
+    "sha256": "7aa8a18caa9538c1276e8b087121c11d9d0620c1f373e781b1a17c16dcfdb845",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      227,
+      324,
+      1044,
+      930
+    ]
+  },
+  {
+    "name": "Tag",
+    "source": "assets/icons/originals/Tag.png",
+    "sha256": "664ff24add815709bf0d10f4d8de2a73abd7c560dc6986452602be0576ad37c0",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      213,
+      215,
+      1078,
+      1078
+    ]
+  },
+  {
+    "name": "Pin",
+    "source": "assets/icons/originals/Pin.png",
+    "sha256": "f821fa6956e0e80bb885e1648c4ebb8d09424f39cc45e837d500ba52f20de335",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      335,
+      214,
+      996,
+      1040
+    ]
+  },
+  {
+    "name": "PinOff",
+    "source": "assets/icons/originals/PinOff.png",
+    "sha256": "46b9a858666163da1be7b26a8a35845e7f7f5156aa45d2de7d225a9e331c7e43",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      209,
+      187,
+      1045,
+      1038
+    ]
+  },
+  {
+    "name": "Star",
+    "source": "assets/icons/originals/Star.png",
+    "sha256": "fefa390f9f5783d995b105187cb44cd92b8b26716f065cdb03466bc5eb26bbbf",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      146,
+      162,
+      1108,
+      1088
+    ]
+  },
+  {
+    "name": "Heart",
+    "source": "assets/icons/originals/Heart.png",
+    "sha256": "cd708eda5cd54524a352fe1d9835555c9d75f20b6e1b35f088ae5019733df946",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      198,
+      280,
+      1055,
+      1002
+    ]
+  },
+  {
+    "name": "History",
+    "source": "assets/icons/originals/History.png",
+    "sha256": "26d10ebef0b521e012f98684b6107035cfdc63800360cdb8d7244c1981667f81",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      177,
+      251,
+      1003,
+      993
+    ]
+  },
+  {
+    "name": "Calendar",
+    "source": "assets/icons/originals/Calendar.png",
+    "sha256": "605a0cd8563b0de164a2877574b4b629325c50da5488f6effc951d149d719433",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      201,
+      190,
+      1053,
+      1091
+    ]
+  },
+  {
+    "name": "User",
+    "source": "assets/icons/originals/User.png",
+    "sha256": "38be5d40834bc33eaf1106390e7a249fb99f3910ffdc9b309e31e6f09e68f075",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      271,
+      270,
+      979,
+      1003
+    ]
+  },
+  {
+    "name": "Users",
+    "source": "assets/icons/originals/Users.png",
+    "sha256": "efb52c35da9c7647c4337580ec8fd3d47190398279ce9990ad65f2a3b27193d3",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      227,
+      392,
+      1026,
+      867
+    ]
+  },
+  {
+    "name": "UserAdd",
+    "source": "assets/icons/originals/UserAdd.png",
+    "sha256": "2c92cd2c57c9d3df7398857a75a2429238f70063c69d65b45559ab254334067d",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      312,
+      298,
+      972,
+      983
+    ]
+  },
+  {
+    "name": "Share",
+    "source": "assets/icons/originals/Share.png",
+    "sha256": "fe6698fcb54512b5a76bc84bf5e4d3841140f5974fd8f244664724edeb809a1f",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      213,
+      245,
+      1031,
+      1060
+    ]
+  },
+  {
+    "name": "Comment",
+    "source": "assets/icons/originals/Comment.png",
+    "sha256": "ad1e20a3a2d4c2bb2229a81e451c20be333d2a99cf72508fd0125ae1279059e9",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      306,
+      360,
+      948,
+      924
+    ]
+  },
+  {
+    "name": "Send",
+    "source": "assets/icons/originals/Send.png",
+    "sha256": "e6a049c491dfdc3d43de7fe244774972d77f70773d513a7a8139463d48b72ec9",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      183,
+      288,
+      1073,
+      1001
+    ]
+  },
+  {
+    "name": "Inbox",
+    "source": "assets/icons/originals/Inbox.png",
+    "sha256": "0c8a9b55cd281c347e71ad3cbb4a82a90df6ad8e852c8febde8a9787caaed956",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      210,
+      282,
+      1044,
+      994
+    ]
+  },
+  {
+    "name": "Cloud",
+    "source": "assets/icons/originals/Cloud.png",
+    "sha256": "87b98bcaa50645363b665244b964287113968246abc66d9128ac3e5d93de32d5",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      91,
+      275,
+      1162,
+      980
+    ]
+  },
+  {
+    "name": "Sync",
+    "source": "assets/icons/originals/Sync.png",
+    "sha256": "4725ef3528e5f1311d38c44a8326149a152561e28430039b337a95106305ffe6",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      210,
+      278,
+      1052,
+      968
+    ]
+  },
+  {
+    "name": "Key",
+    "source": "assets/icons/originals/Key.png",
+    "sha256": "20bd4d69d7556f832b8bafeca6730dd8faedfb2bfa8907b0bfe62b171fece039",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      216,
+      296,
+      1039,
+      1025
+    ]
+  },
+  {
+    "name": "Layers",
+    "source": "assets/icons/originals/Layers.png",
+    "sha256": "122fd3f279387368c5ab936d681f4747039d63b16e2fe7326850c3381a18aedc",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      225,
+      265,
+      1029,
+      1041
+    ]
+  },
+  {
+    "name": "LayerAdd",
+    "source": "assets/icons/originals/LayerAdd.png",
+    "sha256": "a2c0cef286156235c83dc0d2af7dfc5efbe6230d65d90869cae9add8766e9ffd",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      182,
+      279,
+      1087,
+      1006
+    ]
+  },
+  {
+    "name": "Cube",
+    "source": "assets/icons/originals/Cube.png",
+    "sha256": "b7c81f12b0ca68430c129b342a059bee4dbcc83125a20276494c97b1ffdf0931",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      234,
+      206,
+      1020,
+      1062
+    ]
+  },
+  {
+    "name": "Move",
+    "source": "assets/icons/originals/Move.png",
+    "sha256": "9010da2e5c0283c2c07733f2361c96acd1459dc3b2fcc02a0281a51ac9327bc6",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      242,
+      242,
+      1012,
+      1012
+    ]
+  },
+  {
+    "name": "Rotate",
+    "source": "assets/icons/originals/Rotate.png",
+    "sha256": "520638a844ea54ca50b4f5adec20672765791a109404b0816626ee2f16c8f192",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      292,
+      367,
+      1018,
+      910
+    ]
+  },
+  {
+    "name": "Scale",
+    "source": "assets/icons/originals/Scale.png",
+    "sha256": "1ec7de9e85c2ac78b31cf4e2f184232b2042f8b8f0d717f9868cd38efce6fb02",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      309,
+      334,
+      944,
+      964
+    ]
+  },
+  {
+    "name": "Monitor",
+    "source": "assets/icons/originals/Monitor.png",
+    "sha256": "37975f6fc1e5b43c5fc3feaa1f8a4760f02db64ba0fb47daf4b2b08490d0ccc6",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      247,
+      323,
+      1008,
+      947
+    ]
+  },
+  {
+    "name": "Projector",
+    "source": "assets/icons/originals/Projector.png",
+    "sha256": "b278884dd75275252e2e6485cf65fa82d732a9bc80dcb9893261c2e0a0bdf833",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      200,
+      434,
+      1054,
+      843
+    ]
+  },
+  {
+    "name": "Ruler",
+    "source": "assets/icons/originals/Ruler.png",
+    "sha256": "6aeca46c9c03f61b830c53c71a04f6c25df77ee22db8ecdd9572ad05738c435a",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      146,
+      164,
+      1108,
+      1122
+    ]
+  },
+  {
+    "name": "Target",
+    "source": "assets/icons/originals/Target.png",
+    "sha256": "f3bc053b197a265e921ba731e0af5ea288b7e5ed77db992d83b307be02a0a66c",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      176,
+      143,
+      1126,
+      1112
+    ]
+  }
+]

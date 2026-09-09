@@ -1,0 +1,482 @@
+[
+  {
+    "name": "Add",
+    "category": "Basic"
+  },
+  {
+    "name": "Delete",
+    "category": "Basic"
+  },
+  {
+    "name": "Close",
+    "category": "Basic"
+  },
+  {
+    "name": "Check",
+    "category": "Basic"
+  },
+  {
+    "name": "Edit",
+    "category": "Basic"
+  },
+  {
+    "name": "Search",
+    "category": "Basic"
+  },
+  {
+    "name": "Settings",
+    "category": "Basic"
+  },
+  {
+    "name": "More",
+    "category": "Basic"
+  },
+  {
+    "name": "Refresh",
+    "category": "Basic"
+  },
+  {
+    "name": "Reset",
+    "category": "Basic"
+  },
+  {
+    "name": "ArrowUp",
+    "category": "Navigation"
+  },
+  {
+    "name": "ArrowDown",
+    "category": "Navigation"
+  },
+  {
+    "name": "ArrowLeft",
+    "category": "Navigation"
+  },
+  {
+    "name": "ArrowRight",
+    "category": "Navigation"
+  },
+  {
+    "name": "Back",
+    "category": "Navigation"
+  },
+  {
+    "name": "Forward",
+    "category": "Navigation"
+  },
+  {
+    "name": "Home",
+    "category": "Navigation"
+  },
+  {
+    "name": "Menu",
+    "category": "Navigation"
+  },
+  {
+    "name": "ExternalLink",
+    "category": "Navigation"
+  },
+  {
+    "name": "Logout",
+    "category": "Navigation"
+  },
+  {
+    "name": "FileNew",
+    "category": "Files"
+  },
+  {
+    "name": "File",
+    "category": "Files"
+  },
+  {
+    "name": "Folder",
+    "category": "Files"
+  },
+  {
+    "name": "FolderOpen",
+    "category": "Files"
+  },
+  {
+    "name": "Save",
+    "category": "Files"
+  },
+  {
+    "name": "SaveAs",
+    "category": "Files"
+  },
+  {
+    "name": "Import",
+    "category": "Files"
+  },
+  {
+    "name": "Export",
+    "category": "Files"
+  },
+  {
+    "name": "Download",
+    "category": "Files"
+  },
+  {
+    "name": "Upload",
+    "category": "Files"
+  },
+  {
+    "name": "Undo",
+    "category": "Editing"
+  },
+  {
+    "name": "Redo",
+    "category": "Editing"
+  },
+  {
+    "name": "Cut",
+    "category": "Editing"
+  },
+  {
+    "name": "Copy",
+    "category": "Editing"
+  },
+  {
+    "name": "Paste",
+    "category": "Editing"
+  },
+  {
+    "name": "Duplicate",
+    "category": "Editing"
+  },
+  {
+    "name": "SelectAll",
+    "category": "Editing"
+  },
+  {
+    "name": "Deselect",
+    "category": "Editing"
+  },
+  {
+    "name": "Lock",
+    "category": "Editing"
+  },
+  {
+    "name": "Unlock",
+    "category": "Editing"
+  },
+  {
+    "name": "Eye",
+    "category": "View"
+  },
+  {
+    "name": "EyeOff",
+    "category": "View"
+  },
+  {
+    "name": "ZoomIn",
+    "category": "View"
+  },
+  {
+    "name": "ZoomOut",
+    "category": "View"
+  },
+  {
+    "name": "FitView",
+    "category": "View"
+  },
+  {
+    "name": "ActualSize",
+    "category": "View"
+  },
+  {
+    "name": "Fullscreen",
+    "category": "View"
+  },
+  {
+    "name": "ExitFullscreen",
+    "category": "View"
+  },
+  {
+    "name": "Grid",
+    "category": "View"
+  },
+  {
+    "name": "List",
+    "category": "View"
+  },
+  {
+    "name": "SidebarLeft",
+    "category": "Layout"
+  },
+  {
+    "name": "SidebarRight",
+    "category": "Layout"
+  },
+  {
+    "name": "PanelBottom",
+    "category": "Layout"
+  },
+  {
+    "name": "SplitHorizontal",
+    "category": "Layout"
+  },
+  {
+    "name": "SplitVertical",
+    "category": "Layout"
+  },
+  {
+    "name": "AlignLeft",
+    "category": "Layout"
+  },
+  {
+    "name": "AlignCenter",
+    "category": "Layout"
+  },
+  {
+    "name": "AlignRight",
+    "category": "Layout"
+  },
+  {
+    "name": "AlignTop",
+    "category": "Layout"
+  },
+  {
+    "name": "AlignBottom",
+    "category": "Layout"
+  },
+  {
+    "name": "Play",
+    "category": "Media"
+  },
+  {
+    "name": "Pause",
+    "category": "Media"
+  },
+  {
+    "name": "Stop",
+    "category": "Media"
+  },
+  {
+    "name": "Record",
+    "category": "Media"
+  },
+  {
+    "name": "PreviousTrack",
+    "category": "Media"
+  },
+  {
+    "name": "NextTrack",
+    "category": "Media"
+  },
+  {
+    "name": "Repeat",
+    "category": "Media"
+  },
+  {
+    "name": "Shuffle",
+    "category": "Media"
+  },
+  {
+    "name": "Volume",
+    "category": "Media"
+  },
+  {
+    "name": "Mute",
+    "category": "Media"
+  },
+  {
+    "name": "Image",
+    "category": "Content"
+  },
+  {
+    "name": "Video",
+    "category": "Content"
+  },
+  {
+    "name": "Audio",
+    "category": "Content"
+  },
+  {
+    "name": "Camera",
+    "category": "Content"
+  },
+  {
+    "name": "Microphone",
+    "category": "Content"
+  },
+  {
+    "name": "Text",
+    "category": "Content"
+  },
+  {
+    "name": "Code",
+    "category": "Content"
+  },
+  {
+    "name": "Link",
+    "category": "Content"
+  },
+  {
+    "name": "Attachment",
+    "category": "Content"
+  },
+  {
+    "name": "Palette",
+    "category": "Content"
+  },
+  {
+    "name": "Info",
+    "category": "Status"
+  },
+  {
+    "name": "Help",
+    "category": "Status"
+  },
+  {
+    "name": "Warning",
+    "category": "Status"
+  },
+  {
+    "name": "Error",
+    "category": "Status"
+  },
+  {
+    "name": "Success",
+    "category": "Status"
+  },
+  {
+    "name": "Loading",
+    "category": "Status"
+  },
+  {
+    "name": "Bell",
+    "category": "Status"
+  },
+  {
+    "name": "BellOff",
+    "category": "Status"
+  },
+  {
+    "name": "Connected",
+    "category": "Status"
+  },
+  {
+    "name": "Disconnected",
+    "category": "Status"
+  },
+  {
+    "name": "Filter",
+    "category": "Organization"
+  },
+  {
+    "name": "SortAscending",
+    "category": "Organization"
+  },
+  {
+    "name": "SortDescending",
+    "category": "Organization"
+  },
+  {
+    "name": "Tag",
+    "category": "Organization"
+  },
+  {
+    "name": "Pin",
+    "category": "Organization"
+  },
+  {
+    "name": "PinOff",
+    "category": "Organization"
+  },
+  {
+    "name": "Star",
+    "category": "Organization"
+  },
+  {
+    "name": "Heart",
+    "category": "Organization"
+  },
+  {
+    "name": "History",
+    "category": "Organization"
+  },
+  {
+    "name": "Calendar",
+    "category": "Organization"
+  },
+  {
+    "name": "User",
+    "category": "Sharing"
+  },
+  {
+    "name": "Users",
+    "category": "Sharing"
+  },
+  {
+    "name": "UserAdd",
+    "category": "Sharing"
+  },
+  {
+    "name": "Share",
+    "category": "Sharing"
+  },
+  {
+    "name": "Comment",
+    "category": "Sharing"
+  },
+  {
+    "name": "Send",
+    "category": "Sharing"
+  },
+  {
+    "name": "Inbox",
+    "category": "Sharing"
+  },
+  {
+    "name": "Cloud",
+    "category": "Sharing"
+  },
+  {
+    "name": "Sync",
+    "category": "Sharing"
+  },
+  {
+    "name": "Key",
+    "category": "Sharing"
+  },
+  {
+    "name": "Layers",
+    "category": "Production"
+  },
+  {
+    "name": "LayerAdd",
+    "category": "Production"
+  },
+  {
+    "name": "Cube",
+    "category": "Production"
+  },
+  {
+    "name": "Move",
+    "category": "Production"
+  },
+  {
+    "name": "Rotate",
+    "category": "Production"
+  },
+  {
+    "name": "Scale",
+    "category": "Production"
+  },
+  {
+    "name": "Monitor",
+    "category": "Production"
+  },
+  {
+    "name": "Projector",
+    "category": "Production"
+  },
+  {
+    "name": "Ruler",
+    "category": "Production"
+  },
+  {
+    "name": "Target",
+    "category": "Production"
+  }
+]

@@ -230,9 +230,49 @@ void Verify(Host &h, const std::filesystem::path &out) {
     h.Key(ImGuiKey_Escape);
     log << "Input: public Dear ImGui IO events; not native OS/IME acceptance.\n";
 }
+void VerifyIcons(Host &h, const std::filesystem::path &out) {
+    std::ofstream log(out / "icons-interaction.txt");
+    auto check = [&](bool ok, const char *name) {
+        log << (ok ? "PASS " : "FAIL ") << name << '\n';
+        log.flush();
+        if (!ok)
+            throw std::runtime_error(name);
+    };
+    h.Page(6);
+    h.Click("icon-button");
+    check(h.s.iconClicks == 1, "Icon button mouse activation");
+    h.Click("icon-label-button");
+    check(h.s.iconClicks == 2, "Label button mouse activation");
+    h.Click("icon-disabled");
+    check(h.s.iconClicks == 2, "Disabled icon button rejects mouse");
+    h.s.iconFocus = true;
+    h.Settle();
+    check(h.s.iconFocused, "Icon button receives keyboard focus");
+    ImGui::SetNavCursorVisible(true);
+    h.Key(ImGuiKey_Space);
+    check(h.s.iconClicks == 3, "Icon button Space activation");
+    h.Key(ImGuiKey_Tab);
+    h.Key(ImGuiKey_Enter);
+    check(h.s.iconClicks == 4, "Label button Tab and Enter activation");
+    h.Replace("icon-search", "camera");
+    check(std::strcmp(h.s.iconSearch, "camera") == 0, "Catalogue search input");
+    h.Replace("icon-search", "");
+    h.Key(ImGuiKey_Backspace); // Empty text input alone does not remove a selected range.
+    check(h.s.iconSearch[0] == '\0', "Catalogue search clears");
+    h.s.iconCustomColor = true;
+    h.s.iconColor = {.8f, .2f, .3f, .7f};
+    h.s.iconSizeIndex = 3;
+    h.Settle();
+    const auto rect = h.s.probes.at("icon-button");
+    check(rect.max.x - rect.min.x >= 32, "32px icon button layout");
+    h.Frame({}, out / "icons-custom-color-32.png");
+    h.s.iconCustomColor = false;
+    h.s.iconSizeIndex = 1;
+    log << "Input: public Dear ImGui IO events; GPU backbuffer capture; not native OS automation.\n";
+}
 } // namespace
 int main(int argc, char **argv) {
-    bool capture = false, verify = false;
+    bool capture = false, verify = false, verifyIcons = false;
     int capturePage = -1;
     std::filesystem::path out = "out/catalog";
     for (int i = 1; i < argc; ++i) {
@@ -241,6 +281,8 @@ int main(int argc, char **argv) {
             capture = true;
         else if (a == "--verify")
             verify = true;
+        else if (a == "--verify-icons")
+            verifyIcons = true;
         else if (a == "--output" && i + 1 < argc)
             out = argv[++i];
         else if (a == "--page" && i + 1 < argc)
@@ -257,10 +299,10 @@ int main(int argc, char **argv) {
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    glfwWindowHint(GLFW_VISIBLE, capture || verify ? GLFW_FALSE : GLFW_TRUE);
+    glfwWindowHint(GLFW_VISIBLE, capture || verify || verifyIcons ? GLFW_FALSE : GLFW_TRUE);
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
     Host h;
-    h.automated = capture || verify;
+    h.automated = capture || verify || verifyIcons;
     h.window = glfwCreateWindow(1920, 1440, "ImKit Precision Layers", nullptr, nullptr);
     if (!h.window) {
         glfwTerminate();
@@ -278,6 +320,7 @@ int main(int argc, char **argv) {
          renderer = backend && ImGui_ImplOpenGL3_Init("#version 130");
     int result = 0;
     GLuint texture = 0;
+    std::array<GLuint, 6> iconTextures{};
     try {
         if (!renderer)
             throw std::runtime_error("Backend initialization failed");
@@ -310,37 +353,64 @@ int main(int argc, char **argv) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2, 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
         h.s.texture = ImTextureRef(static_cast<ImTextureID>(texture));
+        glGenTextures(6, iconTextures.data());
+        for (int i = 0; i < 6; ++i) {
+            const auto atlas = imkit::GetIconAtlasPixels(imkit::IconPixelSizes[i]);
+            glBindTexture(GL_TEXTURE_2D, iconTextures[i]);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            constexpr GLint clampToEdge = 0x812F; // OpenGL 1.2; Windows GL.h exposes only 1.1.
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clampToEdge);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clampToEdge);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, atlas.width, atlas.height, 0, GL_RGBA,
+                         GL_UNSIGNED_BYTE, atlas.rgba.data());
+            h.s.icons.SetTexture(atlas.iconPixels, ImTextureRef(static_cast<ImTextureID>(iconTextures[i])));
+        }
+        if (capturePage >= 0)
+            h.s.page = capturePage;
         h.Settle();
         if (h.automated) {
             std::filesystem::create_directories(out);
             if (verify)
                 Verify(h, out);
+            if (verifyIcons)
+                VerifyIcons(h, out);
             if (capture) {
                 for (int dark = 0; dark < 2; ++dark) {
                     h.s.dark = dark != 0;
                     h.s.theme = imkit::MakePrecisionTheme(dark ? imkit::ColorScheme::Dark
                                                                : imkit::ColorScheme::Light);
-                    for (int page = 0; page < 6; ++page) {
+                    for (int page = 0; page < 7; ++page) {
                         if (capturePage >= 0 && capturePage != page)
                             continue;
                         h.Page(page);
                         h.Frame({},
                                 out / ("page-" + std::to_string(page) + (dark ? "-dark.png" : "-light.png")));
+                        if (page == 6) {
+                            h.s.iconSizeIndex = 0;
+                            h.Settle();
+                            h.Frame({}, out / (dark ? "icons-16-dark.png" : "icons-16-light.png"));
+                            h.s.iconSizeIndex = 1;
+                        }
                     }
                 }
-                h.s.scale = 1.5f;
-                h.Page(0);
-                h.Frame({}, out / "page-0-dark-150.png");
-                h.s.scale = 1;
-                h.Page(4);
-                h.Click("modal");
-                h.Settle(10);
-                h.Frame({}, out / "modal-dark.png");
+                if (capturePage < 0 || capturePage == 0) {
+                    h.s.scale = 1.5f;
+                    h.Page(0);
+                    h.Frame({}, out / "page-0-dark-150.png");
+                    h.s.scale = 1;
+                }
+                if (capturePage < 0 || capturePage == 4) {
+                    h.Page(4);
+                    h.Click("modal");
+                    h.Settle(10);
+                    h.Frame({}, out / "modal-dark.png");
+                }
             }
             std::ofstream info(out / "capture-info.txt");
             info << "Renderer: " << glGetString(GL_RENDERER) << "\nOpenGL: " << glGetString(GL_VERSION)
                  << "\nDear ImGui: " << ImGui::GetVersion()
-                 << "\nActual OpenGL backbuffer before swap, 1920x1440. No image generation.\nInput verifier "
+                 << "\nActual OpenGL backbuffer before swap, 1920x1440. Icons use ImageGen source assets.\nInput verifier "
                     "uses public IO; native IME not tested.\n";
         } else
             while (!glfwWindowShouldClose(h.window))
@@ -351,6 +421,8 @@ int main(int argc, char **argv) {
     }
     if (texture)
         glDeleteTextures(1, &texture);
+    h.s.icons.Clear();
+    glDeleteTextures(6, iconTextures.data());
     if (renderer)
         ImGui_ImplOpenGL3_Shutdown();
     if (backend)

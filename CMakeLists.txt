@@ -41,7 +41,7 @@ if(NOT TARGET "${IMKIT_IMGUI_TARGET}")
         "Create the Dear ImGui target before adding imgui-modern-kit.")
 endif()
 
-add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/components.cpp)
+add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/components.cpp src/icons.cpp)
 add_library(imkit::imkit ALIAS imkit)
 
 target_compile_features(imkit PUBLIC cxx_std_20)
@@ -81,6 +81,8 @@ install(DIRECTORY docs/ DESTINATION docs
     PATTERN "design-proposals.md" EXCLUDE
     PATTERN "design-refinements.md" EXCLUDE)
 install(DIRECTORY examples/consumer DESTINATION examples)
+install(DIRECTORY assets/icons/ DESTINATION share/imkit/icons
+    PATTERN "originals" EXCLUDE PATTERN "rejected" EXCLUDE)
 install(FILES examples/design_gallery/assets/OFL.txt examples/design_gallery/assets/NotoSansJP-OFL.txt
     DESTINATION examples/design_gallery/assets)
 
@@ -152,6 +154,10 @@ endif()
 
 if(IMKIT_BUILD_TESTS)
     include(CTest)
+    add_executable(imkit_icons_test tests/icons.cpp)
+    target_link_libraries(imkit_icons_test PRIVATE imkit::imkit)
+    add_test(NAME imkit.icons COMMAND imkit_icons_test)
+    set_tests_properties(imkit.icons PROPERTIES TIMEOUT 30)
     add_executable(imkit_api_compile tests/api_compile.cpp)
     target_link_libraries(imkit_api_compile PRIVATE imkit::imkit)
     add_test(NAME imkit.api_compile COMMAND imkit_api_compile)

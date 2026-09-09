@@ -1,0 +1,2 @@
+Single minimal UI icon: a single vertical rectangular DOCUMENT PAGE with its top-right corner folded diagonally. Do NOT draw a folder. No content lines. Black monoline strokes, smooth rounded ends, genuinely transparent background. Crisp clean vector-like geometry. No text, texture, noise, shadows, gradients or border. One centered symbol on square canvas, thin strokes, content with generous uniform margins.
+Source: C:\Users\aokim\.codex\generated_images\01a08366-35a9-7231-b917-d620665ed930\exec-d312e05a-0326-451e-8949-3197a755cd85.png

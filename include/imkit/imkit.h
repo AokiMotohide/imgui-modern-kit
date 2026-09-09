@@ -4,3 +4,4 @@
 #include <imkit/native.h>
 #include <imkit/theme.h>
 #include <imkit/components.h>
+#include <imkit/icons.h>
