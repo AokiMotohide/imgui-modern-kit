@@ -357,3 +357,19 @@ Gallery measures two selected origins, or the selected origin from world zero.
 安全枠はその内側5%・10%です。`renderBounds`は枠内の正規化座標で、描画範囲制限ではなく表示ガイドです。
 寸法端点はホストのワールド座標、数値はホストの距離単位です。overlayは深度遮蔽を行いません。
 Galleryは選択した2原点間、単一選択ではワールド原点からの距離を表示します。
+
+### Mesh selection outline / メッシュの選択輪郭
+
+`preview::DrawMeshOutline` draws open boundary edges and front/back silhouette edges
+from indexed triangles. Coincident vertex positions share an edge even when normal/UV
+seams use separate indices. The host supplies `OutlineEdge` scratch (one entry per
+triangle edge); the return value reports required capacity and shortage draws nothing.
+The overlay allocates no memory, retains no mesh, and has no depth occlusion.
+Triangles crossing the near plane are omitted. Gallery connects selected object IDs
+and the viewport outline toggle to this overlay for both preview paths.
+
+`preview::DrawMeshOutline`はindexed triangleの開いた境界と表裏の境界を描画します。
+normal/UVの継ぎ目でindexが分かれていても、同一位置の頂点は同じ辺として扱います。
+ホストが三角形の辺ごとに`OutlineEdge` scratchを用意し、戻り値は必要容量を返します。
+不足時は部分描画せず、メモリ確保やmesh保持も行いません。深度遮蔽はなく、near planeを横切る三角形は省略します。
+Galleryは両preview経路で選択IDと輪郭表示切替へ接続しています。

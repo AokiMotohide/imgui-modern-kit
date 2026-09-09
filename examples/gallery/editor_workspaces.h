@@ -110,6 +110,7 @@ struct EditorWorkspaces {
     std::array<preview::Vertex, 24> cubeVertices{};
     std::array<std::uint32_t, 36> cubeIndices{};
     std::array<preview::Triangle, 256> scratch{};
+    std::vector<preview::OutlineEdge> outlineScratch;
     preview::OpenGL3Renderer previewRenderer;
     std::array<video::AudioBucket, 128> audio{};
     std::array<float, 512> pcm{};

@@ -239,6 +239,7 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
     if (ImGui::BeginPopup("viewport-overlays")) {
         ImGui::Checkbox(s.labels.axes,&s.axes);
         ImGui::Checkbox(s.labels.origins,&s.origins);
+        ImGui::Checkbox(s.labels.selectionOutline,&s.selectionOutline);
         ImGui::Checkbox(s.labels.cameraFrame,&s.cameraFrame);
         ImGui::Checkbox(s.labels.safeFrame,&s.safeFrame);
         ImGui::Checkbox(s.labels.renderRegion,&s.renderRegion);

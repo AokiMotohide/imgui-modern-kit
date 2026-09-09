@@ -105,6 +105,13 @@ int main() {
           "face normal overlay independently selectable");
     check(imkit::preview::DrawMeshNormals(*ImGui::GetWindowDrawList(),{&mesh,1},c,{0,0},{800,600},{true,true,0})==0,
           "zero-length normal overlay emits no segments");
+    std::array<imkit::preview::OutlineEdge,3> outlineEdges;
+    auto *outlineDraw=ImGui::GetWindowDrawList();
+    const int beforeOutline=outlineDraw->VtxBuffer.Size;
+    check(imkit::preview::DrawMeshOutline(*outlineDraw,mesh,c,{0,0},{800,600},{},IM_COL32_WHITE)==3 &&
+          outlineDraw->VtxBuffer.Size==beforeOutline,"outline capacity shortage draws no partial shape");
+    check(imkit::preview::DrawMeshOutline(*outlineDraw,mesh,c,{0,0},{800,600},outlineEdges,IM_COL32_WHITE)==3 &&
+          outlineDraw->VtxBuffer.Size>beforeOutline,"transformed boundary outline is drawn");
     ImGui::End();
     ImGui::Render();
     ViewportState navigation;

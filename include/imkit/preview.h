@@ -28,6 +28,15 @@ struct NormalOverlayOptions {
 // DrawList overlay, without depth occlusion. Returns drawn normal segments; inputs remain borrowed.
 std::size_t DrawMeshNormals(ImDrawList &draw,std::span<const Mesh> meshes,const cg::Camera &camera,
                            ImVec2 origin,ImVec2 size,NormalOverlayOptions options={});
+struct OutlineEdge {
+    std::array<float,3> a{},b{};
+    ImVec2 screenA{},screenB{};
+    bool front=false;
+};
+// Returns required scratch size (one entry per triangle edge). Insufficient scratch draws nothing.
+// Draws boundary and front/back silhouette edges without depth occlusion; coincident positions weld.
+std::size_t DrawMeshOutline(ImDrawList &draw,const Mesh &mesh,const cg::Camera &camera,
+    ImVec2 origin,ImVec2 size,std::span<OutlineEdge> scratch,ImU32 color,float thickness=2);
 bool Cube(std::span<Vertex> vertices, std::span<std::uint32_t> indices); // 24 vertices, 36 indices.
 bool Sphere(std::span<Vertex> vertices, std::span<std::uint32_t> indices, int slices = 24, int rings = 12);
 // OpenGL 3.3 core function pointers, supplied by the host with a current context.
