@@ -87,7 +87,7 @@ struct TimelineState {
     editor::Transaction drag;
     editor::TimeState time;
     Tool tool = Tool::Select;
-    bool snapping = true, magnet = false;
+    bool snapping = true, magnet = true;
     double verticalScroll = 0;
     editor::Point mouseStart{};
     ClipView original{};
@@ -102,7 +102,13 @@ struct TimelineState {
     std::span<MemberDrag> memberDrags;
     std::size_t memberCount = 0;
     editor::Transaction heightDrag;
+    const IconAtlas *icons = nullptr; // Non-owning host atlas.
+    bool snapToFrame = false;
+    std::uint32_t snapKinds = 0x7f; // Bit positions are editor::SnapKind.
 };
+// Resolves both moving edges; ignores every selected clip and filters disabled kinds.
+editor::SnapResult ResolveTimelineSnap(const TimelineState &state, Tick delta,
+    std::span<const editor::SnapCandidate> candidates, std::span<const StableId> movingIds);
 void Timeline(const char *id, const TimelineProvider &provider, TimelineState &state,
               editor::Selection &selection, editor::EventBuffer &events, const Theme &theme,
               ImVec2 size = {0, 300});

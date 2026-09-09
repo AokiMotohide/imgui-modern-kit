@@ -12,6 +12,28 @@ int main() {
             std::fprintf(stderr, "FAIL %s\n", s);
         }
     };
+    video::TimelineState snapping;
+    snapping.original.id=1;
+    snapping.original.start=editor::FromSeconds(1);
+    snapping.original.duration=editor::FromSeconds(2);
+    snapping.drag.draft.kind=editor::EditKind::Move;
+    std::array targets{editor::SnapCandidate{editor::FromSeconds(3.04),editor::SnapKind::Marker,2,88}};
+    auto hit=video::ResolveTimelineSnap(snapping,0,targets,{});
+    check(hit.snapped && hit.tick==editor::FromSeconds(1.04) && hit.candidate.tick==targets[0].tick,
+          "moving end snaps and retains guide target separately from start");
+    snapping.magnet=false;
+    check(!video::ResolveTimelineSnap(snapping,0,targets,{}).snapped,"magnet off disables target attraction");
+    snapping.magnet=true;
+    std::array<editor::StableId,1> moving{88};
+    check(!video::ResolveTimelineSnap(snapping,0,targets,moving).snapped,"moving selection never attracts itself");
+    snapping.snapKinds &= ~(1u<<static_cast<unsigned>(editor::SnapKind::Marker));
+    check(!video::ResolveTimelineSnap(snapping,0,targets,{}).snapped,"disabled target kind is ignored");
+    snapping.snapToFrame=true;
+    snapping.magnet=false;
+    auto frameHit=video::ResolveTimelineSnap(snapping,editor::FromSeconds(.01),{},{});
+    check(frameHit.snapped && frameHit.tick==snapping.original.start,"independent frame grid resolves nearest frame");
+    snapping.snapping=false;
+    check(!video::ResolveTimelineSnap(snapping,0,targets,{}).snapped,"snap master disables grid and targets");
     video::ClipView c;
     c.start = 100;
     c.duration = 50;

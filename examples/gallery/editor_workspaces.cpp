@@ -455,10 +455,16 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         }
         return std::span<const video::ClipView>(s.selectedClips).first(n);
     };
+    s.timeline.icons=s.icons;
     p.snap = [](void *u, editor::Range range) {
         auto &s = *static_cast<EditorWorkspaces *>(u);
         std::size_t n = 0;
         s.snapCandidates[n++] = {s.timeline.time.playhead, editor::SnapKind::Playhead, 3, 0};
+        s.snapCandidates[n++] = {s.timeline.time.inOut.first, editor::SnapKind::InOut, 2, 0};
+        s.snapCandidates[n++] = {s.timeline.time.inOut.last, editor::SnapKind::InOut, 2, 0};
+        for (const auto &key:s.keys)
+            if (key.tick>=range.first && key.tick<=range.last && n<s.snapCandidates.size())
+                s.snapCandidates[n++] = {key.tick,editor::SnapKind::Keyframe,2,key.id};
         for (auto marker : std::span(s.markers).first(s.markerCount))
             if (n < s.snapCandidates.size())
                 s.snapCandidates[n++] = {marker.tick, editor::SnapKind::Marker, 2, marker.id};
