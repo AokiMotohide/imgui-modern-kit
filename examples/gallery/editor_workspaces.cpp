@@ -884,7 +884,8 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
         }
         if (ImGui::BeginTabItem("UV / Image",nullptr,s.animationPage==2?ImGuiTabItemFlags_SetSelected:0)) {
             for (int i = 0; i < 4; ++i)
-                s.edges[i] = {static_cast<editor::StableId>(i + 1), s.uv[i].uv, s.uv[(i + 1) % 4].uv};
+                s.edges[i] = {static_cast<editor::StableId>(i + 1), s.uv[i].uv, s.uv[(i + 1) % 4].uv,
+                    false,false,s.uv[i].id,s.uv[(i+1)%4].id};
             cg::UVProvider p{&s, s.revision,
                              [](void *u, editor::Rect) {
                                  return std::span<const cg::UVVertex>(static_cast<EditorWorkspaces *>(u)->uv);
