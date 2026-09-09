@@ -417,7 +417,7 @@ void Transport(TimeState &s, std::span<const Binding> bindings, const IconAtlas 
     auto button = [&](const char *id, IconId icon, const char *label) {
         return icons ? IconButton(id, *icons, icon, label) : ImGui::Button(label);
     };
-    bool focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+    bool focused = ImGui::IsWindowFocused();
     if (focused && !ImGui::GetIO().WantTextInput && !ImGui::IsAnyItemActive()) {
         if (CommandPressed(Command::PlayReverse, bindings, focused)) {
             s.playbackRate = s.playing && s.playbackRate < 0 ? s.playbackRate * 2 : -1;
@@ -626,8 +626,6 @@ void FinishCurve(CurveState &s,std::uint64_t revision,bool cancel,EventBuffer &o
 }
 void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, Selection &selection,
                  EventBuffer &out, const Theme &t, ImVec2 size) {
-    if (CommandPressed(Command::Fit,s.bindings,ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)))
-        s.fitRequested=true;
     if (s.fitRequested && provider.bounds) {
         auto bounds=*provider.bounds;
         if (bounds.max.x==bounds.min.x) {bounds.min.x-=.5;bounds.max.x+=.5;}
@@ -648,12 +646,12 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
                                       -view.visible.max.y,
                                       -view.visible.min.y})
                     : std::span<const Keyframe>{};
-    const bool focused=ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+    const bool focused=ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows);
+    if (CommandPressed(Command::Fit,s.bindings,focused)) s.fitRequested=true;
     bool addKey=CommandPressed(Command::AddKey,s.bindings,focused);
     bool previousKey=CommandPressed(Command::PreviousKey,s.bindings,focused);
     bool nextKey=CommandPressed(Command::NextKey,s.bindings,focused);
-    bool removeKeys=CommandPressed(Command::Delete,s.bindings,
-        ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows));
+    bool removeKeys=CommandPressed(Command::Delete,s.bindings,focused);
     StableId previewChannel=0;
     if (s.drag.active && !s.previewKeys.empty() && s.previewKeys.size()<keys.size()) out.overflow=true;
     if (s.drag.active && s.drag.draft.phase!=Phase::Cancel && s.previewKeys.size()>=keys.size()) {
