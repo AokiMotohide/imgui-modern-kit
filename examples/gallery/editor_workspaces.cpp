@@ -364,8 +364,19 @@ void EditorWorkspaces::ApplyEvents() {
             markers[markerCount++] = {nextId++, e.proposed.first, "Marker"};
             changed = true;
         }
+        if (e.kind==editor::EditKind::ComponentAdd && (e.proposed.parent==7801 || e.proposed.parent==7802)) {
+            const auto owner=std::find_if(objects.begin(),objects.end(),[&](const auto &v){return v.id==e.target;});
+            if (owner!=objects.end() && !owner->locked && owner->geometry) {
+                const bool wire=e.proposed.parent==7802;
+                components.push_back({{nextId++,owner->id,wire?"Wireframe override":"Mesh renderer",
+                    wire?"Override preceding renderer shading with wireframe.":"Draw the host geometry using viewport shading.",true},wire});
+                changed=true;
+            }
+        }
         auto component=std::find_if(components.begin(),components.end(),[&](const auto &v){return v.view.id==e.target;});
         if (component!=components.end()) {
+            const auto owner=std::find_if(objects.begin(),objects.end(),[&](const auto &v){return v.id==component->view.owner;});
+            if (owner==objects.end() || (owner->locked && !(e.kind==editor::EditKind::Toggle && e.proposed.x==1))) continue;
             if (e.kind==editor::EditKind::Toggle) {
                 const int field=static_cast<int>(e.proposed.x);
                 if (field==2) {component->view.locked=e.proposed.y!=0;changed=true;}
@@ -1003,7 +1014,9 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     if (object != s.objects.end()) {
         s.inspectorComponents.clear();
         for (const auto &component:s.components) if (component.view.owner==object->id) s.inspectorComponents.push_back(component.view);
-        cg::ComponentStack("Components",s.inspectorComponents,s.revision,s.events);
+        const cg::ComponentTypeView componentTypes[]={{7801,"Mesh renderer"},{7802,"Wireframe override"}};
+        cg::ComponentStack("Components",s.inspectorComponents,s.revision,s.events,
+            {object->id,object->geometry ? std::span<const cg::ComponentTypeView>(componentTypes) : std::span<const cg::ComponentTypeView>{},object->locked});
         editor::PropertyView rows[] = {
             {ObjectPropertyId(s, object->id, 0), "Position X", "Transform", object->transform.translation.x, 0},
             {ObjectPropertyId(s, object->id, 1), "Position Y", "Transform", object->transform.translation.y, 0},

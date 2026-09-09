@@ -610,6 +610,14 @@ int VerifyInspectorModel() {
     editor::Event relink{linkedId,state.revision,editor::Phase::Commit,editor::EditKind::LinkGeometry};relink.proposed.parent=sourceId;
     state.events.Push(relink);state.ApplyEvents();
     check(state.objects.back().geometry==sourceGeometry,"link geometry reconnects to active object data");
+    const auto componentTotal=state.components.size();
+    state.events.Push({sourceId,state.revision,editor::Phase::Commit,editor::EditKind::ComponentAdd,{}, {0,0,0,7802}});state.ApplyEvents();
+    check(state.components.size()==componentTotal+1 && state.components.back().view.owner==sourceId &&
+          state.components.back().wireOverride,"component add creates selected host type for owner");
+    state.objects[1].locked=true;
+    state.events.Push({sourceId,state.revision,editor::Phase::Commit,editor::EditKind::ComponentAdd,{}, {0,0,0,7801}});state.ApplyEvents();
+    check(state.components.size()==componentTotal+1,"locked object rejects component addition");
+    state.objects[1].locked=false;
     std::puts("Evidence: host model/event application; no native OS or GUI input.");
     return failures?1:0;
 }
