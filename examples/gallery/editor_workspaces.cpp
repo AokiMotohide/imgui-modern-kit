@@ -653,6 +653,10 @@ void EditorWorkspaces::ApplyEvents() {
         if (e.kind==editor::EditKind::Rename) for (auto &object:objects)
             if (object.id==e.target && !object.locked) {object.label=renamedLabels[e.target].c_str();changed=true;}
         if (clip != clips.end()) {
+            if (e.kind==editor::EditKind::Link && (e.proposed.offset==0 || e.proposed.offset==1)) {
+                auto &relation=e.proposed.offset ? clip->group : clip->linked;
+                if (relation==e.original.parent && relation!=e.proposed.parent) {relation=e.proposed.parent;changed=true;}
+            }
             auto transitionValue=[](const video::ClipView &c) {
                 editor::Value value;value.first=c.transitionIn;value.last=c.transitionOut;
                 value.x=static_cast<int>(c.transitionInKind);value.y=static_cast<int>(c.transitionOutKind);return value;
@@ -1145,6 +1149,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     s.timeline.labels={};
     s.timeline.trackLabels={};
     if (s.japanese) {
+        s.timeline.labels.unlink="clipのリンクを解除";s.timeline.labels.ungroup="groupから外す";
         s.timeline.labels.tools={"選択","分割","リップル","ロール","スリップ","スライド","手のひら"};
         s.timeline.labels.tooltips={"clipを選択","カーソル位置で分割","trimして後続clipを移動","隣接clipの境界を移動",
             "clip位置を保ち素材範囲を変更","clipを移動して隣接clipをtrim","Timelineをpan"};

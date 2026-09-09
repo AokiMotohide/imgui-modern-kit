@@ -873,7 +873,23 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 const auto cursor=ImGui::GetCursorScreenPos();ImGui::SetCursorScreenPos(hitMin);
                 ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(clip.id)));
                 ImGui::InvisibleButton("clip-body",{hitMax.x-hitMin.x,hitMax.y-hitMin.y});
-                hit=ImGui::IsItemHovered();ImGui::PopID();
+                hit=ImGui::IsItemHovered();
+                if (ImGui::BeginPopupContextItem("clip-relations")) {
+                    for (int relation=0;relation<2;++relation) {
+                        const auto set=relation ? clip.group : clip.linked;
+                        if (ImGui::MenuItem(relation ? s.labels.ungroup : s.labels.unlink,nullptr,false,
+                            set && !track.locked && !clip.locked && !s.drag.active)) {
+                            if (ReserveEvents(out,2)) {
+                                editor::Value original;original.parent=set;original.offset=relation;
+                                editor::Transaction edit;
+                                edit.Begin(clip.id,p.revision,editor::EditKind::Link,original,editor::CurrentModifiers(),out);
+                                edit.draft.proposed.parent=0;edit.Commit(p.revision,out);
+                            }
+                        }
+                    }
+                    ImGui::EndPopup();
+                }
+                ImGui::PopID();
                 ImGui::SetCursorScreenPos(cursor);ImGui::Dummy({0,0});
             }
             if (hit) {

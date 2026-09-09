@@ -118,6 +118,7 @@ struct TimelineLabels {
     std::array<const char *,3> followModes{"Off","Smooth","Page"};
     std::array<const char *,7> snapKinds{"Frame","Playhead","Marker","Clip edge","Keyframe","In/out","Selection edge"};
     const char *fit="Fit", *fitTooltip="Fit timeline";
+    const char *unlink="Unlink clip",*ungroup="Remove from group";
 };
 struct TimelineState {
     struct MemberDrag {
