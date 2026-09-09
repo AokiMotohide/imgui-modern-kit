@@ -809,7 +809,7 @@ int main(int argc, char **argv) {
                         h.Page(page);
                         h.Frame({},
                                 out / ("page-" + std::to_string(page) + (dark ? "-dark.png" : "-light.png")));
-                        if (page >= 8) {
+                        if (page == 6 || page >= 8) {
                             h.s.scale = 1.5f; h.Settle();
                             h.Frame({}, out / ("page-"+std::to_string(page)+(dark ? "-dark-150.png" : "-light-150.png")));
                             h.s.scale = 1; h.Settle();

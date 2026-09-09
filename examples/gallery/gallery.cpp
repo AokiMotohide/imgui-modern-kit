@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cctype>
 #include <string_view>
+#include <vector>
 namespace imkit::gallery {
 void Record(GalleryState &s, const char *name) {
     s.probes[name] = {GetItemRectMin(), GetItemRectMax()};
@@ -20,13 +21,18 @@ void Icons(GalleryState &s) {
     InputText("Search", s.iconSearch, sizeof(s.iconSearch));
     Record(s, "icon-search");
     SameLine();
-    static const char *categories[] = {"All", "Basic", "Navigation", "Files", "Editing", "View", "Layout",
-                                       "Media", "Content", "Status", "Organization", "Sharing", "Production"};
+    static const auto categories=[] {
+        std::vector<const char*> values{"All"};
+        for (const auto &icon:GetIconCatalog())
+            if (std::none_of(values.begin(),values.end(),[&](const char *value){return std::string_view(value)==icon.category;}))
+                values.push_back(icon.category);
+        return values;
+    }();
     SetNextItemWidth(140);
-    Combo("Category", &s.iconCategory, categories, 13);
+    Combo("Category", &s.iconCategory, categories.data(), static_cast<int>(categories.size()));
     SameLine();
     const char *sizes[] = {"16", "20", "24", "32", "48", "64"};
-    SetNextItemWidth(65);
+    SetNextItemWidth(CalcTextSize("64").x+GetFrameHeight()+GetStyle().FramePadding.x*2);
     Combo("Size", &s.iconSizeIndex, sizes, 6);
     Checkbox("Custom icon color", &s.iconCustomColor);
     SameLine();
