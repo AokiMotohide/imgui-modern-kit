@@ -508,6 +508,37 @@ int main() {
         io.AddMouseButtonEvent(0,false);handleFrame();
         if (cancellation==2) --handleObject.id;
     }
+    OutlinerState nameState;ObjectView nameObject;nameObject.id=0x100000099ull;nameObject.label="Original";
+    SceneProvider nameProvider{&nameObject,1,1,[](void *u,int,int,std::string_view){return std::span<const ObjectView>(static_cast<ObjectView*>(u),1);}};
+    imkit::editor::StableId nameIds[2];imkit::editor::Selection nameSelection{nameIds};
+    ImVec2 nameOrigin{};
+    auto nameFrame=[&] {
+        handleEvents.Clear();ImGui::NewFrame();ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({800,600});
+        ImGui::Begin("Outliner rename");nameOrigin=ImGui::GetCursorScreenPos();
+        Outliner("names",nameProvider,nameState,nameSelection,handleEvents);
+        ImGui::End();ImGui::Render();
+    };
+    nameFrame();nameFrame();
+    auto openRename=[&] {
+        io.AddMousePosEvent(nameOrigin.x+35,nameOrigin.y+ImGui::GetFrameHeightWithSpacing()+10);nameFrame();
+        io.AddMouseButtonEvent(1,true);nameFrame();io.AddMouseButtonEvent(1,false);nameFrame();nameFrame();
+        io.AddKeyEvent(ImGuiKey_DownArrow,true);nameFrame();io.AddKeyEvent(ImGuiKey_DownArrow,false);nameFrame();
+        io.AddKeyEvent(ImGuiKey_Enter,true);nameFrame();io.AddKeyEvent(ImGuiKey_Enter,false);nameFrame();nameFrame();
+    };
+    openRename();
+    check(nameState.renameTransaction.active,"Outliner context action begins rename");
+    io.AddInputCharactersUTF8("新しい名前");nameFrame();
+    io.AddKeyEvent(ImGuiKey_Enter,true);nameFrame();
+    check(!nameState.renameTransaction.active && handleEvents.count==1 &&
+          handleEvents.Events()[0].phase==imkit::editor::Phase::Commit &&
+          std::string_view(handleEvents.Events()[0].proposedText.data())=="新しい名前" &&
+          std::string_view(handleEvents.Events()[0].originalText.data())=="Original","Outliner UTF-8 rename commits original and proposed text");
+    io.AddKeyEvent(ImGuiKey_Enter,false);nameFrame();
+    openRename();io.AddInputCharactersUTF8("Cancelled");nameFrame();
+    io.AddKeyEvent(ImGuiKey_Escape,true);nameFrame();
+    check(!nameState.renameTransaction.active && handleEvents.count>=1 &&
+          handleEvents.Events().back().phase==imkit::editor::Phase::Cancel,"Outliner Escape cancels rename");
+    io.AddKeyEvent(ImGuiKey_Escape,false);nameFrame();
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
