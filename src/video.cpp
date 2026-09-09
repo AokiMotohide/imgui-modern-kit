@@ -389,6 +389,11 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     if (s.drag.active) {
         bool cancel = p.revision != s.drag.draft.revision || ImGui::IsKeyPressed(ImGuiKey_Escape) ||
                       s.drag.draft.phase == editor::Phase::Cancel;
+        if (!cancel && p.isEditable) {
+            const auto valid=[&](const editor::Transaction &tx){return !tx.active || p.isEditable(p.user,tx.draft.target);};
+            cancel=!valid(s.drag) || !valid(s.previousDrag) || !valid(s.nextDrag);
+            for (const auto &member:s.memberDrags.first(s.memberCount)) cancel|=!valid(member.transaction);
+        }
         if (cancel || s.drag.draft.phase == editor::Phase::Commit)
             EndDrags(s, p.revision, cancel, out);
     }

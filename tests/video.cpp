@@ -520,6 +520,13 @@ int main() {
     full.Clear();io.AddMouseButtonEvent(0,false);frame(full);
     check(full.count==2 && full.Events()[0].kind==editor::EditKind::Slip && full.Events()[1].kind==editor::EditKind::Slip,
           "linked Slip commits source changes for every member");
+    full.Clear();io.AddMouseButtonEvent(0,true);frame(full);
+    provider.isEditable=[](void *,editor::StableId id){return id!=902;};
+    full.Clear();frame(full);
+    check(full.count==2 && full.Events()[0].phase==editor::Phase::Cancel && full.Events()[1].phase==editor::Phase::Cancel &&
+          !timeline.drag.active && !trimMembers[0].transaction.active,
+          "indexed offscreen owner invalidation cancels the complete clip edit batch");
+    io.AddMouseButtonEvent(0,false);frame(full);provider.isEditable=nullptr;
     timeline.tool=video::Tool::Select;
     provider.selected=nullptr;provider.constraints=nullptr;timeline.memberCount=0;timeline.memberDrags={};selection.Clear();
     io.AddMousePosEvent(clipOrigin.x+timeline.headerWidth+160,clipOrigin.y+25);frame(full);

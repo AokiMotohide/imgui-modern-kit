@@ -311,3 +311,7 @@ Timelineの`AddKey`はtarget=channel、parent=clip、first=clip内tick、x=値�
 ToolSelect/ToolRazor/ToolRipple/ToolRoll/ToolSlip/ToolSlide/ToolHand are appended Command IDs. Timeline consumes them only with canvas focus and no active edit. MakeBindings supplies V/C/B/N/Y/U/H respectively across the built-in presets; the host may replace or remove these bindings. Tooltips show the first active host binding. These are ImKit preset defaults, not a claim of exact third-party shortcut parity.
 
 ToolSelect／ToolRazor／ToolRipple／ToolRoll／ToolSlip／ToolSlide／ToolHandをCommand末尾へ追加しました。Timelineはcanvasにfocusがあり編集中でない場合に使用します。MakeBindingsは各presetで順にV／C／B／N／Y／U／Hを設定し、ホストで変更・削除できます。tooltipは最初の有効なホストbindingを表示します。これはImKitの既定割当であり、第三者製品との完全一致を示すものではありません。
+
+`TimelineProvider::isEditable(user, clip)` optionally validates the existence and lock state of each active clip-body edit owner, including offscreen related clips. A false result cancels the whole active batch; full output buffers retain the terminal operation for retry. Use an indexed lookup, not a full clip scan. Without this callback the host must change revision when owners disappear or become locked.
+
+`TimelineProvider::isEditable(user, clip)`は、画面外の関連clipを含む編集中の各clip本体について、存在とロック状態を確認する任意callbackです。falseなら編集バッチ全体をCancelし、出力容量不足時は終了処理を保持して再試行します。全clip走査ではなく索引を使用してください。callbackを省略する場合、対象の削除・ロック変更時にホストがrevisionを更新する必要があります。

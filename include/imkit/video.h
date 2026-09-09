@@ -98,6 +98,8 @@ struct TimelineProvider {
     editor::Range contentRange{}; // Host-maintained total time extent for Fit.
     // Optional host preflight for nonlocal constraints; called only when starting an edit.
     bool (*canBeginEdit)(void *,StableId clip,editor::EditKind kind)=nullptr;
+    // Optional indexed existence/lock lookup for active clip-body transactions, including offscreen owners.
+    bool (*isEditable)(void *,StableId clip)=nullptr;
 };
 struct TrackLabels {
     // Borrowed UTF-8 strings. Array order follows Visible through Source in TrackControl.
