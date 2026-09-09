@@ -103,11 +103,12 @@
     {
       "operation": "SplitClip",
       "widget": "Timeline",
-      "disposition": "new",
-      "icon": "SplitClip",
+      "disposition": "shared-new",
+      "icon": "Razor",
       "tooltip": "Split Clip",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "original and integration pending",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
     },
     {
       "operation": "TrimStart",
@@ -193,11 +194,12 @@
     {
       "operation": "SnapToMarker",
       "widget": "Timeline",
-      "disposition": "new",
-      "icon": "SnapToMarker",
+      "disposition": "shared-new",
+      "icon": "Marker",
       "tooltip": "Snap To Marker",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "original and integration pending",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
     },
     {
       "operation": "SnapToClipEdge",
@@ -211,11 +213,12 @@
     {
       "operation": "SnapToKeyframe",
       "widget": "Timeline",
-      "disposition": "new",
-      "icon": "SnapToKeyframe",
+      "disposition": "reuse",
+      "icon": "Keyframe",
       "tooltip": "Snap To Keyframe",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "integration review pending",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
     },
     {
       "operation": "SnapToSelection",
@@ -229,11 +232,12 @@
     {
       "operation": "LinkedClips",
       "widget": "Timeline",
-      "disposition": "new",
-      "icon": "LinkedClips",
+      "disposition": "shared-new",
+      "icon": "Link",
       "tooltip": "Linked Clips",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "original and integration pending",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
     },
     {
       "operation": "TrackHeight",
@@ -445,11 +449,12 @@
     {
       "operation": "LoopRange",
       "widget": "Transport / TimeRuler",
-      "disposition": "new",
-      "icon": "LoopRange",
+      "disposition": "reuse",
+      "icon": "Repeat",
       "tooltip": "Loop Range",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "integration review pending",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
     },
     {
       "operation": "Timecode",
@@ -472,38 +477,42 @@
     {
       "operation": "MarkerAdd",
       "widget": "Transport / TimeRuler",
-      "disposition": "new",
-      "icon": "MarkerAdd",
+      "disposition": "shared-new",
+      "icon": "Marker",
       "tooltip": "Marker Add",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "original and integration pending",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
     },
     {
       "operation": "MarkerRemove",
       "widget": "Transport / TimeRuler",
-      "disposition": "new",
-      "icon": "MarkerRemove",
+      "disposition": "shared-new",
+      "icon": "Marker",
       "tooltip": "Marker Remove",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "original and integration pending",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
     },
     {
       "operation": "PreviousMarker",
       "widget": "Transport / TimeRuler",
-      "disposition": "new",
-      "icon": "PreviousMarker",
+      "disposition": "shared-new",
+      "icon": "Marker",
       "tooltip": "Previous Marker",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "original and integration pending",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
     },
     {
       "operation": "NextMarker",
       "widget": "Transport / TimeRuler",
-      "disposition": "new",
-      "icon": "NextMarker",
+      "disposition": "shared-new",
+      "icon": "Marker",
       "tooltip": "Next Marker",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "original and integration pending",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
     },
     {
       "operation": "Keyframe",
@@ -517,119 +526,132 @@
     {
       "operation": "KeyframeAdd",
       "widget": "CurveEditor / PropertyGrid",
-      "disposition": "new",
-      "icon": "KeyframeAdd",
+      "disposition": "reuse",
+      "icon": "Keyframe",
       "tooltip": "Keyframe Add",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "integration review pending",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
     },
     {
       "operation": "KeyframeRemove",
       "widget": "CurveEditor / PropertyGrid",
-      "disposition": "new",
-      "icon": "KeyframeRemove",
+      "disposition": "reuse",
+      "icon": "Keyframe",
       "tooltip": "Keyframe Remove",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "integration review pending",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
     },
     {
       "operation": "PreviousKeyframe",
       "widget": "CurveEditor / PropertyGrid",
-      "disposition": "new",
-      "icon": "PreviousKeyframe",
+      "disposition": "reuse",
+      "icon": "Keyframe",
       "tooltip": "Previous Keyframe",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "integration review pending",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
     },
     {
       "operation": "NextKeyframe",
       "widget": "CurveEditor / PropertyGrid",
-      "disposition": "new",
-      "icon": "NextKeyframe",
+      "disposition": "reuse",
+      "icon": "Keyframe",
       "tooltip": "Next Keyframe",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "integration review pending",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
     },
     {
       "operation": "AutoKeyframe",
       "widget": "CurveEditor / PropertyGrid",
-      "disposition": "new",
-      "icon": "AutoKeyframe",
+      "disposition": "reuse",
+      "icon": "Keyframe",
       "tooltip": "Auto Keyframe",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "integration review pending",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
     },
     {
       "operation": "InterpolationConstant",
       "widget": "CurveEditor / PropertyGrid",
-      "disposition": "new",
-      "icon": "InterpolationConstant",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Interpolation Constant",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "InterpolationLinear",
       "widget": "CurveEditor / PropertyGrid",
-      "disposition": "new",
-      "icon": "InterpolationLinear",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Interpolation Linear",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "InterpolationBezier",
       "widget": "CurveEditor / PropertyGrid",
-      "disposition": "new",
-      "icon": "InterpolationBezier",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Interpolation Bezier",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "HandleAuto",
       "widget": "CurveEditor / PropertyGrid",
-      "disposition": "new",
-      "icon": "HandleAuto",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Handle Auto",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "HandleAutoClamped",
       "widget": "CurveEditor / PropertyGrid",
-      "disposition": "new",
-      "icon": "HandleAutoClamped",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Handle Auto Clamped",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "HandleVector",
       "widget": "CurveEditor / PropertyGrid",
-      "disposition": "new",
-      "icon": "HandleVector",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Handle Vector",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "HandleAligned",
       "widget": "CurveEditor / PropertyGrid",
-      "disposition": "new",
-      "icon": "HandleAligned",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Handle Aligned",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "HandleFree",
       "widget": "CurveEditor / PropertyGrid",
-      "disposition": "new",
-      "icon": "HandleFree",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Handle Free",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "TangentLinked",
@@ -652,38 +674,42 @@
     {
       "operation": "ExtrapolateConstant",
       "widget": "CurveEditor / PropertyGrid",
-      "disposition": "new",
-      "icon": "ExtrapolateConstant",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Extrapolate Constant",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "ExtrapolateLinear",
       "widget": "CurveEditor / PropertyGrid",
-      "disposition": "new",
-      "icon": "ExtrapolateLinear",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Extrapolate Linear",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "ExtrapolateRepeat",
       "widget": "CurveEditor / PropertyGrid",
-      "disposition": "new",
-      "icon": "ExtrapolateRepeat",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Extrapolate Repeat",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "GhostCurve",
       "widget": "CurveEditor / PropertyGrid",
-      "disposition": "new",
-      "icon": "GhostCurve",
+      "disposition": "reuse",
+      "icon": "Eye",
       "tooltip": "Ghost Curve",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "integration review pending",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
     },
     {
       "operation": "CurveEditor",
@@ -904,119 +930,132 @@
     {
       "operation": "StereoMeter",
       "widget": "AudioMixer",
-      "disposition": "new",
-      "icon": "StereoMeter",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Stereo Meter",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "PeakHold",
       "widget": "AudioMixer",
-      "disposition": "new",
-      "icon": "PeakHold",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Peak Hold",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "AudioClipping",
       "widget": "AudioMixer",
-      "disposition": "new",
-      "icon": "AudioClipping",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Audio Clipping",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "Pan",
       "widget": "AudioMixer",
-      "disposition": "new",
-      "icon": "Pan",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Pan",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "Fader",
       "widget": "AudioMixer",
-      "disposition": "new",
-      "icon": "Fader",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Fader",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "AudioFadeIn",
       "widget": "AudioMixer",
-      "disposition": "new",
-      "icon": "AudioFadeIn",
+      "disposition": "shared-new",
+      "icon": "FadeIn",
       "tooltip": "Audio Fade In",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "original and integration pending",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
     },
     {
       "operation": "AudioFadeOut",
       "widget": "AudioMixer",
-      "disposition": "new",
-      "icon": "AudioFadeOut",
+      "disposition": "shared-new",
+      "icon": "FadeOut",
       "tooltip": "Audio Fade Out",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "original and integration pending",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
     },
     {
       "operation": "AudioCrossfade",
       "widget": "AudioMixer",
-      "disposition": "new",
-      "icon": "AudioCrossfade",
+      "disposition": "shared-new",
+      "icon": "Crossfade",
       "tooltip": "Audio Crossfade",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "original and integration pending",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
     },
     {
       "operation": "Histogram",
       "widget": "ColorControls / ColorScopes",
-      "disposition": "new",
-      "icon": "Histogram",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Histogram",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "LumaWaveform",
       "widget": "ColorControls / ColorScopes",
-      "disposition": "new",
-      "icon": "LumaWaveform",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Luma Waveform",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "RGBWaveform",
       "widget": "ColorControls / ColorScopes",
-      "disposition": "new",
-      "icon": "RGBWaveform",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "RGBWaveform",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "Vectorscope",
       "widget": "ColorControls / ColorScopes",
-      "disposition": "new",
-      "icon": "Vectorscope",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Vectorscope",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "ColorWheel",
       "widget": "ColorControls / ColorScopes",
-      "disposition": "new",
-      "icon": "ColorWheel",
+      "disposition": "reuse",
+      "icon": "Palette",
       "tooltip": "Color Wheel",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "integration review pending",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
     },
     {
       "operation": "Lift",
@@ -1075,29 +1114,32 @@
     {
       "operation": "ColorCurves",
       "widget": "ColorControls / ColorScopes",
-      "disposition": "new",
-      "icon": "ColorCurves",
+      "disposition": "shared-new",
+      "icon": "CurveEditor",
       "tooltip": "Color Curves",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "original and integration pending",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
     },
     {
       "operation": "PerspectiveView",
       "widget": "BeginViewport",
-      "disposition": "new",
-      "icon": "PerspectiveView",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Perspective View",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "OrthographicView",
       "widget": "BeginViewport",
-      "disposition": "new",
-      "icon": "OrthographicView",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Orthographic View",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "CameraView",
@@ -1111,56 +1153,62 @@
     {
       "operation": "ViewFront",
       "widget": "BeginViewport",
-      "disposition": "new",
-      "icon": "ViewFront",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "View Front",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "ViewBack",
       "widget": "BeginViewport",
-      "disposition": "new",
-      "icon": "ViewBack",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "View Back",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "ViewLeft",
       "widget": "BeginViewport",
-      "disposition": "new",
-      "icon": "ViewLeft",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "View Left",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "ViewRight",
       "widget": "BeginViewport",
-      "disposition": "new",
-      "icon": "ViewRight",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "View Right",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "ViewTop",
       "widget": "BeginViewport",
-      "disposition": "new",
-      "icon": "ViewTop",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "View Top",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "ViewBottom",
       "widget": "BeginViewport",
-      "disposition": "new",
-      "icon": "ViewBottom",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "View Bottom",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "Orbit",
@@ -1210,11 +1258,12 @@
     {
       "operation": "Overlay",
       "widget": "BeginViewport",
-      "disposition": "new",
-      "icon": "Overlay",
+      "disposition": "reuse",
+      "icon": "Layers",
       "tooltip": "Overlay",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "integration review pending",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
     },
     {
       "operation": "ObjectOrigin",
@@ -1363,83 +1412,92 @@
     {
       "operation": "OrientationWorld",
       "widget": "Gizmo",
-      "disposition": "new",
-      "icon": "OrientationWorld",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Orientation World",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "OrientationLocal",
       "widget": "Gizmo",
-      "disposition": "new",
-      "icon": "OrientationLocal",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Orientation Local",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "OrientationView",
       "widget": "Gizmo",
-      "disposition": "new",
-      "icon": "OrientationView",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Orientation View",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "OrientationParent",
       "widget": "Gizmo",
-      "disposition": "new",
-      "icon": "OrientationParent",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Orientation Parent",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "OrientationCustom",
       "widget": "Gizmo",
-      "disposition": "new",
-      "icon": "OrientationCustom",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Orientation Custom",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "PivotIndividual",
       "widget": "Gizmo",
-      "disposition": "new",
-      "icon": "PivotIndividual",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Pivot Individual",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "PivotMedian",
       "widget": "Gizmo",
-      "disposition": "new",
-      "icon": "PivotMedian",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Pivot Median",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "PivotBounds",
       "widget": "Gizmo",
-      "disposition": "new",
-      "icon": "PivotBounds",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Pivot Bounds",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "PivotCursor",
       "widget": "Gizmo",
-      "disposition": "new",
-      "icon": "PivotCursor",
+      "disposition": "native",
+      "icon": null,
       "tooltip": "Pivot Cursor",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "selected check/radio mark, focus outline and disabled styling",
+      "status": "native interaction review pending",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
     },
     {
       "operation": "TransformSnap",
@@ -1561,11 +1619,12 @@
     {
       "operation": "Selectable",
       "widget": "Hierarchy / PropertyGrid / AssetBrowser",
-      "disposition": "new",
-      "icon": "Selectable",
+      "disposition": "reuse",
+      "icon": "Target",
       "tooltip": "Selectable",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "integration review pending",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
     },
     {
       "operation": "Unselectable",
@@ -1579,20 +1638,22 @@
     {
       "operation": "Renderable",
       "widget": "Hierarchy / PropertyGrid / AssetBrowser",
-      "disposition": "new",
-      "icon": "Renderable",
+      "disposition": "reuse",
+      "icon": "Eye",
       "tooltip": "Renderable",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "integration review pending",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
     },
     {
       "operation": "NonRenderable",
       "widget": "Hierarchy / PropertyGrid / AssetBrowser",
-      "disposition": "new",
-      "icon": "NonRenderable",
+      "disposition": "reuse",
+      "icon": "EyeOff",
       "tooltip": "Non Renderable",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "integration review pending",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
     },
     {
       "operation": "PropertyOverride",
@@ -1642,11 +1703,12 @@
     {
       "operation": "GraphEditor",
       "widget": "DopeSheet / CurveEditor / AnimationStrips",
-      "disposition": "new",
-      "icon": "GraphEditor",
+      "disposition": "shared-new",
+      "icon": "CurveEditor",
       "tooltip": "Graph Editor",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "original and integration pending",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
     },
     {
       "operation": "ChannelList",
@@ -1660,11 +1722,12 @@
     {
       "operation": "SummaryRow",
       "widget": "DopeSheet / CurveEditor / AnimationStrips",
-      "disposition": "new",
-      "icon": "SummaryRow",
+      "disposition": "reuse",
+      "icon": "Layers",
       "tooltip": "Summary Row",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "integration review pending",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
     },
     {
       "operation": "AnimationStrip",
@@ -1795,11 +1858,463 @@
     {
       "operation": "Checkerboard",
       "widget": "UVEditor",
-      "disposition": "new",
-      "icon": "Checkerboard",
+      "disposition": "reuse",
+      "icon": "Grid",
       "tooltip": "Checkerboard",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "integration review pending",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
+    },
+    {
+      "operation": "Add",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Add",
+      "tooltip": "Add",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Delete",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Delete",
+      "tooltip": "Delete",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Edit",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Edit",
+      "tooltip": "Edit",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Undo",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Undo",
+      "tooltip": "Undo",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Redo",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Redo",
+      "tooltip": "Redo",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Copy",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Copy",
+      "tooltip": "Copy",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Paste",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Paste",
+      "tooltip": "Paste",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Duplicate",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Duplicate",
+      "tooltip": "Duplicate",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "SelectAll",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "SelectAll",
+      "tooltip": "SelectAll",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Deselect",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Deselect",
+      "tooltip": "Deselect",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Search",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Search",
+      "tooltip": "Search",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Filter",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Filter",
+      "tooltip": "Filter",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Tag",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Tag",
+      "tooltip": "Tag",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Star",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Star",
+      "tooltip": "Star",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Lock",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Lock",
+      "tooltip": "Lock",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Unlock",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Unlock",
+      "tooltip": "Unlock",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Play",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Play",
+      "tooltip": "Play",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Pause",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Pause",
+      "tooltip": "Pause",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Stop",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Stop",
+      "tooltip": "Stop",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Record",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Record",
+      "tooltip": "Record",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Repeat",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Repeat",
+      "tooltip": "Repeat",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Image",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Image",
+      "tooltip": "Image",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Video",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Video",
+      "tooltip": "Video",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Audio",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Audio",
+      "tooltip": "Audio",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Text",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Text",
+      "tooltip": "Text",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Comment",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Comment",
+      "tooltip": "Comment",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Monitor",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Monitor",
+      "tooltip": "Monitor",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Grid",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Grid",
+      "tooltip": "Grid",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "List",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "List",
+      "tooltip": "List",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Loading",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Loading",
+      "tooltip": "Loading",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Warning",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Warning",
+      "tooltip": "Warning",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Error",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Error",
+      "tooltip": "Error",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Volume",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Volume",
+      "tooltip": "Volume",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Mute",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Mute",
+      "tooltip": "Mute",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Microphone",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Microphone",
+      "tooltip": "Microphone",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Camera",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Camera",
+      "tooltip": "Camera",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Ruler",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Ruler",
+      "tooltip": "Ruler",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Eye",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Eye",
+      "tooltip": "Eye",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "EyeOff",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "EyeOff",
+      "tooltip": "EyeOff",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Move",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Move",
+      "tooltip": "Move",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Rotate",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Rotate",
+      "tooltip": "Rotate",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Scale",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Scale",
+      "tooltip": "Scale",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Folder",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Folder",
+      "tooltip": "Folder",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "FolderOpen",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "FolderOpen",
+      "tooltip": "FolderOpen",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Cube",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Cube",
+      "tooltip": "Cube",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Layers",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Layers",
+      "tooltip": "Layers",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "LayerAdd",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "LayerAdd",
+      "tooltip": "LayerAdd",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Reset",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Reset",
+      "tooltip": "Reset",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "Pin",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "Pin",
+      "tooltip": "Pin",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
+    },
+    {
+      "operation": "PinOff",
+      "widget": "Shared editor controls",
+      "disposition": "reuse",
+      "icon": "PinOff",
+      "tooltip": "PinOff",
+      "state": "button background, focus outline and disabled styling",
+      "status": "integration review pending"
     }
-  ]
+  ],
+  "policy": "New and shared-new are planned glyphs, not generated or integrated assets. Native choices still require implementation and interaction verification."
 }
