@@ -628,3 +628,7 @@ Timelineはホストが割り当てたSplitコマンドで、再生位置をま�
 Move and Duplicate also require a complete selected-clip query for multiple selections. Missing or duplicate IDs reject the entire Begin batch and report overflow, so truncated host scratch cannot silently edit only part of a selection. Without a selected callback only a single selected clip can start these edits.
 
 移動・複製も複数選択の全clipをselected queryで解決します。IDの欠落・重複ではBeginを一切出さずoverflowを通知し、ホストscratchの切り詰めによる部分編集を防ぎます。selected callbackがない場合、単一選択だけが編集を開始できます。
+
+Gallery clip queries use an end-time segment tree rebuilt after host edits. Track/start bounds and subtree maximum ends prune nonoverlapping clips without a fixed lookback. The borrowed query result uses host scratch reserved during rebuild. A focused 100,000-clip fixture verifies a long overlapping clip, track isolation, duration updates, fewer than 150 visited nodes for a sparse query and unchanged scratch capacity. These are query-contract checks, not a replacement for final Release frame measurements.
+
+Galleryのclip検索はホスト編集後に再構築する終了時刻のsegment treeを使用します。track・開始時刻の範囲と部分木の最大終了時刻で範囲外を除外し、固定秒数の探索制限をなくしました。返却spanは再構築時に確保したホスト領域を借用します。10万clipの回帰で長いclip、track分離、duration変更、疎な検索の訪問node数150未満、作業領域の容量不変を確認しています。これは検索契約の検証であり、最終Releaseフレーム計測は別途必要です。
