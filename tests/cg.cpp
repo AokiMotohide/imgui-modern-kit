@@ -313,6 +313,17 @@ int main() {
     check(dopeEvents.count==2 && dopeEvents.Events()[0].phase==imkit::editor::Phase::Commit &&
         dopeEvents.Events()[1].phase==imkit::editor::Phase::Commit && !allUVState.drag.active && !uvCompanions[0].active,
         "UV terminal retry commits every selected vertex together");
+    allUV.edges=[](void *,imkit::editor::Rect)->std::span<const UVEdge> {
+        static const std::array edges{UVEdge{9901,{.2,.2},{.8,.8},false,false,8101,8202}};return edges;
+    };
+    allUVState.selection=UVSelection::Edge;uvSelected.Clear();
+    uvMouse({.5,.5});io.AddMouseButtonEvent(0,true);uvFrame();
+    check(uvSelected.count==1 && uvSelected.Contains(9901) && allUVState.drag.draft.target==8101 &&
+        uvCompanions[0].draft.target==8202,"UV edge selection expands to endpoint transactions");
+    uvMouse({.6,.5});io.AddMouseButtonEvent(0,false);uvFrame();
+    check(dopeEvents.count==2 && std::abs(dopeEvents.Events()[0].proposed.x-.3)<.001 &&
+        std::abs(dopeEvents.Events()[1].proposed.x-.9)<.001 && uvSelected.Contains(9901),
+        "UV edge drag moves both endpoints while keeping edge selection IDs");
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
