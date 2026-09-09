@@ -193,6 +193,48 @@ int main() {
     clickProperty(40,57,1); propertyFrame();
     clickProperty(80,93);
     check(toggles==1 && property.flags==PropertyFlags::None,"locked property can be unlocked from label menu");
+    struct AssetFixture {
+        AssetView item{48031,"Filtered asset","Media"};
+        bool prepared=false,valid=true;
+        int queries=0;
+    } assetFixture;
+    AssetState assetState;
+    assetState.grid=false;
+    std::array<StableId,1> pathIds{87139};
+    assetState.breadcrumbIds=pathIds;
+    const char *pathLabels[]={"All assets"};
+    std::array<StableId,4> assetSelectionStorage{};
+    Selection assetSelection{assetSelectionStorage};
+    AssetProvider assetProvider{&assetFixture,1,100000,
+        [](void *user,int first,int count,std::string_view) {
+            auto &f=*static_cast<AssetFixture*>(user);
+            f.valid &= f.prepared && first==0 && count==1;
+            ++f.queries;
+            return std::span<const AssetView>(&f.item,1);
+        },
+        [](void *user,std::string_view) {
+            static_cast<AssetFixture*>(user)->prepared=true;
+            return 1;
+        }};
+    int navigation=0;
+    auto assetFrame=[&] {
+        propertyEvents.Clear();assetFixture.prepared=false;
+        ImGui::NewFrame();
+        ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({780,300});
+        ImGui::Begin("Asset navigation");
+        AssetBrowser("assets",assetProvider,assetState,assetSelection,propertyEvents,pathLabels);
+        ImGui::End();ImGui::Render();
+        for (auto event:propertyEvents.Events()) if (event.kind==EditKind::Navigate) {
+            ++navigation;
+            check(event.target==pathIds[0] && event.proposed.first==0,"breadcrumb preserves host path ID and index");
+        }
+    };
+    assetFrame();assetFrame();
+    io.AddMousePosEvent(40,32);assetFrame();
+    io.AddMouseButtonEvent(0,true);assetFrame();
+    io.AddMouseButtonEvent(0,false);assetFrame();
+    check(navigation==1,"breadcrumb navigation public IO");
+    check(assetFixture.valid && assetFixture.queries>0,"filtered count precedes bounded visible asset query");
     ImGui::DestroyContext(context);
     std::puts(failures ? "FAIL editor core"
                        : "PASS timebase, drop-frame, snap, transaction, canvas and curves");
