@@ -154,6 +154,7 @@ int main() {
         std::array<video::TrackView,3> tracks;
         int calls=0;
         double firstPixel=0,lastPixel=0;
+        editor::Range queriedTime{};
     } layoutFixture;
     for (int i=0;i<3;++i) {
         layoutFixture.tracks[i].id=100+i;
@@ -193,6 +194,27 @@ int main() {
     clickTrack({sourceX+5,timeline.view.min.y+35});
     check(full.count==1 && full.Events()[0].proposed.x==static_cast<double>(video::TrackControl::Source) &&
               full.Events()[0].proposed.y==1,"source patch button emits a distinct control");
+    provider.contentRange={editor::FromSeconds(-10),editor::FromSeconds(10)};
+    provider.clips=[](void *u,editor::StableId,editor::Range range) {
+        static_cast<LayoutFixture*>(u)->queriedTime=range;
+        return std::span<const video::ClipView>{};
+    };
+    std::array fitBindings{editor::Binding{editor::Command::Fit,ImGuiKey_F8}};
+    timeline.bindings=fitBindings;
+    const double oldY=timeline.canvas.scale.y;
+    full.Clear();io.AddKeyEvent(ImGuiKey_F8,true);frame(full);
+    io.AddKeyEvent(ImGuiKey_F8,false);frame(full);
+    const double expectedScale=(600.-timeline.headerWidth-48)/20;
+    check(std::abs(timeline.canvas.scale.x-expectedScale)<1e-9 &&
+              std::abs(timeline.canvas.origin.x-(-10-24/expectedScale))<1e-9,
+          "host remapped Fit frames negative and positive timeline extent with padding");
+    check(timeline.canvas.scale.y==oldY,"timeline Fit preserves vertical scale");
+    check(layoutFixture.queriedTime.first<=provider.contentRange.first &&
+              layoutFixture.queriedTime.last>=provider.contentRange.last,
+          "visible query contains the fitted timeline range");
+    timeline.bindings={};timeline.canvas.origin.x=7;
+    io.AddKeyEvent(ImGuiKey_F8,true);frame(full);io.AddKeyEvent(ImGuiKey_F8,false);frame(full);
+    check(timeline.canvas.origin.x==7,"empty bindings disable Fit shortcut");
     video::ColorValues hostColors;
     video::ColorPropertyIds colorIds{101,307,509,701,907,1103};
     video::ColorState colorState;
