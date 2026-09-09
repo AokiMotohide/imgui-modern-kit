@@ -127,6 +127,39 @@ TripleEdit SlideClip(const ClipView &a, const ClipView &b, const ClipView &c, Ti
     auto middle = EditClip(b, editor::EditKind::Move, constrained, bc);
     return {left, middle, right, left.valid && middle.valid && right.valid};
 }
+editor::SnapResult ResolveTimelineSnap(const TimelineState &s, Tick delta,
+    std::span<const editor::SnapCandidate> candidates, std::span<const StableId> movingIds) {
+    const auto kind = s.drag.draft.kind;
+    const bool end = kind == editor::EditKind::TrimEnd || kind == editor::EditKind::Ripple || kind == editor::EditKind::Roll;
+    const Tick anchor = s.original.start + (end ? s.original.duration : 0);
+    editor::SnapResult best{anchor + delta};
+    if (!s.snapping || kind == editor::EditKind::Slip) return best;
+    auto consider = [&](editor::SnapCandidate candidate, Tick edge) {
+        if (!(s.snapKinds & (1u << static_cast<unsigned>(candidate.kind)))) return;
+        if (candidate.id && (candidate.id == s.original.id ||
+            std::find(movingIds.begin(),movingIds.end(),candidate.id)!=movingIds.end())) return;
+        auto hit = editor::ResolveSnap(edge + delta, {&candidate,1},
+            s.canvas.scale.x/editor::TicksPerSecond,8);
+        if (hit.snapped && (!best.snapped || hit.distancePixels < best.distancePixels ||
+            (hit.distancePixels == best.distancePixels && hit.candidate.priority > best.candidate.priority))) {
+            best = hit;
+            // tick is the snapped primary anchor; candidate.tick is the visible guide.
+            best.tick = anchor + hit.tick - edge;
+        }
+    };
+    auto edge = [&](Tick tick) {
+        if (s.snapToFrame && editor::Valid(s.time.rate)) {
+            auto frame=editor::TickToFrame(tick+delta,s.time.rate);
+            for (auto f : {frame-1,frame,frame+1})
+                consider({editor::FrameToTick(f,s.time.rate),editor::SnapKind::Frame,0,0},tick);
+        }
+        if (s.magnet) for (auto candidate:candidates) consider(candidate,tick);
+    };
+    edge(anchor);
+    if (kind == editor::EditKind::Move || kind == editor::EditKind::Duplicate || kind == editor::EditKind::Slide)
+        edge(s.original.start+s.original.duration);
+    return best;
+}
 void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, editor::Selection &selection,
               editor::EventBuffer &out, const Theme &theme, ImVec2 size) {
     ImGui::PushID(id);
@@ -140,7 +173,23 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     ImGui::SameLine();
     ImGui::Checkbox("Snap", &s.snapping);
     ImGui::SameLine();
-    ImGui::Checkbox("Magnet", &s.magnet);
+    if (s.icons) {
+        const bool active=s.magnet;
+        if (active) ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+        if (IconButton("magnet", *s.icons, IconId::Magnet, "Magnet: snap to timeline targets")) s.magnet=!s.magnet;
+        if (active) ImGui::PopStyleColor();
+    } else ImGui::Checkbox("Magnet", &s.magnet);
+    ImGui::SameLine();
+    if (ImGui::Button("Snap options")) ImGui::OpenPopup("snap-options");
+    if (ImGui::BeginPopup("snap-options")) {
+        ImGui::Checkbox("Frame grid", &s.snapToFrame);
+        const char *names[]={"Frame", "Playhead", "Marker", "Clip edge", "Keyframe", "In/out", "Selection edge"};
+        for (unsigned i=1;i<7;++i) {
+            bool enabled=(s.snapKinds & (1u<<i))!=0;
+            if (ImGui::Checkbox(names[i],&enabled)) s.snapKinds ^= 1u<<i;
+        }
+        ImGui::EndPopup();
+    }
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + s.headerWidth);
     editor::TimeRuler("time", s.time, s.canvas, p.markers, p.revision, out, theme);
     s.canvas.wheelZoom = ImGui::GetIO().KeyCtrl;
@@ -405,16 +454,13 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         s.drag.draft.phase != editor::Phase::Commit && ReserveEvents(out, ActiveDrags(s))) {
         Tick delta = editor::FromSeconds((io.MousePos.x - s.mouseStart.x) / s.canvas.scale.x);
         s.guide = {};
-        if (s.snapping && p.snap) {
-            auto candidates = p.snap(p.user, range);
-            Tick anchor = s.drag.draft.kind == editor::EditKind::TrimEnd ||
-                                  s.drag.draft.kind == editor::EditKind::Ripple
-                              ? s.original.start + s.original.duration
-                              : s.original.start;
-            s.guide = editor::ResolveSnap(anchor + delta, candidates,
-                                          s.canvas.scale.x / editor::TicksPerSecond, 8, s.original.id);
-            if (s.guide.snapped)
-                delta = s.guide.tick - anchor;
+        if (s.snapping) {
+            auto candidates=p.snap && s.magnet ? p.snap(p.user,range) : std::span<const editor::SnapCandidate>{};
+            s.guide=ResolveTimelineSnap(s,delta,candidates,selection.storage.first(selection.count));
+            Tick anchor=s.original.start;
+            if (s.drag.draft.kind==editor::EditKind::TrimEnd || s.drag.draft.kind==editor::EditKind::Ripple ||
+                s.drag.draft.kind==editor::EditKind::Roll) anchor+=s.original.duration;
+            if (s.guide.snapped) delta=s.guide.tick-anchor;
         }
         auto constraints = p.constraints ? p.constraints(p.user, s.original.id) : ClipConstraints{};
         auto edit = EditClip(s.original, s.drag.draft.kind, delta, constraints);
@@ -459,7 +505,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         if (s.guide.snapped) {
             float x =
                 view.min.x + s.headerWidth +
-                static_cast<float>((editor::Seconds(s.guide.tick) - s.canvas.origin.x) * s.canvas.scale.x);
+                static_cast<float>((editor::Seconds(s.guide.candidate.tick) - s.canvas.origin.x) * s.canvas.scale.x);
             draw->AddLine({x, view.min.y}, {x, view.max.y}, ImGui::GetColorU32(theme.colors.warning), 2);
         }
     }

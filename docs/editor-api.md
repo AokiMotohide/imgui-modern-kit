@@ -121,3 +121,7 @@ API fixtureを全公開targetへlinkし、外部consumerでは別のホスト所
 The `Transport(state, bindings, const IconAtlas*)` overload uses host-owned icon textures for play, pause, stop and single-frame stepping. A null atlas uses native text buttons; the original overload remains available.
 
 `Transport(state, bindings, const IconAtlas*)` はホスト所有のアイコンtextureを使い、再生・一時停止・停止・1フレーム移動を表示します。nullではnative文字ボタンを使い、既存overloadも維持します。
+
+`ResolveTimelineSnap` resolves moving clip edges, ignores moving IDs and applies `snapKinds`. `snapping` is the master switch; `magnet` controls provider targets and `snapToFrame` controls frame grid attraction within eight screen pixels. `SnapResult.tick` is the primary anchor; `candidate.tick` is the guide position. The optional `TimelineState.icons` atlas remains host-owned.
+
+`ResolveTimelineSnap` は移動するclipの両端を評価し、移動対象IDと無効な `snapKinds` を除外します。`snapping` が全体切替、`magnet` がprovider候補、`snapToFrame` が8画面pixel以内のフレーム吸着を制御します。`SnapResult.tick` は主端点、`candidate.tick` はguide位置です。任意の `TimelineState.icons` はホスト所有です。
