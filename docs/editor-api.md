@@ -165,3 +165,7 @@ TimelineのFitは `TimelineProvider.contentRange` に左右24論理pixelの余�
 Gallery curve queries use a channel/time index and return channel-contiguous visible keys plus two neighbors at each boundary for automatic tangents. The index is rebuilt on data changes; queries use binary search per channel and reusable host scratch storage. The sample includes three channels.
 
 Galleryのcurve queryはchannel/time indexを使い、channelごとに連続した可視keyと、自動接線用に各境界の隣接2keyを返します。indexはデータ変更時に更新し、queryはchannelごとの二分探索とホストの再利用bufferを使います。sampleは3channelを含みます。
+
+Right-clicking a Curve key exposes interpolation and handle-mode menus. `KeyInterpolation`/`KeyHandleMode` commits target the explicit key ID and carry the enum value in `proposed.x`; Gallery validates and applies them. Locked keys reject these edits.
+
+Curveのkeyを右クリックすると補間とhandle modeのメニューを開きます。`KeyInterpolation` / `KeyHandleMode` のcommitは明示key IDをtargetにし、`proposed.x` にenum値を返します。Galleryは値を検証して適用し、locked keyへの編集は拒否します。

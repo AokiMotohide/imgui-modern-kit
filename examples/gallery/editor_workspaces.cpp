@@ -400,6 +400,13 @@ void EditorWorkspaces::ApplyEvents() {
         }
         for (auto &key : keys)
             if (key.id == e.target) {
+                if (key.locked) continue;
+                if (e.kind==editor::EditKind::KeyInterpolation && e.proposed.x>=0 && e.proposed.x<3) {
+                    key.interpolation=static_cast<editor::Interpolation>(static_cast<int>(e.proposed.x));changed=true;
+                }
+                if (e.kind==editor::EditKind::KeyHandleMode && e.proposed.x>=0 && e.proposed.x<5) {
+                    key.handles=static_cast<editor::HandleMode>(static_cast<int>(e.proposed.x));changed=true;
+                }
                 if (e.kind == editor::EditKind::Keyframe) {
                     key.tick = e.proposed.first;
                     key.value = e.proposed.x;

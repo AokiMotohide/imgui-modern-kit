@@ -64,7 +64,9 @@ enum class EditKind {
     Range,
     Marker,
     TrackHeight,
-    PropertyKey
+    PropertyKey,
+    KeyInterpolation,
+    KeyHandleMode
 };
 // Exact integer/time fields must never travel through floating point channels.
 struct Value {
@@ -231,13 +233,14 @@ struct CurveQuery {
 struct CurveProvider {
     void *user = nullptr;
     std::uint64_t revision = 0;
-    // Return visible keys plus one neighbor on each side per channel, sorted by channel/time.
+    // Return visible keys plus two neighbors on each side per channel, sorted by channel/time.
     std::span<const Keyframe> (*query)(void *, CurveQuery) = nullptr;
 };
 struct CurveState {
     CanvasState canvas{{0, -1}, {100, 100}};
     Transaction drag;
     StableId handle = 0;
+    StableId contextKey = 0;
     int side = 0;
     Point mouseStart{};
     CanvasView view{};
