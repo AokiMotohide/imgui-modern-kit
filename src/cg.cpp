@@ -630,6 +630,9 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
                     if (ImGui::BeginPopupContextItem("actions")) {
                         ImGui::BeginDisabled(row.locked || s.renameTransaction.active);
                         if (ImGui::MenuItem("Rename")) beginRename();
+                        if (ImGui::MenuItem("Move up")) Emit(out,row.id,p.revision,editor::EditKind::Reorder,{},editor::Value{0,0,-1,row.parent});
+                        if (ImGui::MenuItem("Move down")) Emit(out,row.id,p.revision,editor::EditKind::Reorder,{},editor::Value{0,0,1,row.parent});
+                        if (row.parent && ImGui::MenuItem("Move to root")) Emit(out,row.id,p.revision,editor::EditKind::Reparent,editor::Value{0,0,0,row.parent},{});
                         if (row.hasChildren) {
                             if (ImGui::MenuItem("Expand hierarchy")) Emit(out,row.id,p.revision,editor::EditKind::Toggle,{},Value({5,1,0}));
                             if (ImGui::MenuItem("Collapse hierarchy")) Emit(out,row.id,p.revision,editor::EditKind::Toggle,{},Value({5,0,0}));

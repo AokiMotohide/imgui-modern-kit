@@ -258,6 +258,7 @@ void EditorWorkspaces::Initialize() {
     const char *names[] = {"Collection", "Hero cube", "Fill light", "Camera"};
     for (int i = 0; i < 4; ++i) {
         objects[i].id = 1000000 + i;
+        objectOrder[i]=objects[i].id;
         objects[i].label = names[i];
         objects[i].parent = i ? 1000000 : 0;
         objects[i].depth = i ? 1 : 0;
@@ -406,6 +407,19 @@ void EditorWorkspaces::ApplyEvents() {
                 if (field >= 0 && field < 8) {
                     *fields[field] = e.proposed.y != 0;
                     changed = true;
+                }
+            }
+        }
+        if (e.kind==editor::EditKind::Reorder && (e.proposed.offset==-1 || e.proposed.offset==1)) {
+            const auto object=std::find_if(objects.begin(),objects.end(),[&](const auto &v){return v.id==e.target;});
+            auto current=std::find(objectOrder.begin(),objectOrder.end(),e.target);
+            if (object!=objects.end() && !object->locked && current!=objectOrder.end() && object->parent==e.proposed.parent) {
+                const auto direction=static_cast<std::ptrdiff_t>(e.proposed.offset);
+                for (auto index=std::distance(objectOrder.begin(),current)+direction;index>=0 && index<static_cast<std::ptrdiff_t>(objectOrder.size());index+=direction) {
+                    const auto sibling=std::find_if(objects.begin(),objects.end(),[&](const auto &v){return v.id==objectOrder[index];});
+                    if (sibling==objects.end() || sibling->parent!=object->parent) continue;
+                    if (!sibling->locked) {std::iter_swap(current,objectOrder.begin()+index);changed=true;}
+                    break;
                 }
             }
         }
@@ -806,11 +820,15 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
 }
 void EditorWorkspaces::RebuildOutlinerRows() {
     outlinerRows.clear();outlinerRows.reserve(objects.size());
+    auto ordered=objects;
+    std::sort(ordered.begin(),ordered.end(),[&](const auto &a,const auto &b){
+        return std::find(objectOrder.begin(),objectOrder.end(),a.id)<std::find(objectOrder.begin(),objectOrder.end(),b.id);
+    });
     ImGuiTextFilter filter(outliner.search);
     auto matches=[&](auto &&self,const cg::ObjectView &object,std::size_t depth)->bool {
         if (depth>objects.size()) return false;
         if (filter.PassFilter(object.label)) return true;
-        for (const auto &child:objects) if (child.parent==object.id && self(self,child,depth+1)) return true;
+        for (const auto &child:ordered) if (child.parent==object.id && self(self,child,depth+1)) return true;
         return false;
     };
     auto append=[&](auto &&self,const cg::ObjectView &object,int depth)->void {
@@ -819,9 +837,9 @@ void EditorWorkspaces::RebuildOutlinerRows() {
         row.hasChildren=std::any_of(objects.begin(),objects.end(),[&](const auto &child){return child.parent==object.id;});
         outlinerRows.push_back(row);
         if (object.expanded || filter.IsActive())
-            for (const auto &child:objects) if (child.parent==object.id) self(self,child,depth+1);
+            for (const auto &child:ordered) if (child.parent==object.id) self(self,child,depth+1);
     };
-    for (const auto &object:objects)
+    for (const auto &object:ordered)
         if (!object.parent || std::none_of(objects.begin(),objects.end(),[&](const auto &parent){return parent.id==object.parent;}))
             append(append,object,0);
 }
