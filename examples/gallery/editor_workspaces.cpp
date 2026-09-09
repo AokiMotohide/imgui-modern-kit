@@ -518,12 +518,12 @@ void EditorWorkspaces::ApplyEvents() {
         }
     }
     editor::StableId createdLink=0,createdGroup=0;
-    std::map<editor::StableId,editor::StableId> duplicateLinks,duplicateGroups,splitLinks,splitGroups;
+    std::vector<std::pair<editor::StableId,editor::StableId>> duplicateLinks,duplicateGroups,splitLinks,splitGroups;
     const auto remapRelationship=[&](auto &mapping,editor::StableId id) {
         if (!id) return editor::StableId{0};
-        auto [entry,created]=mapping.try_emplace(id,0);
-        if (created) entry->second=nextId++;
-        return entry->second;
+        const auto entry=std::find_if(mapping.begin(),mapping.end(),[&](const auto &item){return item.first==id;});
+        if (entry!=mapping.end()) return entry->second;
+        const auto created=nextId++;mapping.emplace_back(id,created);return created;
     };
     for (const auto &e : events.Events()) {
         if (e.phase==editor::Phase::Begin && e.kind==editor::EditKind::Property)
