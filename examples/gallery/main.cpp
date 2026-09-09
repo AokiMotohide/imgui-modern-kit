@@ -628,6 +628,28 @@ int VerifyInspectorModel() {
         check(linked.QuerySelectedClips(ids).empty(),"related selection scratch overflow returns no partial members");
     }
     {
+        auto splitStorage=std::make_unique<gallery::EditorWorkspaces>();auto &split=*splitStorage;split.Initialize();
+        split.clips.resize(2);
+        for (auto &clip:split.clips) {clip.start=0;clip.duration=1000;clip.linked=321;clip.group=654;}
+        split.RebuildClipIndex();
+        const std::array originalIds{split.clips[0].id,split.clips[1].id};
+        for (auto id:originalIds)
+            split.events.Push({id,split.revision,editor::Phase::Commit,editor::EditKind::Split,{},editor::Value{500}});
+        split.ApplyEvents();
+        const auto originals=split.QuerySelectedClips(std::span<const editor::StableId>(originalIds).first(1));
+        check(originals.size()==2 && originals[0].start==0 && originals[1].start==0,
+              "split left relationship set excludes right halves");
+        const auto right=std::find_if(split.clips.begin(),split.clips.end(),[](const auto &clip){return clip.start==500;});
+        check(right!=split.clips.end(),"related split creates right halves");
+        if (right!=split.clips.end()) {
+            const auto rightId=right->id;
+            const auto rights=split.QuerySelectedClips(std::span<const editor::StableId>(&rightId,1));
+            check(rights.size()==2 && rights[0].start==500 && rights[1].start==500 &&
+                  rights[0].linked!=321 && rights[0].group!=654 && rights[0].linked==rights[1].linked &&
+                  rights[0].group==rights[1].group,"split right halves retain their own independent linked and group sets");
+        }
+    }
+    {
         auto queryStorage=std::make_unique<gallery::EditorWorkspaces>();
         auto &query=*queryStorage;
         for (int i=0;i<100000;++i) {

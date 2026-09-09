@@ -683,3 +683,7 @@ Galleryはclip本体のCommit適用前に、対象clip・trackのlock、分割�
 Razor now resolves the clicked clip through the selected provider to include related linked/group members, and shares the command Split batch validator. Related clips crossing the cut split at the same timeline tick; a locked eligible member rejects the whole operation. Public IO regression covers an offscreen related clip and lock rejection.
 
 Razorもクリック対象をselected providerで解決してlinked／groupの関連先を含め、コマンド分割と同じバッチ検証を使います。切断時刻をまたぐ関連clipを同じTimeline tickで分割し、対象にlockがあれば全体を拒否します。公開IO回帰で画面外の関連clipとlockによる拒否を確認しています。
+
+Gallery Split preserves original linked/group set IDs on left halves and assigns new shared IDs to right halves within the split batch. Editing one side no longer pulls the other side into its related selection. Host-model regression verifies two related clips split into independent left/right sets.
+
+Galleryの分割は左側に元のlinked／group集合IDを保持し、同じ分割バッチの右側同士へ新しい共通IDを割り当てます。片側の関連選択に反対側が混ざらなくなります。ホストモデル回帰で、関連する2 clipが左右それぞれ独立した集合になることを確認しています。
