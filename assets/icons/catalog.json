@@ -494,5 +494,9 @@
   {
     "name": "Magnet",
     "category": "Editor"
+  },
+  {
+    "name": "SelectPointer",
+    "category": "Editor"
   }
 ]

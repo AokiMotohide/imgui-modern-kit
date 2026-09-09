@@ -133,6 +133,7 @@ enum class IconId : std::uint16_t {
     PreviousFrame,
     NextFrame,
     Magnet,
+    SelectPointer,
     Count
 };
 struct IconInfo {

@@ -1,0 +1,4 @@
+One minimalist black monoline modern toolbar icon. Smooth rounded caps and joins, genuine transparent background with alpha. Crisp geometric single strokes, not double contours around strokes. Uniform approximately 1.75-unit stroke on a square 24-unit canvas, subject occupies 18 units centered. Designed for 16px readability. No texture, shadows, gradients, noise, letters, text, labels, grid or background. Exactly one standalone icon, not an icon sheet. Subject: standard arrow mouse pointer pointing to upper left, an outlined arrow cursor with a short diagonal stem and a clear concave notch. Empty transparent interior, simple recognizable selection pointer silhouette.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/SelectPointer.png
