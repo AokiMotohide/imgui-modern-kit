@@ -27,6 +27,9 @@ struct EditorWorkspaces {
     std::vector<cg::ObjectView> outlinerRows, orderedObjects;
     struct GeometryData {std::vector<preview::Vertex> vertices;std::vector<std::uint32_t> indices;};
     std::map<editor::StableId,GeometryData> geometries;
+    struct Component {cg::ComponentView view;bool wireOverride=false;};
+    std::vector<Component> components;
+    std::vector<cg::ComponentView> inspectorComponents;
     std::vector<preview::Mesh> sceneMeshes;
     std::span<const preview::Mesh> BuildSceneMeshes();
     std::vector<editor::StableId> objectOrder=std::vector<editor::StableId>(4);

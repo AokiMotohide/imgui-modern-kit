@@ -215,6 +215,20 @@ proposed.parentに参照元object IDを入れ、0では現在のデータを独�
 Galleryはactive objectとのlinkとsingle user化を適用し、共有preview・独立コピーの分離・unlink・
 relinkをmodelで確認しています。ライブラリ自体はgeometryを確保・複製・所有しません。
 
+`ComponentStack` consumes non-owning `ComponentView` rows with component/owner IDs,
+host UTF-8 labels/descriptions and enabled/expanded/locked state. It returns Toggle
+fields 0/1/2, owner-scoped Reorder offsets -1/+1, and Remove actions. The host owns
+component data, execution order and semantics. Gallery connects Mesh renderer and
+Wireframe override to both previews, preserves stack order, and copies components
+with fresh IDs on object duplication. Model tests verify enabled rendering, ordered
+overrides and renderer removal; the API fixture exercises the public widget.
+ComponentStackはcomponent/owner ID、ホストのUTF-8名・説明、enabled/expanded/locked状態を持つ
+非所有ComponentViewを受け取ります。Toggleのfield 0/1/2、owner付きReorderのoffset -1/+1、
+Remove操作を返します。componentの保存・実行順・意味はホストが所有します。Galleryは
+Mesh rendererとWireframe overrideを両previewへ接続し、stack順を保持します。object複製では
+新しいIDでcomponentもコピーします。model検証で有効化・override順・renderer無効化の結果を確認し、
+API fixtureで公開widgetを使用しています。
+
 Outliner starts inline rename from its context menu or a double click. The public
 InputText widget edits the UTF-8 draft; Enter commits and Escape cancels. Rename
 events preserve original/proposed text and starting revision; terminal overflow is

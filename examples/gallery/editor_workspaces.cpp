@@ -267,6 +267,8 @@ void EditorWorkspaces::Initialize() {
     }
     objects[1].geometry=nextId++;
     geometries[objects[1].geometry]={{cubeVertices.begin(),cubeVertices.end()},{cubeIndices.begin(),cubeIndices.end()}};
+    components.push_back({{nextId++,objects[1].id,"Mesh renderer","Draw the host geometry using viewport shading.",true},false});
+    components.push_back({{nextId++,objects[1].id,"Wireframe override","Override preceding renderer shading with wireframe.",false},true});
     objects[1].transform.scale = {.7, .7, .7};
     objectSelection.Set(objects[1].id);
     const char *assetNames[] = {"Studio take", "Ambience",     "Title",      "Surface",
@@ -313,7 +315,12 @@ std::span<const preview::Mesh> EditorWorkspaces::BuildSceneMeshes() {
         if (data==geometries.end()) continue;
         preview::Mesh mesh{objects[i].id,data->second.vertices,data->second.indices,objects[i].transform};
         mesh.wire=viewport.shading==cg::Shading::Wireframe;
-        ApplyGizmoPreview(mesh,viewport);sceneMeshes.push_back(mesh);
+        bool render=false;
+        for (const auto &component:components) if (component.view.owner==objects[i].id) {
+            if (!component.wireOverride) {render=component.view.enabled;mesh.wire=viewport.shading==cg::Shading::Wireframe;}
+            else if (component.view.enabled) mesh.wire=true;
+        }
+        if (render) {ApplyGizmoPreview(mesh,viewport);sceneMeshes.push_back(mesh);}
     }
     return sceneMeshes;
 }
@@ -357,6 +364,24 @@ void EditorWorkspaces::ApplyEvents() {
             markers[markerCount++] = {nextId++, e.proposed.first, "Marker"};
             changed = true;
         }
+        auto component=std::find_if(components.begin(),components.end(),[&](const auto &v){return v.view.id==e.target;});
+        if (component!=components.end()) {
+            if (e.kind==editor::EditKind::Toggle) {
+                const int field=static_cast<int>(e.proposed.x);
+                if (field==2) {component->view.locked=e.proposed.y!=0;changed=true;}
+                else if (field==1) {component->view.expanded=e.proposed.y!=0;changed=true;}
+                else if (field==0 && !component->view.locked) {component->view.enabled=e.proposed.y!=0;changed=true;}
+            } else if (!component->view.locked && e.kind==editor::EditKind::Remove) {
+                components.erase(component);changed=true;
+            } else if (!component->view.locked && e.kind==editor::EditKind::Reorder &&
+                       component->view.owner==e.proposed.parent && (e.proposed.offset==-1 || e.proposed.offset==1)) {
+                const auto direction=static_cast<std::ptrdiff_t>(e.proposed.offset);
+                for (auto i=std::distance(components.begin(),component)+direction;i>=0 && i<static_cast<std::ptrdiff_t>(components.size());i+=direction)
+                    if (components[i].view.owner==component->view.owner) {
+                        if (!components[i].view.locked) {std::iter_swap(component,components.begin()+i);changed=true;}break;
+                    }
+            }
+        }
         if (e.kind==editor::EditKind::Duplicate) {
             auto source=std::find_if(objects.begin(),objects.end(),[&](const auto &v){return v.id==e.target;});
             if (source!=objects.end() && !source->locked) {
@@ -369,6 +394,11 @@ void EditorWorkspaces::ApplyEvents() {
                     geometries[copy.geometry]=geometries.at(sourceGeometry);
                 }
                 objects.push_back(copy);objectPropertyIds.push_back(properties);
+                const auto componentCount=components.size();
+                for (std::size_t i=0;i<componentCount;++i) if (components[i].view.owner==e.target) {
+                    auto component=components[i];component.view.id=nextId++;component.view.owner=copy.id;
+                    components.push_back(component);
+                }
                 auto position=std::find(objectOrder.begin(),objectOrder.end(),e.target);
                 objectOrder.insert(position==objectOrder.end() ? position : position+1,copy.id);
                 objectSelection.Set(copy.id);changed=true;
@@ -971,6 +1001,9 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     auto object = std::find_if(s.objects.begin(), s.objects.end(),
                                [&](const auto &o) { return o.id == s.objectSelection.active; });
     if (object != s.objects.end()) {
+        s.inspectorComponents.clear();
+        for (const auto &component:s.components) if (component.view.owner==object->id) s.inspectorComponents.push_back(component.view);
+        cg::ComponentStack("Components",s.inspectorComponents,s.revision,s.events);
         editor::PropertyView rows[] = {
             {ObjectPropertyId(s, object->id, 0), "Position X", "Transform", object->transform.translation.x, 0},
             {ObjectPropertyId(s, object->id, 1), "Position Y", "Transform", object->transform.translation.y, 0},
