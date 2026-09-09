@@ -512,17 +512,26 @@ int main() {
     SceneProvider nameProvider{&nameObject,1,1,[](void *u,int,int,std::string_view){return std::span<const ObjectView>(static_cast<ObjectView*>(u),1);}};
     imkit::editor::StableId nameIds[2];imkit::editor::Selection nameSelection{nameIds};
     ImVec2 nameOrigin{};
+    imkit::editor::Event contextResult{};int contextActions=0;
     auto nameFrame=[&] {
         handleEvents.Clear();ImGui::NewFrame();ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({800,600});
         ImGui::Begin("Outliner rename");nameOrigin=ImGui::GetCursorScreenPos();
         Outliner("names",nameProvider,nameState,nameSelection,handleEvents);
+        for (const auto &event:handleEvents.Events())
+            if (event.kind==imkit::editor::EditKind::Reorder || event.kind==imkit::editor::EditKind::Reparent) {
+                contextResult=event;++contextActions;
+            }
         ImGui::End();ImGui::Render();
     };
     nameFrame();nameFrame();
-    auto openRename=[&] {
+    auto openRename=[&](int item=1) {
         io.AddMousePosEvent(nameOrigin.x+35,nameOrigin.y+ImGui::GetFrameHeightWithSpacing()+10);nameFrame();
         io.AddMouseButtonEvent(1,true);nameFrame();io.AddMouseButtonEvent(1,false);nameFrame();nameFrame();
-        io.AddKeyEvent(ImGuiKey_DownArrow,true);nameFrame();io.AddKeyEvent(ImGuiKey_DownArrow,false);nameFrame();
+        io.AddMousePosEvent(790,590);nameFrame();
+        io.AddKeyEvent(ImGuiKey_Home,true);nameFrame();io.AddKeyEvent(ImGuiKey_Home,false);nameFrame();
+        for (int step=1;step<item;++step) {
+            io.AddKeyEvent(ImGuiKey_DownArrow,true);nameFrame();io.AddKeyEvent(ImGuiKey_DownArrow,false);nameFrame();
+        }
         io.AddKeyEvent(ImGuiKey_Enter,true);nameFrame();io.AddKeyEvent(ImGuiKey_Enter,false);nameFrame();nameFrame();
     };
     openRename();
@@ -539,6 +548,15 @@ int main() {
     check(!nameState.renameTransaction.active && handleEvents.count>=1 &&
           handleEvents.Events().back().phase==imkit::editor::Phase::Cancel,"Outliner Escape cancels rename");
     io.AddKeyEvent(ImGuiKey_Escape,false);nameFrame();
+    nameObject.parent=0x100000050ull;
+    openRename(2);
+    check(contextActions==1 && contextResult.target==nameObject.id && contextResult.kind==imkit::editor::EditKind::Reorder &&
+          contextResult.proposed.offset==-1 && contextResult.proposed.parent==nameObject.parent,"Outliner Move up emits parent-scoped preceding sibling intent");
+    openRename(3);
+    check(contextActions==2 && contextResult.proposed.offset==1,"Outliner Move down emits following sibling intent");
+    openRename(4);
+    check(contextActions==3 && contextResult.kind==imkit::editor::EditKind::Reparent &&
+          contextResult.proposed.parent==0 && contextResult.original.parent==nameObject.parent,"Outliner Move to root retains original parent");
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
