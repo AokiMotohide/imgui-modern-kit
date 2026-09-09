@@ -90,3 +90,7 @@ target_link_libraries(your_app PRIVATE imkit::imkit)
 `-DCMAKE_PREFIX_PATH=/path/to/sdk`でconfigureします。依存adapterからホストtargetへ接続し、元buildのパスを埋め込みません。`examples/consumer`はソースとinstalled packageの両方に対応します。binary条件が一致しない場合はソースからビルドしてください。
 
 検証の範囲と制約は[検証記録](validation.md)、ライセンスは[第三者通知](../THIRD_PARTY_NOTICES.md)を参照してください。公開IOによる統合確認と、native OS/IME・実機の受け入れ確認は別です。
+
+## Editor workspace開発版
+
+native GalleryのEditor Core／Video Editor／CG Editorを開きます。`--verify-editors --capture-editors --output out/editors`で公開IO検証と150%を含む実backbuffer画像を取得できます。中ボタンでpan/orbit、TimelineはCtrl+wheelでzoom、clip端でtrim、Razorでsplit、gizmo軸端でdragします。UV/Graphタブの点も編集できます。[未達項目](editor-suite.md)が残る開発版であり、1.0受入完了ではありません。

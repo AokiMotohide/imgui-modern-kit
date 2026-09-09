@@ -93,3 +93,7 @@ Configure with `-DCMAKE_PREFIX_PATH=/path/to/sdk`. The package uses an imported 
 ## Build and evidence
 
 See [validation](validation.md) for exact evidence and limits. Native OS/IME input and physical devices are separate from the public-IO integration runner. Each category capture comes from the actual catalog and shipped API. License records are in [third-party notices](../THIRD_PARTY_NOTICES.md).
+
+## Experimental editor workspaces
+
+Open **Editor Core**, **Video Editor**, or **CG Editor** in the native Gallery. Use `--verify-editors --capture-editors --output out/editors` for public-IO checks and real backbuffer images, including 150% scale. Middle mouse pans/orbits, Ctrl+wheel zooms Timeline, clip edges trim, Razor splits, and selected gizmo axis tips drag. UV and Graph tabs expose editable points. See [remaining work](editor-suite.md); this is not 1.0 acceptance.

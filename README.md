@@ -65,3 +65,7 @@ ImKit code is MIT. Dear ImGui and GLFW have their own licenses; optional Inter a
 120 generated outline icons support theme tint, custom color, size, icon buttons and
 label buttons. GPU textures remain host-owned. See [icon integration](docs/icons.md)
 and the **Icons** page in the native Gallery.
+
+## Editor Suite development
+
+Experimental `editor_core`, `video`, `cg`, `preview_opengl3` and `editor_suite` targets are available. The native Gallery contains Video and CG workspaces. **The requested 1.0 feature set is not complete.** See [module contracts and remaining work](docs/editor-suite.md), [API reference](docs/editor-api.md) and [validation](docs/editor-validation.md).

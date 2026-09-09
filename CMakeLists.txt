@@ -141,6 +141,8 @@ if(IMKIT_BUILD_GALLERY)
     add_executable(imkit_gallery
         examples/gallery/main.cpp
         examples/gallery/gallery.cpp
+        examples/gallery/editor_workspaces.cpp
+        examples/gallery/allocation_probe.cpp
         examples/gallery/gallery.h
         examples/design_gallery/capture.cpp
     )
@@ -152,6 +154,8 @@ if(IMKIT_BUILD_GALLERY)
     target_link_libraries(imkit_gallery
         PRIVATE
             imkit::imkit
+            imkit::editor_suite
+            imkit::preview_opengl3
             "${IMKIT_GALLERY_BACKEND_TARGET}"
             windowscodecs ole32
     )

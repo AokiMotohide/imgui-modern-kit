@@ -11,13 +11,22 @@
 #include <stdexcept>
 #include <cstdio>
 #include <cstring>
+#include <chrono>
+#include "allocation_probe.h"
+#include <algorithm>
 namespace {
 struct Host {
     GLFWwindow *window = nullptr;
     imkit::gallery::GalleryState s;
     bool automated = false;
+    ImGuiMemAllocFunc originalAlloc=nullptr;
+    ImGuiMemFreeFunc originalFree=nullptr;
+    void *originalAllocatorUser=nullptr;
+    bool countImGuiAllocations=false;
+    std::size_t imguiAllocations=0;
     ImVec2 mouse{-100, -100};
     void Frame(const std::function<void(ImGuiIO &)> &input = {}, const std::filesystem::path &shot = {}) {
+        s.editors.RenderPreview();
         glfwPollEvents();
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -270,9 +279,114 @@ void VerifyIcons(Host &h, const std::filesystem::path &out) {
     h.s.iconSizeIndex = 1;
     log << "Input: public Dear ImGui IO events; GPU backbuffer capture; not native OS automation.\n";
 }
+
+void VerifyEditors(Host &h, const std::filesystem::path &out, const imkit::preview::GLFunctions &functions) {
+    std::ofstream log(out / "editors-interaction.txt");
+    auto check = [&](bool ok, const char *message) {
+        log << (ok ? "PASS " : "FAIL ") << message << '\n'; log.flush();
+        if (!ok) throw std::runtime_error(message);
+    };
+    auto &s = h.s.editors;
+    auto &renderer = s.previewRenderer;
+    imkit::cg::Camera camera; camera.yaw = camera.pitch = 0;
+    imkit::preview::Mesh meshes[2] = {
+        {0x123456789abcdef0ULL, s.cubeVertices, s.cubeIndices},
+        {23, s.cubeVertices, s.cubeIndices}
+    };
+    meshes[0].transform.translation.z = 1;
+    meshes[1].transform.translation.z = -1;
+    check(renderer.Render(meshes, camera), "GL indexed cube rendering");
+    check(renderer.Pick(renderer.Width()/2, renderer.Height()/2) == meshes[0].id,
+          "GL depth test and full 64-bit picking, near object submitted first");
+    check(renderer.Pick(0, 0) == 0, "GL background picking");
+    check(renderer.Resize(800, 450) && renderer.Render(meshes, camera), "GL FBO resize");
+    check(renderer.Pick(400, 225) == meshes[0].id, "GL picking after resize");
+    check(!renderer.Resize(0, 1) && renderer.Initialized(), "GL invalid resize preserves renderer");
+    auto oldTexture=renderer.Texture(); renderer.Shutdown();
+    auto isTexture=reinterpret_cast<GLboolean (*)(GLuint)>(glfwGetProcAddress("glIsTexture"));
+    check(!renderer.Initialized() && renderer.Texture()==0 && isTexture && !isTexture(oldTexture), "GL shutdown deletes texture resources");
+    check(renderer.Init(functions,640,480),"GL reinitialization after shutdown");
+    std::array<imkit::preview::Vertex,325> sphereVertices{};
+    std::array<std::uint32_t,1728> sphereIndices{};
+    check(imkit::preview::Sphere(sphereVertices,sphereIndices),"Sphere primitive generation");
+    imkit::preview::Mesh sphere{99,sphereVertices,sphereIndices};
+    check(renderer.Render({&sphere,1},camera) && renderer.Pick(320,240)==99,"GL sphere rendering and picking");
+    h.Page(8);
+    auto drag = [&](ImVec2 from, ImVec2 to) {
+        h.mouse = from; h.Frame();
+        h.Frame([](auto &io) { io.AddMouseButtonEvent(0, true); });
+        h.mouse = to; h.Frame();
+        h.Frame([](auto &io) { io.AddMouseButtonEvent(0, false); });
+        h.Settle(2);
+    };
+    auto clipPosition = [&](imkit::editor::StableId id, float edge) {
+        const auto clip = std::find_if(s.clips.begin(), s.clips.end(), [&](const auto &c) { return c.id == id; });
+        const auto &view = s.timeline.view;
+        return ImVec2{view.min.x + s.timeline.headerWidth + static_cast<float>(
+            (imkit::editor::Seconds(clip->start) - s.timeline.canvas.origin.x) * s.timeline.canvas.scale.x) + edge,
+            view.min.y + 20};
+    };
+    auto findClip = [&]() -> const imkit::video::ClipView & {
+        return *std::find_if(s.clips.begin(), s.clips.end(), [](auto &c) { return c.id == 1000; });
+    };
+    auto before = findClip().start;
+    auto pos = clipPosition(1000, 90); drag(pos, {pos.x + 40, pos.y});
+    check(findClip().start > before, "Timeline move via public IO");
+    before = findClip().duration;
+    pos = clipPosition(1000, static_cast<float>(imkit::editor::Seconds(before)*s.timeline.canvas.scale.x)-3);
+    drag(pos, {pos.x-25,pos.y});
+    check(findClip().duration < before, "Timeline end trim via public IO");
+    auto count = s.clips.size(); s.timeline.tool = imkit::video::Tool::Razor;
+    h.ClickAt(clipPosition(1000, 100));
+    check(s.clips.size() == count+1, "Timeline razor split via public IO");
+    s.timeline.tool = imkit::video::Tool::Select;
+    h.Page(9);
+    auto projected = imkit::cg::Project(s.objects[1].transform.translation, s.viewport.camera, s.viewportOrigin, s.viewportSize);
+    auto end = imkit::cg::Project({s.objects[1].transform.translation.x+1,s.objects[1].transform.translation.y,s.objects[1].transform.translation.z},s.viewport.camera,s.viewportOrigin,s.viewportSize);
+    float dx=end.screen.x-projected.screen.x,dy=end.screen.y-projected.screen.y,len=std::sqrt(dx*dx+dy*dy);
+    pos={projected.screen.x+dx/len*70,projected.screen.y+dy/len*70};
+    auto oldX=s.objects[1].transform.translation.x;
+    drag(pos,{pos.x+40,pos.y});
+    check(s.objects[1].transform.translation.x>oldX,"CG X gizmo preview and commit via public IO");
+    check(s.objectSelection.active==s.objects[1].id,"CG shared selection stable ID");
+    h.Frame({},out/"cg-edited.png");
+    h.Page(7);
+    auto &key=s.keys[4]; const auto keyId=key.id; auto keyTick=key.tick;
+    auto keyScreen=imkit::editor::ToScreen({imkit::editor::Seconds(key.tick),-key.value},s.curve.canvas,{s.curve.view.min.x,s.curve.view.min.y});
+    drag({static_cast<float>(keyScreen.x),static_cast<float>(keyScreen.y)}, {static_cast<float>(keyScreen.x+20),static_cast<float>(keyScreen.y+10)});
+    auto editedKey=std::find_if(s.keys.begin(),s.keys.end(),[&](const auto &k){return k.id==keyId;});
+    check(editedKey->tick>keyTick,"Curve key move via public IO");
+    s.animationPage=2; h.Page(9); s.animationPage=-1; h.Settle();
+    auto vertex=s.uv[0].uv;auto uvScreen=imkit::editor::ToScreen(vertex,s.uvState.canvas,{s.uvState.view.min.x,s.uvState.view.min.y});
+    drag({static_cast<float>(uvScreen.x),static_cast<float>(uvScreen.y)},{static_cast<float>(uvScreen.x+30),static_cast<float>(uvScreen.y+15)});
+    check(s.uv[0].uv.x>vertex.x&&s.uv[0].uv.y>vertex.y,"UV vertex transform via public IO");
+    h.Frame({},out/"uv-edited.png");
+    s.Dataset(true); h.Page(8); h.Settle(20);
+    std::array<double,180> timings{};
+    std::size_t maxQueries=0,maxClips=0;
+    h.imguiAllocations=0; h.countImGuiAllocations=true;
+    imkit::gallery::CountAllocations(true);
+    for (auto &elapsed:timings) {
+        s.timeline.canvas.origin.x+=.01;
+        const auto start=std::chrono::steady_clock::now(); h.Frame();
+        elapsed=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-start).count();
+        maxQueries=(std::max)(maxQueries,s.queryCount); maxClips=(std::max)(maxClips,s.queriedClips);
+    }
+    imkit::gallery::CountAllocations(false);h.countImGuiAllocations=false;
+    const auto cppAllocations=imkit::gallery::AllocationCount();
+    std::sort(timings.begin(),timings.end());
+    std::ofstream perf(out/"performance.txt");
+    perf << "tracks="<<s.tracks.size()<<" clips="<<s.clips.size()<<" keys="<<s.keys.size()
+         <<"\nframe_cpu_wall_p95_ms="<<timings[170]<<"\nvisible_queries_max="<<maxQueries
+         <<"\nvisible_clips_max="<<maxClips<<"\ncpp_new_allocations="<<cppAllocations<<"\nimgui_allocations="<<h.imguiAllocations<<"\n180 frames, pan interaction, 1920x1440, includes GL submission and swap.\n";
+    check(maxClips<1000 && maxQueries<30,"Large dataset only queries visible clips/tracks");
+    h.Frame({},out/"video-large.png");
+    log<<"Public IO and actual GPU; native OS/IME and media decode not tested.\n";
+}
+
 } // namespace
 int main(int argc, char **argv) {
-    bool capture = false, verify = false, verifyIcons = false;
+    bool capture = false, verify = false, verifyIcons = false, verifyEditors = false;
     int capturePage = -1;
     std::filesystem::path out = "out/catalog";
     for (int i = 1; i < argc; ++i) {
@@ -281,6 +395,9 @@ int main(int argc, char **argv) {
             capture = true;
         else if (a == "--verify")
             verify = true;
+        else if (a == "--capture-editors") { capture = true; capturePage = -2; }
+        else if (a == "--verify-editors")
+            verifyEditors = true;
         else if (a == "--verify-icons")
             verifyIcons = true;
         else if (a == "--output" && i + 1 < argc)
@@ -298,11 +415,11 @@ int main(int argc, char **argv) {
         return 1;
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    glfwWindowHint(GLFW_VISIBLE, capture || verify || verifyIcons ? GLFW_FALSE : GLFW_TRUE);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_VISIBLE, capture || verify || verifyIcons || verifyEditors ? GLFW_FALSE : GLFW_TRUE);
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
     Host h;
-    h.automated = capture || verify || verifyIcons;
+    h.automated = capture || verify || verifyIcons || verifyEditors;
     h.window = glfwCreateWindow(1920, 1440, "ImKit Precision Layers", nullptr, nullptr);
     if (!h.window) {
         glfwTerminate();
@@ -312,6 +429,9 @@ int main(int argc, char **argv) {
     glfwMakeContextCurrent(h.window);
     glfwSwapInterval(h.automated ? 0 : 1);
     IMGUI_CHECKVERSION();
+    ImGui::GetAllocatorFunctions(&h.originalAlloc,&h.originalFree,&h.originalAllocatorUser);
+    ImGui::SetAllocatorFunctions([](std::size_t size,void *user)->void *{auto &h=*static_cast<Host *>(user);if(h.countImGuiAllocations)++h.imguiAllocations;return h.originalAlloc(size,h.originalAllocatorUser);},
+        [](void *memory,void *user){auto &h=*static_cast<Host *>(user);h.originalFree(memory,h.originalAllocatorUser);},&h);
     ImGui::CreateContext();
     auto &io = ImGui::GetIO();
     io.IniFilename = nullptr;
@@ -366,6 +486,55 @@ int main(int argc, char **argv) {
                          GL_UNSIGNED_BYTE, atlas.rgba.data());
             h.s.icons.SetTexture(atlas.iconPixels, ImTextureRef(static_cast<ImTextureID>(iconTextures[i])));
         }
+        imkit::preview::GLFunctions previewFunctions;
+        previewFunctions.GenFramebuffers = reinterpret_cast<decltype(previewFunctions.GenFramebuffers)>(glfwGetProcAddress("glGenFramebuffers"));
+        previewFunctions.DeleteFramebuffers = reinterpret_cast<decltype(previewFunctions.DeleteFramebuffers)>(glfwGetProcAddress("glDeleteFramebuffers"));
+        previewFunctions.BindFramebuffer = reinterpret_cast<decltype(previewFunctions.BindFramebuffer)>(glfwGetProcAddress("glBindFramebuffer"));
+        previewFunctions.CheckFramebufferStatus = reinterpret_cast<decltype(previewFunctions.CheckFramebufferStatus)>(glfwGetProcAddress("glCheckFramebufferStatus"));
+        previewFunctions.FramebufferTexture2D = reinterpret_cast<decltype(previewFunctions.FramebufferTexture2D)>(glfwGetProcAddress("glFramebufferTexture2D"));
+        previewFunctions.DrawBuffers = reinterpret_cast<decltype(previewFunctions.DrawBuffers)>(glfwGetProcAddress("glDrawBuffers"));
+        previewFunctions.ReadBuffer = reinterpret_cast<decltype(previewFunctions.ReadBuffer)>(glfwGetProcAddress("glReadBuffer"));
+        previewFunctions.ReadPixels = reinterpret_cast<decltype(previewFunctions.ReadPixels)>(glfwGetProcAddress("glReadPixels"));
+        previewFunctions.GenTextures = reinterpret_cast<decltype(previewFunctions.GenTextures)>(glfwGetProcAddress("glGenTextures"));
+        previewFunctions.DeleteTextures = reinterpret_cast<decltype(previewFunctions.DeleteTextures)>(glfwGetProcAddress("glDeleteTextures"));
+        previewFunctions.BindTexture = reinterpret_cast<decltype(previewFunctions.BindTexture)>(glfwGetProcAddress("glBindTexture"));
+        previewFunctions.TexImage2D = reinterpret_cast<decltype(previewFunctions.TexImage2D)>(glfwGetProcAddress("glTexImage2D"));
+        previewFunctions.TexParameteri = reinterpret_cast<decltype(previewFunctions.TexParameteri)>(glfwGetProcAddress("glTexParameteri"));
+        previewFunctions.GenVertexArrays = reinterpret_cast<decltype(previewFunctions.GenVertexArrays)>(glfwGetProcAddress("glGenVertexArrays"));
+        previewFunctions.DeleteVertexArrays = reinterpret_cast<decltype(previewFunctions.DeleteVertexArrays)>(glfwGetProcAddress("glDeleteVertexArrays"));
+        previewFunctions.BindVertexArray = reinterpret_cast<decltype(previewFunctions.BindVertexArray)>(glfwGetProcAddress("glBindVertexArray"));
+        previewFunctions.GenBuffers = reinterpret_cast<decltype(previewFunctions.GenBuffers)>(glfwGetProcAddress("glGenBuffers"));
+        previewFunctions.DeleteBuffers = reinterpret_cast<decltype(previewFunctions.DeleteBuffers)>(glfwGetProcAddress("glDeleteBuffers"));
+        previewFunctions.BindBuffer = reinterpret_cast<decltype(previewFunctions.BindBuffer)>(glfwGetProcAddress("glBindBuffer"));
+        previewFunctions.BufferData = reinterpret_cast<decltype(previewFunctions.BufferData)>(glfwGetProcAddress("glBufferData"));
+        previewFunctions.CreateShader = reinterpret_cast<decltype(previewFunctions.CreateShader)>(glfwGetProcAddress("glCreateShader"));
+        previewFunctions.ShaderSource = reinterpret_cast<decltype(previewFunctions.ShaderSource)>(glfwGetProcAddress("glShaderSource"));
+        previewFunctions.CompileShader = reinterpret_cast<decltype(previewFunctions.CompileShader)>(glfwGetProcAddress("glCompileShader"));
+        previewFunctions.GetShaderiv = reinterpret_cast<decltype(previewFunctions.GetShaderiv)>(glfwGetProcAddress("glGetShaderiv"));
+        previewFunctions.DeleteShader = reinterpret_cast<decltype(previewFunctions.DeleteShader)>(glfwGetProcAddress("glDeleteShader"));
+        previewFunctions.CreateProgram = reinterpret_cast<decltype(previewFunctions.CreateProgram)>(glfwGetProcAddress("glCreateProgram"));
+        previewFunctions.AttachShader = reinterpret_cast<decltype(previewFunctions.AttachShader)>(glfwGetProcAddress("glAttachShader"));
+        previewFunctions.LinkProgram = reinterpret_cast<decltype(previewFunctions.LinkProgram)>(glfwGetProcAddress("glLinkProgram"));
+        previewFunctions.GetProgramiv = reinterpret_cast<decltype(previewFunctions.GetProgramiv)>(glfwGetProcAddress("glGetProgramiv"));
+        previewFunctions.DeleteProgram = reinterpret_cast<decltype(previewFunctions.DeleteProgram)>(glfwGetProcAddress("glDeleteProgram"));
+        previewFunctions.UseProgram = reinterpret_cast<decltype(previewFunctions.UseProgram)>(glfwGetProcAddress("glUseProgram"));
+        previewFunctions.GetUniformLocation = reinterpret_cast<decltype(previewFunctions.GetUniformLocation)>(glfwGetProcAddress("glGetUniformLocation"));
+        previewFunctions.UniformMatrix4fv = reinterpret_cast<decltype(previewFunctions.UniformMatrix4fv)>(glfwGetProcAddress("glUniformMatrix4fv"));
+        previewFunctions.Uniform2ui = reinterpret_cast<decltype(previewFunctions.Uniform2ui)>(glfwGetProcAddress("glUniform2ui"));
+        previewFunctions.EnableVertexAttribArray = reinterpret_cast<decltype(previewFunctions.EnableVertexAttribArray)>(glfwGetProcAddress("glEnableVertexAttribArray"));
+        previewFunctions.VertexAttribPointer = reinterpret_cast<decltype(previewFunctions.VertexAttribPointer)>(glfwGetProcAddress("glVertexAttribPointer"));
+        previewFunctions.DrawElements = reinterpret_cast<decltype(previewFunctions.DrawElements)>(glfwGetProcAddress("glDrawElements"));
+        previewFunctions.Viewport = reinterpret_cast<decltype(previewFunctions.Viewport)>(glfwGetProcAddress("glViewport"));
+        previewFunctions.ClearBufferfv = reinterpret_cast<decltype(previewFunctions.ClearBufferfv)>(glfwGetProcAddress("glClearBufferfv"));
+        previewFunctions.ClearBufferuiv = reinterpret_cast<decltype(previewFunctions.ClearBufferuiv)>(glfwGetProcAddress("glClearBufferuiv"));
+        previewFunctions.Enable = reinterpret_cast<decltype(previewFunctions.Enable)>(glfwGetProcAddress("glEnable"));
+        previewFunctions.Disable = reinterpret_cast<decltype(previewFunctions.Disable)>(glfwGetProcAddress("glDisable"));
+        previewFunctions.DepthFunc = reinterpret_cast<decltype(previewFunctions.DepthFunc)>(glfwGetProcAddress("glDepthFunc"));
+        previewFunctions.DepthMask = reinterpret_cast<decltype(previewFunctions.DepthMask)>(glfwGetProcAddress("glDepthMask"));
+        previewFunctions.PolygonMode = reinterpret_cast<decltype(previewFunctions.PolygonMode)>(glfwGetProcAddress("glPolygonMode"));
+        h.s.editors.Initialize();
+        if (!h.s.editors.previewRenderer.Init(previewFunctions, 640, 480))
+            throw std::runtime_error("Preview initialization failed");
         if (capturePage >= 0)
             h.s.page = capturePage;
         h.Settle();
@@ -373,19 +542,28 @@ int main(int argc, char **argv) {
             std::filesystem::create_directories(out);
             if (verify)
                 Verify(h, out);
+            if (verifyEditors)
+                VerifyEditors(h, out, previewFunctions);
             if (verifyIcons)
                 VerifyIcons(h, out);
             if (capture) {
+                if (capturePage == -2) h.s.editors.Dataset(false);
                 for (int dark = 0; dark < 2; ++dark) {
                     h.s.dark = dark != 0;
                     h.s.theme = imkit::MakePrecisionTheme(dark ? imkit::ColorScheme::Dark
                                                                : imkit::ColorScheme::Light);
-                    for (int page = 0; page < 7; ++page) {
+                    for (int page = 0; page < 10; ++page) {
+                        if (capturePage == -2 && page < 7) continue;
                         if (capturePage >= 0 && capturePage != page)
                             continue;
                         h.Page(page);
                         h.Frame({},
                                 out / ("page-" + std::to_string(page) + (dark ? "-dark.png" : "-light.png")));
+                        if (page >= 8) {
+                            h.s.scale = 1.5f; h.Settle();
+                            h.Frame({}, out / ("page-"+std::to_string(page)+(dark ? "-dark-150.png" : "-light-150.png")));
+                            h.s.scale = 1; h.Settle();
+                        }
                         if (page == 6) {
                             h.s.iconSizeIndex = 0;
                             h.Settle();
@@ -394,13 +572,13 @@ int main(int argc, char **argv) {
                         }
                     }
                 }
-                if (capturePage < 0 || capturePage == 0) {
+                if (capturePage == -1 || capturePage == 0) {
                     h.s.scale = 1.5f;
                     h.Page(0);
                     h.Frame({}, out / "page-0-dark-150.png");
                     h.s.scale = 1;
                 }
-                if (capturePage < 0 || capturePage == 4) {
+                if (capturePage == -1 || capturePage == 4) {
                     h.Page(4);
                     h.Click("modal");
                     h.Settle(10);
@@ -419,6 +597,7 @@ int main(int argc, char **argv) {
         std::fprintf(stderr, "Catalog: %s\n", e.what());
         result = 1;
     }
+    h.s.editors.previewRenderer.Shutdown();
     if (texture)
         glDeleteTextures(1, &texture);
     h.s.icons.Clear();
@@ -428,6 +607,7 @@ int main(int argc, char **argv) {
     if (backend)
         ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+    ImGui::SetAllocatorFunctions(h.originalAlloc,h.originalFree,h.originalAllocatorUser);
     glfwDestroyWindow(h.window);
     glfwTerminate();
     CoUninitialize();

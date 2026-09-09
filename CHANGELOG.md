@@ -1,5 +1,12 @@
 # Changelog / 変更履歴
 
+## Unreleased — Editor Suite development
+
+- Add host-owned editor events/timebase/canvas/curve/property/asset APIs and optional Video, CG and OpenGL3 preview modules.
+- Add native Video/CG workspaces, CPU fixtures, public IO/GPU verifier and a 100k synthetic dataset.
+- Editor Suite 1.0 acceptance is incomplete; version remains 0.2.0. See `docs/editor-suite.md` for missing functionality.
+- ホスト所有Editor API、Video/CG/OpenGL3 preview、実Galleryと検証を追加。1.0は未完成のためversionは0.2.0を保持。
+
 ## Unreleased — Modern icons
 
 - Add 120 individually generated outline icons, six PNG sizes, embedded tintable atlases and host-owned texture bindings.

@@ -1,0 +1,537 @@
+#include "editor_workspaces.h"
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
+namespace imkit::gallery {
+namespace {
+editor::StableId ObjectPropertyId(editor::StableId object, int component) {
+    return object * 100 + component;
+}
+editor::AssetProvider Assets(EditorWorkspaces &s) {
+    return {&s, s.revision, static_cast<int>(s.assets.size()),
+            [](void *u, int first, int count, std::string_view) {
+                auto &s = *static_cast<EditorWorkspaces *>(u);
+                return std::span<const editor::AssetView>(s.assets).subspan(
+                    first, (std::min)(count, static_cast<int>(s.assets.size()) - first));
+            }};
+}
+editor::CurveProvider Curves(EditorWorkspaces &s) {
+    return {&s, s.revision, [](void *u, editor::CurveQuery q) {
+                auto &s = *static_cast<EditorWorkspaces *>(u);
+                auto first = std::lower_bound(s.keys.begin(), s.keys.end(), q.time.first,
+                                              [](const auto &k, auto t) { return k.tick < t; });
+                if (first != s.keys.begin())
+                    --first;
+                auto last = std::upper_bound(first, s.keys.end(), q.time.last,
+                                             [](auto t, const auto &k) { return t < k.tick; });
+                if (last != s.keys.end())
+                    ++last;
+                return std::span<const editor::Keyframe>(first, last);
+            }};
+}
+void Options(EditorWorkspaces &s) {
+    bool large = s.large;
+    if (ImGui::Checkbox("100k dataset", &large))
+        s.Dataset(large);
+    ImGui::SameLine();
+    ImGui::Checkbox("日本語", &s.japanese);
+    ImGui::SameLine();
+    ImGui::Checkbox("Narrow panes", &s.narrow);
+    ImGui::SameLine();
+    ImGui::Text("%zu visible queries / %zu clips / %zu commits", s.queryCount, s.queriedClips, s.commits);
+    s.queryCount = s.queriedClips = 0;
+}
+} // namespace
+void EditorWorkspaces::Dataset(bool big) {
+    large = big;
+    tracks.clear();
+    clips.clear();
+    keys.clear();
+    int trackCount = large ? 256 : 6;
+    clipsPerTrack = large ? 391 : 12;
+    tracks.reserve(trackCount);
+    clips.reserve(trackCount * clipsPerTrack + 64);
+    keys.reserve(large ? 100000 : 12);
+    for (int t = 0; t < trackCount; ++t) {
+        video::TrackView track;
+        track.id = t + 1;
+        track.label = t % 3 == 0 ? "V  Picture" : t % 3 == 1 ? "A  Sound" : "T  Caption";
+        track.kind = t % 3 == 0   ? video::TrackKind::Video
+                     : t % 3 == 1 ? video::TrackKind::Audio
+                                  : video::TrackKind::Caption;
+        tracks.push_back(track);
+        for (int i = 0; i < clipsPerTrack; ++i) {
+            video::ClipView clip;
+            clip.id = 1000 + t * clipsPerTrack + i;
+            clip.track = track.id;
+            clip.label = t % 3 == 0   ? "Studio / Main take"
+                         : t % 3 == 1 ? "Ambient / stereo"
+                                      : "A quiet afternoon";
+            clip.start = editor::FromSeconds(i * 4. + (t % 2) * .5);
+            clip.duration = editor::FromSeconds(3.5);
+            clip.sourceIn = editor::TicksPerSecond * 5;
+            clip.proxy = i % 7 == 0;
+            clips.push_back(clip);
+        }
+    }
+    for (int i = 0; i < (large ? 100000 : 12); ++i) {
+        editor::Keyframe key;
+        key.id = 500000 + i;
+        key.channel = 1;
+        key.tick = editor::FromSeconds(i * .5);
+        key.value = .5 + .4 * std::sin(i * .8);
+        key.left = {-.15, 0};
+        key.right = {.15, 0};
+        keys.push_back(key);
+    }
+    if (!clips.empty())
+        clips.front().keys = std::span<const editor::Keyframe>(keys).first(6);
+    selection.Clear();
+    selection.Set(1000);
+    timeline.drag.active = false;
+    curve.drag.active = false;
+    ++revision;
+}
+void EditorWorkspaces::Initialize() {
+    if (initialized)
+        return;
+    initialized = true;
+    Dataset(false);
+    bindingCount = editor::MakeBindings(editor::ShortcutPreset::CapCut, bindings);
+    timeline.memberDrags = clipDrags;
+    preview::Cube(cubeVertices, cubeIndices);
+    const char *names[] = {"Collection", "Hero cube", "Fill light", "Camera"};
+    for (int i = 0; i < 4; ++i) {
+        objects[i].id = 1000000 + i;
+        objects[i].label = names[i];
+        objects[i].parent = i ? 1000000 : 0;
+        objects[i].depth = i ? 1 : 0;
+        objects[i].hasChildren = i == 0;
+        objects[i].transform.translation = {static_cast<double>(i - 1) * 1.5, 0, 0};
+    }
+    objects[1].transform.scale = {.7, .7, .7};
+    objectSelection.Set(objects[1].id);
+    const char *assetNames[] = {"Studio take", "Ambience",     "Title",      "Surface",
+                                "Camera rig",  "Color preset", "Proxy take", "Reference"};
+    for (int i = 0; i < 8; ++i) {
+        assets[i].id = 800000 + i;
+        assets[i].label = assetNames[i];
+        assets[i].status = i == 6 ? editor::AssetStatus::Proxy : editor::AssetStatus::Ready;
+    }
+    uv = {cg::UVVertex{900001, 1, {.1, .1}}, cg::UVVertex{900002, 1, {.9, .1}},
+          cg::UVVertex{900003, 1, {.9, .9}}, cg::UVVertex{900004, 1, {.1, .9}}};
+    for (std::size_t i = 0; i < pcm.size(); ++i)
+        pcm[i] = static_cast<float>(std::sin(i * .27) * (.4 + .3 * std::sin(i * .015)));
+    video::BuildAudioBuckets(pcm, 1, 0, audio);
+    video::UpdateMeter(meter, pcm, 0);
+    for (int y = 0; y < 64; ++y)
+        for (int x = 0; x < 64; ++x)
+            pixels[y * 64 + x] = {x / 63.f, y / 63.f, (x + y) / 126.f, 1};
+    video::BuildScopes(pixels, 64, 64, {red, green, blue, luma, scopeWave, scopeVector});
+}
+void EditorWorkspaces::RenderPreview() {
+    if (!initialized || !previewRenderer.Initialized())
+        return;
+    if (timeline.time.playing) {
+        auto &time = timeline.time;
+        time.playhead += editor::FromSeconds(ImGui::GetIO().DeltaTime * time.playbackRate);
+        if (time.loop && time.inOut.last > time.inOut.first) {
+            if (time.playhead >= time.inOut.last)
+                time.playhead = time.inOut.first;
+            if (time.playhead < time.inOut.first)
+                time.playhead = time.inOut.last - 1;
+        }
+    }
+    if (viewportSize.x > 1 && viewportSize.y > 1)
+        previewRenderer.Resize(static_cast<int>(viewportSize.x), static_cast<int>(viewportSize.y));
+    preview::Mesh mesh{objects[1].id, cubeVertices, cubeIndices, objects[1].transform};
+    if (viewport.drag.active) {
+        auto v = viewport.drag.draft.proposed;
+        if (viewport.drag.draft.kind == editor::EditKind::Translate)
+            mesh.transform.translation = {v.x, v.y, v.z};
+        if (viewport.drag.draft.kind == editor::EditKind::Rotate)
+            mesh.transform.rotation = {v.x, v.y, v.z};
+        if (viewport.drag.draft.kind == editor::EditKind::Scale)
+            mesh.transform.scale = {v.x, v.y, v.z};
+    }
+    previewRenderer.Render({&mesh, 1}, viewport.camera);
+}
+void EditorWorkspaces::ApplyEvents() {
+    bool changed = false;
+    for (const auto &e : events.Events()) {
+        if (e.phase != editor::Phase::Commit || e.revision != revision)
+            continue;
+        ++commits;
+        if (e.kind == editor::EditKind::Select)
+            continue;
+        if (e.kind == editor::EditKind::Marker && markerCount < markers.size()) {
+            markers[markerCount++] = {nextId++, e.proposed.first, "Marker"};
+            changed = true;
+        }
+        if (e.kind == editor::EditKind::Rename)
+            renamedLabels[e.target] = e.proposedText.data();
+        auto clip = std::find_if(clips.begin(), clips.end(), [&](const auto &c) { return c.id == e.target; });
+        if (clip != clips.end()) {
+            if (e.kind == editor::EditKind::Rename) {
+                clip->label = renamedLabels[e.target].c_str();
+                changed = true;
+            }
+            if (e.kind == editor::EditKind::Split) {
+                auto split = video::SplitClip(*clip, e.proposed.first, {});
+                if (split.valid) {
+                    auto right = *clip;
+                    right.id = nextId++;
+                    right.start = split.right.start;
+                    right.duration = split.right.duration;
+                    right.sourceIn = split.right.sourceIn;
+                    clip->duration = split.left.duration;
+                    clips.push_back(right);
+                    changed = true;
+                }
+            } else if (e.kind == editor::EditKind::Duplicate) {
+                auto copy = *clip;
+                copy.id = nextId++;
+                copy.start = e.proposed.first;
+                clips.push_back(copy);
+                changed = true;
+            } else if (e.kind == editor::EditKind::Move || e.kind == editor::EditKind::TrimStart ||
+                       e.kind == editor::EditKind::TrimEnd || e.kind == editor::EditKind::Slip ||
+                       e.kind == editor::EditKind::Ripple || e.kind == editor::EditKind::Roll ||
+                       e.kind == editor::EditKind::Slide) {
+                auto track = clip->track;
+                auto oldEnd = clip->start + clip->duration;
+                clip->start = e.proposed.first;
+                clip->duration = e.proposed.last - e.proposed.first;
+                clip->sourceIn = e.proposed.offset;
+                if (e.kind == editor::EditKind::Ripple)
+                    for (auto &other : clips)
+                        if (other.track == track && other.start >= oldEnd && other.id != e.target)
+                            other.start += e.proposed.last - oldEnd;
+                changed = true;
+            }
+        }
+        for (auto &track : tracks)
+            if (track.id == e.target && e.kind == editor::EditKind::Toggle) {
+                bool *fields[] = {&track.visible, &track.mute,   &track.solo,
+                                  &track.locked,  &track.record, &track.target};
+                int field = static_cast<int>(e.proposed.x);
+                if (field >= 0 && field < 6) {
+                    *fields[field] = e.proposed.y != 0;
+                    changed = true;
+                }
+            }
+        for (auto &o : objects) {
+            if (o.id == e.target && e.kind == editor::EditKind::Toggle) {
+                bool *fields[] = {&o.visible, &o.selectable, &o.renderable, &o.locked, &o.expanded};
+                int field = static_cast<int>(e.proposed.x);
+                if (field >= 0 && field < 5) {
+                    *fields[field] = e.proposed.y != 0;
+                    changed = true;
+                }
+            }
+            if (o.id == e.target) {
+                if (e.kind == editor::EditKind::Translate) {
+                    o.transform.translation = {e.proposed.x, e.proposed.y, e.proposed.z};
+                    changed = true;
+                }
+                if (e.kind == editor::EditKind::Rotate) {
+                    o.transform.rotation = {e.proposed.x, e.proposed.y, e.proposed.z};
+                    changed = true;
+                }
+                if (e.kind == editor::EditKind::Scale) {
+                    o.transform.scale = {e.proposed.x, e.proposed.y, e.proposed.z};
+                    changed = true;
+                }
+                if (e.kind == editor::EditKind::Reparent) {
+                    bool cycle = false;
+                    auto parent = e.proposed.parent;
+                    for (int depth = 0; parent && depth < 4; ++depth) {
+                        if (parent == o.id) {
+                            cycle = true;
+                            break;
+                        }
+                        auto it = std::find_if(objects.begin(), objects.end(),
+                                               [&](auto &v) { return v.id == parent; });
+                        parent = it == objects.end() ? 0 : it->parent;
+                    }
+                    if (!cycle) {
+                        o.parent = e.proposed.parent;
+                        changed = true;
+                    }
+                }
+            }
+            for (int component = 0; component < 3; ++component)
+                if (e.target == ObjectPropertyId(o.id, component) && e.kind == editor::EditKind::Property) {
+                    double *fields[] = {&o.transform.translation.x, &o.transform.translation.y,
+                                        &o.transform.translation.z};
+                    *fields[component] = e.proposed.x;
+                    changed = true;
+                }
+        }
+        for (auto &key : keys)
+            if (key.id == e.target) {
+                if (e.kind == editor::EditKind::Keyframe) {
+                    key.tick = e.proposed.first;
+                    key.value = e.proposed.x;
+                    changed = true;
+                }
+                if (e.kind == editor::EditKind::Handle) {
+                    (curve.side < 0 ? key.left : key.right) = {e.proposed.x, e.proposed.y};
+                    changed = true;
+                }
+            }
+        for (auto &v : uv)
+            if (v.id == e.target && e.kind == editor::EditKind::Translate) {
+                v.uv = {e.proposed.x, e.proposed.y};
+                changed = true;
+            }
+        for (auto &asset : assets)
+            if (asset.id == e.target && e.kind == editor::EditKind::Rename) {
+                asset.label = renamedLabels[e.target].c_str();
+                changed = true;
+            }
+        if (e.target >= 700001 && e.target <= 700004 &&
+            (e.kind == editor::EditKind::Property || e.kind == editor::EditKind::Reset)) {
+            clipPropertyValues[e.target - 700001] = e.proposed.x;
+            changed = true;
+        }
+    }
+    if (changed) {
+        ++revision;
+        std::sort(clips.begin(), clips.end(), [](const auto &a, const auto &b) {
+            return a.track != b.track ? a.track < b.track : a.start < b.start;
+        });
+        std::sort(keys.begin(), keys.end(), [](const auto &a, const auto &b) { return a.tick < b.tick; });
+    }
+    events.Clear();
+}
+void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) {
+    s.Initialize();
+    Options(s);
+    float available = ImGui::GetContentRegionAvail().x;
+    float side = (s.narrow ? 180 : 260) * ImGui::GetFontSize()/14;
+    float top = (std::max)(220.f, ImGui::GetContentRegionAvail().y * .4f);
+    ImGui::BeginChild("Media bin", {side, top}, ImGuiChildFlags_Borders);
+    ImGui::SeparatorText(s.japanese ? "素材" : "Media Bin");
+    editor::AssetBrowser("media", Assets(s), s.assetState, s.selection, s.events);
+    ImGui::EndChild();
+    ImGui::SameLine();
+    ImGui::BeginChild("Monitors", {(std::max)(100.f, available - side * 2 - 20), top},
+                      ImGuiChildFlags_Borders);
+    float width = ImGui::GetContentRegionAvail().x;
+    float monitorHeight = (std::max)(100.f, top - 100);
+    ImGui::BeginGroup();
+    video::Monitor("Source", texture, {width * .48f, monitorHeight}, s.timeline.time,
+                   {true, false, true, false, "Source / Studio"}, theme);
+    ImGui::EndGroup();
+    ImGui::SameLine();
+    video::Monitor("Program", ImTextureRef(static_cast<ImTextureID>(s.previewRenderer.Texture())),
+                   {width * .48f, monitorHeight}, s.timeline.time,
+                   {true, true, true, true, s.japanese ? "プログラム" : "Program", {.5f,.5f}, true}, theme);
+    editor::Transport(s.timeline.time, std::span(s.bindings).first(s.bindingCount));
+    ImGui::EndChild();
+    ImGui::SameLine();
+    ImGui::BeginChild("Clip Inspector", {0, top}, ImGuiChildFlags_Borders);
+    ImGui::SeparatorText("Clip Inspector");
+    editor::PropertyView props[] = {{700001, "Opacity", "Video", 1, 1, editor::PropertyFlags::Animated},
+                                    {700002, "Scale", "Transform", 1, 1},
+                                    {700003, "Position X", "Transform", 0, 0},
+                                    {700004, "Speed", "Retiming", 1, 1}};
+    for (int i = 0; i < 4; ++i)
+        props[i].value = s.clipPropertyValues[i];
+    editor::PropertyProvider properties{props, s.revision, 4, [](void *u, int a, int n, std::string_view) {
+                                            return std::span<const editor::PropertyView>(
+                                                       static_cast<editor::PropertyView *>(u), 4)
+                                                .subspan(a, (std::min)(n, 4 - a));
+                                        }};
+    editor::PropertyGrid("clip", properties, s.videoProperties, s.events);
+    ImGui::EndChild();
+    video::TimelineProvider p{&s, s.revision, static_cast<int>(s.tracks.size())};
+    p.tracks = [](void *u, int a, int n) {
+        auto &s = *static_cast<EditorWorkspaces *>(u);
+        ++s.queryCount;
+        return std::span<const video::TrackView>(s.tracks).subspan(a, n);
+    };
+    p.clips = [](void *u, editor::StableId track, editor::Range range) {
+        auto &s = *static_cast<EditorWorkspaces *>(u);
+        ++s.queryCount;
+        auto begin = std::lower_bound(s.clips.begin(), s.clips.end(), track,
+                                      [](const auto &c, auto t) { return c.track < t; });
+        auto end =
+            std::upper_bound(begin, s.clips.end(), track, [](auto t, const auto &c) { return t < c.track; });
+        auto first = std::lower_bound(begin, end, range.first - editor::TicksPerSecond * 60,
+                                      [](const auto &c, auto t) { return c.start < t; });
+        while (first != end && first->start + first->duration < range.first)
+            ++first;
+        auto last =
+            std::upper_bound(first, end, range.last, [](auto t, const auto &c) { return t < c.start; });
+        s.queriedClips += last - first;
+        return std::span<const video::ClipView>(first, last);
+    };
+    p.markers = std::span<const editor::Marker>(s.markers).first(s.markerCount);
+    p.neighbors = [](void *u, editor::StableId id) {
+        auto &s = *static_cast<EditorWorkspaces *>(u);
+        video::TimelineProvider::Neighbors result;
+        auto it = std::find_if(s.clips.begin(), s.clips.end(), [&](const auto &c) { return c.id == id; });
+        if (it != s.clips.end()) {
+            if (it != s.clips.begin() && (it - 1)->track == it->track)
+                result.previous = &*(it - 1);
+            if (it + 1 != s.clips.end() && (it + 1)->track == it->track)
+                result.next = &*(it + 1);
+        }
+        return result;
+    };
+    p.selected = [](void *u, std::span<const editor::StableId> ids) {
+        auto &s = *static_cast<EditorWorkspaces *>(u);
+        std::size_t n = 0;
+        for (auto id : ids) {
+            auto it = std::find_if(s.clips.begin(), s.clips.end(), [&](const auto &c) { return c.id == id; });
+            if (it != s.clips.end() && n < s.selectedClips.size()) {
+                s.selectedClips[n] = *it;
+                auto track = std::find_if(s.tracks.begin(), s.tracks.end(),
+                                          [&](const auto &t) { return t.id == it->track; });
+                s.selectedClips[n++].locked = it->locked || (track != s.tracks.end() && track->locked);
+            }
+        }
+        return std::span<const video::ClipView>(s.selectedClips).first(n);
+    };
+    p.snap = [](void *u, editor::Range range) {
+        auto &s = *static_cast<EditorWorkspaces *>(u);
+        std::size_t n = 0;
+        s.snapCandidates[n++] = {s.timeline.time.playhead, editor::SnapKind::Playhead, 3, 0};
+        for (auto marker : std::span(s.markers).first(s.markerCount))
+            if (n < s.snapCandidates.size())
+                s.snapCandidates[n++] = {marker.tick, editor::SnapKind::Marker, 2, marker.id};
+        auto first = std::lower_bound(s.clips.begin(), s.clips.end(), s.timeline.original.track,
+                                      [](const auto &c, auto id) { return c.track < id; });
+        for (auto it = first;
+             it != s.clips.end() && it->track == s.timeline.original.track && n + 2 < s.snapCandidates.size();
+             ++it)
+            if (it->start >= range.first && it->start <= range.last) {
+                s.snapCandidates[n++] = {it->start, editor::SnapKind::ClipEdge, 1, it->id};
+                s.snapCandidates[n++] = {it->start + it->duration, editor::SnapKind::ClipEdge, 1, it->id};
+            }
+        return std::span<const editor::SnapCandidate>(s.snapCandidates).first(n);
+    };
+    float remaining = ImGui::GetContentRegionAvail().y;
+    float timelineHeight = (std::max)(140.f, remaining - 230);
+    s.timelineOrigin = ImGui::GetCursorScreenPos();
+    video::Timeline("Timeline", p, s.timeline, s.selection, s.events, theme, {0, timelineHeight});
+    ImGui::BeginChild("Audio color", {0, 0}, ImGuiChildFlags_Borders);
+    if (ImGui::BeginTabBar("audio color")) {
+        if (ImGui::BeginTabItem("Audio")) {
+            video::Waveform("wave", s.audio, {ImGui::GetContentRegionAvail().x - 80, 90}, theme);
+            ImGui::SameLine();
+            video::LevelMeter("meter", s.meter, s.meter, {50, 90}, theme);
+            ImGui::EndTabItem();
+        }
+        if (ImGui::BeginTabItem("Color")) {
+            video::Histogram("hist", s.luma, {350, 100}, theme);
+            ImGui::SameLine();
+            video::ScopeImage("vectorscope", s.scopeVector, 256, 256, {100, 100}, theme);
+            ImGui::EndTabItem();
+        }
+        if (ImGui::BeginTabItem("Keyframes / Curves")) {
+            editor::CurveEditor("clip curve", Curves(s), s.curve, s.keySelection, s.events, theme, {0, 160});
+            ImGui::EndTabItem();
+        }
+        ImGui::EndTabBar();
+    }
+    ImGui::EndChild();
+    s.ApplyEvents();
+}
+void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) {
+    s.Initialize();
+    Options(s);
+    float width = ImGui::GetContentRegionAvail().x, side = (s.narrow ? 180 : 300)*ImGui::GetFontSize()/14,
+          top = ImGui::GetContentRegionAvail().y * .6f;
+    ImGui::BeginChild("View stack", {width - side - 10, top}, ImGuiChildFlags_Borders);
+    ImGui::Checkbox("OpenGL preview", &s.useGL);
+    auto view = cg::BeginViewport(
+        "Scene", s.viewport,
+        s.useGL ? ImTextureRef(static_cast<ImTextureID>(s.previewRenderer.Texture())) : ImTextureRef{},
+        {0, 0}, theme);
+    s.viewportOrigin = view.min;
+    s.viewportSize = view.size;
+    if (!s.useGL) {
+        preview::Mesh mesh{s.objects[1].id, s.cubeVertices, s.cubeIndices, s.objects[1].transform};
+        preview::DrawListPreview(*ImGui::GetWindowDrawList(), {&mesh, 1}, s.viewport.camera, view.min,
+                                 view.size, s.scratch);
+    }
+    cg::ViewportObjects(view, s.objects, s.viewport, s.objectSelection, s.revision, s.events, theme);
+    for (const auto &o : s.objects)
+        if (o.id == s.objectSelection.active) {
+            s.viewport.pivotPosition=o.transform.translation;
+            cg::TransformGizmo(view, o, s.viewport, s.revision, s.events, theme);
+        }
+    cg::EndViewport();
+    ImGui::EndChild();
+    ImGui::SameLine();
+    ImGui::BeginChild("Scene properties", {0, top}, ImGuiChildFlags_Borders);
+    ImGui::BeginChild("Outliner", {0, top * .42f});
+    cg::SceneProvider scene{&s, s.revision, 4, [](void *u, int first, int count, std::string_view) {
+                                auto &s = *static_cast<EditorWorkspaces *>(u);
+                                return std::span<const cg::ObjectView>(s.objects).subspan(
+                                    first, (std::min)(count, 4 - first));
+                            }};
+    cg::Outliner("Hierarchy", scene, s.outliner, s.objectSelection, s.events);
+    ImGui::EndChild();
+    ImGui::SeparatorText("Inspector");
+    auto object = std::find_if(s.objects.begin(), s.objects.end(),
+                               [&](const auto &o) { return o.id == s.objectSelection.active; });
+    if (object != s.objects.end()) {
+        editor::PropertyView rows[] = {
+            {ObjectPropertyId(object->id, 0), "Position X", "Transform", object->transform.translation.x, 0},
+            {ObjectPropertyId(object->id, 1), "Position Y", "Transform", object->transform.translation.y, 0},
+            {ObjectPropertyId(object->id, 2), "Position Z", "Transform", object->transform.translation.z, 0}};
+        editor::PropertyProvider properties{rows, s.revision, 3, [](void *u, int a, int n, std::string_view) {
+                                                return std::span<const editor::PropertyView>(
+                                                           static_cast<editor::PropertyView *>(u), 3)
+                                                    .subspan(a, (std::min)(n, 3 - a));
+                                            }};
+        editor::PropertyGrid("object", properties, s.objectProperties, s.events);
+    }
+    ImGui::EndChild();
+    ImGui::BeginChild("Assets", {side, 0}, ImGuiChildFlags_Borders);
+    editor::AssetBrowser("assets", Assets(s), s.assetState, s.selection, s.events);
+    ImGui::EndChild();
+    ImGui::SameLine();
+    ImGui::BeginChild("Animation UV", {0, 0}, ImGuiChildFlags_Borders);
+    editor::Transport(s.timeline.time, std::span(s.bindings).first(s.bindingCount));
+    if (ImGui::BeginTabBar("Animation editors")) {
+        if (ImGui::BeginTabItem("Graph Editor",nullptr,s.animationPage==0?ImGuiTabItemFlags_SetSelected:0)) {
+            editor::CurveEditor("graph", Curves(s), s.curve, s.keySelection, s.events, theme, {0, 0});
+            ImGui::EndTabItem();
+        }
+        if (ImGui::BeginTabItem("Dope Sheet",nullptr,s.animationPage==1?ImGuiTabItemFlags_SetSelected:0)) {
+            cg::DopeSheet("dope", Curves(s), s.curve, s.keySelection, s.events, theme, {0, 0});
+            ImGui::EndTabItem();
+        }
+        if (ImGui::BeginTabItem("UV / Image",nullptr,s.animationPage==2?ImGuiTabItemFlags_SetSelected:0)) {
+            for (int i = 0; i < 4; ++i)
+                s.edges[i] = {static_cast<editor::StableId>(i + 1), s.uv[i].uv, s.uv[(i + 1) % 4].uv};
+            cg::UVProvider p{&s, s.revision,
+                             [](void *u, editor::Rect) {
+                                 return std::span<const cg::UVVertex>(static_cast<EditorWorkspaces *>(u)->uv);
+                             },
+                             [](void *u, editor::Rect) {
+                                 return std::span<const cg::UVEdge>(
+                                     static_cast<EditorWorkspaces *>(u)->edges);
+                             }};
+            cg::UVEditor("uv", p, texture, s.uvState, s.uvSelection, s.events, theme, {0, 0});
+            ImGui::EndTabItem();
+        }
+        ImGui::EndTabBar();
+    }
+    ImGui::EndChild();
+    s.ApplyEvents();
+}
+void CoreWorkspace(EditorWorkspaces &s, const Theme &theme) {
+    s.Initialize();
+    editor::Transport(s.timeline.time, std::span(s.bindings).first(s.bindingCount));
+    editor::TimeRuler("ruler", s.timeline.time, s.curve.canvas, {}, s.revision, s.events, theme);
+    editor::CurveEditor("core curve", Curves(s), s.curve, s.keySelection, s.events, theme, {0, 400});
+    editor::StatusBar("Host-owned state / revision checked events", s.keySelection);
+    s.ApplyEvents();
+}
+} // namespace imkit::gallery
