@@ -17,9 +17,11 @@ struct EditorWorkspaces {
     std::vector<video::ClipView> clips;
     std::vector<editor::Keyframe> keys;
     std::array<cg::ObjectView, 4> objects{};
-    std::array<std::array<editor::StableId,3>,4> objectPropertyIds{{
-        {930011,930023,930037}, {930049,930061,930079},
-        {930091,930107,930121}, {930137,930151,930169}}};
+    std::array<std::array<editor::StableId,9>,4> objectPropertyIds{{
+        {930011,930023,930037,931013,931027,931039,932003,932017,932029},
+        {930049,930061,930079,931051,931067,931081,932041,932053,932071},
+        {930091,930107,930121,931093,931109,931123,932087,932101,932117},
+        {930137,930151,930169,931139,931157,931171,932131,932149,932163}}};
     std::array<editor::AssetView, 8> assets{}, filteredAssets{};
     std::size_t filteredAssetCount=0;
     std::array<editor::StableId,2> assetPathIds{880001,880002};

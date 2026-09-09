@@ -141,3 +141,7 @@ Propertyのkey操作はcurve key移動とは別の `EditKind::PropertyKey` で�
 Asset breadcrumb buttons emit Navigate with a host-supplied `AssetState.breadcrumbIds` target and the breadcrumb index in `proposed.first`. Optional `AssetProvider.filteredCount` updates the host filter index after search/tag/status input, before clipped queries. Gallery applies these filters and breadcrumb navigation; row heights include status/tag labels.
 
 Asset breadcrumbは `AssetState.breadcrumbIds` のホスト指定IDをtarget、indexを `proposed.first` とするNavigateイベントを返します。任意の `AssetProvider.filteredCount` は検索・tag・status入力後、可視query前にホストの絞り込みindexを更新します。Galleryは検索とbreadcrumb移動を適用し、行高にtag・状態表示を含めます。
+
+The CG Gallery Inspector exposes all nine translation, rotation and scale components. Rotation values are radians; reset restores translation/rotation to zero and scale to one. Each component has an explicit host-assigned property ID and shares property lock, favorite, override and keyframe handling.
+
+CG Gallery Inspectorは移動・回転・scaleの全9成分を公開します。回転の単位はradianで、resetは移動・回転を0、scaleを1へ戻します。各成分はホストが明示したproperty IDを持ち、lock・favorite・override・keyframe操作を共用します。

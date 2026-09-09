@@ -24,7 +24,7 @@ struct PropertyRows {
     }
 };
 editor::StableId ObjectPropertyId(const EditorWorkspaces &state, editor::StableId object, int component) {
-    if (component<0 || component>=3) return 0;
+    if (component<0 || component>=9) return 0;
     for (std::size_t i=0;i<state.objects.size();++i)
         if (state.objects[i].id==object) return state.objectPropertyIds[i][component];
     return 0;
@@ -325,11 +325,12 @@ void EditorWorkspaces::ApplyEvents() {
                     }
                 }
             }
-            for (int component = 0; component < 3; ++component)
+            for (int component = 0; component < 9; ++component)
                 if (e.target == ObjectPropertyId(*this, o.id, component) &&
                     (e.kind == editor::EditKind::Property || e.kind == editor::EditKind::Reset)) {
                     double *fields[] = {&o.transform.translation.x, &o.transform.translation.y,
-                                        &o.transform.translation.z};
+                                        &o.transform.translation.z, &o.transform.rotation.x, &o.transform.rotation.y,
+                                        &o.transform.rotation.z, &o.transform.scale.x, &o.transform.scale.y, &o.transform.scale.z};
                     *fields[component] = e.proposed.x;
                     changed = true;
                 }
@@ -382,7 +383,7 @@ void EditorWorkspaces::ApplyEvents() {
             }
         bool isProperty=e.target>=700001 && e.target<=700004;
         for (const auto &object:objects)
-            for (int component=0;component<3;++component)
+            for (int component=0;component<9;++component)
                 isProperty |= e.target==ObjectPropertyId(*this, object.id,component);
         if (isProperty && e.kind==editor::EditKind::PropertyKey) {
             auto &channel=propertyKeys[e.target];
@@ -680,7 +681,13 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
         editor::PropertyView rows[] = {
             {ObjectPropertyId(s, object->id, 0), "Position X", "Transform", object->transform.translation.x, 0},
             {ObjectPropertyId(s, object->id, 1), "Position Y", "Transform", object->transform.translation.y, 0},
-            {ObjectPropertyId(s, object->id, 2), "Position Z", "Transform", object->transform.translation.z, 0}};
+            {ObjectPropertyId(s, object->id, 2), "Position Z", "Transform", object->transform.translation.z, 0},
+            {ObjectPropertyId(s, object->id, 3), "Rotation X (rad)", "Rotation", object->transform.rotation.x, 0},
+            {ObjectPropertyId(s, object->id, 4), "Rotation Y (rad)", "Rotation", object->transform.rotation.y, 0},
+            {ObjectPropertyId(s, object->id, 5), "Rotation Z (rad)", "Rotation", object->transform.rotation.z, 0},
+            {ObjectPropertyId(s, object->id, 6), "Scale X", "Scale", object->transform.scale.x, 1},
+            {ObjectPropertyId(s, object->id, 7), "Scale Y", "Scale", object->transform.scale.y, 1},
+            {ObjectPropertyId(s, object->id, 8), "Scale Z", "Scale", object->transform.scale.z, 1}};
         for (auto &row:rows)
             row.flags=static_cast<editor::PropertyFlags>(s.propertyFlags[row.id]|
                 (row.value!=row.defaultValue?2u:0u)|(object->locked?16u:0u));
