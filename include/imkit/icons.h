@@ -137,6 +137,9 @@ enum class IconId : std::uint16_t {
     BoxSelect,
     LassoSelect,
     HandPan,
+    Razor,
+    RippleEdit,
+    SlipEdit,
     Count
 };
 struct IconInfo {

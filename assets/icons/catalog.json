@@ -510,5 +510,17 @@
   {
     "name": "HandPan",
     "category": "Editor"
+  },
+  {
+    "name": "Razor",
+    "category": "Editor"
+  },
+  {
+    "name": "RippleEdit",
+    "category": "Editor"
+  },
+  {
+    "name": "SlipEdit",
+    "category": "Editor"
   }
 ]

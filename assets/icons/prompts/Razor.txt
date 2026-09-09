@@ -1,0 +1,4 @@
+Use case: logo-brand. Asset: one individual toolbar icon named Razor for a C++ video editor UI. Draw a diagonal single-edge razor blade outline, one long slanted cutting edge and a small central slot; simple unmistakable cutting tool silhouette. Thin consistent black monoline, rounded caps and joins, no shading, no letters, no decorative frame. Transparent RGBA background, black stroke only. Match a 24-unit UI icon with 1.75-unit stroke and generous 3-unit margins, centered and optically balanced. A single isolated glyph, legible when reduced to 16 pixels. No contact sheet, no additional glyphs.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/Razor.png

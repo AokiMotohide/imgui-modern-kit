@@ -1,0 +1,4 @@
+Use case: logo-brand. Asset: one individual toolbar icon named SlipEdit for a C++ video editor UI. Draw a wide horizontal rectangular clip outline, containing a short horizontal double-headed arrow entirely inside the rectangle; the exterior clip stays fixed. Thin consistent black monoline, rounded caps and joins, no shading, no letters, no decorative frame. Transparent RGBA background, black stroke only. Match a 24-unit UI icon with 1.75-unit stroke and generous 3-unit margins, centered and optically balanced. A single isolated glyph, legible when reduced to 16 pixels. No contact sheet, no additional glyphs. Produce true transparent background with fully opaque black lines (alpha 255 at stroke centers) and alpha 0 outside. Square canvas. Preserve the clip rectangle and internal double-headed arrow. This is a technical toolbar symbol.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/SlipEdit.png

@@ -206,11 +206,16 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     for (int i = 0; i < 7; ++i) {
         if (i)
             ImGui::SameLine();
-        if ((i==0 || i==6) && s.icons) {
-            const bool active=s.tool==(i==0 ? Tool::Select : Tool::Hand);
+        if ((i==0 || i==1 || i==2 || i==4 || i==6) && s.icons) {
+            const IconId glyphs[]={IconId::SelectPointer,IconId::Razor,IconId::RippleEdit,IconId::Count,IconId::SlipEdit,IconId::Count,IconId::HandPan};
+            const char *tips[]={"Select clips","Razor: split clip at cursor","Ripple: trim and shift following clips","","Slip: change source range without moving clip","","Pan timeline"};
+            const bool active=static_cast<int>(s.tool)==i;
             if (active) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-            if (IconButton(i==0 ? "select-tool" : "pan-tool",*s.icons,i==0 ? IconId::SelectPointer : IconId::HandPan,
-                           i==0 ? "Select clips" : "Pan timeline")) s.tool=i==0 ? Tool::Select : Tool::Hand;
+            if (IconButton(tools[i],*s.icons,glyphs[i],tips[i])) s.tool=static_cast<Tool>(i);
+            if (active) {
+                const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
+                ImGui::GetWindowDrawList()->AddLine({a.x+4,b.y-2},{b.x-4,b.y-2},ImGui::GetColorU32(theme.colors.text),2);
+            }
             if (active) ImGui::PopStyleColor();
         } else if (ImGui::Selectable(tools[i], static_cast<int>(s.tool) == i, 0, {56, 24}))
             s.tool = static_cast<Tool>(i);
