@@ -539,7 +539,17 @@ int main() {
           full.Events()[1].revision==provider.revision && full.Events()[1].original.first==transitionFixture.clip.start &&
           full.Events()[1].proposed.first>transitionFixture.clip.start,
           "Razor emits complete split transaction with original clip and proposed cut");
-    io.AddMouseButtonEvent(0,false);frame(full);timeline.tool=video::Tool::Select;
+    io.AddMouseButtonEvent(0,false);frame(full);
+    transitionFixture.related={transitionFixture.clip,transitionFixture.clip};transitionFixture.related[1].id=902;
+    provider.selected=[](void *u,std::span<const editor::StableId>){return std::span<const video::ClipView>(static_cast<TransitionFixture*>(u)->related);};
+    full.Clear();io.AddMouseButtonEvent(0,true);frame(full);
+    check(full.count==4 && full.Events()[1].kind==editor::EditKind::Split && full.Events()[3].target==902 &&
+          full.Events()[1].proposed.first==full.Events()[3].proposed.first,
+          "Razor splits related offscreen clip at same timeline cut");
+    io.AddMouseButtonEvent(0,false);frame(full);transitionFixture.related[1].locked=true;
+    full.Clear();io.AddMouseButtonEvent(0,true);frame(full);
+    check(full.count==0,"Razor rejects entire split when related clip is locked");
+    io.AddMouseButtonEvent(0,false);frame(full);provider.selected=nullptr;
     timeline.tool=video::Tool::Ripple;
     provider.canBeginEdit=[](void *,editor::StableId,editor::EditKind kind){return kind!=editor::EditKind::Ripple;};
     full.Clear();io.AddMouseButtonEvent(0,true);frame(full);
