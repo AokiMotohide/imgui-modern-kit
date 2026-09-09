@@ -568,3 +568,7 @@ Track headerのtoggleは、折り畳みと狭いpaneのmenuを含め、元値と
 Gallery Japanese mode supplies translated track controls via `TrackLabels`. Wider translated labels automatically use the compact menu when the header is too narrow. API compilation and public IO menu operation with a host UTF-8 label pass.
 
 Galleryの日本語modeは`TrackLabels`を通じてtrack操作を翻訳します。翻訳後のラベルがheader幅に収まらない場合は省略menuへ切り替わります。API compileとホストUTF-8ラベルを使用した公開IOのmenu操作を確認しました。
+
+Timeline track controls reuse Eye/EyeOff, Volume/Mute, Unlock/Lock and Record from the host icon atlas. The compact menu includes the same glyphs with labels and checked state. Active inline controls retain a background and underline. Without an atlas, host text buttons remain available. Solo, Target and Source still use host labels. Build and text-route public IO regression pass; native inspection of this icon route remains pending.
+
+Timelineのtrack操作へホストatlasのEye／EyeOff、Volume／Mute、Unlock／Lock、Recordを接続しました。省略menuも同じglyph、操作名、check状態を表示します。activeのinline操作は背景と下線を維持し、atlas未指定時はホスト文字ボタンを使用します。Solo／Target／Sourceは引き続きホストラベルを使用します。ビルドと文字ボタン経路の公開IO回帰は通過し、このicon経路のnative確認は未実施です。
