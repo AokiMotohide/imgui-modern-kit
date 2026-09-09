@@ -616,3 +616,7 @@ Track高さの編集popupが表示されなくなった場合はCancelします�
 Gallery Japanese mode now translates Timeline tools/tooltips and snapping/follow/Fit controls through public TimelineLabels. Video regressions, API compilation and the external source consumer pass.
 
 Galleryの日本語modeは公開TimelineLabelsを使い、Timelineのtool名・tooltipとsnap／追従／Fit操作を翻訳します。Video回帰、API compile、外部source consumerを確認しました。
+
+Timeline tool switching now uses host Command bindings, and tooltips include the configured shortcut. Public IO regression verifies all seven remapped tools and that an unbound default key cannot bypass the map. Core, Video and API compile checks pass.
+
+Timelineのtool切替をホストCommand bindingへ接続し、tooltipへ設定済みshortcutを表示します。7種類の再割当と、未割当の既定キーがbinding mapを迂回しないことを公開IOで確認しました。Core／Video／API compileを確認済みです。

@@ -189,7 +189,8 @@ enum class Command {
     Redo,
     PlayReverse,
     PlayForward,
-    Pause
+    Pause,
+    ToolSelect, ToolRazor, ToolRipple, ToolRoll, ToolSlip, ToolSlide, ToolHand
 };
 enum class ShortcutPreset { CapCut, Premiere, Blender };
 struct Binding {

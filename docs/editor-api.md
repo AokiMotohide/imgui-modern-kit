@@ -307,3 +307,7 @@ Timelineの`AddKey`はtarget=channel、parent=clip、first=clip内tick、x=値�
 `TimelineState::labels` borrows `TimelineLabels` strings for seven tools/tooltips, Snap, Magnet, the options popup, follow modes, snap kinds and Fit. Keep UTF-8 strings valid during the call; defaults are English. Binding behavior and popup IDs are unchanged.
 
 `TimelineState::labels`の`TimelineLabels`は7種類のtool名・tooltip、Snap、Magnet、設定popup、追従mode、snap対象、FitのUTF-8文字列を非所有参照します。呼出し中の寿命をホストで保証し、未指定時は英語を使用します。bindingの挙動とpopup IDは維持します。
+
+ToolSelect/ToolRazor/ToolRipple/ToolRoll/ToolSlip/ToolSlide/ToolHand are appended Command IDs. Timeline consumes them only with canvas focus and no active edit. MakeBindings supplies V/C/B/N/Y/U/H respectively across the built-in presets; the host may replace or remove these bindings. Tooltips show the first active host binding. These are ImKit preset defaults, not a claim of exact third-party shortcut parity.
+
+ToolSelect／ToolRazor／ToolRipple／ToolRoll／ToolSlip／ToolSlide／ToolHandをCommand末尾へ追加しました。Timelineはcanvasにfocusがあり編集中でない場合に使用します。MakeBindingsは各presetで順にV／C／B／N／Y／U／Hを設定し、ホストで変更・削除できます。tooltipは最初の有効なホストbindingを表示します。これはImKitの既定割当であり、第三者製品との完全一致を示すものではありません。

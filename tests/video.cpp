@@ -405,6 +405,18 @@ int main() {
     io.AddMouseButtonEvent(0,false);frame(full);
     check(timeline.canvas.origin.x<timeOrigin && timeline.view.min.x==panOrigin.x && timeline.view.min.y==panOrigin.y &&
           full.count==0 && selection.count==selectedClips,"Hand pan scrolls time without moving window or selecting clip");
+    std::array toolBindings{editor::Binding{editor::Command::ToolSelect,ImGuiKey_F1},
+        editor::Binding{editor::Command::ToolRazor,ImGuiKey_F2},editor::Binding{editor::Command::ToolRipple,ImGuiKey_F3},
+        editor::Binding{editor::Command::ToolRoll,ImGuiKey_F4},editor::Binding{editor::Command::ToolSlip,ImGuiKey_F5},
+        editor::Binding{editor::Command::ToolSlide,ImGuiKey_F6},editor::Binding{editor::Command::ToolHand,ImGuiKey_F7}};
+    timeline.bindings=toolBindings;
+    for (int i=0;i<7;++i) {
+        const auto key=static_cast<ImGuiKey>(ImGuiKey_F1+i);full.Clear();
+        io.AddKeyEvent(key,true);frame(full);io.AddKeyEvent(key,false);frame(full);
+        check(static_cast<int>(timeline.tool)==i && full.count==0,"remapped tool command changes mode without edit events");
+    }
+    timeline.bindings={};io.AddKeyEvent(ImGuiKey_C,true);frame(full);io.AddKeyEvent(ImGuiKey_C,false);frame(full);
+    check(timeline.tool==video::Tool::Hand,"unbound default tool key does not bypass host binding map");
     timeline.tool=video::Tool::Select;
     timeline.canvas.origin.x=0;full.Clear();frame(full);
     const auto clipOrigin=timeline.view.min;

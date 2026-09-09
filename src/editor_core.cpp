@@ -380,7 +380,14 @@ std::size_t MakeBindings(ShortcutPreset preset, std::span<Binding> dst) {
                                 {Command::Undo, ImGuiMod_Ctrl | ImGuiKey_Z},
                                 {Command::Redo, ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_Z},
                                 {Command::PlayReverse, ImGuiKey_J},
-                                {Command::PlayForward, ImGuiKey_L}};
+                                {Command::PlayForward, ImGuiKey_L},
+                                {Command::ToolSelect, ImGuiKey_V},
+                                {Command::ToolRazor, ImGuiKey_C},
+                                {Command::ToolRipple, ImGuiKey_B},
+                                {Command::ToolRoll, ImGuiKey_N},
+                                {Command::ToolSlip, ImGuiKey_Y},
+                                {Command::ToolSlide, ImGuiKey_U},
+                                {Command::ToolHand, ImGuiKey_H}};
     auto n = (std::min)(dst.size(), std::size(defaults));
     std::copy_n(defaults, n, dst.begin());
     for (auto &b : dst.first(n)) {
