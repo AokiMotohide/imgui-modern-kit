@@ -620,3 +620,7 @@ Galleryの日本語modeは公開TimelineLabelsを使い、Timelineのtool名・t
 Timeline tool switching now uses host Command bindings, and tooltips include the configured shortcut. Public IO regression verifies all seven remapped tools and that an unbound default key cannot bypass the map. Core, Video and API compile checks pass.
 
 Timelineのtool切替をホストCommand bindingへ接続し、tooltipへ設定済みshortcutを表示します。7種類の再割当と、未割当の既定キーがbinding mapを迂回しないことを公開IOで確認しました。Core／Video／API compileを確認済みです。
+
+Timeline consumes the host-bound Split command at the playhead. The selected callback must resolve every selected clip, including offscreen clips and locked-track state. Missing selected IDs report overflow; invalid or locked eligible targets reject the whole batch. All Begin/Commit slots are reserved before emission. Clips that do not cross the playhead are unchanged. Public IO regression covers remapping, multiple offscreen clips, locks, missing IDs and event shortage.
+
+Timelineはホストが割り当てたSplitコマンドで、再生位置をまたぐ選択clipを分割します。selected callbackは画面外を含む全選択clipとtrackのロック状態を返す必要があります。選択IDの欠落はoverflowを通知し、対象の制約違反・ロック・イベント容量不足では部分分割を出しません。公開IO回帰でキー再割当、画面外の複数clip、ロック、ID欠落、容量不足を確認しています。

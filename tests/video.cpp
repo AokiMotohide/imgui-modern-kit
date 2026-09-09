@@ -438,6 +438,31 @@ int main() {
     io.AddMousePosEvent(clipOrigin.x+timeline.headerWidth+160,clipOrigin.y+25);frame(full);
     io.AddMouseButtonEvent(0,false);frame(full);io.AddKeyEvent(ImGuiMod_Ctrl,false);frame(full);
     check(full.count==0 && !timeline.drag.active,"deselected clip emits no Update or Commit after mouse movement");
+    std::array splitClips{transitionFixture.clip,transitionFixture.clip};splitClips[1].id=902;
+    auto savedUser=provider.user;
+    provider.user=&splitClips;
+    provider.selected=[](void *u,std::span<const editor::StableId>){return std::span<const video::ClipView>(*static_cast<std::array<video::ClipView,2>*>(u));};
+    auto savedTracks=provider.tracks;auto savedClips=provider.clips;
+    provider.tracks=nullptr;provider.clips=nullptr;
+    selection.storage[0]=901;selection.storage[1]=902;selection.count=2;
+    std::array splitBindings{editor::Binding{editor::Command::Split,ImGuiKey_F9}};
+    timeline.bindings=splitBindings;timeline.time.playhead=editor::FromSeconds(1);
+    auto splitCommand=[&](editor::EventBuffer &buffer) {
+        buffer.Clear();io.AddKeyEvent(ImGuiKey_F9,true);frame(buffer);
+        io.AddKeyEvent(ImGuiKey_F9,false);frame(buffer);
+    };
+    splitCommand(full);
+    check(full.count==4 && full.Events()[1].phase==editor::Phase::Commit &&
+          full.Events()[3].target==902 && full.Events()[3].proposed.first==timeline.time.playhead,
+          "remapped Split atomically emits selected offscreen clip transactions");
+    splitClips[1].locked=true;splitCommand(full);
+    check(full.count==0,"locked selected clip prevents partial Split");
+    splitClips[1].locked=false;splitCommand(small);
+    check(small.overflow && small.count==0,"Split reserves entire selection event batch");
+    selection.storage[1]=999;splitCommand(full);
+    check(full.overflow && full.count==0,"incomplete selected query prevents partial Split");
+    provider.selected=nullptr;provider.user=savedUser;provider.tracks=savedTracks;provider.clips=savedClips;
+    selection.Clear();timeline.bindings={};
     timeline.tool=video::Tool::Razor;full.Clear();frame(full);
     small.Clear();io.AddMouseButtonEvent(0,true);frame(small);
     check(small.overflow && small.count==0 && !timeline.drag.active,"Razor rejects insufficient buffer without partial transaction");
