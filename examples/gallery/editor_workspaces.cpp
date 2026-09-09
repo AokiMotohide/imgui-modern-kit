@@ -854,10 +854,14 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     for (const auto &object:s.objects) if (s.objectSelection.Contains(object.id)) s.gizmoSelection[selectedCount++]=object;
     s.viewport.selectedObjects={s.gizmoSelection.data(),selectedCount};
     s.viewport.companions=s.gizmoCompanions;
+    bool hasActiveObject=false;
     for (const auto &o : s.objects)
         if (o.id == s.objectSelection.active) {
+            hasActiveObject=true;
             cg::TransformGizmo(view, o, s.viewport, s.revision, s.events, theme);
         }
+    if (!hasActiveObject && s.viewport.drag.active)
+        cg::TransformGizmo(view, {}, s.viewport, s.revision, s.events, theme);
     cg::EndViewport();
     ImGui::EndChild();
     ImGui::SameLine();
