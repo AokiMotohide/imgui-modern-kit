@@ -17,6 +17,7 @@ struct EditorWorkspaces {
     editor::PropertyState mixerState;
     std::vector<video::ClipView> clips, visibleClips;
     std::vector<editor::Tick> clipEndTree;
+    std::vector<std::pair<editor::StableId,std::size_t>> clipById;
     std::size_t clipTreeBase=1, clipQueryVisits=0;
     void RebuildClipIndex();
     std::span<const video::ClipView> QueryClips(editor::StableId track,editor::Range range);

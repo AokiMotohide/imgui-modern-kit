@@ -233,6 +233,9 @@ void EditorWorkspaces::RebuildClipIndex() {
     std::sort(clips.begin(),clips.end(),[](const auto &a,const auto &b) {
         return a.track!=b.track ? a.track<b.track : a.start<b.start;
     });
+    clipById.clear();clipById.reserve(clips.size());
+    for (std::size_t i=0;i<clips.size();++i) clipById.emplace_back(clips[i].id,i);
+    std::sort(clipById.begin(),clipById.end());
     clipTreeBase=1;
     while (clipTreeBase<clips.size()) clipTreeBase*=2;
     clipEndTree.assign(clipTreeBase*2,std::numeric_limits<editor::Tick>::min());
@@ -1088,6 +1091,15 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
                 result.next = &*(it + 1);
         }
         return result;
+    };
+    p.isEditable=[](void *u,editor::StableId id) {
+        const auto &s=*static_cast<EditorWorkspaces *>(u);
+        const auto found=std::lower_bound(s.clipById.begin(),s.clipById.end(),id,
+            [](const auto &entry,auto id){return entry.first<id;});
+        if (found==s.clipById.end() || found->first!=id) return false;
+        const auto &clip=s.clips[found->second];
+        const auto track=std::find_if(s.tracks.begin(),s.tracks.end(),[&](const auto &t){return t.id==clip.track;});
+        return !clip.locked && track!=s.tracks.end() && !track->locked;
     };
     p.canBeginEdit=[](void *u,editor::StableId id,editor::EditKind kind) {
         if (kind!=editor::EditKind::Ripple) return true;
