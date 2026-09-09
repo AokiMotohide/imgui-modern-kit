@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstring>
 namespace imkit::video {
 TransitionEdit EditTransition(const ClipView &clip, bool end, Tick delta) {
     if (clip.locked || clip.duration<=0 || clip.transitionIn<0 || clip.transitionOut<0 ||
@@ -236,6 +237,12 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     if (s.transitionDrag.active && (p.revision!=s.transitionDrag.draft.revision || ImGui::IsKeyPressed(ImGuiKey_Escape)))
         s.transitionDrag.Cancel(out);
     bool transitionSeen=false;
+    detail::ResumeTerminal(s.captionDrag,p.revision,out);
+    if (s.captionDrag.active && ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+        s.captionDrag.draft.proposedText=s.captionDrag.draft.originalText;s.captionDrag.Cancel(out);
+    }
+    if (!s.captionDrag.active) s.editingCaption=0;
+    bool captionSeen=false;
     detail::ResumeTerminal(s.heightDrag,p.revision,out);
     if (s.heightDrag.active && ImGui::IsKeyPressed(ImGuiKey_Escape)) s.heightDrag.Cancel(out);
     if (view.hovered && s.tool == Tool::Hand && ImGui::IsMouseDragging(0))
@@ -350,21 +357,23 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                           selected ? 2.f : 1.f);
             if (track.expanded && clip.thumbnail.GetTexID())
                 draw->AddImage(clip.thumbnail, {x + 3, y + 23}, {(std::min)(end - 3, x + 65), b.y - 3});
-            if (s.editingCaption == clip.id) {
-                ImGui::SetCursorScreenPos({x + 4, y + 5});
-                ImGui::SetNextItemWidth((std::max)(30.f, end - x - 8));
-                if (ImGui::InputText("##caption", s.caption, sizeof(s.caption),
-                                     ImGuiInputTextFlags_EnterReturnsTrue)) {
-                    editor::Event e{clip.id, p.revision, editor::Phase::Commit, editor::EditKind::Rename};
-                    std::snprintf(e.originalText.data(), e.originalText.size(), "%s", clip.label);
-                    std::snprintf(e.proposedText.data(), e.proposedText.size(), "%s", s.caption);
-                    if (out.Push(e))
-                        s.editingCaption = 0;
+            if (s.editingCaption == clip.id && s.captionDrag.active) {
+                captionSeen=true;
+                if (track.locked || clip.locked) {
+                    s.captionDrag.draft.proposedText=s.captionDrag.draft.originalText;s.captionDrag.Cancel(out);
                 }
-                if (ImGui::IsKeyPressed(ImGuiKey_Escape))
-                    s.editingCaption = 0;
-            } else
-                draw->AddText({x + 6, y + 7}, ImGui::GetColorU32(theme.colors.text), clip.label);
+                if (s.captionDrag.active && s.captionDrag.draft.phase!=editor::Phase::Cancel &&
+                    s.captionDrag.draft.phase!=editor::Phase::Commit) {
+                    ImGui::SetCursorScreenPos({x+4,y+5});ImGui::SetNextItemWidth(std::max(30.f,end-x-8));
+                    if (s.captionFocus) {ImGui::SetKeyboardFocusHere();s.captionFocus=false;}
+                    const bool accept=ImGui::InputText("##caption",s.caption,sizeof(s.caption),
+                        ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_AutoSelectAll);
+                    auto update=s.captionDrag.draft;update.phase=editor::Phase::Update;
+                    std::snprintf(update.proposedText.data(),update.proposedText.size(),"%s",s.caption);
+                    if (update.proposedText!=s.captionDrag.draft.proposedText && out.Push(update)) s.captionDrag.draft=update;
+                    if (accept) {s.captionDrag.draft.proposedText=update.proposedText;s.captionDrag.Commit(p.revision,out);}
+                }
+            } else draw->AddText({x+6,y+7},ImGui::GetColorU32(theme.colors.text),clip.label);
             if (clip.missing || clip.offline)
                 draw->AddLine(a, b, ImGui::GetColorU32(theme.colors.destructive), 2);
             if (track.locked || clip.locked)
@@ -453,11 +462,19 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 ImGui::EndPopup();
             }
             ImGui::PopID();
-            if (hit && track.kind == TrackKind::Caption && ImGui::IsMouseDoubleClicked(0) && !track.locked &&
-                !clip.locked) {
-                EndDrags(s, p.revision, true, out);
-                s.editingCaption = clip.id;
-                std::snprintf(s.caption, sizeof(s.caption), "%s", clip.label);
+            if (hit && !transitionHit && !s.transitionDrag.active && !s.captionDrag.active &&
+                track.kind==TrackKind::Caption && ImGui::IsMouseDoubleClicked(0) && !track.locked && !clip.locked) {
+                EndDrags(s,p.revision,true,out);
+                if (std::strlen(clip.label)>=sizeof(s.caption)) out.overflow=true;
+                else {
+                    editor::Event begin{clip.id,p.revision,editor::Phase::Begin,editor::EditKind::Rename};
+                    std::snprintf(begin.originalText.data(),begin.originalText.size(),"%s",clip.label);
+                    begin.proposedText=begin.originalText;begin.modifiers=editor::CurrentModifiers();
+                    if (out.Push(begin)) {
+                        s.captionDrag.draft=begin;s.captionDrag.active=true;s.editingCaption=clip.id;
+                        s.captionFocus=true;captionSeen=true;std::snprintf(s.caption,sizeof(s.caption),"%s",clip.label);
+                    }
+                }
             }
             if (hit && !transitionHit && !s.transitionDrag.active && s.editingCaption != clip.id && ImGui::IsMouseClicked(0) && !track.locked &&
                 !clip.locked && !s.drag.active) {
@@ -536,6 +553,9 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             }
         }
         draw->PopClipRect();
+    }
+    if (s.captionDrag.active && !captionSeen) {
+        s.captionDrag.draft.proposedText=s.captionDrag.draft.originalText;s.captionDrag.Cancel(out);
     }
     if (s.transitionDrag.active) {
         if (!transitionSeen) s.transitionDrag.Cancel(out);

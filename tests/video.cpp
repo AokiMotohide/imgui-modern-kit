@@ -273,6 +273,27 @@ int main() {
         transitionFixture.track.locked=false;
         io.AddKeyEvent(ImGuiKey_Escape,false);io.AddMouseButtonEvent(0,false);full.Clear();frame(full);
     }
+    transitionFixture.track.kind=video::TrackKind::Caption;
+    auto beginCaption=[&] {
+        io.DeltaTime=.4f;frame(full);io.DeltaTime=1.f/60;
+        full.Clear();io.AddMousePosEvent(timeline.view.min.x+timeline.headerWidth+130,timeline.view.min.y+24);frame(full);
+        for (int click=0;click<2;++click) {
+            io.AddMouseButtonEvent(0,true);frame(full);io.AddMouseButtonEvent(0,false);frame(full);
+        }
+        check(timeline.captionDrag.active && timeline.captionDrag.draft.originalText[0]=='T',"caption double click begins text transaction");
+        full.Clear();frame(full);
+    };
+    beginCaption();
+    io.AddInputCharactersUTF8("\xe5\xad\x97\xe5\xb9\x95");frame(full);
+    full.Clear();io.AddKeyEvent(ImGuiKey_Enter,true);frame(full);io.AddKeyEvent(ImGuiKey_Enter,false);frame(full);
+    check(!timeline.captionDrag.active && full.count==1 && full.Events()[0].phase==editor::Phase::Commit &&
+          std::string_view(full.Events()[0].proposedText.data())=="\xe5\xad\x97\xe5\xb9\x95" &&
+          std::string_view(full.Events()[0].originalText.data())=="Transition","caption Enter commits original and UTF8 proposal");
+    beginCaption();io.AddInputCharactersUTF8("cancel");frame(full);
+    full.Clear();io.AddKeyEvent(ImGuiKey_Escape,true);frame(full);io.AddKeyEvent(ImGuiKey_Escape,false);frame(full);
+    check(!timeline.captionDrag.active && full.count==1 && full.Events()[0].phase==editor::Phase::Cancel &&
+          full.Events()[0].proposedText==full.Events()[0].originalText,"caption Escape restores original text in Cancel");
+    transitionFixture.track.kind=video::TrackKind::Video;
     ImVec2 pickerOrigin{};
     auto pickerFrame=[&](editor::EventBuffer &events) {
         ImGui::NewFrame();ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({780,580});
