@@ -4,16 +4,10 @@
 namespace imkit::preview {
 namespace {
 cg::Vec3 Transform(cg::Vec3 p, const cg::Transform &t) {
-    p = {p.x * t.scale.x, p.y * t.scale.y, p.z * t.scale.z};
-    auto rotate = [](double &a, double &b, double r) {
-        double c = std::cos(r), s = std::sin(r), v = a * c - b * s;
-        b = a * s + b * c;
-        a = v;
-    };
-    rotate(p.y, p.z, t.rotation.x);
-    rotate(p.z, p.x, t.rotation.y);
-    rotate(p.x, p.y, t.rotation.z);
-    return {p.x + t.translation.x, p.y + t.translation.y, p.z + t.translation.z};
+    const auto b=cg::LinearBasis(t);
+    return {b.x.x*p.x+b.y.x*p.y+b.z.x*p.z+t.translation.x,
+            b.x.y*p.x+b.y.y*p.y+b.z.y*p.z+t.translation.y,
+            b.x.z*p.x+b.y.z*p.y+b.z.z*p.z+t.translation.z};
 }
 } // namespace
 std::size_t DrawListPreview(ImDrawList &draw, std::span<const Mesh> meshes, const cg::Camera &camera,
@@ -44,13 +38,10 @@ std::size_t DrawListPreview(ImDrawList &draw, std::span<const Mesh> meshes, cons
                 }
                 tri.points[j] = projected.screen;
                 tri.depth += projected.depth;
-                cg::Transform normalTransform = mesh.transform;
-                normalTransform.translation = {};
-                auto reciprocal = [](double value) { return value == 0 ? 0. : 1. / value; };
-                normalTransform.scale = {reciprocal(mesh.transform.scale.x),
-                                         reciprocal(mesh.transform.scale.y),
-                                         reciprocal(mesh.transform.scale.z)};
-                auto normal = Transform({v.normal[0], v.normal[1], v.normal[2]}, normalTransform);
+                const auto n=cg::NormalBasis(mesh.transform);
+                const cg::Vec3 normal{n.x.x*v.normal[0]+n.y.x*v.normal[1]+n.z.x*v.normal[2],
+                    n.x.y*v.normal[0]+n.y.y*v.normal[1]+n.z.y*v.normal[2],
+                    n.x.z*v.normal[0]+n.y.z*v.normal[1]+n.z.z*v.normal[2]};
                 double length = std::sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
                 double lambert = length > 0 ? (normal.x * .3 + normal.y * .8 + normal.z * .5) /
                                                 (length * std::sqrt(.98)) : 0;

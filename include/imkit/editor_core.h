@@ -81,6 +81,8 @@ struct Value {
     Tick first = 0, last = 0, offset = 0;
     StableId parent = 0;
     double x = 0, y = 0, z = 0, w = 0;
+    std::array<double,6> affine{}; // Scale events: rotation xyz and shear xy/xz/yz.
+    bool hasAffine=false;
     bool operator==(const Value &) const = default;
 };
 struct Event {

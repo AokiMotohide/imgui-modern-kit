@@ -265,19 +265,19 @@ originを投影し、hidden・unselectable・locked対象を除外します。sc
 revision変更は選択gestureを取り消します。Galleryは共通object selectionへ接続しています。
 公開IOテストで両形状による選択と範囲外originの除外を確認しています。
 
-`TransformAroundPivot` returns a complete TRS value with the object's position rotated
+`TransformAroundPivot` returns a complete affine transform with the object's position rotated
 or scaled about a supplied pivot. Its orthonormal basis determines constrained offset
 movement. Rotation composes the existing orientation rather than adding Euler angles.
 The gizmo pairs rotation/scale with a position transaction when an external pivot
 changes the object offset. Begin, Update and terminal batches preflight event capacity;
 a short terminal buffer retains both transactions for retry. Gallery OpenGL preview
-applies the companion position. TRS does not represent shear from arbitrary affine transforms.
-TransformAroundPivotは指定pivotの周りに位置を回転・拡大縮小したTRSを返します。
+applies the companion position. Transform additionally retains affine shear from oriented nonuniform scaling.
+TransformAroundPivotは指定pivotの周りに位置を回転・拡大縮小したアフィン変換を返します。
 直交正規basisで変位を拘束し、回転はEuler角の加算ではなく既存姿勢との合成で計算します。
 gizmoは外部pivotで位置が変わる回転・scaleに位置transactionを併用します。
 Begin・Update・終了eventは必要容量を事前確認し、終了buffer不足では両transactionを再試行まで保持します。
 GalleryのOpenGL previewは位置側の提案も反映します。
-TRSは任意のアフィン変換によるshearを表現しません。
+Transformは任意方向の非均等scaleによるshearも保持します。
 
 `ViewportState::selectedObjects` accepts the complete host selection, including
 objects outside the viewport. `companions` supplies host-owned `TransformCompanion`
@@ -300,14 +300,14 @@ remains fixed through the transaction. Plane movement solves the two projected
 basis directions independently, and ring movement uses angular displacement.
 Shift applies fine control and snap quantizes the resulting delta. Source transforms
 remain host-owned; preview and commit use typed Translate/Rotate/Scale events.
-Arbitrary oriented nonuniform scale still needs its TRS/shear behavior completed.
+Oriented nonuniform scale retains rotation, scale and shear in the affine event payload.
 TransformGizmoは移動軸、XY/YZ/ZX平面、screen handleを描画します。Scaleは四角い軸端、
 平面内の独立した拡大縮小、screenでの一様拡大縮小を提供します。Rotateは投影した軸ringと
 画面法線方向の外周ringを使います。Unifiedは移動・scale・回転handleを同時表示し、
 選んだ操作をtransaction終了まで維持します。平面操作は投影した2基底から個別に変位を求め、
 ringは角度差で回転します。Shiftはfine、snapは変位の量子化へ反映します。
 元transformはホスト所有のまま、Translate/Rotate/Scaleのpreview・commit eventを返します。
-任意orientationの非一様scaleについてはTRS/shearの扱いが未完了です。
+任意orientationの非均等scaleはrotation・scale・shearをアフィンイベントへ保持します。
 
 The focused CG public-IO test covers all three translation/scale planes, screen
 translation/scaling/rotation, axis rotation rings and distinct Unified operations.
@@ -711,3 +711,7 @@ link／groupのcontext actionはLink／Layersを再利用し、作成・解除�
 Relationship ID remapping uses empty vectors until an actual duplicate/split needs entries. This removes the four per-frame C++ allocations caused by empty MSVC maps. The six-operation Release benchmark and host-model regressions pass after the change, with zero measured steady C++/ImGui allocations.
 
 関係ID変換は複製・分割で要素が必要になるまで空のvectorを使用します。MSVCの空mapによる毎frame 4回のC++ allocationを解消しました。修正後はReleaseの6操作測定とホストモデル回帰が合格し、測定対象の定常C++／ImGui allocationは0です。
+
+Oriented nonuniform scale now retains the full linear transform through rotation/scale/shear decomposition. Focused CG regression verifies transformed basis columns and inverse-transpose normals; public IO checks the affine payload and the host model checks Commit application. The native GL verifier passed sheared mesh picking and analytical lighting checks. Core/Video/CG/API regression and the external consumer passed.
+
+任意方向の非均等scaleはrotation／scale／shear分解で全線形変換を保持します。CG回帰で変換後の基底列と逆転置normal、公開IOでアフィンpayload、ホストモデルでCommit反映を確認しました。native GL検証ではshear付きmeshのpickingと解析値に対する照明が合格しました。Core／Video／CG／API回帰と外部consumerも合格しています。

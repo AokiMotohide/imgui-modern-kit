@@ -49,38 +49,15 @@ void Matrix(const cg::Camera &c, const cg::Transform &t, float aspect, float *re
         projection[11] = -1;
         projection[14] = -2 * far * near / (far - near);
     }
-    float cx = static_cast<float>(std::cos(t.rotation.x)), sx = static_cast<float>(std::sin(t.rotation.x));
-    cy = static_cast<float>(std::cos(t.rotation.y));
-    sy = static_cast<float>(std::sin(t.rotation.y));
-    float cz = static_cast<float>(std::cos(t.rotation.z)), sz = static_cast<float>(std::sin(t.rotation.z));
-    float model[16] = {cz * cy,
-                       sz * cy,
-                       -sy,
-                       0,
-                       cz * sy * sx - sz * cx,
-                       sz * sy * sx + cz * cx,
-                       cy * sx,
-                       0,
-                       cz * sy * cx + sz * sx,
-                       sz * sy * cx - cz * sx,
-                       cy * cx,
-                       0,
-                       static_cast<float>(t.translation.x),
-                       static_cast<float>(t.translation.y),
-                       static_cast<float>(t.translation.z),
-                       1};
-    std::fill(normal, normal + 16, 0.f);
-    normal[15] = 1;
-    const double scale[] = {t.scale.x, t.scale.y, t.scale.z};
-    for (int column = 0; column < 3; ++column)
-        for (int row = 0; row < 3; ++row)
-            normal[column * 4 + row] = scale[column] == 0 ? 0.f :
-                static_cast<float>(model[column * 4 + row] / scale[column]);
-    for (int i = 0; i < 3; ++i) {
-        model[i] *= static_cast<float>(t.scale.x);
-        model[4 + i] *= static_cast<float>(t.scale.y);
-        model[8 + i] *= static_cast<float>(t.scale.z);
+    const auto linear=cg::LinearBasis(t),normals=cg::NormalBasis(t);
+    float model[16]{};std::fill(normal,normal+16,0.f);model[15]=normal[15]=1;
+    const cg::Vec3 columns[]{linear.x,linear.y,linear.z},normalColumns[]{normals.x,normals.y,normals.z};
+    for (int column=0;column<3;++column) {
+        const auto &v=columns[column],&n=normalColumns[column];
+        model[column*4]=static_cast<float>(v.x);model[column*4+1]=static_cast<float>(v.y);model[column*4+2]=static_cast<float>(v.z);
+        normal[column*4]=static_cast<float>(n.x);normal[column*4+1]=static_cast<float>(n.y);normal[column*4+2]=static_cast<float>(n.z);
     }
+    model[12]=static_cast<float>(t.translation.x);model[13]=static_cast<float>(t.translation.y);model[14]=static_cast<float>(t.translation.z);
     float vp[16];
     Multiply(projection, view, vp);
     Multiply(vp, model, result);

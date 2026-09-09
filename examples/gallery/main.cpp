@@ -334,6 +334,13 @@ void VerifyEditors(Host &h, const std::filesystem::path &out, const imkit::previ
     int expectedNormal = static_cast<int>(std::lround(255 * (.25 + .75 * 1.1 / std::sqrt(5.25 * .98))));
     check(std::abs(static_cast<int>(normalPixels[(240*640+320)*4]) - expectedNormal) <= 2,
           "GL inverse transpose normal under rotation and nonuniform scale");
+    normalMesh.transform.shear={.5,0,0};
+    check(renderer.Render({&normalMesh,1},camera) && renderer.Pick(320,240)==100,"GL sheared mesh preserves depth and picking");
+    functions.BindTexture(0x0DE1,renderer.Texture());
+    getTexImage(0x0DE1,0,0x1908,0x1401,normalPixels.data());
+    const int expectedShear=static_cast<int>(std::lround(255*(.25+.75*1.175/std::sqrt(4.8125*.98))));
+    check(std::abs(static_cast<int>(normalPixels[(240*640+320)*4])-expectedShear)<=2,
+          "GL inverse transpose preserves sheared surface lighting");
     h.Page(8);
     auto drag = [&](ImVec2 from, ImVec2 to) {
         h.mouse = from; h.Frame();
@@ -639,6 +646,14 @@ int VerifyInspectorModel() {
         std::printf("%s %s\n",ok?"PASS":"FAIL",name);
         if (!ok) ++failures;
     };
+    {
+        auto affineStorage=std::make_unique<gallery::EditorWorkspaces>();auto &affine=*affineStorage;affine.Initialize();
+        editor::Value value;value.x=2;value.y=3;value.z=4;value.affine={.2,.3,.4,.5,.6,.7};value.hasAffine=true;
+        affine.events.Push({affine.objects[0].id,affine.revision,editor::Phase::Commit,editor::EditKind::Scale,{},value});
+        affine.ApplyEvents();const auto &result=affine.objects[0].transform;
+        check(result.scale.x==2 && result.rotation.z==.4 && result.shear.x==.5 && result.shear.z==.7,
+              "host scale Commit preserves affine rotation and shear payload");
+    }
     {
         auto linkedStorage=std::make_unique<gallery::EditorWorkspaces>();
         auto &linked=*linkedStorage;linked.Initialize();

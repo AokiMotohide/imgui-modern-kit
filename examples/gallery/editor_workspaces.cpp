@@ -11,7 +11,10 @@ void ApplyGizmoPreview(preview::Mesh &mesh,const cg::ViewportState &viewport) {
         const auto &v=transaction->draft.proposed;
         if (transaction->draft.kind==editor::EditKind::Translate) mesh.transform.translation={v.x,v.y,v.z};
         if (transaction->draft.kind==editor::EditKind::Rotate) mesh.transform.rotation={v.x,v.y,v.z};
-        if (transaction->draft.kind==editor::EditKind::Scale) mesh.transform.scale={v.x,v.y,v.z};
+        if (transaction->draft.kind==editor::EditKind::Scale) {
+            mesh.transform.scale={v.x,v.y,v.z};
+            if (v.hasAffine) {mesh.transform.rotation={v.affine[0],v.affine[1],v.affine[2]};mesh.transform.shear={v.affine[3],v.affine[4],v.affine[5]};}
+        }
     };
     apply(&viewport.drag);apply(&viewport.pivotDrag);
     for (std::size_t i=0;i<viewport.companionCount;++i) {
@@ -838,6 +841,10 @@ void EditorWorkspaces::ApplyEvents() {
                 }
                 if (e.kind == editor::EditKind::Scale) {
                     o.transform.scale = {e.proposed.x, e.proposed.y, e.proposed.z};
+                    if (e.proposed.hasAffine) {
+                        o.transform.rotation={e.proposed.affine[0],e.proposed.affine[1],e.proposed.affine[2]};
+                        o.transform.shear={e.proposed.affine[3],e.proposed.affine[4],e.proposed.affine[5]};
+                    }
                     changed = true;
                 }
                 if (e.kind == editor::EditKind::Reparent && !o.locked) {

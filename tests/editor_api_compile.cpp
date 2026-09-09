@@ -5,6 +5,10 @@
 #include <array>
 int main() {
     using namespace imkit;
+    cg::Transform affineTransform;affineTransform.shear={.1,.2,.3};
+    const auto affineBasis=cg::LinearBasis(affineTransform),normalBasis=cg::NormalBasis(affineTransform);
+    if (affineBasis.y.x!=.1 || normalBasis.x.x!=1) return 2;
+    editor::Value affineValue;affineValue.hasAffine=true;affineValue.affine={0,0,0,.1,.2,.3};
     std::array<editor::Event, 32> eventStorage{};
     editor::EventBuffer events{eventStorage};
     std::array<editor::StableId, 32> ids{};
