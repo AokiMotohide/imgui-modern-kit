@@ -499,6 +499,12 @@ int main() {
         timeline={};timeline.canvas.scale.x=100;full.Clear();frame(full);frame(full);
         check(ImGui::GetDrawData()->TotalVtxCount<10000,"100k inline keys emit geometry only for visible interval");
         transitionFixture.clip.keys={};
+        std::vector<video::EnvelopePoint> denseEnvelope(100000);
+        for (std::size_t i=0;i<denseEnvelope.size();++i) denseEnvelope[i]={200000+i,editor::FromSeconds(double(i)),double(i%2)};
+        transitionFixture.clip.envelope=denseEnvelope;transitionFixture.track.kind=video::TrackKind::Audio;
+        full.Clear();frame(full);frame(full);
+        check(ImGui::GetDrawData()->TotalVtxCount<10000,"100k envelope points emit visible geometry with boundary neighbors");
+        transitionFixture.clip.envelope={};
     }
     video::ColorValues hostColors;
     video::ColorPropertyIds colorIds{101,307,509,701,907,1103};

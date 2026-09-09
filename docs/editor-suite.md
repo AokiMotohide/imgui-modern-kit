@@ -600,3 +600,7 @@ Galleryはclip内key spanと併せて全channelの`keyEvaluation`を渡します
 Timeline bounds inline-key drawing and hit testing with binary searches of the sorted clip-local span. Active keys are resolved by original tick/ID and drawn separately when their original positions lie outside the visible interval. A 100,000-key public IO fixture verifies bounded emitted geometry; existing multi-key and transaction regressions pass. This is not a new Release frame-time measurement.
 
 Timelineは時刻順のclip内key spanを二分探索し、可視区間の描画とhit testに絞ります。操作中のkeyは開始時刻とIDで解決し、元位置が可視区間外でも別途描画します。10万keyの公開IO fixtureで描画geometryが有界であることを確認し、既存の複数keyとtransaction回帰も通過しました。Releaseのフレーム時間を再測定した結果ではありません。
+
+Timeline envelope rendering now binary-searches the visible interval and retains one neighboring point on each side for connecting segments. Active point validation uses original tick/ID separately from drawing, so culling a point inside a still-visible clip does not end its gesture. A 100,000-point fixture verifies bounded geometry; existing envelope edit/remove/insert regressions pass.
+
+Timelineのenvelope描画は可視区間を二分探索し、接続線用に両側の隣接点を1つずつ残します。操作点は描画とは別に開始時刻とIDで検証し、clipが可視のまま点だけ描画範囲外へ出ても操作を終了しません。10万点のfixtureで描画geometryが有界であることを確認し、既存のenvelope編集・削除・挿入回帰も通過しました。
