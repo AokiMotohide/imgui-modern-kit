@@ -18,8 +18,8 @@
       "icon": "BoxSelect",
       "tooltip": "Box Select",
       "state": "button background, focus outline and disabled styling",
-      "status": "generated and connected; native 16px light appearance inspected; 150% pending",
-      "evidence": "out/selection-icons-native/icons-16-light.png (local capture, not distributed)"
+      "status": "generated and connected; native 16px light and 150% dark appearance inspected",
+      "evidence": "out/selection-icons-native/icons-16-light.png; out/selection-icons-150-fit/page-6-dark-150.png (local captures, not distributed)"
     },
     {
       "operation": "LassoSelect",
@@ -28,8 +28,8 @@
       "icon": "LassoSelect",
       "tooltip": "Lasso Select",
       "state": "button background, focus outline and disabled styling",
-      "status": "generated and connected; native 16px light appearance inspected; 150% pending",
-      "evidence": "out/selection-icons-native/icons-16-light.png (local capture, not distributed)"
+      "status": "generated and connected; native 16px light and 150% dark appearance inspected",
+      "evidence": "out/selection-icons-native/icons-16-light.png; out/selection-icons-150-fit/page-6-dark-150.png (local captures, not distributed)"
     },
     {
       "operation": "HandPan",
