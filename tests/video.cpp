@@ -262,7 +262,7 @@ int main() {
     timeline.bindings={};timeline.canvas.origin.x=7;
     io.AddKeyEvent(ImGuiKey_F8,true);frame(full);io.AddKeyEvent(ImGuiKey_F8,false);frame(full);
     check(timeline.canvas.origin.x==7,"empty bindings disable Fit shortcut");
-    struct TransitionFixture {video::TrackView track;video::ClipView clip;} transitionFixture;
+    struct TransitionFixture {video::TrackView track;video::ClipView clip;std::array<video::ClipView,2> related;} transitionFixture;
     transitionFixture.track.id=900;transitionFixture.track.label="Video";
     transitionFixture.clip.id=901;transitionFixture.clip.track=900;transitionFixture.clip.label="Transition";
     transitionFixture.clip.duration=editor::FromSeconds(3);
@@ -486,6 +486,29 @@ int main() {
     check(full.overflow && full.count==0 && !timeline.drag.active,
           "multiple selected clips require complete provider resolution");
     io.AddMouseButtonEvent(0,false);frame(full);selection.Clear();
+    transitionFixture.related={transitionFixture.clip,transitionFixture.clip};
+    transitionFixture.related[1].id=902;transitionFixture.related[1].duration=editor::FromSeconds(.3);
+    provider.selected=[](void *u,std::span<const editor::StableId>){
+        return std::span<const video::ClipView>(static_cast<TransitionFixture*>(u)->related);
+    };
+    provider.constraints=[](void *,editor::StableId){return video::ClipConstraints{0,editor::FromSeconds(100),editor::FromSeconds(.1)};};
+    std::array<video::TimelineState::MemberDrag,2> trimMembers;
+    timeline.memberDrags=trimMembers;timeline.snapping=false;
+    selection.Set(transitionFixture.clip.id);full.Clear();
+    io.AddMousePosEvent(clipOrigin.x+timeline.headerWidth+2,clipOrigin.y+25);frame(full);
+    io.AddMouseButtonEvent(0,true);frame(full);
+    check(timeline.drag.active && timeline.memberCount==1 && timeline.drag.draft.kind==editor::EditKind::TrimStart,
+          "linked trim begins primary and offscreen member transactions");
+    io.AddMousePosEvent(clipOrigin.x+timeline.headerWidth+52,clipOrigin.y+25);frame(full);
+    check(timeline.drag.draft.proposed.first==editor::FromSeconds(.2) &&
+          trimMembers[0].transaction.draft.proposed.first==editor::FromSeconds(.2) &&
+          trimMembers[0].transaction.draft.proposed.last==editor::FromSeconds(.3),
+          "linked trim shares shortest member minimum-duration constraint");
+    full.Clear();io.AddMouseButtonEvent(0,false);frame(full);
+    check(full.count==2 && full.Events()[0].phase==editor::Phase::Commit && full.Events()[1].phase==editor::Phase::Commit,
+          "linked trim commits all members together");
+    provider.selected=nullptr;provider.constraints=nullptr;timeline.memberCount=0;timeline.memberDrags={};selection.Clear();
+    io.AddMousePosEvent(clipOrigin.x+timeline.headerWidth+160,clipOrigin.y+25);frame(full);
     timeline.tool=video::Tool::Razor;full.Clear();frame(full);
     small.Clear();io.AddMouseButtonEvent(0,true);frame(small);
     check(small.overflow && small.count==0 && !timeline.drag.active,"Razor rejects insufficient buffer without partial transaction");

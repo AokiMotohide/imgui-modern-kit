@@ -667,3 +667,7 @@ Galleryの分割は元の開始transitionを左clip、終了transitionを右clip
 SplitClip validates positive finite speed, minimum duration, source-media bounds and representable timeline/source positions before integer arithmetic. Razor now uses the same pure validation before publishing Begin/Commit. Focused regression includes extreme Tick inputs, invalid speed/minimum duration and media overflow.
 
 SplitClipは有限の正速度、最小duration、素材範囲、時刻・素材位置の表現可能性を整数演算前に検証します。Razorも同じ純粋計算で確認してからBegin／Commitを出力します。極端なTick、無効な速度・最小duration、素材範囲外を回帰で確認しました。
+
+Timeline TrimStart and TrimEnd now resolve selected/linked/group members through the same complete-query contract as Move. All members share a delta constrained by every clip media range and minimum duration, and emit an atomic terminal batch. Public IO regression verifies an offscreen short member constraining both start trims and both Commit events. Ripple, Roll and Slide relationship behavior remains separately scoped.
+
+Timelineの開始・終了trimはMoveと同じ完全query契約で選択・linked・groupの関連clipを解決します。各clipの素材範囲と最小durationから共通deltaを制限し、終了イベントをまとめて返します。公開IO回帰で、画面外の短い関連clipによる開始trimの共通制限と、両対象のCommitを確認しました。Ripple・Roll・Slideの関連制約は別の対象です。
