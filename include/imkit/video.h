@@ -124,6 +124,9 @@ struct TimelineState {
     double transitionMouseStart=0;
     editor::Transaction captionDrag;
     bool captionFocus=false;
+    editor::Transaction keyDrag;
+    double keyMouseStart=0;
+    editor::Selection *keySelection=nullptr; // Optional non-owning selection distinct from clips.
 };
 // Resolves both moving edges; ignores every selected clip and filters disabled kinds.
 editor::SnapResult ResolveTimelineSnap(const TimelineState &state, Tick delta,
