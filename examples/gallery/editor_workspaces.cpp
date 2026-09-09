@@ -439,7 +439,7 @@ void EditorWorkspaces::ApplyEvents() {
                 if (e.kind==editor::EditKind::KeyHandleMode && e.proposed.x>=0 && e.proposed.x<5) {
                     key.handles=static_cast<editor::HandleMode>(static_cast<int>(e.proposed.x));changed=true;
                 }
-                if (e.kind == editor::EditKind::Keyframe) {
+                if (e.kind == editor::EditKind::Keyframe || e.kind==editor::EditKind::KeyScale) {
                     key.tick = e.proposed.first;
                     key.value = e.proposed.x;
                     changed = true;

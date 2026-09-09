@@ -334,6 +334,15 @@ int main() {
     check(propertyEvents.count==2 && propertyEvents.Events()[0].proposed.first==FrameToTick(27,{24,1}) &&
         propertyEvents.Events()[1].proposed.first==FrameToTick(51,{24,1}),
         "curve frame snap applies a common delta and preserves selected key spacing");
+    curveState.scaleTime=true;curveState.snapToFrame=false;
+    io.AddMousePosEvent(static_cast<float>(curvePoint.x),static_cast<float>(curvePoint.y));curveFrame();
+    io.AddMouseButtonEvent(0,true);curveFrame();
+    io.AddMousePosEvent(static_cast<float>(curvePoint.x+100),static_cast<float>(curvePoint.y+20));curveFrame();
+    io.AddMouseButtonEvent(0,false);curveFrame();
+    check(propertyEvents.count==2 && propertyEvents.Events()[0].kind==EditKind::KeyScale &&
+        propertyEvents.Events()[0].proposed.first==FromSeconds(1) && propertyEvents.Events()[1].proposed.first==FromSeconds(3) &&
+        propertyEvents.Events()[0].proposed.x==.5 && propertyEvents.Events()[1].proposed.x==.7,
+        "curve timing scale doubles spacing around first key and preserves values");
     ImGui::DestroyContext(context);
     std::puts(failures ? "FAIL editor core"
                        : "PASS timebase, drop-frame, snap, transaction, canvas and curves");

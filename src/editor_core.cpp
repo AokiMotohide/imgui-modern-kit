@@ -592,6 +592,12 @@ Tick CurveTimeDelta(const CurveState &s,double seconds) {
     }
     return delta;
 }
+Tick CurveKeyTime(const CurveState &s,Tick original,double dx) {
+    if (!s.scaling) return original+CurveTimeDelta(s,dx);
+    const double factor=std::exp2(std::clamp(dx*s.canvas.scale.x/100.,-16.,16.));
+    Tick tick=Rounded(static_cast<long double>(s.scalePivot)+(static_cast<long double>(original)-s.scalePivot)*factor);
+    return s.snapToFrame && Valid(s.rate) ? FrameToTick(TickToFrame(tick,s.rate),s.rate) : tick;
+}
 bool CurveCapacity(const CurveState &s,EventBuffer &out) {
     if (out.storage.size()-out.count>=1+s.companionCount) return true;
     out.overflow=true;return false;
@@ -649,12 +655,12 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
                 *key=MoveHandle(ResolveHandles({first,last},static_cast<std::size_t>(key-first)),s.side<0,
                     {s.drag.draft.original.x+dx,s.drag.draft.original.y+dy});
             } else {
-                key->tick=s.drag.draft.original.first+CurveTimeDelta(s,dx);
-                key->value=s.drag.draft.original.x+dy;
+                key->tick=CurveKeyTime(s,s.drag.draft.original.first,dx);
+                key->value=s.drag.draft.original.x+(s.scaling?0:dy);
             }
             for (const auto &drag:s.companionDrags.first(s.companionCount)) {
                 auto member=std::find_if(preview.begin(),preview.end(),[&](const auto &item){return item.id==drag.draft.target;});
-                if (member!=preview.end()) {member->tick=drag.draft.original.first+CurveTimeDelta(s,dx);member->value=drag.draft.original.x+dy;}
+                if (member!=preview.end()) {member->tick=CurveKeyTime(s,drag.draft.original.first,dx);member->value=drag.draft.original.x+(s.scaling?0:dy);}
             }
             std::sort(preview.begin(),preview.end(),[](const auto &a,const auto &b){return a.channel!=b.channel?a.channel<b.channel:a.tick<b.tick;});
             keys=preview;
@@ -737,6 +743,7 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
         if (ImGui::MenuItem("Fit all channels",nullptr,false,provider.bounds.has_value())) s.fitRequested=true;
         ImGui::Checkbox("Ghost other channels",&s.ghostOtherChannels);
         ImGui::Checkbox("Snap to frame",&s.snapToFrame);
+        ImGui::Checkbox("Scale key timing",&s.scaleTime);
         if (provider.sample) {
             int mode=static_cast<int>(s.extrapolation);
             if (ImGui::Combo("Extrapolation",&mode,"Constant\0Linear\0Repeat\0"))
@@ -778,7 +785,10 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
             count>s.companionDrags.size() || out.storage.size()-out.count<1+count) {out.overflow=true;allowed=false;}
         if (allowed) {
             s.companionCount=0;
-            const auto kind=side?EditKind::Handle:ImGui::GetIO().KeyAlt?EditKind::Duplicate:EditKind::Keyframe;
+            s.scaling=!side && s.scaleTime && !ImGui::GetIO().KeyAlt;
+            s.scalePivot=initial.first;
+            for (const auto &member:members) s.scalePivot=(std::min)(s.scalePivot,member.tick);
+            const auto kind=side?EditKind::Handle:ImGui::GetIO().KeyAlt?EditKind::Duplicate:s.scaling?EditKind::KeyScale:EditKind::Keyframe;
             s.drag.Begin(hit, provider.revision, kind, initial,CurrentModifiers(), out);
             for (const auto &member:members) if (member.id!=hit)
                 s.companionDrags[s.companionCount++].Begin(member.id,provider.revision,kind,
@@ -794,13 +804,13 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
             proposed.x += dx;
             proposed.y += dy;
         } else {
-            proposed.first += CurveTimeDelta(s,dx);
-            proposed.x += dy;
+            proposed.first = CurveKeyTime(s,s.drag.draft.original.first,dx);
+            if (!s.scaling) proposed.x += dy;
         }
         if (ImGui::IsMouseDown(0)) {
             if (!(proposed == s.drag.draft.proposed)) s.drag.Update(provider.revision, proposed, out);
             for (auto &drag:s.companionDrags.first(s.companionCount)) {
-                auto value=drag.draft.original;value.first+=CurveTimeDelta(s,dx);value.x+=dy;
+                auto value=drag.draft.original;value.first=CurveKeyTime(s,drag.draft.original.first,dx);if (!s.scaling) value.x+=dy;
                 if (!(value==drag.draft.proposed)) drag.Update(provider.revision,value,out);
             }
         }
