@@ -463,6 +463,18 @@ int main() {
     check(full.overflow && full.count==0,"incomplete selected query prevents partial Split");
     provider.selected=nullptr;provider.user=savedUser;provider.tracks=savedTracks;provider.clips=savedClips;
     selection.Clear();timeline.bindings={};
+    selection.storage[0]=transitionFixture.clip.id;selection.storage[1]=902;selection.count=2;
+    provider.selected=[](void *u,std::span<const editor::StableId>){
+        return std::span<const video::ClipView>(&static_cast<TransitionFixture*>(u)->clip,1);
+    };
+    full.Clear();io.AddMouseButtonEvent(0,true);frame(full);
+    check(full.overflow && full.count==0 && !timeline.drag.active,
+          "incomplete clip selection query rejects entire move before Begin");
+    io.AddMouseButtonEvent(0,false);frame(full);provider.selected=nullptr;
+    full.Clear();io.AddMouseButtonEvent(0,true);frame(full);
+    check(full.overflow && full.count==0 && !timeline.drag.active,
+          "multiple selected clips require complete provider resolution");
+    io.AddMouseButtonEvent(0,false);frame(full);selection.Clear();
     timeline.tool=video::Tool::Razor;full.Clear();frame(full);
     small.Clear();io.AddMouseButtonEvent(0,true);frame(small);
     check(small.overflow && small.count==0 && !timeline.drag.active,"Razor rejects insufficient buffer without partial transaction");

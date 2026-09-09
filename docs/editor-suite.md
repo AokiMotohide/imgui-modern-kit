@@ -624,3 +624,7 @@ Timelineのtool切替をホストCommand bindingへ接続し、tooltipへ設定�
 Timeline consumes the host-bound Split command at the playhead. The selected callback must resolve every selected clip, including offscreen clips and locked-track state. Missing selected IDs report overflow; invalid or locked eligible targets reject the whole batch. All Begin/Commit slots are reserved before emission. Clips that do not cross the playhead are unchanged. Public IO regression covers remapping, multiple offscreen clips, locks, missing IDs and event shortage.
 
 Timelineはホストが割り当てたSplitコマンドで、再生位置をまたぐ選択clipを分割します。selected callbackは画面外を含む全選択clipとtrackのロック状態を返す必要があります。選択IDの欠落はoverflowを通知し、対象の制約違反・ロック・イベント容量不足では部分分割を出しません。公開IO回帰でキー再割当、画面外の複数clip、ロック、ID欠落、容量不足を確認しています。
+
+Move and Duplicate also require a complete selected-clip query for multiple selections. Missing or duplicate IDs reject the entire Begin batch and report overflow, so truncated host scratch cannot silently edit only part of a selection. Without a selected callback only a single selected clip can start these edits.
+
+移動・複製も複数選択の全clipをselected queryで解決します。IDの欠落・重複ではBeginを一切出さずoverflowを通知し、ホストscratchの切り詰めによる部分編集を防ぎます。selected callbackがない場合、単一選択だけが編集を開始できます。
