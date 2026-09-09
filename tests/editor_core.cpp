@@ -378,6 +378,40 @@ int main() {
             "remapped previous/next key uses host neighbor and exact tick");
         io.AddKeyEvent(key,false);curveFrame();
     }
+    curveSource[1].locked=false;
+    curveState.bindings={};
+    curveProvider.selectionQuery=[](void *,Rect) -> std::span<const SelectablePoint> {
+        static const std::array points{SelectablePoint{6101,{1,-.5},false},
+            SelectablePoint{6103,{2,-.7},false},SelectablePoint{6107,{3,-.4},false}};
+        return points;
+    };
+    auto selectionMouse=[&](Point point) {
+        const auto screen=ToScreen(point,curveState.canvas,{curveState.view.min.x,curveState.view.min.y});
+        io.AddMousePosEvent(static_cast<float>(screen.x),static_cast<float>(screen.y));curveFrame();
+    };
+    auto boxGesture=[&] {
+        selectionMouse({.8,-.9});io.AddMouseButtonEvent(0,true);curveFrame();
+        selectionMouse({2.2,-.2});io.AddMouseButtonEvent(0,false);curveFrame();
+    };
+    curveSelection.Clear();curveSelection.Set(6107);
+    boxGesture();
+    check(curveSelection.count==2 && curveSelection.Contains(6101) && curveSelection.Contains(6103) &&
+        propertyEvents.count==2 && propertyEvents.Events()[0].kind==EditKind::BoxSelect,
+        "curve box selection replaces selection with enclosed keys");
+    std::array<Point,32> lassoPath{};
+    curveState.canvas.selectionPath=lassoPath;curveState.lassoSelect=true;
+    curveSelection.Clear();curveSelection.Set(6107);
+    selectionMouse({.8,-.9});io.AddMouseButtonEvent(0,true);curveFrame();
+    selectionMouse({2.2,-.9});selectionMouse({2.2,-.2});selectionMouse({.8,-.2});
+    io.AddMouseButtonEvent(0,false);curveFrame();
+    check(curveSelection.count==2 && curveSelection.Contains(6101) && curveSelection.Contains(6103) &&
+        propertyEvents.count==2 && propertyEvents.Events()[0].kind==EditKind::LassoSelect,
+        "curve lasso selection replaces selection with enclosed keys");
+    curveState.lassoSelect=false;curveSelection.Clear();
+    curveSelection.storage=std::span(curveIds).first(1);curveSelection.Set(6107);
+    boxGesture();
+    check(propertyEvents.overflow && propertyEvents.count==0 && curveSelection.count==1 &&
+        curveSelection.Contains(6107),"short selection storage preserves the old curve selection atomically");
     ImGui::DestroyContext(context);
     std::puts(failures ? "FAIL editor core"
                        : "PASS timebase, drop-frame, snap, transaction, canvas and curves");
