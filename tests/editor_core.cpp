@@ -306,6 +306,24 @@ int main() {
     io.AddMouseButtonEvent(0,true);curveFrame();
     check(propertyEvents.count==0 && !curveState.drag.active,"locked companion rejects whole curve gesture");
     io.AddMouseButtonEvent(0,false);curveFrame();
+    curveSource[1].locked=false;
+    io.AddKeyEvent(ImGuiMod_Alt,true);curveFrame();
+    io.AddMousePosEvent(static_cast<float>(curvePoint.x),static_cast<float>(curvePoint.y));curveFrame();
+    io.AddMouseButtonEvent(0,true);curveFrame();
+    check(curveState.drag.active && curveState.drag.draft.kind==EditKind::Duplicate &&
+        companionDrags[0].draft.kind==EditKind::Duplicate,"Alt begins Duplicate for every selected curve key");
+    io.AddMousePosEvent(static_cast<float>(curvePoint.x+20),static_cast<float>(curvePoint.y));curveFrame();
+    io.AddMouseButtonEvent(0,false);curveFrame();
+    check(propertyEvents.count==2 && propertyEvents.Events()[0].kind==EditKind::Duplicate &&
+        propertyEvents.Events()[1].kind==EditKind::Duplicate && propertyEvents.Events()[0].phase==Phase::Commit &&
+        propertyEvents.Events()[1].phase==Phase::Commit,"Alt-drag commits the complete duplication batch");
+    io.AddKeyEvent(ImGuiMod_Alt,false);curveFrame();
+    curveProvider.selected=nullptr;
+    io.AddMousePosEvent(static_cast<float>(curvePoint.x),static_cast<float>(curvePoint.y));curveFrame();
+    io.AddMouseButtonEvent(0,true);curveFrame();
+    check(propertyEvents.overflow && propertyEvents.count==0 && !curveState.drag.active,
+        "missing selected-key provider rejects partial multi-key editing");
+    io.AddMouseButtonEvent(0,false);curveFrame();
     ImGui::DestroyContext(context);
     std::puts(failures ? "FAIL editor core"
                        : "PASS timebase, drop-frame, snap, transaction, canvas and curves");

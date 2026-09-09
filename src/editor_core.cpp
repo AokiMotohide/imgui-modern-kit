@@ -765,7 +765,8 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
         auto members=!side && provider.selected ? provider.selected(provider.user,selection.storage.first(selection.count)) : std::span<const Keyframe>{};
         std::size_t count=0;bool allowed=true;
         for (const auto &member:members) if (member.id!=hit) {++count;allowed &= !member.locked;}
-        if (count>s.companionDrags.size() || out.storage.size()-out.count<1+count) {out.overflow=true;allowed=false;}
+        if ((!side && selection.count>1 && (!provider.selected || count+1!=selection.count)) ||
+            count>s.companionDrags.size() || out.storage.size()-out.count<1+count) {out.overflow=true;allowed=false;}
         if (allowed) {
             s.companionCount=0;
             const auto kind=side?EditKind::Handle:ImGui::GetIO().KeyAlt?EditKind::Duplicate:EditKind::Keyframe;
