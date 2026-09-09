@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <limits>
 namespace imkit::gallery {
 namespace {
 void ApplyGizmoPreview(preview::Mesh &mesh,const cg::ViewportState &viewport) {
@@ -587,6 +588,13 @@ void EditorWorkspaces::ApplyEvents() {
                     right.start = split.right.start;
                     right.duration = split.right.duration;
                     right.sourceIn = split.right.sourceIn;
+                    const auto localCut=split.left.duration;
+                    if (clip->keyChannel && std::any_of(keys.begin(),keys.end(),[&](const auto &key) {
+                        return key.channel==clip->keyChannel && key.tick<std::numeric_limits<editor::Tick>::min()+localCut;
+                    })) continue;
+                    CopyClipEditingData(*clip,right);
+                    if (right.keyChannel) for (auto &key:keys)
+                        if (key.channel==right.keyChannel) key.tick-=localCut;
                     if (!clip->envelope.empty()) {
                         const auto localCut=split.left.duration;
                         const auto gain=video::EvaluateEnvelope(clip->envelope,localCut);

@@ -588,3 +588,7 @@ GalleryはRipple適用前に、移動対象となる同一trackの後続clipにl
 Gallery uses the Timeline host preflight to prevent Ripple Begin when a following clip on the track is locked. Public IO tests cover rejection without events/overflow and the optional-callback path.
 
 GalleryはTimelineのホスト判定を使用し、同一trackの後続clipがlockedならRippleのBeginを抑止します。イベントもoverflowも発生しない拒否経路と、任意callback未指定時の開始を公開IOで確認しました。
+
+Gallery split copies Inspector values and property IDs to the right clip and assigns an independent inline key channel. Right-channel key ticks are shifted by the cut offset; values, interpolation and relative handle offsets are copied. The host retains off-clip keys in its channel storage. The model regression covers an interior key and Inspector independence. Boundary evaluation from the clipped inline span is not established by this check.
+
+Galleryのsplitは右clipへInspector値をコピーし、property IDとclip内key channelを独立させます。右channelのkey時刻から分割offsetを引き、値・補間mode・相対handleをコピーします。clip範囲外のkeyもホストchannel領域には保持します。モデル回帰で内部keyの時刻移動とInspectorの独立を確認しました。clip範囲に絞ったinline spanの境界評価は、この確認では保証していません。
