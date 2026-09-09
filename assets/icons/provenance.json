@@ -1993,5 +1993,20 @@
       1027,
       736
     ]
+  },
+  {
+    "name": "Solo",
+    "source": "assets/icons/originals/Solo.png",
+    "sha256": "a70cb104465797e09c30c2241e0696e96922cda4febfcdb6dd892488c7d43f22",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      332,
+      350,
+      922,
+      903
+    ]
   }
 ]

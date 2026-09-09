@@ -530,5 +530,9 @@
   {
     "name": "SlideEdit",
     "category": "Editor"
+  },
+  {
+    "name": "Solo",
+    "category": "Editor"
   }
 ]

@@ -142,6 +142,7 @@ enum class IconId : std::uint16_t {
     SlipEdit,
     RollingEdit,
     SlideEdit,
+    Solo,
     Count
 };
 struct IconInfo {

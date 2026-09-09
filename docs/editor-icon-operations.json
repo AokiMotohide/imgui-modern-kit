@@ -331,12 +331,13 @@
     },
     {
       "operation": "Solo",
-      "widget": "TrackHeader",
+      "widget": "Timeline track header and compact menu",
       "disposition": "new",
       "icon": "Solo",
       "tooltip": "Solo",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "active background and underline; menu check mark",
+      "status": "generated and connected; native 16px light and 150% dark inspected; public IO menu changes host solo",
+      "evidence": "out/solo-icons-native/icons-16-light.png; page-6-dark-150.png; out/solo-track-native/track-controls.txt"
     },
     {
       "operation": "SourcePatch",

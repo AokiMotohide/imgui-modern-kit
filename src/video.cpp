@@ -360,7 +360,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         const bool values[] = {track.visible, track.mute,   track.solo,
                                track.locked,  track.record, track.target, track.source};
         const IconId controlIcons[]={track.visible ? IconId::Eye : IconId::EyeOff,
-            track.mute ? IconId::Mute : IconId::Volume,IconId::Count,
+            track.mute ? IconId::Mute : IconId::Volume,IconId::Solo,
             track.locked ? IconId::Lock : IconId::Unlock,IconId::Record,IconId::Count,IconId::Count};
         const float controlIconSize=20*ImGui::GetFontSize()/14;
         float controlsWidth=12;
