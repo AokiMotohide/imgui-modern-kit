@@ -218,6 +218,17 @@ int main() {
     small.Clear();io.AddMousePosEvent(timeline.view.min.x+10,timeline.view.min.y+10);frame(small);
     io.AddMouseButtonEvent(0,true);frame(small);io.AddMouseButtonEvent(0,false);frame(small);
     check(small.overflow && small.count==0,"track toggle shortage emits neither Begin nor Commit");
+    full.Clear();timeline.heightDrag.Begin(100,provider.revision,editor::EditKind::TrackHeight,{0,0,0,0,200},{},full);
+    full.Clear();frame(full);
+    check(!timeline.heightDrag.active && full.count==1 && full.Events()[0].phase==editor::Phase::Cancel,
+          "closed track height popup cancels active transaction");
+    full.Clear();timeline.heightDrag.Begin(100,provider.revision,editor::EditKind::TrackHeight,{0,0,0,0,200},{},full);
+    small.Clear();small.Push({});frame(small);
+    check(timeline.heightDrag.active && timeline.heightDrag.draft.phase==editor::Phase::Cancel && small.overflow,
+          "closed track height popup retains Cancel when event buffer is full");
+    full.Clear();frame(full);
+    check(!timeline.heightDrag.active && full.count==1 && full.Events()[0].phase==editor::Phase::Cancel,
+          "track height retries its pending Cancel once capacity returns");
     timeline.headerWidth=180;
     provider.contentRange={editor::FromSeconds(-10),editor::FromSeconds(10)};
     provider.clips=[](void *u,editor::StableId,editor::Range range) {

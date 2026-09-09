@@ -293,6 +293,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     const bool addKey=editor::CommandPressed(editor::Command::AddKey,s.bindings,keyCommands);
     const bool previousKey=editor::CommandPressed(editor::Command::PreviousKey,s.bindings,keyCommands);
     const bool nextKey=editor::CommandPressed(editor::Command::NextKey,s.bindings,keyCommands);
+    bool heightEditorSeen=false;
     detail::ResumeTerminal(s.heightDrag,p.revision,out);
     if (s.heightDrag.active && ImGui::IsKeyPressed(ImGuiKey_Escape)) s.heightDrag.Cancel(out);
     if (s.tool==Tool::Hand && view.max.x>view.min.x+s.headerWidth) {
@@ -368,6 +369,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                                    {0,0,0,0,track.height},editor::CurrentModifiers(),out);
             if (edited && s.heightDrag.active)
                 s.heightDrag.Update(p.revision,{0,0,0,0,height},out);
+            if (s.heightDrag.active && s.heightDrag.draft.target==track.id) heightEditorSeen=true;
             if (ImGui::IsItemDeactivated() && s.heightDrag.active)
                 s.heightDrag.Commit(p.revision,out);
             ImGui::EndPopup();
@@ -914,6 +916,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         }
         draw->PopClipRect();
     }
+    if (s.heightDrag.active && !heightEditorSeen && s.heightDrag.draft.phase!=editor::Phase::Commit &&
+        s.heightDrag.draft.phase!=editor::Phase::Cancel) s.heightDrag.Cancel(out);
     if (s.envelopeDrag.active) {
         if (!envelopeSeen) s.envelopeDrag.Cancel(out);
         else if (!out.overflow && !ImGui::IsMouseDown(0) && s.envelopeDrag.draft.phase!=editor::Phase::Cancel)

@@ -608,3 +608,7 @@ Timelineのenvelope描画は可視区間を二分探索し、接続線用に両�
 Track names are fine-clipped to the header width, with a bounded right-click item for the height menu and full text in a tooltip. Long mixed English/Japanese names were captured in narrow dark 150% headers in `out/track-label-clipping/`; existing Track control public IO and Video regressions pass.
 
 Track名はheader幅へfine clipし、高さmenuの右クリック領域も同じ幅へ制限します。全文はtooltipへ表示します。長い英日混在名を狭いdark・150% headerで`out/track-label-clipping/`へcaptureし、既存Track操作の公開IOとVideo回帰も通過しました。
+
+Track height edits cancel when their popup is no longer submitted. A full event buffer retains the pending Cancel and retries it on the next frame with capacity; pending Commit is preserved. Focused transaction tests cover popup closure and Cancel retry.
+
+Track高さの編集popupが表示されなくなった場合はCancelします。event bufferが満杯ならCancelを保持して容量回復後のフレームで再送し、保留中のCommitは維持します。popup終了とCancel再送をtransaction回帰で確認しました。
