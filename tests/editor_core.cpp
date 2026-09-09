@@ -257,11 +257,14 @@ int main() {
     std::array<StableId,4> curveIds{};
     Selection curveSelection{curveIds};curveSelection.Set(6101);curveSelection.Set(6103,true);
     bool curveCancelled=false;int curveCancelCount=0;
+    TimeState siblingTransport;siblingTransport.playhead=FromSeconds(2);
+    std::array siblingBindings{Binding{Command::SetIn,ImGuiKey_F10}};
     auto curveFrame=[&] {
         propertyEvents.Clear();ImGui::NewFrame();
         ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({780,400});ImGui::Begin("Curve preview");
         CurveEditor("curve",curveProvider,curveState,curveSelection,propertyEvents,
             imkit::MakePrecisionTheme(imkit::ColorScheme::Dark),{600,300});
+        Transport(siblingTransport,siblingBindings);
         ImGui::End();ImGui::Render();
         for (auto event:propertyEvents.Events()) if (event.phase==Phase::Cancel) {curveCancelled=true;++curveCancelCount;}
     };
@@ -369,6 +372,7 @@ int main() {
     check(propertyEvents.count==1 && propertyEvents.Events()[0].kind==EditKind::KeyInsert &&
         propertyEvents.Events()[0].target==7 && propertyEvents.Events()[0].proposed.first==FromSeconds(1.5) &&
         propertyEvents.Events()[0].proposed.x==.25,"remapped curve AddKey carries channel, playhead and evaluated value");
+    check(siblingTransport.inOut.first==0,"focused Curve shortcut does not also trigger parent Transport");
     io.AddKeyEvent(ImGuiKey_F10,false);curveFrame();
     for (auto key:{ImGuiKey_F11,ImGuiKey_F12}) {
         io.AddKeyEvent(key,true);curveFrame();
