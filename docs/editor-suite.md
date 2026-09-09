@@ -596,3 +596,7 @@ Galleryのsplitは右clipへInspector値をコピーし、property IDとclip内k
 Gallery supplies full-channel `keyEvaluation` alongside the clipped key span. The split model regression now confirms equal original/right-channel interpolation at the cut and inside the right clip. Public IO verifies that inserting a key uses outside context rather than the visible-only span.
 
 Galleryはclip内key spanと併せて全channelの`keyEvaluation`を渡します。splitモデル回帰で分割点および右clip内部の補間値が元channelと一致することを確認しました。key挿入が可視spanだけでなくclip外contextを使うことも公開IOで確認しました。
+
+Timeline bounds inline-key drawing and hit testing with binary searches of the sorted clip-local span. Active keys are resolved by original tick/ID and drawn separately when their original positions lie outside the visible interval. A 100,000-key public IO fixture verifies bounded emitted geometry; existing multi-key and transaction regressions pass. This is not a new Release frame-time measurement.
+
+Timelineは時刻順のclip内key spanを二分探索し、可視区間の描画とhit testに絞ります。操作中のkeyは開始時刻とIDで解決し、元位置が可視区間外でも別途描画します。10万keyの公開IO fixtureで描画geometryが有界であることを確認し、既存の複数keyとtransaction回帰も通過しました。Releaseのフレーム時間を再測定した結果ではありません。
