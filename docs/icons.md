@@ -1,6 +1,6 @@
 # Modern outline icons
 
-ImKit includes 128 individually ImageGen-generated monochrome icons in 13 categories.
+ImKit includes 131 individually ImageGen-generated monochrome icons in 13 categories.
 The artwork is distributed with this repository under its MIT license. The original
 generations and their prompts are retained in `assets/icons/originals` and
 `assets/icons/prompts`; `provenance.json` records source hashes. Original images use
@@ -48,7 +48,7 @@ The existing `IconButton(id, ImGuiDir, accessibleLabel)` overload is unchanged.
 ## API behavior
 
 - `GetIconCatalog()` returns stable IDs, English names and categories; `GetIconInfo`
-  returns null for invalid IDs. The 128 entries follow `assets/icons/catalog.json`.
+  returns null for invalid IDs. The 131 entries follow `assets/icons/catalog.json`.
 - `GetIconAtlasPixels` accepts exactly 16, 20, 24, 32, 48 or 64. The returned CPU data
   is immutable with process lifetime; unsupported sizes return an empty view.
 - `GetIconRegion` returns the corresponding normalized UV rectangle. Two transparent
@@ -71,7 +71,7 @@ The existing `IconButton(id, ImGuiDir, accessibleLabel)` overload is unchanged.
 
 ## Assets and reproduction
 
-`assets/icons/{16,20,24,32,48,64}` contains 768 individual transparent PNGs.
+`assets/icons/{16,20,24,32,48,64}` contains 786 individual transparent PNGs.
 `assets/icons/atlases` contains six atlas PNGs. All are included by CMake install
 under `share/imkit/icons`. Headers and compiled embedded data are installed normally.
 Original large images are kept in the source checkout, not copied into the SDK.
@@ -112,10 +112,15 @@ This focused run uses public Dear ImGui IO events and captures the real OpenGL
 backbuffer at 16px and 20px on both themes. It does not claim native OS input automation.
 
 BoxSelect and LassoSelect are separate ImageGen originals, connected to Viewport selection mode.
-The catalog now contains 128 originals and 768 size variants; the original 120 IDs remain stable.
+The catalog now contains 131 originals and 786 size variants; the original 120 IDs remain stable.
 BoxSelectとLassoSelectは個別のImageGen原画から生成し、Viewportの選択modeへ接続しています。
-原画128枚・サイズ別PNG768枚で、既存120 IDの順序と数値は維持しています。
+原画131枚・サイズ別PNG786枚で、既存120 IDの順序と数値は維持しています。
 
-HandPan is an individual built-in ImageGen original with its saved prompt and provenance hash. Timeline uses it for the Hand tool. Native Icon Gallery inspection covers 16px light and 150% dark in `out/hand-pan-native/`. The catalog contains 128 originals, 768 variants, and six atlases.
+HandPan is an individual built-in ImageGen original with its saved prompt and provenance hash. Timeline uses it for the Hand tool. Native Icon Gallery inspection covers 16px light and 150% dark in `out/hand-pan-native/`. The catalog contains 131 originals, 786 variants, and six atlases.
 
-HandPanは組込みImageGenによる個別原画で、promptとprovenance hashを保存しています。TimelineのHand toolへ接続し、`out/hand-pan-native/`のnative Icon Galleryで16px lightと150% darkを確認しました。原画128枚・派生PNG768枚・atlas6枚です。
+HandPanは組込みImageGenによる個別原画で、promptとprovenance hashを保存しています。TimelineのHand toolへ接続し、`out/hand-pan-native/`のnative Icon Galleryで16px lightと150% darkを確認しました。原画131枚・派生PNG786枚・atlas6枚です。
+
+
+Razor, RippleEdit, and SlipEdit each have an individual built-in ImageGen original and saved prompt. Timeline connects them to split-at-cursor, ripple trim, and source slip tools. Native Icon Gallery was inspected at 16px light and 150% dark in `out/timeline-edit-icons/`. RollingEdit and SlideEdit originals remain pending after generation-service rejection; their existing text tool controls remain operational.
+
+Razor・RippleEdit・SlipEditは組込みImageGenの個別原画とpromptを保存し、Timelineのカーソル位置分割・ripple trim・source slipへ接続しました。`out/timeline-edit-icons/`のnative Icon Galleryで16px lightと150% darkを確認しました。RollingEditとSlideEditの原画は生成サービスの拒否により未追加で、既存の文字によるツール操作を維持しています。

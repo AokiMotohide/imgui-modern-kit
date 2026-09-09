@@ -1918,5 +1918,50 @@
       1049,
       1091
     ]
+  },
+  {
+    "name": "Razor",
+    "source": "assets/icons/originals/Razor.png",
+    "sha256": "5c0bf644daab5470be457b924f5203384474fe7235d49e4ae2277a3be676c316",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      258,
+      251,
+      998,
+      992
+    ]
+  },
+  {
+    "name": "RippleEdit",
+    "source": "assets/icons/originals/RippleEdit.png",
+    "sha256": "f8306251c4b144afcc415705f0e2459dbdb7fd36bcc224e5350f54856faa0c77",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      404,
+      282,
+      905,
+      1024
+    ]
+  },
+  {
+    "name": "SlipEdit",
+    "source": "assets/icons/originals/SlipEdit.png",
+    "sha256": "3663b126a9ee59eb86ba5c6202baa139c83cfef59fd43f0f229408157b690fba",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      144,
+      458,
+      1110,
+      796
+    ]
   }
 ]

@@ -97,12 +97,13 @@
     },
     {
       "operation": "Razor",
-      "widget": "Timeline",
+      "widget": "Timeline tool selector; Icon Gallery",
       "disposition": "new",
       "icon": "Razor",
       "tooltip": "Razor",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "generated and connected; native 16px light and 150% dark inspected",
+      "evidence": "out/timeline-edit-icons/icons-16-light.png; out/timeline-edit-icons/page-6-dark-150.png (local captures, not distributed)"
     },
     {
       "operation": "SplitClip",
@@ -134,12 +135,13 @@
     },
     {
       "operation": "RippleEdit",
-      "widget": "Timeline",
+      "widget": "Timeline tool selector; Icon Gallery",
       "disposition": "new",
       "icon": "RippleEdit",
       "tooltip": "Ripple Edit",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "generated and connected; native 16px light and 150% dark inspected",
+      "evidence": "out/timeline-edit-icons/icons-16-light.png; out/timeline-edit-icons/page-6-dark-150.png (local captures, not distributed)"
     },
     {
       "operation": "RippleDelete",
@@ -161,12 +163,13 @@
     },
     {
       "operation": "SlipEdit",
-      "widget": "Timeline",
+      "widget": "Timeline tool selector; Icon Gallery",
       "disposition": "new",
       "icon": "SlipEdit",
       "tooltip": "Slip Edit",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "generated and connected; native 16px light and 150% dark inspected",
+      "evidence": "out/timeline-edit-icons/icons-16-light.png; out/timeline-edit-icons/page-6-dark-150.png (local captures, not distributed)"
     },
     {
       "operation": "SlideEdit",
