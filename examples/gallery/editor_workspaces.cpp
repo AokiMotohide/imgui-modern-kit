@@ -362,6 +362,24 @@ void EditorWorkspaces::ApplyEvents() {
         for (const auto &object:objects)
             for (int component=0;component<3;++component)
                 isProperty |= e.target==ObjectPropertyId(object.id,component);
+        if (isProperty && e.kind==editor::EditKind::PropertyKey) {
+            auto &channel=propertyKeys[e.target];
+            auto next=std::lower_bound(channel.begin(),channel.end(),e.proposed.first,
+                [](const auto &key,auto tick){return key.tick<tick;});
+            auto action=static_cast<editor::PropertyKeyAction>(e.proposed.offset);
+            if (action==editor::PropertyKeyAction::Add) {
+                if (next!=channel.end() && next->tick==e.proposed.first) next->value=e.proposed.x;
+                else channel.insert(next,{nextId++,e.target,e.proposed.first,e.proposed.x});
+                changed=true;
+            } else if (action==editor::PropertyKeyAction::Remove) {
+                if (next!=channel.end() && next->tick==e.proposed.first) {channel.erase(next);changed=true;}
+            } else if (action==editor::PropertyKeyAction::Previous) {
+                if (next!=channel.begin()) timeline.time.playhead=(--next)->tick;
+            } else if (action==editor::PropertyKeyAction::Next) {
+                if (next!=channel.end() && next->tick==e.proposed.first) ++next;
+                if (next!=channel.end()) timeline.time.playhead=next->tick;
+            }
+        }
         if (isProperty && e.kind==editor::EditKind::Toggle) {
             unsigned flag=static_cast<unsigned>(e.proposed.x);
             if (flag==8 || flag==16 || flag==4) {
@@ -424,6 +442,14 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
             s.propertyFlags[props[i].id]|(props[i].value!=props[i].defaultValue?2u:0u));
     }
     s.videoProperties.icons=s.icons;
+    s.videoProperties.time=s.timeline.time.playhead;
+    for (auto &row:props) {
+        auto channel=s.propertyKeys.find(row.id);
+        if (channel==s.propertyKeys.end() || channel->second.empty()) continue;
+        unsigned flags=static_cast<unsigned>(row.flags)|32u;
+        if (std::any_of(channel->second.begin(),channel->second.end(),[&](const auto &key){return key.tick==s.timeline.time.playhead;})) flags|=64u;
+        row.flags=static_cast<editor::PropertyFlags>(flags);
+    }
     PropertyRows visibleProperties{std::span(props).first(FilterProperties(props,s.videoProperties.search))};
     editor::PropertyProvider properties{&visibleProperties,s.revision,static_cast<int>(visibleProperties.rows.size()),PropertyRows::Query};
     editor::PropertyGrid("clip", properties, s.videoProperties, s.events);
@@ -636,6 +662,14 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
             row.flags=static_cast<editor::PropertyFlags>(s.propertyFlags[row.id]|
                 (row.value!=row.defaultValue?2u:0u)|(object->locked?16u:0u));
         s.objectProperties.icons=s.icons;
+        s.objectProperties.time=s.timeline.time.playhead;
+        for (auto &row:rows) {
+            auto channel=s.propertyKeys.find(row.id);
+            if (channel==s.propertyKeys.end() || channel->second.empty()) continue;
+            unsigned flags=static_cast<unsigned>(row.flags)|32u;
+            if (std::any_of(channel->second.begin(),channel->second.end(),[&](const auto &key){return key.tick==s.timeline.time.playhead;})) flags|=64u;
+            row.flags=static_cast<editor::PropertyFlags>(flags);
+        }
         PropertyRows visibleProperties{std::span(rows).first(FilterProperties(rows,s.objectProperties.search))};
         editor::PropertyProvider properties{&visibleProperties,s.revision,static_cast<int>(visibleProperties.rows.size()),PropertyRows::Query};
         editor::PropertyGrid("object", properties, s.objectProperties, s.events);

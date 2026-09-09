@@ -31,6 +31,7 @@ struct EditorWorkspaces {
     std::array<editor::SnapCandidate, 256> snapCandidates{};
     std::map<editor::StableId, std::string> renamedLabels;
     std::map<editor::StableId, unsigned> propertyFlags;
+    std::map<editor::StableId, std::vector<editor::Keyframe>> propertyKeys;
     editor::EventBuffer events{eventStorage};
     std::array<editor::Binding, 32> bindings{};
     std::size_t bindingCount = 0;

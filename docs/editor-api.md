@@ -133,3 +133,7 @@ TransportのJ/K/Lは `PlayReverse` / `Pause` / `PlayForward` bindingを使いま
 Property labels expose Favorite, Locked and Override context actions even while values are locked. Toggle events identify the `PropertyFlags` bit in `Value.x` and the requested state in `Value.y`; the host applies it. Modified/override/locked states use textual indicators in addition to styling. Gallery filters property labels and categories on the following frame and applies object Reset events. `PropertyState.icons` optionally supplies the host atlas for keyframe buttons.
 
 Property名のcontext menuは値がロック中でもFavorite・Locked・Overrideを操作できます。Toggleイベントの `Value.x` は `PropertyFlags` のbit、`Value.y` は変更先の状態で、ホストが反映します。modified・override・lockedは文字でも表示します。Galleryは次フレームで名前とカテゴリの検索を反映し、objectのResetも適用します。`PropertyState.icons` にホストatlasを渡すとkeyframeアイコンを表示します。
+
+Property key actions use `EditKind::PropertyKey`, distinct from curve-key movement. `target` is the property ID; proposed `first` is `PropertyState.time`, `offset` is `PropertyKeyAction`, and `x` is the property value. Gallery stores sorted, host-owned property channels and applies Add/Remove/Previous/Next, updating keyed state at the playhead.
+
+Propertyのkey操作はcurve key移動とは別の `EditKind::PropertyKey` です。`target` はproperty ID、proposedの `first` は `PropertyState.time`、`offset` は `PropertyKeyAction`、`x` はproperty値です。Galleryはソート済みchannelをホスト側で保持し、追加・削除・前後移動とplayhead位置のkeyed表示を反映します。

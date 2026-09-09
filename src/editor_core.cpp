@@ -706,16 +706,20 @@ void PropertyGrid(const char *id, const PropertyProvider &p, PropertyState &s, E
                         Action(out, row.id, p.revision, EditKind::Toggle, Value{0, 0, 0, 0, 8},
                                Value{0, 0, 0, 0, 8, Flag(row.flags, PropertyFlags::Favorite) ? 0. : 1.});
                     if (ImGui::MenuItem("Previous key"))
-                        Action(out, row.id, p.revision, EditKind::Keyframe, {}, Value{-1});
+                        Action(out, row.id, p.revision, EditKind::PropertyKey, {},
+                               Value{s.time,0,static_cast<Tick>(PropertyKeyAction::Previous),0,row.value});
                     if (ImGui::MenuItem("Next key"))
-                        Action(out, row.id, p.revision, EditKind::Keyframe, {}, Value{1});
+                        Action(out, row.id, p.revision, EditKind::PropertyKey, {},
+                               Value{s.time,0,static_cast<Tick>(PropertyKeyAction::Next),0,row.value});
                     ImGui::EndPopup();
                 }
                 ImGui::TableNextColumn();
                 if (s.icons ? IconButton("keyframe",*s.icons,IconId::Keyframe,
                         Flag(row.flags,PropertyFlags::Keyed)?"Remove keyframe":"Add keyframe",{ImGui::GetFontSize()})
                     : ImGui::SmallButton(Flag(row.flags, PropertyFlags::Keyed) ? "<>" : "+"))
-                    Action(out, row.id, p.revision, EditKind::Keyframe);
+                    Action(out, row.id, p.revision, EditKind::PropertyKey, {},
+                        Value{s.time,0,static_cast<Tick>(Flag(row.flags,PropertyFlags::Keyed)?
+                            PropertyKeyAction::Remove:PropertyKeyAction::Add),0,row.value});
                 ImGui::EndDisabled();
                 ImGui::PopID();
             }
