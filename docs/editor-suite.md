@@ -612,3 +612,7 @@ Track名はheader幅へfine clipし、高さmenuの右クリック領域も同�
 Track height edits cancel when their popup is no longer submitted. A full event buffer retains the pending Cancel and retries it on the next frame with capacity; pending Commit is preserved. Focused transaction tests cover popup closure and Cancel retry.
 
 Track高さの編集popupが表示されなくなった場合はCancelします。event bufferが満杯ならCancelを保持して容量回復後のフレームで再送し、保留中のCommitは維持します。popup終了とCancel再送をtransaction回帰で確認しました。
+
+Gallery Japanese mode now translates Timeline tools/tooltips and snapping/follow/Fit controls through public TimelineLabels. Video regressions, API compilation and the external source consumer pass.
+
+Galleryの日本語modeは公開TimelineLabelsを使い、Timelineのtool名・tooltipとsnap／追従／Fit操作を翻訳します。Video回帰、API compile、外部source consumerを確認しました。

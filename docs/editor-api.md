@@ -303,3 +303,7 @@ Timelineの`AddKey`はtarget=channel、parent=clip、first=clip内tick、x=値�
 `TrackLabels::kinds` supplies six UTF-8 role tooltips in TrackKind order for the track heading glyph. Gallery uses Japanese role names when its language option is enabled.
 
 `TrackLabels::kinds`はtrack見出しglyphの種類tooltipをTrackKind順に6つ指定します。Galleryの日本語切替では日本語の種類名を渡します。
+
+`TimelineState::labels` borrows `TimelineLabels` strings for seven tools/tooltips, Snap, Magnet, the options popup, follow modes, snap kinds and Fit. Keep UTF-8 strings valid during the call; defaults are English. Binding behavior and popup IDs are unchanged.
+
+`TimelineState::labels`の`TimelineLabels`は7種類のtool名・tooltip、Snap、Magnet、設定popup、追従mode、snap対象、FitのUTF-8文字列を非所有参照します。呼出し中の寿命をホストで保証し、未指定時は英語を使用します。bindingの挙動とpopup IDは維持します。

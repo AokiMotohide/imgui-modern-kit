@@ -107,6 +107,16 @@ struct TrackLabels {
     const char *expand="Expand track", *collapse="Collapse track";
     std::array<const char *,6> kinds{"Video track","Audio track","Caption track","Effect track","Adjustment track","Group track"};
 };
+struct TimelineLabels {
+    std::array<const char *,7> tools{"Select","Razor","Ripple","Roll","Slip","Slide","Hand"};
+    std::array<const char *,7> tooltips{"Select clips","Razor: split clip at cursor","Ripple: trim and shift following clips",
+        "Roll: move the boundary between adjacent clips","Slip: change source range without moving clip","Slide: move clip and trim its neighbors","Pan timeline"};
+    const char *snap="Snap", *magnet="Magnet", *magnetTooltip="Magnet: snap to timeline targets";
+    const char *options="Timeline options", *follow="Follow playhead", *frameGrid="Frame grid";
+    std::array<const char *,3> followModes{"Off","Smooth","Page"};
+    std::array<const char *,7> snapKinds{"Frame","Playhead","Marker","Clip edge","Keyframe","In/out","Selection edge"};
+    const char *fit="Fit", *fitTooltip="Fit timeline";
+};
 struct TimelineState {
     struct MemberDrag {
         ClipView original{};
@@ -150,6 +160,7 @@ struct TimelineState {
     std::size_t keyCompanionCount=0;
     editor::Selection *keySelection=nullptr; // Optional non-owning selection distinct from clips.
     TrackLabels trackLabels;
+    TimelineLabels labels;
 };
 // Resolves both moving edges; ignores every selected clip and filters disabled kinds.
 editor::SnapResult ResolveTimelineSnap(const TimelineState &state, Tick delta,

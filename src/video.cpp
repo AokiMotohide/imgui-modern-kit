@@ -204,13 +204,13 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
               editor::EventBuffer &out, const Theme &theme, ImVec2 size) {
     ImGui::PushID(id);
     const float timelineWidth=size.x>0?size.x:ImGui::GetContentRegionAvail().x;
-    const char *tools[] = {"Select", "Razor", "Ripple", "Roll", "Slip", "Slide", "Hand"};
+    const auto &tools=s.labels.tools;
     for (int i = 0; i < 7; ++i) {
         if (i)
             ImGui::SameLine();
         if (s.icons) {
             const IconId glyphs[]={IconId::SelectPointer,IconId::Razor,IconId::RippleEdit,IconId::RollingEdit,IconId::SlipEdit,IconId::SlideEdit,IconId::HandPan};
-            const char *tips[]={"Select clips","Razor: split clip at cursor","Ripple: trim and shift following clips","Roll: move the boundary between adjacent clips","Slip: change source range without moving clip","Slide: move clip and trim its neighbors","Pan timeline"};
+            const auto &tips=s.labels.tooltips;
             const bool active=static_cast<int>(s.tool)==i;
             if (active) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
             if (IconButton(tools[i],*s.icons,glyphs[i],tips[i])) s.tool=static_cast<Tool>(i);
@@ -223,22 +223,22 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             s.tool = static_cast<Tool>(i);
     }
     ImGui::SameLine();
-    ImGui::Checkbox("Snap", &s.snapping);
+    ImGui::Checkbox(s.labels.snap, &s.snapping);
     ImGui::SameLine();
     if (s.icons) {
         const bool active=s.magnet;
         if (active) ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-        if (IconButton("magnet", *s.icons, IconId::Magnet, "Magnet: snap to timeline targets")) s.magnet=!s.magnet;
+        if (IconButton("magnet", *s.icons, IconId::Magnet, s.labels.magnetTooltip)) s.magnet=!s.magnet;
         if (active) ImGui::PopStyleColor();
-    } else ImGui::Checkbox("Magnet", &s.magnet);
+    } else ImGui::Checkbox(s.labels.magnet, &s.magnet);
     ImGui::SameLine();
-    if (ImGui::Button("Timeline options")) ImGui::OpenPopup("snap-options");
+    if (ImGui::Button(s.labels.options)) ImGui::OpenPopup("snap-options");
     if (ImGui::BeginPopup("snap-options")) {
         int follow=static_cast<int>(s.autoScroll);
-        if (ImGui::Combo("Follow playhead",&follow,"Off\0Smooth\0Page\0"))
+        if (ImGui::Combo(s.labels.follow,&follow,s.labels.followModes.data(),static_cast<int>(s.labels.followModes.size())))
             s.autoScroll=static_cast<editor::AutoScroll>(follow);
-        ImGui::Checkbox("Frame grid", &s.snapToFrame);
-        const char *names[]={"Frame", "Playhead", "Marker", "Clip edge", "Keyframe", "In/out", "Selection edge"};
+        ImGui::Checkbox(s.labels.frameGrid, &s.snapToFrame);
+        const auto &names=s.labels.snapKinds;
         for (unsigned i=1;i<7;++i) {
             bool enabled=(s.snapKinds & (1u<<i))!=0;
             if (ImGui::Checkbox(names[i],&enabled)) s.snapKinds ^= 1u<<i;
@@ -246,7 +246,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         ImGui::EndPopup();
     }
     ImGui::SameLine();
-    bool fit=s.icons ? IconButton("fit",*s.icons,IconId::FitView,"Fit timeline") : ImGui::Button("Fit");
+    bool fit=s.icons ? IconButton("fit",*s.icons,IconId::FitView,s.labels.fitTooltip) : ImGui::Button(s.labels.fit);
     fit |= editor::CommandPressed(editor::Command::Fit,s.bindings,
         ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows));
     if (fit && p.contentRange.last>p.contentRange.first) {
