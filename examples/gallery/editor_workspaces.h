@@ -65,6 +65,8 @@ struct EditorWorkspaces {
     cg::Camera sceneCamera{{0,0,0},0,.15,10,.65,5,cg::Projection::Perspective};
     cg::OutlinerState outliner;
     cg::UVState uvState;
+    std::array<editor::SelectablePoint,4> uvSelectionPoints{};
+    std::array<editor::Point,512> uvSelectionPath{};
     std::array<preview::Vertex, 24> cubeVertices{};
     std::array<std::uint32_t, 36> cubeIndices{};
     std::array<preview::Triangle, 256> scratch{};
