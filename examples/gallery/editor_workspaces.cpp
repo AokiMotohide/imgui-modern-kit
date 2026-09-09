@@ -348,6 +348,8 @@ void EditorWorkspaces::ApplyEvents() {
         }
         if (e.kind == editor::EditKind::Rename)
             renamedLabels[e.target] = e.proposedText.data();
+        if (e.kind==editor::EditKind::Rename) for (auto &object:objects)
+            if (object.id==e.target && !object.locked) {object.label=renamedLabels[e.target].c_str();changed=true;}
         auto clip = std::find_if(clips.begin(), clips.end(), [&](const auto &c) { return c.id == e.target; });
         if (clip != clips.end()) {
             if (e.kind == editor::EditKind::Rename) {

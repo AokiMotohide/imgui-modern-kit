@@ -561,6 +561,8 @@ void EndViewport() {
 }
 void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::Selection &selection,
               editor::EventBuffer &out) {
+    detail::ResumeTerminal(s.renameTransaction,p.revision,out);
+    if (!s.renameTransaction.active) s.renaming=0;
     ImGui::PushID(id);
     ImGui::InputText("Search", s.search, sizeof(s.search));
     if (ImGui::BeginTable("tree", 5,
@@ -585,12 +587,53 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
                              Value({4, row.expanded ? 1. : 0., 0}), Value({4, row.expanded ? 0. : 1., 0}));
                     ImGui::SameLine();
                 }
-                if (ImGui::Selectable(row.label, selection.Contains(row.id)) && row.selectable &&
-                    !row.locked) {
-                    selection.Set(row.id, ImGui::GetIO().KeyCtrl, ImGui::GetIO().KeyCtrl);
-                    Emit(out, row.id, p.revision, editor::EditKind::Select);
+                auto beginRename=[&] {
+                    if (row.locked || s.renameTransaction.active) return;
+                    editor::Event event{row.id,p.revision,editor::Phase::Begin,editor::EditKind::Rename};
+                    if (std::snprintf(event.originalText.data(),event.originalText.size(),"%s",row.label)>=static_cast<int>(event.originalText.size())) {
+                        out.overflow=true;return;
+                    }
+                    event.proposedText=event.originalText;
+                    if (!out.Push(event)) return;
+                    s.renameTransaction.draft=event;s.renameTransaction.active=true;
+                    std::snprintf(s.rename,sizeof(s.rename),"%s",row.label);s.renaming=row.id;s.renameFocus=true;
+                };
+                if (s.renaming==row.id) {
+                    if (row.locked) s.renameTransaction.Cancel(out);
+                    else if (s.renameTransaction.draft.phase==editor::Phase::Commit || s.renameTransaction.draft.phase==editor::Phase::Cancel)
+                        ImGui::TextUnformatted(s.rename);
+                    else {
+                        if (s.renameFocus) {ImGui::SetKeyboardFocusHere();s.renameFocus=false;}
+                        ImGui::SetNextItemWidth(-1);
+                        const bool accept=ImGui::InputText("##rename",s.rename,sizeof(s.rename),
+                            ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_AutoSelectAll);
+                        auto &draft=s.renameTransaction.draft;
+                        if (std::string_view(draft.proposedText.data())!=s.rename) {
+                            auto event=draft;event.phase=editor::Phase::Update;
+                            std::snprintf(event.proposedText.data(),event.proposedText.size(),"%s",s.rename);
+                            if (out.Push(event)) draft=event;
+                        }
+                        if (ImGui::IsKeyPressed(ImGuiKey_Escape)) s.renameTransaction.Cancel(out);
+                        else if (accept) {
+                            std::snprintf(draft.proposedText.data(),draft.proposedText.size(),"%s",s.rename);
+                            s.renameTransaction.Commit(p.revision,out);
+                        }
+                        if (!s.renameTransaction.active) s.renaming=0;
+                    }
+                } else {
+                    if (ImGui::Selectable(row.label, selection.Contains(row.id)) && row.selectable && !row.locked) {
+                        if (selection.Set(row.id, ImGui::GetIO().KeyCtrl, ImGui::GetIO().KeyCtrl))
+                            Emit(out,row.id,p.revision,editor::EditKind::Select);
+                        else out.overflow=true;
+                    }
+                    if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) beginRename();
+                    if (ImGui::BeginPopupContextItem("actions")) {
+                        ImGui::BeginDisabled(row.locked || s.renameTransaction.active);
+                        if (ImGui::MenuItem("Rename")) beginRename();
+                        ImGui::EndDisabled();ImGui::EndPopup();
+                    }
                 }
-                if (ImGui::BeginDragDropSource()) {
+                if (!row.locked && !s.renameTransaction.active && ImGui::BeginDragDropSource()) {
                     ImGui::SetDragDropPayload("IMKIT_OBJECT", &row.id, sizeof(row.id));
                     ImGui::TextUnformatted(row.label);
                     ImGui::EndDragDropSource();

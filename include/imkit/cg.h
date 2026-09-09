@@ -95,6 +95,8 @@ void EndViewport();
 struct OutlinerState {
     char search[128]{}, rename[256]{};
     StableId renaming = 0;
+    editor::Transaction renameTransaction;
+    bool renameFocus=false;
 };
 void Outliner(const char *id, const SceneProvider &provider, OutlinerState &state,
               editor::Selection &selection, editor::EventBuffer &events);
