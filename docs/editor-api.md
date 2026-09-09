@@ -149,3 +149,7 @@ CG Gallery Inspectorは移動・回転・scaleの全9成分を公開します。
 CG Inspector component edits and reset apply an absolute value to the selected objects. Different values display Mixed. A locked object/property rejects the whole edit, and changing selection during a gesture rejects its commit.
 
 CG Inspectorの成分編集とresetは選択objectへ同じ絶対値を適用します。値が異なる場合はMixed表示になります。locked object/propertyを含む場合は一括編集全体を拒否し、gesture中に選択が変わった場合もcommitを拒否します。
+
+`FollowPlayhead` provides Off/Smooth/Page following in seconds. Smooth keeps a ten-percent screen margin in either direction; Page advances whole visible widths and handles reverse playback and multi-page jumps. `TimelineState.autoScroll` selects the behavior through Timeline options.
+
+`FollowPlayhead` は秒単位のOff/Smooth/Page追従を提供します。Smoothは進行方向の両側に表示幅の10%の余白を保ち、Pageは表示幅単位で切り替え、逆再生と複数page移動にも対応します。Timeline optionsで `TimelineState.autoScroll` を変更できます。

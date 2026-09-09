@@ -389,6 +389,18 @@ bool CommandPressed(Command command, std::span<const Binding> bindings, bool foc
             return true;
     return false;
 }
+double FollowPlayhead(double origin,double width,double head,AutoScroll mode) {
+    if (!std::isfinite(origin) || !std::isfinite(width) || !std::isfinite(head) || width<=0 || mode==AutoScroll::Off)
+        return origin;
+    if (mode==AutoScroll::Page) {
+        if (head<origin || head>=origin+width) return origin+std::floor((head-origin)/width)*width;
+        return origin;
+    }
+    const double margin=width*.1;
+    if (head>origin+width-margin) return head-width+margin;
+    if (head<origin+margin) return head-margin;
+    return origin;
+}
 void Transport(TimeState &s, std::span<const Binding> bindings) {
     Transport(s, bindings, nullptr);
 }

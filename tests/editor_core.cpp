@@ -102,6 +102,14 @@ int main() {
     automatic = MoveHandle(ResolveHandles(extrema, 1), false, {.25, .5});
     check(automatic.handles == HandleMode::Free && automatic.left.y == 0 && automatic.right.y == .5,
           "manual auto handle edit preserves resolved opposite handle and becomes free");
+    check(FollowPlayhead(0,10,9.5,AutoScroll::Smooth)==.5,"smooth forward margin");
+    check(FollowPlayhead(0,10,-.5,AutoScroll::Smooth)==-1.5,"smooth reverse margin");
+    check(FollowPlayhead(0,10,9.5,AutoScroll::Page)==0,"page holds while head is visible");
+    check(FollowPlayhead(0,10,10,AutoScroll::Page)==10,"page advances at right boundary");
+    check(FollowPlayhead(0,10,-.5,AutoScroll::Page)==-10,"page follows reverse playback");
+    check(FollowPlayhead(3,10,38,AutoScroll::Page)==33,"page jumps across multiple pages");
+    check(FollowPlayhead(3,0,38,AutoScroll::Smooth)==3,"zero-width viewport does not shift origin");
+    check(FollowPlayhead(3,10,38,AutoScroll::Off)==3,"off leaves host origin unchanged");
     auto *context=ImGui::CreateContext();
     auto &io=ImGui::GetIO();
     io.IniFilename=nullptr;

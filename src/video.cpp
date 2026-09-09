@@ -180,8 +180,11 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         if (active) ImGui::PopStyleColor();
     } else ImGui::Checkbox("Magnet", &s.magnet);
     ImGui::SameLine();
-    if (ImGui::Button("Snap options")) ImGui::OpenPopup("snap-options");
+    if (ImGui::Button("Timeline options")) ImGui::OpenPopup("snap-options");
     if (ImGui::BeginPopup("snap-options")) {
+        int follow=static_cast<int>(s.autoScroll);
+        if (ImGui::Combo("Follow playhead",&follow,"Off\0Smooth\0Page\0"))
+            s.autoScroll=static_cast<editor::AutoScroll>(follow);
         ImGui::Checkbox("Frame grid", &s.snapToFrame);
         const char *names[]={"Frame", "Playhead", "Marker", "Clip edge", "Keyframe", "In/out", "Selection edge"};
         for (unsigned i=1;i<7;++i) {
@@ -202,14 +205,10 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     if (s.heightDrag.active && ImGui::IsKeyPressed(ImGuiKey_Escape)) s.heightDrag.Cancel(out);
     if (view.hovered && s.tool == Tool::Hand && ImGui::IsMouseDragging(0))
         s.canvas.origin.x -= io.MouseDelta.x / s.canvas.scale.x;
-    if (s.time.playing) {
-        double visibleSeconds = (view.max.x - view.min.x - s.headerWidth) / s.canvas.scale.x,
-               head = editor::Seconds(s.time.playhead);
-        if (head > s.canvas.origin.x + visibleSeconds * .9)
-            s.canvas.origin.x = head - visibleSeconds * .9;
-        if (head < s.canvas.origin.x)
-            s.canvas.origin.x = head;
-    }
+    if (s.time.playing)
+        s.canvas.origin.x=editor::FollowPlayhead(s.canvas.origin.x,
+            (view.max.x-view.min.x-s.headerWidth)/s.canvas.scale.x,
+            editor::Seconds(s.time.playhead),s.autoScroll);
     // Track rows are indexed independently from time; no all-track query or clip scan.
     if (view.hovered && io.MouseWheel && !io.KeyCtrl)
         s.verticalScroll = (std::max)(0., s.verticalScroll - io.MouseWheel * s.rowHeight);
