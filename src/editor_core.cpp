@@ -615,7 +615,21 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
         const auto resolved = ResolveHandles(channelKeys, i - channelBegin);
         Point v{Seconds(k.tick), -k.value};
         auto p = Screen(v, s.canvas, view.min);
-        if (i && keys[i - 1].channel == k.channel) {
+        if (provider.sample && i==channelBegin) {
+            const float width=view.max.x-view.min.x;
+            const int segments=(std::max)(1,static_cast<int>(std::ceil(width/4)));
+            ImVec2 previous{};
+            for (int sample=0;sample<=segments;++sample) {
+                const float x=view.min.x+width*sample/segments;
+                const Tick tick=FromSeconds(s.canvas.origin.x+(x-view.min.x)/s.canvas.scale.x);
+                const double value=provider.sample(provider.user,k.channel,tick,s.extrapolation);
+                auto point=Screen({Seconds(tick),-value},s.canvas,view.min);
+                if (sample && std::isfinite(point.y) && std::isfinite(previous.y) && (!ghost || sample%2))
+                    d->AddLine(previous,point,ImGui::GetColorU32(curveColor),ghost?1.f:1.5f);
+                previous=point;
+            }
+        }
+        if (!provider.sample && i && keys[i - 1].channel == k.channel) {
             auto &prev = keys[i - 1];
             ImVec2 old = Screen({Seconds(prev.tick), -prev.value}, s.canvas, view.min);
             for (int j = 1; j <= 32; ++j) {
@@ -655,6 +669,11 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
     }
     if (ImGui::BeginPopup("key settings")) {
         ImGui::Checkbox("Ghost other channels",&s.ghostOtherChannels);
+        if (provider.sample) {
+            int mode=static_cast<int>(s.extrapolation);
+            if (ImGui::Combo("Extrapolation",&mode,"Constant\0Linear\0Repeat\0"))
+                s.extrapolation=static_cast<Extrapolation>(mode);
+        }
         auto key=std::find_if(keys.begin(),keys.end(),[&](const auto &value){return value.id==s.contextKey;});
         if (key!=keys.end()) {
             ImGui::BeginDisabled(key->locked);

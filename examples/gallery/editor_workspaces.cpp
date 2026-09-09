@@ -60,6 +60,12 @@ editor::CurveProvider Curves(EditorWorkspaces &s) {
     return {&s, s.revision, [](void *u, editor::CurveQuery q) {
                 auto &s = *static_cast<EditorWorkspaces *>(u);
                 return s.QueryKeys(q);
+            }, [](void *u,editor::StableId id,editor::Tick tick,editor::Extrapolation mode) {
+                const auto &s=*static_cast<EditorWorkspaces*>(u);
+                for (auto [first,last]:s.keyChannels)
+                    if (s.keys[first].channel==id)
+                        return editor::Evaluate(std::span<const editor::Keyframe>(s.keys).subspan(first,last-first),tick,mode);
+                return 0.;
             }};
 }
 void Options(EditorWorkspaces &s) {
