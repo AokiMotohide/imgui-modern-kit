@@ -38,6 +38,9 @@ struct OutlineEdge {
 std::size_t DrawMeshOutline(ImDrawList &draw,const Mesh &mesh,const cg::Camera &camera,
     ImVec2 origin,ImVec2 size,std::span<OutlineEdge> scratch,ImU32 color,float thickness=2);
 bool Cube(std::span<Vertex> vertices, std::span<std::uint32_t> indices); // 24 vertices, 36 indices.
+// Host-owned indexed helper meshes, usable by both preview renderers.
+bool CameraPrimitive(std::span<Vertex> vertices,std::span<std::uint32_t> indices); // 24 vertices,36 indices; frustum along +Z.
+bool LightPrimitive(std::span<Vertex> vertices,std::span<std::uint32_t> indices); // 24 vertices,24 indices; point-light octahedron.
 bool Sphere(std::span<Vertex> vertices, std::span<std::uint32_t> indices, int slices = 24, int rings = 12);
 // OpenGL 3.3 core function pointers, supplied by the host with a current context.
 // On Windows x64 OpenGL APIENTRY uses the platform's single calling convention.

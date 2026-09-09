@@ -375,6 +375,13 @@ void EditorWorkspaces::Initialize() {
     geometries[objects[1].geometry]={{cubeVertices.begin(),cubeVertices.end()},{cubeIndices.begin(),cubeIndices.end()}};
     components.push_back({{nextId++,objects[1].id,"Mesh renderer","Draw the host geometry using viewport shading.",true},false});
     components.push_back({{nextId++,objects[1].id,"Wireframe override","Override preceding renderer shading with wireframe.",false},true});
+    for (int i : {2,3}) {
+        auto &geometry=geometries[objects[i].geometry=nextId++];
+        geometry.vertices.resize(24);geometry.indices.resize(i==2 ? 24 : 36);
+        if (i==2) preview::LightPrimitive(geometry.vertices,geometry.indices);
+        else preview::CameraPrimitive(geometry.vertices,geometry.indices);
+        components.push_back({{nextId++,objects[i].id,"Helper renderer","Host-owned camera/light preview mesh.",true},false});
+    }
     objects[1].transform.scale = {.7, .7, .7};
     objectSelection.Set(objects[1].id);
     const char *assetNames[] = {"Studio take", "Ambience",     "Title",      "Surface",

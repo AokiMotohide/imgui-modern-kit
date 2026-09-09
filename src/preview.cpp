@@ -173,6 +173,39 @@ bool Cube(std::span<Vertex> vertices, std::span<std::uint32_t> indices) {
     }
     return true;
 }
+bool CameraPrimitive(std::span<Vertex> vertices,std::span<std::uint32_t> indices) {
+    if (!Cube(vertices,indices)) return false;
+    for (auto &v:vertices.first(24)) {
+        const float extent=v.position[2]>0 ? .65f : .2f;
+        v.position[0]*=extent;v.position[1]*=extent*.65f;
+        v.position[2]=v.position[2]>0 ? 1.f : 0.f;
+        v.color[0]=.35f;v.color[1]=.65f;v.color[2]=.85f;
+    }
+    for (int face=0;face<6;++face) {
+        const auto &a=vertices[indices[face*6]],&b=vertices[indices[face*6+1]],&c=vertices[indices[face*6+2]];
+        const cg::Vec3 u{b.position[0]-a.position[0],b.position[1]-a.position[1],b.position[2]-a.position[2]};
+        const cg::Vec3 v{c.position[0]-a.position[0],c.position[1]-a.position[1],c.position[2]-a.position[2]};
+        const cg::Vec3 n{u.y*v.z-u.z*v.y,u.z*v.x-u.x*v.z,u.x*v.y-u.y*v.x};
+        const auto length=std::hypot(n.x,n.y,n.z);
+        for (int j=0;j<4;++j) {auto &target=vertices[face*4+j];target.normal[0]=static_cast<float>(n.x/length);target.normal[1]=static_cast<float>(n.y/length);target.normal[2]=static_cast<float>(n.z/length);}
+    }
+    return true;
+}
+bool LightPrimitive(std::span<Vertex> vertices,std::span<std::uint32_t> indices) {
+    if (vertices.size()<24 || indices.size()<24) return false;
+    int index=0;
+    for (int x : {-1,1}) for (int y : {-1,1}) for (int z : {-1,1}) {
+        cg::Vec3 points[]={{x*.3,0,0},{0,y*.3,0},{0,0,z*.3}};
+        if (x*y*z<0) std::swap(points[1],points[2]);
+        for (const auto &p:points) {
+            auto &v=vertices[index];v={};v.position[0]=static_cast<float>(p.x);v.position[1]=static_cast<float>(p.y);v.position[2]=static_cast<float>(p.z);
+            v.normal[0]=x/std::sqrt(3.f);v.normal[1]=y/std::sqrt(3.f);v.normal[2]=z/std::sqrt(3.f);
+            v.color[0]=1;v.color[1]=.8f;v.color[2]=.25f;v.color[3]=1;
+            indices[index]=index;++index;
+        }
+    }
+    return true;
+}
 bool Sphere(std::span<Vertex> vertices, std::span<std::uint32_t> indices, int slices, int rings) {
     if (slices < 3 || rings < 2 || vertices.size() < static_cast<std::size_t>(slices + 1) * (rings + 1) ||
         indices.size() < static_cast<std::size_t>(slices) * rings * 6)
