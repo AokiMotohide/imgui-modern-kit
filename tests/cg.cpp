@@ -431,6 +431,21 @@ int main() {
           "screen ring rotates around view normal");
     io.AddMouseButtonEvent(0,false);handleFrame();
     check(!handleState.drag.active && handleEvents.count==1,"screen rotation commits once");
+    handleState.tool=TransformTool::Unified;
+    for (auto kind:{imkit::editor::EditKind::Translate,imkit::editor::EditKind::Rotate,imkit::editor::EditKind::Scale}) {
+        handleState.drag={};
+        const float radius=kind==imkit::editor::EditKind::Translate ? 70.f : kind==imkit::editor::EditKind::Scale ? 110.f : 88.f;
+        const float angle=kind==imkit::editor::EditKind::Rotate ? .4f : 0.f;
+        const float x=ringCenter.x+radius*std::cos(angle), y=ringCenter.y-radius*std::sin(angle);
+        io.AddMousePosEvent(x,y);handleFrame();handleFrame();
+        io.AddMouseButtonEvent(0,true);handleFrame();
+        check(handleState.drag.active && handleState.drag.draft.kind==kind,"Unified handles select distinct operation kinds");
+        io.AddMousePosEvent(x+12,y-9);handleFrame();
+        check(!(handleState.drag.draft.proposed==handleState.drag.draft.original),"Unified handle changes selected transform component");
+        io.AddMouseButtonEvent(0,false);handleFrame();
+        check(!handleState.drag.active && handleEvents.count==1 && handleEvents.Events()[0].kind==kind,
+              "Unified preserves operation through commit");
+    }
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
