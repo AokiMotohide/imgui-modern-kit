@@ -366,7 +366,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                                track.locked,  track.record, track.target, track.source};
         const IconId controlIcons[]={track.visible ? IconId::Eye : IconId::EyeOff,
             track.mute ? IconId::Mute : IconId::Volume,IconId::Solo,
-            track.locked ? IconId::Lock : IconId::Unlock,IconId::Record,IconId::Count,IconId::Count};
+            track.locked ? IconId::Lock : IconId::Unlock,IconId::Record,IconId::Target,IconId::SourcePatch};
         const float controlIconSize=20*ImGui::GetFontSize()/14;
         float controlsWidth=12;
         for (int f=0;f<7;++f) controlsWidth+=(s.icons && controlIcons[f]!=IconId::Count ? controlIconSize :

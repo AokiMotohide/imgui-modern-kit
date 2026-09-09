@@ -341,21 +341,23 @@
     },
     {
       "operation": "SourcePatch",
-      "widget": "TrackHeader",
+      "widget": "Timeline track header and compact menu",
       "disposition": "new",
       "icon": "SourcePatch",
       "tooltip": "Source Patch",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "active background and underline; checked menu item",
+      "status": "connected; native Japanese menu host state verified",
+      "evidence": "out/source-target-native/track-controls.txt; out/source-patch-icons/icons-16-light.png; page-6-dark-150.png"
     },
     {
       "operation": "TrackTarget",
-      "widget": "TrackHeader",
-      "disposition": "new",
-      "icon": "TrackTarget",
+      "widget": "Timeline track header and compact menu",
+      "disposition": "reuse",
+      "icon": "Target",
       "tooltip": "Track Target",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "active background and underline; checked menu item",
+      "status": "connected; native Japanese menu host state verified",
+      "evidence": "out/source-target-native/track-controls.txt; out/source-patch-icons/icons-16-light.png; page-6-dark-150.png"
     },
     {
       "operation": "PreviousFrame",

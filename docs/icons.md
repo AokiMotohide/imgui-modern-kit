@@ -1,6 +1,6 @@
 # Modern outline icons
 
-ImKit includes 134 individually ImageGen-generated monochrome icons in 13 categories.
+ImKit includes 135 individually ImageGen-generated monochrome icons in 13 categories.
 The artwork is distributed with this repository under its MIT license. The original
 generations and their prompts are retained in `assets/icons/originals` and
 `assets/icons/prompts`; `provenance.json` records source hashes. Original images use
@@ -48,7 +48,7 @@ The existing `IconButton(id, ImGuiDir, accessibleLabel)` overload is unchanged.
 ## API behavior
 
 - `GetIconCatalog()` returns stable IDs, English names and categories; `GetIconInfo`
-  returns null for invalid IDs. The 134 entries follow `assets/icons/catalog.json`.
+  returns null for invalid IDs. The 135 entries follow `assets/icons/catalog.json`.
 - `GetIconAtlasPixels` accepts exactly 16, 20, 24, 32, 48 or 64. The returned CPU data
   is immutable with process lifetime; unsupported sizes return an empty view.
 - `GetIconRegion` returns the corresponding normalized UV rectangle. Two transparent
@@ -71,7 +71,7 @@ The existing `IconButton(id, ImGuiDir, accessibleLabel)` overload is unchanged.
 
 ## Assets and reproduction
 
-`assets/icons/{16,20,24,32,48,64}` contains 804 individual transparent PNGs.
+`assets/icons/{16,20,24,32,48,64}` contains 810 individual transparent PNGs.
 `assets/icons/atlases` contains six atlas PNGs. All are included by CMake install
 under `share/imkit/icons`. Headers and compiled embedded data are installed normally.
 Original large images are kept in the source checkout, not copied into the SDK.
@@ -112,19 +112,23 @@ This focused run uses public Dear ImGui IO events and captures the real OpenGL
 backbuffer at 16px and 20px on both themes. It does not claim native OS input automation.
 
 BoxSelect and LassoSelect are separate ImageGen originals, connected to Viewport selection mode.
-The catalog now contains 134 originals and 804 size variants; the original 120 IDs remain stable.
+The catalog now contains 135 originals and 810 size variants; the original 120 IDs remain stable.
 BoxSelectとLassoSelectは個別のImageGen原画から生成し、Viewportの選択modeへ接続しています。
-原画134枚・サイズ別PNG804枚で、既存120 IDの順序と数値は維持しています。
+原画135枚・サイズ別PNG810枚で、既存120 IDの順序と数値は維持しています。
 
-HandPan is an individual built-in ImageGen original with its saved prompt and provenance hash. Timeline uses it for the Hand tool. Native Icon Gallery inspection covers 16px light and 150% dark in `out/hand-pan-native/`. The catalog contains 134 originals, 804 variants, and six atlases.
+HandPan is an individual built-in ImageGen original with its saved prompt and provenance hash. Timeline uses it for the Hand tool. Native Icon Gallery inspection covers 16px light and 150% dark in `out/hand-pan-native/`. The catalog contains 135 originals, 810 variants, and six atlases.
 
-HandPanは組込みImageGenによる個別原画で、promptとprovenance hashを保存しています。TimelineのHand toolへ接続し、`out/hand-pan-native/`のnative Icon Galleryで16px lightと150% darkを確認しました。原画134枚・派生PNG804枚・atlas6枚です。
+HandPanは組込みImageGenによる個別原画で、promptとprovenance hashを保存しています。TimelineのHand toolへ接続し、`out/hand-pan-native/`のnative Icon Galleryで16px lightと150% darkを確認しました。原画135枚・派生PNG810枚・atlas6枚です。
 
 
 Razor, RippleEdit, and SlipEdit each have an individual built-in ImageGen original and saved prompt. Timeline connects them to split-at-cursor, ripple trim, and source slip tools. Native Icon Gallery was inspected at 16px light and 150% dark in `out/timeline-edit-icons/`. RollingEdit and SlideEdit were generated successfully on retry, with individual prompts and originals. All seven Timeline tool selectors now use icons when a host atlas is provided. Their 16px light and 150% dark appearance was inspected in `out/roll-slide-icons/`.
 
 Razor・RippleEdit・SlipEditは組込みImageGenの個別原画とpromptを保存し、Timelineのカーソル位置分割・ripple trim・source slipへ接続しました。`out/timeline-edit-icons/`のnative Icon Galleryで16px lightと150% darkを確認しました。RollingEditとSlideEditも再試行で個別原画を生成し、promptを保存しました。ホストatlasがある場合、Timelineの7ツールすべてをアイコンで操作できます。`out/roll-slide-icons/`で16px lightと150% darkを確認しました。
 
-Solo uses a separately generated headphones-and-dot original, saved prompt and provenance hash. It is connected to the Timeline track button/menu. Native 16px light and 150% dark Icon Gallery captures are in `out/solo-icons-native/`; the host Solo toggle passes `--verify-track-controls`. The catalog contains 134 originals, 804 size variants, six atlases and 634926 embedded RLE bytes. Existing IDs remain stable. Install includes generated assets and prompts while excluding originals, as before.
+Solo uses a separately generated headphones-and-dot original, saved prompt and provenance hash. It is connected to the Timeline track button/menu. Native 16px light and 150% dark Icon Gallery captures are in `out/solo-icons-native/`; the host Solo toggle passes `--verify-track-controls`. The catalog contains 135 originals, 810 size variants, six atlases and 636718 embedded RLE bytes. Existing IDs remain stable. Install includes generated assets and prompts while excluding originals, as before.
 
-Soloはheadphoneと中央点を持つ個別生成原画で、promptとprovenance hashを保存し、Timelineのtrackボタン／menuへ接続しました。`out/solo-icons-native/`で16px light・150% darkを確認し、`--verify-track-controls`でホストSolo状態への反映を確認しました。原画134枚、派生PNG804枚、atlas6枚、埋込みRLE 634926 bytesで、既存IDは維持しています。installは従来どおり原画を除外し、生成資産とpromptを含みます。
+Soloはheadphoneと中央点を持つ個別生成原画で、promptとprovenance hashを保存し、Timelineのtrackボタン／menuへ接続しました。`out/solo-icons-native/`で16px light・150% darkを確認し、`--verify-track-controls`でホストSolo状態への反映を確認しました。原画135枚、派生PNG810枚、atlas6枚、埋込みRLE 636718 bytesで、既存IDは維持しています。installは従来どおり原画を除外し、生成資産とpromptを含みます。
+
+SourcePatch is an individual ImageGen original with saved prompt and provenance hash, integrated into track source controls. Track targeting reuses Target rather than adding a synonymous original. Native 16px light and 150% dark captures are in `out/source-patch-icons/`; Source and Target menu changes reach host state in `out/source-target-native/track-controls.txt`. The catalog contains 135 originals, 810 PNG variants and six atlases.
+
+SourcePatchはpromptとprovenance hashを保存した個別ImageGen原画で、trackの素材patch操作へ接続しました。編集先指定は同義の原画を追加せず既存Targetを再利用します。`out/source-patch-icons/`で16px light・150% darkを確認し、`out/source-target-native/track-controls.txt`でSource／Targetのホスト反映を確認しました。原画135枚、派生PNG810枚、atlas6枚です。

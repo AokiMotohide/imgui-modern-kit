@@ -2008,5 +2008,20 @@
       922,
       903
     ]
+  },
+  {
+    "name": "SourcePatch",
+    "source": "assets/icons/originals/SourcePatch.png",
+    "sha256": "0540dc68dd7856ebdc1e3197c5856aeaa6d82ec44b4965b643dcec2c65fb572c",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      153,
+      400,
+      1102,
+      851
+    ]
   }
 ]

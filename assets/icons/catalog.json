@@ -534,5 +534,9 @@
   {
     "name": "Solo",
     "category": "Editor"
+  },
+  {
+    "name": "SourcePatch",
+    "category": "Editor"
   }
 ]
