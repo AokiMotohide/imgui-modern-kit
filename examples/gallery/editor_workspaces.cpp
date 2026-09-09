@@ -27,12 +27,25 @@ editor::StableId ObjectPropertyId(editor::StableId object, int component) {
     return object * 100 + component;
 }
 editor::AssetProvider Assets(EditorWorkspaces &s) {
-    return {&s, s.revision, static_cast<int>(s.assets.size()),
-            [](void *u, int first, int count, std::string_view) {
-                auto &s = *static_cast<EditorWorkspaces *>(u);
-                return std::span<const editor::AssetView>(s.assets).subspan(
-                    first, (std::min)(count, static_cast<int>(s.assets.size()) - first));
-            }};
+    s.assetState.breadcrumbIds=std::span(s.assetPathIds).first(s.assetPathDepth);
+    return {&s,s.revision,static_cast<int>(s.assets.size()),
+        [](void *u,int first,int count,std::string_view) {
+            auto &s=*static_cast<EditorWorkspaces*>(u);
+            auto begin=(std::min)(s.filteredAssetCount,static_cast<std::size_t>((std::max)(0,first)));
+            return std::span<const editor::AssetView>(s.filteredAssets).subspan(begin,
+                (std::min)(s.filteredAssetCount-begin,static_cast<std::size_t>((std::max)(0,count))));
+        },
+        [](void *u,std::string_view search) {
+            auto &s=*static_cast<EditorWorkspaces*>(u);
+            ImGuiTextFilter names(search.data()),tags(s.assetState.tag);
+            s.filteredAssetCount=0;
+            for (const auto &asset:s.assets)
+                if (names.PassFilter(asset.label) && tags.PassFilter(asset.tag) &&
+                    (s.assetState.status<0 || s.assetState.status==static_cast<int>(asset.status)) &&
+                    (s.assetPathDepth==1 || std::string_view(asset.tag)=="Media"))
+                    s.filteredAssets[s.filteredAssetCount++]=asset;
+            return static_cast<int>(s.filteredAssetCount);
+        }};
 }
 editor::CurveProvider Curves(EditorWorkspaces &s) {
     return {&s, s.revision, [](void *u, editor::CurveQuery q) {
@@ -153,6 +166,7 @@ void EditorWorkspaces::Initialize() {
     for (int i = 0; i < 8; ++i) {
         assets[i].id = 800000 + i;
         assets[i].label = assetNames[i];
+        assets[i].tag = i<6 ? "Media" : "Utility";
         assets[i].status = i == 6 ? editor::AssetStatus::Proxy : editor::AssetStatus::Ready;
     }
     uv = {cg::UVVertex{900001, 1, {.1, .1}}, cg::UVVertex{900002, 1, {.9, .1}},
@@ -353,6 +367,11 @@ void EditorWorkspaces::ApplyEvents() {
                 v.uv = {e.proposed.x, e.proposed.y};
                 changed = true;
             }
+        if (e.kind==editor::EditKind::Navigate && (e.target==assetPathIds[0] || e.target==assetPathIds[1])) {
+            assetPathDepth=e.target==assetPathIds[0]?1:2;
+            assetState.search[0]=assetState.tag[0]=0;
+            assetState.status=-1;
+        }
         for (auto &asset : assets)
             if (asset.id == e.target && e.kind == editor::EditKind::Rename) {
                 asset.label = renamedLabels[e.target].c_str();
@@ -412,7 +431,8 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     float top = (std::max)(220.f, ImGui::GetContentRegionAvail().y * .4f);
     ImGui::BeginChild("Media bin", {side, top}, ImGuiChildFlags_Borders);
     ImGui::SeparatorText(s.japanese ? "素材" : "Media Bin");
-    editor::AssetBrowser("media", Assets(s), s.assetState, s.selection, s.events);
+    const char *assetPath[]={"All assets","Media"};
+    editor::AssetBrowser("media", Assets(s), s.assetState, s.selection, s.events, std::span(assetPath).first(s.assetPathDepth));
     ImGui::EndChild();
     ImGui::SameLine();
     ImGui::BeginChild("Monitors", {(std::max)(100.f, available - side * 2 - 20), top},
@@ -676,7 +696,8 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     }
     ImGui::EndChild();
     ImGui::BeginChild("Assets", {side, 0}, ImGuiChildFlags_Borders);
-    editor::AssetBrowser("assets", Assets(s), s.assetState, s.selection, s.events);
+    const char *assetPath[]={"All assets","Media"};
+    editor::AssetBrowser("assets", Assets(s), s.assetState, s.selection, s.events, std::span(assetPath).first(s.assetPathDepth));
     ImGui::EndChild();
     ImGui::SameLine();
     ImGui::BeginChild("Animation UV", {0, 0}, ImGuiChildFlags_Borders);

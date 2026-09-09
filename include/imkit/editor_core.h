@@ -287,11 +287,16 @@ struct AssetProvider {
     std::uint64_t revision = 0;
     int count = 0;
     std::span<const AssetView> (*query)(void *, int first, int count, std::string_view search) = nullptr;
+    // Rebuild the host filter index before visible queries; optional for legacy providers.
+    int (*filteredCount)(void *, std::string_view search) = nullptr;
 };
 struct AssetState {
     char search[128]{}, rename[256]{};
     bool grid = true;
     StableId renaming = 0;
+    char tag[64]{};
+    int status = -1; // -1 means all statuses.
+    std::span<const StableId> breadcrumbIds;
 };
 void AssetBrowser(const char *id, const AssetProvider &provider, AssetState &state, Selection &selection,
                   EventBuffer &events, std::span<const char *const> breadcrumbs = {});

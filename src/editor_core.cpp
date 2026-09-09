@@ -731,8 +731,12 @@ void PropertyGrid(const char *id, const PropertyProvider &p, PropertyState &s, E
 void AssetBrowser(const char *id, const AssetProvider &p, AssetState &s, Selection &selection,
                   EventBuffer &out, std::span<const char *const> path) {
     ImGui::PushID(id);
-    for (auto label : path) {
-        ImGui::TextUnformatted(label);
+    for (std::size_t i=0;i<path.size();++i) {
+        ImGui::PushID(static_cast<int>(i));
+        if (ImGui::SmallButton(path[i]))
+            Action(out,i<s.breadcrumbIds.size()?s.breadcrumbIds[i]:0,p.revision,EditKind::Navigate,{},
+                   Value{static_cast<Tick>(i)});
+        ImGui::PopID();
         ImGui::SameLine();
         ImGui::TextUnformatted("/");
         ImGui::SameLine();
@@ -742,10 +746,18 @@ void AssetBrowser(const char *id, const AssetProvider &p, AssetState &s, Selecti
     ImGui::SetNextItemWidth(-1);
     ImGui::InputTextWithHint("##search", "Search", s.search, sizeof(s.search));
     ImGui::Checkbox("Grid", &s.grid);
+    if (p.filteredCount) {
+        ImGui::SameLine(); ImGui::SetNextItemWidth(100);
+        ImGui::InputTextWithHint("##tag","Tag",s.tag,sizeof(s.tag));
+        ImGui::SameLine(); ImGui::SetNextItemWidth(100);
+        int status=s.status+1;
+        if (ImGui::Combo("##status",&status,"All statuses\0Ready\0Loading\0Proxy\0Missing\0Error\0")) s.status=status-1;
+    }
+    const int count=p.filteredCount ? (std::max)(0,p.filteredCount(p.user,s.search)) : p.count;
     int columns = s.grid ? (std::max)(1, static_cast<int>(ImGui::GetContentRegionAvail().x / 120)) : 1;
     if (ImGui::BeginChild("items")) {
         ImGuiListClipper clipper;
-        clipper.Begin((p.count + columns - 1) / columns, s.grid ? 112.f : ImGui::GetFrameHeightWithSpacing());
+        clipper.Begin((count + columns - 1) / columns, s.grid ? 144.f : ImGui::GetFrameHeightWithSpacing());
         while (clipper.Step()) {
             auto assets = p.query ? p.query(p.user, clipper.DisplayStart * columns,
                                             (clipper.DisplayEnd - clipper.DisplayStart) * columns, s.search)
@@ -755,6 +767,7 @@ void AssetBrowser(const char *id, const AssetProvider &p, AssetState &s, Selecti
                 if (column++ % columns)
                     ImGui::SameLine();
                 ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(a.id)));
+                const auto assetTop=ImGui::GetCursorScreenPos();
                 ImGui::BeginGroup();
                 if (s.grid && a.thumbnail.GetTexID())
                     ImGui::Image(a.thumbnail, {104, 70});
@@ -796,9 +809,18 @@ void AssetBrowser(const char *id, const AssetProvider &p, AssetState &s, Selecti
                     ImGui::TextUnformatted(a.label);
                     ImGui::EndDragDropSource();
                 }
+                if (a.tag && *a.tag) {
+                    if (!s.grid) ImGui::SameLine();
+                    ImGui::TextDisabled("%s",a.tag);
+                }
                 if (a.status != AssetStatus::Ready) {
+                    if (!s.grid) ImGui::SameLine();
                     const char *labels[] = {"Ready", "Loading", "Proxy", "Missing", "Error"};
                     ImGui::TextDisabled("%s", labels[static_cast<int>(a.status)]);
+                }
+                if (s.grid) {
+                    ImGui::SetCursorScreenPos({assetTop.x,assetTop.y+144-ImGui::GetStyle().ItemSpacing.y});
+                    ImGui::Dummy({104,0});
                 }
                 ImGui::EndGroup();
                 ImGui::PopID();
