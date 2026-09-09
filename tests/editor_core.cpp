@@ -49,6 +49,14 @@ int main() {
     check(!tx.Update(8, proposed, events) && !tx.active && events.Events().back().phase == Phase::Cancel,
           "revision cancellation");
     EventBuffer empty{{}};
+    events.Clear();tx.Begin(77,7,EditKind::Rename,{}, {},events);
+    tx.draft.originalText[0]='A';tx.draft.proposedText[0]='B';
+    tx.Commit(8,empty);
+    check(tx.active && empty.overflow && tx.draft.proposedText==tx.draft.originalText,
+          "revision cancellation restores text even while terminal buffer is full");
+    tx.Cancel(events);
+    check(!tx.active && events.Events().back().proposedText==events.Events().back().originalText,
+          "retried text cancellation carries original text");
     check(!tx.Begin(42, 1, EditKind::Move, {}, {}, empty) && !tx.active && empty.overflow,
           "capacity failure atomicity");
     events.Clear();
