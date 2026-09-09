@@ -62,6 +62,18 @@ struct TransformCompanion {
     Transform original{};
     editor::Transaction transform, position;
 };
+// Borrowed UTF-8 labels; keep their storage alive while submitting the viewport.
+struct ViewportLabels {
+    std::array<const char *,5> tools{"Select","Translate","Rotate","Scale","Unified"};
+    std::array<const char *,3> projections{"Perspective","Orthographic","Camera"};
+    std::array<const char *,5> orientations{"World","Local","View","Parent","Custom"};
+    std::array<const char *,4> pivots{"Individual","Median","Bounds","Cursor"};
+    std::array<const char *,2> shading{"Wireframe","Solid"};
+    const char *grid="Grid", *gizmo="Gizmo", *snap="Snap";
+    const char *vertexNormals="Vertex normals", *faceNormals="Face normals";
+    const char *boxSelect="Box select", *lassoSelect="Lasso select";
+    const char *alignView="Align view: click an axis";
+};
 struct ViewportState {
     Camera camera{};
     TransformTool tool = TransformTool::Translate;
@@ -91,6 +103,7 @@ struct ViewportState {
     std::uint64_t selectionRevision=0;
     editor::Point rotationMouse{}; // Previous sample for continuous ring rotation.
     double rotationAngle=0; // Unwrapped gesture angle in radians.
+    ViewportLabels labels{};
 };
 struct ViewportView {
     ImVec2 min{}, size{};

@@ -1341,6 +1341,20 @@ void EditorWorkspaces::RebuildOutlinerRows() {
             append(append,object,0);
 }
 void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) {
+    s.viewport.labels={};
+    if (s.japanese) {
+        auto &l=s.viewport.labels;
+        l.tools={"選択","移動","回転","拡縮","統合"};
+        l.projections={"透視投影","平行投影","カメラ"};
+        l.orientations={"ワールド","ローカル","ビュー","親","カスタム"};
+        l.pivots={"各原点","中心","境界中心","カーソル"};
+        l.shading={"ワイヤー","ソリッド"};
+        l.grid="グリッド";l.gizmo="ギズモ";l.snap="スナップ";
+        l.vertexNormals="頂点法線";l.faceNormals="面法線";
+        l.boxSelect="矩形選択";l.lassoSelect="投げ縄選択";
+        l.alignView="軸をクリックして視点を整列";
+    }
+
     s.curve.icons=s.icons;
     s.uvState.icons=s.icons;
     s.Initialize();
