@@ -197,3 +197,7 @@ CurveのAlt-dragは選択keyごとのDuplicate transactionを返します。Gall
 Curve frame snapping uses host `CurveState.rate` and `snapToFrame`, available in the context menu. The primary key snaps to the nearest frame; companion keys receive the same tick delta, preserving their spacing. Preview and committed proposals share this calculation.
 
 Curveのフレーム吸着はホストの `CurveState.rate` とcontext menuの `snapToFrame` を使います。主keyを最寄りのフレームへ合わせ、他の選択keyには同じtick差分を適用して間隔を保ちます。previewとcommit案は同じ計算を使います。
+
+Curve context option `scaleTime` starts `KeyScale` transactions around the earliest selected tick: 100 horizontal pixels doubles timing distances, preserving values. The pivot/mode are latched at Begin, and optional frame snapping applies to each scaled time.
+
+Curveのcontext設定 `scaleTime` は選択keyの最初のtickを基準に `KeyScale` transactionを開始します。横100pixelで時間間隔を2倍にし、値を維持します。基準とmodeはBegin時に固定し、フレーム吸着は各scale後の時刻へ適用します。

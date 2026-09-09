@@ -66,7 +66,8 @@ enum class EditKind {
     TrackHeight,
     PropertyKey,
     KeyInterpolation,
-    KeyHandleMode
+    KeyHandleMode,
+    KeyScale
 };
 // Exact integer/time fields must never travel through floating point channels.
 struct Value {
@@ -253,6 +254,8 @@ struct CurveState {
     std::span<Keyframe> previewKeys; // Optional host scratch, at least the query result size.
     std::span<Transaction> companionDrags;
     std::size_t companionCount = 0;
+    bool scaleTime = false, scaling = false;
+    Tick scalePivot = 0;
     bool snapToFrame = false;
     FrameRate rate{};
     int side = 0;
