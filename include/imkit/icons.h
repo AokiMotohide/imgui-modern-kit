@@ -129,6 +129,10 @@ enum class IconId : std::uint16_t {
     Projector,
     Ruler,
     Target,
+    Keyframe,
+    PreviousFrame,
+    NextFrame,
+    Magnet,
     Count
 };
 struct IconInfo {

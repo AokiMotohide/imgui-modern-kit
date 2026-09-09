@@ -1,0 +1,4 @@
+One minimalist black monoline modern toolbar icon depicting a single hollow diamond keyframe: a square rotated exactly 45 degrees, no other marks. Smooth rounded joins, genuine transparent background with alpha. Crisp geometric single strokes, not double contours around strokes. Uniform approximately 1.75-unit stroke on a square 24-unit canvas, diamond occupies 18 units centered. Designed to remain readable at 16 pixels. No texture, shadows, gradients, noise, letters, text, labels, grid or background. Exactly one standalone icon, not an icon sheet.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/Keyframe.png

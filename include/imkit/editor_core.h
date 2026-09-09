@@ -1,5 +1,6 @@
 #pragma once
 #include <imkit/theme.h>
+#include <imkit/icons.h>
 #include <span>
 #include <string_view>
 #include <cstddef>
@@ -198,6 +199,8 @@ struct TimeState {
 void TimeRuler(const char *id, TimeState &state, CanvasState &canvas, std::span<const Marker> markers,
                std::uint64_t revision, EventBuffer &events, const Theme &theme, float height = 32);
 void Transport(TimeState &state, std::span<const Binding> bindings);
+// Optional host-owned atlas; nullptr retains native text buttons.
+void Transport(TimeState &state, std::span<const Binding> bindings, const IconAtlas *icons);
 enum class Interpolation { Constant, Linear, Bezier };
 enum class HandleMode { Auto, AutoClamped, Vector, Aligned, Free };
 enum class Extrapolation { Constant, Linear, Repeat };

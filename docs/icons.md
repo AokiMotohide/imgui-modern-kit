@@ -1,6 +1,6 @@
 # Modern outline icons
 
-ImKit includes 120 individually ImageGen-generated monochrome icons in 12 categories.
+ImKit includes 124 individually ImageGen-generated monochrome icons in 13 categories.
 The artwork is distributed with this repository under its MIT license. The original
 generations and their prompts are retained in `assets/icons/originals` and
 `assets/icons/prompts`; `provenance.json` records source hashes. Original images use
@@ -48,7 +48,7 @@ The existing `IconButton(id, ImGuiDir, accessibleLabel)` overload is unchanged.
 ## API behavior
 
 - `GetIconCatalog()` returns stable IDs, English names and categories; `GetIconInfo`
-  returns null for invalid IDs. The 120 entries follow `assets/icons/catalog.json`.
+  returns null for invalid IDs. The 124 entries follow `assets/icons/catalog.json`.
 - `GetIconAtlasPixels` accepts exactly 16, 20, 24, 32, 48 or 64. The returned CPU data
   is immutable with process lifetime; unsupported sizes return an empty view.
 - `GetIconRegion` returns the corresponding normalized UV rectangle. Two transparent
@@ -71,7 +71,7 @@ The existing `IconButton(id, ImGuiDir, accessibleLabel)` overload is unchanged.
 
 ## Assets and reproduction
 
-`assets/icons/{16,20,24,32,48,64}` contains 720 individual transparent PNGs.
+`assets/icons/{16,20,24,32,48,64}` contains 744 individual transparent PNGs.
 `assets/icons/atlases` contains six atlas PNGs. All are included by CMake install
 under `share/imkit/icons`. Headers and compiled embedded data are installed normally.
 Original large images are kept in the source checkout, not copied into the SDK.

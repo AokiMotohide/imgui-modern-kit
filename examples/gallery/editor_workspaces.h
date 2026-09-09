@@ -8,6 +8,7 @@
 #include <string>
 namespace imkit::gallery {
 struct EditorWorkspaces {
+    const IconAtlas *icons = nullptr; // Host-owned renderer resources.
     std::vector<video::TrackView> tracks;
     std::vector<double> trackOffsets;
     std::vector<video::AudioStripView> audioStrips;
