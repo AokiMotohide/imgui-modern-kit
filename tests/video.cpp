@@ -128,6 +128,49 @@ int main() {
               full.Events()[0].phase == editor::Phase::Cancel &&
               full.Events()[1].phase == editor::Phase::Cancel,
           "revision cancellation retries as one complete batch");
+    struct LayoutFixture {
+        std::array<video::TrackView,3> tracks;
+        int calls=0;
+        double firstPixel=0,lastPixel=0;
+    } layoutFixture;
+    for (int i=0;i<3;++i) {
+        layoutFixture.tracks[i].id=100+i;
+        layoutFixture.tracks[i].label="Track";
+        layoutFixture.tracks[i].height=200-i*20.f;
+    }
+    provider.user=&layoutFixture;provider.trackCount=3;provider.totalHeight=540;
+    provider.layout=[](void *u,double first,double last) {
+        auto &f=*static_cast<LayoutFixture *>(u); ++f.calls;f.firstPixel=first;f.lastPixel=last;
+        std::size_t a=0,b=0;double top=0,end=0;
+        while (a<f.tracks.size() && top+video::TrackExtent(f.tracks[a])<=first)
+            top+=video::TrackExtent(f.tracks[a++]);
+        b=a;end=top;
+        while (b<f.tracks.size() && end<last) end+=video::TrackExtent(f.tracks[b++]);
+        return video::TrackLayout{std::span<const video::TrackView>(f.tracks).subspan(a,b-a),top};
+    };
+    timeline.verticalScroll=100; full.Clear();frame(full);
+    check(layoutFixture.calls==1 && layoutFixture.firstPixel==100 && layoutFixture.lastPixel>100,
+          "variable height timeline queries only the visible pixel interval");
+    check(video::TrackExtent(layoutFixture.tracks[0])==200,"expanded track uses host height");
+    timeline.verticalScroll=0;full.Clear();frame(full);
+    auto clickTrack=[&](ImVec2 p) {
+        full.Clear();io.AddMousePosEvent(p.x,p.y);frame(full);
+        io.AddMouseButtonEvent(0,true);frame(full);
+        io.AddMouseButtonEvent(0,false);frame(full);
+    };
+    clickTrack({timeline.view.min.x+10,timeline.view.min.y+10});
+    check(full.count==1 && full.Events()[0].target==100 &&
+              full.Events()[0].proposed.x==static_cast<double>(video::TrackControl::Expanded) &&
+              full.Events()[0].proposed.y==0,"track collapse emits the explicit host control");
+    layoutFixture.tracks[0].expanded=false;
+    check(video::TrackExtent(layoutFixture.tracks[0])==32,"collapsed row has compact extent");
+    layoutFixture.tracks[0].expanded=true;
+    float sourceX=timeline.view.min.x+4;
+    for (const char *label:{"V","M","S","L","R","T"})
+        sourceX+=ImGui::CalcTextSize(label).x+ImGui::GetStyle().FramePadding.x*2+2;
+    clickTrack({sourceX+5,timeline.view.min.y+35});
+    check(full.count==1 && full.Events()[0].proposed.x==static_cast<double>(video::TrackControl::Source) &&
+              full.Events()[0].proposed.y==1,"source patch button emits a distinct control");
     video::ColorValues hostColors;
     video::ColorPropertyIds colorIds{101,307,509,701,907,1103};
     video::ColorState colorState;

@@ -16,7 +16,7 @@ until the named operations and their direct checks are complete.
 | Property categories/mixed/reset/override/favorite/lock/animation | PropertyGrid | Full state actions and Inspector application pending | Partial / 部分 |
 | Asset grid/list/thumbnail/path/filter/tag/rename/status | AssetBrowser | Clickable path and complete host filtering pending | Partial / 部分 |
 | Toolbar/status/splitter/rename/context/tooltip | editor_core components | Localization and icon integration pending | Partial / 部分 |
-| Track roles/heights/collapse and all header controls | video::Timeline | Variable heights and all flag application pending | Partial / 部分 |
+| Track roles/heights/collapse and all header controls | video::Timeline, TrackExtent, TrackLayout | Indexed height layout, collapse and all header flags connected to host; complete role presentation and icon acceptance pending | Partial / 部分 |
 | Clip presentation, move/duplicate/trim/split/ripple/roll/slip/slide | EditClip, RollClips, SlideClip, SplitClip, Timeline | tests/video.cpp; full linked/group/locked multi-edit and IO acceptance pending | Partial / 部分 |
 | Snap targets/guide/magnet, scrolling/zoom/fit | Timeline | Complete targets and representative gesture checks pending | Partial / 部分 |
 | Transition/caption/property keys | Timeline, Video workspace | Handles, picker, inline edits and host application pending | Open / 未完了 |

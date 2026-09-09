@@ -42,6 +42,9 @@ int main() {
     editor::AssetBrowser("assets", {}, asset, selection, events);
     ImGui::EndChild();
     video::Timeline("timeline", {}, timeline, selection, events, theme, {300, 100});
+    video::TrackView trackView;
+    auto trackHeight=video::TrackExtent(trackView);
+    (void)trackHeight;
     video::Monitor("monitor", {}, {100, 80}, time, {}, theme);
     video::Waveform("waveform", {}, {100, 20}, theme);
     video::LevelMeter("meter", {}, {}, {20, 100}, theme);

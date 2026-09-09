@@ -107,3 +107,13 @@ all transform-gizmo or camera-overlay requirements.
 Debug CGテストはorthographic投影倍率・view相対pan・6軸alignment・camera表示のnavigation保護と、
 公開IOのwheel/gizmoクリックを確認します。BeginViewport経由でホストcamera参照も確認しました。
 API fixtureは新しいcamera関数を呼びます。全transform gizmo・camera overlayの合格を意味しません。
+
+Variable track layout tests check the queried visible pixel interval, expanded and
+collapsed extents, and public-IO collapse/source-patch events. Debug Video and API
+fixtures passed. The native editor verifier also passed Timeline move/end-trim/split
+and the existing shared selection, curve and UV paths using the indexed Gallery
+track layout (`out/editor-track-layout-debug/`). This is not full track-role/icon
+acceptance or native OS input evidence.
+可変track配置のテストは可視pixel区間query、展開・折り畳み高、公開IOのcollapse/source eventを確認します。
+Debug Video/API fixtureと、累積高さqueryへ切り替えたGalleryでの移動・終端trim・split・選択・Curve・UVの
+既存操作は成功しました。全track role・icon受入やnative OS入力の検証ではありません。

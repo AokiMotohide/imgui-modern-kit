@@ -9,6 +9,7 @@
 namespace imkit::gallery {
 struct EditorWorkspaces {
     std::vector<video::TrackView> tracks;
+    std::vector<double> trackOffsets;
     std::vector<video::AudioStripView> audioStrips;
     editor::StableId mixerTrack = 0;
     editor::PropertyState mixerState;
@@ -69,6 +70,7 @@ struct EditorWorkspaces {
     void Dataset(bool largeData);
     void RenderPreview();
     void ApplyEvents();
+    void RebuildTrackLayout();
 };
 void VideoWorkspace(EditorWorkspaces &state, const Theme &theme, ImTextureRef hostTexture);
 void CGWorkspace(EditorWorkspaces &state, const Theme &theme, ImTextureRef hostTexture);

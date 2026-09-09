@@ -100,7 +100,14 @@ void EditorWorkspaces::Dataset(bool big) {
     mixerTrack = audioStrips.empty() ? 0 : audioStrips.front().id;
     mixerState.drag.active = false;
     curve.drag.active = false;
+    RebuildTrackLayout();
     ++revision;
+}
+void EditorWorkspaces::RebuildTrackLayout() {
+    trackOffsets.resize(tracks.size()+1);
+    trackOffsets[0]=0;
+    for (std::size_t i=0;i<tracks.size();++i)
+        trackOffsets[i+1]=trackOffsets[i]+video::TrackExtent(tracks[i]);
 }
 void EditorWorkspaces::Initialize() {
     if (initialized)
@@ -228,16 +235,20 @@ void EditorWorkspaces::ApplyEvents() {
                 if (e.target==strip.gainId) { strip.gain=e.proposed.x; changed=true; }
                 if (e.target==strip.panId) { strip.pan=e.proposed.x; changed=true; }
             }
-        for (auto &track : tracks)
+        for (auto &track : tracks) {
+            if (track.id==e.target && e.kind==editor::EditKind::TrackHeight) {
+                track.height=static_cast<float>(e.proposed.x); changed=true;
+            }
             if (track.id == e.target && e.kind == editor::EditKind::Toggle) {
                 bool *fields[] = {&track.visible, &track.mute,   &track.solo,
-                                  &track.locked,  &track.record, &track.target};
+                                  &track.locked,  &track.record, &track.target, &track.source, &track.expanded};
                 int field = static_cast<int>(e.proposed.x);
-                if (field >= 0 && field < 6) {
+                if (field >= 0 && field < 8) {
                     *fields[field] = e.proposed.y != 0;
                     changed = true;
                 }
             }
+        }
         for (auto &o : objects) {
             if (o.id == e.target && e.kind == editor::EditKind::Toggle) {
                 bool *fields[] = {&o.visible, &o.selectable, &o.renderable, &o.locked, &o.expanded};
@@ -334,6 +345,7 @@ void EditorWorkspaces::ApplyEvents() {
         }
     }
     if (changed) {
+        RebuildTrackLayout();
         ++revision;
         std::sort(clips.begin(), clips.end(), [](const auto &a, const auto &b) {
             return a.track != b.track ? a.track < b.track : a.start < b.start;
@@ -405,6 +417,17 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         s.queriedClips += last - first;
         return std::span<const video::ClipView>(first, last);
     };
+    p.layout=[](void *u,double firstPixel,double lastPixel) {
+        auto &s=*static_cast<EditorWorkspaces *>(u);
+        ++s.queryCount;
+        auto first=std::upper_bound(s.trackOffsets.begin(),s.trackOffsets.end(),firstPixel);
+        std::size_t index=first==s.trackOffsets.begin() ? 0 : static_cast<std::size_t>(first-s.trackOffsets.begin()-1);
+        index=(std::min)(index,s.tracks.size());
+        auto last=std::lower_bound(s.trackOffsets.begin()+index,s.trackOffsets.end(),lastPixel);
+        auto end=(std::min)(static_cast<std::size_t>(last-s.trackOffsets.begin()),s.tracks.size());
+        return video::TrackLayout{std::span<const video::TrackView>(s.tracks).subspan(index,end-index),s.trackOffsets[index]};
+    };
+    p.totalHeight=s.trackOffsets.back();
     p.markers = std::span<const editor::Marker>(s.markers).first(s.markerCount);
     p.neighbors = [](void *u, editor::StableId id) {
         auto &s = *static_cast<EditorWorkspaces *>(u);
