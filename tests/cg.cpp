@@ -281,6 +281,22 @@ int main() {
             dopeEvents.Events()[0].kind==(lasso?imkit::editor::EditKind::LassoSelect:imkit::editor::EditKind::BoxSelect),
             "UV box and lasso select only enclosed provider candidates");
     }
+    allUV.vertices=[](void *,imkit::editor::Rect)->std::span<const UVVertex> {
+        static const std::array vertices{UVVertex{8101,1,{.2,.2}}};return vertices;
+    };
+    allUVState.snap=0;allUVState.pivot={.5,.5};
+    for (auto tool:{TransformTool::Rotate,TransformTool::Scale}) {
+        allUVState.tool=tool;
+        uvMouse({.2,.2});io.AddMouseButtonEvent(0,true);uvFrame();
+        uvMouse({tool==TransformTool::Rotate?1.77079632679:.7,.2});
+        io.AddMouseButtonEvent(0,false);uvFrame();
+        const double expectedX=tool==TransformTool::Rotate?.8:.05;
+        check(dopeEvents.count==1 && dopeEvents.Events()[0].kind==
+            (tool==TransformTool::Rotate?imkit::editor::EditKind::Rotate:imkit::editor::EditKind::Scale) &&
+            std::abs(dopeEvents.Events()[0].proposed.x-expectedX)<.002 &&
+            std::abs(dopeEvents.Events()[0].proposed.y-.2)<.002,
+            "UV rotation and scale emit pivot-relative coordinates with matching edit kind");
+    }
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
