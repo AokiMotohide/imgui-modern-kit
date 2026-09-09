@@ -472,3 +472,7 @@ clip内のdiamondをドラッグして時刻を編集できます。`Keyframe` t
 Clip-local key dragging now includes selected keys from the same clip. Host-owned `TimelineState::keyCompanions` stores companion transactions. Movement and frame snap use one shared delta constrained by all selected endpoints, preserving spacing. Begin/Update/terminal batches preflight capacity; missing or locked members cancel the batch. Public IO tests verify two-key movement, boundary clamping, and complete Commit retry after a one-event buffer shortage. Each visible key registers an InvisibleButton so dragging cannot also move its ImGui window. Cross-clip key movement is not implemented.
 
 同じclip内の選択keyをまとめてドラッグできます。ホスト所有の`TimelineState::keyCompanions`に関連transactionを保持し、移動とframe snapは全選択keyの端点で制約した共通deltaを使うため間隔を保ちます。Begin／Update／終了batchは容量を事前確認し、対象消失・ロックで全体を取り消します。公開IOで2key移動・端点制約・1イベントbuffer不足後のCommit一括再送を確認しました。可視keyをInvisibleButtonへ登録し、ドラッグがImGuiウィンドウ移動へ伝わる不具合も修正しました。clipをまたぐkey移動は未実装です。
+
+Transition handles also use public InvisibleButton hit regions. Drag tests now assert that the timeline window origin remains fixed. Cursor restoration submits a zero-size Dummy to satisfy ImGui layout bookkeeping. The Video test executable reports MSVC assertions to stderr instead of opening a blocking dialog; the focused test passes.
+
+transition handleも公開InvisibleButtonのhit領域を使用し、ドラッグ中にTimelineウィンドウの原点が動かないことをテストしました。cursor復元後に寸法ゼロのDummyを登録し、ImGuiのlayout契約も満たします。Videoテスト実行ファイルはMSVC assertionを停止ダイアログではなくstderrへ出力する設定とし、focused testが合格しました。

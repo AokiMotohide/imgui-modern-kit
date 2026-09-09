@@ -3,8 +3,13 @@
 #include <cmath>
 #include <cstdio>
 #include <limits>
+#include <cstdlib>
 using namespace imkit;
 int main() {
+#ifdef _MSC_VER
+    _set_error_mode(_OUT_TO_STDERR);
+    _set_abort_behavior(0,_WRITE_ABORT_MSG|_CALL_REPORTFAULT);
+#endif
     int failures = 0;
     auto check = [&](bool ok, const char *s) {
         if (!ok) {
@@ -239,6 +244,7 @@ int main() {
     provider.clips=[](void *u,editor::StableId,editor::Range){return std::span<const video::ClipView>(&static_cast<TransitionFixture*>(u)->clip,1);};
     timeline={};full.Clear();frame(full);frame(full);
     for (int side=0;side<2;++side) {
+        const auto stableOrigin=timeline.view.min;
         const float x=timeline.view.min.x+timeline.headerWidth+(side ? 250.f : 50.f);
         const float y=timeline.view.min.y+10;
         full.Clear();io.AddMousePosEvent(x,y);frame(full);frame(full);
@@ -247,6 +253,7 @@ int main() {
         full.Clear();io.AddMousePosEvent(x+(side ? -50.f : 50.f),y);frame(full);
         check(timeline.transitionDrag.draft.proposed.first==editor::FromSeconds(side ? .5 : 1.) &&
               timeline.transitionDrag.draft.proposed.last==editor::FromSeconds(side ? 1. : .5),"transition handle changes only its duration");
+        check(timeline.view.min.x==stableOrigin.x && timeline.view.min.y==stableOrigin.y,"transition drag does not move the ImGui window");
         full.Clear();io.AddMouseButtonEvent(0,false);frame(full);
         check(full.count==1 && full.Events()[0].kind==editor::EditKind::TransitionDuration &&
               full.Events()[0].phase==editor::Phase::Commit && !timeline.transitionDrag.active,"transition duration commits without moving the clip");
