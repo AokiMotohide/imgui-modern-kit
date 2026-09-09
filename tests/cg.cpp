@@ -213,6 +213,17 @@ int main() {
             dopeEvents.Events()[0].proposed.last==imkit::editor::FromSeconds(end?4.25:4),
             "strip edge drag trims only the chosen boundary");
     }
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.AddMousePosEvent(stripOrigin.x+50,stripOrigin.y+12);stripFrame();
+    io.AddMouseButtonEvent(1,true);stripFrame();io.AddMouseButtonEvent(1,false);stripFrame();
+    check(ImGui::IsPopupOpen(nullptr,ImGuiPopupFlags_AnyPopupId),"strip settings open from public right-click");
+    auto stripKey=[&](ImGuiKey key) {
+        io.AddKeyEvent(key,true);stripFrame();io.AddKeyEvent(key,false);stripFrame();
+    };
+    stripKey(ImGuiKey_DownArrow);stripKey(ImGuiKey_Enter);stripKey(ImGuiKey_RightArrow);
+    check(stripDrag.active && stripDrag.draft.kind==imkit::editor::EditKind::StripSettings,
+        "strip settings keyboard edit begins a typed transaction");
+    stripKey(ImGuiKey_Escape);
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
