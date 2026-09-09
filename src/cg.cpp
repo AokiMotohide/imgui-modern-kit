@@ -283,6 +283,7 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
     const Vec3 axes[] = {basis.x, basis.y, basis.z};
     const ImU32 colors[] = {IM_COL32(230, 85, 85, 255), IM_COL32(85, 220, 110, 255),
                             IM_COL32(85, 145, 240, 255)};
+    ImVec2 projected[3]{};
     Axis hit = Axis::None;
     auto mouse = ImGui::GetIO().MousePos;
     for (int i = 0; i < 3; ++i) {
@@ -293,6 +294,7 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
                length = std::hypot(dx, dy);
         if (length < 1)
             continue;
+        projected[i] = {static_cast<float>(dx), static_cast<float>(dy)};
         ImVec2 tip{center.screen.x + static_cast<float>(dx / length * 70),
                    center.screen.y + static_cast<float>(dy / length * 70)};
         d->AddLine(center.screen, tip, colors[i], 3);
@@ -301,6 +303,35 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
         d->AddText({tip.x + 8, tip.y}, colors[i], label);
         if (std::hypot(mouse.x - tip.x, mouse.y - tip.y) < 12)
             hit = static_cast<Axis>(i + 1);
+    }
+    if (s.tool == TransformTool::Translate || s.tool == TransformTool::Unified) {
+        for (int plane = 0; plane < 3; ++plane) {
+            const int a = plane, b = (plane + 1) % 3;
+            const auto u = projected[a], w = projected[b];
+            const double lu = std::hypot(u.x, u.y), lw = std::hypot(w.x, w.y);
+            if (lu < 1 || lw < 1) continue;
+            const ImVec2 x{float(u.x / lu), float(u.y / lu)}, y{float(w.x / lw), float(w.y / lw)};
+            const double determinant = x.x * y.y - x.y * y.x;
+            if (std::abs(determinant) < .15) continue;
+            ImVec2 corners[4];
+            const float distances[4][2] = {{18,18},{34,18},{34,34},{18,34}};
+            for (int k = 0; k < 4; ++k)
+                corners[k] = {center.screen.x + x.x * distances[k][0] + y.x * distances[k][1],
+                              center.screen.y + x.y * distances[k][0] + y.y * distances[k][1]};
+            const Axis axis = static_cast<Axis>(static_cast<int>(Axis::XY) + plane);
+            d->AddConvexPolyFilled(corners, 4, (colors[plane] & 0x00ffffff) | IM_COL32(0,0,0,65));
+            d->AddPolyline(corners, 4, colors[plane], ImDrawFlags_Closed,
+                           s.drag.active && s.activeAxis == axis ? 3.f : 1.f);
+            const double mx = mouse.x - center.screen.x, my = mouse.y - center.screen.y;
+            const double first = (mx * y.y - my * y.x) / determinant;
+            const double second = (x.x * my - x.y * mx) / determinant;
+            if (first >= 18 && first <= 34 && second >= 18 && second <= 34) hit = axis;
+        }
+        const ImVec2 low{center.screen.x - 7, center.screen.y - 7}, high{center.screen.x + 7, center.screen.y + 7};
+        d->AddRect(low, high, IM_COL32(230,230,230,255), 0, 0,
+                   s.drag.active && s.activeAxis == Axis::Screen ? 3.f : 2.f);
+        if (mouse.x >= low.x && mouse.x <= high.x && mouse.y >= low.y && mouse.y <= high.y)
+            hit = Axis::Screen;
     }
     if (v.hovered && hit != Axis::None && ImGui::IsMouseClicked(0) && !s.drag.active) {
         s.activeAxis = hit;
@@ -317,6 +348,28 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
     if (s.drag.active) {
         double delta = ((mouse.x - s.mouseStart.x) - (mouse.y - s.mouseStart.y)) * .01;
         Vec3 dv{delta, delta, delta};
+        if (s.tool == TransformTool::Translate || s.tool == TransformTool::Unified) {
+            const double mx = mouse.x - s.mouseStart.x, my = mouse.y - s.mouseStart.y;
+            if (s.activeAxis == Axis::Screen) {
+                basis = OrientationBasis(Orientation::View, s.original, s.camera, s.parentBasis, s.customBasis);
+                const auto px = Project(Add(pivot, basis.x), s.camera, v.min, v.size);
+                const auto py = Project(Add(pivot, basis.y), s.camera, v.min, v.size);
+                const double xx = px.screen.x - center.screen.x, xy = px.screen.y - center.screen.y;
+                const double yx = py.screen.x - center.screen.x, yy = py.screen.y - center.screen.y;
+                const double det = xx * yy - xy * yx;
+                dv = std::abs(det) > 1e-6 ? Vec3{(mx * yy - my * yx) / det, (xx * my - xy * mx) / det, 0} : Vec3{};
+            } else if (s.activeAxis >= Axis::XY && s.activeAxis <= Axis::ZX) {
+                const int a = static_cast<int>(s.activeAxis) - static_cast<int>(Axis::XY), b = (a + 1) % 3;
+                const auto x = projected[a], y = projected[b];
+                const double det = x.x * y.y - x.y * y.x;
+                double values[3]{};
+                if (std::abs(det) > 1e-6) {
+                    values[a] = (mx * y.y - my * y.x) / det;
+                    values[b] = (x.x * my - x.y * mx) / det;
+                }
+                dv = {values[0], values[1], values[2]};
+            }
+        }
         auto result = TransformDelta(s.original, s.tool, s.activeAxis, dv, basis, s.snap ? .1 : 0,
                                      ImGui::GetIO().KeyShift);
         auto value = Value(s.tool == TransformTool::Rotate  ? result.rotation
