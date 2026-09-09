@@ -775,6 +775,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 if ((!selection.Contains(clip.id) || io.KeyCtrl) && !selection.Set(clip.id,io.KeyCtrl,io.KeyCtrl)) {
                     out.overflow=true;continue;
                 }
+                if (!selection.Contains(clip.id)) continue; // Toggle-off is selection only.
                 auto kind = io.KeyAlt ? editor::EditKind::Duplicate : editor::EditKind::Move;
                 if (io.MousePos.x - x < 7)
                     kind = editor::EditKind::TrimStart;
