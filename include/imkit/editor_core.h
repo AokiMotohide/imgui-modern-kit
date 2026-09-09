@@ -71,7 +71,8 @@ enum class EditKind {
     KeyInsert,
     StripSettings,
     LinkGeometry,
-    ComponentAdd
+    ComponentAdd,
+    TransitionDuration // first=in duration, last=out duration; target=clip ID.
 };
 // Exact integer/time fields must never travel through floating point channels.
 struct Value {

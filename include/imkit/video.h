@@ -108,6 +108,9 @@ struct TimelineState {
     editor::AutoScroll autoScroll = editor::AutoScroll::Smooth;
     std::span<const editor::Binding> bindings;
     std::uint32_t snapKinds = 0x7f; // Bit positions are editor::SnapKind.
+    editor::Transaction transitionDrag;
+    bool transitionEnd=false;
+    double transitionMouseStart=0;
 };
 // Resolves both moving edges; ignores every selected clip and filters disabled kinds.
 editor::SnapResult ResolveTimelineSnap(const TimelineState &state, Tick delta,
