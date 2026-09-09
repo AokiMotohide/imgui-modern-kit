@@ -193,3 +193,7 @@ Curveの複数key移動は `CurveProvider.selected` の全選択keyとホスト�
 Alt-dragging Curve keys emits a Duplicate transaction per selected key. Gallery copies the source key metadata, assigns a new StableId and applies the proposed time/value, leaving source keys unchanged.
 
 CurveのAlt-dragは選択keyごとのDuplicate transactionを返します。Galleryは元keyの属性をコピーして新しいStableIdを割り当て、提案された時間/値を適用し、元keyを維持します。
+
+Curve frame snapping uses host `CurveState.rate` and `snapToFrame`, available in the context menu. The primary key snaps to the nearest frame; companion keys receive the same tick delta, preserving their spacing. Preview and committed proposals share this calculation.
+
+Curveのフレーム吸着はホストの `CurveState.rate` とcontext menuの `snapToFrame` を使います。主keyを最寄りのフレームへ合わせ、他の選択keyには同じtick差分を適用して間隔を保ちます。previewとcommit案は同じ計算を使います。

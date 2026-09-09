@@ -324,6 +324,16 @@ int main() {
     check(propertyEvents.overflow && propertyEvents.count==0 && !curveState.drag.active,
         "missing selected-key provider rejects partial multi-key editing");
     io.AddMouseButtonEvent(0,false);curveFrame();
+    curveProvider.selected=[](void *user,std::span<const StableId>) {
+        return std::span<const Keyframe>(*static_cast<std::array<Keyframe,3>*>(user)).first(2);
+    };
+    curveState.snapToFrame=true;curveState.rate={24,1};
+    io.AddMouseButtonEvent(0,true);curveFrame();
+    io.AddMousePosEvent(static_cast<float>(curvePoint.x+11),static_cast<float>(curvePoint.y));curveFrame();
+    io.AddMouseButtonEvent(0,false);curveFrame();
+    check(propertyEvents.count==2 && propertyEvents.Events()[0].proposed.first==FrameToTick(27,{24,1}) &&
+        propertyEvents.Events()[1].proposed.first==FrameToTick(51,{24,1}),
+        "curve frame snap applies a common delta and preserves selected key spacing");
     ImGui::DestroyContext(context);
     std::puts(failures ? "FAIL editor core"
                        : "PASS timebase, drop-frame, snap, transaction, canvas and curves");

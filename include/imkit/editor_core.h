@@ -253,6 +253,8 @@ struct CurveState {
     std::span<Keyframe> previewKeys; // Optional host scratch, at least the query result size.
     std::span<Transaction> companionDrags;
     std::size_t companionCount = 0;
+    bool snapToFrame = false;
+    FrameRate rate{};
     int side = 0;
     Point mouseStart{};
     CanvasView view{};
