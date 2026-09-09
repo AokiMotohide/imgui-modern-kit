@@ -522,5 +522,13 @@
   {
     "name": "SlipEdit",
     "category": "Editor"
+  },
+  {
+    "name": "RollingEdit",
+    "category": "Editor"
+  },
+  {
+    "name": "SlideEdit",
+    "category": "Editor"
   }
 ]

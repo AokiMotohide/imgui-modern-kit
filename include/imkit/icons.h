@@ -140,6 +140,8 @@ enum class IconId : std::uint16_t {
     Razor,
     RippleEdit,
     SlipEdit,
+    RollingEdit,
+    SlideEdit,
     Count
 };
 struct IconInfo {

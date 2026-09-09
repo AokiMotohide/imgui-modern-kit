@@ -12,7 +12,7 @@
 
 | File | SHA256 |
 |---|---|
-| Inter-Regular.ttf | 40d692fce188e4471e2b3cba937be967878f631ad3ebbbdcd587867c7ebe0c82 |
+| Inter-Regular.ttf | 40d692fce188e4471e2b3cba937be967878f631ad3ebbbdcd587687c7ebe0c82 |
 | Inter-SemiBold.ttf | 78a843fade9d4612a5567302fb595b56976eb5fcebf4fea5a5912d638bafcde3 |
 | OFL.txt | 262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a |
 
@@ -110,7 +110,7 @@ freely, subject to the following restrictions:
 
 ## Generated icon assets
 
-The 131 icons under `assets/icons` were individually generated with the built-in
+The 133 icons under `assets/icons` were individually generated with the built-in
 OpenAI image generation tool for this project. They are not copied from the design
 reference projects mentioned above. Their prompts and source hashes accompany the
 assets. These project assets are distributed under the repository MIT license.

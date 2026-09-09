@@ -1,0 +1,4 @@
+Use case: logo-brand. Generate one individual software toolbar icon: RollingEdit. Geometry: one central vertical timeline boundary, a short arrow pointing left on the left of the boundary, a short arrow pointing right on the right of the boundary. Symmetric horizontal arrangement. It means moving a shared edit boundary between adjacent clips. Black 1.75-unit monoline on a 24-unit grid, round line ends, generous three-unit margins. True transparent RGBA background, fully opaque black strokes, no fill except the strokes, no lettering, no shading, no extra symbols. Square canvas. Optical balance and legibility at 16px. A technical UI glyph, not a scene or contact sheet.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/RollingEdit.png
