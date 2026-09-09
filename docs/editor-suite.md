@@ -38,17 +38,102 @@ rows; `count` is the filtered count. UI performs no full-dataset search.
 canvasとsnapは純粋計算として使用できます。Curve queryはchannel別時刻順と補間用隣接keyを
 返します。Property/Assetの検索とfiltered countはホストが用意し、UIは可視行だけを要求します。
 
-Current widgets: TimeRuler, Transport, CurveEditor (key/handle drag), PropertyGrid
-(numeric edit/reset/key request), AssetBrowser (grid/list/selection/asset drag payload),
-Splitter, StatusBar. Property/asset labels are host UTF-8 strings; built-in toolbar
-labels currently use English. Curve handle modes are represented in views; automatic
-tangent derivation is not yet implemented. Box/lasso gesture UI, multi-key transforms,
-asset rename and additional property flags still require implementation.
-現時点では時間軸・transport・key/handle drag・数値property編集/reset/key要求・asset選択と
-payload・splitter・status表示を実装しています。自動接線、box/lasso gesture、複数key変換、
-asset rename、追加property flag操作は未実装です。組込toolbar文字列は現時点で英語です。
+Current widgets: TimeRuler, Transport (including J/K/L), CurveEditor, PropertyGrid,
+AssetBrowser, Splitter and StatusBar. CanvasSelection provides box/lasso selection
+against a bounded point query. ResolveHandles implements Auto, Auto Clamped and
+Vector tangents; MoveHandle preserves aligned tangents. Asset rename emits fixed-size
+UTF-8 text events. Core multi-key transforms and full property-state actions remain
+incomplete. Built-in toolbar labels currently use English.
+時間軸・JKLを含むtransport・Curve・Property・Asset・splitter・statusを実装しています。
+CanvasSelectionは範囲queryでbox/lasso選択を行います。自動接線とAligned handleの純粋計算、
+Asset renameの固定長UTF-8 eventを提供します。複数key変換と全property状態の操作は未完成です。
+組込toolbar文字列は現時点では英語です。
 
 Focused test: `ctest --test-dir build/windows-debug -C Debug -R imkit.editor_core --output-on-failure`.
 The test checks time boundaries, exact event ticks above 2^53, cancellation, snap,
 canvas transforms and curve interpolation. It is CPU evidence, not native UI acceptance.
 focused testは時間境界・整数精度・cancel・snap・canvas・補間を検証し、native操作の証拠とは区別します。
+
+## Video / 動画
+
+`imkit::video` provides Timeline, Monitor, Waveform, LevelMeter, Histogram,
+ScopeImage and color draft controls. EditClip, RollClips, SlideClip and SplitClip
+are pure constrained edit operations. Timeline requests visible tracks and clips,
+uses caller-owned drag storage for multiple clips, and emits independent events for
+adjacent edits. Provider-selected members may include linked/group clips; locked
+members must be marked by the host. Callbacks and returned views are non-owning.
+VideoはTimeline・Monitor・波形・meter・scopeと色draft操作を公開します。編集計算は
+純粋関数です。Timelineは可視track/clipを要求し、複数clipのdrag領域はホストが渡します。
+linked/group対象はproviderが返し、locked trackのmemberもlockedと指定します。
+
+Audio buckets use interleaved PCM and an explicit channel. Scope utilities operate
+on CPU RGBA values without decoding, resampling, playback or color management.
+Those services, timeline collision policy, undo, media loading and persistence remain
+host responsibilities. Monitor flipY explicitly selects texture UV orientation.
+PCMはinterleaved spanとchannelを指定します。scopeはCPU RGBAだけを集計し、decode・再生・
+resample・色管理は行いません。衝突方針・Undo・media loading・保存もホスト責務です。
+
+## CG / CG編集
+
+`imkit::cg` provides camera projection, navigation, object-origin picking, axis gizmo,
+Outliner restriction/reparent events, UV transforms, DopeSheet and generic animation
+strip movement. `OrientationBasis` resolves world/local/view/parent/custom axes.
+Host-supplied pivotPosition represents the median, bounds or cursor location.
+Scene geometry, hierarchy validation, selection and animation runtime stay host-owned.
+CGは投影・navigation・object origin選択・軸gizmo・Outlinerの制限/reparent event・UV変換・
+Dope Sheet・animation strip移動を提供します。orientationは純粋関数で計算し、pivotPositionは
+ホストが計算します。scene geometry・階層検証・選択・animation runtimeは所有しません。
+
+## Preview / 簡易描画
+
+`DrawListPreview` belongs to `imkit::cg`. It projects indexed non-owning mesh spans,
+uses host triangle scratch, and depth-sorts triangles. It has no z-buffer: intersecting
+or cyclic surfaces can be incorrect. Cube and Sphere fill host buffers. CPU normals
+and GL shading currently use mesh-local normals for simple Lambert lighting.
+DrawListPreviewはcgに含まれ、ホストのtriangle scratchでdepth sortします。z-bufferはなく、
+交差面や循環する重なりは正確ではありません。Cube/Sphereはホストbufferへ生成します。
+簡易Lambertは現時点でmesh-local normalを使います。
+
+`imkit::preview_opengl3` is separate from `editor_suite`. Include `<imkit/preview.h>`.
+The host supplies a complete GLFunctions table and makes its OpenGL 3.3 context
+current before Init, Resize, Render, Pick and Shutdown. The object owns only its FBO,
+RGBA color, integer ID and depth textures, shaders, VAO and buffers. It never creates
+a context or loads GL functions. Call Shutdown before context destruction; the
+object destructor deliberately performs no GL calls. Copying is disabled.
+preview_opengl3はeditor_suiteに含めません。ホストがGL関数表とcurrent contextを用意します。
+renderer objectは自身のFBO・color/ID/depth texture・shader・VAO/bufferだけを所有します。
+Context破棄前にShutdownが必須です。デストラクタはGL関数を呼ばず、copyは禁止します。
+
+The current renderer changes GL bindings, viewport, depth, cull, blend, scissor and
+polygon state, and ends with framebuffer/program/VAO bound to zero. The host must
+re-establish its render state before subsequent passes. Pick returns the exact
+64-bit StableId; zero means background. Resize invalidates the previous texture ID.
+現在のrendererはGL stateを変更します。後続passのstateはホストが再設定してください。
+終了時FBO/program/VAOは0です。Pickは64bit ID、背景は0を返します。Resize後はtexture IDを
+取得し直してください。GL resource lifecycleは同じcurrent contextで管理します。
+
+## Integration and remaining acceptance / 統合と未達項目
+
+Gallery pages 7, 8 and 9 use the public modules for Editor Core, Video and CG.
+The sample host applies commit events, increments revisions and synchronizes
+object selection. Its data and edited labels are synthetic. The 100k dataset toggle
+constructs 256 tracks, 100096 clips and 100000 keys. No media runtime is implied.
+Gallery 7/8/9は公開moduleでCore/Video/CGを構成します。sample hostがcommit eventを適用して
+revisionを進め、object選択を同期します。100k切替は256 track・100096 clip・100000 keyです。
+
+The requested 1.0 suite is **not complete**. Remaining work includes fully integrated
+box/lasso and multi-key workflows, per-track variable heights, complete track flags,
+transition handles/picker, linked/group sample policy, audio envelope editing,
+RGB waveform and three-way wheels, gizmo plane/screen handles and full pivot rotation,
+navigation gizmo, hierarchy rename/reorder and stack inspector, UV edge/face/island
+interaction, strip scale/repeat/blend editing, editor-specific icon expansion,
+complete localization and all requested representative input checks. Provider search
+controls exist, but the Gallery's sample providers do not yet apply every filter.
+依頼された1.0 Suiteは**未完成**です。box/lassoと複数key操作の統合、可変track高と全flag、
+transition編集/picker、linked/groupのsample処理、audio envelope、RGB waveform/three-way wheel、
+gizmoのplane/screen handleとpivot回転、navigation gizmo、階層rename/reorderとstack inspector、
+UVのedge/face/island操作、strip scale/repeat/blend、editor icon追加、完全な表示文字列差替え、
+全代表操作の検証が残っています。Gallery providerでは全検索条件の適用も未完了です。
+
+Version remains 0.2.0 until 1.0 acceptance is complete. No 1.0 tag or Release is created.
+1.0の受入完了まではversionを0.2.0に保持し、1.0 tag/Releaseは作成しません。

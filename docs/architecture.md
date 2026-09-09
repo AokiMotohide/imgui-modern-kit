@@ -24,3 +24,9 @@ There is no global theme registry. `Theme` is a copyable host-owned preset, `Fon
 Add overloads only after comparing the pinned public signature, preserving defaults and return semantics. Regenerate the API inventory and compile/link fixture with `tools/generate_api.py`. An unsupported new Dear ImGui version requires deliberate adapter/style review, not just relaxing the version guard. Keep rendering dimensions derived from theme/font size, state bounded, and native editing intact. Do not introduce host-specific data or services into this library.
 
 新しいDear ImGui版への対応では署名・style・font契約を比較し、対応表とcompile/link fixtureを更新します。version guardを緩めるだけでは対応完了にしません。寸法はThemeと文字サイズから導出し、状態容量を制限し、ホスト固有の情報・サービスを持ち込みません。
+
+## Editor module ownership / Editor moduleの所有権
+
+Editor Core, Video and CG consume non-owning provider views and emit fixed-buffer events. They do not own edited scene/media data, selection, undo, worker or context. The explicitly constructed optional OpenGL3 preview object owns its own graphics resources only; its context and GL function table originate from the host. See [Editor Suite contracts](editor-suite.md).
+
+Editor Core・Video・CGのproviderは非所有です。scene/mediaデータ・選択・Undo・worker・Contextはホスト所有です。任意のOpenGL3 preview objectだけが自身の描画resourceを所有し、Contextと関数表はホストが渡します。詳細は上記契約を参照してください。

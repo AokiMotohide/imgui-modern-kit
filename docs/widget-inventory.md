@@ -20,3 +20,7 @@
 Legacy column helpers are available but tables are preferred. Context/frame lifecycle, renderer/platform functions, debug/demo windows, allocation, logging and ini persistence remain host responsibilities. Obsolete declarations and private implementation APIs are not wrapped. The base design still applies when native widgets are mixed into an ImKit-themed window.
 
 旧column補助も公開しますが、新規コードはtableを推奨します。Context/frame、renderer/platform、debug/demo、allocator、logging、ini永続化はホスト責務です。obsolete/private APIをラップしません。ImKitのTheme適用中に標準ImGui部品を混在させても共通styleは適用されます。
+
+## Editor extension inventory
+
+The custom editor API is inventoried separately in [editor-api.md](editor-api.md). Its compile/link fixture is `tests/editor_api_compile.cpp`, also compiled against an external host ImGui target. The generated 365-overload native inventory is unchanged.

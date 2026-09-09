@@ -1,0 +1,74 @@
+#include <imkit/editor_core.h>
+#include <imkit/video.h>
+#include <imkit/cg.h>
+#include <imkit/preview.h>
+#include <array>
+int main() {
+    using namespace imkit;
+    std::array<editor::Event, 32> eventStorage{};
+    editor::EventBuffer events{eventStorage};
+    std::array<editor::StableId, 32> ids{};
+    editor::Selection selection{ids};
+    auto *context = ImGui::CreateContext();
+    auto &io = ImGui::GetIO();
+    io.DisplaySize = {1280, 900};
+    io.DeltaTime = 1.f / 60;
+    io.IniFilename = nullptr;
+    unsigned char *pixels = nullptr;
+    int w = 0, h = 0;
+    io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);
+    io.Fonts->SetTexID(ImTextureID{1});
+    auto theme = MakePrecisionTheme();
+    editor::CanvasState canvas;
+    editor::CurveState curve;
+    editor::PropertyState property;
+    editor::AssetState asset;
+    editor::TimeState time;
+    video::TimelineState timeline;
+    cg::ViewportState viewport;
+    cg::OutlinerState outliner;
+    cg::UVState uv;
+    editor::Transaction drag;
+    ImGui::NewFrame();
+    ImGui::SetNextWindowSize({1200, 800});
+    ImGui::Begin("Editor API consumer");
+    editor::TimeRuler("time", time, canvas, {}, 1, events, theme);
+    editor::Transport(time, {});
+    editor::CurveEditor("curve", {}, curve, selection, events, theme, {300, 100});
+    ImGui::BeginChild("properties", {300, 100});
+    editor::PropertyGrid("props", {}, property, events);
+    ImGui::EndChild();
+    ImGui::BeginChild("assets", {300, 100});
+    editor::AssetBrowser("assets", {}, asset, selection, events);
+    ImGui::EndChild();
+    video::Timeline("timeline", {}, timeline, selection, events, theme, {300, 100});
+    video::Monitor("monitor", {}, {100, 80}, time, {}, theme);
+    video::Waveform("waveform", {}, {100, 20}, theme);
+    video::LevelMeter("meter", {}, {}, {20, 100}, theme);
+    video::Histogram("histogram", {}, {100, 50}, theme);
+    video::ScopeImage("scope", {}, 0, 0, {100, 50}, theme);
+    auto view = cg::BeginViewport("viewport", viewport, {}, {300, 100}, theme);
+    cg::ViewportObjects(view, {}, viewport, selection, 1, events, theme);
+    cg::TransformGizmo(view, {}, viewport, 1, events, theme);
+    cg::EndViewport();
+    ImGui::BeginChild("outliner", {300, 100});
+    cg::Outliner("tree", {}, outliner, selection, events);
+    ImGui::EndChild();
+    cg::UVEditor("uv", {}, {}, uv, selection, events, theme, {300, 100});
+    cg::DopeSheet("dope", {}, curve, selection, events, theme, {300, 100});
+    cg::AnimationStrips("strips", {}, 1, canvas, drag, events, theme, {300, 100});
+    std::array<preview::Vertex, 24> vertices;
+    std::array<std::uint32_t, 36> indices;
+    preview::Cube(vertices, indices);
+    std::array<preview::Triangle, 12> scratch;
+    preview::Mesh mesh{1, vertices, indices};
+    preview::DrawListPreview(*ImGui::GetWindowDrawList(), {&mesh, 1}, {}, {0, 0}, {100, 100}, scratch);
+    ImGui::End();
+    ImGui::Render();
+    ImGui::DestroyContext(context);
+    preview::OpenGL3Renderer renderer;
+    if (renderer.Init({}, 100, 100))
+        return 1;
+    renderer.Shutdown();
+    return events.overflow ? 1 : 0;
+}
