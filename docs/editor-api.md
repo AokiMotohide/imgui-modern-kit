@@ -410,3 +410,16 @@ not a camera projection model or light simulation.
 点光源を表す八面体（24頂点・24index）をホスト領域へ書き込みます。容量不足時は書き込まず、
 面法線と色も供給します。通常のDrawList／OpenGL mesh経路で変換・pickingへ接続し、
 Galleryのカメラとライトが所有します。補助表示形状であり、投影モデルや光源simulationではありません。
+
+### Related ripple trims / 関連対象のRipple trim
+
+Ripple joins the complete selected/linked/group batch returned by `selected`.
+Every participant passes lock and `canBeginEdit` checks before Begin, shares the
+most restrictive media-handle delta, and commits atomically through member scratch.
+Gallery computes follower shifts from the pre-edit snapshot and applies their sum
+once, so a later selected clip cannot overwrite an earlier ripple shift.
+
+Rippleも`selected`が返す選択・linked・group全対象を一括編集します。各対象のlockと
+`canBeginEdit`をBegin前に確認し、media handleが許す共通deltaで編集します。
+Galleryは編集前の位置から後続clipの移動量を合算して一度だけ適用し、後の選択clipの
+Commitが先行Rippleの移動を上書きしないようにしています。

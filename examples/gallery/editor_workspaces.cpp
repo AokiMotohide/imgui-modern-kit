@@ -527,6 +527,27 @@ void EditorWorkspaces::ApplyEvents() {
             });
         }
     }
+    // Resolve all ripple follower positions from the same pre-edit snapshot.
+    // In particular, a later edited clip must not overwrite a shift from an earlier trim.
+    std::vector<std::pair<editor::StableId,editor::Tick>> ripplePositions;
+    struct RippleChange {editor::StableId id,track;editor::Tick end,delta;};
+    std::vector<RippleChange> rippleChanges;
+    if (!rejectClipBatch) for (const auto &e:events.Events()) {
+        if (e.phase!=editor::Phase::Commit || e.revision!=revision || e.kind!=editor::EditKind::Ripple) continue;
+        const auto source=std::find_if(clips.begin(),clips.end(),[&](const auto &c){return c.id==e.target;});
+        if (source!=clips.end()) rippleChanges.push_back({source->id,source->track,source->start+source->duration,e.proposed.last-(source->start+source->duration)});
+    }
+    if (!rippleChanges.empty()) for (const auto &clip:clips) {
+        auto position=clip.start;
+        for (const auto &r:rippleChanges) {
+            if (r.id==clip.id || r.track!=clip.track || clip.start<r.end) continue;
+            const auto delta=r.delta;
+            if ((delta>0 && position>std::numeric_limits<editor::Tick>::max()-delta) ||
+                (delta<0 && position<std::numeric_limits<editor::Tick>::min()-delta)) {rejectClipBatch=true;break;}
+            position+=delta;
+        }
+        if (position!=clip.start) ripplePositions.emplace_back(clip.id,position);
+    }
     editor::StableId createdLink=0,createdGroup=0;
     std::vector<std::pair<editor::StableId,editor::StableId>> duplicateLinks,duplicateGroups,splitLinks,splitGroups;
     const auto remapRelationship=[&](auto &mapping,editor::StableId id) {
@@ -771,18 +792,9 @@ void EditorWorkspaces::ApplyEvents() {
                 const auto oldEnd=clip->start+clip->duration;
                 if (clip->start==e.proposed.first && oldEnd==e.proposed.last && clip->sourceIn==e.proposed.offset)
                     continue;
-                auto track = clip->track;
-                if (e.kind==editor::EditKind::Ripple && e.proposed.last!=oldEnd &&
-                    std::any_of(clips.begin(),clips.end(),[&](const auto &other) {
-                        return other.id!=clip->id && other.track==track && other.start>=oldEnd && other.locked;
-                    })) continue;
                 clip->start = e.proposed.first;
                 clip->duration = e.proposed.last - e.proposed.first;
                 clip->sourceIn = e.proposed.offset;
-                if (e.kind == editor::EditKind::Ripple)
-                    for (auto &other : clips)
-                        if (other.track == track && other.start >= oldEnd && other.id != e.target)
-                            other.start += e.proposed.last - oldEnd;
                 changed = true;
             }
         }
@@ -1018,6 +1030,10 @@ void EditorWorkspaces::ApplyEvents() {
                 }
             }
         }
+    }
+    if (!rejectClipBatch) for (const auto &[id,position]:ripplePositions) {
+        const auto clip=std::find_if(clips.begin(),clips.end(),[&](const auto &c){return c.id==id;});
+        if (clip!=clips.end()) {clip->start=position;changed=true;}
     }
     if (changed) {
         RebuildTrackLayout();
