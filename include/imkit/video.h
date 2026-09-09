@@ -77,6 +77,7 @@ struct TimelineProvider {
     // Optional indexed variable-height query. Returned rows cover [firstPixel,lastPixel].
     TrackLayout (*layout)(void *, double firstPixel, double lastPixel) = nullptr;
     double totalHeight = 0;
+    editor::Range contentRange{}; // Host-maintained total time extent for Fit.
 };
 struct TimelineState {
     struct MemberDrag {
@@ -105,6 +106,7 @@ struct TimelineState {
     const IconAtlas *icons = nullptr; // Non-owning host atlas.
     bool snapToFrame = false;
     editor::AutoScroll autoScroll = editor::AutoScroll::Smooth;
+    std::span<const editor::Binding> bindings;
     std::uint32_t snapKinds = 0x7f; // Bit positions are editor::SnapKind.
 };
 // Resolves both moving edges; ignores every selected clip and filters disabled kinds.

@@ -163,6 +163,7 @@ editor::SnapResult ResolveTimelineSnap(const TimelineState &s, Tick delta,
 void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, editor::Selection &selection,
               editor::EventBuffer &out, const Theme &theme, ImVec2 size) {
     ImGui::PushID(id);
+    const float timelineWidth=size.x>0?size.x:ImGui::GetContentRegionAvail().x;
     const char *tools[] = {"Select", "Razor", "Ripple", "Roll", "Slip", "Slide", "Hand"};
     for (int i = 0; i < 7; ++i) {
         if (i)
@@ -193,9 +194,21 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         }
         ImGui::EndPopup();
     }
-    if (s.time.playing)
+    ImGui::SameLine();
+    bool fit=s.icons ? IconButton("fit",*s.icons,IconId::FitView,"Fit timeline") : ImGui::Button("Fit");
+    fit |= editor::CommandPressed(editor::Command::Fit,s.bindings,
+        ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows));
+    if (fit && p.contentRange.last>p.contentRange.first) {
+        const double width=timelineWidth-s.headerWidth;
+        if (width>48) {
+            const double first=editor::Seconds(p.contentRange.first),last=editor::Seconds(p.contentRange.last);
+            s.canvas.scale.x=(width-48)/(last-first);
+            s.canvas.origin.x=first-24/s.canvas.scale.x;
+        }
+    }
+    if (s.time.playing && !fit)
         s.canvas.origin.x=editor::FollowPlayhead(s.canvas.origin.x,
-            ((size.x>0?size.x:ImGui::GetContentRegionAvail().x)-s.headerWidth)/s.canvas.scale.x,
+            (timelineWidth-s.headerWidth)/s.canvas.scale.x,
             editor::Seconds(s.time.playhead),s.autoScroll);
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + s.headerWidth);
     editor::TimeRuler("time", s.time, s.canvas, p.markers, p.revision, out, theme);

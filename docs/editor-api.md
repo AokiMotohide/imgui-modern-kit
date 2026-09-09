@@ -157,3 +157,7 @@ CG Inspectorの成分編集とresetは選択objectへ同じ絶対値を適用し
 TimeRuler draws frame-aligned major/minor ticks with density derived from horizontal zoom. Playback following updates the shared canvas before the Timeline ruler and clips draw. Invalid horizontal scale skips ruler geometry.
 
 TimeRulerは横zoomに応じた密度でフレーム単位のmajor/minor tickを描画します。Timelineは再生追従を共有canvasへ先に反映し、ルーラーとclipを描画します。横scaleが不正な場合はルーラー描画を省略します。
+
+Timeline Fit uses `TimelineProvider.contentRange`, with 24 logical pixels of horizontal padding, preserving vertical scale/scroll. The host supplies `TimelineState.bindings` for the Fit command; the icon button uses the same action. Gallery caches the total range when rebuilding edited data, not during visible queries.
+
+TimelineのFitは `TimelineProvider.contentRange` に左右24論理pixelの余白を付け、縦scale/scrollを維持します。ホストは `TimelineState.bindings` でFitキーを渡し、アイコンボタンも同じ処理を使います。Galleryは編集データ更新時に全体範囲を保持し、可視query中には全件走査しません。

@@ -145,6 +145,14 @@ void EditorWorkspaces::Dataset(bool big) {
     ++revision;
 }
 void EditorWorkspaces::RebuildTrackLayout() {
+    timelineBounds={};
+    if (!clips.empty()) {
+        timelineBounds={clips.front().start,clips.front().start+clips.front().duration};
+        for (const auto &clip:clips) {
+            timelineBounds.first=(std::min)(timelineBounds.first,clip.start);
+            timelineBounds.last=(std::max)(timelineBounds.last,clip.start+clip.duration);
+        }
+    }
     trackOffsets.resize(tracks.size()+1);
     trackOffsets[0]=0;
     for (std::size_t i=0;i<tracks.size();++i)
@@ -556,6 +564,8 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         return std::span<const video::ClipView>(s.selectedClips).first(n);
     };
     s.timeline.icons=s.icons;
+    s.timeline.bindings=std::span(s.bindings).first(s.bindingCount);
+    p.contentRange=s.timelineBounds;
     p.snap = [](void *u, editor::Range range) {
         auto &s = *static_cast<EditorWorkspaces *>(u);
         std::size_t n = 0;
