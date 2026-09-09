@@ -639,6 +639,10 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
                                       -view.visible.max.y,
                                       -view.visible.min.y})
                     : std::span<const Keyframe>{};
+    const bool focused=ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+    bool addKey=CommandPressed(Command::AddKey,s.bindings,focused);
+    bool previousKey=CommandPressed(Command::PreviousKey,s.bindings,focused);
+    bool nextKey=CommandPressed(Command::NextKey,s.bindings,focused);
     bool removeKeys=CommandPressed(Command::Delete,s.bindings,
         ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows));
     StableId previewChannel=0;
@@ -742,6 +746,9 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
         ImGui::OpenPopup("key settings");
     }
     if (ImGui::BeginPopup("key settings")) {
+        if (ImGui::MenuItem("Add key at playhead",nullptr,false,s.activeChannel!=0 && !s.drag.active)) addKey=true;
+        if (ImGui::MenuItem("Previous key",nullptr,false,provider.neighbor!=nullptr)) previousKey=true;
+        if (ImGui::MenuItem("Next key",nullptr,false,provider.neighbor!=nullptr)) nextKey=true;
         if (ImGui::MenuItem("Delete selected keys",nullptr,false,selection.count>0 && !s.drag.active)) removeKeys=true;
         if (ImGui::MenuItem("Fit all channels",nullptr,false,provider.bounds.has_value())) s.fitRequested=true;
         ImGui::Checkbox("Ghost other channels",&s.ghostOtherChannels);
@@ -774,6 +781,16 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
         ImGui::EndPopup();
     }
     ImGui::PopID();
+    if (!s.drag.active && s.activeChannel) {
+        if (addKey) {
+            double value=provider.sample?provider.sample(provider.user,s.activeChannel,s.time,s.extrapolation):0.;
+            Action(out,s.activeChannel,provider.revision,EditKind::KeyInsert,{},Value{s.time,0,0,0,value});
+        }
+        if (provider.neighbor && (previousKey || nextKey)) {
+            if (auto key=provider.neighbor(provider.user,s.activeChannel,s.time,nextKey))
+                Action(out,key->id,provider.revision,EditKind::Navigate,{},Value{key->tick,0,0,key->channel});
+        }
+    }
     if (removeKeys && !s.drag.active && selection.count) {
         auto targets=provider.selected ? provider.selected(provider.user,selection.storage.first(selection.count)) : std::span<const Keyframe>{};
         if (!provider.selected && selection.count==1) {

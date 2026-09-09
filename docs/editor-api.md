@@ -205,3 +205,7 @@ Curveのcontext設定 `scaleTime` は選択keyの最初のtickを基準に `KeyS
 Curve Delete uses the host Delete binding or context menu and emits one Remove commit per selected key. Locked targets reject the whole deletion; missing selected views or insufficient event capacity report overflow without partial events. Gallery removes keys by explicit ID.
 
 CurveのDeleteはホストbindingまたはcontext menuから選択keyごとにRemove commitを返します。locked対象を含む削除は全体を拒否し、選択view不足・event容量不足は部分イベントを返さずoverflowを通知します。Galleryは明示IDでkeyを削除します。
+
+Curve AddKey inserts at host `CurveState.time` on the active channel (`KeyInsert` target is the channel ID). Optional `neighbor` locates previous/next keys without a full scan; navigation events carry the key ID and exact tick. Gallery updates playhead/selection and avoids duplicate keys at the same channel/time.
+
+CurveのAddKeyはホストの `CurveState.time` とactive channelへ追加します（`KeyInsert` のtargetはchannel ID）。任意の `neighbor` から全件走査せず前後keyを取得し、key IDと正確なtickをNavigateで返します。Galleryはplayhead/選択を反映し、同じchannel/時刻にkeyを重複追加しません。
