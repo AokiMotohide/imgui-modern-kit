@@ -343,6 +343,16 @@ int main() {
         propertyEvents.Events()[0].proposed.first==FromSeconds(1) && propertyEvents.Events()[1].proposed.first==FromSeconds(3) &&
         propertyEvents.Events()[0].proposed.x==.5 && propertyEvents.Events()[1].proposed.x==.7,
         "curve timing scale doubles spacing around first key and preserves values");
+    std::array deleteKeysBinding{Binding{Command::Delete,ImGuiKey_F9}};
+    curveState.bindings=deleteKeysBinding;
+    io.AddKeyEvent(ImGuiKey_F9,true);curveFrame();
+    check(propertyEvents.count==2 && propertyEvents.Events()[0].kind==EditKind::Remove &&
+        propertyEvents.Events()[1].kind==EditKind::Remove,"remapped curve delete emits complete selected batch");
+    io.AddKeyEvent(ImGuiKey_F9,false);curveFrame();
+    curveSource[1].locked=true;
+    io.AddKeyEvent(ImGuiKey_F9,true);curveFrame();
+    check(propertyEvents.count==0,"locked selected key blocks complete delete batch");
+    io.AddKeyEvent(ImGuiKey_F9,false);curveFrame();
     ImGui::DestroyContext(context);
     std::puts(failures ? "FAIL editor core"
                        : "PASS timebase, drop-frame, snap, transaction, canvas and curves");

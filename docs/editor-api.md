@@ -201,3 +201,7 @@ Curveのフレーム吸着はホストの `CurveState.rate` とcontext menuの `
 Curve context option `scaleTime` starts `KeyScale` transactions around the earliest selected tick: 100 horizontal pixels doubles timing distances, preserving values. The pivot/mode are latched at Begin, and optional frame snapping applies to each scaled time.
 
 Curveのcontext設定 `scaleTime` は選択keyの最初のtickを基準に `KeyScale` transactionを開始します。横100pixelで時間間隔を2倍にし、値を維持します。基準とmodeはBegin時に固定し、フレーム吸着は各scale後の時刻へ適用します。
+
+Curve Delete uses the host Delete binding or context menu and emits one Remove commit per selected key. Locked targets reject the whole deletion; missing selected views or insufficient event capacity report overflow without partial events. Gallery removes keys by explicit ID.
+
+CurveのDeleteはホストbindingまたはcontext menuから選択keyごとにRemove commitを返します。locked対象を含む削除は全体を拒否し、選択view不足・event容量不足は部分イベントを返さずoverflowを通知します。Galleryは明示IDでkeyを削除します。

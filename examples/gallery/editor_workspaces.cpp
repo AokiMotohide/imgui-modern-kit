@@ -429,6 +429,10 @@ void EditorWorkspaces::ApplyEvents() {
         for (auto &key : keys)
             if (key.id == e.target) {
                 if (key.locked) continue;
+                if (e.kind==editor::EditKind::Remove) {
+                    keys.erase(keys.begin()+(&key-keys.data()));
+                    keySelection.Clear();changed=true;break;
+                }
                 if (e.kind==editor::EditKind::Duplicate) {
                     auto copy=key;copy.id=nextId++;copy.tick=e.proposed.first;copy.value=e.proposed.x;
                     keys.push_back(copy);changed=true;break;
