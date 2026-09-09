@@ -184,6 +184,7 @@ int main() {
     imkit::editor::CanvasState stripCanvas;stripCanvas.scale={100,1};
     imkit::editor::Transaction stripDrag;
     ImVec2 stripOrigin{};
+    int stripSettingsCommits=0,stripSettingsCancels=0;
     auto stripFrame=[&] {
         dopeEvents.Clear();ImGui::NewFrame();
         ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({800,600});ImGui::Begin("Strip test");
@@ -191,6 +192,10 @@ int main() {
         AnimationStrips("strips",testStrips,1,stripCanvas,stripDrag,dopeEvents,
             imkit::MakePrecisionTheme(imkit::ColorScheme::Dark),{700,400});
         ImGui::End();ImGui::Render();
+        for (const auto &event:dopeEvents.Events()) if (event.kind==imkit::editor::EditKind::StripSettings) {
+            if (event.phase==imkit::editor::Phase::Commit) ++stripSettingsCommits;
+            if (event.phase==imkit::editor::Phase::Cancel) ++stripSettingsCancels;
+        }
     };
     stripFrame();stripFrame();
     io.AddMousePosEvent(stripOrigin.x+50,stripOrigin.y+12);stripFrame();
@@ -223,7 +228,11 @@ int main() {
     stripKey(ImGuiKey_DownArrow);stripKey(ImGuiKey_Enter);stripKey(ImGuiKey_RightArrow);
     check(stripDrag.active && stripDrag.draft.kind==imkit::editor::EditKind::StripSettings,
         "strip settings keyboard edit begins a typed transaction");
-    stripKey(ImGuiKey_Escape);
+    stripKey(ImGuiKey_Enter);
+    check(stripSettingsCommits==1 && !stripDrag.active,"strip settings keyboard edit commits once");
+    stripKey(ImGuiKey_Enter);stripKey(ImGuiKey_RightArrow);stripKey(ImGuiKey_Escape);
+    check(stripSettingsCancels==1 && stripSettingsCommits==1 && !stripDrag.active,
+        "strip settings Escape cancels without a second commit");
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
