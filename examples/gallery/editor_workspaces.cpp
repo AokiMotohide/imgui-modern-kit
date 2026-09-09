@@ -58,6 +58,7 @@ editor::AssetProvider Assets(EditorWorkspaces &s) {
 }
 editor::CurveProvider Curves(EditorWorkspaces &s) {
     s.curve.bindings=std::span(s.bindings).first(s.bindingCount);
+    s.curve.rate=s.timeline.time.rate;
     return {&s, s.revision, [](void *u, editor::CurveQuery q) {
                 auto &s = *static_cast<EditorWorkspaces *>(u);
                 return s.QueryKeys(q);

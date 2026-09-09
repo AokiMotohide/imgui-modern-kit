@@ -584,6 +584,14 @@ double Evaluate(std::span<const Keyframe> keys, Tick tick, Extrapolation extrapo
     return bez(a->value, a->value + resolvedA.right.y, b->value + resolvedB.left.y, b->value, (lo + hi) * .5);
 }
 namespace {
+Tick CurveTimeDelta(const CurveState &s,double seconds) {
+    Tick delta=FromSeconds(seconds);
+    if (s.snapToFrame && Valid(s.rate) && !s.side) {
+        const Tick tick=s.drag.draft.original.first+delta;
+        delta=FrameToTick(TickToFrame(tick,s.rate),s.rate)-s.drag.draft.original.first;
+    }
+    return delta;
+}
 bool CurveCapacity(const CurveState &s,EventBuffer &out) {
     if (out.storage.size()-out.count>=1+s.companionCount) return true;
     out.overflow=true;return false;
@@ -641,12 +649,12 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
                 *key=MoveHandle(ResolveHandles({first,last},static_cast<std::size_t>(key-first)),s.side<0,
                     {s.drag.draft.original.x+dx,s.drag.draft.original.y+dy});
             } else {
-                key->tick=s.drag.draft.original.first+FromSeconds(dx);
+                key->tick=s.drag.draft.original.first+CurveTimeDelta(s,dx);
                 key->value=s.drag.draft.original.x+dy;
             }
             for (const auto &drag:s.companionDrags.first(s.companionCount)) {
                 auto member=std::find_if(preview.begin(),preview.end(),[&](const auto &item){return item.id==drag.draft.target;});
-                if (member!=preview.end()) {member->tick=drag.draft.original.first+FromSeconds(dx);member->value=drag.draft.original.x+dy;}
+                if (member!=preview.end()) {member->tick=drag.draft.original.first+CurveTimeDelta(s,dx);member->value=drag.draft.original.x+dy;}
             }
             std::sort(preview.begin(),preview.end(),[](const auto &a,const auto &b){return a.channel!=b.channel?a.channel<b.channel:a.tick<b.tick;});
             keys=preview;
@@ -728,6 +736,7 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
     if (ImGui::BeginPopup("key settings")) {
         if (ImGui::MenuItem("Fit all channels",nullptr,false,provider.bounds.has_value())) s.fitRequested=true;
         ImGui::Checkbox("Ghost other channels",&s.ghostOtherChannels);
+        ImGui::Checkbox("Snap to frame",&s.snapToFrame);
         if (provider.sample) {
             int mode=static_cast<int>(s.extrapolation);
             if (ImGui::Combo("Extrapolation",&mode,"Constant\0Linear\0Repeat\0"))
@@ -785,13 +794,13 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
             proposed.x += dx;
             proposed.y += dy;
         } else {
-            proposed.first += FromSeconds(dx);
+            proposed.first += CurveTimeDelta(s,dx);
             proposed.x += dy;
         }
         if (ImGui::IsMouseDown(0)) {
             if (!(proposed == s.drag.draft.proposed)) s.drag.Update(provider.revision, proposed, out);
             for (auto &drag:s.companionDrags.first(s.companionCount)) {
-                auto value=drag.draft.original;value.first+=FromSeconds(dx);value.x+=dy;
+                auto value=drag.draft.original;value.first+=CurveTimeDelta(s,dx);value.x+=dy;
                 if (!(value==drag.draft.proposed)) drag.Update(provider.revision,value,out);
             }
         }
