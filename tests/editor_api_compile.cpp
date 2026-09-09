@@ -19,6 +19,8 @@ int main() {
     io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);
     io.Fonts->SetTexID(ImTextureID{1});
     auto theme = MakePrecisionTheme();
+    IconAtlas icons; // Texture lifetime remains with this consumer.
+    for (int pixels : {16,20,24,32,48,64}) icons.SetTexture(pixels,ImTextureRef(ImTextureID{2}));
     editor::CanvasState canvas;
     editor::CurveState curve;
     editor::PropertyState property;
@@ -28,6 +30,8 @@ int main() {
     cg::ViewportState viewport;
     cg::OutlinerState outliner;
     cg::UVState uv;
+    curve.icons=&icons;uv.icons=&icons;viewport.icons=&icons;
+    viewport.rotationAngle=0;viewport.rotationMouse={};
     editor::Transaction drag;
     ImGui::NewFrame();
     ImGui::SetNextWindowSize({1200, 800});
@@ -74,6 +78,12 @@ int main() {
     cg::Outliner("tree", {}, outliner, selection, events);
     const cg::ComponentView component{123,456,"Renderer","Host-owned component"};
     cg::ComponentStack("stack",{&component,1},1,events);
+    const cg::ComponentTypeView componentTypes[]={{701,"Renderer"},{709,"Wireframe"}};
+    cg::ComponentStackOptions componentOptions;
+    componentOptions.owner=component.owner;componentOptions.availableTypes=componentTypes;
+    componentOptions.locked=false;
+    cg::ComponentStack("typed stack",{&component,1},1,events,componentOptions);
+    (void)editor::EditKind::ComponentAdd;
     ImGui::EndChild();
     cg::UVProvider uvProvider;
     uvProvider.all=[](void *,cg::UVSelection)->std::span<const editor::StableId>{return {};};
@@ -82,6 +92,7 @@ int main() {
     uv.bindings={};uv.imageSize={1920,1080};uv.coordinates=cg::UVCoordinates::Pixel;
     uv.companionDrags={};uv.canvas.selectionPath={};uv.checker=true;uv.showTexture=false;uv.grid=true;
     cg::UVEdge edge;edge.aVertex=1;edge.bVertex=2;
+    uvProvider.faces=[](void *,editor::Rect)->std::span<const cg::UVFace>{return {};};
     cg::UVEditor("uv", uvProvider, {}, uv, selection, events, theme, {300, 100});
     cg::DopeSheet("dope", {}, curve, selection, events, theme, {300, 100});
     cg::AnimationStrips("strips", {}, 1, canvas, drag, events, theme, {300, 100});
