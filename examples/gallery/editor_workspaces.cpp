@@ -230,6 +230,10 @@ void EditorWorkspaces::Initialize() {
     if (initialized)
         return;
     initialized = true;
+    for (int i=0;i<3;++i) animationStrips[i]={nextId++,static_cast<editor::StableId>(i+1),
+        i==0?"Base motion":i==1?"Accent motion":"Ending motion",
+        {editor::FromSeconds(i*2.),editor::FromSeconds(i*2.+4)}};
+    stripCanvas.scale={100,1};
     Dataset(false);
     bindingCount = editor::MakeBindings(editor::ShortcutPreset::CapCut, bindings);
     timeline.memberDrags = clipDrags;
@@ -305,6 +309,14 @@ void EditorWorkspaces::ApplyEvents() {
         if (e.phase != editor::Phase::Commit || e.revision != revision)
             continue;
         ++commits;
+        for (auto &strip:animationStrips) if (strip.id==e.target) {
+            if (e.kind==editor::EditKind::StripSettings) {
+                strip.scale=e.proposed.x;strip.repeat=e.proposed.y;strip.blend=e.proposed.z;
+                strip.muted=(e.proposed.offset&1)!=0;strip.locked=(e.proposed.offset&2)!=0;changed=true;
+            } else if (e.kind==editor::EditKind::Move && !strip.locked) {
+                strip.range={e.proposed.first,e.proposed.last};changed=true;
+            }
+        }
         if (e.kind == editor::EditKind::Select)
             continue;
         if (e.kind == editor::EditKind::Marker && markerCount < markers.size()) {
@@ -845,6 +857,10 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
         }
         if (ImGui::BeginTabItem("Dope Sheet",nullptr,s.animationPage==1?ImGuiTabItemFlags_SetSelected:0)) {
             cg::DopeSheet("dope", Curves(s), s.curve, s.keySelection, s.events, theme, {0, 0});
+            ImGui::EndTabItem();
+        }
+        if (ImGui::BeginTabItem("Animation strips",nullptr,s.animationPage==3?ImGuiTabItemFlags_SetSelected:0)) {
+            cg::AnimationStrips("strips",s.animationStrips,s.revision,s.stripCanvas,s.stripDrag,s.events,theme,{0,0});
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("UV / Image",nullptr,s.animationPage==2?ImGuiTabItemFlags_SetSelected:0)) {
