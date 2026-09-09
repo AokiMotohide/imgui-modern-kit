@@ -761,7 +761,21 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
         ImGui::Checkbox("Ghost other channels",&s.ghostOtherChannels);
         ImGui::Checkbox("Snap to frame",&s.snapToFrame);
         ImGui::Checkbox("Scale key timing",&s.scaleTime);
-        ImGui::Checkbox("Lasso selection",&s.lassoSelect);
+        if (s.icons) {
+            ImGui::BeginDisabled(s.drag.active || s.canvas.selecting);
+            for (int mode=0;mode<2;++mode) {
+                if (mode) ImGui::SameLine();
+                const bool active=s.lassoSelect==(mode==1);
+                const char *label=mode ? (active ? "Lasso select (active)" : "Lasso select") :
+                                         (active ? "Box select (active)" : "Box select");
+                if (active) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+                if (IconLabelButton(mode ? "lasso" : "box",*s.icons,
+                                    mode ? IconId::LassoSelect : IconId::BoxSelect,label,
+                                    {16*ImGui::GetFontSize()/14})) s.lassoSelect=mode==1;
+                if (active) ImGui::PopStyleColor();
+            }
+            ImGui::EndDisabled();
+        } else ImGui::Checkbox("Lasso selection",&s.lassoSelect);
         if (provider.sample) {
             int mode=static_cast<int>(s.extrapolation);
             if (ImGui::Combo("Extrapolation",&mode,"Constant\0Linear\0Repeat\0"))

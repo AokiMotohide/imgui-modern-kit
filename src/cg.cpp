@@ -956,7 +956,21 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
         ImGui::Checkbox("Checker",&s.checker);
         ImGui::Checkbox("Texture",&s.showTexture);
         ImGui::Checkbox("Grid",&s.grid);
-        ImGui::Checkbox("Lasso selection",&s.lassoSelect);
+        if (s.icons) {
+            ImGui::BeginDisabled(s.drag.active || s.canvas.selecting);
+            for (int mode=0;mode<2;++mode) {
+                if (mode) ImGui::SameLine();
+                const bool active=s.lassoSelect==(mode==1);
+                const char *label=mode ? (active ? "Lasso select (active)" : "Lasso select") :
+                                         (active ? "Box select (active)" : "Box select");
+                if (active) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+                if (IconLabelButton(mode ? "lasso" : "box",*s.icons,
+                                    mode ? IconId::LassoSelect : IconId::BoxSelect,label,
+                                    {16*ImGui::GetFontSize()/14})) s.lassoSelect=mode==1;
+                if (active) ImGui::PopStyleColor();
+            }
+            ImGui::EndDisabled();
+        } else ImGui::Checkbox("Lasso selection",&s.lassoSelect);
         int coordinates=static_cast<int>(s.coordinates);
         if (ImGui::Combo("Coordinates",&coordinates,"Normalized\0Pixel\0UDIM\0"))
             s.coordinates=static_cast<UVCoordinates>(coordinates);

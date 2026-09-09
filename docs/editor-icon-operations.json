@@ -13,22 +13,22 @@
     },
     {
       "operation": "BoxSelect",
-      "widget": "Viewport Select mode; Icon Gallery",
+      "widget": "Viewport Select mode; Curve and UV context menus; Icon Gallery",
       "disposition": "new",
       "icon": "BoxSelect",
       "tooltip": "Box Select",
       "state": "button background, focus outline and disabled styling",
-      "status": "generated and connected; native 16px light and 150% dark appearance inspected",
+      "status": "generated and connected; native 16px light and 150% dark appearance inspected; Curve/UV integration compiled, native menu inspection pending",
       "evidence": "out/selection-icons-native/icons-16-light.png; out/selection-icons-150-fit/page-6-dark-150.png (local captures, not distributed)"
     },
     {
       "operation": "LassoSelect",
-      "widget": "Viewport Select mode; Icon Gallery",
+      "widget": "Viewport Select mode; Curve and UV context menus; Icon Gallery",
       "disposition": "new",
       "icon": "LassoSelect",
       "tooltip": "Lasso Select",
       "state": "button background, focus outline and disabled styling",
-      "status": "generated and connected; native 16px light and 150% dark appearance inspected",
+      "status": "generated and connected; native 16px light and 150% dark appearance inspected; Curve/UV integration compiled, native menu inspection pending",
       "evidence": "out/selection-icons-native/icons-16-light.png; out/selection-icons-150-fit/page-6-dark-150.png (local captures, not distributed)"
     },
     {
