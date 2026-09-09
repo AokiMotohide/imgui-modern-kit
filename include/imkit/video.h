@@ -21,6 +21,9 @@ struct TrackLayout {
     double top = 0; // Absolute pixel offset of the first returned track.
 };
 enum class TransitionKind { None, Dissolve, Fade, Crossfade };
+struct EnvelopePoint {StableId id=0;Tick tick=0;double gain=1;bool locked=false;};
+// Sorted clip-local points; empty envelope evaluates to unity gain.
+double EvaluateEnvelope(std::span<const EnvelopePoint> points,Tick tick);
 struct ClipView {
     StableId id = 0, track = 0, linked = 0, group = 0;
     const char *label = "";
@@ -33,6 +36,7 @@ struct ClipView {
     Tick transitionIn = 0, transitionOut = 0;
     std::span<const AudioBucket> audioBuckets;
     TransitionKind transitionInKind=TransitionKind::Dissolve,transitionOutKind=TransitionKind::Dissolve;
+    std::span<const EnvelopePoint> envelope;
 };
 struct TransitionEdit {
     Tick inDuration=0,outDuration=0;
@@ -122,6 +126,8 @@ struct TimelineState {
     editor::Transaction transitionDrag;
     bool transitionEnd=false;
     double transitionMouseStart=0;
+    editor::Transaction envelopeDrag;
+    editor::Point envelopeMouseStart{};
     editor::Transaction captionDrag;
     bool captionFocus=false;
     editor::Transaction keyDrag;

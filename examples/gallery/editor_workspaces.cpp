@@ -124,6 +124,9 @@ void Options(EditorWorkspaces &s) {
 } // namespace
 void EditorWorkspaces::Dataset(bool big) {
     transitionHistory.clear();transitionHistoryCursor=0;
+    volumeEnvelope={video::EnvelopePoint{nextId++,editor::FromSeconds(.5),.5},
+                    video::EnvelopePoint{nextId++,editor::FromSeconds(1.5),1},
+                    video::EnvelopePoint{nextId++,editor::FromSeconds(3),.7}};
     large = big;
     tracks.clear();
     clips.clear();
@@ -164,6 +167,7 @@ void EditorWorkspaces::Dataset(bool big) {
             }
             clip.proxy = i % 7 == 0;
             if (track.kind == video::TrackKind::Audio) clip.audioBuckets=audio;
+            if (t==1 && i==0) clip.envelope=volumeEnvelope;
             clips.push_back(clip);
         }
     }
@@ -394,6 +398,11 @@ void EditorWorkspaces::ApplyEvents() {
             } else if ((e.kind==editor::EditKind::Move || e.kind==editor::EditKind::TrimStart ||
                         e.kind==editor::EditKind::TrimEnd) && !strip.locked) {
                 strip.range={e.proposed.first,e.proposed.last};changed=true;
+            }
+        }
+        if (e.kind==editor::EditKind::AudioEnvelope) {
+            for (auto &point:volumeEnvelope) if (point.id==e.target && !point.locked) {
+                point.tick=e.proposed.first;point.gain=std::clamp(e.proposed.x,0.,2.);changed=true;
             }
         }
         if (e.kind == editor::EditKind::Select)

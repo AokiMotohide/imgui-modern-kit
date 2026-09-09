@@ -49,6 +49,9 @@ int main() {
     (void)video::EditTransition(video::ClipView{},false,0);
     (void)editor::EditKind::TransitionDuration;
     video::TransitionPicker("transition types",{},1,events);
+    (void)video::EvaluateEnvelope({},0);
+    video::EnvelopePoint envelopePoint{8001,0,1};
+    (void)envelopePoint;
     video::TrackView trackView;
     auto trackHeight=video::TrackExtent(trackView);
     (void)trackHeight;

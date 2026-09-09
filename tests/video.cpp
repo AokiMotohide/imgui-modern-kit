@@ -366,6 +366,25 @@ int main() {
           "clip body drag keeps parent window stationary");
     io.AddMouseButtonEvent(0,false);frame(full);
     check(!timeline.drag.active && full.Events().back().phase==editor::Phase::Commit,"clip body drag commits normally");
+    video::EnvelopePoint envelope[]={{2901,editor::FromSeconds(.5),.5},{2902,editor::FromSeconds(1.5),1}};
+    check(video::EvaluateEnvelope(envelope,editor::FromSeconds(1))==.75 && video::EvaluateEnvelope({},0)==1,
+          "volume envelope linearly interpolates gain and defaults to unity");
+    transitionFixture.clip.envelope=envelope;transitionFixture.track.kind=video::TrackKind::Audio;
+    timeline.canvas.origin.x=0;full.Clear();frame(full);
+    const float envelopeTop=std::min(timeline.view.min.y+video::TrackExtent(transitionFixture.track)-9,
+        timeline.view.min.y+4+2*ImGui::GetFontSize()+7);
+    const float envelopeBottom=timeline.view.min.y+video::TrackExtent(transitionFixture.track)-9;
+    const float envelopeX=timeline.view.min.x+timeline.headerWidth+150;
+    const float envelopeY=(envelopeTop+envelopeBottom)*.5f;
+    io.AddMousePosEvent(envelopeX,envelopeY);frame(full);full.Clear();io.AddMouseButtonEvent(0,true);frame(full);
+    check(timeline.envelopeDrag.active && !timeline.drag.active,"volume envelope point owns its drag");
+    io.AddMousePosEvent(envelopeX+20,envelopeY-6);full.Clear();frame(full);
+    check(timeline.envelopeDrag.draft.proposed.x>1 && timeline.envelopeDrag.draft.proposed.first>envelope[1].tick &&
+          envelope[1].gain==1,"volume envelope updates gain and local time without host mutation");
+    full.Clear();io.AddMouseButtonEvent(0,false);frame(full);
+    check(full.count==1 && full.Events()[0].kind==editor::EditKind::AudioEnvelope &&
+          full.Events()[0].target==2902 && full.Events()[0].phase==editor::Phase::Commit,"volume envelope emits typed Commit");
+    transitionFixture.clip.envelope={};transitionFixture.track.kind=video::TrackKind::Video;
     ImVec2 pickerOrigin{};
     auto pickerFrame=[&](editor::EventBuffer &events) {
         ImGui::NewFrame();ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({780,580});
