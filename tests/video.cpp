@@ -273,6 +273,33 @@ int main() {
         transitionFixture.track.locked=false;
         io.AddKeyEvent(ImGuiKey_Escape,false);io.AddMouseButtonEvent(0,false);full.Clear();frame(full);
     }
+    ImVec2 pickerOrigin{};
+    auto pickerFrame=[&](editor::EventBuffer &events) {
+        ImGui::NewFrame();ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({780,580});
+        ImGui::Begin("Transition picker");pickerOrigin=ImGui::GetCursorScreenPos();
+        video::TransitionPicker("types",transitionFixture.clip,1,events);
+        ImGui::End();ImGui::Render();
+    };
+    auto chooseTransition=[&](int side,int option,editor::EventBuffer &events) {
+        events.Clear();pickerFrame(events);pickerFrame(events);
+        io.AddMousePosEvent(pickerOrigin.x+80,pickerOrigin.y+ImGui::GetFrameHeight()*.5f+side*ImGui::GetFrameHeightWithSpacing());pickerFrame(events);
+        io.AddMouseButtonEvent(0,true);pickerFrame(events);io.AddMouseButtonEvent(0,false);pickerFrame(events);
+        io.AddMousePosEvent(770,570);pickerFrame(events);
+        auto key=[&](ImGuiKey k){io.AddKeyEvent(k,true);pickerFrame(events);io.AddKeyEvent(k,false);pickerFrame(events);};
+        key(ImGuiKey_Home);for (int i=0;i<option;++i) key(ImGuiKey_DownArrow);key(ImGuiKey_Enter);
+    };
+    chooseTransition(0,2,full);
+    check(full.count==2 && full.Events()[0].phase==editor::Phase::Begin &&
+          full.Events()[1].phase==editor::Phase::Commit && full.Events()[1].kind==editor::EditKind::TransitionType &&
+          full.Events()[1].proposed.first==2 && full.Events()[1].proposed.last==1,
+          "transition picker changes in kind with a complete typed transaction");
+    chooseTransition(1,3,full);
+    check(full.count==2 && full.Events()[1].proposed.first==1 && full.Events()[1].proposed.last==3,
+          "transition picker preserves the other end");
+    chooseTransition(0,2,small);
+    check(small.overflow && small.count==0,"transition picker rejects partial Begin Commit delivery");
+    transitionFixture.clip.locked=true;chooseTransition(0,2,full);
+    check(full.count==0,"locked transition picker emits no edit");transitionFixture.clip.locked=false;
     video::ColorValues hostColors;
     video::ColorPropertyIds colorIds{101,307,509,701,907,1103};
     video::ColorState colorState;

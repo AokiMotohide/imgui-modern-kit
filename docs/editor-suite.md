@@ -444,3 +444,7 @@ Clip top-edge square handles edit the in/out transition durations independently,
 `video::TransitionPicker` edits independent in/out `TransitionKind` values (None, Dissolve, Fade, Crossfade). Timeline opens it on clip right-click; the host applies `TransitionType` events (`first`/`last` are in/out kind). Each choice emits an atomic Begin/Commit pair or reports buffer overflow without a partial edit. Locked tracks/clips disable the picker. D/F/X badges identify the chosen type. Choosing None retains the saved duration for later re-enabling. These are UI and host-model semantics; media blending remains host-owned.
 
 `video::TransitionPicker`は開始側・終了側の`TransitionKind`（None／Dissolve／Fade／Crossfade）を独立して変更します。Timelineのclip右クリックで開き、ホストは`TransitionType`イベントの`first`／`last`を開始側／終了側の種類として適用します。選択ごとにBegin／Commitの一組を返し、buffer不足時は部分送信せずoverflowを通知します。locked track／clipでは無効です。D／F／Xのbadgeで種類を示し、Noneへ変更しても再有効化用に長さを保持します。これはUIとホストデータの契約であり、メディア合成はホストの責任です。
+
+Transition picker public-IO tests now cover choosing Fade on the in side and Crossfade on the out side, preservation of the opposite type, atomic rejection with a one-event buffer, and locked-clip input suppression. Native menu appearance and host playback are not covered by these tests.
+
+transition pickerの公開IOテストで、開始側のFade・終了側のCrossfade選択、反対側の種類の保持、1イベントbufferでの部分送信拒否、locked clipへの入力抑止を確認しました。native menuの表示とホスト再生はこのテストの検証範囲に含みません。
