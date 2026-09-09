@@ -715,3 +715,7 @@ Relationship ID remapping uses empty vectors until an actual duplicate/split nee
 Oriented nonuniform scale now retains the full linear transform through rotation/scale/shear decomposition. Focused CG regression verifies transformed basis columns and inverse-transpose normals; public IO checks the affine payload and the host model checks Commit application. The native GL verifier passed sheared mesh picking and analytical lighting checks. Core/Video/CG/API regression and the external consumer passed.
 
 任意方向の非均等scaleはrotation／scale／shear分解で全線形変換を保持します。CG回帰で変換後の基底列と逆転置normal、公開IOでアフィンpayload、ホストモデルでCommit反映を確認しました。native GL検証ではshear付きmeshのpickingと解析値に対する照明が合格しました。Core／Video／CG／API回帰と外部consumerも合格しています。
+
+Gallery vertex/face normal toggles now call public DrawMeshNormals over OpenGL or DrawList preview. Focused tests verify segment counts for a sheared triangle, independent face mode and zero-length suppression; the external consumer compiles and runs the API. `--verify-normals` captures light and dark 150% views of a sheared mesh. These are display captures, not OS-input acceptance; normal lines do not use depth occlusion.
+
+Galleryの頂点・面normal切替を公開DrawMeshNormalsへ接続しました。OpenGL／DrawList preview上で使用します。shear付き三角形の線分数、面だけの表示、長さ0の抑止が回帰で合格し、外部consumerもAPIを実行しました。`--verify-normals`はshear付きmeshのlight・dark 150%画面をcaptureします。表示確認でありOS入力の受入検証ではありません。normal線はdepth遮蔽を行いません。

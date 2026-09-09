@@ -217,6 +217,8 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
     ImGui::Checkbox("Gizmo", &s.gizmo);
     ImGui::SameLine();
     ImGui::Checkbox("Snap", &s.snap);
+    ImGui::SameLine();ImGui::Checkbox("Vertex normals",&s.normals);
+    ImGui::SameLine();ImGui::Checkbox("Face normals",&s.faceNormals);
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImGui::GetFontSize()*8);
     int orientation = static_cast<int>(s.orientation);

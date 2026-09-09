@@ -70,6 +70,7 @@ struct ViewportState {
     Shading shading = Shading::Solid;
     bool grid = true, axes = true, origins = true, gizmo = true, safeFrame = false, wireframe = false,
          normals = false, snap = false;
+    bool faceNormals=false;
     editor::Transaction drag;
     Axis activeAxis = Axis::None;
     editor::Point mouseStart{};

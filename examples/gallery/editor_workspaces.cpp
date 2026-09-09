@@ -1341,6 +1341,9 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
         preview::DrawListPreview(*ImGui::GetWindowDrawList(),s.BuildSceneMeshes(),s.viewport.camera,
                                  view.min,view.size,s.scratch);
     }
+    if (s.viewport.normals || s.viewport.faceNormals)
+        preview::DrawMeshNormals(*ImGui::GetWindowDrawList(),s.BuildSceneMeshes(),s.viewport.camera,view.min,view.size,
+            {s.viewport.normals,s.viewport.faceNormals,.2,ImGui::GetColorU32(theme.colors.accent)});
     s.viewportSelectionPoints.resize(s.objects.size());
     s.viewport.selectionPoints=s.viewportSelectionPoints;
     s.viewport.selectionCanvas.selectionPath=s.viewportSelectionPath;

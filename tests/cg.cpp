@@ -98,6 +98,13 @@ int main() {
     auto expected = static_cast<int>(std::lround(255 * (.25 + .75 * 1.1 / std::sqrt(5.25 * .98))));
     check(std::abs(static_cast<int>(triangles[0].color & 255) - expected) <= 1,
           "DrawList inverse transpose normal under rotation and nonuniform scale");
+    mesh.transform.shear={.5,.2,.1};
+    check(imkit::preview::DrawMeshNormals(*ImGui::GetWindowDrawList(),{&mesh,1},c,{0,0},{800,600},{true,true})==4,
+          "sheared mesh draws three vertex normals and one face normal");
+    check(imkit::preview::DrawMeshNormals(*ImGui::GetWindowDrawList(),{&mesh,1},c,{0,0},{800,600},{false,true})==1,
+          "face normal overlay independently selectable");
+    check(imkit::preview::DrawMeshNormals(*ImGui::GetWindowDrawList(),{&mesh,1},c,{0,0},{800,600},{true,true,0})==0,
+          "zero-length normal overlay emits no segments");
     ImGui::End();
     ImGui::Render();
     ViewportState navigation;
