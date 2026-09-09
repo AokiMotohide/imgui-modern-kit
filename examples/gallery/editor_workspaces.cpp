@@ -433,6 +433,13 @@ void EditorWorkspaces::ApplyEvents() {
             if (object.id==e.target && !object.locked) {object.label=renamedLabels[e.target].c_str();changed=true;}
         auto clip = std::find_if(clips.begin(), clips.end(), [&](const auto &c) { return c.id == e.target; });
         if (clip != clips.end()) {
+            if (e.kind==editor::EditKind::TransitionType && !clip->locked && e.proposed.first>=0 && e.proposed.first<=3 && e.proposed.last>=0 && e.proposed.last<=3) {
+                const auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==clip->track;});
+                if (track!=tracks.end() && !track->locked) {
+                    clip->transitionInKind=static_cast<video::TransitionKind>(e.proposed.first);
+                    clip->transitionOutKind=static_cast<video::TransitionKind>(e.proposed.last);changed=true;
+                }
+            }
             if (e.kind==editor::EditKind::TransitionDuration && !clip->locked) {
                 const auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==clip->track;});
                 if (track!=tracks.end() && !track->locked) {
