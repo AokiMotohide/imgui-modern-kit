@@ -193,6 +193,10 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         }
         ImGui::EndPopup();
     }
+    if (s.time.playing)
+        s.canvas.origin.x=editor::FollowPlayhead(s.canvas.origin.x,
+            ((size.x>0?size.x:ImGui::GetContentRegionAvail().x)-s.headerWidth)/s.canvas.scale.x,
+            editor::Seconds(s.time.playhead),s.autoScroll);
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + s.headerWidth);
     editor::TimeRuler("time", s.time, s.canvas, p.markers, p.revision, out, theme);
     s.canvas.wheelZoom = ImGui::GetIO().KeyCtrl;
@@ -205,10 +209,6 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     if (s.heightDrag.active && ImGui::IsKeyPressed(ImGuiKey_Escape)) s.heightDrag.Cancel(out);
     if (view.hovered && s.tool == Tool::Hand && ImGui::IsMouseDragging(0))
         s.canvas.origin.x -= io.MouseDelta.x / s.canvas.scale.x;
-    if (s.time.playing)
-        s.canvas.origin.x=editor::FollowPlayhead(s.canvas.origin.x,
-            (view.max.x-view.min.x-s.headerWidth)/s.canvas.scale.x,
-            editor::Seconds(s.time.playhead),s.autoScroll);
     // Track rows are indexed independently from time; no all-track query or clip scan.
     if (view.hovered && io.MouseWheel && !io.KeyCtrl)
         s.verticalScroll = (std::max)(0., s.verticalScroll - io.MouseWheel * s.rowHeight);
