@@ -190,9 +190,8 @@ void EditorWorkspaces::Dataset(bool big) {
         key.handles=editor::HandleMode::AutoClamped;
         keys.push_back(key);
     }
+    if (!clips.empty()) clips.front().keyChannel=1;
     RebuildKeyIndex();
-    if (!clips.empty())
-        clips.front().keys = std::span<const editor::Keyframe>(keys).first(6);
     selection.Clear();
     selection.Set(1000);
     timeline.drag.active = false;
@@ -224,16 +223,16 @@ void EditorWorkspaces::RebuildKeyIndex() {
         keyChannels.emplace_back(first,last);first=last;
     }
     visibleKeys.reserve((std::min)(keys.size(),std::size_t{4096}));
-    if (!clips.empty()) {
-        clips.front().keys={};
-        if (!keyChannels.empty()) {
-            auto [begin,end]=keyChannels.front();
-            auto channel=std::span<const editor::Keyframe>(keys).subspan(begin,end-begin);
-            clips.front().keyChannel=channel.front().channel;
-            auto first=std::lower_bound(channel.begin(),channel.end(),editor::Tick{0},[](const auto &key,auto tick){return key.tick<tick;});
-            auto last=std::upper_bound(first,channel.end(),clips.front().duration,[](auto tick,const auto &key){return tick<key.tick;});
-            clips.front().keys={first,last};
-        }
+    for (auto &clip:clips) {
+        clip.keys={};
+        if (!clip.keyChannel) continue;
+        const auto range=std::lower_bound(keyChannels.begin(),keyChannels.end(),clip.keyChannel,
+            [&](const auto &range,auto id){return keys[range.first].channel<id;});
+        if (range==keyChannels.end() || keys[range->first].channel!=clip.keyChannel) continue;
+        auto channel=std::span<const editor::Keyframe>(keys).subspan(range->first,range->second-range->first);
+        auto first=std::lower_bound(channel.begin(),channel.end(),editor::Tick{0},[](const auto &key,auto tick){return key.tick<tick;});
+        auto last=std::upper_bound(first,channel.end(),clip.duration,[](auto tick,const auto &key){return tick<key.tick;});
+        clip.keys={first,last};
     }
 }
 std::span<const editor::Keyframe> EditorWorkspaces::QueryKeys(editor::CurveQuery query) {
