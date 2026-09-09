@@ -160,6 +160,33 @@ CGは投影・navigation・object origin選択・軸gizmo・Outlinerの制限/re
 Dope Sheet・animation strip移動を提供します。orientationは純粋関数で計算し、pivotPositionは
 ホストが計算します。scene geometry・階層検証・選択・animation runtimeは所有しません。
 
+`TransformGizmo` draws translation axes, XY/YZ/ZX plane handles and a screen handle;
+Scale adds square axis tips, independent plane scaling and uniform screen scaling.
+Rotate uses projected axis rings and an outer view-normal ring. Unified displays
+translation tips, scale squares and rotation rings together; the chosen operation
+remains fixed through the transaction. Plane movement solves the two projected
+basis directions independently, and ring movement uses angular displacement.
+Shift applies fine control and snap quantizes the resulting delta. Source transforms
+remain host-owned; preview and commit use typed Translate/Rotate/Scale events.
+Full rotation/scale around an external pivot and multi-object application remain incomplete.
+TransformGizmoは移動軸、XY/YZ/ZX平面、screen handleを描画します。Scaleは四角い軸端、
+平面内の独立した拡大縮小、screenでの一様拡大縮小を提供します。Rotateは投影した軸ringと
+画面法線方向の外周ringを使います。Unifiedは移動・scale・回転handleを同時表示し、
+選んだ操作をtransaction終了まで維持します。平面操作は投影した2基底から個別に変位を求め、
+ringは角度差で回転します。Shiftはfine、snapは変位の量子化へ反映します。
+元transformはホスト所有のまま、Translate/Rotate/Scaleのpreview・commit eventを返します。
+外部pivotを中心とする完全な回転・scaleと複数objectへの適用は未完了です。
+
+The focused CG public-IO test covers all three translation/scale planes, screen
+translation/scaling/rotation, axis rotation rings and distinct Unified operations.
+The native Gallery GPU verifier also passes the existing X-gizmo preview/commit
+path after these changes. A 150% native capture checks translation-handle visibility;
+it does not establish native OS/IME input coverage or visual coverage of every tool.
+CGの公開IOテストで移動・scaleの3平面、screen移動・scale・回転、軸回転ring、
+Unifiedの操作種別を確認しています。GalleryのGPU検証でも既存のX軸preview/commit経路が成功しました。
+150%のnative captureでは移動handleの表示を確認しています。native OS/IME入力や全toolの外観確認を
+実施した根拠には含めません。
+
 `NavigateCamera` applies screen-pixel orbit/pan and wheel zoom. Pan uses the view
 basis and projected world units per pixel; orthographic zoom updates visible height,
 perspective zoom updates distance. `AlignCamera` provides all six axis views.
@@ -218,14 +245,14 @@ revisionを進め、object選択を同期します。100k切替は256 track・10
 The requested 1.0 suite is **not complete**. Remaining work includes fully integrated
 box/lasso and multi-key workflows,
 transition handles/picker, linked/group sample policy, audio envelope editing,
-gizmo plane/screen handles and full pivot rotation,
-navigation gizmo, hierarchy rename/reorder and stack inspector, UV edge/face/island
+full pivot rotation and multi-object transforms,
+hierarchy rename/reorder and stack inspector, UV edge/face/island
 interaction, strip scale/repeat/blend editing, editor-specific icon expansion,
 complete localization and all requested representative input checks. Provider search
 controls exist, but the Gallery's sample providers do not yet apply every filter.
 依頼された1.0 Suiteは**未完成**です。box/lassoと複数key操作の統合、
 transition編集/picker、linked/groupのsample処理、audio envelope、
-gizmoのplane/screen handleとpivot回転、navigation gizmo、階層rename/reorderとstack inspector、
+gizmoのpivot回転と複数object変換、階層rename/reorderとstack inspector、
 UVのedge/face/island操作、strip scale/repeat/blend、editor icon追加、完全な表示文字列差替え、
 全代表操作の検証が残っています。Gallery providerでは全検索条件の適用も未完了です。
 
