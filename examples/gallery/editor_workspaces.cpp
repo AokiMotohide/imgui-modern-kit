@@ -192,6 +192,7 @@ void EditorWorkspaces::Dataset(bool big) {
     }
     if (!clips.empty()) clips.front().keyChannel=1;
     RebuildKeyIndex();
+    RebuildClipIndex();
     selection.Clear();
     selection.Set(1000);
     timeline.drag.active = false;
@@ -202,6 +203,44 @@ void EditorWorkspaces::Dataset(bool big) {
     for (auto &drag:curveCompanions) drag.active=false;
     RebuildTrackLayout();
     ++revision;SyncClipProperties();
+}
+void EditorWorkspaces::RebuildClipIndex() {
+    std::sort(clips.begin(),clips.end(),[](const auto &a,const auto &b) {
+        return a.track!=b.track ? a.track<b.track : a.start<b.start;
+    });
+    clipTreeBase=1;
+    while (clipTreeBase<clips.size()) clipTreeBase*=2;
+    clipEndTree.assign(clipTreeBase*2,std::numeric_limits<editor::Tick>::min());
+    for (std::size_t i=0;i<clips.size();++i) {
+        const auto &clip=clips[i];
+        const auto duration=std::max(editor::Tick{0},clip.duration);
+        clipEndTree[clipTreeBase+i]=clip.start>std::numeric_limits<editor::Tick>::max()-duration
+            ? std::numeric_limits<editor::Tick>::max() : clip.start+duration;
+    }
+    for (auto i=clipTreeBase;i-->1;)
+        clipEndTree[i]=std::max(clipEndTree[i*2],clipEndTree[i*2+1]);
+    visibleClips.reserve(clips.size());
+}
+std::span<const video::ClipView> EditorWorkspaces::QueryClips(editor::StableId track,editor::Range range) {
+    ++queryCount;visibleClips.clear();clipQueryVisits=0;
+    if (clipEndTree.empty() || range.last<range.first) return visibleClips;
+    const auto first=std::lower_bound(clips.begin(),clips.end(),track,
+        [](const auto &clip,auto id){return clip.track<id;});
+    const auto end=std::upper_bound(first,clips.end(),track,
+        [](auto id,const auto &clip){return id<clip.track;});
+    const auto last=std::upper_bound(first,end,range.last,
+        [](auto tick,const auto &clip){return tick<clip.start;});
+    const auto lo=static_cast<std::size_t>(first-clips.begin()),hi=static_cast<std::size_t>(last-clips.begin());
+    const auto visit=[&](auto &&self,std::size_t node,std::size_t begin,std::size_t end)->void {
+        ++clipQueryVisits;
+        if (end<=lo || begin>=hi || clipEndTree[node]<range.first) return;
+        if (end-begin==1) {visibleClips.push_back(clips[begin]);return;}
+        const auto middle=begin+(end-begin)/2;
+        self(self,node*2,begin,middle);self(self,node*2+1,middle,end);
+    };
+    visit(visit,1,0,clipTreeBase);
+    queriedClips+=visibleClips.size();
+    return visibleClips;
 }
 void EditorWorkspaces::RebuildKeyIndex() {
     std::sort(keys.begin(),keys.end(),[](const auto &a,const auto &b) {
@@ -881,9 +920,7 @@ void EditorWorkspaces::ApplyEvents() {
     if (changed) {
         RebuildTrackLayout();
         ++revision;
-        std::sort(clips.begin(), clips.end(), [](const auto &a, const auto &b) {
-            return a.track != b.track ? a.track < b.track : a.start < b.start;
-        });
+        RebuildClipIndex();
         RebuildKeyIndex();
     }
     events.Clear();SyncClipProperties();
@@ -983,20 +1020,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         return std::span<const video::TrackView>(s.tracks).subspan(a, n);
     };
     p.clips = [](void *u, editor::StableId track, editor::Range range) {
-        auto &s = *static_cast<EditorWorkspaces *>(u);
-        ++s.queryCount;
-        auto begin = std::lower_bound(s.clips.begin(), s.clips.end(), track,
-                                      [](const auto &c, auto t) { return c.track < t; });
-        auto end =
-            std::upper_bound(begin, s.clips.end(), track, [](auto t, const auto &c) { return t < c.track; });
-        auto first = std::lower_bound(begin, end, range.first - editor::TicksPerSecond * 60,
-                                      [](const auto &c, auto t) { return c.start < t; });
-        while (first != end && first->start + first->duration < range.first)
-            ++first;
-        auto last =
-            std::upper_bound(first, end, range.last, [](auto t, const auto &c) { return t < c.start; });
-        s.queriedClips += last - first;
-        return std::span<const video::ClipView>(first, last);
+        return static_cast<EditorWorkspaces *>(u)->QueryClips(track,range);
     };
     p.layout=[](void *u,double firstPixel,double lastPixel) {
         auto &s=*static_cast<EditorWorkspaces *>(u);

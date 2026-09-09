@@ -589,6 +589,26 @@ int VerifyInspectorModel() {
         if (!ok) ++failures;
     };
     {
+        auto queryStorage=std::make_unique<gallery::EditorWorkspaces>();
+        auto &query=*queryStorage;
+        for (int i=0;i<100000;++i) {
+            video::ClipView clip;clip.id=1000+i;clip.track=1;clip.start=i*100;clip.duration=10;
+            query.clips.push_back(clip);
+        }
+        query.clips.front().start=-editor::TicksPerSecond*120;
+        query.clips.front().duration=editor::TicksPerSecond*120+10000000;
+        query.RebuildClipIndex();
+        const auto capacity=query.visibleClips.capacity();
+        auto visible=query.QueryClips(1,{9000000,9000005});
+        check(visible.size()==2 && visible.front().id==1000 && visible.back().id==91000,
+              "interval query includes long clip starting outside former 60-second lookback");
+        check(query.clipQueryVisits<150 && query.visibleClips.capacity()==capacity,
+              "sparse 100k clip query prunes ended clips without scratch growth");
+        check(query.QueryClips(2,{0,10000000}).empty(),"clip interval query isolates track IDs");
+        query.clips.front().duration=1;query.RebuildClipIndex();
+        check(query.QueryClips(1,{9000000,9000005}).size()==1,"clip index rebuild reflects edited duration");
+    }
+    {
         auto copyStorage=std::make_unique<gallery::EditorWorkspaces>();
         auto &copies=*copyStorage;copies.Initialize();
         const auto original=copies.clips.front().id,property=copies.clipPropertyIds[1];

@@ -15,7 +15,11 @@ struct EditorWorkspaces {
     std::vector<video::AudioStripView> audioStrips;
     editor::StableId mixerTrack = 0;
     editor::PropertyState mixerState;
-    std::vector<video::ClipView> clips;
+    std::vector<video::ClipView> clips, visibleClips;
+    std::vector<editor::Tick> clipEndTree;
+    std::size_t clipTreeBase=1, clipQueryVisits=0;
+    void RebuildClipIndex();
+    std::span<const video::ClipView> QueryClips(editor::StableId track,editor::Range range);
     std::map<editor::StableId,std::vector<video::EnvelopePoint>> clipEnvelopes;
     struct TransitionHistory {editor::StableId id;editor::Value before,after;};
     std::vector<TransitionHistory> transitionHistory;
