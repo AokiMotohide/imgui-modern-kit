@@ -389,6 +389,32 @@ int main() {
         check(handleObject.transform.translation.x==0 && handleObject.transform.translation.y==0 &&
               handleObject.transform.translation.z==0,"gizmo leaves host data unchanged");
     }
+    handleState.tool=TransformTool::Rotate;
+    for (Axis axis:{Axis::X,Axis::Y,Axis::Z}) {
+        handleState.drag={}; AlignCamera(handleState.camera,axis);
+        const auto origin=Project({},handleState.camera,handleView.min,handleView.size).screen;
+        const Vec3 units[3]={{1,0,0},{0,1,0},{0,0,1}};
+        const int n=static_cast<int>(axis)-1;
+        auto u=Project(units[(n+1)%3],handleState.camera,handleView.min,handleView.size).screen;
+        auto w=Project(units[(n+2)%3],handleState.camera,handleView.min,handleView.size).screen;
+        const double extent=std::max(std::hypot(u.x-origin.x,u.y-origin.y),std::hypot(w.x-origin.x,w.y-origin.y));
+        auto ringPoint=[&](double angle) {return ImVec2{
+            float(origin.x+70/extent*((u.x-origin.x)*std::cos(angle)+(w.x-origin.x)*std::sin(angle))),
+            float(origin.y+70/extent*((u.y-origin.y)*std::cos(angle)+(w.y-origin.y)*std::sin(angle)))};};
+        auto start=ringPoint(.3),end=ringPoint(.9);
+        io.AddMousePosEvent(start.x,start.y);handleFrame();handleFrame();
+        io.AddMouseButtonEvent(0,true);handleFrame();
+        check(handleState.drag.active && handleState.activeAxis==axis,"rotation ring hit selects its normal axis");
+        io.AddMousePosEvent(end.x,end.y);handleFrame();
+        auto result=handleState.drag.draft.proposed;
+        // Public IO rounds mouse coordinates to pixels; allow the corresponding angular error.
+        check(std::abs(result.x-(n==0 ? .6 : 0))<.02 && std::abs(result.y-(n==1 ? .6 : 0))<.02 &&
+              std::abs(result.z-(n==2 ? .6 : 0))<.02,"rotation ring uses projected angular drag");
+        io.AddMouseButtonEvent(0,false);handleFrame();
+        check(!handleState.drag.active && handleEvents.count==1 &&
+              handleEvents.Events()[0].kind==imkit::editor::EditKind::Rotate &&
+              handleEvents.Events()[0].phase==imkit::editor::Phase::Commit,"rotation ring commits typed rotation");
+    }
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
