@@ -377,7 +377,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     video::Monitor("Program", ImTextureRef(static_cast<ImTextureID>(s.previewRenderer.Texture())),
                    {width * .48f, monitorHeight}, s.timeline.time,
                    {true, true, true, true, s.japanese ? "プログラム" : "Program", {.5f,.5f}, true}, theme);
-    editor::Transport(s.timeline.time, std::span(s.bindings).first(s.bindingCount));
+    editor::Transport(s.timeline.time, std::span(s.bindings).first(s.bindingCount), s.icons);
     ImGui::EndChild();
     ImGui::SameLine();
     ImGui::BeginChild("Clip Inspector", {0, top}, ImGuiChildFlags_Borders);
@@ -606,7 +606,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     ImGui::EndChild();
     ImGui::SameLine();
     ImGui::BeginChild("Animation UV", {0, 0}, ImGuiChildFlags_Borders);
-    editor::Transport(s.timeline.time, std::span(s.bindings).first(s.bindingCount));
+    editor::Transport(s.timeline.time, std::span(s.bindings).first(s.bindingCount), s.icons);
     if (ImGui::BeginTabBar("Animation editors")) {
         if (ImGui::BeginTabItem("Graph Editor",nullptr,s.animationPage==0?ImGuiTabItemFlags_SetSelected:0)) {
             editor::CurveEditor("graph", Curves(s), s.curve, s.keySelection, s.events, theme, {0, 0});
@@ -637,7 +637,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
 }
 void CoreWorkspace(EditorWorkspaces &s, const Theme &theme) {
     s.Initialize();
-    editor::Transport(s.timeline.time, std::span(s.bindings).first(s.bindingCount));
+    editor::Transport(s.timeline.time, std::span(s.bindings).first(s.bindingCount), s.icons);
     editor::TimeRuler("ruler", s.timeline.time, s.curve.canvas, {}, s.revision, s.events, theme);
     editor::CurveEditor("core curve", Curves(s), s.curve, s.keySelection, s.events, theme, {0, 400});
     editor::StatusBar("Host-owned state / revision checked events", s.keySelection);

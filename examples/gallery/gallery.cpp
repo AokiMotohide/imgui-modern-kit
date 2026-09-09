@@ -506,12 +506,15 @@ void Show(GalleryState &s) {
         Icons(s);
         break;
     case 7:
+        s.editors.icons = &s.icons;
         CoreWorkspace(s.editors, s.theme);
         break;
     case 8:
+        s.editors.icons = &s.icons;
         VideoWorkspace(s.editors, s.theme, s.texture);
         break;
     case 9:
+        s.editors.icons = &s.icons;
         CGWorkspace(s.editors, s.theme, s.texture);
         break;
     }

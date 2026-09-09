@@ -1798,5 +1798,65 @@
       1126,
       1112
     ]
+  },
+  {
+    "name": "Keyframe",
+    "source": "assets/icons/originals/Keyframe.png",
+    "sha256": "17d8dc4174dc02db17303095bdd5cbb516bf00c87c4dfacbb37021449a7bb4ef",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      194,
+      194,
+      1060,
+      1060
+    ]
+  },
+  {
+    "name": "PreviousFrame",
+    "source": "assets/icons/originals/PreviousFrame.png",
+    "sha256": "dbc1472fc8566c48816df5dce5ccf397a3cda676153fc566cf5edef79d6c3b94",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      383,
+      408,
+      884,
+      851
+    ]
+  },
+  {
+    "name": "NextFrame",
+    "source": "assets/icons/originals/NextFrame.png",
+    "sha256": "179d751c79fa7cd4f18e594eae15974dbbcafef80e298a3a1061a7d506ef6d20",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      336,
+      366,
+      918,
+      886
+    ]
+  },
+  {
+    "name": "Magnet",
+    "source": "assets/icons/originals/Magnet.png",
+    "sha256": "c5b5ca516c9eaa3850d19bf17381fa9f693dcced090390f28ed521c6edc969d2",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      252,
+      222,
+      1002,
+      1045
+    ]
   }
 ]

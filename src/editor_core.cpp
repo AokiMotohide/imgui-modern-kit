@@ -388,6 +388,12 @@ bool CommandPressed(Command command, std::span<const Binding> bindings, bool foc
     return false;
 }
 void Transport(TimeState &s, std::span<const Binding> bindings) {
+    Transport(s, bindings, nullptr);
+}
+void Transport(TimeState &s, std::span<const Binding> bindings, const IconAtlas *icons) {
+    auto button = [&](const char *id, IconId icon, const char *label) {
+        return icons ? IconButton(id, *icons, icon, label) : ImGui::Button(label);
+    };
     bool focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
     if (focused && !ImGui::GetIO().WantTextInput && !ImGui::IsAnyItemActive()) {
         if (ImGui::IsKeyPressed(ImGuiKey_J)) {
@@ -399,18 +405,18 @@ void Transport(TimeState &s, std::span<const Binding> bindings) {
             s.playing = true;
         }
     }
-    if (ImGui::Button(s.playing ? "Pause" : "Play") || CommandPressed(Command::PlayPause, bindings, focused))
+    if (button("play-pause", s.playing ? IconId::Pause : IconId::Play, s.playing ? "Pause" : "Play") || CommandPressed(Command::PlayPause, bindings, focused))
         s.playing = !s.playing;
     ImGui::SameLine();
-    if (ImGui::Button("Stop") || CommandPressed(Command::Stop, bindings, focused)) {
+    if (button("stop", IconId::Stop, "Stop") || CommandPressed(Command::Stop, bindings, focused)) {
         s.playing = false;
         s.playhead = s.inOut.first;
     }
     ImGui::SameLine();
-    if (ImGui::Button("<") || CommandPressed(Command::PreviousFrame, bindings, focused))
+    if (button("previous-frame", IconId::PreviousFrame, "Previous frame") || CommandPressed(Command::PreviousFrame, bindings, focused))
         s.playhead = FrameToTick(TickToFrame(s.playhead, s.rate) - 1, s.rate);
     ImGui::SameLine();
-    if (ImGui::Button(">") || CommandPressed(Command::NextFrame, bindings, focused))
+    if (button("next-frame", IconId::NextFrame, "Next frame") || CommandPressed(Command::NextFrame, bindings, focused))
         s.playhead = FrameToTick(TickToFrame(s.playhead, s.rate) + 1, s.rate);
     ImGui::SameLine();
     if (ImGui::Button("In") || CommandPressed(Command::SetIn, bindings, focused))

@@ -478,5 +478,21 @@
   {
     "name": "Target",
     "category": "Production"
+  },
+  {
+    "name": "Keyframe",
+    "category": "Editor"
+  },
+  {
+    "name": "PreviousFrame",
+    "category": "Editor"
+  },
+  {
+    "name": "NextFrame",
+    "category": "Editor"
+  },
+  {
+    "name": "Magnet",
+    "category": "Editor"
   }
 ]

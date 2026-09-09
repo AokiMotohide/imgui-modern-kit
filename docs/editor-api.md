@@ -117,3 +117,7 @@ target. This demonstrates source integration, not compatibility with arbitrary
 Dear ImGui versions or native OS input systems.
 API fixtureを全公開targetへlinkし、外部consumerでは別のホスト所有ImGui targetを使用します。
 任意版ImGuiとの互換性やnative OS入力の受入を意味しません。
+
+The `Transport(state, bindings, const IconAtlas*)` overload uses host-owned icon textures for play, pause, stop and single-frame stepping. A null atlas uses native text buttons; the original overload remains available.
+
+`Transport(state, bindings, const IconAtlas*)` はホスト所有のアイコンtextureを使い、再生・一時停止・停止・1フレーム移動を表示します。nullではnative文字ボタンを使い、既存overloadも維持します。
