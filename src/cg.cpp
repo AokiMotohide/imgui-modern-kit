@@ -2,6 +2,7 @@
 #include "transaction_support.h"
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 namespace imkit::cg {
 namespace {
 Vec3 Add(Vec3 a, Vec3 b) {
@@ -473,12 +474,34 @@ void AnimationStrips(const char *id, std::span<const StripView> strips, std::uin
         drag.Cancel(out);
     for (const auto &strip : strips) {
         float y = view.min.y + row++ * 30;
+        auto range=strip.range;
+        double repeat=strip.repeat,blend=strip.blend,scale=strip.scale;
+        if (drag.active && drag.draft.target==strip.id && drag.draft.phase!=editor::Phase::Cancel) {
+            if (drag.draft.kind==editor::EditKind::Move) range={drag.draft.proposed.first,drag.draft.proposed.last};
+            if (drag.draft.kind==editor::EditKind::StripSettings) {
+                repeat=drag.draft.proposed.y;blend=drag.draft.proposed.z;scale=drag.draft.proposed.x;
+            }
+        }
         float x = view.min.x +
-                  static_cast<float>((editor::Seconds(strip.range.first) - canvas.origin.x) * canvas.scale.x);
-        float w = static_cast<float>(editor::Seconds(strip.range.last - strip.range.first) * canvas.scale.x);
+                  static_cast<float>((editor::Seconds(range.first) - canvas.origin.x) * canvas.scale.x);
+        float w = static_cast<float>(editor::Seconds(range.last - range.first) * canvas.scale.x);
         d->AddRectFilled({x, y}, {x + w, y + 26},
                          ImGui::GetColorU32(strip.muted ? theme.colors.muted : theme.colors.accent), 4);
-        d->AddText({x + 4, y + 4}, ImGui::GetColorU32(theme.colors.text), strip.label);
+        d->PushClipRect({x,y},{x+(std::max)(1.f,w),y+26},true);
+        if (repeat>1 && std::isfinite(repeat)) {
+            const int divisions=static_cast<int>((std::min)(repeat,128.));
+            for (int i=1;i<=divisions;++i) {
+                float boundary=x+static_cast<float>(w*i/repeat);
+                d->AddLine({boundary,y+2},{boundary,y+24},ImGui::GetColorU32(theme.colors.border));
+            }
+        }
+        d->AddLine({x+2,y+24},{x+2+(std::max)(0.f,w-4)*static_cast<float>(std::clamp(blend,0.,1.)),y+24},
+                   ImGui::GetColorU32(theme.colors.text),2);
+        char description[256];
+        std::snprintf(description,sizeof(description),"%s  x%.2f / %.2f repeats%s%s",strip.label,scale,repeat,
+            strip.muted?" [Muted]":"",strip.locked?" [Locked]":"");
+        d->AddText({x + 4, y + 4}, ImGui::GetColorU32(theme.colors.text), description);
+        d->PopClipRect();
         ImGui::SetCursorScreenPos({x, y});
         ImGui::PushID(reinterpret_cast<void *>(static_cast<std::uintptr_t>(strip.id)));
         ImGui::BeginDisabled(strip.locked);
