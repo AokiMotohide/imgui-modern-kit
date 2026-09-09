@@ -181,6 +181,19 @@ Begin・Update・終了eventは必要容量を事前確認し、終了buffer不�
 GalleryのOpenGL previewは位置側の提案も反映します。
 TRSは任意のアフィン変換によるshearを表現しません。
 
+`ViewportState::selectedObjects` accepts the complete host selection, including
+objects outside the viewport. `companions` supplies host-owned `TransformCompanion`
+storage for every additional object. Storage remains stable until the gesture ends.
+All selected objects use the same constrained delta and shared pivot, or individual
+origins in Individual mode. Locked targets reject the batch. Disappearing companion
+IDs cancel it. Capacity is checked before each batch; terminal overflow retains the
+whole selection for retry. Gallery supplies its selection and previews companions.
+selectedObjectsは画面外も含む完全なホスト選択を受け取り、companionsは追加objectごとの
+ホスト所有TransformCompanion領域を受け取ります。領域はgesture終了まで維持します。
+全対象に共通変位・共通pivotを適用し、Individualでは各originを使います。locked対象があれば
+開始を拒否し、補助対象IDの消失では一括取消します。batch容量を事前確認し、終了buffer不足時は
+全対象を保持して再試行します。Galleryは選択と補助previewを接続しています。
+
 `TransformGizmo` draws translation axes, XY/YZ/ZX plane handles and a screen handle;
 Scale adds square axis tips, independent plane scaling and uniform screen scaling.
 Rotate uses projected axis rings and an outer view-normal ring. Unified displays
@@ -189,14 +202,14 @@ remains fixed through the transaction. Plane movement solves the two projected
 basis directions independently, and ring movement uses angular displacement.
 Shift applies fine control and snap quantizes the resulting delta. Source transforms
 remain host-owned; preview and commit use typed Translate/Rotate/Scale events.
-Full rotation/scale around an external pivot and multi-object application remain incomplete.
+Arbitrary oriented nonuniform scale still needs its TRS/shear behavior completed.
 TransformGizmoは移動軸、XY/YZ/ZX平面、screen handleを描画します。Scaleは四角い軸端、
 平面内の独立した拡大縮小、screenでの一様拡大縮小を提供します。Rotateは投影した軸ringと
 画面法線方向の外周ringを使います。Unifiedは移動・scale・回転handleを同時表示し、
 選んだ操作をtransaction終了まで維持します。平面操作は投影した2基底から個別に変位を求め、
 ringは角度差で回転します。Shiftはfine、snapは変位の量子化へ反映します。
 元transformはホスト所有のまま、Translate/Rotate/Scaleのpreview・commit eventを返します。
-外部pivotを中心とする完全な回転・scaleと複数objectへの適用は未完了です。
+任意orientationの非一様scaleについてはTRS/shearの扱いが未完了です。
 
 The focused CG public-IO test covers all three translation/scale planes, screen
 translation/scaling/rotation, axis rotation rings and distinct Unified operations.

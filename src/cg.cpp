@@ -301,14 +301,30 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
                     editor::EventBuffer &out, const Theme &) {
     constexpr double Pi=3.14159265358979323846;
     auto finish=[&](bool cancel) {
-        const std::size_t count=1+(s.pivotDrag.active ? 1 : 0);
+        std::size_t count=1+(s.pivotDrag.active ? 1 : 0);
+        for (std::size_t i=0;i<s.companionCount;++i) {
+            auto &member=s.companions[i];count+=1+(member.position.active ? 1 : 0);
+            member.transform.draft.phase=member.position.draft.phase=cancel ? editor::Phase::Cancel : editor::Phase::Commit;
+        }
         s.drag.draft.phase=cancel ? editor::Phase::Cancel : editor::Phase::Commit;
         if (s.pivotDrag.active) s.pivotDrag.draft.phase=s.drag.draft.phase;
         if (out.storage.size()-out.count<count) {out.overflow=true;return;}
         if (cancel) {s.drag.Cancel(out);if (s.pivotDrag.active) s.pivotDrag.Cancel(out);}
         else {s.drag.Commit(revision,out);if (s.pivotDrag.active) s.pivotDrag.Commit(revision,out);}
+        for (std::size_t i=0;i<s.companionCount;++i) {
+            auto &member=s.companions[i];
+            if (cancel) {member.transform.Cancel(out);if (member.position.active) member.position.Cancel(out);}
+            else {member.transform.Commit(revision,out);if (member.position.active) member.position.Commit(revision,out);}
+        }
+        s.companionCount=0;
     };
-    if (s.drag.active && (revision!=s.drag.draft.revision || object.id!=s.drag.draft.target || object.locked ||
+    bool selectionChanged=false;
+    if (s.drag.active) for (std::size_t i=0;i<s.companionCount;++i) {
+        const auto target=s.companions[i].transform.draft.target;
+        auto found=std::find_if(s.selectedObjects.begin(),s.selectedObjects.end(),[&](const auto &o){return o.id==target;});
+        selectionChanged |= found==s.selectedObjects.end() || found->locked;
+    }
+    if (s.drag.active && (selectionChanged || revision!=s.drag.draft.revision || object.id!=s.drag.draft.target || object.locked ||
                          !s.gizmo || s.tool==TransformTool::Select || ImGui::IsKeyPressed(ImGuiKey_Escape))) {
         finish(true);return;
     }
@@ -422,7 +438,17 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
     if (v.hovered && hit != Axis::None && ImGui::IsMouseClicked(0) && !s.drag.active) {
         const bool needsPosition=s.pivot!=Pivot::Individual && operation!=TransformTool::Translate &&
             (object.transform.translation.x!=pivot.x || object.transform.translation.y!=pivot.y || object.transform.translation.z!=pivot.z);
-        if (out.storage.size()-out.count < (needsPosition ? 2u : 1u)) {out.overflow=true;return;}
+        std::size_t members=0,required=needsPosition ? 2u : 1u;
+        const bool memberPosition=s.pivot!=Pivot::Individual && operation!=TransformTool::Translate;
+        for (std::size_t i=0;i<s.selectedObjects.size();++i) {
+            const auto &member=s.selectedObjects[i];
+            if (member.locked) return;
+            for (std::size_t j=0;j<i;++j) if (s.selectedObjects[j].id==member.id) {out.overflow=true;return;}
+            if (member.id==object.id) continue;
+            ++members;required+=memberPosition ? 2u : 1u;
+        }
+        if (members>s.companions.size() || out.storage.size()-out.count<required) {out.overflow=true;return;}
+        s.companionCount=0;
         s.activeAxis = hit;
         s.mouseStart = {mouse.x, mouse.y};
         s.original = object.transform;
@@ -435,6 +461,14 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
         s.drag.Begin(object.id, revision, kind, value, editor::CurrentModifiers(), out);
         if (needsPosition) s.pivotDrag.Begin(object.id,revision,editor::EditKind::Translate,
                                             Value(object.transform.translation),editor::CurrentModifiers(),out);
+        for (const auto &member:s.selectedObjects) if (member.id!=object.id) {
+            auto &companion=s.companions[s.companionCount++];companion.original=member.transform;
+            companion.transform.Begin(member.id,revision,kind,
+                Value(operation==TransformTool::Rotate ? member.transform.rotation :
+                      operation==TransformTool::Scale ? member.transform.scale : member.transform.translation),editor::CurrentModifiers(),out);
+            if (memberPosition) companion.position.Begin(member.id,revision,editor::EditKind::Translate,
+                Value(member.transform.translation),editor::CurrentModifiers(),out);
+        }
     }
     if (s.drag.active) {
         double delta = ((mouse.x - s.mouseStart.x) - (mouse.y - s.mouseStart.y)) * .01;
@@ -495,11 +529,26 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
             const auto position=Value(result.translation);
             const bool mainChanged=!(value==s.drag.draft.proposed);
             const bool positionChanged=s.pivotDrag.active && !(position==s.pivotDrag.draft.proposed);
-            const std::size_t count=(mainChanged ? 1u : 0u)+(positionChanged ? 1u : 0u);
+            std::size_t count=(mainChanged ? 1u : 0u)+(positionChanged ? 1u : 0u);
+            for (std::size_t i=0;i<s.companionCount;++i) count+=1+(s.companions[i].position.active ? 1u : 0u);
             if (out.storage.size()-out.count<count) out.overflow=true;
             else {
                 if (mainChanged) s.drag.Update(revision,value,out);
                 if (positionChanged) s.pivotDrag.Update(revision,position,out);
+                for (std::size_t i=0;i<s.companionCount;++i) {
+                    auto &member=s.companions[i];
+                    const auto memberPivot=s.pivot==Pivot::Individual ? member.original.translation : pivot;
+                    const auto memberBasis=s.pivot==Pivot::Individual && s.activeAxis!=Axis::Screen ?
+                        OrientationBasis(s.orientation,member.original,s.camera,s.parentBasis,s.customBasis) : basis;
+                    const auto transformed=TransformAroundPivot(member.original,operation,s.activeAxis,dv,memberBasis,
+                                                               memberPivot,s.snap ? .1 : 0,ImGui::GetIO().KeyShift);
+                    const auto memberValue=Value(operation==TransformTool::Rotate ? transformed.rotation :
+                        operation==TransformTool::Scale ? transformed.scale : transformed.translation);
+                    if (!(memberValue==member.transform.draft.proposed)) member.transform.Update(revision,memberValue,out);
+                    const auto memberLocation=Value(transformed.translation);
+                    if (member.position.active && !(memberLocation==member.position.draft.proposed))
+                        member.position.Update(revision,memberLocation,out);
+                }
             }
         }
         if (ImGui::IsMouseReleased(0)) finish(false);

@@ -474,6 +474,21 @@ int main() {
     check(!handleState.drag.active && !handleState.pivotDrag.active && handleEvents.count==2 &&
           handleEvents.Events()[0].phase==imkit::editor::Phase::Commit &&
           handleEvents.Events()[1].phase==imkit::editor::Phase::Commit,"pivot terminal batch retries intact");
+    ObjectView selectedObjects[]={handleObject,handleObject};selectedObjects[1].id++;
+    selectedObjects[1].transform.translation={4,0,0};
+    TransformCompanion companionStorage[1];handleState.selectedObjects=selectedObjects;handleState.companions=companionStorage;
+    io.AddMousePosEvent(ringCenter.x+88,ringCenter.y);handleFrame();handleFrame();
+    io.AddMouseButtonEvent(0,true);handleFrame();
+    check(handleEvents.count==4 && handleState.companionCount==1,"multi-object pivot begins complete transform batch");
+    io.AddMousePosEvent(ringCenter.x,ringCenter.y-88);handleFrame();
+    check(std::abs(companionStorage[0].position.draft.proposed.x)<1e-6 &&
+          std::abs(companionStorage[0].position.draft.proposed.y-4)<1e-6,"multi-object rotation uses shared pivot");
+    handleEvents.storage={handleStorage,3};io.AddMouseButtonEvent(0,false);handleFrame();
+    check(handleEvents.count==0 && handleEvents.overflow && companionStorage[0].transform.active,
+          "multi-object terminal buffer rejects partial commit");
+    handleEvents.storage=handleStorage;handleFrame();
+    check(handleEvents.count==4 && !handleState.drag.active && !companionStorage[0].transform.active &&
+          handleState.companionCount==0,"multi-object terminal retry commits entire batch");
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
