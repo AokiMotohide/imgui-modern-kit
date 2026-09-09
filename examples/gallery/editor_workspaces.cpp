@@ -218,7 +218,16 @@ void EditorWorkspaces::RebuildKeyIndex() {
         keyChannels.emplace_back(first,last);first=last;
     }
     visibleKeys.reserve((std::min)(keys.size(),std::size_t{4096}));
-    if (!clips.empty()) clips.front().keys=std::span<const editor::Keyframe>(keys).first((std::min)(keys.size(),std::size_t{6}));
+    if (!clips.empty()) {
+        clips.front().keys={};
+        if (!keyChannels.empty()) {
+            auto [begin,end]=keyChannels.front();
+            auto channel=std::span<const editor::Keyframe>(keys).subspan(begin,end-begin);
+            auto first=std::lower_bound(channel.begin(),channel.end(),editor::Tick{0},[](const auto &key,auto tick){return key.tick<tick;});
+            auto last=std::upper_bound(first,channel.end(),clips.front().duration,[](auto tick,const auto &key){return tick<key.tick;});
+            clips.front().keys={first,last};
+        }
+    }
 }
 std::span<const editor::Keyframe> EditorWorkspaces::QueryKeys(editor::CurveQuery query) {
     visibleKeys.clear();

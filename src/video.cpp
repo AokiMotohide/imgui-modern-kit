@@ -259,6 +259,10 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         s.keyDrag.draft.revision!=p.revision || ImGui::IsKeyPressed(ImGuiKey_Escape)))
         EndClipKeys(s,p.revision,ImGui::IsKeyPressed(ImGuiKey_Escape),out);
     bool keySeen=false;
+    const bool keyCommands=ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows) && !io.WantTextInput &&
+        !s.keyDrag.active && !s.drag.active && !s.transitionDrag.active && !s.captionDrag.active;
+    const bool duplicateKeys=editor::CommandPressed(editor::Command::Duplicate,s.bindings,keyCommands);
+    const bool removeKeys=editor::CommandPressed(editor::Command::Delete,s.bindings,keyCommands);
     detail::ResumeTerminal(s.heightDrag,p.revision,out);
     if (s.heightDrag.active && ImGui::IsKeyPressed(ImGuiKey_Escape)) s.heightDrag.Cancel(out);
     if (view.hovered && s.tool == Tool::Hand && ImGui::IsMouseDragging(0))
@@ -414,6 +418,24 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 draw->AddLine({wx,centerY-amplitude*clip.audioBuckets[j].maximum},
                               {wx,centerY-amplitude*clip.audioBuckets[j].minimum},
                               ImGui::GetColorU32(theme.colors.text));
+            }
+            if ((duplicateKeys || removeKeys) && s.keySelection && s.keyDrag.draft.original.parent==clip.id) {
+                std::size_t count=0;bool allowed=!clip.locked && !track.locked;
+                Tick delta=std::max(Tick{0},editor::FrameToTick(1,s.time.rate));
+                for (const auto &key:clip.keys) if (s.keySelection->Contains(key.id)) {
+                    ++count;allowed &= !key.locked && key.tick>=0 && key.tick<=clip.duration;
+                    delta=std::min(delta,std::max(Tick{0},clip.duration-key.tick));
+                }
+                if (count>0 && allowed) {
+                    if (out.storage.size()-out.count<count*2) out.overflow=true;
+                    else for (const auto &key:clip.keys) if (s.keySelection->Contains(key.id)) {
+                        editor::Value original;original.first=key.tick;original.x=key.value;original.parent=clip.id;
+                        editor::Transaction action;action.Begin(key.id,p.revision,removeKeys ? editor::EditKind::Remove : editor::EditKind::Duplicate,
+                            original,editor::CurrentModifiers(),out);
+                        if (!removeKeys) action.draft.proposed.first+=delta;
+                        action.Commit(p.revision,out);
+                    }
+                }
             }
             bool keyHit=false;
             if (s.keyDrag.active && s.keyDrag.draft.original.parent==clip.id) {

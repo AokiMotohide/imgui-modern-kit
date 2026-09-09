@@ -308,6 +308,19 @@ int main() {
     full.Clear();frame(full);
     check(full.count==2 && full.Events()[0].phase==editor::Phase::Commit && full.Events()[1].phase==editor::Phase::Commit &&
           !timeline.keyDrag.active && !clipKeyCompanions[0].active,"clip multi-key commits complete retry batch");
+    std::array keyBindings{editor::Binding{editor::Command::Duplicate,ImGuiKey_F7},editor::Binding{editor::Command::Delete,ImGuiKey_F6}};
+    timeline.bindings=keyBindings;
+    full.Clear();io.AddKeyEvent(ImGuiKey_F7,true);frame(full);io.AddKeyEvent(ImGuiKey_F7,false);frame(full);
+    check(full.count==4 && full.Events()[1].kind==editor::EditKind::Duplicate && full.Events()[3].kind==editor::EditKind::Duplicate &&
+          full.Events()[1].proposed.first-clipKeys[0].tick==full.Events()[3].proposed.first-clipKeys[1].tick,
+          "remapped clip key Duplicate emits complete equally-offset pairs");
+    clipKeys[1].locked=true;full.Clear();io.AddKeyEvent(ImGuiKey_F6,true);frame(full);io.AddKeyEvent(ImGuiKey_F6,false);frame(full);
+    check(full.count==0,"one locked clip key rejects whole Delete command");clipKeys[1].locked=false;
+    small.Clear();io.AddKeyEvent(ImGuiKey_F6,true);frame(small);io.AddKeyEvent(ImGuiKey_F6,false);frame(small);
+    check(small.overflow && small.count==0,"clip key Delete refuses partial event capacity");
+    full.Clear();io.AddKeyEvent(ImGuiKey_F6,true);frame(full);io.AddKeyEvent(ImGuiKey_F6,false);frame(full);
+    check(full.count==4 && full.Events()[1].kind==editor::EditKind::Remove && full.Events()[3].kind==editor::EditKind::Remove,
+          "remapped clip key Delete commits all selected keys");timeline.bindings={};
     transitionFixture.clip.keys={};timeline.keySelection=nullptr;
     transitionFixture.track.kind=video::TrackKind::Caption;
     auto beginCaption=[&] {
