@@ -793,8 +793,11 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     auto split = Value(clip);
                     split.first = editor::FromSeconds(
                         s.canvas.origin.x + (io.MousePos.x - view.min.x - s.headerWidth) / s.canvas.scale.x);
-                    out.Push({clip.id, p.revision, editor::Phase::Commit, editor::EditKind::Split,
-                              Value(clip), split, editor::CurrentModifiers()});
+                    if (ReserveEvents(out,2)) {
+                        editor::Transaction edit;
+                        edit.Begin(clip.id,p.revision,editor::EditKind::Split,Value(clip),editor::CurrentModifiers(),out);
+                        edit.draft.proposed=split;edit.Commit(p.revision,out);
+                    }
                 } else if (s.tool != Tool::Hand) {
                     auto neighbors =
                         p.neighbors ? p.neighbors(p.user, clip.id) : TimelineProvider::Neighbors{};

@@ -556,3 +556,7 @@ Galleryのsplitは音量envelopeを分割位置で分け、必要な境界点を
 Ctrl-clicking a selected Timeline clip now only removes it from selection; it does not begin an edit or emit Update/Commit after subsequent mouse movement. The public ImGui IO video regression covers this path.
 
 Timelineで選択済みclipをCtrlクリックすると選択解除だけを行い、編集を開始しません。その後マウスを移動してもUpdate／Commitを発生させないことを公開ImGui IOのVideo回帰で確認しました。
+
+Razor emits a complete Split Begin/Commit pair with the original clip value, proposed cut, owner ID, starting revision and modifiers. Two event slots are reserved before publishing either event; shortage reports overflow with no partial transaction. Public ImGui IO regression verifies both paths.
+
+Razorは元clip値、分割提案、対象ID、開始revision、modifierを含むSplitのBegin／Commitを返します。出力前に2イベント分の容量を確認し、不足時は部分transactionを出さずoverflowを通知します。通常時と容量不足時を公開ImGui IOの回帰で確認しました。
