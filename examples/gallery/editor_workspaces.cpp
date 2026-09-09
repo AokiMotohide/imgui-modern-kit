@@ -507,7 +507,7 @@ void EditorWorkspaces::ApplyEvents() {
             });
         }
     }
-    std::map<editor::StableId,editor::StableId> duplicateLinks,duplicateGroups;
+    std::map<editor::StableId,editor::StableId> duplicateLinks,duplicateGroups,splitLinks,splitGroups;
     const auto remapRelationship=[&](auto &mapping,editor::StableId id) {
         if (!id) return editor::StableId{0};
         auto [entry,created]=mapping.try_emplace(id,0);
@@ -691,6 +691,8 @@ void EditorWorkspaces::ApplyEvents() {
                     if (clip->keyChannel && std::any_of(keys.begin(),keys.end(),[&](const auto &key) {
                         return key.channel==clip->keyChannel && key.tick<std::numeric_limits<editor::Tick>::min()+localCut;
                     })) continue;
+                    right.linked=remapRelationship(splitLinks,clip->linked);
+                    right.group=remapRelationship(splitGroups,clip->group);
                     CopyClipEditingData(*clip,right);
                     if (right.keyChannel) for (auto &key:keys)
                         if (key.channel==right.keyChannel) key.tick-=localCut;
