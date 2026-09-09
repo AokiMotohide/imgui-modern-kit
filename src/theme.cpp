@@ -145,6 +145,11 @@ Theme MakePrecisionTheme(ColorScheme scheme) {
                 Hex(d ? 0x83c6a1 : 0x276341),
                 Hex(d ? 0xe4c17b : 0x805a12)};
     SetAccent(t, t.colors.accent);
+    t.editor = {t.colors.canvas,t.colors.border,t.colors.muted,t.colors.surface,
+                t.colors.accent,t.colors.success,t.colors.warning,t.colors.text,t.colors.warning,
+                t.colors.warning,t.colors.focus,Hex(0xdb6565),Hex(0x5cab72),Hex(0x6699e0),
+                t.colors.accent,t.colors.success,t.colors.destructive,t.colors.warning,
+                t.colors.destructive,t.colors.muted};
     return t;
 }
 void SetAccent(Theme &t, ImVec4 accent) {

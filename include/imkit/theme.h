@@ -23,12 +23,18 @@ struct FontSet {
     ImFont *regular = nullptr;
     ImFont *emphasis = nullptr;
 }; // Non-owning.
+struct EditorPalette {
+    ImVec4 canvas{}, grid{}, ruler{}, trackHeader{}, videoClip{}, audioClip{}, captionClip{};
+    ImVec4 key{}, selectedKey{}, marker{}, snapGuide{}, axisX{}, axisY{}, axisZ{}, gizmo{};
+    ImVec4 scope{}, missing{}, proxy{}, error{}, locked{};
+};
 struct Theme {
     ColorScheme scheme = ColorScheme::Light;
     Palette colors{};
     Metrics metrics{};
     Motion motion{};
     FontSet fonts{};
+    EditorPalette editor{};
 };
 Theme MakePrecisionTheme(ColorScheme scheme = ColorScheme::Light);
 // Explicitly updates accent, onAccent, focus and selection only.
