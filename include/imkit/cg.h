@@ -36,6 +36,10 @@ void NavigateCamera(Camera &camera, editor::Point orbitPixels, editor::Point pan
 void AlignCamera(Camera &camera, Axis axis, bool negative = false);
 Transform TransformDelta(const Transform &original, TransformTool tool, Axis axis, Vec3 delta,
                          const Basis &basis, double snap = 0, bool fine = false);
+// Applies the same constrained delta to an object's transform and its offset from a shared pivot.
+// Basis must be orthonormal. Transform stores TRS; it cannot represent affine shear.
+Transform TransformAroundPivot(const Transform &original, TransformTool tool, Axis axis, Vec3 delta,
+                               const Basis &basis, Vec3 pivot, double snap = 0, bool fine = false);
 struct ObjectView {
     StableId id = 0, parent = 0;
     const char *label = "";
