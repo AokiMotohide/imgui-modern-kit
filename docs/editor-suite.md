@@ -438,3 +438,9 @@ Clip top-edge square handles edit the in/out transition durations independently,
 `video::EditTransition(clip, end, durationDelta)` is the pure duration calculation used by Timeline. It preserves the opposite end, clamps the edited end inside the clip, and rejects locked clips or invalid original durations. Arithmetic clamps the delta before addition. Focused tests cover the duration bound and complete Cancel delivery after event-buffer shortage on track locking, revision changes, and Escape.
 
 `video::EditTransition(clip, end, durationDelta)`はTimelineが使用する純粋な長さ計算です。反対側の長さを保持し、編集側をクリップ内に制限します。locked clipと不正な元の長さは拒否し、加算前にdeltaを制限します。長さの上限と、trackのロック・revision変更・Escapeによる取消しがbuffer不足後にも届くことをfocused testで確認しました。
+
+### Transition type picker / transition種類の選択
+
+`video::TransitionPicker` edits independent in/out `TransitionKind` values (None, Dissolve, Fade, Crossfade). Timeline opens it on clip right-click; the host applies `TransitionType` events (`first`/`last` are in/out kind). Each choice emits an atomic Begin/Commit pair or reports buffer overflow without a partial edit. Locked tracks/clips disable the picker. D/F/X badges identify the chosen type. Choosing None retains the saved duration for later re-enabling. These are UI and host-model semantics; media blending remains host-owned.
+
+`video::TransitionPicker`は開始側・終了側の`TransitionKind`（None／Dissolve／Fade／Crossfade）を独立して変更します。Timelineのclip右クリックで開き、ホストは`TransitionType`イベントの`first`／`last`を開始側／終了側の種類として適用します。選択ごとにBegin／Commitの一組を返し、buffer不足時は部分送信せずoverflowを通知します。locked track／clipでは無効です。D／F／Xのbadgeで種類を示し、Noneへ変更しても再有効化用に長さを保持します。これはUIとホストデータの契約であり、メディア合成はホストの責任です。

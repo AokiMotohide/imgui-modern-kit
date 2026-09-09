@@ -20,6 +20,7 @@ struct TrackLayout {
     std::span<const TrackView> tracks;
     double top = 0; // Absolute pixel offset of the first returned track.
 };
+enum class TransitionKind { None, Dissolve, Fade, Crossfade };
 struct ClipView {
     StableId id = 0, track = 0, linked = 0, group = 0;
     const char *label = "";
@@ -31,6 +32,7 @@ struct ClipView {
     std::span<const editor::Keyframe> keys;
     Tick transitionIn = 0, transitionOut = 0;
     std::span<const AudioBucket> audioBuckets;
+    TransitionKind transitionInKind=TransitionKind::Dissolve,transitionOutKind=TransitionKind::Dissolve;
 };
 struct TransitionEdit {
     Tick inDuration=0,outDuration=0;
@@ -38,6 +40,9 @@ struct TransitionEdit {
 };
 // Delta changes the selected duration, not the clip position. The other end is preserved.
 TransitionEdit EditTransition(const ClipView &clip, bool end, Tick durationDelta);
+// Emits a complete Begin/Commit pair; clip/track ownership remains with the host.
+void TransitionPicker(const char *id, const ClipView &clip, std::uint64_t revision,
+                      editor::EventBuffer &events, bool trackLocked=false);
 struct ClipConstraints {
     Tick mediaFirst = 0, mediaLast = editor::TicksPerSecond * 3600, minimumDuration = 1;
 };

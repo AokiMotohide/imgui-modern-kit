@@ -48,6 +48,7 @@ int main() {
     video::Timeline("timeline", {}, timeline, selection, events, theme, {300, 100});
     (void)video::EditTransition(video::ClipView{},false,0);
     (void)editor::EditKind::TransitionDuration;
+    video::TransitionPicker("transition types",{},1,events);
     video::TrackView trackView;
     auto trackHeight=video::TrackExtent(trackView);
     (void)trackHeight;
