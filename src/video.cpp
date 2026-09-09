@@ -308,7 +308,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         float y = view.min.y + static_cast<float>(rowTop-s.verticalScroll);
         rowTop+=rowHeight;
         draw->AddRectFilled({view.min.x, y}, {view.max.x, y + rowHeight - 2},
-                            ImGui::GetColorU32(theme.colors.surface));
+                            ImGui::GetColorU32(theme.editor.trackHeader));
         ImGui::SetCursorScreenPos({view.min.x + 4, y + 3});
         ImGui::PushID(reinterpret_cast<void *>(static_cast<std::uintptr_t>(track.id)));
         if (ImGui::SmallButton(track.expanded ? "v" : ">"))
@@ -377,10 +377,10 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             float end = x + static_cast<float>(editor::Seconds(value.last - value.first) * s.canvas.scale.x);
             ImVec2 a{x, y + 4}, b{end, y + rowHeight - 7};
             bool selected = selection.Contains(clip.id);
-            auto color = track.kind == TrackKind::Audio     ? theme.colors.success
-                         : track.kind == TrackKind::Caption ? theme.colors.warning
-                                                            : theme.colors.accent;
-            color.w = selected ? .8f : .35f;
+            auto color = track.kind == TrackKind::Audio     ? theme.editor.audioClip
+                         : track.kind == TrackKind::Caption ? theme.editor.captionClip
+                                                            : theme.editor.videoClip;
+            color.w *= selected ? .8f : .35f;
             draw->AddRectFilled(a, b, ImGui::GetColorU32(color), 4);
             draw->AddRect(a, b, ImGui::GetColorU32(selected ? theme.colors.focus : theme.colors.border), 4, 0,
                           selected ? 2.f : 1.f);
@@ -404,11 +404,11 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 }
             } else draw->AddText({x+6,y+4+((clip.transitionIn || clip.transitionOut) ? ImGui::GetFontSize() : 3.f)},ImGui::GetColorU32(theme.colors.text),clip.label);
             if (clip.missing || clip.offline)
-                draw->AddLine(a, b, ImGui::GetColorU32(theme.colors.destructive), 2);
+                draw->AddLine(a, b, ImGui::GetColorU32(clip.offline ? theme.editor.error : theme.editor.missing), 2);
             if (track.locked || clip.locked)
-                draw->AddText({x + 6, b.y - 18}, ImGui::GetColorU32(theme.colors.muted), "Locked");
+                draw->AddText({x + 6, b.y - 18}, ImGui::GetColorU32(theme.editor.locked), "Locked");
             if (clip.proxy)
-                draw->AddText({end - 20, y + 7}, ImGui::GetColorU32(theme.colors.warning), "P");
+                draw->AddText({end - 20, y + 7}, ImGui::GetColorU32(theme.editor.proxy), "P");
             if (clip.linked || clip.group)
                 draw->AddLine({x + 3, b.y - 3}, {end - 3, b.y - 3}, ImGui::GetColorU32(theme.colors.text));
             const float waveformTop=std::min(b.y-2,a.y+((clip.transitionIn || clip.transitionOut) ? 2.f : 1.f)*ImGui::GetFontSize()+7);
@@ -760,7 +760,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             float x =
                 view.min.x + s.headerWidth +
                 static_cast<float>((editor::Seconds(s.guide.candidate.tick) - s.canvas.origin.x) * s.canvas.scale.x);
-            draw->AddLine({x, view.min.y}, {x, view.max.y}, ImGui::GetColorU32(theme.colors.warning), 2);
+            draw->AddLine({x, view.min.y}, {x, view.max.y}, ImGui::GetColorU32(theme.editor.snapGuide), 2);
         }
     }
     if (s.drag.active && !ImGui::IsMouseDown(0))
