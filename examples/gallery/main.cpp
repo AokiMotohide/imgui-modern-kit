@@ -509,6 +509,21 @@ void VerifyLinkedClips(Host &h,const std::filesystem::path &out) {
         if (!ok) throw std::runtime_error("linked native move did not apply to all members");
     }
     h.mouse={-100,-100};h.Frame({},out/"linked-clips-light.png");
+    h.mouse={s.timeline.view.min.x+s.timeline.headerWidth+200,s.timeline.view.min.y+25};h.Frame();
+    h.Frame([](auto &io){io.AddMouseButtonEvent(1,true);});h.Frame([](auto &io){io.AddMouseButtonEvent(1,false);});
+    h.Key(ImGuiKey_Home);h.Key(ImGuiKey_Enter);h.Settle(2);
+    const auto unlinked=std::find_if(s.clips.begin(),s.clips.end(),[&](const auto &c){return c.id==target;});
+    const bool detached=unlinked!=s.clips.end() && !unlinked->linked;
+    log<<(detached ? "PASS " : "FAIL ")<<"native context menu unlinks clicked clip\n";log.flush();
+    if (!detached) throw std::runtime_error("native unlink did not update host relationship");
+    s.japanese=true;h.Frame();
+    h.mouse.y+=video::TrackExtent(s.tracks.front());h.Frame();
+    h.Frame([](auto &io){io.AddMouseButtonEvent(1,true);});h.Frame([](auto &io){io.AddMouseButtonEvent(1,false);});
+    h.Key(ImGuiKey_Home);h.Key(ImGuiKey_DownArrow);h.Key(ImGuiKey_Enter);h.Settle(2);
+    const auto audio=std::find_if(s.clips.begin(),s.clips.end(),[&](const auto &c){return c.id==before[1].id;});
+    const bool ungrouped=audio!=s.clips.end() && !audio->group && audio->linked;
+    log<<(ungrouped ? "PASS " : "FAIL ")<<"Japanese native context detaches group while preserving link\n";log.flush();
+    if (!ungrouped) throw std::runtime_error("native ungroup did not preserve independent link relation");
 }
 void VerifyTrackControls(Host &h,const std::filesystem::path &out) {
     using namespace imkit;

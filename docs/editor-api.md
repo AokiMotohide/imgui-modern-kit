@@ -315,3 +315,7 @@ ToolSelect／ToolRazor／ToolRipple／ToolRoll／ToolSlip／ToolSlide／ToolHand
 `TimelineProvider::isEditable(user, clip)` optionally validates the existence and lock state of each active clip-body edit owner, including offscreen related clips. A false result cancels the whole active batch; full output buffers retain the terminal operation for retry. Use an indexed lookup, not a full clip scan. Without this callback the host must change revision when owners disappear or become locked.
 
 `TimelineProvider::isEditable(user, clip)`は、画面外の関連clipを含む編集中の各clip本体について、存在とロック状態を確認する任意callbackです。falseなら編集バッチ全体をCancelし、出力容量不足時は終了処理を保持して再試行します。全clip走査ではなく索引を使用してください。callbackを省略する場合、対象の削除・ロック変更時にホストがrevisionを更新する必要があります。
+
+The Timeline clip context menu can detach the clicked clip from its link or group set. `EditKind::Link` emits Begin/Commit with target=clip ID, offset=0 for linked or 1 for group, original.parent=old set ID and proposed.parent=0. The host validates ownership, revision and original membership before applying. TimelineLabels::unlink/ungroup are borrowed UTF-8 labels. Locked owners disable both actions.
+
+Timelineのclip context menuはクリック対象をlinked／group集合から外せます。`EditKind::Link`のBegin／Commitでtarget=clip ID、offset=linkedなら0・groupなら1、original.parent=元集合ID、proposed.parent=0を返します。ホストが所有権・revision・元集合を検証して適用します。TimelineLabels::unlink／ungroupは借用UTF-8文字列です。locked対象では両操作を無効化します。
