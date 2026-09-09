@@ -659,3 +659,7 @@ Galleryは非0のlinked・group IDを集合IDとして扱い、移動・複製�
 Gallery Duplicate assigns new linked/group set IDs per event batch. Copies retain relationships with other copies in that batch while original relationship sets remain unchanged. Host-model regression checks a transitive linked/group selection and verifies that selecting the original set excludes the copies.
 
 Galleryの複製はイベントバッチごとに新しいlinked／group集合IDを割り当てます。同じバッチの複製同士の関係を維持し、元の集合は変更しません。ホストモデル回帰で推移的なlinked／group関係の複製と、元集合の選択に複製が混ざらないことを確認しています。
+
+Gallery Split retains the original incoming transition on the left clip and outgoing transition on the right clip, clamping each duration to its resulting clip. Newly cut edges have no transition. Host-model regression verifies both kinds, durations and cleared edges.
+
+Galleryの分割は元の開始transitionを左clip、終了transitionを右clipへ残し、それぞれの長さを分割後のclip長まで制限します。新しくできた切れ目のtransitionは解除します。ホストモデル回帰で種類・長さ・切れ目の解除を確認しています。
