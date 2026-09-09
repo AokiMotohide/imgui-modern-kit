@@ -487,6 +487,8 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
         s.activeAxis = hit;
         s.mouseStart = {mouse.x, mouse.y};
         s.original = object.transform;
+        s.rotationMouse = s.mouseStart;
+        s.rotationAngle = 0;
         auto kind = operation == TransformTool::Rotate  ? editor::EditKind::Rotate
                     : operation == TransformTool::Scale ? editor::EditKind::Scale
                                                      : editor::EditKind::Translate;
@@ -545,16 +547,20 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
                 x-=center.screen.x; y-=center.screen.y;
                 return std::atan2((u.x*y-u.y*x)/det,(x*w.y-y*w.x)/det);
             };
-            const double rotation=std::abs(det)>1e-6 ?
-                std::remainder(angle(mouse.x,mouse.y)-angle(s.mouseStart.x,s.mouseStart.y),2*Pi) : 0;
+            if (std::abs(det)>1e-6)
+                s.rotationAngle += std::remainder(angle(mouse.x,mouse.y)-
+                    angle(s.rotationMouse.x,s.rotationMouse.y),2*Pi);
+            const double rotation=s.rotationAngle;
             dv={axis==0 ? rotation : 0,axis==1 ? rotation : 0,axis==2 ? rotation : 0};
         }
         if (operation == TransformTool::Rotate && s.activeAxis == Axis::Screen) {
             basis=OrientationBasis(Orientation::View,s.original,s.camera,s.parentBasis,s.customBasis);
-            const double start=std::atan2(-(s.mouseStart.y-center.screen.y),s.mouseStart.x-center.screen.x);
+            const double start=std::atan2(-(s.rotationMouse.y-center.screen.y),s.rotationMouse.x-center.screen.x);
             const double end=std::atan2(-(mouse.y-center.screen.y),mouse.x-center.screen.x);
-            dv={0,0,std::remainder(end-start,2*Pi)};
+            s.rotationAngle += std::remainder(end-start,2*Pi);
+            dv={0,0,s.rotationAngle};
         }
+        if (operation == TransformTool::Rotate) s.rotationMouse={mouse.x,mouse.y};
         auto result = TransformAroundPivot(s.original, operation, s.activeAxis, dv, basis, pivot, s.snap ? .1 : 0,
                                      ImGui::GetIO().KeyShift);
         auto value = Value(operation == TransformTool::Rotate  ? result.rotation

@@ -85,6 +85,8 @@ struct ViewportState {
     bool lassoSelection=false;
     const IconAtlas *icons=nullptr;
     std::uint64_t selectionRevision=0;
+    editor::Point rotationMouse{}; // Previous sample for continuous ring rotation.
+    double rotationAngle=0; // Unwrapped gesture angle in radians.
 };
 struct ViewportView {
     ImVec2 min{}, size{};

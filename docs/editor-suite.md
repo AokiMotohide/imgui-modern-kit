@@ -410,3 +410,9 @@ Dope Sheetは既存の複数キー選択をドラッグ時に維持します。�
 `BeginViewport` uses `Theme::editor.canvas`, `grid`, and `axisX/Y/Z` for its background, grid, scene axes, and navigation gizmo. `TransformGizmo` uses the same axis tokens and `editor.gizmo` for screen-space handles. Plane fills preserve the token alpha, multiplied by 65/255; active handles also change outline thickness. Hosts can customize these tokens without changing global ImGui colors.
 
 `BeginViewport`の背景・grid・scene軸・navigation gizmoは`Theme::editor.canvas`、`grid`、`axisX/Y/Z`を使用します。`TransformGizmo`も同じ軸tokenを使い、screen-space handleには`editor.gizmo`を使用します。平面の塗りはtokenのalphaに65/255を乗じ、active handleは輪郭の太さでも区別します。ホストはImGuiのグローバル色を変えずにこれらのtokenを指定できます。
+
+### Continuous ring rotation / 回転リングの連続操作
+
+Axis and screen rotation rings accumulate the signed angular difference between consecutive mouse samples. Crossing ±180 degrees or completing multiple turns no longer resets the gesture angle; snap and fine adjustment use this accumulated angle. `ViewportState::rotationMouse` and `rotationAngle` are gesture state owned by the host. Rotation events still contain the resulting Euler orientation, not a revolution count. As with sampled pointer input, an angular jump greater than 180 degrees between samples is interpreted as the shorter arc.
+
+軸・screen回転リングは、隣接するマウス入力間の符号付き角度差を積算します。±180度の通過や複数周回で操作角度をリセットせず、snap・fineにも積算角度を使用します。`ViewportState::rotationMouse`と`rotationAngle`はホスト所有の操作状態です。回転イベントは周回数ではなく結果のEuler姿勢を返します。入力サンプル間で180度を超えて移動した場合は短い側の弧として解釈します。公開ImGui IOテストでscreenリングの810度までの連続操作を確認しています。
