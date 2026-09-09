@@ -95,6 +95,7 @@ struct UVEdge {
     StableId id = 0;
     editor::Point a{}, b{};
     bool selected = false, seam = false;
+    StableId aVertex=0,bVertex=0;
 };
 enum class UVSelection { Vertex, Edge, Face, Island };
 enum class UVCoordinates { Normalized, Pixel, Tiles };

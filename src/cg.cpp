@@ -429,8 +429,17 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
     editor::DrawGrid(view, s.canvas, {.1, .1}, theme);
     auto vertices = p.vertices ? p.vertices(p.user, view.visible) : std::span<const UVVertex>{};
     auto edges = p.edges ? p.edges(p.user, view.visible) : std::span<const UVEdge>{};
+    auto preview=[&](StableId vertexId,editor::Point original) {
+        if (!vertexId || !s.drag.active || p.revision!=s.drag.draft.revision ||
+            s.drag.draft.phase==editor::Phase::Cancel || ImGui::IsKeyPressed(ImGuiKey_Escape)) return original;
+        const editor::Transaction *transaction=s.drag.draft.target==vertexId?&s.drag:nullptr;
+        for (const auto &drag:s.companionDrags.first(s.companionCount))
+            if (drag.draft.target==vertexId) {transaction=&drag;break;}
+        if (!transaction) return original;
+        return editor::Point{transaction->draft.proposed.x,transaction->draft.proposed.y};
+    };
     for (const auto &e : edges)
-        d->AddLine(UVScreen(e.a, s.canvas, view.min), UVScreen(e.b, s.canvas, view.min),
+        d->AddLine(UVScreen(preview(e.aVertex,e.a), s.canvas, view.min), UVScreen(preview(e.bVertex,e.b), s.canvas, view.min),
                    ImGui::GetColorU32(e.seam       ? theme.colors.destructive
                                       : e.selected ? theme.colors.warning
                                                    : theme.colors.text),
@@ -439,7 +448,7 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
     editor::Point original{};
     auto mouse = ImGui::GetIO().MousePos;
     for (const auto &vertex : vertices) {
-        auto pos = UVScreen(vertex.uv, s.canvas, view.min);
+        auto pos = UVScreen(preview(vertex.id,vertex.uv), s.canvas, view.min);
         d->AddCircleFilled(pos, selection.Contains(vertex.id) ? 5.f : 3.f,
                            ImGui::GetColorU32(vertex.pinned                   ? theme.colors.destructive
                                               : selection.Contains(vertex.id) ? theme.colors.warning
