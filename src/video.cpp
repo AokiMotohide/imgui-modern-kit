@@ -411,8 +411,22 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             draw->AddRectFilled(a, b, ImGui::GetColorU32(color), 4);
             draw->AddRect(a, b, ImGui::GetColorU32(selected ? theme.colors.focus : theme.colors.border), 4, 0,
                           selected ? 2.f : 1.f);
-            if (track.expanded && clip.thumbnail.GetTexID())
-                draw->AddImage(clip.thumbnail, {x + 3, y + 23}, {(std::min)(end - 3, x + 65), b.y - 3});
+            const float nameY=y+4+((clip.transitionIn || clip.transitionOut) ? ImGui::GetFontSize() : 3.f);
+            const ImVec4 textBounds{x+4,a.y+1,end-4,b.y-1};
+            auto text=[&](ImVec2 position,ImU32 color,const char *label,float right) {
+                const ImVec4 bounds{textBounds.x,textBounds.y,std::min(textBounds.z,right),textBounds.w};
+                if (bounds.z>bounds.x && bounds.w>bounds.y)
+                    draw->AddText(ImGui::GetFont(),ImGui::GetFontSize(),position,color,label,nullptr,0,&bounds);
+            };
+            char duration[48]{},metadata[96]{};
+            editor::FormatTimecode(value.last-value.first,s.time.rate,false,duration);
+            std::snprintf(metadata,sizeof(metadata),"%s  %.3gx",duration,value.x);
+            const float metadataWidth=ImGui::CalcTextSize(metadata).x;
+            const float metadataRight=end-(clip.proxy ? ImGui::GetFontSize()+16 : 12);
+            const bool showMetadata=metadataRight-x>metadataWidth+100 && nameY+ImGui::GetFontSize()<b.y;
+            const float nameRight=showMetadata ? metadataRight-metadataWidth-10 : metadataRight;
+            if (track.expanded && clip.thumbnail.GetTexID() && end-x>8 && b.y>nameY+ImGui::GetFontSize()+7)
+                draw->AddImage(clip.thumbnail, {x+3,nameY+ImGui::GetFontSize()+4}, {std::min(end-3,x+65),b.y-3});
             if (s.editingCaption == clip.id && s.captionDrag.active) {
                 captionSeen=true;
                 if (track.locked || clip.locked) {
@@ -429,13 +443,16 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     if (update.proposedText!=s.captionDrag.draft.proposedText && out.Push(update)) s.captionDrag.draft=update;
                     if (accept) {s.captionDrag.draft.proposedText=update.proposedText;s.captionDrag.Commit(p.revision,out);}
                 }
-            } else draw->AddText({x+6,y+4+((clip.transitionIn || clip.transitionOut) ? ImGui::GetFontSize() : 3.f)},ImGui::GetColorU32(theme.colors.text),clip.label);
+            } else {
+                text({x+6,nameY},ImGui::GetColorU32(theme.colors.text),clip.label,nameRight);
+                if (showMetadata) text({metadataRight-metadataWidth,nameY},ImGui::GetColorU32(theme.colors.muted),metadata,metadataRight);
+            }
             if (clip.missing || clip.offline)
                 draw->AddLine(a, b, ImGui::GetColorU32(clip.offline ? theme.editor.error : theme.editor.missing), 2);
             if (track.locked || clip.locked)
-                draw->AddText({x + 6, b.y - 18}, ImGui::GetColorU32(theme.editor.locked), "Locked");
+                text({x+6,b.y-ImGui::GetFontSize()-3},ImGui::GetColorU32(theme.editor.locked),"Locked",end-4);
             if (clip.proxy)
-                draw->AddText({end - 20, y + 7}, ImGui::GetColorU32(theme.editor.proxy), "P");
+                text({end-ImGui::GetFontSize()-8,y+7},ImGui::GetColorU32(theme.editor.proxy),"P",end-8);
             if (clip.linked || clip.group)
                 draw->AddLine({x + 3, b.y - 3}, {end - 3, b.y - 3}, ImGui::GetColorU32(theme.colors.text));
             const float waveformTop=std::min(b.y-2,a.y+((clip.transitionIn || clip.transitionOut) ? 2.f : 1.f)*ImGui::GetFontSize()+7);
@@ -710,8 +727,20 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 hit=ImGui::IsItemHovered();ImGui::PopID();
                 ImGui::SetCursorScreenPos(cursor);ImGui::Dummy({0,0});
             }
-            if (hit)
+            if (hit) {
                 s.hovered = clip.id;
+                if (!io.MouseDown[0]) {
+                    ImGui::BeginTooltip();ImGui::TextUnformatted(clip.label);
+                    ImGui::Text("Duration: %s   Speed: %.3gx",duration,value.x);
+                    if (clip.linked) ImGui::Text("Linked: %llu",static_cast<unsigned long long>(clip.linked));
+                    if (clip.group) ImGui::Text("Group: %llu",static_cast<unsigned long long>(clip.group));
+                    if (clip.proxy) ImGui::TextUnformatted("Proxy");
+                    if (clip.missing) ImGui::TextUnformatted("Missing media");
+                    if (clip.offline) ImGui::TextUnformatted("Offline media");
+                    if (track.locked || clip.locked) ImGui::TextUnformatted("Locked");
+                    ImGui::EndTooltip();
+                }
+            }
             ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(clip.id)));
             if (hit && ImGui::IsMouseClicked(1)) {
                 s.envelopeContextTick=std::clamp(editor::FromSeconds((io.MousePos.x-x)/s.canvas.scale.x),Tick{0},std::max(Tick{0},clip.duration));
