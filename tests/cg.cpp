@@ -145,6 +145,26 @@ int main() {
     check(dopeEvents.count==2 && dopeEvents.Events()[0].kind==imkit::editor::EditKind::Duplicate &&
         dopeEvents.Events()[1].kind==imkit::editor::EditKind::Duplicate,"Dope Sheet Alt duplicates selection");
     io.AddKeyEvent(ImGuiMod_Alt,false);dopeFrame();
+    dopeState.scaleTime=false;dopeState.snapToFrame=true;dopeState.rate={24,1};gesture(11);
+    check(dopeEvents.count==2 && dopeEvents.Events()[0].proposed.first==imkit::editor::FrameToTick(27,{24,1}) &&
+        dopeEvents.Events()[1].proposed.first==imkit::editor::FrameToTick(51,{24,1}),
+        "Dope Sheet snap preserves selected spacing");
+    const auto dopeX=dopeState.view.min.x+100,dopeY=dopeState.view.min.y+15;
+    io.AddMousePosEvent(dopeX,dopeY);dopeFrame();io.AddMouseButtonEvent(0,true);dopeFrame();
+    io.AddMousePosEvent(dopeX+25,dopeY);dopeFrame();
+    dopeEvents.storage=std::span(dopeStorage).first(1);
+    io.AddMouseButtonEvent(0,false);dopeFrame();
+    check(dopeEvents.overflow && dopeEvents.count==0 && dopeState.drag.active && dopeCompanions[0].active,
+        "Dope Sheet short terminal buffer retains every transaction");
+    dopeEvents.storage=dopeStorage;dopeFrame();
+    check(dopeEvents.count==2 && dopeEvents.Events()[0].phase==imkit::editor::Phase::Commit &&
+        dopeEvents.Events()[1].phase==imkit::editor::Phase::Commit && !dopeState.drag.active && !dopeCompanions[0].active,
+        "Dope Sheet retries complete Commit batch");
+    io.AddMousePosEvent(dopeX,dopeY);dopeFrame();io.AddMouseButtonEvent(0,true);dopeFrame();
+    ++dopeProvider.revision;dopeFrame();
+    check(dopeEvents.count==2 && dopeEvents.Events()[0].phase==imkit::editor::Phase::Cancel &&
+        dopeEvents.Events()[1].phase==imkit::editor::Phase::Cancel,"Dope Sheet revision change cancels complete batch");
+    io.AddMouseButtonEvent(0,false);dopeFrame();
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
