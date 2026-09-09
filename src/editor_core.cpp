@@ -598,6 +598,7 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
     StableId hit = 0;
     int side = 0;
     Value initial{};
+    if (!s.activeChannel && !keys.empty()) s.activeChannel=keys.front().channel;
     std::size_t channelBegin = 0, channelEnd = 0;
     for (std::size_t i = 0; i < keys.size(); ++i) {
         if (i == channelEnd) {
@@ -608,6 +609,9 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
         }
         const auto channelKeys = keys.subspan(channelBegin, channelEnd - channelBegin);
         const auto &k = keys[i];
+        const bool ghost=s.ghostOtherChannels && s.activeChannel && k.channel!=s.activeChannel;
+        auto curveColor=t.colors.accent;
+        if (ghost) curveColor.w*=.4f;
         const auto resolved = ResolveHandles(channelKeys, i - channelBegin);
         Point v{Seconds(k.tick), -k.value};
         auto p = Screen(v, s.canvas, view.min);
@@ -618,12 +622,12 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
                 Tick tick = prev.tick + (k.tick - prev.tick) * j / 32;
                 auto next =
                     Screen({Seconds(tick), -Evaluate(channelKeys, tick)}, s.canvas, view.min);
-                d->AddLine(old, next, ImGui::GetColorU32(t.colors.accent), 1.5f);
+                if (!ghost || (j%2)) d->AddLine(old,next,ImGui::GetColorU32(curveColor),ghost?1.f:1.5f);
                 old = next;
             }
         }
         auto mouse = ImGui::GetIO().MousePos;
-        if (selection.Contains(k.id)) {
+        if (selection.Contains(k.id) && !ghost) {
             for (int h = -1; h <= 1; h += 2) {
                 auto offset = h < 0 ? resolved.left : resolved.right;
                 auto hp = Screen({v.x + offset.x, v.y - offset.y}, s.canvas, view.min);
@@ -636,7 +640,8 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
                 }
             }
         }
-        Diamond(d, p, ImGui::GetColorU32(selection.Contains(k.id) ? t.colors.warning : t.colors.text));
+        if (ghost) d->AddQuad({p.x,p.y-5},{p.x+5,p.y},{p.x,p.y+5},{p.x-5,p.y},ImGui::GetColorU32(curveColor));
+        else Diamond(d, p, ImGui::GetColorU32(selection.Contains(k.id) ? t.colors.warning : t.colors.text));
         if (!k.locked && std::hypot(mouse.x - p.x, mouse.y - p.y) < 7) {
             hit = k.id;
             side = 0;
@@ -644,11 +649,12 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
         }
     }
     ImGui::PushID(id);
-    if (view.hovered && hit && ImGui::IsMouseReleased(1) && !s.drag.active) {
+    if (view.hovered && ImGui::IsMouseReleased(1) && !s.drag.active) {
         s.contextKey=hit;
         ImGui::OpenPopup("key settings");
     }
     if (ImGui::BeginPopup("key settings")) {
+        ImGui::Checkbox("Ghost other channels",&s.ghostOtherChannels);
         auto key=std::find_if(keys.begin(),keys.end(),[&](const auto &value){return value.id==s.contextKey;});
         if (key!=keys.end()) {
             ImGui::BeginDisabled(key->locked);
@@ -672,6 +678,8 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
     }
     ImGui::PopID();
     if (view.hovered && hit && ImGui::IsMouseClicked(0) && !s.drag.active) {
+        auto active=std::find_if(keys.begin(),keys.end(),[&](const auto &key){return key.id==hit;});
+        if (active!=keys.end()) s.activeChannel=active->channel;
         selection.Set(hit, ImGui::GetIO().KeyCtrl);
         s.side = side;
         s.mouseStart = {ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y};

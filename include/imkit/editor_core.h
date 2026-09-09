@@ -241,6 +241,8 @@ struct CurveState {
     Transaction drag;
     StableId handle = 0;
     StableId contextKey = 0;
+    StableId activeChannel = 0;
+    bool ghostOtherChannels = true;
     int side = 0;
     Point mouseStart{};
     CanvasView view{};
