@@ -535,7 +535,7 @@ void AnimationStrips(const char *id, std::span<const StripView> strips, std::uin
                 drag.draft.kind==editor::EditKind::StripSettings ? drag.draft.proposed : original;
             ImGui::BeginDisabled(strip.locked);
             auto setting=[&](const char *label,double &field,double low,double high) {
-                bool changed=ImGui::DragScalar(label,ImGuiDataType_Double,&field,.01f,&low,&high,"%.3f");
+                bool changed=ImGui::DragScalar(label,ImGuiDataType_Double,&field,.01f,&low,&high,"%.3f",ImGuiSliderFlags_AlwaysClamp);
                 if (ImGui::IsItemActivated())
                     drag.Begin(strip.id,revision,editor::EditKind::StripSettings,original,editor::CurrentModifiers(),out);
                 if (changed && drag.active) drag.Update(revision,value,out);

@@ -534,6 +534,16 @@ int VerifyInspectorModel() {
         {0,0,1,neighborId}});state.ApplyEvents();
     check(state.animationStrips[1].id==stripId && state.animationStrips[0].id==neighborId,
         "strip Reorder swaps host order by StableId");
+    state.animationStrips[1].locked=true;
+    state.events.Clear();
+    state.events.Push({stripId,state.revision,editor::Phase::Commit,editor::EditKind::StripSettings,{},
+        {0,0,0,0,8,9,.8}});state.ApplyEvents();
+    check(state.animationStrips[1].locked && state.animationStrips[1].scale==2,
+        "locked strip rejects simultaneous unlock and settings mutation");
+    state.events.Clear();
+    state.events.Push({stripId,state.revision,editor::Phase::Commit,editor::EditKind::StripSettings,{},
+        {0,0,1,0,2,3,.4}});state.ApplyEvents();
+    check(!state.animationStrips[1].locked,"locked strip accepts explicit unchanged-settings unlock");
     std::puts("Evidence: host model/event application; no native OS or GUI input.");
     return failures?1:0;
 }
