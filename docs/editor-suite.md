@@ -49,6 +49,14 @@ CanvasSelectionは範囲queryでbox/lasso選択を行います。自動接線と
 Asset renameの固定長UTF-8 eventを提供します。複数key変換と全property状態の操作は未完成です。
 組込toolbar文字列は現時点では英語です。
 
+Curve rendering and handle positions use the same channel-local neighboring keys
+as evaluation. Handle events store the side in `Value::offset` (-1 left, +1 right);
+the host applies `MoveHandle` to the resolved starting key to preserve Aligned
+constraints and convert a manually edited automatic tangent to Free.
+Curveの描画・handle位置・評価は同じchannel内の隣接keyを使用します。Handle eventの
+`Value::offset`は左-1・右+1です。ホストは開始keyの接線を解決してからMoveHandleを適用し、
+Alignedの対向接線を維持し、自動接線の手動編集をFreeへ変更します。
+
 Focused test: `ctest --test-dir build/windows-debug -C Debug -R imkit.editor_core --output-on-failure`.
 The test checks time boundaries, exact event ticks above 2^53, cancellation, snap,
 canvas transforms and curve interpolation. It is CPU evidence, not native UI acceptance.

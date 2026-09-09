@@ -276,7 +276,14 @@ void EditorWorkspaces::ApplyEvents() {
                     changed = true;
                 }
                 if (e.kind == editor::EditKind::Handle) {
-                    (curve.side < 0 ? key.left : key.right) = {e.proposed.x, e.proposed.y};
+                    auto first = std::find_if(keys.begin(), keys.end(),
+                                              [&](const auto &v) { return v.channel == key.channel; });
+                    auto last = std::find_if(first, keys.end(),
+                                             [&](const auto &v) { return v.channel != key.channel; });
+                    auto channel = std::span<const editor::Keyframe>(first, last);
+                    key = editor::MoveHandle(
+                        editor::ResolveHandles(channel, static_cast<std::size_t>(&key - &*first)),
+                        e.original.offset < 0, {e.proposed.x, e.proposed.y});
                     changed = true;
                 }
             }

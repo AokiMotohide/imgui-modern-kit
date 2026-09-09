@@ -82,6 +82,12 @@ int main() {
     automatic = MoveHandle(extrema[1], false, {.5, .5});
     check(std::abs(automatic.left.x - automatic.left.y) < 1e-9 && automatic.left.x < 0,
           "aligned opposite tangent");
+    extrema[0].handles = extrema[1].handles = extrema[2].handles = HandleMode::AutoClamped;
+    check(std::abs(Evaluate(extrema, TicksPerSecond / 2) - .625) < 1e-9,
+          "Bezier uses the next segment neighbor for a clamped extremum");
+    automatic = MoveHandle(ResolveHandles(extrema, 1), false, {.25, .5});
+    check(automatic.handles == HandleMode::Free && automatic.left.y == 0 && automatic.right.y == .5,
+          "manual auto handle edit preserves resolved opposite handle and becomes free");
     std::puts(failures ? "FAIL editor core"
                        : "PASS timebase, drop-frame, snap, transaction, canvas and curves");
     return failures ? 1 : 0;

@@ -554,8 +554,17 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
     StableId hit = 0;
     int side = 0;
     Value initial{};
+    std::size_t channelBegin = 0, channelEnd = 0;
     for (std::size_t i = 0; i < keys.size(); ++i) {
+        if (i == channelEnd) {
+            channelBegin = i;
+            channelEnd = i + 1;
+            while (channelEnd < keys.size() && keys[channelEnd].channel == keys[i].channel)
+                ++channelEnd;
+        }
+        const auto channelKeys = keys.subspan(channelBegin, channelEnd - channelBegin);
         const auto &k = keys[i];
+        const auto resolved = ResolveHandles(channelKeys, i - channelBegin);
         Point v{Seconds(k.tick), -k.value};
         auto p = Screen(v, s.canvas, view.min);
         if (i && keys[i - 1].channel == k.channel) {
@@ -564,7 +573,7 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
             for (int j = 1; j <= 32; ++j) {
                 Tick tick = prev.tick + (k.tick - prev.tick) * j / 32;
                 auto next =
-                    Screen({Seconds(tick), -Evaluate(keys.subspan(i - 1, 2), tick)}, s.canvas, view.min);
+                    Screen({Seconds(tick), -Evaluate(channelKeys, tick)}, s.canvas, view.min);
                 d->AddLine(old, next, ImGui::GetColorU32(t.colors.accent), 1.5f);
                 old = next;
             }
@@ -572,14 +581,14 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
         auto mouse = ImGui::GetIO().MousePos;
         if (selection.Contains(k.id)) {
             for (int h = -1; h <= 1; h += 2) {
-                auto offset = h < 0 ? k.left : k.right;
+                auto offset = h < 0 ? resolved.left : resolved.right;
                 auto hp = Screen({v.x + offset.x, v.y - offset.y}, s.canvas, view.min);
                 d->AddLine(p, hp, ImGui::GetColorU32(t.colors.muted));
                 d->AddCircleFilled(hp, 4, ImGui::GetColorU32(t.colors.text));
                 if (!k.locked && std::hypot(mouse.x - hp.x, mouse.y - hp.y) < 7) {
                     hit = k.id;
                     side = h;
-                    initial = {k.tick, 0, 0, 0, offset.x, offset.y};
+                    initial = {k.tick, 0, h, 0, offset.x, offset.y};
                 }
             }
         }
