@@ -382,6 +382,37 @@ void EditorWorkspaces::SyncClipProperties() {
     const auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==clip->track;});
     clipInspectorLocked=clip->locked || track==tracks.end() || track->locked;
 }
+void EditorWorkspaces::CopyClipEditingData(const video::ClipView &source,video::ClipView &copy) {
+    // Media spans remain borrowed; editable host data receives independent IDs and storage.
+    if (const auto properties=clipProperties.find(source.id);properties!=clipProperties.end()) {
+        auto &target=clipProperties[copy.id];target.values=properties->second.values;
+        for (std::size_t i=0;i<target.ids.size();++i) {
+            const auto oldId=properties->second.ids[i],newId=nextId++;
+            target.ids[i]=newId;clipPropertyOwners.emplace(newId,std::pair{copy.id,i});
+            if (const auto flags=propertyFlags.find(oldId);flags!=propertyFlags.end()) propertyFlags[newId]=flags->second;
+            if (const auto channel=propertyKeys.find(oldId);channel!=propertyKeys.end()) {
+                auto &newKeys=propertyKeys[newId];newKeys=channel->second;
+                for (auto &key:newKeys) {key.id=nextId++;key.channel=newId;}
+            }
+        }
+    }
+    if (!source.envelope.empty()) {
+        auto &points=clipEnvelopes[copy.id];points.assign(source.envelope.begin(),source.envelope.end());
+        for (auto &point:points) point.id=nextId++;
+        copy.envelope=points;
+    } else copy.envelope={};
+    copy.keys={};
+    if (source.keyChannel) {
+        copy.keyChannel=nextId++;
+        const auto count=keys.size();
+        for (std::size_t i=0;i<count;++i) if (keys[i].channel==source.keyChannel) {
+            auto key=keys[i];key.id=nextId++;key.channel=copy.keyChannel;keys.push_back(key);
+        }
+    }
+    if (const auto label=renamedLabels.find(source.id);label!=renamedLabels.end()) {
+        renamedLabels[copy.id]=label->second;copy.label=renamedLabels[copy.id].c_str();
+    }
+}
 void EditorWorkspaces::ApplyEvents() {
     bool changed = false;
     for (const auto &e : events.Events()) {
@@ -555,9 +586,12 @@ void EditorWorkspaces::ApplyEvents() {
                     changed = true;
                 }
             } else if (e.kind == editor::EditKind::Duplicate) {
+                const auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==clip->track;});
+                if (clip->locked || track==tracks.end() || track->locked) continue;
                 auto copy = *clip;
                 copy.id = nextId++;
                 copy.start = e.proposed.first;
+                CopyClipEditingData(*clip,copy);
                 clips.push_back(copy);
                 changed = true;
             } else if (e.kind == editor::EditKind::Move || e.kind == editor::EditKind::TrimStart ||

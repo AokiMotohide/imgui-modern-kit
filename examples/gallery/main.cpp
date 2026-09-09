@@ -556,6 +556,42 @@ int VerifyInspectorModel() {
         std::printf("%s %s\n",ok?"PASS":"FAIL",name);
         if (!ok) ++failures;
     };
+    {
+        auto copyStorage=std::make_unique<gallery::EditorWorkspaces>();
+        auto &copies=*copyStorage;copies.Initialize();
+        const auto original=copies.clips.front().id,property=copies.clipPropertyIds[1];
+        copies.clipProperties.at(original).values[1]=1.75;
+        copies.propertyFlags[property]=8;
+        copies.propertyKeys[property]={{copies.nextId++,property,0,1.75}};
+        copies.clipEnvelopes[original]={{copies.nextId++,0,.75},{copies.nextId++,1000,1}};
+        copies.clips.front().envelope=copies.clipEnvelopes.at(original);
+        auto duplicate=[&] {
+            copies.events.Push({original,copies.revision,editor::Phase::Commit,editor::EditKind::Duplicate,{},
+                editor::Value{editor::FromSeconds(100)}});copies.ApplyEvents();
+        };
+        const auto count=copies.clips.size();copies.tracks.front().locked=true;duplicate();
+        check(copies.clips.size()==count,"locked track rejects host clip duplication");copies.tracks.front().locked=false;
+        duplicate();
+        const auto copy=std::find_if(copies.clips.begin(),copies.clips.end(),[&](const auto &c) {
+            return c.track==copies.tracks.front().id && c.start==editor::FromSeconds(100);
+        });
+        check(copy!=copies.clips.end() && copies.clips.size()==count+1,"host duplicates clip");
+        if (copy!=copies.clips.end()) {
+            const auto copyProperty=copies.clipProperties.at(copy->id).ids[1];
+            check(copyProperty!=property && copies.clipProperties.at(copy->id).values[1]==1.75 &&
+                  copies.propertyFlags.at(copyProperty)==8 && copies.propertyKeys.at(copyProperty).front().channel==copyProperty &&
+                  copies.propertyKeys.at(copyProperty).front().id!=copies.propertyKeys.at(property).front().id,
+                  "duplicate copies Inspector values flags and property keys with independent IDs");
+            check(copy->keyChannel!=copies.clips.front().keyChannel && !copy->keys.empty() &&
+                  copy->keys.front().id!=copies.clips.front().keys.front().id &&
+                  copy->keys.front().value==copies.clips.front().keys.front().value,
+                  "duplicate receives independent inline key channel and keys");
+            copies.clipEnvelopes.at(copy->id).front().gain=.25;
+            check(copy->envelope.front().id!=copies.clips.front().envelope.front().id &&
+                  copies.clips.front().envelope.front().gain==.75,
+                  "duplicate envelope edits preserve original clip");
+        }
+    }
     const auto firstClipId=state.clips.front().id,secondClipId=state.clips[1].id;
     const auto firstScaleId=state.clipPropertyIds[1];
     state.events.Push({firstScaleId,state.revision,editor::Phase::Commit,editor::EditKind::Property,{},editor::Value{0,0,0,0,1.5}});state.ApplyEvents();

@@ -65,6 +65,7 @@ struct EditorWorkspaces {
     std::uint64_t clipPropertyRevision=0;
     bool clipInspectorLocked=false;
     void SyncClipProperties();
+    void CopyClipEditingData(const video::ClipView &source,video::ClipView &copy);
     std::array<editor::Marker, 64> markers{};
     std::size_t markerCount = 0;
     std::array<editor::SnapCandidate, 256> snapCandidates{};
