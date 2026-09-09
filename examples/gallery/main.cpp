@@ -638,6 +638,20 @@ int VerifyInspectorModel() {
                   "split envelope preserves original gain on both sides");
         }
     }
+    {
+        auto rippleStorage=std::make_unique<gallery::EditorWorkspaces>();auto &ripple=*rippleStorage;ripple.Initialize();
+        const auto source=ripple.clips.front(),following=ripple.clips[1];const auto beforeRevision=ripple.revision;
+        auto apply=[&] {
+            ripple.events.Push({source.id,ripple.revision,editor::Phase::Commit,editor::EditKind::Ripple,{},
+                {source.start,source.start+source.duration+100,source.sourceIn,source.track,source.speed}});ripple.ApplyEvents();
+        };
+        ripple.clips[1].locked=true;apply();
+        check(ripple.revision==beforeRevision && ripple.clips.front().duration==source.duration &&
+              ripple.clips[1].start==following.start,"locked following clip rejects whole host ripple before source trim");
+        ripple.clips[1].locked=false;apply();
+        check(ripple.clips.front().duration==source.duration+100 && ripple.clips[1].start==following.start+100,
+              "unlocked ripple applies source trim and following shift together");
+    }
     const auto firstClipId=state.clips.front().id,secondClipId=state.clips[1].id;
     const auto firstScaleId=state.clipPropertyIds[1];
     state.events.Push({firstScaleId,state.revision,editor::Phase::Commit,editor::EditKind::Property,{},editor::Value{0,0,0,0,1.5}});state.ApplyEvents();

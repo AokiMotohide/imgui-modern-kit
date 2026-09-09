@@ -580,3 +580,7 @@ Timelineのtrack操作へホストatlasのEye／EyeOff、Volume／Mute、Unlock�
 Gallery validates clip/track ownership and locks before applying clip edits, including before writing rename storage. Its model regression verifies that locked-track Move, both trims, Ripple, Roll, Slip and Slide leave clip data and host revision unchanged.
 
 Galleryはclip編集の適用前にclip／trackの存在とlockを確認し、rename保存領域への書込み前にも拒否します。locked trackのMove、両端trim、Ripple、Roll、Slip、Slideがclip値とホストrevisionを変えないことをモデル回帰で確認しました。
+
+Before applying a host Ripple edit, Gallery rejects it if any following clip on that track that would move is locked. The original trim and following shifts remain unchanged on rejection. The model verifier covers rejection and the corresponding unlocked edit.
+
+GalleryはRipple適用前に、移動対象となる同一trackの後続clipにlockがあれば編集を拒否します。拒否時は元clipのtrimも後続clipの位置も変えません。拒否経路とlock解除後の一括適用をモデル回帰で確認しました。

@@ -626,6 +626,10 @@ void EditorWorkspaces::ApplyEvents() {
                 if (clip->start==e.proposed.first && oldEnd==e.proposed.last && clip->sourceIn==e.proposed.offset)
                     continue;
                 auto track = clip->track;
+                if (e.kind==editor::EditKind::Ripple && e.proposed.last!=oldEnd &&
+                    std::any_of(clips.begin(),clips.end(),[&](const auto &other) {
+                        return other.id!=clip->id && other.track==track && other.start>=oldEnd && other.locked;
+                    })) continue;
                 clip->start = e.proposed.first;
                 clip->duration = e.proposed.last - e.proposed.first;
                 clip->sourceIn = e.proposed.offset;
