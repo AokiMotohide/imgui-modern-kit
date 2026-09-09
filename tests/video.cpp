@@ -59,6 +59,17 @@ int main() {
               split.right.duration == 30,
           "split source mapping");
     check(!video::SplitClip(c, 100, bounds).valid, "split rejects edge");
+    auto invalidSplit=c;
+    invalidSplit.speed=std::numeric_limits<double>::infinity();
+    check(!video::SplitClip(invalidSplit,120,bounds).valid,"split rejects nonfinite speed");
+    invalidSplit=c;invalidSplit.sourceIn=90;
+    check(!video::SplitClip(invalidSplit,120,bounds).valid,"split rejects source range beyond media");
+    check(!video::SplitClip(c,std::numeric_limits<editor::Tick>::min(),bounds).valid,
+          "split rejects extreme cut before subtracting timeline ticks");
+    invalidSplit=c;invalidSplit.start=std::numeric_limits<editor::Tick>::max()-10;
+    check(!video::SplitClip(invalidSplit,std::numeric_limits<editor::Tick>::max()-5,bounds).valid,
+          "split rejects overflowing timeline end");
+    check(!video::SplitClip(c,120,{0,100,0}).valid,"split rejects invalid minimum duration");
     video::ClipView right = c;
     right.start = 150;
     auto roll = video::RollClips(c, right, 100, bounds, bounds);
