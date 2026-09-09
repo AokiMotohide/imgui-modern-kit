@@ -167,6 +167,18 @@ CGは投影・navigation・object origin選択・軸gizmo・Outlinerの制限/re
 Dope Sheet・animation strip移動を提供します。orientationは純粋関数で計算し、pivotPositionは
 ホストが計算します。scene geometry・階層検証・選択・animation runtimeは所有しません。
 
+Outliner starts inline rename from its context menu or a double click. The public
+InputText widget edits the UTF-8 draft; Enter commits and Escape cancels. Rename
+events preserve original/proposed text and starting revision; terminal overflow is
+retried. Locked objects cannot start rename or drag. Gallery applies committed names
+to its host object labels. Public-IO tests cover context activation, Japanese UTF-8
+input, Commit and Cancel; this does not constitute native IME verification.
+Outlinerは右クリックmenuまたはダブルクリックからinline renameを開始します。公開InputTextで
+UTF-8 draftを編集し、Enterで確定、Escapeで取消します。eventには元名・提案名・開始revisionを保持し、
+終了buffer不足では再試行します。locked objectはrename・dragを開始しません。Galleryは確定名を
+ホストobjectへ適用します。公開IOでmenu開始・日本語UTF-8入力・確定・取消を検証しています。
+native IMEの検証には含めません。
+
 `TransformAroundPivot` returns a complete TRS value with the object's position rotated
 or scaled about a supplied pivot. Its orthonormal basis determines constrained offset
 movement. Rotation composes the existing orientation rather than adding Euler angles.
