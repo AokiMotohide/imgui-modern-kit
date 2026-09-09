@@ -353,6 +353,31 @@ int main() {
     io.AddKeyEvent(ImGuiKey_F9,true);curveFrame();
     check(propertyEvents.count==0,"locked selected key blocks complete delete batch");
     io.AddKeyEvent(ImGuiKey_F9,false);curveFrame();
+    curveState.time=FromSeconds(1.5);
+    curveProvider.sample=[](void *,StableId channel,Tick tick,Extrapolation) {
+        return channel==7 && tick==FromSeconds(1.5) ? .25 : 0.;
+    };
+    curveProvider.neighbor=[](void *user,StableId channel,Tick tick,bool next)->const Keyframe* {
+        auto &keys=*static_cast<std::array<Keyframe,3>*>(user);
+        if (channel!=7 || tick!=FromSeconds(1.5)) return nullptr;
+        return &keys[next?1:0];
+    };
+    std::array keyActions{Binding{Command::AddKey,ImGuiKey_F10},Binding{Command::PreviousKey,ImGuiKey_F11},
+        Binding{Command::NextKey,ImGuiKey_F12}};
+    curveState.bindings=keyActions;
+    io.AddKeyEvent(ImGuiKey_F10,true);curveFrame();
+    check(propertyEvents.count==1 && propertyEvents.Events()[0].kind==EditKind::KeyInsert &&
+        propertyEvents.Events()[0].target==7 && propertyEvents.Events()[0].proposed.first==FromSeconds(1.5) &&
+        propertyEvents.Events()[0].proposed.x==.25,"remapped curve AddKey carries channel, playhead and evaluated value");
+    io.AddKeyEvent(ImGuiKey_F10,false);curveFrame();
+    for (auto key:{ImGuiKey_F11,ImGuiKey_F12}) {
+        io.AddKeyEvent(key,true);curveFrame();
+        const auto &expected=curveSource[key==ImGuiKey_F11?0:1];
+        check(propertyEvents.count==1 && propertyEvents.Events()[0].kind==EditKind::Navigate &&
+            propertyEvents.Events()[0].target==expected.id && propertyEvents.Events()[0].proposed.first==expected.tick,
+            "remapped previous/next key uses host neighbor and exact tick");
+        io.AddKeyEvent(key,false);curveFrame();
+    }
     ImGui::DestroyContext(context);
     std::puts(failures ? "FAIL editor core"
                        : "PASS timebase, drop-frame, snap, transaction, canvas and curves");
