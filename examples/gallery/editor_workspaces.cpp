@@ -930,6 +930,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     float width = ImGui::GetContentRegionAvail().x, side = (s.narrow ? 180 : 300)*ImGui::GetFontSize()/14,
           top = ImGui::GetContentRegionAvail().y * .6f;
     ImGui::BeginChild("View stack", {width - side - 10, top}, ImGuiChildFlags_Borders);
+    s.viewport.icons=s.icons;
     ImGui::Checkbox("OpenGL preview", &s.useGL);
     if (s.viewport.pivot==cg::Pivot::Cursor) {
         double cursor[]={s.cursorPivot.x,s.cursorPivot.y,s.cursorPivot.z};

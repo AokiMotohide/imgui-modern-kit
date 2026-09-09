@@ -83,6 +83,7 @@ struct ViewportState {
     editor::CanvasState selectionCanvas;
     std::span<editor::SelectablePoint> selectionPoints;
     bool lassoSelection=false;
+    const IconAtlas *icons=nullptr;
     std::uint64_t selectionRevision=0;
 };
 struct ViewportView {

@@ -13,21 +13,23 @@
     },
     {
       "operation": "BoxSelect",
-      "widget": "CanvasSelection",
+      "widget": "Viewport Select mode; Icon Gallery",
       "disposition": "new",
       "icon": "BoxSelect",
       "tooltip": "Box Select",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "generated and connected; native 16px light appearance inspected; 150% pending",
+      "evidence": "out/selection-icons-native/icons-16-light.png (local capture, not distributed)"
     },
     {
       "operation": "LassoSelect",
-      "widget": "CanvasSelection",
+      "widget": "Viewport Select mode; Icon Gallery",
       "disposition": "new",
       "icon": "LassoSelect",
       "tooltip": "Lasso Select",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "generated and connected; native 16px light appearance inspected; 150% pending",
+      "evidence": "out/selection-icons-native/icons-16-light.png (local capture, not distributed)"
     },
     {
       "operation": "HandPan",

@@ -498,5 +498,13 @@
   {
     "name": "SelectPointer",
     "category": "Editor"
+  },
+  {
+    "name": "BoxSelect",
+    "category": "Editor"
+  },
+  {
+    "name": "LassoSelect",
+    "category": "Editor"
   }
 ]

@@ -198,7 +198,18 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
     int shading=s.shading==Shading::Wireframe ? 0 : 1;
     if (ImGui::Combo("##shading",&shading,"Wireframe\0Solid\0"))
         s.shading=shading==0 ? Shading::Wireframe : Shading::Solid;
-    if (s.tool==TransformTool::Select) ImGui::Checkbox("Lasso selection",&s.lassoSelection);
+    if (s.tool==TransformTool::Select) {
+        if (s.icons) {
+            for (int i=0;i<2;++i) {
+                if (i) ImGui::SameLine();
+                const bool active=s.lassoSelection==(i==1);
+                if (active) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+                if (IconLabelButton(i ? "lasso" : "box",*s.icons,i ? IconId::LassoSelect : IconId::BoxSelect,
+                                    i ? "Lasso select" : "Box select",{16*ImGui::GetFontSize()/14})) s.lassoSelection=i==1;
+                if (active) ImGui::PopStyleColor();
+            }
+        } else ImGui::Checkbox("Lasso selection",&s.lassoSelection);
+    }
     ViewportView v{ImGui::GetCursorScreenPos(), ImGui::GetContentRegionAvail(), ImGui::IsWindowHovered()};
     auto *d = ImGui::GetWindowDrawList();
     d->PushClipRect(v.min, {v.min.x + v.size.x, v.min.y + v.size.y}, true);
