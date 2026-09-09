@@ -542,6 +542,15 @@ void AnimationStrips(const char *id, std::span<const StripView> strips, std::uin
                 if (ImGui::IsItemDeactivated() && drag.active) drag.Commit(revision,out);
             };
             setting("Scale",value.x,.001,1000);setting("Repeat",value.y,.001,1000);setting("Blend",value.z,0,1);
+            const auto index=static_cast<std::size_t>(&strip-strips.data());
+            for (int direction:{-1,1}) {
+                const auto neighbor=static_cast<std::ptrdiff_t>(index)+direction;
+                const bool available=neighbor>=0 && neighbor<static_cast<std::ptrdiff_t>(strips.size()) &&
+                    !strips[neighbor].locked;
+                if (ImGui::MenuItem(direction<0?"Move up":"Move down",nullptr,false,available))
+                    Emit(out,strip.id,revision,editor::EditKind::Reorder,{},
+                         {0,0,direction,strips[neighbor].id});
+            }
             bool muted=strip.muted;
             if (ImGui::Checkbox("Mute",&muted)) {
                 value=original;value.offset=muted?value.offset|1:value.offset&~editor::Tick{1};

@@ -309,6 +309,13 @@ void EditorWorkspaces::ApplyEvents() {
         if (e.phase != editor::Phase::Commit || e.revision != revision)
             continue;
         ++commits;
+        if (e.kind==editor::EditKind::Reorder) {
+            auto from=std::find_if(animationStrips.begin(),animationStrips.end(),[&](const auto &strip){return strip.id==e.target;});
+            auto to=std::find_if(animationStrips.begin(),animationStrips.end(),[&](const auto &strip){return strip.id==e.proposed.parent;});
+            if (from!=animationStrips.end() && to!=animationStrips.end() && !from->locked && !to->locked) {
+                std::iter_swap(from,to);changed=true;
+            }
+        }
         for (auto &strip:animationStrips) if (strip.id==e.target) {
             if (e.kind==editor::EditKind::StripSettings) {
                 strip.scale=e.proposed.x;strip.repeat=e.proposed.y;strip.blend=e.proposed.z;
