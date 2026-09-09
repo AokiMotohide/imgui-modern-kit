@@ -50,6 +50,9 @@ void EndDrags(TimelineState &s, std::uint64_t revision, bool cancel, editor::Eve
         finish(member.transaction);
 }
 } // namespace
+float TrackExtent(const TrackView &track) {
+    return track.expanded ? (std::max)(64.f,std::isfinite(track.height) ? track.height : 64.f) : 32.f;
+}
 ClipEdit EditClip(const ClipView &c, editor::EditKind kind, Tick delta, ClipConstraints bounds) {
     ClipEdit result{c.start, c.duration, c.sourceIn, false};
     if (c.locked || c.duration < bounds.minimumDuration || c.speed <= 0 || !std::isfinite(c.speed) ||
@@ -146,6 +149,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     s.view = view;
     auto *draw = ImGui::GetWindowDrawList();
     const auto &io = ImGui::GetIO();
+    detail::ResumeTerminal(s.heightDrag,p.revision,out);
+    if (s.heightDrag.active && ImGui::IsKeyPressed(ImGuiKey_Escape)) s.heightDrag.Cancel(out);
     if (view.hovered && s.tool == Tool::Hand && ImGui::IsMouseDragging(0))
         s.canvas.origin.x -= io.MouseDelta.x / s.canvas.scale.x;
     if (s.time.playing) {
@@ -159,10 +164,19 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     // Track rows are indexed independently from time; no all-track query or clip scan.
     if (view.hovered && io.MouseWheel && !io.KeyCtrl)
         s.verticalScroll = (std::max)(0., s.verticalScroll - io.MouseWheel * s.rowHeight);
+    const double totalHeight = p.layout ? p.totalHeight : p.trackCount*s.rowHeight;
+    if (totalHeight>0)
+        s.verticalScroll=std::clamp(s.verticalScroll,0.,(std::max)(0.,totalHeight-(view.max.y-view.min.y)));
     const int first = (std::max)(0, static_cast<int>(s.verticalScroll / s.rowHeight));
     const int count = (std::max)(
         0, (std::min)(p.trackCount - first, static_cast<int>((view.max.y - view.min.y) / s.rowHeight) + 2));
-    auto tracks = p.tracks ? p.tracks(p.user, first, count) : std::span<const TrackView>{};
+    TrackLayout layout;
+    if (p.layout) layout=p.layout(p.user,s.verticalScroll,s.verticalScroll+view.max.y-view.min.y);
+    else {
+        layout.tracks=p.tracks ? p.tracks(p.user, first, count) : std::span<const TrackView>{};
+        layout.top=first*s.rowHeight;
+    }
+    auto tracks=layout.tracks;
     editor::Range range{editor::FromSeconds(s.canvas.origin.x),
                         editor::FromSeconds(s.canvas.origin.x +
                                             (view.max.x - view.min.x - s.headerWidth) / s.canvas.scale.x)};
@@ -173,27 +187,55 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         if (cancel || s.drag.draft.phase == editor::Phase::Commit)
             EndDrags(s, p.revision, cancel, out);
     }
-    int index = first;
+    double rowTop=layout.top;
     for (const auto &track : tracks) {
-        float y = view.min.y + index++ * s.rowHeight - static_cast<float>(s.verticalScroll);
-        draw->AddRectFilled({view.min.x, y}, {view.max.x, y + s.rowHeight - 2},
+        const float rowHeight=p.layout ? TrackExtent(track) : s.rowHeight;
+        float y = view.min.y + static_cast<float>(rowTop-s.verticalScroll);
+        rowTop+=rowHeight;
+        draw->AddRectFilled({view.min.x, y}, {view.max.x, y + rowHeight - 2},
                             ImGui::GetColorU32(theme.colors.surface));
         ImGui::SetCursorScreenPos({view.min.x + 4, y + 3});
         ImGui::PushID(reinterpret_cast<void *>(static_cast<std::uintptr_t>(track.id)));
+        if (ImGui::SmallButton(track.expanded ? "v" : ">"))
+            Toggle(out,track,p.revision,static_cast<int>(TrackControl::Expanded),track.expanded);
+        ImGui::SameLine(0,4);
         ImGui::TextUnformatted(track.label);
-        ImGui::SetCursorScreenPos({view.min.x + 4, y + 28});
-        const char *labels[] = {"V", "M", "S", "L", "R", "T"};
+        if (ImGui::BeginPopupContextItem("track layout")) {
+            float height=s.heightDrag.active && s.heightDrag.draft.target==track.id ?
+                         static_cast<float>(s.heightDrag.draft.proposed.x) : track.height;
+            bool edited=ImGui::SliderFloat("Track height",&height,64,240,"%.0f px");
+            if (ImGui::IsItemActivated())
+                s.heightDrag.Begin(track.id,p.revision,editor::EditKind::TrackHeight,
+                                   {0,0,0,0,track.height},editor::CurrentModifiers(),out);
+            if (edited && s.heightDrag.active)
+                s.heightDrag.Update(p.revision,{0,0,0,0,height},out);
+            if (ImGui::IsItemDeactivated() && s.heightDrag.active)
+                s.heightDrag.Commit(p.revision,out);
+            ImGui::EndPopup();
+        }
+        if (track.expanded) {
+        ImGui::SetCursorScreenPos({view.min.x + 4, y + 30});
+        const char *labels[] = {"V", "M", "S", "L", "R", "T", "P"};
+        const char *tooltips[]={"Visible","Mute","Solo","Locked","Record armed","Target track","Source patch"};
         const bool values[] = {track.visible, track.mute,   track.solo,
-                               track.locked,  track.record, track.target};
-        for (int f = 0; f < 6; ++f) {
+                               track.locked,  track.record, track.target, track.source};
+        for (int f = 0; f < 7; ++f) {
             if (f)
                 ImGui::SameLine(0, 2);
+            if (values[f]) ImGui::PushStyleColor(ImGuiCol_Button,theme.colors.accent);
             if (ImGui::SmallButton(labels[f]))
                 Toggle(out, track, p.revision, f, values[f]);
+            if (values[f]) {
+                auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
+                draw->AddLine({a.x+2,b.y-1},{b.x-2,b.y-1},ImGui::GetColorU32(theme.colors.text),2);
+                ImGui::PopStyleColor();
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s: %s",tooltips[f],values[f] ? "On" : "Off");
+        }
         }
         ImGui::PopID();
         auto clips = p.clips ? p.clips(p.user, track.id, range) : std::span<const ClipView>{};
-        draw->PushClipRect({view.min.x + s.headerWidth, y}, {view.max.x, y + s.rowHeight - 2}, true);
+        draw->PushClipRect({view.min.x + s.headerWidth, y}, {view.max.x, y + rowHeight - 2}, true);
         for (const auto &clip : clips) {
             auto value = Value(clip);
             if (s.drag.active && s.drag.draft.target == clip.id)
@@ -209,7 +251,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 view.min.x + s.headerWidth +
                 static_cast<float>((editor::Seconds(value.first) - s.canvas.origin.x) * s.canvas.scale.x);
             float end = x + static_cast<float>(editor::Seconds(value.last - value.first) * s.canvas.scale.x);
-            ImVec2 a{x, y + 4}, b{end, y + s.rowHeight - 7};
+            ImVec2 a{x, y + 4}, b{end, y + rowHeight - 7};
             bool selected = selection.Contains(clip.id);
             auto color = track.kind == TrackKind::Audio     ? theme.colors.success
                          : track.kind == TrackKind::Caption ? theme.colors.warning
@@ -218,7 +260,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             draw->AddRectFilled(a, b, ImGui::GetColorU32(color), 4);
             draw->AddRect(a, b, ImGui::GetColorU32(selected ? theme.colors.focus : theme.colors.border), 4, 0,
                           selected ? 2.f : 1.f);
-            if (clip.thumbnail.GetTexID())
+            if (track.expanded && clip.thumbnail.GetTexID())
                 draw->AddImage(clip.thumbnail, {x + 3, y + 23}, {(std::min)(end - 3, x + 65), b.y - 3});
             if (s.editingCaption == clip.id) {
                 ImGui::SetCursorScreenPos({x + 4, y + 5});
@@ -243,13 +285,13 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 draw->AddText({end - 20, y + 7}, ImGui::GetColorU32(theme.colors.warning), "P");
             if (clip.linked || clip.group)
                 draw->AddLine({x + 3, b.y - 3}, {end - 3, b.y - 3}, ImGui::GetColorU32(theme.colors.text));
-            for (std::size_t j = 0; j < clip.waveform.size(); ++j) {
+            for (std::size_t j = 0; track.expanded && j < clip.waveform.size(); ++j) {
                 float wx = x + (end - x) * static_cast<float>(j) / clip.waveform.size(),
-                      amplitude = clip.waveform[j] * (s.rowHeight - 28) * .4f;
+                      amplitude = clip.waveform[j] * (rowHeight - 28) * .4f;
                 draw->AddLine({wx, y + 40 - amplitude}, {wx, y + 40 + amplitude},
                               ImGui::GetColorU32(theme.colors.text));
             }
-            for (std::size_t j = 0; j < clip.audioBuckets.size(); ++j) {
+            for (std::size_t j = 0; track.expanded && j < clip.audioBuckets.size(); ++j) {
                 float wx = x + (end-x) * static_cast<float>(j) / clip.audioBuckets.size();
                 float centerY = (a.y+b.y)*.5f + 5;
                 float amplitude = (b.y-a.y-26)*.5f;

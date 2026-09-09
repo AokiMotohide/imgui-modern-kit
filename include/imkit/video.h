@@ -15,6 +15,11 @@ struct TrackView {
     bool visible = true, mute = false, solo = false, locked = false, record = false, source = false,
          target = true, expanded = true;
 };
+float TrackExtent(const TrackView &track); // Expanded: at least 64 px; collapsed: 32 px.
+struct TrackLayout {
+    std::span<const TrackView> tracks;
+    double top = 0; // Absolute pixel offset of the first returned track.
+};
 struct ClipView {
     StableId id = 0, track = 0, linked = 0, group = 0;
     const char *label = "";
@@ -69,6 +74,9 @@ struct TimelineProvider {
     Neighbors (*neighbors)(void *, StableId clip) = nullptr;
     // Includes linked/group members; host marks members of locked tracks as locked.
     std::span<const ClipView> (*selected)(void *, std::span<const StableId>) = nullptr;
+    // Optional indexed variable-height query. Returned rows cover [firstPixel,lastPixel].
+    TrackLayout (*layout)(void *, double firstPixel, double lastPixel) = nullptr;
+    double totalHeight = 0;
 };
 struct TimelineState {
     struct MemberDrag {
@@ -93,6 +101,7 @@ struct TimelineState {
     ClipView previousOriginal{}, nextOriginal{};
     std::span<MemberDrag> memberDrags;
     std::size_t memberCount = 0;
+    editor::Transaction heightDrag;
 };
 void Timeline(const char *id, const TimelineProvider &provider, TimelineState &state,
               editor::Selection &selection, editor::EventBuffer &events, const Theme &theme,

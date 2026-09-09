@@ -87,6 +87,21 @@ VideoはTimeline・Monitor・波形・meter・scopeと色draft操作を公開し
 純粋関数です。Timelineは可視track/clipを要求し、複数clipのdrag領域はホストが渡します。
 linked/group対象はproviderが返し、locked trackのmemberもlockedと指定します。
 
+For variable-height tracks, provide `TimelineProvider::layout` and `totalHeight`.
+The callback receives the visible pixel interval and returns contiguous tracks plus
+the first track's absolute top. Build an indexed prefix-height table in the host;
+the Gallery uses binary search and rebuilds its table only after data/layout edits.
+Use `TrackExtent` for both that table and drawing: expanded rows use at least 64 px,
+collapsed rows 32 px. Without a layout callback the original uniform-row query is
+retained. Track labels open a context menu with a height slider emitting TrackHeight
+transactions. Collapse, visible, mute, solo, lock, record, source and target controls
+emit explicit TrackControl selectors and are applied to Gallery track state.
+可変track高にはlayout callbackとtotalHeightを指定します。callbackは可視pixel区間に対する連続trackと先頭の
+絶対topを返します。ホストで高さの累積表を保持し、Galleryはデータ・layout編集後に更新した表を二分探索します。
+累積表と描画の両方にTrackExtentを使い、展開時は最低64px・折り畳み時は32pxです。callbackを省略すると既存の
+均一行queryを使用します。track名のcontext menuから高さを編集でき、TrackHeight transactionを返します。
+展開・visible・mute・solo・lock・record・source・targetの操作は明示selectorを返し、Galleryがtrack状態へ適用します。
+
 Audio buckets use interleaved PCM and an explicit channel. Scope utilities operate
 on CPU RGBA values without decoding, resampling, playback or color management.
 Those services, timeline collision policy, undo, media loading and persistence remain
@@ -201,14 +216,14 @@ Gallery 7/8/9は公開moduleでCore/Video/CGを構成します。sample hostがc
 revisionを進め、object選択を同期します。100k切替は256 track・100096 clip・100000 keyです。
 
 The requested 1.0 suite is **not complete**. Remaining work includes fully integrated
-box/lasso and multi-key workflows, per-track variable heights, complete track flags,
+box/lasso and multi-key workflows,
 transition handles/picker, linked/group sample policy, audio envelope editing,
 gizmo plane/screen handles and full pivot rotation,
 navigation gizmo, hierarchy rename/reorder and stack inspector, UV edge/face/island
 interaction, strip scale/repeat/blend editing, editor-specific icon expansion,
 complete localization and all requested representative input checks. Provider search
 controls exist, but the Gallery's sample providers do not yet apply every filter.
-依頼された1.0 Suiteは**未完成**です。box/lassoと複数key操作の統合、可変track高と全flag、
+依頼された1.0 Suiteは**未完成**です。box/lassoと複数key操作の統合、
 transition編集/picker、linked/groupのsample処理、audio envelope、
 gizmoのplane/screen handleとpivot回転、navigation gizmo、階層rename/reorderとstack inspector、
 UVのedge/face/island操作、strip scale/repeat/blend、editor icon追加、完全な表示文字列差替え、

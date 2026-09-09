@@ -92,6 +92,16 @@ Audio API inventory / 音声操作API一覧:
 | `AudioStrip(...)` | Native gain fader/pan transactions; mute/solo/record state events / 音声操作event |
 | `ClipView::audioBuckets` | Non-owning PCM min/max buckets rendered inside clips / clip波形の非所有データ |
 
+Track layout API inventory / track配置API一覧:
+
+| API | Contract / 契約 |
+|---|---|
+| `float TrackExtent(const TrackView&)` | Actual expanded/collapsed row height / 展開状態を含む描画高 |
+| `TrackLayout { tracks, top }` | Contiguous non-owning visible rows and absolute first-row pixel offset / 可視行と絶対offset |
+| `TimelineProvider::layout`, `totalHeight` | Optional indexed pixel-range query; uniform rows remain supported / 任意の可変高query |
+| `TimelineState::heightDrag` | Host-owned track-height transaction / 高さ編集state |
+| `EditKind::TrackHeight` | Value x carries original/proposed height, target is track ID / 高さの提案event |
+
 Populate every function pointer from the current OpenGL 3.3 context, initialize the
 renderer, render non-owning mesh views and pass `Texture()` to the host UI. Use flipped
 UVs for the FBO image. `Pick(x,y)` accepts top-left coordinates. Always call Shutdown

@@ -61,7 +61,8 @@ enum class EditKind {
     Scale,
     Navigate,
     Range,
-    Marker
+    Marker,
+    TrackHeight
 };
 // Exact integer/time fields must never travel through floating point channels.
 struct Value {
