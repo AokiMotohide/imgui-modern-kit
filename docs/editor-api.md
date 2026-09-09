@@ -189,3 +189,7 @@ Optional host-owned `CurveState.previewKeys` scratch (at least the visible query
 Curve multi-key move uses complete selected-key views from `CurveProvider.selected` and host-owned `CurveState.companionDrags`. Each key emits its own typed transaction with a shared time/value delta. Capacity is checked for the whole batch; terminal events retry together, and any locked selected member prevents the gesture. Gallery supplies these buffers and applies each committed key.
 
 Curveの複数key移動は `CurveProvider.selected` の全選択keyとホスト所有 `CurveState.companionDrags` を使います。各keyは共通の時間/値差分を持つtransactionを返します。容量はbatch全体で確認し、終端イベントも一括再送します。lockedな選択keyを含むgestureは開始しません。Galleryはbufferを提供し、各keyのcommitを反映します。
+
+Alt-dragging Curve keys emits a Duplicate transaction per selected key. Gallery copies the source key metadata, assigns a new StableId and applies the proposed time/value, leaving source keys unchanged.
+
+CurveのAlt-dragは選択keyごとのDuplicate transactionを返します。Galleryは元keyの属性をコピーして新しいStableIdを割り当て、提案された時間/値を適用し、元keyを維持します。

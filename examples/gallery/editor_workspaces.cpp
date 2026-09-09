@@ -177,6 +177,7 @@ void EditorWorkspaces::RebuildKeyIndex() {
         keyChannels.emplace_back(first,last);first=last;
     }
     visibleKeys.reserve((std::min)(keys.size(),std::size_t{4096}));
+    if (!clips.empty()) clips.front().keys=std::span<const editor::Keyframe>(keys).first((std::min)(keys.size(),std::size_t{6}));
 }
 std::span<const editor::Keyframe> EditorWorkspaces::QueryKeys(editor::CurveQuery query) {
     visibleKeys.clear();
@@ -427,6 +428,10 @@ void EditorWorkspaces::ApplyEvents() {
         for (auto &key : keys)
             if (key.id == e.target) {
                 if (key.locked) continue;
+                if (e.kind==editor::EditKind::Duplicate) {
+                    auto copy=key;copy.id=nextId++;copy.tick=e.proposed.first;copy.value=e.proposed.x;
+                    keys.push_back(copy);changed=true;break;
+                }
                 if (e.kind==editor::EditKind::KeyInterpolation && e.proposed.x>=0 && e.proposed.x<3) {
                     key.interpolation=static_cast<editor::Interpolation>(static_cast<int>(e.proposed.x));changed=true;
                 }

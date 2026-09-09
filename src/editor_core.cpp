@@ -768,9 +768,10 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
         if (count>s.companionDrags.size() || out.storage.size()-out.count<1+count) {out.overflow=true;allowed=false;}
         if (allowed) {
             s.companionCount=0;
-            s.drag.Begin(hit, provider.revision, side ? EditKind::Handle : EditKind::Keyframe, initial,CurrentModifiers(), out);
+            const auto kind=side?EditKind::Handle:ImGui::GetIO().KeyAlt?EditKind::Duplicate:EditKind::Keyframe;
+            s.drag.Begin(hit, provider.revision, kind, initial,CurrentModifiers(), out);
             for (const auto &member:members) if (member.id!=hit)
-                s.companionDrags[s.companionCount++].Begin(member.id,provider.revision,EditKind::Keyframe,
+                s.companionDrags[s.companionCount++].Begin(member.id,provider.revision,kind,
                     Value{member.tick,0,0,0,member.value},CurrentModifiers(),out);
         }
     }
