@@ -213,3 +213,11 @@ CurveのAddKeyはホストの `CurveState.time` とactive channelへ追加しま
 Curve box/lasso selection uses optional `selectionQuery` and the shared CanvasSelection widget. Gallery supplies query results and lasso path scratch. Selection/event capacity is preflighted; insufficient capacity leaves the old selection intact, and an exhausted lasso path cancels rather than selecting from a truncated polygon.
 
 Curveのbox/lasso選択は任意の `selectionQuery` と共通CanvasSelectionを使います。Galleryはquery結果とlasso用bufferを提供します。選択/event容量を先に確認し、不足時は元の選択を保持します。lasso pathを使い切った場合も途中のpolygonで選択せず中止します。
+
+`EditKind::StripSettings` carries strip range in `first/last`, channel in `parent`,
+scale/repeat/blend in `x/y/z`, and mute/lock bits 1/2 in `offset`. The host applies
+Commit and retains its source data during Update. A locked strip still exposes Unlock.
+
+`EditKind::StripSettings`はrangeを`first/last`、channelを`parent`、scale/repeat/blendを
+`x/y/z`、mute/lockを`offset`のbit 1/2で返します。ホストはCommit時に適用し、Update中は
+元データを維持します。ロック中も解除操作は可能です。
