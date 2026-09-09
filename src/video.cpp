@@ -144,12 +144,25 @@ PairEdit RollClips(const ClipView &a, const ClipView &b, Tick delta, ClipConstra
     return {left, right, left.valid && right.valid};
 }
 SplitResult SplitClip(const ClipView &c, Tick tick, ClipConstraints bounds) {
-    Tick offset = tick - c.start;
-    if (c.locked || offset < bounds.minimumDuration || c.duration - offset < bounds.minimumDuration)
-        return {};
+    if (c.locked || bounds.minimumDuration<1 || c.duration<bounds.minimumDuration ||
+        !std::isfinite(c.speed) || c.speed<=0 || bounds.mediaLast<bounds.mediaFirst ||
+        c.sourceIn<bounds.mediaFirst || c.sourceIn>bounds.mediaLast ||
+        c.start>std::numeric_limits<Tick>::max()-c.duration) return {};
+    const auto end=c.start+c.duration;
+    if (tick<=c.start || tick>=end) return {};
+    const Tick offset=tick-c.start;
+    if (offset<bounds.minimumDuration || c.duration-offset<bounds.minimumDuration) return {};
+    const auto available=static_cast<std::uint64_t>(bounds.mediaLast)-static_cast<std::uint64_t>(c.sourceIn);
+    const long double sourceDuration=static_cast<long double>(c.duration)*c.speed;
+    if (sourceDuration>static_cast<long double>(available)) return {};
+    const long double mapped=std::round(static_cast<long double>(offset)*c.speed);
+    if (!std::isfinite(mapped) || mapped<0 || mapped>=std::ldexp(1.L,63)) return {};
+    const Tick sourceOffset=c.speed==1 ? offset : static_cast<Tick>(mapped);
+    if (c.sourceIn>std::numeric_limits<Tick>::max()-sourceOffset) return {};
+    const auto rightSource=c.sourceIn+sourceOffset;
+    if (rightSource>bounds.mediaLast) return {};
     return {{c.start, offset, c.sourceIn, true},
-            {tick, c.duration - offset, c.sourceIn + static_cast<Tick>(std::llround(offset * c.speed)), true},
-            true};
+            {tick, c.duration - offset, rightSource, true},true};
 }
 TripleEdit SlideClip(const ClipView &a, const ClipView &b, const ClipView &c, Tick delta, ClipConstraints ac,
                      ClipConstraints bc, ClipConstraints cc) {
@@ -903,7 +916,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     auto split = Value(clip);
                     split.first = editor::FromSeconds(
                         s.canvas.origin.x + (io.MousePos.x - view.min.x - s.headerWidth) / s.canvas.scale.x);
-                    if (ReserveEvents(out,2)) {
+                    if (SplitClip(clip,split.first,p.constraints ? p.constraints(p.user,clip.id) : ClipConstraints{}).valid &&
+                        ReserveEvents(out,2)) {
                         editor::Transaction edit;
                         edit.Begin(clip.id,p.revision,editor::EditKind::Split,Value(clip),editor::CurrentModifiers(),out);
                         edit.draft.proposed=split;edit.Commit(p.revision,out);

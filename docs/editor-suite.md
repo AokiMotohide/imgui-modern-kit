@@ -663,3 +663,7 @@ Galleryの複製はイベントバッチごとに新しいlinked／group集合ID
 Gallery Split retains the original incoming transition on the left clip and outgoing transition on the right clip, clamping each duration to its resulting clip. Newly cut edges have no transition. Host-model regression verifies both kinds, durations and cleared edges.
 
 Galleryの分割は元の開始transitionを左clip、終了transitionを右clipへ残し、それぞれの長さを分割後のclip長まで制限します。新しくできた切れ目のtransitionは解除します。ホストモデル回帰で種類・長さ・切れ目の解除を確認しています。
+
+SplitClip validates positive finite speed, minimum duration, source-media bounds and representable timeline/source positions before integer arithmetic. Razor now uses the same pure validation before publishing Begin/Commit. Focused regression includes extreme Tick inputs, invalid speed/minimum duration and media overflow.
+
+SplitClipは有限の正速度、最小duration、素材範囲、時刻・素材位置の表現可能性を整数演算前に検証します。Razorも同じ純粋計算で確認してからBegin／Commitを出力します。極端なTick、無効な速度・最小duration、素材範囲外を回帰で確認しました。
