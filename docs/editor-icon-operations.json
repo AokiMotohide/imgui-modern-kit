@@ -3,12 +3,12 @@
   "operations": [
     {
       "operation": "SelectPointer",
-      "widget": "CanvasSelection",
+      "widget": "Timeline",
       "disposition": "new",
       "icon": "SelectPointer",
-      "tooltip": "Select Pointer",
+      "tooltip": "Select clips",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "generated and connected; native appearance review pending"
     },
     {
       "operation": "BoxSelect",

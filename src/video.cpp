@@ -168,7 +168,12 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     for (int i = 0; i < 7; ++i) {
         if (i)
             ImGui::SameLine();
-        if (ImGui::Selectable(tools[i], static_cast<int>(s.tool) == i, 0, {56, 24}))
+        if (i==0 && s.icons) {
+            const bool active=s.tool==Tool::Select;
+            if (active) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+            if (IconButton("select-tool",*s.icons,IconId::SelectPointer,"Select clips")) s.tool=Tool::Select;
+            if (active) ImGui::PopStyleColor();
+        } else if (ImGui::Selectable(tools[i], static_cast<int>(s.tool) == i, 0, {56, 24}))
             s.tool = static_cast<Tool>(i);
     }
     ImGui::SameLine();
