@@ -27,6 +27,7 @@ struct EditorPalette {
     ImVec4 canvas{}, grid{}, ruler{}, trackHeader{}, videoClip{}, audioClip{}, captionClip{};
     ImVec4 key{}, selectedKey{}, marker{}, snapGuide{}, axisX{}, axisY{}, axisZ{}, gizmo{};
     ImVec4 scope{}, missing{}, proxy{}, error{}, locked{};
+    ImVec4 effectClip{}, adjustmentClip{}, groupClip{};
 };
 struct Theme {
     ColorScheme scheme = ColorScheme::Light;
