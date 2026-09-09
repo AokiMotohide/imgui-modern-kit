@@ -252,7 +252,7 @@ bool InPolygon(Point p, std::span<const Point> polygon) {
     return inside;
 }
 CanvasView BeginCanvas(const char *id, CanvasState &s, ImVec2 size, const Theme &t) {
-    ImGui::PushStyleColor(ImGuiCol_ChildBg, t.colors.canvas);
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, t.editor.canvas);
     ImGui::BeginChild(id, size, ImGuiChildFlags_Borders,
                       ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
     CanvasView v;
@@ -347,7 +347,7 @@ void CanvasSelection(const CanvasView &v, CanvasState &s, const SelectionProvide
 }
 void DrawGrid(const CanvasView &v, const CanvasState &s, Point spacing, const Theme &t) {
     auto *d = ImGui::GetWindowDrawList();
-    auto color = ImGui::GetColorU32(t.colors.border);
+    auto color = ImGui::GetColorU32(t.editor.grid);
     for (int axis = 0; axis < 2; ++axis) {
         double step = axis ? spacing.y : spacing.x, scale = axis ? s.scale.y : s.scale.x;
         if (step <= 0 || !std::isfinite(step))
@@ -485,16 +485,16 @@ void TimeRuler(const char *id, TimeState &s, CanvasState &canvas, std::span<cons
         if (second>=right) break;
         float x=p.x+static_cast<float>((second-canvas.origin.x)*canvas.scale.x);
         const bool major=std::abs(second/step-std::round(second/step))<1e-6;
-        d->AddLine({x,p.y+height-(major?8:4)},{x,p.y+height},ImGui::GetColorU32(t.colors.muted));
+        d->AddLine({x,p.y+height-(major?8:4)},{x,p.y+height},ImGui::GetColorU32(t.editor.ruler));
         if (major) {
             char label[32];
             FormatTimecode(FromSeconds(second),s.rate,s.dropFrame,label);
-            d->AddText({x+3,p.y},ImGui::GetColorU32(t.colors.muted),label);
+            d->AddText({x+3,p.y},ImGui::GetColorU32(t.editor.ruler),label);
         }
     }
     for (auto m : markers) {
         auto x = p.x + static_cast<float>((Seconds(m.tick) - canvas.origin.x) * canvas.scale.x);
-        Diamond(d, {x, p.y + height - 5}, ImGui::GetColorU32(t.colors.warning));
+        Diamond(d, {x, p.y + height - 5}, ImGui::GetColorU32(t.editor.marker));
     }
     float x = p.x + static_cast<float>((Seconds(s.playhead) - canvas.origin.x) * canvas.scale.x);
     d->AddLine({x, p.y}, {x, p.y + height}, ImGui::GetColorU32(t.colors.accent), 2);

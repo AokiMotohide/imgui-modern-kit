@@ -488,3 +488,7 @@ TimelineのHand modeは時間軸領域に公開InvisibleButtonを登録し、左
 Clip bodies register a clipped public InvisibleButton after their key and transition controls. Move/trim gestures consequently own their mouse input without moving the parent window. Insufficient clip-selection scratch reports overflow and prevents an edit from starting. The direct public-IO regression covers both rejection and a normal stationary-window move/Commit.
 
 clip本体はkey・transition controlの後に、可視範囲で切り取った公開InvisibleButtonを登録します。移動・trimはマウス入力を保持し、親ウィンドウへ移動を伝えません。clip選択scratch不足時はoverflowを通知して編集開始を防ぎます。公開IOの直接回帰で容量不足による拒否と、親ウィンドウを動かさない移動／Commitを確認しました。
+
+Core canvas/grid/ruler/marker and Timeline track-header, video/audio/caption fill, snap guide, missing/offline/proxy/locked indicators now consume their `Theme::editor` semantic colors. Clip fill multiplies the host alpha by the selection-state opacity instead of replacing it. Core and Video direct regressions pass; this change has no new native capture.
+
+Coreのcanvas／grid／ruler／markerと、Timelineのtrack header・video／audio／caption塗り・snap guide・missing／offline／proxy／locked表示に`Theme::editor`の意味色を適用しました。clip塗りはホストのalphaを置換せず、選択状態の不透明度を乗じます。Core／Videoの直接回帰テストが合格しています。今回の変更後のnative captureは未実施です。
