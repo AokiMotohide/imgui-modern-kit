@@ -535,6 +535,8 @@ void VerifyLinkedClips(Host &h,const std::filesystem::path &out) {
         log<<(joined ? "PASS " : "FAIL ")<<(relation ? "native selected link creation" : "native selected group creation")<<'\n';log.flush();
         if (!joined) throw std::runtime_error("native relationship creation failed");
     }
+    h.Frame([](auto &io){io.AddMouseButtonEvent(1,true);});h.Frame([](auto &io){io.AddMouseButtonEvent(1,false);});
+    h.Frame({},out/"clip-relations-menu-japanese.png");h.Key(ImGuiKey_Escape);
 }
 void VerifyTrackControls(Host &h,const std::filesystem::path &out) {
     using namespace imkit;
