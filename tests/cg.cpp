@@ -518,7 +518,8 @@ int main() {
         ImGui::Begin("Outliner rename");nameOrigin=ImGui::GetCursorScreenPos();
         Outliner("names",nameProvider,nameState,nameSelection,handleEvents);
         for (const auto &event:handleEvents.Events())
-            if (event.kind==imkit::editor::EditKind::Reorder || event.kind==imkit::editor::EditKind::Reparent) {
+            if (event.kind==imkit::editor::EditKind::Reorder || event.kind==imkit::editor::EditKind::Reparent ||
+                event.kind==imkit::editor::EditKind::Duplicate) {
                 contextResult=event;++contextActions;
             }
         ImGui::End();ImGui::Render();
@@ -557,6 +558,12 @@ int main() {
     openRename(5);
     check(contextActions==3 && contextResult.kind==imkit::editor::EditKind::Reparent &&
           contextResult.proposed.parent==0 && contextResult.original.parent==nameObject.parent,"Outliner Move to root retains original parent");
+    openRename(2);
+    check(contextActions==4 && contextResult.target==nameObject.id && contextResult.kind==imkit::editor::EditKind::Duplicate &&
+          contextResult.phase==imkit::editor::Phase::Commit,"Outliner Duplicate emits one action for the source StableId");
+    nameObject.locked=true;openRename(2);
+    check(contextActions==4 && !nameState.renameTransaction.active,"locked Outliner row rejects duplicate context action");
+    io.AddKeyEvent(ImGuiKey_Escape,true);nameFrame();io.AddKeyEvent(ImGuiKey_Escape,false);nameFrame();
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
