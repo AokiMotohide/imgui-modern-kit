@@ -117,6 +117,7 @@ struct UVState {
     UVSelection selection = UVSelection::Vertex;
     bool lassoSelect = false;
     UVCoordinates coordinates = UVCoordinates::Normalized;
+    editor::Point imageSize{1,1}; // Host image dimensions for pixel coordinate display.
     std::span<const editor::Binding> bindings;
     TransformTool tool = TransformTool::Translate;
     double snap = 0;

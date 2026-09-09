@@ -247,3 +247,9 @@ reject Begin or retain the complete terminal batch for retry; no partial Commit 
 UVの複数頂点変換では`UVProvider::selected`で選択全体を返し、他の頂点のtransactionを
 `UVState::companionDrags`へ確保します。容量不足はBeginを拒否するか、終了イベント全体を
 再試行用に保持します。Commitの一部だけを返すことはありません。
+
+UV coordinate display keeps geometry in normalized UV units. Set `UVState::imageSize`
+to the host texture dimensions for pixel tooltips. UDIM labels use 1001 + u + 10v for
+nonnegative tile rows and columns 0..9; other columns are explicitly outside this convention.
+UVの内部座標はnormalizedを維持します。pixel表示には`UVState::imageSize`へホストtextureの
+寸法を設定します。UDIMは非負の行と0..9列で1001 + u + 10vを表示し、範囲外は明示します。

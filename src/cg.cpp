@@ -462,7 +462,15 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
         }
         if (view.hovered && std::hypot(mouse.x - pos.x, mouse.y - pos.y) < 8) {
             d->AddCircle(pos,10,ImGui::GetColorU32(theme.colors.text));
-            ImGui::SetTooltip("UV (%.3f, %.3f)%s",vertex.uv.x,vertex.uv.y,vertex.pinned?" - Pinned":"");
+            if (s.coordinates==UVCoordinates::Pixel)
+                ImGui::SetTooltip("Pixel (%.2f, %.2f)%s",vertex.uv.x*s.imageSize.x,vertex.uv.y*s.imageSize.y,
+                    vertex.pinned?" - Pinned":"");
+            else if (s.coordinates==UVCoordinates::Tiles) {
+                const double u=std::floor(vertex.uv.x),v=std::floor(vertex.uv.y);
+                if (u>=0 && u<10 && v>=0)
+                    ImGui::SetTooltip("UDIM %.0f - UV (%.3f, %.3f)",1001+u+10*v,vertex.uv.x-u,vertex.uv.y-v);
+                else ImGui::SetTooltip("Tile (%.0f, %.0f) - outside UDIM columns",u,v);
+            } else ImGui::SetTooltip("UV (%.3f, %.3f)%s",vertex.uv.x,vertex.uv.y,vertex.pinned?" - Pinned":"");
             hit = vertex.id;
             original = vertex.uv;
         }
@@ -530,6 +538,9 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
     if (view.hovered && ImGui::IsMouseReleased(1) && !s.drag.active) ImGui::OpenPopup("UV selection options");
     if (ImGui::BeginPopup("UV selection options")) {
         ImGui::Checkbox("Lasso selection",&s.lassoSelect);
+        int coordinates=static_cast<int>(s.coordinates);
+        if (ImGui::Combo("Coordinates",&coordinates,"Normalized\0Pixel\0UDIM\0"))
+            s.coordinates=static_cast<UVCoordinates>(coordinates);
         int tool=s.tool==TransformTool::Rotate?1:s.tool==TransformTool::Scale?2:0;
         if (ImGui::Combo("Transform",&tool,"Move\0Rotate\0Scale\0"))
             s.tool=tool==1?TransformTool::Rotate:tool==2?TransformTool::Scale:TransformTool::Translate;
