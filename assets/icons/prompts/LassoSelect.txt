@@ -1,0 +1,4 @@
+A single minimal toolbar icon for freeform area selection in a graphics editor. Black uniform thin rounded stroke, centered on a transparent square canvas with generous margins. Draw only an irregular rounded outline, like a gently asymmetric oval made from six separated curved dashes. Empty transparent center. Clean geometric UI symbol readable at 16 pixels. No people, objects, text, shadows, gradients, texture, or background. Exactly one icon.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/LassoSelect.png

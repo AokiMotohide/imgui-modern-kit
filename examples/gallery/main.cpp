@@ -624,6 +624,7 @@ int VerifyInspectorModel() {
 int main(int argc, char **argv) {
     bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false;
     int capturePage = -1, animationPage = -1;
+    std::string iconSearch;
     std::filesystem::path out = "out/catalog";
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
@@ -646,6 +647,7 @@ int main(int argc, char **argv) {
             animationPage=std::stoi(argv[++i]);
             if (animationPage<0 || animationPage>3) return 2;
         }
+        else if (a == "--icon-search" && i + 1 < argc) iconSearch=argv[++i];
         else if (a == "--page" && i + 1 < argc)
             capturePage = std::stoi(argv[++i]);
         else
@@ -778,6 +780,7 @@ int main(int argc, char **argv) {
         previewFunctions.PolygonMode = reinterpret_cast<decltype(previewFunctions.PolygonMode)>(glfwGetProcAddress("glPolygonMode"));
         h.s.editors.Initialize();
         h.s.editors.animationPage=animationPage;
+        std::snprintf(h.s.iconSearch,sizeof(h.s.iconSearch),"%s",iconSearch.c_str());
         if (!h.s.editors.previewRenderer.Init(previewFunctions, 640, 480))
             throw std::runtime_error("Preview initialization failed");
         if (capturePage >= 0)

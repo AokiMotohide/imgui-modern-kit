@@ -1873,5 +1873,35 @@
       944,
       1061
     ]
+  },
+  {
+    "name": "BoxSelect",
+    "source": "assets/icons/originals/BoxSelect.png",
+    "sha256": "322e4049b8d8d69a6c781962e5afaeb1c36d9695cec0b9d68794685813c63662",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      210,
+      216,
+      1044,
+      1029
+    ]
+  },
+  {
+    "name": "LassoSelect",
+    "source": "assets/icons/originals/LassoSelect.png",
+    "sha256": "2a301fd98886d59d3e61c38298b832b7fccd17cea89ccbe5c263ccebec4cc00e",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      285,
+      266,
+      990,
+      985
+    ]
   }
 ]
