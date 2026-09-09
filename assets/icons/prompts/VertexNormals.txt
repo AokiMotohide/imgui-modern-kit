@@ -1,0 +1,4 @@
+Generate a single tiny technical UI glyph VertexNormals on a TRUE TRANSPARENT RGBA background (not a checkerboard drawing). Black thin rounded outline strokes, no fill. A shallow V-shaped pair of mesh edges connecting three hollow vertex circles at left bottom, center top, right bottom. EXACTLY THREE short vertical arrows, one rising from each circle. No other arrows, no arrow in the middle empty space. Stroke uniform equivalent to 1.75 on a 24-unit grid, generous margins. Square icon. No texture, no paper, no shadows, no text, no surrounding symbols.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/VertexNormals.png

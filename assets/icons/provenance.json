@@ -2053,5 +2053,35 @@
       1018,
       1037
     ]
+  },
+  {
+    "name": "VertexNormals",
+    "source": "assets/icons/originals/VertexNormals.png",
+    "sha256": "92aa2330f370a34a7e861198ddfc37fcbb4f11b41af4fd637c307c3a24e206a9",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      236,
+      406,
+      1019,
+      850
+    ]
+  },
+  {
+    "name": "FaceNormals",
+    "source": "assets/icons/originals/FaceNormals.png",
+    "sha256": "d5caf6badf20d5464156cb1136cf10cf1f45154ac773533727b1c3dd9b6f2fcd",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      191,
+      246,
+      1063,
+      989
+    ]
   }
 ]

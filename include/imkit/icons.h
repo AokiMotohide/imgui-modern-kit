@@ -146,6 +146,8 @@ enum class IconId : std::uint16_t {
     SourcePatch,
     EffectTrack,
     AdjustmentTrack,
+    VertexNormals,
+    FaceNormals,
     Count
 };
 struct IconInfo {
