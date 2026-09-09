@@ -584,3 +584,7 @@ Galleryはclip編集の適用前にclip／trackの存在とlockを確認し、re
 Before applying a host Ripple edit, Gallery rejects it if any following clip on that track that would move is locked. The original trim and following shifts remain unchanged on rejection. The model verifier covers rejection and the corresponding unlocked edit.
 
 GalleryはRipple適用前に、移動対象となる同一trackの後続clipにlockがあれば編集を拒否します。拒否時は元clipのtrimも後続clipの位置も変えません。拒否経路とlock解除後の一括適用をモデル回帰で確認しました。
+
+Gallery uses the Timeline host preflight to prevent Ripple Begin when a following clip on the track is locked. Public IO tests cover rejection without events/overflow and the optional-callback path.
+
+GalleryはTimelineのホスト判定を使用し、同一trackの後続clipがlockedならRippleのBeginを抑止します。イベントもoverflowも発生しない拒否経路と、任意callback未指定時の開始を公開IOで確認しました。

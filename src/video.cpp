@@ -804,6 +804,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     kind = editor::EditKind::Roll;
                 if (s.tool == Tool::Slide)
                     kind = editor::EditKind::Slide;
+                if (p.canBeginEdit && !p.canBeginEdit(p.user,clip.id,s.tool==Tool::Razor ? editor::EditKind::Split : kind)) continue;
                 if (s.tool == Tool::Razor) {
                     auto split = Value(clip);
                     split.first = editor::FromSeconds(

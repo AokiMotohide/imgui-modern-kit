@@ -418,6 +418,14 @@ int main() {
           full.Events()[1].proposed.first>transitionFixture.clip.start,
           "Razor emits complete split transaction with original clip and proposed cut");
     io.AddMouseButtonEvent(0,false);frame(full);timeline.tool=video::Tool::Select;
+    timeline.tool=video::Tool::Ripple;
+    provider.canBeginEdit=[](void *,editor::StableId,editor::EditKind kind){return kind!=editor::EditKind::Ripple;};
+    full.Clear();io.AddMouseButtonEvent(0,true);frame(full);
+    check(full.count==0 && !full.overflow && !timeline.drag.active,"host nonlocal preflight rejects Ripple before Begin");
+    io.AddMouseButtonEvent(0,false);frame(full);provider.canBeginEdit=nullptr;
+    full.Clear();io.AddMouseButtonEvent(0,true);frame(full);
+    check(timeline.drag.active && full.Events()[0].phase==editor::Phase::Begin,"optional preflight preserves permitted Ripple start");
+    io.AddMouseButtonEvent(0,false);frame(full);timeline.tool=video::Tool::Select;
     video::EnvelopePoint envelope[]={{2901,editor::FromSeconds(.5),.5},{2902,editor::FromSeconds(1.5),1}};
     check(video::EvaluateEnvelope(envelope,editor::FromSeconds(1))==.75 && video::EvaluateEnvelope({},0)==1,
           "volume envelope linearly interpolates gain and defaults to unity");

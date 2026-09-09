@@ -291,3 +291,7 @@ Timelineの`AddKey`はtarget=channel、parent=clip、first=clip内tick、x=値�
 `video::TrackLabels`, stored in `TimelineState::trackLabels`, supplies borrowed UTF-8 strings for seven track buttons/tooltips (Visible through Source order), the compact controls menu, height control, boolean status and expand/collapse tooltip. Defaults retain English labels. Keep the strings valid for the Timeline call.
 
 `TimelineState::trackLabels`の`video::TrackLabels`は7つのtrackボタンとtooltip（VisibleからSourceの順）、省略menu、高さ操作、真偽状態、展開・折り畳みtooltipへ非所有UTF-8文字列を指定します。既定値は英語で、文字列はTimeline呼出し中有効に保つ必要があります。
+
+`TimelineProvider::canBeginEdit(user, clip, kind)` is an optional host preflight for clip-body tools and Razor. Returning false suppresses their edit Begin without reporting a buffer shortage. It runs on gesture start, not steady frames. The host can inspect nonlocal constraints such as locked ripple followers; revision changes still cancel active transactions. Caption, envelope, transition and key tools retain their own contracts.
+
+`TimelineProvider::canBeginEdit(user, clip, kind)`はclip本体の編集toolとRazor向けの任意ホスト判定です。falseなら容量不足扱いにせず編集Beginを抑止します。定常フレームでは呼ばず、操作開始時に後続clipのlockなど非局所制約を確認できます。操作中のrevision変更は既存契約に従ってCancelします。caption、envelope、transition、keyの操作はそれぞれの契約を維持します。

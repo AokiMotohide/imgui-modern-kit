@@ -1013,6 +1013,15 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         }
         return result;
     };
+    p.canBeginEdit=[](void *u,editor::StableId id,editor::EditKind kind) {
+        if (kind!=editor::EditKind::Ripple) return true;
+        const auto &s=*static_cast<EditorWorkspaces *>(u);
+        const auto clip=std::find_if(s.clips.begin(),s.clips.end(),[&](const auto &c){return c.id==id;});
+        if (clip==s.clips.end()) return false;
+        return std::none_of(clip+1,s.clips.end(),[&](const auto &c) {
+            return c.track==clip->track && c.start>=clip->start+clip->duration && c.locked;
+        });
+    };
     p.selected = [](void *u, std::span<const editor::StableId> ids) {
         auto &s = *static_cast<EditorWorkspaces *>(u);
         std::size_t n = 0;

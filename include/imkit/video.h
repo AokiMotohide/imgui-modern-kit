@@ -95,6 +95,8 @@ struct TimelineProvider {
     TrackLayout (*layout)(void *, double firstPixel, double lastPixel) = nullptr;
     double totalHeight = 0;
     editor::Range contentRange{}; // Host-maintained total time extent for Fit.
+    // Optional host preflight for nonlocal constraints; called only when starting an edit.
+    bool (*canBeginEdit)(void *,StableId clip,editor::EditKind kind)=nullptr;
 };
 struct TrackLabels {
     // Borrowed UTF-8 strings. Array order follows Visible through Source in TrackControl.
