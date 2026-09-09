@@ -718,11 +718,15 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
     detail::ResumeTerminal(s.renameTransaction,p.revision,out);
     if (!s.renameTransaction.active) s.renaming=0;
     ImGui::PushID(id);
-    ImGui::InputText("Search", s.search, sizeof(s.search));
+    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x*.45f);
+    ImGui::InputText(s.labels.search, s.search, sizeof(s.search));
+    ImGui::SameLine();ImGui::SetNextItemWidth(-1);
+    int filter=static_cast<int>(s.filter);
+    if (ImGui::Combo("##filter",&filter,s.labels.filters.data(),5)) s.filter=static_cast<OutlinerFilter>(filter);
     if (ImGui::BeginTable("tree", 5,
                           ImGuiTableFlags_Resizable | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY)) {
-        ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
-        for (const char *label : {"Visible", "Selectable", "Renderable", "Locked"})
+        ImGui::TableSetupColumn(s.labels.name, ImGuiTableColumnFlags_WidthStretch);
+        for (const char *label : s.labels.restrictions)
             ImGui::TableSetupColumn(label, ImGuiTableColumnFlags_WidthFixed, ImGui::GetFrameHeight());
         ImGuiListClipper clipper;
         clipper.Begin(p.visibleCount, ImGui::GetFrameHeightWithSpacing());
@@ -783,21 +787,21 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
                     if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) beginRename();
                     if (ImGui::BeginPopupContextItem("actions")) {
                         ImGui::BeginDisabled(row.locked || s.renameTransaction.active);
-                        if (ImGui::MenuItem("Rename")) beginRename();
-                        if (ImGui::MenuItem("Duplicate")) Emit(out,row.id,p.revision,editor::EditKind::Duplicate);
+                        if (ImGui::MenuItem(s.labels.rename)) beginRename();
+                        if (ImGui::MenuItem(s.labels.duplicate)) Emit(out,row.id,p.revision,editor::EditKind::Duplicate);
                         if (row.geometry) {
-                            if (ImGui::MenuItem("Linked duplicate")) Emit(out,row.id,p.revision,editor::EditKind::Duplicate,{},editor::Value{0,0,1});
-                            if (selection.active && selection.active!=row.id && ImGui::MenuItem("Link geometry to active"))
+                            if (ImGui::MenuItem(s.labels.linkedDuplicate)) Emit(out,row.id,p.revision,editor::EditKind::Duplicate,{},editor::Value{0,0,1});
+                            if (selection.active && selection.active!=row.id && ImGui::MenuItem(s.labels.linkGeometry))
                                 Emit(out,row.id,p.revision,editor::EditKind::LinkGeometry,editor::Value{0,0,0,row.geometry},editor::Value{0,0,0,selection.active});
-                            if (ImGui::MenuItem("Make geometry single user"))
+                            if (ImGui::MenuItem(s.labels.singleUser))
                                 Emit(out,row.id,p.revision,editor::EditKind::LinkGeometry,editor::Value{0,0,0,row.geometry},{});
                         }
-                        if (ImGui::MenuItem("Move up")) Emit(out,row.id,p.revision,editor::EditKind::Reorder,{},editor::Value{0,0,-1,row.parent});
-                        if (ImGui::MenuItem("Move down")) Emit(out,row.id,p.revision,editor::EditKind::Reorder,{},editor::Value{0,0,1,row.parent});
-                        if (row.parent && ImGui::MenuItem("Move to root")) Emit(out,row.id,p.revision,editor::EditKind::Reparent,editor::Value{0,0,0,row.parent},{});
+                        if (ImGui::MenuItem(s.labels.moveUp)) Emit(out,row.id,p.revision,editor::EditKind::Reorder,{},editor::Value{0,0,-1,row.parent});
+                        if (ImGui::MenuItem(s.labels.moveDown)) Emit(out,row.id,p.revision,editor::EditKind::Reorder,{},editor::Value{0,0,1,row.parent});
+                        if (row.parent && ImGui::MenuItem(s.labels.moveRoot)) Emit(out,row.id,p.revision,editor::EditKind::Reparent,editor::Value{0,0,0,row.parent},{});
                         if (row.hasChildren) {
-                            if (ImGui::MenuItem("Expand hierarchy")) Emit(out,row.id,p.revision,editor::EditKind::Toggle,{},Value({5,1,0}));
-                            if (ImGui::MenuItem("Collapse hierarchy")) Emit(out,row.id,p.revision,editor::EditKind::Toggle,{},Value({5,0,0}));
+                            if (ImGui::MenuItem(s.labels.expand)) Emit(out,row.id,p.revision,editor::EditKind::Toggle,{},Value({5,1,0}));
+                            if (ImGui::MenuItem(s.labels.collapse)) Emit(out,row.id,p.revision,editor::EditKind::Toggle,{},Value({5,0,0}));
                         }
                         ImGui::EndDisabled();ImGui::EndPopup();
                     }
@@ -818,12 +822,24 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
                 }
                 ImGui::Unindent(row.depth * 14.f);
                 const bool values[] = {row.visible, row.selectable, row.renderable, row.locked};
-                const char *labels[] = {"V", "S", "R", "L"};
+                const auto &labels=s.labels.restrictions;
                 for (int f = 0; f < 4; ++f) {
                     ImGui::TableNextColumn();
                     ImGui::PushID(f);
                     bool draft = values[f];
-                    if (ImGui::Checkbox("##restriction", &draft))
+                    bool changed=false;
+                    if (s.icons) {
+                        const IconId glyphs[]={draft?IconId::Eye:IconId::EyeOff,draft?IconId::SelectAll:IconId::Deselect,IconId::Camera,draft?IconId::Lock:IconId::Unlock};
+                        if (draft) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+                        changed=IconButton("restriction",*s.icons,glyphs[f],labels[f],{16*ImGui::GetFontSize()/14});
+                        if (draft) {
+                            const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
+                            ImGui::GetWindowDrawList()->AddLine({a.x+3,b.y-2},{b.x-3,b.y-2},ImGui::GetColorU32(ImGuiCol_Text),2);
+                            ImGui::PopStyleColor();
+                        }
+                        if (changed) draft=!draft;
+                    } else changed=ImGui::Checkbox("##restriction", &draft);
+                    if (changed)
                         Emit(out, row.id, p.revision, editor::EditKind::Toggle,
                              Value({static_cast<double>(f), values[f] ? 1. : 0., 0}),
                              Value({static_cast<double>(f), draft ? 1. : 0., 0}));

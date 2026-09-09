@@ -1324,7 +1324,12 @@ void EditorWorkspaces::RebuildOutlinerRows() {
     ImGuiTextFilter filter(outliner.search);
     auto matches=[&](auto &&self,const cg::ObjectView &object,std::size_t depth)->bool {
         if (depth>objects.size()) return false;
-        if (filter.PassFilter(object.label)) return true;
+        const bool stateMatches=outliner.filter==cg::OutlinerFilter::All ||
+            (outliner.filter==cg::OutlinerFilter::Visible && object.visible) ||
+            (outliner.filter==cg::OutlinerFilter::Hidden && !object.visible) ||
+            (outliner.filter==cg::OutlinerFilter::Locked && object.locked) ||
+            (outliner.filter==cg::OutlinerFilter::Selected && objectSelection.Contains(object.id));
+        if (stateMatches && filter.PassFilter(object.label)) return true;
         for (const auto &child:ordered) if (child.parent==object.id && self(self,child,depth+1)) return true;
         return false;
     };
@@ -1333,7 +1338,7 @@ void EditorWorkspaces::RebuildOutlinerRows() {
         auto row=object;row.depth=depth;
         row.hasChildren=std::any_of(objects.begin(),objects.end(),[&](const auto &child){return child.parent==object.id;});
         outlinerRows.push_back(row);
-        if (object.expanded || filter.IsActive())
+        if (object.expanded || filter.IsActive() || outliner.filter!=cg::OutlinerFilter::All)
             for (const auto &child:ordered) if (child.parent==object.id) self(self,child,depth+1);
     };
     for (const auto &object:ordered)
@@ -1426,6 +1431,16 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     ImGui::SameLine();
     ImGui::BeginChild("Scene properties", {0, top}, ImGuiChildFlags_Borders);
     ImGui::BeginChild("Outliner", {0, top * .42f});
+    s.outliner.icons=s.icons;s.outliner.labels={};
+    if (s.japanese) {
+        auto &l=s.outliner.labels;l.search="検索";l.name="名前";
+        l.filters={"すべて","表示中","非表示","ロック中","選択中"};
+        l.restrictions={"表示","選択可能","レンダー対象","ロック"};
+        l.rename="名前変更";l.duplicate="複製";l.linkedDuplicate="リンク複製";
+        l.linkGeometry="アクティブ対象の形状を共有";l.singleUser="形状を独立化";
+        l.moveUp="上へ";l.moveDown="下へ";l.moveRoot="ルートへ";
+        l.expand="階層を展開";l.collapse="階層を折り畳む";
+    }
     s.RebuildOutlinerRows();
     cg::SceneProvider scene{&s,s.revision,static_cast<int>(s.outlinerRows.size()),
         [](void *user,int first,int count,std::string_view) {
