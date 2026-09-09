@@ -584,6 +584,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                         bool selected=true;
                         if (s.keySelection && (!s.keySelection->Contains(key.id) || io.KeyCtrl))
                             selected=s.keySelection->Set(key.id,io.KeyCtrl,io.KeyCtrl);
+                        if (selected && s.keySelection && !s.keySelection->Contains(key.id))
+                            continue; // Ctrl-click removed this key; selection changes do not begin edits.
                         std::size_t count=0;bool valid=selected;
                         for (const auto &member:clip.keys) if (member.id!=key.id && s.keySelection && s.keySelection->Contains(member.id)) {
                             ++count;valid &= !member.locked && member.tick>=0 && member.tick<=clip.duration;

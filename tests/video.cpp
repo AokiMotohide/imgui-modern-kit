@@ -308,6 +308,14 @@ int main() {
     full.Clear();frame(full);
     check(full.count==2 && full.Events()[0].phase==editor::Phase::Commit && full.Events()[1].phase==editor::Phase::Commit &&
           !timeline.keyDrag.active && !clipKeyCompanions[0].active,"clip multi-key commits complete retry batch");
+    full.Clear();io.AddMousePosEvent(keyX,keyY);io.AddKeyEvent(ImGuiMod_Ctrl,true);frame(full);
+    io.AddMouseButtonEvent(0,true);frame(full);
+    check(!keySelection.Contains(clipKeys[0].id) && keySelection.Contains(clipKeys[1].id) &&
+          !timeline.keyDrag.active && full.count==0 && !full.overflow,
+          "Ctrl-click deselects clip key without starting a drag or reporting shortage");
+    io.AddMousePosEvent(keyX+30,keyY);frame(full);io.AddMouseButtonEvent(0,false);frame(full);
+    check(full.count==0 && !timeline.drag.active,"deselected key cannot move remaining keys or the clip");
+    io.AddKeyEvent(ImGuiMod_Ctrl,false);frame(full);keySelection.Set(clipKeys[0].id,true);
     std::array keyBindings{editor::Binding{editor::Command::Duplicate,ImGuiKey_F7},editor::Binding{editor::Command::Delete,ImGuiKey_F6}};
     timeline.bindings=keyBindings;
     full.Clear();io.AddKeyEvent(ImGuiKey_F7,true);frame(full);io.AddKeyEvent(ImGuiKey_F7,false);frame(full);
