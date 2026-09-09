@@ -35,6 +35,7 @@ struct EditorWorkspaces {
     int assetPathDepth=2;
     std::array<cg::UVVertex, 4> uv{};
     std::array<cg::UVEdge, 4> edges{};
+    std::array<cg::UVFace,1> uvFaces{};
     std::array<editor::StableId, 1024> selectionStorage{}, objectSelectionStorage{}, keySelectionStorage{},
         uvSelectionStorage{};
     editor::Selection selection{selectionStorage}, objectSelection{objectSelectionStorage},

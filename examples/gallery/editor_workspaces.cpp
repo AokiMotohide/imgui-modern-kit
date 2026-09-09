@@ -894,15 +894,25 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
                                  return std::span<const cg::UVEdge>(
                                      static_cast<EditorWorkspaces *>(u)->edges);
                              }};
+            s.uvFaces[0]={910001,920001,s.uv,false};
+            p.faces=[](void *u,editor::Rect) {return std::span<const cg::UVFace>(static_cast<EditorWorkspaces *>(u)->uvFaces);};
             p.all=[](void *,cg::UVSelection mode)->std::span<const editor::StableId> {
                 static constexpr std::array<editor::StableId,4> ids{900001,900002,900003,900004};
                 static constexpr std::array<editor::StableId,4> edgeIds{1,2,3,4};
+                static constexpr std::array<editor::StableId,1> faceIds{910001},islandIds{920001};
+                if (mode==cg::UVSelection::Face) return faceIds;
+                if (mode==cg::UVSelection::Island) return islandIds;
                 if (mode==cg::UVSelection::Edge) return edgeIds;
                 return mode==cg::UVSelection::Vertex ? std::span<const editor::StableId>(ids) : std::span<const editor::StableId>{};
             };
             p.selectionQuery=[](void *u,editor::Rect,cg::UVSelection mode)->std::span<const editor::SelectablePoint> {
                 auto &host=*static_cast<EditorWorkspaces *>(u);
-                if (mode!=cg::UVSelection::Vertex && mode!=cg::UVSelection::Edge) return {};
+                if (mode==cg::UVSelection::Face || mode==cg::UVSelection::Island) {
+                    editor::Point center{};
+                    for (const auto &v:host.uv) {center.x+=v.uv.x/4;center.y+=v.uv.y/4;}
+                    host.uvSelectionPoints[0]={mode==cg::UVSelection::Face?910001u:920001u,center,false};
+                    return std::span<const editor::SelectablePoint>(host.uvSelectionPoints).first(1);
+                }
                 for (std::size_t i=0;i<host.uv.size();++i) {
                     const auto &edge=host.edges[i];
                     host.uvSelectionPoints[i]=mode==cg::UVSelection::Vertex ?
@@ -918,6 +928,10 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
                     if (mode==cg::UVSelection::Edge) for (const auto &edge:host.edges)
                         if ((edge.aVertex==vertex.id || edge.bVertex==vertex.id) &&
                             std::find(ids.begin(),ids.end(),edge.id)!=ids.end()) selected=true;
+                    if (mode==cg::UVSelection::Face || mode==cg::UVSelection::Island) {
+                        const editor::StableId id=mode==cg::UVSelection::Face?910001:920001;
+                        selected=std::find(ids.begin(),ids.end(),id)!=ids.end();
+                    }
                     if (selected) host.selectedUVVertices[count++]=vertex;
                 }
                 return std::span<const cg::UVVertex>(host.selectedUVVertices).first(count);
