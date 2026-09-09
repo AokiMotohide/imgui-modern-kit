@@ -510,3 +510,8 @@ Timelineのcanvasにfocusがあるとき、ホストbindingの`AddKey`・`Previo
 Timeline clips show duration timecode and speed when the title row has enough width. The title and metadata use separate clipped bounds; thumbnails start below the title. Proxy and edge handles retain their own margin. Hovering a clip exposes its full title, duration, speed, linked/group IDs, and media/lock status even when the clip is too short for inline metadata. Native 150% dark inspection is recorded in `out/clip-metadata-fit/page-8-dark-150.png` (local evidence).
 
 Timelineのclipは名前行に幅がある場合、durationのtimecodeとspeedを表示します。名前と情報欄を別々の領域でclipし、thumbnailは名前の下から描画します。proxyと端のhandleの余白を確保しています。短いclipでもhover時に名前全文・duration・speed・linked／group ID・media／lock状態を確認できます。150% darkのnative確認結果は`out/clip-metadata-fit/page-8-dark-150.png`にあります（ローカル検証物）。
+
+
+Gallery preserves each clip's explicit `keyChannel` when rebuilding key indices, including empty channels, and refreshes borrowed key spans for every referencing clip after host storage changes. The initial first-six-key override has been removed: each span contains only that channel's keys in the clip-local duration. Host-model tests cover channel exhaustion, reinsertion, and multiple clips referencing one channel.
+
+Galleryはkey索引の再構築で、空channelを含む各clipの明示`keyChannel`を維持します。ホストの格納領域変更後は、参照する全clipの非所有key spanを更新します。初期表示を先頭6 keyで上書きする処理を除き、そのchannelのclip内durationに含まれるkeyを渡します。channel内全削除後のID維持・再追加・複数clipからの参照をホストモデル検証で確認しました。

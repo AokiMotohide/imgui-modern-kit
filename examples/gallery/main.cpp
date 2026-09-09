@@ -537,6 +537,18 @@ int VerifyInspectorModel() {
     state.events.Push(clipInsert);state.ApplyEvents();
     check(state.keys.size()==countBeforeInsert+1 && std::any_of(state.clips.front().keys.begin(),state.clips.front().keys.end(),
         [](const auto &key){return key.tick==12345 && key.value==.4;}),"clip insertion applies to explicit host channel and refreshes span");
+    const auto savedKeys=state.keys;
+    std::erase_if(state.keys,[&](const auto &key){return key.channel==clipChannel;});state.RebuildKeyIndex();
+    check(state.clips.front().keyChannel==clipChannel && state.clips.front().keys.empty(),
+          "empty clip channel keeps its explicit ID instead of adopting another channel");
+    clipInsert.revision=state.revision;state.events.Push(clipInsert);state.ApplyEvents();
+    check(state.clips.front().keys.size()==1 && state.clips.front().keys.front().channel==clipChannel,
+          "first key can be inserted again into an emptied clip channel");
+    state.clips[1].keyChannel=clipChannel;
+    state.keys=savedKeys;state.RebuildKeyIndex();
+    check(state.clips[1].keys.data()==state.clips.front().keys.data() && !state.clips[1].keys.empty(),
+          "all clips referencing an explicit channel refresh their borrowed key spans");
+    state.clips[1].keyChannel=0;state.RebuildKeyIndex();
     const auto transitionClip=state.clips.front().id;
     state.events.Push({transitionClip,state.revision,editor::Phase::Commit,editor::EditKind::TransitionDuration,{},
         {editor::FromSeconds(.2),editor::FromSeconds(.3)}});state.ApplyEvents();
