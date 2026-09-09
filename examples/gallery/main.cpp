@@ -442,6 +442,16 @@ int VerifyInspectorModel() {
         std::printf("%s %s\n",ok?"PASS":"FAIL",name);
         if (!ok) ++failures;
     };
+    const auto transitionClip=state.clips.front().id;
+    state.events.Push({transitionClip,state.revision,editor::Phase::Commit,editor::EditKind::TransitionDuration,{},
+        {editor::FromSeconds(.2),editor::FromSeconds(.3)}});state.ApplyEvents();
+    check(state.clips.front().transitionIn==editor::FromSeconds(.2) && state.UndoTransition() &&
+          state.clips.front().transitionIn==0,"transition duration host apply and Undo");
+    check(state.UndoTransition(true) && state.clips.front().transitionOut==editor::FromSeconds(.3),"transition duration Redo");
+    state.events.Push({transitionClip,state.revision,editor::Phase::Commit,editor::EditKind::TransitionType,{}, {2,3}});state.ApplyEvents();
+    check(state.clips.front().transitionInKind==video::TransitionKind::Fade && state.UndoTransition() &&
+          state.clips.front().transitionInKind==video::TransitionKind::Dissolve,"transition kind host apply and Undo");
+    state.UndoTransition();
     const auto rendererComponent=state.components[0].view.id,wireComponent=state.components[1].view.id;
     state.events.Push({wireComponent,state.revision,editor::Phase::Commit,editor::EditKind::Toggle,{}, {0,0,0,0,0,1}});state.ApplyEvents();
     check(state.BuildSceneMeshes().front().wire,"enabled wire component changes preview rendering");
