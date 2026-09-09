@@ -445,7 +445,7 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
     for (const auto &e : edges)
         d->AddLine(UVScreen(preview(e.aVertex,e.a), s.canvas, view.min), UVScreen(preview(e.bVertex,e.b), s.canvas, view.min),
                    ImGui::GetColorU32(e.seam       ? theme.colors.destructive
-                                      : e.selected ? theme.colors.warning
+                                      : (e.selected || (s.selection==UVSelection::Edge && selection.Contains(e.id))) ? theme.colors.warning
                                                    : theme.colors.text),
                    e.seam ? 2.f : 1.f);
     StableId hit = 0;
@@ -464,7 +464,7 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
             d->AddLine({pos.x-4,pos.y-6},{pos.x+4,pos.y-6},color,2);
             d->AddLine({pos.x,pos.y-6},{pos.x,pos.y-11},color,2);
         }
-        if (view.hovered && std::hypot(mouse.x - pos.x, mouse.y - pos.y) < 8) {
+        if (s.selection==UVSelection::Vertex && view.hovered && std::hypot(mouse.x - pos.x, mouse.y - pos.y) < 8) {
             d->AddCircle(pos,10,ImGui::GetColorU32(theme.colors.text));
             if (s.coordinates==UVCoordinates::Pixel)
                 ImGui::SetTooltip("Pixel (%.2f, %.2f)%s",vertex.uv.x*s.imageSize.x,vertex.uv.y*s.imageSize.y,
@@ -477,6 +477,17 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
             } else ImGui::SetTooltip("UV (%.3f, %.3f)%s",vertex.uv.x,vertex.uv.y,vertex.pinned?" - Pinned":"");
             hit = vertex.id;
             original = vertex.uv;
+        }
+    }
+    if (s.selection==UVSelection::Edge && view.hovered) {
+        double best=8;
+        for (const auto &edge:edges) {
+            auto a=UVScreen(preview(edge.aVertex,edge.a),s.canvas,view.min);
+            auto b=UVScreen(preview(edge.bVertex,edge.b),s.canvas,view.min);
+            double dx=b.x-a.x,dy=b.y-a.y,length=dx*dx+dy*dy;
+            double t=length>0?std::clamp(((mouse.x-a.x)*dx+(mouse.y-a.y)*dy)/length,0.,1.):0;
+            double distance=std::hypot(mouse.x-a.x-t*dx,mouse.y-a.y-t*dy);
+            if (distance<best) {best=distance;hit=edge.id;}
         }
     }
     auto capacity=[&] {
@@ -501,17 +512,19 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
             !selection.Set(hit,ImGui::GetIO().KeyCtrl,ImGui::GetIO().KeyCtrl)) out.overflow=true;
         if (!selection.Contains(hit)) {editor::EndCanvas();return;}
         auto members=p.selected?p.selected(p.user,selection.storage.first(selection.count),s.selection):std::span<const UVVertex>{};
-        if ((selection.count>1 && members.size()!=selection.count) || members.size()>s.companionDrags.size()+1 ||
+        if ((s.selection==UVSelection::Vertex ? selection.count>1 && members.size()!=selection.count : members.empty()) || members.size()>s.companionDrags.size()+1 ||
             out.storage.size()-out.count<(std::max)(std::size_t{1},members.size())) {
             out.overflow=true;editor::EndCanvas();return;
         }
+        StableId primary=hit;
+        if (s.selection!=UVSelection::Vertex) {primary=members.front().id;original=members.front().uv;}
         s.mouseStart = {mouse.x, mouse.y};
         const auto kind=s.tool==TransformTool::Rotate?editor::EditKind::Rotate:
             s.tool==TransformTool::Scale?editor::EditKind::Scale:editor::EditKind::Translate;
-        s.drag.Begin(hit, p.revision, kind, Value({original.x, original.y, 0}),
+        s.drag.Begin(primary, p.revision, kind, Value({original.x, original.y, 0}),
                      editor::CurrentModifiers(), out);
         s.companionCount=0;
-        for (const auto &vertex:members) if (vertex.id!=hit)
+        for (const auto &vertex:members) if (vertex.id!=primary)
             s.companionDrags[s.companionCount++].Begin(vertex.id,p.revision,kind,Value({vertex.uv.x,vertex.uv.y,0}),editor::CurrentModifiers(),out);
     }
     if (s.drag.active && s.drag.draft.phase!=editor::Phase::Cancel && s.drag.draft.phase!=editor::Phase::Commit && capacity()) {
@@ -541,6 +554,10 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
     ImGui::PushID(id);
     if (view.hovered && ImGui::IsMouseReleased(1) && !s.drag.active) ImGui::OpenPopup("UV selection options");
     if (ImGui::BeginPopup("UV selection options")) {
+        int selectionMode=static_cast<int>(s.selection);
+        if (ImGui::Combo("Selection",&selectionMode,"Vertex\0Edge\0")) {
+            s.selection=static_cast<UVSelection>(selectionMode);selection.Clear();
+        }
         ImGui::Checkbox("Checker",&s.checker);
         ImGui::Checkbox("Texture",&s.showTexture);
         ImGui::Checkbox("Grid",&s.grid);
