@@ -285,7 +285,16 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         const char *tooltips[]={"Visible","Mute","Solo","Locked","Record armed","Target track","Source patch"};
         const bool values[] = {track.visible, track.mute,   track.solo,
                                track.locked,  track.record, track.target, track.source};
-        for (int f = 0; f < 7; ++f) {
+        float controlsWidth=12;
+        for (auto label:labels) controlsWidth+=ImGui::CalcTextSize(label).x+2*ImGui::GetStyle().FramePadding.x;
+        if (controlsWidth>s.headerWidth-8) {
+            if (ImGui::SmallButton("Controls")) ImGui::OpenPopup("track controls");
+            if (ImGui::BeginPopup("track controls")) {
+                for (int f=0;f<7;++f)
+                    if (ImGui::MenuItem(tooltips[f],nullptr,values[f])) Toggle(out,track,p.revision,f,values[f]);
+                ImGui::EndPopup();
+            }
+        } else for (int f = 0; f < 7; ++f) {
             if (f)
                 ImGui::SameLine(0, 2);
             if (values[f]) ImGui::PushStyleColor(ImGuiCol_Button,theme.colors.accent);
