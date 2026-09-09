@@ -679,6 +679,9 @@ int VerifyInspectorModel() {
         const auto id=split.clips.front().id;const auto start=split.clips.front().start;
         split.clipEnvelopes[id]={{split.nextId++,0,.5},{split.nextId++,1000,1.5}};
         split.clips.front().envelope=split.clipEnvelopes.at(id);
+        split.clips.front().transitionIn=800;split.clips.front().transitionOut=1000;
+        split.clips.front().transitionInKind=video::TransitionKind::Fade;
+        split.clips.front().transitionOutKind=video::TransitionKind::Dissolve;
         const auto sourceChannel=split.clips.front().keyChannel;
         split.keys.push_back({split.nextId++,sourceChannel,1000,.625});split.RebuildKeyIndex();
         split.clipProperties.at(id).values[1]=1.25;
@@ -692,6 +695,12 @@ int VerifyInspectorModel() {
         const auto right=std::find_if(split.clips.begin(),split.clips.end(),[&](const auto &c){return c.track==split.tracks.front().id && c.start==start+500;});
         check(right!=split.clips.end() && split.clips.size()==count+1,"host splits clip at requested tick");
         if (right!=split.clips.end()) {
+            const auto leftClip=std::find_if(split.clips.begin(),split.clips.end(),[&](const auto &c){return c.id==id;});
+            check(leftClip->transitionIn==500 && leftClip->transitionInKind==video::TransitionKind::Fade &&
+                  leftClip->transitionOut==0 && leftClip->transitionOutKind==video::TransitionKind::None &&
+                  right->transitionIn==0 && right->transitionInKind==video::TransitionKind::None &&
+                  right->transitionOut==1000 && right->transitionOutKind==video::TransitionKind::Dissolve,
+                  "split preserves outer transitions with duration clamp and clears newly cut edges");
             check(!right->keyEvaluation.empty() && right->keyEvaluation.front().tick<0 &&
                   std::abs(editor::Evaluate(right->keyEvaluation,0)-editor::Evaluate(beforeKeys,500))<1e-10 &&
                   std::abs(editor::Evaluate(right->keyEvaluation,250)-editor::Evaluate(beforeKeys,750))<1e-10,

@@ -689,6 +689,10 @@ void EditorWorkspaces::ApplyEvents() {
                         clip->envelope=clipEnvelopes.at(clip->id);right.envelope=clipEnvelopes.at(right.id);
                     }
                     clip->duration = split.left.duration;
+                    clip->transitionIn=std::min(clip->transitionIn,clip->duration);
+                    clip->transitionOut=0;clip->transitionOutKind=video::TransitionKind::None;
+                    right.transitionIn=0;right.transitionInKind=video::TransitionKind::None;
+                    right.transitionOut=std::min(right.transitionOut,right.duration);
                     clips.push_back(right);
                     changed = true;
                 }
