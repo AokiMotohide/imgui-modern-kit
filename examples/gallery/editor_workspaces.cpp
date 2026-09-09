@@ -302,10 +302,16 @@ void EditorWorkspaces::RenderPreview() {
     }
     if (viewportSize.x > 1 && viewportSize.y > 1)
         previewRenderer.Resize(static_cast<int>(viewportSize.x), static_cast<int>(viewportSize.y));
-    preview::Mesh mesh{objects[1].id, cubeVertices, cubeIndices, objects[1].transform};
-    mesh.wire=viewport.shading==cg::Shading::Wireframe;
-    ApplyGizmoPreview(mesh,viewport);
-    previewRenderer.Render({&mesh, 1}, viewport.camera);
+    previewRenderer.Render(BuildSceneMeshes(),viewport.camera);
+}
+std::span<const preview::Mesh> EditorWorkspaces::BuildSceneMeshes() {
+    sceneMeshes.clear();sceneMeshes.reserve(objects.size());
+    for (std::size_t i=0;i<objects.size();++i) if (objectIsMesh[i] && objects[i].visible) {
+        preview::Mesh mesh{objects[i].id,cubeVertices,cubeIndices,objects[i].transform};
+        mesh.wire=viewport.shading==cg::Shading::Wireframe;
+        ApplyGizmoPreview(mesh,viewport);sceneMeshes.push_back(mesh);
+    }
+    return sceneMeshes;
 }
 void EditorWorkspaces::ApplyEvents() {
     bool changed = false;
@@ -346,6 +352,21 @@ void EditorWorkspaces::ApplyEvents() {
         if (e.kind == editor::EditKind::Marker && markerCount < markers.size()) {
             markers[markerCount++] = {nextId++, e.proposed.first, "Marker"};
             changed = true;
+        }
+        if (e.kind==editor::EditKind::Duplicate) {
+            auto source=std::find_if(objects.begin(),objects.end(),[&](const auto &v){return v.id==e.target;});
+            if (source!=objects.end() && !source->locked) {
+                const auto index=static_cast<std::size_t>(source-objects.begin());
+                auto copy=*source;copy.id=nextId++;copy.hasChildren=false;
+                renamedLabels[copy.id]=std::string(source->label)+" copy";copy.label=renamedLabels[copy.id].c_str();
+                std::array<editor::StableId,9> properties;
+                for (auto &property:properties) property=nextId++;
+                const bool mesh=objectIsMesh[index];
+                objects.push_back(copy);objectIsMesh.push_back(mesh);objectPropertyIds.push_back(properties);
+                auto position=std::find(objectOrder.begin(),objectOrder.end(),e.target);
+                objectOrder.insert(position==objectOrder.end() ? position : position+1,copy.id);
+                objectSelection.Set(copy.id);changed=true;
+            }
         }
         if (e.kind == editor::EditKind::Rename)
             renamedLabels[e.target] = e.proposedText.data();
@@ -459,7 +480,7 @@ void EditorWorkspaces::ApplyEvents() {
                     const auto destination=std::find_if(objects.begin(),objects.end(),[&](const auto &v){return v.id==e.proposed.parent;});
                     bool cycle = e.proposed.parent && (destination==objects.end() || destination->locked);
                     auto parent = e.proposed.parent;
-                    for (int depth = 0; parent && depth < 4; ++depth) {
+                    for (std::size_t depth = 0; parent && depth < objects.size(); ++depth) {
                         if (parent == o.id) {
                             cycle = true;
                             break;
@@ -820,7 +841,8 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
 }
 void EditorWorkspaces::RebuildOutlinerRows() {
     outlinerRows.clear();outlinerRows.reserve(objects.size());
-    auto ordered=objects;
+    orderedObjects.assign(objects.begin(),objects.end());
+    auto &ordered=orderedObjects;
     std::sort(ordered.begin(),ordered.end(),[&](const auto &a,const auto &b){
         return std::find(objectOrder.begin(),objectOrder.end(),a.id)<std::find(objectOrder.begin(),objectOrder.end(),b.id);
     });
@@ -865,11 +887,8 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     s.viewportOrigin = view.min;
     s.viewportSize = view.size;
     if (!s.useGL) {
-        preview::Mesh mesh{s.objects[1].id, s.cubeVertices, s.cubeIndices, s.objects[1].transform};
-        mesh.wire=s.viewport.shading==cg::Shading::Wireframe;
-        ApplyGizmoPreview(mesh,s.viewport);
-        preview::DrawListPreview(*ImGui::GetWindowDrawList(), {&mesh, 1}, s.viewport.camera, view.min,
-                                 view.size, s.scratch);
+        preview::DrawListPreview(*ImGui::GetWindowDrawList(),s.BuildSceneMeshes(),s.viewport.camera,
+                                 view.min,view.size,s.scratch);
     }
     cg::ViewportObjects(view, s.objects, s.viewport, s.objectSelection, s.revision, s.events, theme);
     if (!s.viewport.drag.active) {
@@ -882,7 +901,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
                 if (!count) low=high=p;
                 else {low={std::min(low.x,p.x),std::min(low.y,p.y),std::min(low.z,p.z)};
                       high={std::max(high.x,p.x),std::max(high.y,p.y),std::max(high.z,p.z)};}
-                if (object.id==s.objects[1].id && s.viewport.pivot==cg::Pivot::Bounds) {
+                if (s.objectIsMesh[static_cast<std::size_t>(&object-s.objects.data())] && s.viewport.pivot==cg::Pivot::Bounds) {
                     const auto basis=cg::OrientationBasis(cg::Orientation::Local,object.transform,{});
                     for (const auto &vertex:s.cubeVertices) {
                         const double x=vertex.position[0]*object.transform.scale.x,
@@ -902,6 +921,8 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
                 cg::Vec3{sum.x/count,sum.y/count,sum.z/count};
         }
     }
+    s.gizmoSelection.resize(s.objects.size());
+    if (!s.viewport.drag.active) s.gizmoCompanions.resize(s.objects.size()-1);
     std::size_t selectedCount=0;
     for (const auto &object:s.objects) if (s.objectSelection.Contains(object.id)) s.gizmoSelection[selectedCount++]=object;
     s.viewport.selectedObjects={s.gizmoSelection.data(),selectedCount};

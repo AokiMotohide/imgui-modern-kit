@@ -566,6 +566,18 @@ int VerifyInspectorModel() {
     state.events.Push({stripId,state.revision,editor::Phase::Commit,editor::EditKind::StripSettings,{},
         {0,0,1,0,2,3,.4}});state.ApplyEvents();
     check(!state.animationStrips[1].locked,"locked strip accepts explicit unchanged-settings unlock");
+    const auto sourceId=state.objects[1].id;const auto sourceX=state.objects[1].transform.translation.x;
+    state.events.Push({sourceId,state.revision,editor::Phase::Commit,editor::EditKind::Duplicate});state.ApplyEvents();
+    check(state.objects.size()==5 && state.objects.back().id!=sourceId && state.objectSelection.active==state.objects.back().id,
+          "Outliner duplicate creates and selects a new object ID");
+    bool distinctProperties=true;
+    for (auto id:state.objectPropertyIds.back()) for (std::size_t i=0;i+1<state.objectPropertyIds.size();++i)
+        for (auto previous:state.objectPropertyIds[i]) distinctProperties &= id!=previous;
+    check(distinctProperties && state.BuildSceneMeshes().size()==2,"duplicate has independent property IDs and a preview mesh");
+    state.events.Push({state.objects.back().id,state.revision,editor::Phase::Commit,editor::EditKind::Translate,{},
+        {0,0,0,0,12,0,0}});state.ApplyEvents();
+    check(state.objects.back().transform.translation.x==12 && state.objects[1].transform.translation.x==sourceX,
+          "duplicate transform edit preserves source object");
     std::puts("Evidence: host model/event application; no native OS or GUI input.");
     return failures?1:0;
 }

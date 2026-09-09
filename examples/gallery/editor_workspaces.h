@@ -23,15 +23,18 @@ struct EditorWorkspaces {
     std::array<editor::Point,1024> curveSelectionPath{};
     void RebuildKeyIndex();
     std::span<const editor::Keyframe> QueryKeys(editor::CurveQuery query);
-    std::array<cg::ObjectView, 4> objects{};
-    std::vector<cg::ObjectView> outlinerRows;
-    std::array<editor::StableId,4> objectOrder{};
+    std::vector<cg::ObjectView> objects=std::vector<cg::ObjectView>(4);
+    std::vector<cg::ObjectView> outlinerRows, orderedObjects;
+    std::vector<bool> objectIsMesh{false,true,false,false};
+    std::vector<preview::Mesh> sceneMeshes;
+    std::span<const preview::Mesh> BuildSceneMeshes();
+    std::vector<editor::StableId> objectOrder=std::vector<editor::StableId>(4);
     void RebuildOutlinerRows();
-    std::array<std::array<editor::StableId,9>,4> objectPropertyIds{{
+    std::vector<std::array<editor::StableId,9>> objectPropertyIds{
         {930011,930023,930037,931013,931027,931039,932003,932017,932029},
         {930049,930061,930079,931051,931067,931081,932041,932053,932071},
         {930091,930107,930121,931093,931109,931123,932087,932101,932117},
-        {930137,930151,930169,931139,931157,931171,932131,932149,932163}}};
+        {930137,930151,930169,931139,931157,931171,932131,932149,932163}};
     std::array<editor::AssetView, 8> assets{}, filteredAssets{};
     std::size_t filteredAssetCount=0;
     std::array<editor::StableId,2> assetPathIds{880001,880002};
@@ -67,8 +70,8 @@ struct EditorWorkspaces {
     editor::AssetState assetState;
     cg::ViewportState viewport;
     cg::Vec3 cursorPivot{};
-    std::array<cg::ObjectView,4> gizmoSelection{};
-    std::array<cg::TransformCompanion,3> gizmoCompanions{};
+    std::vector<cg::ObjectView> gizmoSelection;
+    std::vector<cg::TransformCompanion> gizmoCompanions;
     cg::Camera sceneCamera{{0,0,0},0,.15,10,.65,5,cg::Projection::Perspective};
     cg::OutlinerState outliner;
     cg::UVState uvState;
