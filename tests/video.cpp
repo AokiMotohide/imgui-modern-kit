@@ -187,9 +187,10 @@ int main() {
         io.AddMouseButtonEvent(0,false);frame(full);
     };
     clickTrack({timeline.view.min.x+10,timeline.view.min.y+10});
-    check(full.count==1 && full.Events()[0].target==100 &&
-              full.Events()[0].proposed.x==static_cast<double>(video::TrackControl::Expanded) &&
-              full.Events()[0].proposed.y==0,"track collapse emits the explicit host control");
+    check(full.count==2 && full.Events()[0].phase==editor::Phase::Begin && full.Events()[1].phase==editor::Phase::Commit &&
+              full.Events()[0].target==100 &&
+              full.Events()[1].proposed.x==static_cast<double>(video::TrackControl::Expanded) &&
+              full.Events()[1].proposed.y==0,"track collapse emits the explicit host control");
     layoutFixture.tracks[0].expanded=false;
     check(video::TrackExtent(layoutFixture.tracks[0])==32,"collapsed row has compact extent");
     layoutFixture.tracks[0].expanded=true;
@@ -197,8 +198,8 @@ int main() {
     for (const char *label:{"V","M","S","L","R","T"})
         sourceX+=ImGui::CalcTextSize(label).x+ImGui::GetStyle().FramePadding.x*2+2;
     clickTrack({sourceX+5,timeline.view.min.y+35});
-    check(full.count==1 && full.Events()[0].proposed.x==static_cast<double>(video::TrackControl::Source) &&
-              full.Events()[0].proposed.y==1,"source patch button emits a distinct control");
+    check(full.count==2 && full.Events()[1].proposed.x==static_cast<double>(video::TrackControl::Source) &&
+              full.Events()[1].proposed.y==1,"source patch button emits a distinct control");
     timeline.headerWidth=100;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     full.Clear();frame(full);
@@ -208,9 +209,13 @@ int main() {
     io.AddKeyEvent(ImGuiKey_DownArrow,false);frame(full);
     io.AddKeyEvent(ImGuiKey_Enter,true);frame(full);
     io.AddKeyEvent(ImGuiKey_Enter,false);frame(full);
-    check(full.count==1 && full.Events()[0].target==100 &&
+    check(full.count==2 && full.Events()[0].phase==editor::Phase::Begin && full.Events()[1].phase==editor::Phase::Commit &&
+              full.Events()[0].target==100 &&
         full.Events()[0].kind==editor::EditKind::Toggle,
         "narrow track control menu emits host event through public IO");
+    small.Clear();io.AddMousePosEvent(timeline.view.min.x+10,timeline.view.min.y+10);frame(small);
+    io.AddMouseButtonEvent(0,true);frame(small);io.AddMouseButtonEvent(0,false);frame(small);
+    check(small.overflow && small.count==0,"track toggle shortage emits neither Begin nor Commit");
     timeline.headerWidth=180;
     provider.contentRange={editor::FromSeconds(-10),editor::FromSeconds(10)};
     provider.clips=[](void *u,editor::StableId,editor::Range range) {
