@@ -297,6 +297,22 @@ int main() {
             std::abs(dopeEvents.Events()[0].proposed.y-.2)<.002,
             "UV rotation and scale emit pivot-relative coordinates with matching edit kind");
     }
+    allUV.selected=[](void *,std::span<const imkit::editor::StableId>,UVSelection)->std::span<const UVVertex> {
+        static const std::array vertices{UVVertex{8101,1,{.2,.2}},UVVertex{8202,1,{.8,.8}}};return vertices;
+    };
+    std::array<imkit::editor::Transaction,1> uvCompanions;allUVState.companionDrags=uvCompanions;
+    uvSelected.Set(8101);uvSelected.Set(8202,true);allUVState.tool=TransformTool::Translate;
+    uvMouse({.2,.2});io.AddMouseButtonEvent(0,true);uvFrame();uvMouse({.3,.2});
+    check(allUVState.drag.active && uvCompanions[0].active &&
+        std::abs(uvCompanions[0].draft.proposed.x-.9)<.001,"UV multi-drag transforms every selected vertex");
+    dopeEvents.storage=std::span(dopeStorage).first(1);
+    io.AddMouseButtonEvent(0,false);uvFrame();
+    check(dopeEvents.overflow && dopeEvents.count==0 && allUVState.drag.active && uvCompanions[0].active,
+        "UV short terminal buffer retains the entire batch");
+    dopeEvents.storage=dopeStorage;uvFrame();
+    check(dopeEvents.count==2 && dopeEvents.Events()[0].phase==imkit::editor::Phase::Commit &&
+        dopeEvents.Events()[1].phase==imkit::editor::Phase::Commit && !allUVState.drag.active && !uvCompanions[0].active,
+        "UV terminal retry commits every selected vertex together");
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
