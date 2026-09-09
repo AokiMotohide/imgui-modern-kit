@@ -240,13 +240,13 @@
     },
     {
       "operation": "LinkedClips",
-      "widget": "Timeline",
-      "disposition": "shared-new",
+      "widget": "Timeline clip header",
+      "disposition": "reuse",
       "icon": "Link",
-      "tooltip": "Linked Clips",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending",
-      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
+      "tooltip": "Linked clip set ID in clip tooltip",
+      "state": "link glyph and related clip underline",
+      "status": "integrated",
+      "composition": "Existing Link glyph identifies linked membership; Layers identifies group membership."
     },
     {
       "operation": "TrackHeight",

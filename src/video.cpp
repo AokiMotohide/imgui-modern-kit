@@ -534,6 +534,22 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             const float nameRight=showMetadata ? metadataRight-metadataWidth-10 : metadataRight;
             if (track.expanded && clip.thumbnail.GetTexID() && end-x>8 && b.y>nameY+ImGui::GetFontSize()+7)
                 draw->AddImage(clip.thumbnail, {x+3,nameY+ImGui::GetFontSize()+4}, {std::min(end-3,x+65),b.y-3});
+            float nameLeft=x+6;
+            if (s.icons && (clip.linked || clip.group)) {
+                const float iconSize=ImGui::GetFontSize();
+                const float pixels=iconSize*std::max(io.DisplayFramebufferScale.x,io.DisplayFramebufferScale.y);
+                std::size_t level=0;
+                while (level+1<IconPixelSizes.size() && IconPixelSizes[level]<pixels) ++level;
+                const auto badge=[&](IconId id) {
+                    if (nameLeft+iconSize+12>nameRight || !s.icons->textures[level].GetTexID()) return;
+                    const auto region=GetIconRegion(id,IconPixelSizes[level]);
+                    draw->AddImage(s.icons->textures[level],{nameLeft,nameY},{nameLeft+iconSize,nameY+iconSize},
+                        region.uv0,region.uv1,ImGui::GetColorU32(theme.colors.text));
+                    nameLeft+=iconSize+3;
+                };
+                if (clip.linked) badge(IconId::Link);
+                if (clip.group) badge(IconId::Layers);
+            }
             if (s.editingCaption == clip.id && s.captionDrag.active) {
                 captionSeen=true;
                 if (track.locked || clip.locked) {
@@ -551,7 +567,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     if (accept) {s.captionDrag.draft.proposedText=update.proposedText;s.captionDrag.Commit(p.revision,out);}
                 }
             } else {
-                text({x+6,nameY},ImGui::GetColorU32(theme.colors.text),clip.label,nameRight);
+                text({nameLeft,nameY},ImGui::GetColorU32(theme.colors.text),clip.label,nameRight);
                 if (showMetadata) text({metadataRight-metadataWidth,nameY},ImGui::GetColorU32(theme.colors.muted),metadata,metadataRight);
             }
             if (clip.missing || clip.offline)
