@@ -904,6 +904,13 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
                     host.uvSelectionPoints[i]={host.uv[i].id,host.uv[i].uv,false};
                 return host.uvSelectionPoints;
             };
+            p.selected=[](void *u,std::span<const editor::StableId> ids,cg::UVSelection mode)->std::span<const cg::UVVertex> {
+                auto &host=*static_cast<EditorWorkspaces *>(u);std::size_t count=0;
+                if (mode==cg::UVSelection::Vertex) for (const auto &vertex:host.uv)
+                    if (std::find(ids.begin(),ids.end(),vertex.id)!=ids.end()) host.selectedUVVertices[count++]=vertex;
+                return std::span<const cg::UVVertex>(host.selectedUVVertices).first(count);
+            };
+            s.uvState.companionDrags=s.uvCompanions;
             s.uvState.canvas.selectionPath=s.uvSelectionPath;
             s.uvState.bindings=std::span(s.bindings).first(s.bindingCount);
             cg::UVEditor("uv", p, texture, s.uvState, s.uvSelection, s.events, theme, {0, 0});

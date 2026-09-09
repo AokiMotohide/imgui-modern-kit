@@ -104,12 +104,15 @@ struct UVProvider {
     std::span<const UVVertex> (*vertices)(void *, editor::Rect) = nullptr;
     std::span<const UVEdge> (*edges)(void *, editor::Rect) = nullptr;
     std::span<const StableId> (*all)(void *, UVSelection) = nullptr;
+    std::span<const UVVertex> (*selected)(void *, std::span<const StableId>, UVSelection) = nullptr;
     std::span<const editor::SelectablePoint> (*selectionQuery)(void *, editor::Rect, UVSelection) = nullptr;
 };
 struct UVState {
     editor::CanvasState canvas{{-.1, -.1}, {300, 300}};
     editor::Transaction drag;
     editor::Point mouseStart{};
+    std::span<editor::Transaction> companionDrags;
+    std::size_t companionCount=0;
     UVSelection selection = UVSelection::Vertex;
     bool lassoSelect = false;
     UVCoordinates coordinates = UVCoordinates::Normalized;

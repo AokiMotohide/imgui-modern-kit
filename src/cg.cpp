@@ -449,32 +449,57 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
             original = vertex.uv;
         }
     }
-    detail::ResumeTerminal(s.drag, p.revision, out);
-    if (s.drag.active && (s.drag.draft.revision != p.revision || ImGui::IsKeyPressed(ImGuiKey_Escape)))
-        s.drag.Cancel(out);
+    auto capacity=[&] {
+        if (out.storage.size()-out.count>=1+s.companionCount) return true;
+        out.overflow=true;return false;
+    };
+    auto finish=[&](bool cancel) {
+        cancel |= s.drag.draft.phase==editor::Phase::Cancel || p.revision!=s.drag.draft.revision;
+        s.drag.draft.phase=cancel?editor::Phase::Cancel:editor::Phase::Commit;
+        for (auto &drag:s.companionDrags.first(s.companionCount)) drag.draft.phase=s.drag.draft.phase;
+        if (!capacity()) return;
+        if (cancel) s.drag.Cancel(out);else s.drag.Commit(p.revision,out);
+        for (auto &drag:s.companionDrags.first(s.companionCount))
+            if (cancel) drag.Cancel(out);else drag.Commit(p.revision,out);
+        s.companionCount=0;
+    };
+    if (s.drag.active && (s.drag.draft.revision!=p.revision || ImGui::IsKeyPressed(ImGuiKey_Escape) ||
+        s.drag.draft.phase==editor::Phase::Cancel || s.drag.draft.phase==editor::Phase::Commit))
+        finish(ImGui::IsKeyPressed(ImGuiKey_Escape));
     if (view.hovered && hit && ImGui::IsMouseClicked(0) && !s.drag.active) {
-        if (!selection.Set(hit,ImGui::GetIO().KeyCtrl,ImGui::GetIO().KeyCtrl)) out.overflow=true;
+        if ((!selection.Contains(hit) || ImGui::GetIO().KeyCtrl) &&
+            !selection.Set(hit,ImGui::GetIO().KeyCtrl,ImGui::GetIO().KeyCtrl)) out.overflow=true;
         if (!selection.Contains(hit)) {editor::EndCanvas();return;}
+        auto members=p.selected?p.selected(p.user,selection.storage.first(selection.count),s.selection):std::span<const UVVertex>{};
+        if ((selection.count>1 && members.size()!=selection.count) || members.size()>s.companionDrags.size()+1 ||
+            out.storage.size()-out.count<(std::max)(std::size_t{1},members.size())) {
+            out.overflow=true;editor::EndCanvas();return;
+        }
         s.mouseStart = {mouse.x, mouse.y};
         const auto kind=s.tool==TransformTool::Rotate?editor::EditKind::Rotate:
             s.tool==TransformTool::Scale?editor::EditKind::Scale:editor::EditKind::Translate;
         s.drag.Begin(hit, p.revision, kind, Value({original.x, original.y, 0}),
                      editor::CurrentModifiers(), out);
+        s.companionCount=0;
+        for (const auto &vertex:members) if (vertex.id!=hit)
+            s.companionDrags[s.companionCount++].Begin(vertex.id,p.revision,kind,Value({vertex.uv.x,vertex.uv.y,0}),editor::CurrentModifiers(),out);
     }
-    if (s.drag.active) {
+    if (s.drag.active && s.drag.draft.phase!=editor::Phase::Cancel && s.drag.draft.phase!=editor::Phase::Commit && capacity()) {
         editor::Point delta{(mouse.x - s.mouseStart.x) / s.canvas.scale.x,
                             (mouse.y - s.mouseStart.y) / s.canvas.scale.y};
-        auto start = s.drag.draft.original;
+        auto update=[&](editor::Transaction &drag) {
+        auto start = drag.draft.original;
         auto transformed = TransformUV(
             {start.x, start.y}, s.pivot, s.tool == TransformTool::Translate ? delta : editor::Point{},
             s.tool == TransformTool::Rotate ? delta.x : 0,
             s.tool == TransformTool::Scale ? editor::Point{1 + delta.x, 1 + delta.y} : editor::Point{1, 1},
             s.snap);
         auto value = Value({transformed.x, transformed.y, 0});
-        if (ImGui::IsMouseDown(0) && !(value == s.drag.draft.proposed))
-            s.drag.Update(p.revision, value, out);
-        if (ImGui::IsMouseReleased(0))
-            s.drag.Commit(p.revision, out);
+        if (ImGui::IsMouseDown(0) && !(value == drag.draft.proposed)) drag.Update(p.revision,value,out);
+        };
+        update(s.drag);
+        for (auto &drag:s.companionDrags.first(s.companionCount)) update(drag);
+        if (!ImGui::IsMouseDown(0)) finish(false);
     }
     if (p.selectionQuery && !s.drag.active && (!hit || s.canvas.selecting)) {
         struct Query {const UVProvider &provider;UVSelection mode;} query{p,s.selection};
