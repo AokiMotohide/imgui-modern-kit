@@ -109,6 +109,7 @@ void EditorWorkspaces::Initialize() {
     Dataset(false);
     bindingCount = editor::MakeBindings(editor::ShortcutPreset::CapCut, bindings);
     timeline.memberDrags = clipDrags;
+    viewport.cameraView=&sceneCamera;
     preview::Cube(cubeVertices, cubeIndices);
     const char *names[] = {"Collection", "Hero cube", "Fill light", "Camera"};
     for (int i = 0; i < 4; ++i) {
@@ -156,6 +157,7 @@ void EditorWorkspaces::RenderPreview() {
     if (viewportSize.x > 1 && viewportSize.y > 1)
         previewRenderer.Resize(static_cast<int>(viewportSize.x), static_cast<int>(viewportSize.y));
     preview::Mesh mesh{objects[1].id, cubeVertices, cubeIndices, objects[1].transform};
+    mesh.wire=viewport.shading==cg::Shading::Wireframe;
     if (viewport.drag.active) {
         auto v = viewport.drag.draft.proposed;
         if (viewport.drag.draft.kind == editor::EditKind::Translate)
@@ -538,6 +540,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     s.viewportSize = view.size;
     if (!s.useGL) {
         preview::Mesh mesh{s.objects[1].id, s.cubeVertices, s.cubeIndices, s.objects[1].transform};
+        mesh.wire=s.viewport.shading==cg::Shading::Wireframe;
         preview::DrawListPreview(*ImGui::GetWindowDrawList(), {&mesh, 1}, s.viewport.camera, view.min,
                                  view.size, s.scratch);
     }

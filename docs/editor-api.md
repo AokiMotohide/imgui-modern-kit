@@ -58,6 +58,15 @@ handleは相対秒/値のx/y、reparentはparentを使います。Galleryの適�
 
 ## GL pass contract / GL pass契約
 
+Camera API additions / camera追加API:
+
+| API | Contract / 契約 |
+|---|---|
+| `NavigateCamera(Camera&, Point orbitPixels, Point panPixels, double wheel, double viewportHeight)` | Pure camera navigation, view-relative pan, orthographic extent zoom / 描画倍率に従うcamera操作 |
+| `AlignCamera(Camera&, Axis, bool negative = false)` | X/Y/Z positive/negative orthographic views / 6方向の正投影 |
+| `ViewportState::cameraView` | Non-owning host camera, valid during BeginViewport / ホストcameraの非所有参照 |
+| `ViewportState::navigationGizmo` | Toggle the clickable view-axis overlay / 軸alignment overlayの表示切替 |
+
 Color API inventory / 色操作API一覧:
 
 | Signature / 署名 | Contract / 契約 |

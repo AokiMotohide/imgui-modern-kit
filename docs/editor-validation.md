@@ -98,3 +98,12 @@ PCM min/max clip waveforms and the connected mixer/stereo meters; artifacts are 
 音声のfocused testはfader/panの公開IO Commit、隣接しない明示ID、mute event、locked操作、PCM先頭の非有限値を
 確認し、Debug video/API fixtureは成功しました。GalleryのVideo backbufferでPCM波形・mixer・stereo meterを確認します。
 media再生/録音engine・OS audio deviceの検証ではありません。
+
+Debug CG tests verify orthographic projected-size changes, view-relative pan,
+six axis alignments, camera-view navigation protection, and public IO wheel/axis
+gizmo clicks. The non-owning host camera is checked through BeginViewport.
+The API fixture covers NavigateCamera/AlignCamera. These checks do not certify
+all transform-gizmo or camera-overlay requirements.
+Debug CGテストはorthographic投影倍率・view相対pan・6軸alignment・camera表示のnavigation保護と、
+公開IOのwheel/gizmoクリックを確認します。BeginViewport経由でホストcamera参照も確認しました。
+API fixtureは新しいcamera関数を呼びます。全transform gizmo・camera overlayの合格を意味しません。

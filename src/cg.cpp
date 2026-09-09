@@ -43,6 +43,27 @@ ProjectionResult Project(Vec3 world, const Camera &c, ImVec2 origin, ImVec2 size
             z,
             true};
 }
+void NavigateCamera(Camera &camera, editor::Point orbit, editor::Point pan, double wheel,
+                    double viewportHeight) {
+    if (camera.projection == Projection::Camera || viewportHeight <= 0)
+        return;
+    camera.yaw += orbit.x * .01;
+    camera.pitch = std::clamp(camera.pitch + orbit.y * .01, -1.5707963267948966, 1.5707963267948966);
+    const auto basis = OrientationBasis(Orientation::View, {}, camera);
+    const double height = camera.projection == Projection::Orthographic ? camera.orthographicHeight :
+                          2 * camera.distance * std::tan(camera.verticalFov * .5);
+    camera.target = Add(camera.target, Add(Mul(basis.x,-pan.x*height/viewportHeight),
+                                           Mul(basis.y,pan.y*height/viewportHeight)));
+    double &extent = camera.projection == Projection::Orthographic ? camera.orthographicHeight : camera.distance;
+    extent = std::clamp(extent * std::pow(.85,wheel), .001, 10000.);
+}
+void AlignCamera(Camera &camera, Axis axis, bool negative) {
+    constexpr double pi=3.14159265358979323846;
+    if (axis!=Axis::X && axis!=Axis::Y && axis!=Axis::Z) return;
+    camera.projection=Projection::Orthographic;
+    camera.yaw=axis==Axis::X ? (negative ? -pi/2 : pi/2) : axis==Axis::Z && negative ? pi : 0;
+    camera.pitch=axis==Axis::Y ? (negative ? -pi/2 : pi/2) : 0;
+}
 Transform TransformDelta(const Transform &original, TransformTool tool, Axis axis, Vec3 delta,
                          const Basis &basis, double snap, bool fine) {
     if (fine)
@@ -111,9 +132,21 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
             s.tool = static_cast<TransformTool>(i);
     }
     ImGui::SameLine();
-    if (ImGui::SmallButton(s.camera.projection == Projection::Orthographic ? "Ortho" : "Persp"))
-        s.camera.projection = s.camera.projection == Projection::Orthographic ? Projection::Perspective
-                                                                              : Projection::Orthographic;
+    ImGui::SetNextItemWidth(ImGui::GetFontSize()*9);
+    const char *projections[]={"Perspective","Orthographic","Camera"};
+    if (ImGui::BeginCombo("##projection",projections[static_cast<int>(s.camera.projection)])) {
+        for (int i=0;i<3;++i) {
+            ImGui::BeginDisabled(i==2 && !s.cameraView);
+            if (ImGui::Selectable(projections[i],static_cast<int>(s.camera.projection)==i))
+                s.camera.projection=static_cast<Projection>(i);
+            ImGui::EndDisabled();
+        }
+        ImGui::EndCombo();
+    }
+    if (s.camera.projection==Projection::Camera && s.cameraView) {
+        s.camera=*s.cameraView;
+        s.camera.projection=Projection::Camera;
+    }
     ImGui::Checkbox("Grid", &s.grid);
     ImGui::SameLine();
     ImGui::Checkbox("Gizmo", &s.gizmo);
@@ -129,6 +162,11 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
     int pivot = static_cast<int>(s.pivot);
     if (ImGui::Combo("##pivot", &pivot, "Individual\0Median\0Bounds\0Cursor\0"))
         s.pivot = static_cast<Pivot>(pivot);
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImGui::GetFontSize()*7);
+    int shading=s.shading==Shading::Wireframe ? 0 : 1;
+    if (ImGui::Combo("##shading",&shading,"Wireframe\0Solid\0"))
+        s.shading=shading==0 ? Shading::Wireframe : Shading::Solid;
     ViewportView v{ImGui::GetCursorScreenPos(), ImGui::GetContentRegionAvail(), ImGui::IsWindowHovered()};
     auto *d = ImGui::GetWindowDrawList();
     d->PushClipRect(v.min, {v.min.x + v.size.x, v.min.y + v.size.y}, true);
@@ -154,20 +192,50 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
         line({0, 0, 0}, {0, 3, 0}, IM_COL32(90, 195, 100, 255));
         line({0, 0, 0}, {0, 0, 3}, IM_COL32(95, 145, 235, 255));
     }
-    if (v.hovered && ImGui::GetIO().MousePos.y >= v.min.y) {
-        const auto &io = ImGui::GetIO();
-        if (ImGui::IsMouseDragging(2)) {
-            if (io.KeyShift) {
-                s.camera.target.x -= io.MouseDelta.x * .01;
-                s.camera.target.y += io.MouseDelta.y * .01;
-            } else {
-                s.camera.yaw += io.MouseDelta.x * .01;
-                s.camera.pitch = std::clamp(s.camera.pitch + io.MouseDelta.y * .01, -1.55, 1.55);
+    bool navigationHovered=false;
+    if (s.navigationGizmo && v.size.x>=110 && v.size.y>=110) {
+        ImVec2 corner{v.min.x+v.size.x-104,v.min.y+8},center{corner.x+48,corner.y+48};
+        ImGui::SetCursorScreenPos(corner);
+        ImGui::InvisibleButton("navigation",{96,96});
+        navigationHovered=ImGui::IsItemHovered();
+        auto basis=OrientationBasis(Orientation::View,{},s.camera);
+        Vec3 axes[]={{1,0,0},{0,1,0},{0,0,1}};
+        const ImU32 colors[]={IM_COL32(220,85,85,255),IM_COL32(90,195,100,255),IM_COL32(95,145,235,255)};
+        int hit=-1; double closest=12,front=-2;
+        std::array<int,6> order{0,1,2,3,4,5};
+        auto depthOf=[&](int i){return Dot(Mul(axes[i/2],i%2 ? -1 : 1),basis.z);};
+        std::sort(order.begin(),order.end(),[&](int a,int b){return depthOf(a)<depthOf(b);});
+        for (int i:order) {
+            auto axis=Mul(axes[i/2],i%2 ? -1 : 1);
+            ImVec2 p{center.x+static_cast<float>(Dot(axis,basis.x)*32),
+                     center.y-static_cast<float>(Dot(axis,basis.y)*32)};
+            d->AddLine(center,p,colors[i/2],1.5f);
+            d->AddCircleFilled(p,8,ImGui::GetColorU32(ImGuiCol_WindowBg));
+            d->AddCircle(p,8,colors[i/2],16,2);
+            const char *names[]={"X","-X","Y","-Y","Z","-Z"};
+            auto textSize=ImGui::CalcTextSize(names[i]);
+            d->AddText({p.x-textSize.x*.5f,p.y-textSize.y*.5f},colors[i/2],names[i]);
+            auto mouse=ImGui::GetIO().MousePos;
+            double distance=std::hypot(mouse.x-p.x,mouse.y-p.y),depth=Dot(axis,basis.z);
+            if (distance<closest || (std::abs(distance-closest)<.01 && depth>front)) {
+                closest=distance;front=depth;hit=i;
             }
         }
-        if (io.MouseWheel)
-            s.camera.distance = std::clamp(s.camera.distance * std::pow(.85, io.MouseWheel), .05, 10000.);
+        if (navigationHovered && hit>=0 && ImGui::IsMouseClicked(0))
+            AlignCamera(s.camera,static_cast<Axis>(hit/2+1),hit%2!=0);
+        if (navigationHovered) ImGui::SetTooltip("Align view: click an axis");
+        ImGui::SetCursorScreenPos(v.min);
     }
+    if (v.hovered && !navigationHovered && ImGui::GetIO().MousePos.y >= v.min.y) {
+        const auto &io = ImGui::GetIO();
+        editor::Point orbit{},pan{};
+        if (ImGui::IsMouseDragging(2)) {
+            if (io.KeyShift) pan={io.MouseDelta.x,io.MouseDelta.y};
+            else orbit={io.MouseDelta.x,io.MouseDelta.y};
+        }
+        NavigateCamera(s.camera,orbit,pan,io.MouseWheel,v.size.y);
+    }
+    v.hovered &= !navigationHovered;
     return v;
 }
 void ViewportObjects(const ViewportView &v, std::span<const ObjectView> objects, ViewportState &s,

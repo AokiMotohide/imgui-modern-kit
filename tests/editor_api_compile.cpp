@@ -57,6 +57,8 @@ int main() {
     video::ColorControls("Color draft", colorValues);
     video::ColorControls("Color events", colorValues, {101,203,307,409,503,607}, 1, colorState, events);
     auto view = cg::BeginViewport("viewport", viewport, {}, {300, 100}, theme);
+    cg::NavigateCamera(viewport.camera,{}, {},0,100);
+    cg::AlignCamera(viewport.camera,cg::Axis::Z);
     cg::ViewportObjects(view, {}, viewport, selection, 1, events, theme);
     cg::TransformGizmo(view, {}, viewport, 1, events, theme);
     cg::EndViewport();
