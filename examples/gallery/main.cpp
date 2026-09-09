@@ -16,6 +16,10 @@
 #include "allocation_probe.h"
 #include <algorithm>
 namespace {
+const std::filesystem::path &NoCapturePath() {
+    static const std::filesystem::path empty;
+    return empty;
+}
 struct Host {
     GLFWwindow *window = nullptr;
     imkit::gallery::GalleryState s;
@@ -26,7 +30,7 @@ struct Host {
     bool countImGuiAllocations=false;
     std::size_t imguiAllocations=0;
     ImVec2 mouse{-100, -100};
-    void Frame(const std::function<void(ImGuiIO &)> &input = {}, const std::filesystem::path &shot = {}) {
+    void Frame(const std::function<void(ImGuiIO &)> &input = {}, const std::filesystem::path &shot = NoCapturePath()) {
         s.editors.RenderPreview();
         glfwPollEvents();
         ImGui_ImplOpenGL3_NewFrame();
