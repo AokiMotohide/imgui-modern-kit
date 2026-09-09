@@ -590,8 +590,10 @@ void DopeSheet(const char *id, const editor::CurveProvider &p, editor::CurveStat
     }
     ImGui::PopID();
     if (view.hovered && hit && ImGui::IsMouseClicked(0) && !s.drag.active) {
-        if (!selection.Contains(hit) || ImGui::GetIO().KeyCtrl)
-            selection.Set(hit, ImGui::GetIO().KeyCtrl, ImGui::GetIO().KeyCtrl);
+        if (!selection.Contains(hit) || ImGui::GetIO().KeyCtrl) {
+            if (!selection.Set(hit,ImGui::GetIO().KeyCtrl,ImGui::GetIO().KeyCtrl)) out.overflow=true;
+            if (!selection.Contains(hit)) {editor::EndCanvas();return;}
+        }
         auto selected=p.selected ? p.selected(p.user,selection.storage.first(selection.count))
                                  : std::span<const editor::Keyframe>{};
         bool allowed=selection.count<=1 || selected.size()==selection.count;
