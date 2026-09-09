@@ -260,6 +260,27 @@ int main() {
     check(dopeEvents.overflow && dopeEvents.count==0 && uvSelected.count==1 && uvSelected.Contains(9999),
         "UV Select All preserves old selection on insufficient storage");
     io.AddKeyEvent(ImGuiKey_F10,false);uvFrame();
+    allUV.selectionQuery=[](void *,imkit::editor::Rect,UVSelection mode)->std::span<const imkit::editor::SelectablePoint> {
+        static constexpr std::array points{imkit::editor::SelectablePoint{8101,{.2,.2},false},
+            imkit::editor::SelectablePoint{8202,{.8,.8},false}};
+        return mode==UVSelection::Vertex?std::span<const imkit::editor::SelectablePoint>(points):std::span<const imkit::editor::SelectablePoint>{};
+    };
+    uvSelected.storage=uvIds;
+    std::array<imkit::editor::Point,32> uvPath;allUVState.canvas.selectionPath=uvPath;
+    auto uvMouse=[&](imkit::editor::Point point) {
+        const auto screen=imkit::editor::ToScreen(point,allUVState.canvas,{allUVState.view.min.x,allUVState.view.min.y});
+        io.AddMousePosEvent(static_cast<float>(screen.x),static_cast<float>(screen.y));uvFrame();
+    };
+    for (bool lasso:{false,true}) {
+        allUVState.lassoSelect=lasso;
+        uvMouse({.1,.1});io.AddMouseButtonEvent(0,true);uvFrame();
+        uvMouse({.4,.1});uvMouse({.4,.4});
+        if (lasso) uvMouse({.1,.4});
+        io.AddMouseButtonEvent(0,false);uvFrame();
+        check(uvSelected.count==1 && uvSelected.Contains(8101) && dopeEvents.count==1 &&
+            dopeEvents.Events()[0].kind==(lasso?imkit::editor::EditKind::LassoSelect:imkit::editor::EditKind::BoxSelect),
+            "UV box and lasso select only enclosed provider candidates");
+    }
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }

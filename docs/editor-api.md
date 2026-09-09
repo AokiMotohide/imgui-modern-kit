@@ -233,3 +233,10 @@ Missing provider or insufficient selection/event storage preserves the old selec
 UVの全選択は`UVState::bindings`と`UVProvider::all(user, selectionMode)`を使用します。
 画面外も含む、その選択単位の一意な選択可能IDを返してください。provider未設定や
 選択・イベント容量不足では元の選択を保持し、overflowを通知します。
+
+UV box/lasso uses `UVProvider::selectionQuery` with UV-coordinate bounds and the active
+selection mode. Supply unique representative points; CanvasSelection performs the final
+box/polygon containment test. Lasso requires host storage in `UVState::canvas.selectionPath`.
+UVのbox/lassoは`UVProvider::selectionQuery`へUV座標の範囲と選択単位を渡します。
+一意な代表点を返すと、CanvasSelectionが矩形・多角形の内外判定を行います。
+lassoには`UVState::canvas.selectionPath`へホストの作業領域を設定してください。
