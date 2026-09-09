@@ -237,6 +237,7 @@ struct CurveProvider {
     std::span<const Keyframe> (*query)(void *, CurveQuery) = nullptr;
     // Optional complete-channel evaluation, including extrapolation beyond visible keys.
     double (*sample)(void *, StableId channel, Tick, Extrapolation) = nullptr;
+    std::optional<Rect> bounds; // Complete key bounds in seconds / negative value coordinates.
 };
 struct CurveState {
     CanvasState canvas{{0, -1}, {100, 100}};
@@ -246,6 +247,8 @@ struct CurveState {
     StableId activeChannel = 0;
     bool ghostOtherChannels = true;
     Extrapolation extrapolation = Extrapolation::Constant;
+    std::span<const Binding> bindings;
+    bool fitRequested = false;
     int side = 0;
     Point mouseStart{};
     CanvasView view{};
