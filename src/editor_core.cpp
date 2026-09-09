@@ -639,6 +639,8 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
                                       -view.visible.max.y,
                                       -view.visible.min.y})
                     : std::span<const Keyframe>{};
+    bool removeKeys=CommandPressed(Command::Delete,s.bindings,
+        ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows));
     StableId previewChannel=0;
     if (s.drag.active && !s.previewKeys.empty() && s.previewKeys.size()<keys.size()) out.overflow=true;
     if (s.drag.active && s.drag.draft.phase!=Phase::Cancel && s.previewKeys.size()>=keys.size()) {
@@ -740,6 +742,7 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
         ImGui::OpenPopup("key settings");
     }
     if (ImGui::BeginPopup("key settings")) {
+        if (ImGui::MenuItem("Delete selected keys",nullptr,false,selection.count>0 && !s.drag.active)) removeKeys=true;
         if (ImGui::MenuItem("Fit all channels",nullptr,false,provider.bounds.has_value())) s.fitRequested=true;
         ImGui::Checkbox("Ghost other channels",&s.ghostOtherChannels);
         ImGui::Checkbox("Snap to frame",&s.snapToFrame);
@@ -771,6 +774,18 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
         ImGui::EndPopup();
     }
     ImGui::PopID();
+    if (removeKeys && !s.drag.active && selection.count) {
+        auto targets=provider.selected ? provider.selected(provider.user,selection.storage.first(selection.count)) : std::span<const Keyframe>{};
+        if (!provider.selected && selection.count==1) {
+            auto key=std::find_if(keys.begin(),keys.end(),[&](const auto &value){return selection.Contains(value.id);});
+            if (key!=keys.end()) targets={&*key,1};
+        }
+        bool available=targets.size()==selection.count;
+        if (!available || out.storage.size()-out.count<targets.size()) {out.overflow=true;available=false;}
+        for (const auto &key:targets) available &= !key.locked;
+        if (available) for (const auto &key:targets)
+            Action(out,key.id,provider.revision,EditKind::Remove,Value{key.tick,0,0,0,key.value});
+    }
     if (view.hovered && hit && ImGui::IsMouseClicked(0) && !s.drag.active) {
         auto active=std::find_if(keys.begin(),keys.end(),[&](const auto &key){return key.id==hit;});
         if (active!=keys.end()) s.activeChannel=active->channel;
