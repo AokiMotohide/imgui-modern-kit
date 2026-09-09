@@ -373,7 +373,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     if (update.proposedText!=s.captionDrag.draft.proposedText && out.Push(update)) s.captionDrag.draft=update;
                     if (accept) {s.captionDrag.draft.proposedText=update.proposedText;s.captionDrag.Commit(p.revision,out);}
                 }
-            } else draw->AddText({x+6,y+7},ImGui::GetColorU32(theme.colors.text),clip.label);
+            } else draw->AddText({x+6,y+4+((clip.transitionIn || clip.transitionOut) ? ImGui::GetFontSize() : 3.f)},ImGui::GetColorU32(theme.colors.text),clip.label);
             if (clip.missing || clip.offline)
                 draw->AddLine(a, b, ImGui::GetColorU32(theme.colors.destructive), 2);
             if (track.locked || clip.locked)
@@ -382,16 +382,19 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 draw->AddText({end - 20, y + 7}, ImGui::GetColorU32(theme.colors.warning), "P");
             if (clip.linked || clip.group)
                 draw->AddLine({x + 3, b.y - 3}, {end - 3, b.y - 3}, ImGui::GetColorU32(theme.colors.text));
+            const float waveformTop=std::min(b.y-2,a.y+((clip.transitionIn || clip.transitionOut) ? 2.f : 1.f)*ImGui::GetFontSize()+7);
+            const float waveformCenter=(waveformTop+b.y)*.5f;
+            const float waveformAmplitude=std::max(0.f,(b.y-waveformTop)*.5f);
             for (std::size_t j = 0; track.expanded && j < clip.waveform.size(); ++j) {
                 float wx = x + (end - x) * static_cast<float>(j) / clip.waveform.size(),
-                      amplitude = clip.waveform[j] * (rowHeight - 28) * .4f;
-                draw->AddLine({wx, y + 40 - amplitude}, {wx, y + 40 + amplitude},
+                      amplitude = clip.waveform[j] * waveformAmplitude;
+                draw->AddLine({wx, waveformCenter - amplitude}, {wx, waveformCenter + amplitude},
                               ImGui::GetColorU32(theme.colors.text));
             }
             for (std::size_t j = 0; track.expanded && j < clip.audioBuckets.size(); ++j) {
                 float wx = x + (end-x) * static_cast<float>(j) / clip.audioBuckets.size();
-                float centerY = (a.y+b.y)*.5f + 5;
-                float amplitude = (b.y-a.y-26)*.5f;
+                float centerY = waveformCenter;
+                float amplitude = waveformAmplitude;
                 draw->AddLine({wx,centerY-amplitude*clip.audioBuckets[j].maximum},
                               {wx,centerY-amplitude*clip.audioBuckets[j].minimum},
                               ImGui::GetColorU32(theme.colors.text));
@@ -428,18 +431,20 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             for (int side=0;side<2;++side) {
                 const float handleX=side ? end-float(editor::Seconds(transitionOut)*s.canvas.scale.x) :
                                           x+float(editor::Seconds(transitionIn)*s.canvas.scale.x);
-                const ImVec2 handle{handleX,a.y+6};
+                const float handleScale=ImGui::GetFontSize()/14.f;
+                const float radius=4*handleScale;
+                const ImVec2 handle{handleX,a.y+6*handleScale};
                 const auto type=side ? clip.transitionOutKind : clip.transitionInKind;
                 const char *badge=type==TransitionKind::None ? "-" : type==TransitionKind::Dissolve ? "D" :
                                   type==TransitionKind::Fade ? "F" : "X";
                 if ((side ? transitionOut : transitionIn)>0)
-                    draw->AddText({handleX+(side ? -14.f : 6.f),a.y+2},ImGui::GetColorU32(theme.colors.text),badge);
+                    draw->AddText({handleX+(side ? -14.f : 6.f)*handleScale,a.y},ImGui::GetColorU32(theme.colors.text),badge);
                 draw->AddLine(side ? ImVec2{handleX,b.y} : a,
                               side ? ImVec2{end,a.y} : ImVec2{handleX,b.y},ImGui::GetColorU32(theme.colors.text),2);
-                draw->AddRect({handle.x-4,handle.y-4},{handle.x+4,handle.y+4},
+                draw->AddRect({handle.x-radius,handle.y-radius},{handle.x+radius,handle.y+radius},
                               ImGui::GetColorU32(theme.editor.marker),1,0,editingTransition ? 2.f : 1.f);
                 const bool hovered=view.hovered && handleX>=view.min.x+s.headerWidth &&
-                    std::abs(io.MousePos.x-handle.x)<=6 && std::abs(io.MousePos.y-handle.y)<=6;
+                    std::abs(io.MousePos.x-handle.x)<=6*handleScale && std::abs(io.MousePos.y-handle.y)<=6*handleScale;
                 transitionHit |= hovered;
                 if (hovered) {
                     ImGui::SetTooltip(side ? "Transition out duration" : "Transition in duration");

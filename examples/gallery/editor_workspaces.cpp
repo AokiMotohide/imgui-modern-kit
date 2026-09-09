@@ -158,6 +158,10 @@ void EditorWorkspaces::Dataset(bool big) {
             clip.start = editor::FromSeconds(i * 4. + (t % 2) * .5);
             clip.duration = editor::FromSeconds(3.5);
             clip.sourceIn = editor::TicksPerSecond * 5;
+            if (t==0 && i==1) {
+                clip.transitionIn=editor::FromSeconds(.4);clip.transitionOut=editor::FromSeconds(.6);
+                clip.transitionOutKind=video::TransitionKind::Fade;
+            }
             clip.proxy = i % 7 == 0;
             if (track.kind == video::TrackKind::Audio) clip.audioBuckets=audio;
             clips.push_back(clip);
