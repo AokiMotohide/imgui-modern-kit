@@ -503,9 +503,26 @@ void AnimationStrips(const char *id, std::span<const StripView> strips, std::uin
 }
 void DopeSheet(const char *id, const editor::CurveProvider &p, editor::CurveState &s,
                editor::Selection &selection, editor::EventBuffer &out, const Theme &theme, ImVec2 size) {
-    detail::ResumeTerminal(s.drag, p.revision, out);
+    auto capacity=[&](std::size_t count) {
+        if (out.storage.size()-out.count>=count) return true;
+        out.overflow=true;return false;
+    };
+    auto finish=[&](bool cancel) {
+        cancel |= s.drag.draft.phase==editor::Phase::Cancel || s.drag.draft.revision!=p.revision;
+        s.drag.draft.phase=cancel?editor::Phase::Cancel:editor::Phase::Commit;
+        for (auto &drag:s.companionDrags.first(s.companionCount)) drag.draft.phase=s.drag.draft.phase;
+        if (!capacity(1+s.companionCount)) return;
+        if (cancel) s.drag.Cancel(out);else s.drag.Commit(p.revision,out);
+        for (auto &drag:s.companionDrags.first(s.companionCount))
+            if (cancel) drag.Cancel(out);else drag.Commit(p.revision,out);
+        s.companionCount=0;
+    };
+    if (s.drag.active && (s.drag.draft.phase==editor::Phase::Cancel ||
+        s.drag.draft.phase==editor::Phase::Commit || s.drag.draft.revision!=p.revision ||
+        ImGui::IsKeyPressed(ImGuiKey_Escape))) finish(ImGui::IsKeyPressed(ImGuiKey_Escape));
     s.canvas.wheelZoomY = false;
     auto view = editor::BeginCanvas(id, s.canvas, size, theme);
+    s.view=view;
     auto *d = ImGui::GetWindowDrawList();
     auto keys =
         p.query
@@ -537,20 +554,46 @@ void DopeSheet(const char *id, const editor::CurveProvider &p, editor::CurveStat
             original = {key.tick, 0, 0, 0, key.value};
         }
     }
-    if (s.drag.active && (s.drag.draft.revision != p.revision || ImGui::IsKeyPressed(ImGuiKey_Escape)))
-        s.drag.Cancel(out);
     if (view.hovered && hit && ImGui::IsMouseClicked(0) && !s.drag.active) {
-        selection.Set(hit, ImGui::GetIO().KeyCtrl, ImGui::GetIO().KeyCtrl);
-        s.mouseStart = {mouse.x, mouse.y};
-        s.drag.Begin(hit, p.revision, editor::EditKind::Keyframe, original, editor::CurrentModifiers(), out);
+        if (!selection.Contains(hit) || ImGui::GetIO().KeyCtrl)
+            selection.Set(hit, ImGui::GetIO().KeyCtrl, ImGui::GetIO().KeyCtrl);
+        auto selected=p.selected ? p.selected(p.user,selection.storage.first(selection.count))
+                                 : std::span<const editor::Keyframe>{};
+        bool allowed=selection.count<=1 || selected.size()==selection.count;
+        if (!allowed || selected.size()>s.companionDrags.size()+1) {out.overflow=true;allowed=false;}
+        for (const auto &key:selected) if (key.locked) allowed=false;
+        if (allowed && capacity((std::max)(std::size_t{1},selected.size()))) {
+            s.mouseStart={mouse.x,mouse.y};s.companionCount=0;
+            s.scaling=s.scaleTime && !ImGui::GetIO().KeyAlt;s.scalePivot=original.first;
+            for (const auto &key:selected) s.scalePivot=(std::min)(s.scalePivot,key.tick);
+            auto kind=ImGui::GetIO().KeyAlt ? editor::EditKind::Duplicate :
+                s.scaling ? editor::EditKind::KeyScale : editor::EditKind::Keyframe;
+            s.drag.Begin(hit,p.revision,kind,original,editor::CurrentModifiers(),out);
+            for (const auto &key:selected) if (key.id!=hit)
+                s.companionDrags[s.companionCount++].Begin(key.id,p.revision,kind,
+                    {key.tick,0,0,0,key.value},editor::CurrentModifiers(),out);
+        }
     }
-    if (s.drag.active) {
-        auto value = s.drag.draft.original;
-        value.first += editor::FromSeconds((mouse.x - s.mouseStart.x) / s.canvas.scale.x);
-        if (ImGui::IsMouseDown(0) && !(value == s.drag.draft.proposed))
-            s.drag.Update(p.revision, value, out);
-        if (ImGui::IsMouseReleased(0))
-            s.drag.Commit(p.revision, out);
+    if (s.drag.active && s.drag.draft.phase!=editor::Phase::Cancel &&
+        s.drag.draft.phase!=editor::Phase::Commit && capacity(1+s.companionCount)) {
+        const double dx=(mouse.x-s.mouseStart.x)/s.canvas.scale.x;
+        auto delta=editor::FromSeconds(dx);
+        if (s.snapToFrame && !s.scaling)
+            delta=editor::FrameToTick(editor::TickToFrame(s.drag.draft.original.first+delta,s.rate),s.rate)-
+                s.drag.draft.original.first;
+        auto update=[&](editor::Transaction &drag) {
+            auto value=drag.draft.original;
+            if (s.scaling) {
+                const double factor=std::exp2(std::clamp(dx*s.canvas.scale.x/100.,-16.,16.));
+                value.first=s.scalePivot+static_cast<editor::Tick>(std::llround(
+                    static_cast<long double>(value.first-s.scalePivot)*factor));
+                if (s.snapToFrame) value.first=editor::FrameToTick(editor::TickToFrame(value.first,s.rate),s.rate);
+            } else value.first+=delta;
+            if (ImGui::IsMouseDown(0) && !(value==drag.draft.proposed)) drag.Update(p.revision,value,out);
+        };
+        update(s.drag);
+        for (auto &drag:s.companionDrags.first(s.companionCount)) update(drag);
+        if (!ImGui::IsMouseDown(0)) finish(false);
     }
     editor::EndCanvas();
 }
