@@ -402,6 +402,16 @@ int main() {
     io.AddMousePosEvent(clipOrigin.x+timeline.headerWidth+160,clipOrigin.y+25);frame(full);
     io.AddMouseButtonEvent(0,false);frame(full);io.AddKeyEvent(ImGuiMod_Ctrl,false);frame(full);
     check(full.count==0 && !timeline.drag.active,"deselected clip emits no Update or Commit after mouse movement");
+    timeline.tool=video::Tool::Razor;full.Clear();frame(full);
+    small.Clear();io.AddMouseButtonEvent(0,true);frame(small);
+    check(small.overflow && small.count==0 && !timeline.drag.active,"Razor rejects insufficient buffer without partial transaction");
+    io.AddMouseButtonEvent(0,false);frame(full);full.Clear();io.AddMouseButtonEvent(0,true);frame(full);
+    check(full.count==2 && full.Events()[0].phase==editor::Phase::Begin && full.Events()[1].phase==editor::Phase::Commit &&
+          full.Events()[0].kind==editor::EditKind::Split && full.Events()[1].target==transitionFixture.clip.id &&
+          full.Events()[1].revision==provider.revision && full.Events()[1].original.first==transitionFixture.clip.start &&
+          full.Events()[1].proposed.first>transitionFixture.clip.start,
+          "Razor emits complete split transaction with original clip and proposed cut");
+    io.AddMouseButtonEvent(0,false);frame(full);timeline.tool=video::Tool::Select;
     video::EnvelopePoint envelope[]={{2901,editor::FromSeconds(.5),.5},{2902,editor::FromSeconds(1.5),1}};
     check(video::EvaluateEnvelope(envelope,editor::FromSeconds(1))==.75 && video::EvaluateEnvelope({},0)==1,
           "volume envelope linearly interpolates gain and defaults to unity");
