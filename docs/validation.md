@@ -36,3 +36,8 @@ The public-IO integration log is `out/catalog/interaction.txt`; renderer details
 - Screenshot state after interaction can differ from initial values; no synthetic reference image is used as evidence.
 
 対応版・環境以外、native OS/IME、実機、他アプリへの導入は未検証です。標準のreorder/resize/drag-dropの全組合せを再試験していません。日本語の字形範囲、通常weight、数値の標準レイアウトを明示し、未実施の受け入れ確認を合格扱いしません。
+
+## Editor extension
+
+See [editor-validation.md](editor-validation.md) for focused CPU, external consumer, public IO, real GPU and performance evidence. The full Editor Suite 1.0 acceptance remains incomplete.
+Editor拡張の検証結果は上記を参照してください。Editor Suite 1.0全体の受入は未完了です。

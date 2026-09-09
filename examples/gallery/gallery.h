@@ -5,6 +5,7 @@
 #include <array>
 #include <cstdint>
 #include <vector>
+#include "editor_workspaces.h"
 namespace imkit::gallery {
 struct Probe {
     ImVec2 min, max;
@@ -13,6 +14,7 @@ struct Probe {
     }
 };
 struct GalleryState {
+    EditorWorkspaces editors;
     Theme theme = MakePrecisionTheme();
     FontSet fonts{};
     AnimationState animation;

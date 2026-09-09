@@ -63,3 +63,7 @@ ImKitのコードはMITです。Dear ImGui・GLFWにはそれぞれのライセ�
 120種類の生成アイコンを、テーマ色・任意色・サイズ指定で利用できます。
 アイコンのみのボタンと文字付きボタンに対応し、GPUリソースはホスト側で管理します。
 導入方法は [アイコン API](docs/icons.md)、実例は Gallery の **Icons** ページを参照してください。
+
+## Editor Suite開発版
+
+`editor_core`、`video`、`cg`、`preview_opengl3`、`editor_suite` targetと、native GalleryのVideo/CG workspaceを追加しています。**1.0の要求機能は未完成です。** [module契約・残作業](docs/editor-suite.md)、[API reference](docs/editor-api.md)、[検証](docs/editor-validation.md)を参照してください。

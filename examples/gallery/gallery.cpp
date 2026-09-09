@@ -458,8 +458,8 @@ void Show(GalleryState &s) {
     TextDisabled("A modern component system for Dear ImGui / public API catalog");
     Spacing();
     const char *pages[] = {"Basic / Selection", "Numeric / Units",  "Input / Media",
-                           "Hierarchy / Table", "Overlay / Layout", "Composites / 日本語", "Icons"};
-    for (int i = 0; i < 7; ++i) {
+                           "Hierarchy / Table", "Overlay / Layout", "Composites / 日本語", "Icons", "Editor Core", "Video Editor", "CG Editor"};
+    for (int i = 0; i < 10; ++i) {
         if (i)
             SameLine();
         PushID(i);
@@ -479,7 +479,7 @@ void Show(GalleryState &s) {
     SliderFloat("Scale", &s.scale, 1, 1.5f, "%.2f");
     TextDisabled("Precision Layers 0.2.0 / live public imkit API / Inter + Japanese fallback");
     Separator();
-    BeginChild("Component panel", {s.page == 6 ? GetContentRegionAvail().x
+    BeginChild("Component panel", {s.page >= 6 ? GetContentRegionAvail().x
                                               : std::min(GetContentRegionAvail().x, 1120 * s.scale), 0},
                ImGuiChildFlags_Borders, s.page == 4 ? ImGuiWindowFlags_MenuBar : 0);
     PushItemWidth(420 * s.scale);
@@ -504,6 +504,15 @@ void Show(GalleryState &s) {
         break;
     case 6:
         Icons(s);
+        break;
+    case 7:
+        CoreWorkspace(s.editors, s.theme);
+        break;
+    case 8:
+        VideoWorkspace(s.editors, s.theme, s.texture);
+        break;
+    case 9:
+        CGWorkspace(s.editors, s.theme, s.texture);
         break;
     }
     PopItemWidth();
