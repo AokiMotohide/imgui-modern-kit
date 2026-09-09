@@ -1,6 +1,8 @@
 #include "gallery.h"
 #include <algorithm>
 #include <cstdio>
+#include <cctype>
+#include <string_view>
 namespace imkit::gallery {
 void Record(GalleryState &s, const char *name) {
     s.probes[name] = {GetItemRectMin(), GetItemRectMax()};
@@ -11,6 +13,84 @@ void Heading(GalleryState &s, const char *text) {
     TextUnformatted(text);
     PopFont();
     Separator();
+}
+void Icons(GalleryState &s) {
+    Heading(s, "Icons / 120 generated outline glyphs");
+    SetNextItemWidth(210);
+    InputText("Search", s.iconSearch, sizeof(s.iconSearch));
+    Record(s, "icon-search");
+    SameLine();
+    static const char *categories[] = {"All", "Basic", "Navigation", "Files", "Editing", "View", "Layout",
+                                       "Media", "Content", "Status", "Organization", "Sharing", "Production"};
+    SetNextItemWidth(140);
+    Combo("Category", &s.iconCategory, categories, 13);
+    SameLine();
+    const char *sizes[] = {"16", "20", "24", "32", "48", "64"};
+    SetNextItemWidth(65);
+    Combo("Size", &s.iconSizeIndex, sizes, 6);
+    Checkbox("Custom icon color", &s.iconCustomColor);
+    SameLine();
+    SetNextItemWidth(230);
+    ColorEdit4("Tint", &s.iconColor.x, ImGuiColorEditFlags_NoInputs);
+    const IconOptions options{static_cast<float>(IconPixelSizes[s.iconSizeIndex]) * s.scale,
+                              s.iconCustomColor ? std::optional<ImVec4>(s.iconColor) : std::nullopt};
+    const auto selected = static_cast<IconId>(s.selectedIcon);
+    const auto *info = GetIconInfo(selected);
+    Separator();
+    Icon(s.icons, selected, {48 * s.scale, options.color});
+    SameLine();
+    Text("%s / %s", info->name, info->category);
+    char example[256];
+    std::snprintf(example, sizeof(example), "imkit::Icon(icons, imkit::IconId::%s, {.size = %d});",
+                  info->name, IconPixelSizes[s.iconSizeIndex]);
+    TextUnformatted(example);
+    SameLine();
+    if (Button("Copy code"))
+        SetClipboardText(example);
+    if (s.iconFocus) {
+        SetKeyboardFocusHere();
+        s.iconFocus = false;
+    }
+    if (IconButton("icon-example", s.icons, selected, info->name, options))
+        ++s.iconClicks;
+    Record(s, "icon-button");
+    s.iconFocused = IsItemFocused();
+    SameLine();
+    if (IconLabelButton("icon-label-example", s.icons, selected, "Run action", options))
+        ++s.iconClicks;
+    Record(s, "icon-label-button");
+    SameLine();
+    BeginDisabled();
+    if (IconLabelButton("icon-disabled-example", s.icons, selected, "Unavailable", options))
+        ++s.iconClicks;
+    Record(s, "icon-disabled");
+    EndDisabled();
+    SameLine();
+    Text("Activated: %d", s.iconClicks);
+    Separator();
+    std::string query = s.iconSearch;
+    auto fold = [](std::string &value) {
+        for (auto &c : value)
+            c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    };
+    fold(query);
+    const int columns = std::max(1, static_cast<int>(GetContentRegionAvail().x / (210 * s.scale)));
+    if (BeginTable("Icon catalogue", columns, ImGuiTableFlags_SizingStretchSame)) {
+        for (const auto &item : GetIconCatalog()) {
+            if (s.iconCategory && std::string_view(item.category) != categories[s.iconCategory])
+                continue;
+            std::string searchable = std::string(item.name) + " " + item.category;
+            fold(searchable);
+            if (searchable.find(query) == std::string::npos)
+                continue;
+            TableNextColumn();
+            PushID(static_cast<int>(item.id));
+            if (IconLabelButton("pick", s.icons, item.id, item.name, options))
+                s.selectedIcon = static_cast<int>(item.id);
+            PopID();
+        }
+        EndTable();
+    }
 }
 void Basic(GalleryState &s) {
     Heading(s, "Actions / Selection");
@@ -378,8 +458,8 @@ void Show(GalleryState &s) {
     TextDisabled("A modern component system for Dear ImGui / public API catalog");
     Spacing();
     const char *pages[] = {"Basic / Selection", "Numeric / Units",  "Input / Media",
-                           "Hierarchy / Table", "Overlay / Layout", "Composites / 日本語"};
-    for (int i = 0; i < 6; ++i) {
+                           "Hierarchy / Table", "Overlay / Layout", "Composites / 日本語", "Icons"};
+    for (int i = 0; i < 7; ++i) {
         if (i)
             SameLine();
         PushID(i);
@@ -399,7 +479,8 @@ void Show(GalleryState &s) {
     SliderFloat("Scale", &s.scale, 1, 1.5f, "%.2f");
     TextDisabled("Precision Layers 0.2.0 / live public imkit API / Inter + Japanese fallback");
     Separator();
-    BeginChild("Component panel", {std::min(GetContentRegionAvail().x, 1120 * s.scale), 0},
+    BeginChild("Component panel", {s.page == 6 ? GetContentRegionAvail().x
+                                              : std::min(GetContentRegionAvail().x, 1120 * s.scale), 0},
                ImGuiChildFlags_Borders, s.page == 4 ? ImGuiWindowFlags_MenuBar : 0);
     PushItemWidth(420 * s.scale);
     switch (s.page) {
@@ -420,6 +501,9 @@ void Show(GalleryState &s) {
         break;
     case 5:
         Composites(s);
+        break;
+    case 6:
+        Icons(s);
         break;
     }
     PopItemWidth();

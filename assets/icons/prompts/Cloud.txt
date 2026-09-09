@@ -1,0 +1,2 @@
+ONE modern black outline UI icon: a simple empty cloud outline. Use a clearly visible moderately thick outline, 2 pixels thick on a 24-pixel logical grid. NOT a hairline. Simple smooth rounded strokes, truly transparent background, no shading, texture or words. Centered on a square canvas, icon occupies 75 percent of canvas. Must be clearly readable when reduced to 16 pixels.
+Source: C:\Users\aokim\.codex\generated_images\01a08366-35a9-7231-b917-d620665ed930\exec-68269e9e-a09e-4e4c-8124-3be720213def.png

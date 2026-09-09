@@ -38,6 +38,11 @@ struct GalleryState {
     float tableScroll = 0;
     ImVec4 color{.42f, .32f, .72f, 1};
     ImTextureRef texture{};
+    IconAtlas icons;
+    char iconSearch[96]{};
+    int iconCategory = 0, iconSizeIndex = 1, selectedIcon = 0, iconClicks = 0;
+    bool iconCustomColor = false, iconFocus = false, iconFocused = false;
+    ImVec4 iconColor{.25f, .5f, .85f, 1};
     std::map<std::string, Probe> probes;
 };
 void Show(GalleryState &s);

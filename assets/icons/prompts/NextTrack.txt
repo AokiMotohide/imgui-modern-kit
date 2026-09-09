@@ -1,0 +1,2 @@
+A single clean modern toolbar icon: a single EMPTY right-pointing triangle with a vertical stop bar to its RIGHT. The triangle height is TEN TIMES its line thickness. Triangle interior fully transparent. Black monoline strokes of medium-fine consistent thickness, rounded caps, genuinely transparent background. Crisp simple geometry centered on a square canvas with even margins. No letters, textures, shadows, gradients or extra objects.
+Source: C:\Users\aokim\.codex\generated_images\01a08366-35a9-7231-b917-d620665ed930\exec-9f073711-067a-4bf4-98e1-9594f5149e7e.png

@@ -1,0 +1,2 @@
+ONE modern black outline UI icon: three vertical narrow bars of different lengths, all starting at the same top level under a horizontal alignment line. Clear strong outline strokes, 2 pixels on a 24-pixel logical grid, NOT hairlines. Simple smooth rounded strokes, truly transparent background, no shading, texture or words. Centered on a square canvas, icon occupies 75 percent of canvas. Must be clearly readable when reduced to 16 pixels.
+Source: C:\Users\aokim\.codex\generated_images\01a08366-35a9-7231-b917-d620665ed930\exec-f31ab571-a1b0-4940-88fe-275dde9948b2.png

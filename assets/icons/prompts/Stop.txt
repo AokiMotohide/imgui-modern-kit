@@ -1,0 +1,2 @@
+A single clean modern UI pictogram: one empty rounded square. The interior is transparent. Each square side is TEN TIMES the stroke thickness, not hairline-thin. Black solid monoline strokes with round caps, genuine transparent background. Uniform medium-fine line weight, centered occupying three quarters of the square canvas. No words, noise, texture, shadows or gradients. Simple recognizable geometric shape.
+Source: C:\Users\aokim\.codex\generated_images\01a08366-35a9-7231-b917-d620665ed930\exec-e5618d22-f564-40e6-a19e-8ba93b0de4b6.png
