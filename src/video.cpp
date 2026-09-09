@@ -4,6 +4,15 @@
 #include <cmath>
 #include <cstdio>
 namespace imkit::video {
+TransitionEdit EditTransition(const ClipView &clip, bool end, Tick delta) {
+    if (clip.locked || clip.duration<=0 || clip.transitionIn<0 || clip.transitionOut<0 ||
+        clip.transitionIn>clip.duration || clip.transitionOut>clip.duration-clip.transitionIn) return {};
+    TransitionEdit result{clip.transitionIn,clip.transitionOut,true};
+    auto &duration=end ? result.outDuration : result.inDuration;
+    const Tick other=end ? result.inDuration : result.outDuration;
+    duration+=std::clamp(delta,-duration,clip.duration-other-duration);
+    return result;
+}
 namespace {
 editor::Value Value(const ClipView &c) {
     return {c.start, c.start + c.duration, c.sourceIn, c.track, c.speed};
@@ -393,9 +402,13 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                          s.transitionDrag.draft.phase!=editor::Phase::Commit) {
                     auto proposed=s.transitionDrag.draft.original;
                     const Tick delta=editor::FromSeconds((io.MousePos.x-s.transitionMouseStart)/s.canvas.scale.x);
-                    if (s.transitionEnd) proposed.last=std::clamp(proposed.last-delta,Tick{0},std::max(Tick{0},clip.duration-proposed.first));
-                    else proposed.first=std::clamp(proposed.first+delta,Tick{0},std::max(Tick{0},clip.duration-proposed.last));
-                    if (!(proposed==s.transitionDrag.draft.proposed)) s.transitionDrag.Update(p.revision,proposed,out);
+                    auto original=clip;original.transitionIn=proposed.first;original.transitionOut=proposed.last;
+                    const auto edit=EditTransition(original,s.transitionEnd,s.transitionEnd ? -delta : delta);
+                    if (!edit.valid) s.transitionDrag.Cancel(out);
+                    else {
+                        proposed.first=edit.inDuration;proposed.last=edit.outDuration;
+                        if (!(proposed==s.transitionDrag.draft.proposed)) s.transitionDrag.Update(p.revision,proposed,out);
+                    }
                 }
                 if (s.transitionDrag.draft.phase!=editor::Phase::Cancel) {
                     transitionIn=s.transitionDrag.draft.proposed.first;
