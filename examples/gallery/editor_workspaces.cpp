@@ -831,6 +831,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         }
     video::Monitor("Program", ImTextureRef(static_cast<ImTextureID>(s.previewRenderer.Texture())),
                    {width*.48f,monitorHeight},s.timeline.time,program,theme);
+    s.programMonitorMin=ImGui::GetItemRectMin();s.programMonitorMax=ImGui::GetItemRectMax();
     if (ImGui::BeginPopupContextItem("monitor metadata")) {
         const char *labels[]={s.japanese ? "非表示" : "No metadata",s.japanese ? "クリップ" : "Clip metadata",s.japanese ? "詳細" : "Detailed metadata"};
         for (int i=0;i<3;++i)

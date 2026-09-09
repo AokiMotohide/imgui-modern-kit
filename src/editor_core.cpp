@@ -392,7 +392,8 @@ std::size_t MakeBindings(ShortcutPreset preset, std::span<Binding> dst) {
     return n;
 }
 bool CommandPressed(Command command, std::span<const Binding> bindings, bool focused) {
-    if (!focused || ImGui::GetIO().WantTextInput || ImGui::IsAnyItemActive())
+    if (!focused || ImGui::GetIO().WantTextInput || ImGui::IsAnyItemActive() ||
+        ImGui::IsPopupOpen(nullptr,ImGuiPopupFlags_AnyPopupId|ImGuiPopupFlags_AnyPopupLevel))
         return false;
     for (auto b : bindings)
         if (b.command == command && ImGui::IsKeyChordPressed(b.chord))
