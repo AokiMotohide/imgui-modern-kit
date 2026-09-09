@@ -453,7 +453,16 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
                            ImGui::GetColorU32(vertex.pinned                   ? theme.colors.destructive
                                               : selection.Contains(vertex.id) ? theme.colors.warning
                                                                               : theme.colors.text));
-        if (std::hypot(mouse.x - pos.x, mouse.y - pos.y) < 8) {
+        if (selection.active==vertex.id)
+            d->AddCircle(pos,8,ImGui::GetColorU32(theme.colors.text),0,2);
+        if (vertex.pinned) {
+            const auto color=ImGui::GetColorU32(theme.colors.text);
+            d->AddLine({pos.x-4,pos.y-6},{pos.x+4,pos.y-6},color,2);
+            d->AddLine({pos.x,pos.y-6},{pos.x,pos.y-11},color,2);
+        }
+        if (view.hovered && std::hypot(mouse.x - pos.x, mouse.y - pos.y) < 8) {
+            d->AddCircle(pos,10,ImGui::GetColorU32(theme.colors.text));
+            ImGui::SetTooltip("UV (%.3f, %.3f)%s",vertex.uv.x,vertex.uv.y,vertex.pinned?" - Pinned":"");
             hit = vertex.id;
             original = vertex.uv;
         }
