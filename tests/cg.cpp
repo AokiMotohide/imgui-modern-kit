@@ -324,6 +324,21 @@ int main() {
     check(dopeEvents.count==2 && std::abs(dopeEvents.Events()[0].proposed.x-.3)<.001 &&
         std::abs(dopeEvents.Events()[1].proposed.x-.9)<.001 && uvSelected.Contains(9901),
         "UV edge drag moves both endpoints while keeping edge selection IDs");
+    std::array faceVertices{UVVertex{8101,1,{.2,.2}},UVVertex{8202,1,{.8,.2}},UVVertex{8303,1,{.2,.8}}};
+    std::array faces{UVFace{9911,9922,faceVertices,false}};allUV.user=&faces;
+    allUV.faces=[](void *u,imkit::editor::Rect) {return std::span<const UVFace>(*static_cast<decltype(faces)*>(u));};
+    allUV.selected=[](void *u,std::span<const imkit::editor::StableId>,UVSelection) {
+        return static_cast<decltype(faces)*>(u)->front().vertices;
+    };
+    std::array<imkit::editor::Transaction,2> faceCompanions;allUVState.companionDrags=faceCompanions;
+    for (auto mode:{UVSelection::Face,UVSelection::Island}) {
+        allUVState.selection=mode;uvSelected.Clear();
+        uvMouse({.35,.35});io.AddMouseButtonEvent(0,true);uvFrame();uvMouse({.45,.35});
+        io.AddMouseButtonEvent(0,false);uvFrame();
+        check(uvSelected.count==1 && uvSelected.Contains(mode==UVSelection::Face?9911:9922) &&
+            dopeEvents.count==3 && std::abs(dopeEvents.Events()[2].proposed.x-.3)<.001,
+            "UV face and island drag expands to every constituent vertex");
+    }
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }

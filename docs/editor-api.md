@@ -260,3 +260,11 @@ preview to vertex proposals. Gallery box/lasso tests edge midpoints.
 UV EdgeモードのSelectionは辺IDを保持します。`selected`は重複を除いた端点頂点へ展開し、
 変換イベントは頂点IDを対象にします。`UVEdge::aVertex/bVertex`で辺のプレビューを頂点の
 提案座標へ接続します。Galleryのbox/lasso選択は辺の中点を判定します。
+
+`UVFace` references an ordered non-owning vertex span and carries separate face/island
+IDs. Face/Island click selection tests the polygon interior; `selected` must expand the
+selected face/island IDs into every unique transformable vertex. `overlap` is host-computed
+and displayed as a marked outline, not a library topology analysis.
+`UVFace`は順序付き頂点spanを非所有参照し、面IDとisland IDを保持します。面内クリックで
+選択し、`selected`は選択IDを重複のない構成頂点へ展開します。`overlap`はホストが計算し、
+ライブラリは輪郭とラベルで表示します。トポロジー解析は行いません。
