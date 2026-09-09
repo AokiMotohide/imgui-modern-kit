@@ -78,6 +78,17 @@ int main() {
     check(video::EditClip(extreme,editor::EditKind::Slip,10,
           {std::numeric_limits<editor::Tick>::min(),std::numeric_limits<editor::Tick>::max(),1}).sourceIn==extreme.sourceIn+10,
           "wide signed media bounds preserve exact unit-speed source movement");
+    video::ClipView exact;exact.duration=1;
+    const auto tickMax=std::numeric_limits<editor::Tick>::max();
+    const auto exactSlip=video::EditClip(exact,editor::EditKind::Slip,tickMax-2,{0,tickMax,1});
+    check(exactSlip.valid && exactSlip.sourceIn==tickMax-2,"unit-speed Slip preserves extreme integer offset exactly");
+    exact.duration=tickMax;
+    const auto exactSplit=video::SplitClip(exact,tickMax-2,{0,tickMax,1});
+    check(exactSplit.valid && exactSplit.right.sourceIn==tickMax-2 && exactSplit.right.duration==2,
+          "unit-speed Split preserves cut within two ticks of integer limit");
+    check(!video::SplitClip(exact,100,{0,tickMax-1,1}).valid &&
+          !video::EditClip(exact,editor::EditKind::Move,0,{0,tickMax-1,1}).valid,
+          "unit-speed source bounds reject one tick beyond media without floating rounding");
     video::ClipView right = c;
     right.start = 150;
     auto roll = video::RollClips(c, right, 100, bounds, bounds);

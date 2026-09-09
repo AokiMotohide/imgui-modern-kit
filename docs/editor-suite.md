@@ -699,3 +699,7 @@ clip headerはホストatlasがあればLinkとLayersをlinked／group表示へ�
 EditClip now bounds source-handle conversion before casting to Tick, avoids signed subtraction across wide media ranges, and checks timeline additions and source shifts. Extremely slow valid clips can still move without overflowing unused handle calculations. Focused regression covers low speed, signed media extremes and timeline end overflow; existing trim/Slip/related-edit regressions pass.
 
 EditClipは素材余白のTick変換を範囲内へ制限し、広い素材範囲の符号付き減算overflow、Timeline加算、素材位置移動を検証します。極端に低速な有効clipも、未使用の余白計算をoverflowさせず移動できます。低速、素材範囲の両極、Timeline終了時刻overflowと、既存trim／Slip／関連編集の回帰が合格しています。
+
+Unit-speed EditClip and SplitClip keep source-range checks, source handles and source offsets in integer arithmetic. Regression verifies a Slip offset and split cut two ticks below Tick max and rejects a source overrun of one tick at that scale. Non-unit speeds retain checked floating-point rescaling.
+
+1倍速のEditClip／SplitClipは素材範囲・余白・素材位置を整数演算で保持します。Tick上限の2 tick手前のSlip・分割を正確に処理し、同じ桁で1 tickだけ素材範囲を超える入力を拒否する回帰が合格しました。1倍以外は範囲検証付きの浮動小数点倍率変換を使用します。

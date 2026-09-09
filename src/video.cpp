@@ -120,6 +120,7 @@ void SplitBatch(const TimelineProvider &p,std::span<const ClipView> clips,std::s
         }
 }
 Tick AvailableTicks(std::uint64_t sourceTicks,double speed) {
+    if (speed==1) return static_cast<Tick>(std::min(sourceTicks,static_cast<std::uint64_t>(std::numeric_limits<Tick>::max())));
     const auto value=std::floor(static_cast<long double>(sourceTicks)/speed);
     return value>=std::ldexp(1.L,63) ? std::numeric_limits<Tick>::max() : static_cast<Tick>(value);
 }
@@ -138,15 +139,17 @@ ClipEdit EditClip(const ClipView &c, editor::EditKind kind, Tick delta, ClipCons
         bounds.mediaLast < bounds.mediaFirst)
         return result;
     if (c.sourceIn < bounds.mediaFirst || c.sourceIn > bounds.mediaLast ||
-        static_cast<long double>(c.duration)*c.speed > static_cast<long double>(static_cast<std::uint64_t>(bounds.mediaLast)-static_cast<std::uint64_t>(c.sourceIn)) ||
+        (c.speed==1 ? static_cast<std::uint64_t>(c.duration)>static_cast<std::uint64_t>(bounds.mediaLast)-static_cast<std::uint64_t>(c.sourceIn) :
+        static_cast<long double>(c.duration)*c.speed > static_cast<long double>(static_cast<std::uint64_t>(bounds.mediaLast)-static_cast<std::uint64_t>(c.sourceIn))) ||
         c.start>std::numeric_limits<Tick>::max()-c.duration)
         return result;
     Tick before=AvailableTicks(static_cast<std::uint64_t>(c.sourceIn)-static_cast<std::uint64_t>(bounds.mediaFirst),c.speed);
     Tick after=AvailableTicks(static_cast<std::uint64_t>(bounds.mediaLast)-static_cast<std::uint64_t>(c.sourceIn),c.speed)-c.duration;
     const auto advanceSource=[&](Tick amount) {
+        if (c.speed==1) return AddTick(c.sourceIn,amount,result.sourceIn);
         const auto mapped=std::round(static_cast<long double>(amount)*c.speed);
         if (!std::isfinite(mapped) || mapped < -std::ldexp(1.L,63) || mapped >= std::ldexp(1.L,63)) return false;
-        return AddTick(c.sourceIn,c.speed==1 ? amount : static_cast<Tick>(mapped),result.sourceIn);
+        return AddTick(c.sourceIn,static_cast<Tick>(mapped),result.sourceIn);
     };
     switch (kind) {
     case editor::EditKind::Move:
@@ -200,11 +203,16 @@ SplitResult SplitClip(const ClipView &c, Tick tick, ClipConstraints bounds) {
     const Tick offset=tick-c.start;
     if (offset<bounds.minimumDuration || c.duration-offset<bounds.minimumDuration) return {};
     const auto available=static_cast<std::uint64_t>(bounds.mediaLast)-static_cast<std::uint64_t>(c.sourceIn);
-    const long double sourceDuration=static_cast<long double>(c.duration)*c.speed;
-    if (sourceDuration>static_cast<long double>(available)) return {};
-    const long double mapped=std::round(static_cast<long double>(offset)*c.speed);
-    if (!std::isfinite(mapped) || mapped<0 || mapped>=std::ldexp(1.L,63)) return {};
-    const Tick sourceOffset=c.speed==1 ? offset : static_cast<Tick>(mapped);
+    Tick sourceOffset=offset;
+    if (c.speed==1) {
+        if (static_cast<std::uint64_t>(c.duration)>available) return {};
+    } else {
+        const long double sourceDuration=static_cast<long double>(c.duration)*c.speed;
+        if (sourceDuration>static_cast<long double>(available)) return {};
+        const long double mapped=std::round(static_cast<long double>(offset)*c.speed);
+        if (!std::isfinite(mapped) || mapped<0 || mapped>=std::ldexp(1.L,63)) return {};
+        sourceOffset=static_cast<Tick>(mapped);
+    }
     if (c.sourceIn>std::numeric_limits<Tick>::max()-sourceOffset) return {};
     const auto rightSource=c.sourceIn+sourceOffset;
     if (rightSource>bounds.mediaLast) return {};
