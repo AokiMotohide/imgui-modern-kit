@@ -117,3 +117,23 @@ acceptance or native OS input evidence.
 可変track配置のテストは可視pixel区間query、展開・折り畳み高、公開IOのcollapse/source eventを確認します。
 Debug Video/API fixtureと、累積高さqueryへ切り替えたGalleryでの移動・終端trim・split・選択・Curve・UVの
 既存操作は成功しました。全track role・icon受入やnative OS入力の検証ではありません。
+
+
+## Release representative interaction benchmark (2026-09-10)
+
+Run `imkit_gallery.exe --benchmark-editors --output out/editor-benchmark-release` from the Release build. This independent mode avoids rerunning GPU lifecycle and unrelated interaction checks. Each operation uses 20 warm-up frames and 180 measured frames at 1920x1440, 256 tracks, 100096 clips and 100000 keys. Inputs use public ImGui IO in a hidden native OpenGL window with vsync disabled. The wall-time boundary is `Host::Frame`, including host event application, preview rendering, ImGui, GL submission and swap. Dataset construction and warm-up are excluded. Continuous-drag Commit is measured separately after sampling; selection sampling includes press/release cycles. Allocation counters cover the frame thread's C++ new/new[] (including aligned forms) and ImGui allocation calls, excluding driver and OS allocations and the separate terminal frame.
+
+| Operation | P95 ms | Max ms | Terminal frame ms |
+|---|---:|---:|---:|
+| Pan | 1.9951 | 2.8499 | 1.3201 |
+| Zoom | 1.7816 | 2.3514 | 1.0018 |
+| Selection | 10.6984 | 20.8087 | 2.4116 |
+| Clip drag | 2.0580 | 2.7558 | 8.8062 |
+| Clip end trim | 2.0424 | 3.5986 | 15.2676 |
+| Inline keyframe drag | 1.7699 | 2.4499 | 10.0462 |
+
+Each operation returned at most 30 clips through at most 7 visible track/clip queries per frame, with zero counted C++ and ImGui allocations in its sampling interval. These six P95 values meet 16.7 ms on the current PC; the selection maximum exceeded it. Reports are local `out/editor-benchmark-release/editor-performance.csv` and `editor-performance-context.txt`. The mode checks changed pan/zoom state, nonempty selection, actual clip/key Commit values and trim kind, and fails on missing interaction, wrong framebuffer size, excessive visible queries or P95. It does not constitute complete Editor Suite acceptance or native OS/IME verification. Returned inline-key and track-row counts are not separately instrumented yet.
+
+Release版の上記コマンドで、GPU lifecycleなどの無関係な検証を再実行せず6操作を測定できます。条件は1920x1440、256 track、100096 clip、100000 key、各20 warm-up＋180測定フレームです。非表示native OpenGL windowへ公開ImGui IOを注入し、vsyncを無効にしています。計測境界はホスト編集適用・preview描画・ImGui・GL発行・swapを含む`Host::Frame`の壁時計時間です。dataset構築とwarm-upは除外し、連続dragのCommitは別測定、選択は押下・解放を測定区間へ含めます。allocationはフレームスレッドのC++ new／new[]（alignedを含む）とImGui呼出しで、driver／OSと別測定の終了フレームは対象外です。
+
+表の6操作はいずれもP95 16.7ms以下でしたが、選択の最大値は20.8087msでした。各操作の最大値は7可視track／clip query・30返却clip、測定区間のC++／ImGui allocationは0です。pan／zoomの状態変化、非空のselection、clip／keyの実Commit値、trim種別を確認します。入力不成立、framebuffer条件不一致、query上限、P95未達は失敗にします。inline keyとtrack行の返却数はまだ個別計測していません。この測定だけでEditor Suite全体やnative OS／IMEの受入完了とはしません。
