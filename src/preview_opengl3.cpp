@@ -25,7 +25,7 @@ void Multiply(const float *a, const float *b, float *out) {
                 out[c * 4 + r] += a[k * 4 + r] * b[c * 4 + k];
         }
 }
-void Matrix(const cg::Camera &c, const cg::Transform &t, float aspect, float *result) {
+void Matrix(const cg::Camera &c, const cg::Transform &t, float aspect, float *result, float *normal) {
     float cy = static_cast<float>(std::cos(c.yaw)), sy = static_cast<float>(std::sin(c.yaw)),
           cp = static_cast<float>(std::cos(c.pitch)), sp = static_cast<float>(std::sin(c.pitch));
     float view[16] = {cy, -sy * sp, sy * cp, 0, 0, cp, sp, 0, -sy, -cy * sp, cy * cp, 0, 0, 0, 0, 1};
@@ -69,6 +69,13 @@ void Matrix(const cg::Camera &c, const cg::Transform &t, float aspect, float *re
                        static_cast<float>(t.translation.y),
                        static_cast<float>(t.translation.z),
                        1};
+    std::fill(normal, normal + 16, 0.f);
+    normal[15] = 1;
+    const double scale[] = {t.scale.x, t.scale.y, t.scale.z};
+    for (int column = 0; column < 3; ++column)
+        for (int row = 0; row < 3; ++row)
+            normal[column * 4 + row] = scale[column] == 0 ? 0.f :
+                static_cast<float>(model[column * 4 + row] / scale[column]);
     for (int i = 0; i < 3; ++i) {
         model[i] *= static_cast<float>(t.scale.x);
         model[4 + i] *= static_cast<float>(t.scale.y);
@@ -84,8 +91,9 @@ bool OpenGL3Renderer::Init(const GLFunctions &functions, int width, int height) 
         return false;
     gl_ = functions;
     const char *vs = "#version 330 core\nlayout(location=0) in vec3 p;layout(location=1) in vec3 "
-                     "n;layout(location=2) in vec4 c;uniform mat4 mvp;out vec4 color;void "
-                     "main(){gl_Position=mvp*vec4(p,1);color=vec4(c.rgb*(.25+.75*max(0.,dot(normalize(n),"
+                     "n;layout(location=2) in vec4 c;uniform mat4 mvp;uniform mat4 normalMatrix;out vec4 color;void "
+                     "main(){gl_Position=mvp*vec4(p,1);vec3 wn=(normalMatrix*vec4(n,0)).xyz;"
+                     "wn=length(wn)>0.?normalize(wn):vec3(0);color=vec4(c.rgb*(.25+.75*max(0.,dot(wn,"
                      "normalize(vec3(.3,.8,.5))))),c.a);}";
     const char *fs = "#version 330 core\nin vec4 color;uniform uvec2 objectId;layout(location=0) out vec4 "
                      "frag;layout(location=1) out uvec2 pick;void main(){frag=color;pick=objectId;}";
@@ -198,15 +206,17 @@ bool OpenGL3Renderer::Render(std::span<const Mesh> meshes, const cg::Camera &cam
     gl_.ClearBufferfv(0x1801, 0, &depth);
     gl_.UseProgram(program_);
     gl_.BindVertexArray(vao_);
+    const int normalLocation = gl_.GetUniformLocation(program_, "normalMatrix");
     for (const auto &mesh : meshes) {
         if (mesh.vertices.empty() || mesh.indices.empty())
             continue;
         if (std::any_of(mesh.indices.begin(), mesh.indices.end(),
                         [&](auto index) { return index >= mesh.vertices.size(); }))
             continue;
-        float matrix[16];
-        Matrix(camera, mesh.transform, static_cast<float>(width_) / height_, matrix);
+        float matrix[16], normal[16];
+        Matrix(camera, mesh.transform, static_cast<float>(width_) / height_, matrix, normal);
         gl_.UniformMatrix4fv(matrixLocation_, 1, 0, matrix);
+        gl_.UniformMatrix4fv(normalLocation, 1, 0, normal);
         gl_.Uniform2ui(idLocation_, static_cast<unsigned>(mesh.id), static_cast<unsigned>(mesh.id >> 32));
         gl_.BindBuffer(0x8892, vbo_);
         gl_.BufferData(0x8892, mesh.vertices.size_bytes(), mesh.vertices.data(), 0x88E0);

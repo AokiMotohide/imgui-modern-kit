@@ -97,10 +97,13 @@ Dope Sheet・animation strip移動を提供します。orientationは純粋関�
 `DrawListPreview` belongs to `imkit::cg`. It projects indexed non-owning mesh spans,
 uses host triangle scratch, and depth-sorts triangles. It has no z-buffer: intersecting
 or cyclic surfaces can be incorrect. Cube and Sphere fill host buffers. CPU normals
-and GL shading currently use mesh-local normals for simple Lambert lighting.
+and GL shading use inverse-scale and rotation transformed normals for simple
+world-space Lambert lighting. A zero scale axis contributes a zero normal component;
+fully degenerate normals receive ambient lighting only.
 DrawListPreviewはcgに含まれ、ホストのtriangle scratchでdepth sortします。z-bufferはなく、
 交差面や循環する重なりは正確ではありません。Cube/Sphereはホストbufferへ生成します。
-簡易Lambertは現時点でmesh-local normalを使います。
+簡易Lambertは逆scaleと回転を適用したworld-space normalを使います。scaleが0の軸のnormal成分は0とし、
+完全に退化したnormalは環境光だけで表示します。
 
 `imkit::preview_opengl3` is separate from `editor_suite`. Include `<imkit/preview.h>`.
 The host supplies a complete GLFunctions table and makes its OpenGL 3.3 context

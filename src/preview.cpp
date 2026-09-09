@@ -44,8 +44,17 @@ std::size_t DrawListPreview(ImDrawList &draw, std::span<const Mesh> meshes, cons
                 }
                 tri.points[j] = projected.screen;
                 tri.depth += projected.depth;
-                intensity +=
-                    .25f + .75f * (std::max)(0.f, v.normal[0] * .3f + v.normal[1] * .8f + v.normal[2] * .5f);
+                cg::Transform normalTransform = mesh.transform;
+                normalTransform.translation = {};
+                auto reciprocal = [](double value) { return value == 0 ? 0. : 1. / value; };
+                normalTransform.scale = {reciprocal(mesh.transform.scale.x),
+                                         reciprocal(mesh.transform.scale.y),
+                                         reciprocal(mesh.transform.scale.z)};
+                auto normal = Transform({v.normal[0], v.normal[1], v.normal[2]}, normalTransform);
+                double length = std::sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+                double lambert = length > 0 ? (normal.x * .3 + normal.y * .8 + normal.z * .5) /
+                                                (length * std::sqrt(.98)) : 0;
+                intensity += .25f + .75f * static_cast<float>((std::max)(0., lambert));
                 color.x += v.color[0] / 3;
                 color.y += v.color[1] / 3;
                 color.z += v.color[2] / 3;
