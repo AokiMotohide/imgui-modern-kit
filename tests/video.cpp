@@ -329,6 +329,27 @@ int main() {
     full.Clear();io.AddKeyEvent(ImGuiKey_F6,true);frame(full);io.AddKeyEvent(ImGuiKey_F6,false);frame(full);
     check(full.count==4 && full.Events()[1].kind==editor::EditKind::Remove && full.Events()[3].kind==editor::EditKind::Remove,
           "remapped clip key Delete commits all selected keys");timeline.bindings={};
+    std::array navigationBindings{editor::Binding{editor::Command::AddKey,ImGuiKey_F8},
+        editor::Binding{editor::Command::PreviousKey,ImGuiKey_F9},editor::Binding{editor::Command::NextKey,ImGuiKey_F10}};
+    timeline.bindings=navigationBindings;transitionFixture.clip.keyChannel=7100;
+    timeline.time.playhead=editor::FromSeconds(1.5);
+    auto keyCommand=[&](ImGuiKey key,editor::EventBuffer &events) {
+        events.Clear();io.AddKeyEvent(key,true);frame(events);io.AddKeyEvent(key,false);frame(events);
+    };
+    keyCommand(ImGuiKey_F9,full);
+    check(full.count==2 && full.Events()[1].kind==editor::EditKind::Navigate &&
+          timeline.time.playhead==clipKeys[0].tick,"remapped previous clip key moves playhead");
+    keyCommand(ImGuiKey_F10,full);
+    check(full.count==2 && timeline.time.playhead==clipKeys[1].tick,"remapped next clip key moves playhead");
+    timeline.time.playhead=editor::FromSeconds(1.5);keyCommand(ImGuiKey_F8,full);
+    check(full.count==2 && full.Events()[1].kind==editor::EditKind::KeyInsert && full.Events()[1].target==7100 &&
+          full.Events()[1].proposed.parent==transitionFixture.clip.id && full.Events()[1].proposed.first==editor::FromSeconds(1.5),
+          "clip insertion emits explicit channel and local time");
+    keyCommand(ImGuiKey_F8,small);check(small.overflow && small.count==0,"clip insertion refuses partial event pair");
+    transitionFixture.track.locked=true;keyCommand(ImGuiKey_F8,full);
+    check(full.count==0,"locked track rejects clip key insertion");transitionFixture.track.locked=false;
+    timeline.time.playhead=clipKeys[0].tick;keyCommand(ImGuiKey_F8,full);
+    check(full.count==0,"clip insertion preserves existing key at current time");timeline.bindings={};
     transitionFixture.clip.keys={};timeline.keySelection=nullptr;
     transitionFixture.track.kind=video::TrackKind::Caption;
     auto beginCaption=[&] {

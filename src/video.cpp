@@ -283,6 +283,9 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         !s.keyDrag.active && !s.envelopeDrag.active && !s.drag.active && !s.transitionDrag.active && !s.captionDrag.active;
     const bool duplicateKeys=editor::CommandPressed(editor::Command::Duplicate,s.bindings,keyCommands);
     const bool removeKeys=editor::CommandPressed(editor::Command::Delete,s.bindings,keyCommands);
+    const bool addKey=editor::CommandPressed(editor::Command::AddKey,s.bindings,keyCommands);
+    const bool previousKey=editor::CommandPressed(editor::Command::PreviousKey,s.bindings,keyCommands);
+    const bool nextKey=editor::CommandPressed(editor::Command::NextKey,s.bindings,keyCommands);
     detail::ResumeTerminal(s.heightDrag,p.revision,out);
     if (s.heightDrag.active && ImGui::IsKeyPressed(ImGuiKey_Escape)) s.heightDrag.Cancel(out);
     if (s.tool==Tool::Hand && view.max.x>view.min.x+s.headerWidth) {
@@ -446,6 +449,37 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 draw->AddLine({wx,centerY-amplitude*clip.audioBuckets[j].maximum},
                               {wx,centerY-amplitude*clip.audioBuckets[j].minimum},
                               ImGui::GetColorU32(theme.colors.text));
+            }
+            const bool keyOwner=selection.count==1 ? selected : s.keyDrag.draft.original.parent==clip.id;
+            if (keyOwner && (addKey || previousKey || nextKey)) {
+                const auto distance=std::uint64_t(s.time.playhead)-std::uint64_t(clip.start);
+                const Tick local=s.time.playhead<clip.start ? Tick{-1} :
+                    distance>std::uint64_t(INT64_MAX) ? Tick{INT64_MAX} : static_cast<Tick>(distance);
+                const editor::Keyframe *neighbor=nullptr;
+                bool existing=false;
+                for (const auto &key:clip.keys) {
+                    existing |= key.tick==local;
+                    if (key.tick<0 || key.tick>clip.duration) continue;
+                    if ((previousKey && key.tick<local && (!neighbor || key.tick>neighbor->tick)) ||
+                        (!previousKey && nextKey && key.tick>local && (!neighbor || key.tick<neighbor->tick))) neighbor=&key;
+                }
+                if (addKey && !clip.locked && !track.locked && clip.keyChannel && local>=0 && local<=clip.duration && !existing) {
+                    if (out.storage.size()-out.count<2) out.overflow=true;
+                    else {
+                        editor::Value proposal;proposal.first=local;proposal.parent=clip.id;
+                        proposal.x=clip.keys.empty() ? clip.keyDefaultValue : editor::Evaluate(clip.keys,local);
+                        editor::Transaction action;action.Begin(clip.keyChannel,p.revision,editor::EditKind::KeyInsert,{},editor::CurrentModifiers(),out);
+                        action.draft.proposed=proposal;action.Commit(p.revision,out);
+                    }
+                } else if (!addKey && neighbor) {
+                    if (out.storage.size()-out.count<2) out.overflow=true;
+                    else {
+                        editor::Value original;original.first=s.time.playhead;original.parent=clip.id;
+                        editor::Transaction action;action.Begin(neighbor->id,p.revision,editor::EditKind::Navigate,original,editor::CurrentModifiers(),out);
+                        action.draft.proposed.first=clip.start+neighbor->tick;action.Commit(p.revision,out);
+                        s.time.playhead=clip.start+neighbor->tick;
+                    }
+                }
             }
             if ((duplicateKeys || removeKeys) && s.keySelection && s.keyDrag.draft.original.parent==clip.id) {
                 std::size_t count=0;bool allowed=!clip.locked && !track.locked;

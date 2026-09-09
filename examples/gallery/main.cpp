@@ -442,6 +442,13 @@ int VerifyInspectorModel() {
         std::printf("%s %s\n",ok?"PASS":"FAIL",name);
         if (!ok) ++failures;
     };
+    const auto clipChannel=state.clips.front().keyChannel;
+    const auto countBeforeInsert=state.keys.size();
+    editor::Event clipInsert{clipChannel,state.revision,editor::Phase::Commit,editor::EditKind::KeyInsert};
+    clipInsert.proposed.parent=state.clips.front().id;clipInsert.proposed.first=12345;clipInsert.proposed.x=.4;
+    state.events.Push(clipInsert);state.ApplyEvents();
+    check(state.keys.size()==countBeforeInsert+1 && std::any_of(state.clips.front().keys.begin(),state.clips.front().keys.end(),
+        [](const auto &key){return key.tick==12345 && key.value==.4;}),"clip insertion applies to explicit host channel and refreshes span");
     const auto transitionClip=state.clips.front().id;
     state.events.Push({transitionClip,state.revision,editor::Phase::Commit,editor::EditKind::TransitionDuration,{},
         {editor::FromSeconds(.2),editor::FromSeconds(.3)}});state.ApplyEvents();
