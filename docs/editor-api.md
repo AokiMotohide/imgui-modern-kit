@@ -396,3 +396,17 @@ for restriction controls, whose checked state also uses an underline.
 ホストが検索文字列と併せてprovider行数と行を構築し、一致対象の祖先も含めます。
 Galleryはfilter中に一致する階層を展開します。`labels`は非所有UTF-8文字列、`icons`は
 非所有atlasです。制限状態の操作はアイコンと有効状態の下線で表示します。
+
+### Camera/light primitives / カメラ・ライトのprimitive
+
+`preview::CameraPrimitive` writes a 24-vertex/36-index frustum along local +Z;
+`LightPrimitive` writes a 24-vertex/24-index point-light octahedron. Both use host
+storage, reject insufficient spans before writing, and provide face normals/colors.
+They feed the ordinary DrawList/OpenGL mesh path, including transforms and picking.
+Gallery camera/light objects own these helper meshes; they are visualization helpers,
+not a camera projection model or light simulation.
+
+`CameraPrimitive`はローカル+Z方向の視錐台（24頂点・36index）、`LightPrimitive`は
+点光源を表す八面体（24頂点・24index）をホスト領域へ書き込みます。容量不足時は書き込まず、
+面法線と色も供給します。通常のDrawList／OpenGL mesh経路で変換・pickingへ接続し、
+Galleryのカメラとライトが所有します。補助表示形状であり、投影モデルや光源simulationではありません。

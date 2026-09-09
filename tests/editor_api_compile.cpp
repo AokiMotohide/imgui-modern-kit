@@ -129,6 +129,10 @@ int main() {
     std::array<preview::Triangle, 12> scratch;
     preview::Mesh mesh{1, vertices, indices};
     preview::DrawListPreview(*ImGui::GetWindowDrawList(), {&mesh, 1}, {}, {0, 0}, {100, 100}, scratch);
+    std::array<preview::Vertex,24> helperVertices;
+    std::array<std::uint32_t,36> helperIndices;
+    preview::CameraPrimitive(helperVertices,helperIndices);
+    preview::LightPrimitive(helperVertices,helperIndices);
     std::array<preview::OutlineEdge,36> outline;
     preview::DrawMeshOutline(*ImGui::GetWindowDrawList(),mesh,{},{0,0},{100,100},outline,IM_COL32_WHITE);
     preview::DrawMeshNormals(*ImGui::GetWindowDrawList(),{&mesh,1},{},{0,0},{100,100},{true,true,.2});
