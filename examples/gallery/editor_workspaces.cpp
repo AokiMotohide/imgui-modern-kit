@@ -139,7 +139,7 @@ void EditorWorkspaces::Dataset(bool big) {
     for (int t = 0; t < trackCount; ++t) {
         video::TrackView track;
         track.id = t + 1;
-        constexpr const char *trackLabels[]={"V  Picture","A  Sound","T  Caption","FX  Effect","ADJ  Adjustment","GRP  Group"};
+        constexpr const char *trackLabels[]={"Picture","Sound","Caption","Effect","Adjustment","Group"};
         track.label=trackLabels[t%6];
         track.kind=static_cast<video::TrackKind>(t%6);
         tracks.push_back(track);
@@ -1051,6 +1051,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         s.timeline.trackLabels.names={"表示","ミュート","ソロ","ロック","録音待機","編集対象track","素材patch"};
         s.timeline.trackLabels.controls="track操作";s.timeline.trackLabels.height="track高さ";
         s.timeline.trackLabels.on="有効";s.timeline.trackLabels.off="無効";
+        s.timeline.trackLabels.kinds={"映像track","音声track","字幕track","効果track","調整track","グループtrack"};
         s.timeline.trackLabels.expand="trackを展開";s.timeline.trackLabels.collapse="trackを折り畳む";
     }
     s.timeline.icons=s.icons;

@@ -105,6 +105,7 @@ struct TrackLabels {
     std::array<const char *,7> names{"Visible","Mute","Solo","Locked","Record armed","Target track","Source patch"};
     const char *controls="Controls", *height="Track height", *on="On", *off="Off";
     const char *expand="Expand track", *collapse="Collapse track";
+    std::array<const char *,6> kinds{"Video track","Audio track","Caption track","Effect track","Adjustment track","Group track"};
 };
 struct TimelineState {
     struct MemberDrag {

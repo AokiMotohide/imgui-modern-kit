@@ -538,5 +538,13 @@
   {
     "name": "SourcePatch",
     "category": "Editor"
+  },
+  {
+    "name": "EffectTrack",
+    "category": "Editor"
+  },
+  {
+    "name": "AdjustmentTrack",
+    "category": "Editor"
   }
 ]

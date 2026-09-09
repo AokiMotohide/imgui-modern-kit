@@ -2023,5 +2023,35 @@
       1102,
       851
     ]
+  },
+  {
+    "name": "EffectTrack",
+    "source": "assets/icons/originals/EffectTrack.png",
+    "sha256": "0b3a56a2471208bc105f80228f1f9f882633c4177c97315562e33628ca04aa08",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      197,
+      238,
+      1072,
+      1069
+    ]
+  },
+  {
+    "name": "AdjustmentTrack",
+    "source": "assets/icons/originals/AdjustmentTrack.png",
+    "sha256": "9a1affa0dc18cfe5337ce0355fb3457ef298325fe1f42499f44c2117c39de748",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      235,
+      217,
+      1018,
+      1037
+    ]
   }
 ]
