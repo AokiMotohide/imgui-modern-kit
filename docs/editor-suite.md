@@ -420,3 +420,7 @@ Axis and screen rotation rings accumulate the signed angular difference between 
 Gizmo gestures cancel the complete transform batch when a participating object becomes hidden, or when the pivot cannot be projected (behind the near plane or in a zero-size viewport). An insufficient event buffer retains the pending Cancel batch for retry. Ordinary movement outside the viewport rectangle remains projectable and does not cancel the gesture.
 
 ギズモ操作は、参加対象の非表示化、またはpivotの投影不能（near planeより後方、Viewport寸法ゼロ）で変換バッチ全体をCancelします。event buffer不足時はCancel一式を保持して再送します。Viewport矩形の外への通常移動は投影可能なため取消しません。
+
+Curve and UV context menus use `BoxSelect` and `LassoSelect` when the host supplies `CurveState::icons` or `UVState::icons`. The active mode has an explicit text indicator and selected background. Mode buttons are disabled during a drag or area selection. The atlas is non-owning; null retains the text checkbox. Gallery supplies its atlas to both editors.
+
+Curve／UVのcontext menuは、ホストが`CurveState::icons`／`UVState::icons`を渡した場合に`BoxSelect`／`LassoSelect`を表示します。activeモードを文字と選択背景で示し、drag・領域選択中はモードボタンを無効にします。atlasは非所有で、nullでは従来の文字checkboxを使用します。Galleryは両部品へatlasを渡します。

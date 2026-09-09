@@ -687,6 +687,8 @@ void EditorWorkspaces::ApplyEvents() {
     events.Clear();
 }
 void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) {
+    s.curve.icons=s.icons;
+    s.uvState.icons=s.icons;
     s.Initialize();
     Options(s);
     float available = ImGui::GetContentRegionAvail().x;
@@ -925,6 +927,8 @@ void EditorWorkspaces::RebuildOutlinerRows() {
             append(append,object,0);
 }
 void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) {
+    s.curve.icons=s.icons;
+    s.uvState.icons=s.icons;
     s.Initialize();
     Options(s);
     float width = ImGui::GetContentRegionAvail().x, side = (s.narrow ? 180 : 300)*ImGui::GetFontSize()/14,
@@ -1150,6 +1154,8 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     s.ApplyEvents();
 }
 void CoreWorkspace(EditorWorkspaces &s, const Theme &theme) {
+    s.curve.icons=s.icons;
+    s.uvState.icons=s.icons;
     s.Initialize();
     editor::Transport(s.timeline.time, std::span(s.bindings).first(s.bindingCount), s.icons);
     editor::TimeRuler("ruler", s.timeline.time, s.curve.canvas, {}, s.revision, s.events, theme);

@@ -168,6 +168,7 @@ struct UVState {
     double snap = 0;
     editor::Point pivot{.5, .5};
     editor::CanvasView view{};
+    const IconAtlas *icons=nullptr; // Non-owning host atlas for selection controls.
 };
 editor::Point TransformUV(editor::Point uv, editor::Point pivot, editor::Point translation,
                           double rotationRadians, editor::Point scale, double snap = 0);

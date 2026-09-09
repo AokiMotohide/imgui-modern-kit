@@ -269,6 +269,7 @@ struct CurveState {
     int side = 0;
     Point mouseStart{};
     CanvasView view{};
+    const IconAtlas *icons=nullptr; // Non-owning host atlas for selection controls.
 };
 void CurveEditor(const char *id, const CurveProvider &provider, CurveState &state, Selection &selection,
                  EventBuffer &events, const Theme &theme, ImVec2 size = {0, 220});
