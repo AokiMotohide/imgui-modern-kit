@@ -921,6 +921,28 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                                            p.selected
                                        ? p.selected(p.user, selection.storage.first(selection.count))
                                        : std::span<const ClipView>{};
+                    // A selection query must resolve the complete edit set, even offscreen.
+                    // Reject incomplete or ambiguous host scratch before publishing any Begin.
+                    if (kind == editor::EditKind::Move || kind == editor::EditKind::Duplicate) {
+                        if (!p.selected && selection.count > 1) {
+                            out.overflow = true;
+                            available = false;
+                        }
+                        if (p.selected) {
+                            for (const auto id : selection.storage.first(selection.count))
+                                if (std::count_if(members.begin(), members.end(),
+                                                  [&](const auto &member) { return member.id == id; }) != 1) {
+                                    out.overflow = true;
+                                    available = false;
+                                }
+                            for (std::size_t i = 0; i < members.size(); ++i)
+                                if (std::any_of(members.begin(), members.begin() + i,
+                                                [&](const auto &member) { return member.id == members[i].id; })) {
+                                    out.overflow = true;
+                                    available = false;
+                                }
+                        }
+                    }
                     std::size_t memberCount = 0;
                     for (const auto &member : members)
                         if (member.id != clip.id) {
