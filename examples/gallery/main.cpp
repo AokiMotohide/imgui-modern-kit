@@ -442,6 +442,18 @@ int VerifyInspectorModel() {
         std::printf("%s %s\n",ok?"PASS":"FAIL",name);
         if (!ok) ++failures;
     };
+    state.RebuildOutlinerRows();check(state.outlinerRows.size()==4,"Outliner expanded hierarchy includes all rows");
+    state.objects[0].expanded=false;state.RebuildOutlinerRows();
+    check(state.outlinerRows.size()==1,"Outliner collapse hides descendants");
+    std::snprintf(state.outliner.search,sizeof(state.outliner.search),"Camera");state.RebuildOutlinerRows();
+    check(state.outlinerRows.size()==2 && state.outlinerRows[1].id==state.objects[3].id &&
+          state.outlinerRows[1].depth==1,"Outliner search includes match and ancestor through collapsed hierarchy");
+    state.outliner.search[0]=0;state.objects[0].expanded=true;
+    const auto oldParent=state.objects[3].parent;state.objects[3].parent=state.objects[1].id;
+    state.RebuildOutlinerRows();
+    check(state.outlinerRows.size()==4 && state.outlinerRows[2].id==state.objects[3].id &&
+          state.outlinerRows[2].depth==2 && state.outlinerRows[1].hasChildren,"Outliner rebuild reflects reparented hierarchy");
+    state.objects[3].parent=oldParent;
     state.objectSelection.Set(state.objects[1].id);
     state.objectSelection.Set(state.objects[2].id,true);
     auto send=[&](editor::Phase phase,int component,double value,editor::EditKind kind=editor::EditKind::Property) {

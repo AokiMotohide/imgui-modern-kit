@@ -630,6 +630,10 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
                     if (ImGui::BeginPopupContextItem("actions")) {
                         ImGui::BeginDisabled(row.locked || s.renameTransaction.active);
                         if (ImGui::MenuItem("Rename")) beginRename();
+                        if (row.hasChildren) {
+                            if (ImGui::MenuItem("Expand hierarchy")) Emit(out,row.id,p.revision,editor::EditKind::Toggle,{},Value({5,1,0}));
+                            if (ImGui::MenuItem("Collapse hierarchy")) Emit(out,row.id,p.revision,editor::EditKind::Toggle,{},Value({5,0,0}));
+                        }
                         ImGui::EndDisabled();ImGui::EndPopup();
                     }
                 }

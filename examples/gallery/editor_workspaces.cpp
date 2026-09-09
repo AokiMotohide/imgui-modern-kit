@@ -409,6 +409,16 @@ void EditorWorkspaces::ApplyEvents() {
                 }
             }
         }
+        if (e.kind==editor::EditKind::Toggle && e.proposed.x==5) {
+            for (auto &object:objects) {
+                auto ancestor=object.id;
+                for (std::size_t depth=0;ancestor && depth<objects.size();++depth) {
+                    if (ancestor==e.target) {object.expanded=e.proposed.y!=0;changed=true;break;}
+                    const auto parent=std::find_if(objects.begin(),objects.end(),[&](const auto &v){return v.id==ancestor;});
+                    ancestor=parent==objects.end() ? 0 : parent->parent;
+                }
+            }
+        }
         for (auto &o : objects) {
             if (o.id == e.target && e.kind == editor::EditKind::Toggle) {
                 bool *fields[] = {&o.visible, &o.selectable, &o.renderable, &o.locked, &o.expanded};
@@ -431,8 +441,9 @@ void EditorWorkspaces::ApplyEvents() {
                     o.transform.scale = {e.proposed.x, e.proposed.y, e.proposed.z};
                     changed = true;
                 }
-                if (e.kind == editor::EditKind::Reparent) {
-                    bool cycle = false;
+                if (e.kind == editor::EditKind::Reparent && !o.locked) {
+                    const auto destination=std::find_if(objects.begin(),objects.end(),[&](const auto &v){return v.id==e.proposed.parent;});
+                    bool cycle = e.proposed.parent && (destination==objects.end() || destination->locked);
                     auto parent = e.proposed.parent;
                     for (int depth = 0; parent && depth < 4; ++depth) {
                         if (parent == o.id) {
@@ -793,6 +804,27 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     ImGui::EndChild();
     s.ApplyEvents();
 }
+void EditorWorkspaces::RebuildOutlinerRows() {
+    outlinerRows.clear();outlinerRows.reserve(objects.size());
+    ImGuiTextFilter filter(outliner.search);
+    auto matches=[&](auto &&self,const cg::ObjectView &object,std::size_t depth)->bool {
+        if (depth>objects.size()) return false;
+        if (filter.PassFilter(object.label)) return true;
+        for (const auto &child:objects) if (child.parent==object.id && self(self,child,depth+1)) return true;
+        return false;
+    };
+    auto append=[&](auto &&self,const cg::ObjectView &object,int depth)->void {
+        if (depth>=static_cast<int>(objects.size()) || !matches(matches,object,0)) return;
+        auto row=object;row.depth=depth;
+        row.hasChildren=std::any_of(objects.begin(),objects.end(),[&](const auto &child){return child.parent==object.id;});
+        outlinerRows.push_back(row);
+        if (object.expanded || filter.IsActive())
+            for (const auto &child:objects) if (child.parent==object.id) self(self,child,depth+1);
+    };
+    for (const auto &object:objects)
+        if (!object.parent || std::none_of(objects.begin(),objects.end(),[&](const auto &parent){return parent.id==object.parent;}))
+            append(append,object,0);
+}
 void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) {
     s.Initialize();
     Options(s);
@@ -869,11 +901,13 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     ImGui::SameLine();
     ImGui::BeginChild("Scene properties", {0, top}, ImGuiChildFlags_Borders);
     ImGui::BeginChild("Outliner", {0, top * .42f});
-    cg::SceneProvider scene{&s, s.revision, 4, [](void *u, int first, int count, std::string_view) {
-                                auto &s = *static_cast<EditorWorkspaces *>(u);
-                                return std::span<const cg::ObjectView>(s.objects).subspan(
-                                    first, (std::min)(count, 4 - first));
-                            }};
+    s.RebuildOutlinerRows();
+    cg::SceneProvider scene{&s,s.revision,static_cast<int>(s.outlinerRows.size()),
+        [](void *user,int first,int count,std::string_view) {
+            auto &rows=static_cast<EditorWorkspaces*>(user)->outlinerRows;
+            const auto begin=std::min(rows.size(),static_cast<std::size_t>(std::max(0,first)));
+            return std::span<const cg::ObjectView>(rows).subspan(begin,std::min(rows.size()-begin,static_cast<std::size_t>(std::max(0,count))));
+        }};
     cg::Outliner("Hierarchy", scene, s.outliner, s.objectSelection, s.events);
     ImGui::EndChild();
     ImGui::SeparatorText("Inspector");
