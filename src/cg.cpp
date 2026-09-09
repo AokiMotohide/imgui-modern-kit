@@ -477,7 +477,8 @@ void AnimationStrips(const char *id, std::span<const StripView> strips, std::uin
         auto range=strip.range;
         double repeat=strip.repeat,blend=strip.blend,scale=strip.scale;
         if (drag.active && drag.draft.target==strip.id && drag.draft.phase!=editor::Phase::Cancel) {
-            if (drag.draft.kind==editor::EditKind::Move) range={drag.draft.proposed.first,drag.draft.proposed.last};
+            if (drag.draft.kind==editor::EditKind::Move || drag.draft.kind==editor::EditKind::TrimStart ||
+                drag.draft.kind==editor::EditKind::TrimEnd) range={drag.draft.proposed.first,drag.draft.proposed.last};
             if (drag.draft.kind==editor::EditKind::StripSettings) {
                 repeat=drag.draft.proposed.y;blend=drag.draft.proposed.z;scale=drag.draft.proposed.x;
             }
@@ -506,14 +507,19 @@ void AnimationStrips(const char *id, std::span<const StripView> strips, std::uin
         ImGui::PushID(reinterpret_cast<void *>(static_cast<std::uintptr_t>(strip.id)));
         ImGui::BeginDisabled(strip.locked);
         ImGui::InvisibleButton("strip", {(std::max)(1.f, w), 26});
-        if (ImGui::IsItemActivated())
-            drag.Begin(strip.id, revision, editor::EditKind::Move, {strip.range.first, strip.range.last},
-                       editor::CurrentModifiers(), out);
+        if (ImGui::IsItemActivated()) {
+            const float mx=ImGui::GetIO().MousePos.x;
+            auto kind=mx<x+6 ? editor::EditKind::TrimStart : mx>x+w-6 ? editor::EditKind::TrimEnd : editor::EditKind::Move;
+            drag.Begin(strip.id, revision, kind, {strip.range.first, strip.range.last},editor::CurrentModifiers(), out);
+        }
+        if (ImGui::IsItemHovered() && (ImGui::GetIO().MousePos.x<x+6 || ImGui::GetIO().MousePos.x>x+w-6))
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
         if (ImGui::IsItemActive() && drag.active) {
             auto value = drag.draft.proposed;
             auto delta = editor::FromSeconds(ImGui::GetIO().MouseDelta.x / canvas.scale.x);
-            value.first += delta;
-            value.last += delta;
+            if (drag.draft.kind==editor::EditKind::TrimStart) value.first=(std::min)(value.first+delta,value.last-1);
+            else if (drag.draft.kind==editor::EditKind::TrimEnd) value.last=(std::max)(value.last+delta,value.first+1);
+            else {value.first+=delta;value.last+=delta;}
             if (delta)
                 drag.Update(revision, value, out);
         }

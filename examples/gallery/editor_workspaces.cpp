@@ -313,7 +313,8 @@ void EditorWorkspaces::ApplyEvents() {
             if (e.kind==editor::EditKind::StripSettings) {
                 strip.scale=e.proposed.x;strip.repeat=e.proposed.y;strip.blend=e.proposed.z;
                 strip.muted=(e.proposed.offset&1)!=0;strip.locked=(e.proposed.offset&2)!=0;changed=true;
-            } else if (e.kind==editor::EditKind::Move && !strip.locked) {
+            } else if ((e.kind==editor::EditKind::Move || e.kind==editor::EditKind::TrimStart ||
+                        e.kind==editor::EditKind::TrimEnd) && !strip.locked) {
                 strip.range={e.proposed.first,e.proposed.last};changed=true;
             }
         }
