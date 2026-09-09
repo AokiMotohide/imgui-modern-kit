@@ -299,3 +299,7 @@ Timelineの`AddKey`はtarget=channel、parent=clip、first=clip内tick、x=値�
 `ClipView::keyEvaluation` optionally borrows the full sorted local-time channel for key insertion evaluation. `keys` continues to supply drawable/editable clip-local keys. Empty evaluation context falls back to `keys`, then `keyDefaultValue`. The evaluator uses binary search and neighboring tangents; it does not draw or select off-clip context. Both spans remain host-owned.
 
 `ClipView::keyEvaluation`はkey挿入値の評価用に、ローカル時刻順の全channelを非所有参照できます。`keys`は引き続き描画・編集対象のclip内keyです。評価context未指定時は`keys`、さらに空なら`keyDefaultValue`を使用します。評価は二分探索と隣接接線を使用し、clip外contextを描画・選択しません。両spanともホスト所有です。
+
+`TrackLabels::kinds` supplies six UTF-8 role tooltips in TrackKind order for the track heading glyph. Gallery uses Japanese role names when its language option is enabled.
+
+`TrackLabels::kinds`はtrack見出しglyphの種類tooltipをTrackKind順に6つ指定します。Galleryの日本語切替では日本語の種類名を渡します。

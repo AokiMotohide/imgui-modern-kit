@@ -344,6 +344,15 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             Toggle(out,track,p.revision,static_cast<int>(TrackControl::Expanded),track.expanded);
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s",track.expanded ? s.trackLabels.collapse : s.trackLabels.expand);
         ImGui::SameLine(0,4);
+        if (s.icons) {
+            constexpr IconId kinds[]={IconId::Video,IconId::Audio,IconId::Text,IconId::EffectTrack,IconId::AdjustmentTrack,IconId::Layers};
+            const auto kind=static_cast<unsigned>(track.kind);
+            if (kind<std::size(kinds)) {
+                Icon(*s.icons,kinds[kind],{ImGui::GetFontSize()});
+                if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s",s.trackLabels.kinds[kind]);
+                ImGui::SameLine(0,4);
+            }
+        }
         ImGui::TextUnformatted(track.label);
         if (ImGui::BeginPopupContextItem("track layout")) {
             float height=s.heightDrag.active && s.heightDrag.draft.target==track.id ?

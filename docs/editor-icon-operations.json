@@ -268,57 +268,63 @@
     },
     {
       "operation": "VideoTrack",
-      "widget": "TrackHeader",
+      "widget": "Timeline track heading",
       "disposition": "reuse",
       "icon": "Video",
       "tooltip": "Video Track",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "role glyph with host UTF-8 kind tooltip, label and existing track state controls",
+      "status": "connected and native track heading inspected; new glyphs inspected at 16px light and 150% dark",
+      "evidence": "out/track-kinds-native/track-icons-light.png; out/track-kind-icons/icons-16-light.png; page-6-dark-150.png"
     },
     {
       "operation": "AudioTrack",
-      "widget": "TrackHeader",
+      "widget": "Timeline track heading",
       "disposition": "reuse",
       "icon": "Audio",
       "tooltip": "Audio Track",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "role glyph with host UTF-8 kind tooltip, label and existing track state controls",
+      "status": "connected and native track heading inspected; new glyphs inspected at 16px light and 150% dark",
+      "evidence": "out/track-kinds-native/track-icons-light.png; out/track-kind-icons/icons-16-light.png; page-6-dark-150.png"
     },
     {
       "operation": "CaptionTrack",
-      "widget": "TrackHeader",
+      "widget": "Timeline track heading",
       "disposition": "reuse",
       "icon": "Text",
       "tooltip": "Caption Track",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "role glyph with host UTF-8 kind tooltip, label and existing track state controls",
+      "status": "connected and native track heading inspected; new glyphs inspected at 16px light and 150% dark",
+      "evidence": "out/track-kinds-native/track-icons-light.png; out/track-kind-icons/icons-16-light.png; page-6-dark-150.png"
     },
     {
       "operation": "EffectTrack",
-      "widget": "TrackHeader",
+      "widget": "Timeline track heading",
       "disposition": "new",
       "icon": "EffectTrack",
       "tooltip": "Effect Track",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "role glyph with host UTF-8 kind tooltip, label and existing track state controls",
+      "status": "connected and native track heading inspected; new glyphs inspected at 16px light and 150% dark",
+      "evidence": "out/track-kinds-native/track-icons-light.png; out/track-kind-icons/icons-16-light.png; page-6-dark-150.png"
     },
     {
       "operation": "AdjustmentTrack",
-      "widget": "TrackHeader",
+      "widget": "Timeline track heading",
       "disposition": "new",
       "icon": "AdjustmentTrack",
       "tooltip": "Adjustment Track",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "role glyph with host UTF-8 kind tooltip, label and existing track state controls",
+      "status": "connected and native track heading inspected; new glyphs inspected at 16px light and 150% dark",
+      "evidence": "out/track-kinds-native/track-icons-light.png; out/track-kind-icons/icons-16-light.png; page-6-dark-150.png"
     },
     {
       "operation": "GroupTrack",
-      "widget": "TrackHeader",
+      "widget": "Timeline track heading",
       "disposition": "reuse",
       "icon": "Layers",
       "tooltip": "Group Track",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "role glyph with host UTF-8 kind tooltip, label and existing track state controls",
+      "status": "connected and native track heading inspected; new glyphs inspected at 16px light and 150% dark",
+      "evidence": "out/track-kinds-native/track-icons-light.png; out/track-kind-icons/icons-16-light.png; page-6-dark-150.png"
     },
     {
       "operation": "TrackAdd",
