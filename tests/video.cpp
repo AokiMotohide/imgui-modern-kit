@@ -200,6 +200,7 @@ int main() {
     clickTrack({sourceX+5,timeline.view.min.y+35});
     check(full.count==2 && full.Events()[1].proposed.x==static_cast<double>(video::TrackControl::Source) &&
               full.Events()[1].proposed.y==1,"source patch button emits a distinct control");
+    timeline.trackLabels.controls="\xe6\x93\x8d\xe4\xbd\x9c"; // Host UTF-8 menu label.
     timeline.headerWidth=100;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     full.Clear();frame(full);

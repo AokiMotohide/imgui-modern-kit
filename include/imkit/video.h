@@ -96,6 +96,13 @@ struct TimelineProvider {
     double totalHeight = 0;
     editor::Range contentRange{}; // Host-maintained total time extent for Fit.
 };
+struct TrackLabels {
+    // Borrowed UTF-8 strings. Array order follows Visible through Source in TrackControl.
+    std::array<const char *,7> buttons{"V","M","S","L","R","T","P"};
+    std::array<const char *,7> names{"Visible","Mute","Solo","Locked","Record armed","Target track","Source patch"};
+    const char *controls="Controls", *height="Track height", *on="On", *off="Off";
+    const char *expand="Expand track", *collapse="Collapse track";
+};
 struct TimelineState {
     struct MemberDrag {
         ClipView original{};
@@ -138,6 +145,7 @@ struct TimelineState {
     std::span<editor::Transaction> keyCompanions; // Host scratch, stable during a gesture.
     std::size_t keyCompanionCount=0;
     editor::Selection *keySelection=nullptr; // Optional non-owning selection distinct from clips.
+    TrackLabels trackLabels;
 };
 // Resolves both moving edges; ignores every selected clip and filters disabled kinds.
 editor::SnapResult ResolveTimelineSnap(const TimelineState &state, Tick delta,

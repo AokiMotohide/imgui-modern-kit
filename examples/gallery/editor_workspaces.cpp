@@ -1019,6 +1019,14 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         }
         return std::span<const video::ClipView>(s.selectedClips).first(n);
     };
+    s.timeline.trackLabels={};
+    if (s.japanese) {
+        s.timeline.trackLabels.buttons={"表示","消音","ソロ","固定","録音","対象","素材"};
+        s.timeline.trackLabels.names={"表示","ミュート","ソロ","ロック","録音待機","編集対象track","素材patch"};
+        s.timeline.trackLabels.controls="track操作";s.timeline.trackLabels.height="track高さ";
+        s.timeline.trackLabels.on="有効";s.timeline.trackLabels.off="無効";
+        s.timeline.trackLabels.expand="trackを展開";s.timeline.trackLabels.collapse="trackを折り畳む";
+    }
     s.timeline.icons=s.icons;
     s.timeline.bindings=std::span(s.bindings).first(s.bindingCount);
     p.contentRange=s.timelineBounds;
