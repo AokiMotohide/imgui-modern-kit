@@ -63,6 +63,7 @@ struct EditorWorkspaces {
     std::vector<editor::StableId> propertyGestureSelection;
     editor::AssetState assetState;
     cg::ViewportState viewport;
+    cg::Vec3 cursorPivot{};
     cg::Camera sceneCamera{{0,0,0},0,.15,10,.65,5,cg::Projection::Perspective};
     cg::OutlinerState outliner;
     cg::UVState uvState;

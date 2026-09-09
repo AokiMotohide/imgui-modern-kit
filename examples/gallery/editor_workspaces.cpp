@@ -4,6 +4,15 @@
 #include <cstdio>
 namespace imkit::gallery {
 namespace {
+void ApplyGizmoPreview(preview::Mesh &mesh,const cg::ViewportState &viewport) {
+    for (const auto *transaction:{&viewport.drag,&viewport.pivotDrag}) {
+        if (!transaction->active || transaction->draft.target!=mesh.id || transaction->draft.phase==editor::Phase::Cancel) continue;
+        const auto &v=transaction->draft.proposed;
+        if (transaction->draft.kind==editor::EditKind::Translate) mesh.transform.translation={v.x,v.y,v.z};
+        if (transaction->draft.kind==editor::EditKind::Rotate) mesh.transform.rotation={v.x,v.y,v.z};
+        if (transaction->draft.kind==editor::EditKind::Scale) mesh.transform.scale={v.x,v.y,v.z};
+    }
+}
 template<std::size_t N>
 int FilterProperties(editor::PropertyView (&rows)[N],const char *search) {
     ImGuiTextFilter filter(search);
@@ -290,19 +299,7 @@ void EditorWorkspaces::RenderPreview() {
         previewRenderer.Resize(static_cast<int>(viewportSize.x), static_cast<int>(viewportSize.y));
     preview::Mesh mesh{objects[1].id, cubeVertices, cubeIndices, objects[1].transform};
     mesh.wire=viewport.shading==cg::Shading::Wireframe;
-    if (viewport.drag.active) {
-        auto v = viewport.drag.draft.proposed;
-        if (viewport.drag.draft.kind == editor::EditKind::Translate)
-            mesh.transform.translation = {v.x, v.y, v.z};
-        if (viewport.drag.draft.kind == editor::EditKind::Rotate)
-            mesh.transform.rotation = {v.x, v.y, v.z};
-        if (viewport.drag.draft.kind == editor::EditKind::Scale)
-            mesh.transform.scale = {v.x, v.y, v.z};
-    }
-    if (viewport.pivotDrag.active && viewport.pivotDrag.draft.target==mesh.id) {
-        const auto &position=viewport.pivotDrag.draft.proposed;
-        mesh.transform.translation={position.x,position.y,position.z};
-    }
+    ApplyGizmoPreview(mesh,viewport);
     previewRenderer.Render({&mesh, 1}, viewport.camera);
 }
 void EditorWorkspaces::ApplyEvents() {
@@ -797,6 +794,14 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
           top = ImGui::GetContentRegionAvail().y * .6f;
     ImGui::BeginChild("View stack", {width - side - 10, top}, ImGuiChildFlags_Borders);
     ImGui::Checkbox("OpenGL preview", &s.useGL);
+    if (s.viewport.pivot==cg::Pivot::Cursor) {
+        double cursor[]={s.cursorPivot.x,s.cursorPivot.y,s.cursorPivot.z};
+        ImGui::BeginDisabled(s.viewport.drag.active);
+        ImGui::SetNextItemWidth(ImGui::GetFontSize()*20);
+        if (ImGui::DragScalarN("Cursor pivot",ImGuiDataType_Double,cursor,3,.01f))
+            s.cursorPivot={cursor[0],cursor[1],cursor[2]};
+        ImGui::EndDisabled();
+    }
     auto view = cg::BeginViewport(
         "Scene", s.viewport,
         s.useGL ? ImTextureRef(static_cast<ImTextureID>(s.previewRenderer.Texture())) : ImTextureRef{},
@@ -806,13 +811,43 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     if (!s.useGL) {
         preview::Mesh mesh{s.objects[1].id, s.cubeVertices, s.cubeIndices, s.objects[1].transform};
         mesh.wire=s.viewport.shading==cg::Shading::Wireframe;
+        ApplyGizmoPreview(mesh,s.viewport);
         preview::DrawListPreview(*ImGui::GetWindowDrawList(), {&mesh, 1}, s.viewport.camera, view.min,
                                  view.size, s.scratch);
     }
     cg::ViewportObjects(view, s.objects, s.viewport, s.objectSelection, s.revision, s.events, theme);
+    if (!s.viewport.drag.active) {
+        if (s.viewport.pivot==cg::Pivot::Cursor) s.viewport.pivotPosition=s.cursorPivot;
+        else {
+            cg::Vec3 sum{},low{},high{};int count=0;
+            for (const auto &object:s.objects) if (s.objectSelection.Contains(object.id)) {
+                const auto p=object.transform.translation;
+                sum.x+=p.x;sum.y+=p.y;sum.z+=p.z;
+                if (!count) low=high=p;
+                else {low={std::min(low.x,p.x),std::min(low.y,p.y),std::min(low.z,p.z)};
+                      high={std::max(high.x,p.x),std::max(high.y,p.y),std::max(high.z,p.z)};}
+                if (object.id==s.objects[1].id && s.viewport.pivot==cg::Pivot::Bounds) {
+                    const auto basis=cg::OrientationBasis(cg::Orientation::Local,object.transform,{});
+                    for (const auto &vertex:s.cubeVertices) {
+                        const double x=vertex.position[0]*object.transform.scale.x,
+                                     y=vertex.position[1]*object.transform.scale.y,
+                                     z=vertex.position[2]*object.transform.scale.z;
+                        const cg::Vec3 point{p.x+basis.x.x*x+basis.y.x*y+basis.z.x*z,
+                                             p.y+basis.x.y*x+basis.y.y*y+basis.z.y*z,
+                                             p.z+basis.x.z*x+basis.y.z*y+basis.z.z*z};
+                        low={std::min(low.x,point.x),std::min(low.y,point.y),std::min(low.z,point.z)};
+                        high={std::max(high.x,point.x),std::max(high.y,point.y),std::max(high.z,point.z)};
+                    }
+                }
+                ++count;
+            }
+            if (count) s.viewport.pivotPosition=s.viewport.pivot==cg::Pivot::Bounds ?
+                cg::Vec3{(low.x+high.x)/2,(low.y+high.y)/2,(low.z+high.z)/2} :
+                cg::Vec3{sum.x/count,sum.y/count,sum.z/count};
+        }
+    }
     for (const auto &o : s.objects)
         if (o.id == s.objectSelection.active) {
-            s.viewport.pivotPosition=o.transform.translation;
             cg::TransformGizmo(view, o, s.viewport, s.revision, s.events, theme);
         }
     cg::EndViewport();
