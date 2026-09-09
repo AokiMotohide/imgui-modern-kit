@@ -204,6 +204,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
               editor::EventBuffer &out, const Theme &theme, ImVec2 size) {
     ImGui::PushID(id);
     const float timelineWidth=size.x>0?size.x:ImGui::GetContentRegionAvail().x;
+    constexpr editor::Command toolCommands[]={editor::Command::ToolSelect,editor::Command::ToolRazor,
+        editor::Command::ToolRipple,editor::Command::ToolRoll,editor::Command::ToolSlip,editor::Command::ToolSlide,editor::Command::ToolHand};
     const auto &tools=s.labels.tools;
     for (int i = 0; i < 7; ++i) {
         if (i)
@@ -221,6 +223,17 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             if (active) ImGui::PopStyleColor();
         } else if (ImGui::Selectable(tools[i], static_cast<int>(s.tool) == i, 0, {56, 24}))
             s.tool = static_cast<Tool>(i);
+        if (ImGui::IsItemHovered() || ImGui::IsItemFocused()) {
+            const auto binding=std::find_if(s.bindings.begin(),s.bindings.end(),[&](const auto &b){return b.command==toolCommands[i] && b.chord;});
+            if (binding==s.bindings.end()) ImGui::SetTooltip("%s",s.labels.tooltips[i]);
+            else {
+                const auto chord=binding->chord;
+                ImGui::SetTooltip("%s (%s%s%s%s%s)",s.labels.tooltips[i],
+                    chord & ImGuiMod_Ctrl ? "Ctrl+" : "",chord & ImGuiMod_Shift ? "Shift+" : "",
+                    chord & ImGuiMod_Alt ? "Alt+" : "",chord & ImGuiMod_Super ? "Super+" : "",
+                    ImGui::GetKeyName(static_cast<ImGuiKey>(chord & ~ImGuiMod_Mask_)));
+            }
+        }
     }
     ImGui::SameLine();
     ImGui::Checkbox(s.labels.snap, &s.snapping);
@@ -288,6 +301,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     bool keySeen=false;
     const bool keyCommands=ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows) && !io.WantTextInput &&
         !s.keyDrag.active && !s.envelopeDrag.active && !s.drag.active && !s.transitionDrag.active && !s.captionDrag.active;
+    for (int i=0;i<7;++i) if (editor::CommandPressed(toolCommands[i],s.bindings,keyCommands && !s.heightDrag.active))
+        s.tool=static_cast<Tool>(i);
     const bool duplicateKeys=editor::CommandPressed(editor::Command::Duplicate,s.bindings,keyCommands);
     const bool removeKeys=editor::CommandPressed(editor::Command::Delete,s.bindings,keyCommands);
     const bool addKey=editor::CommandPressed(editor::Command::AddKey,s.bindings,keyCommands);
