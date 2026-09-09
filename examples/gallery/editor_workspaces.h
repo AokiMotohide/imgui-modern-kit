@@ -127,7 +127,7 @@ struct EditorWorkspaces {
     std::size_t monitorClipIndex=0;
     ImVec2 programMonitorMin{},programMonitorMax{};
     std::uint64_t revision = 1;
-    std::size_t queryCount = 0, queriedClips = 0, commits = 0;
+    std::size_t queryCount = 0, queriedClips = 0, queriedKeys = 0, queriedTracks = 0, commits = 0;
     bool initialized = false, large = false, japanese = false, narrow = false, useGL = true;
     int animationPage = -1;
     int clipsPerTrack = 12;

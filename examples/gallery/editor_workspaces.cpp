@@ -120,7 +120,7 @@ void Options(EditorWorkspaces &s) {
         ImGui::EndPopup();
     }
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("Right-click for transition Undo / Redo");
-    s.queryCount = s.queriedClips = 0;
+    s.queryCount = s.queriedClips = s.queriedKeys = s.queriedTracks = 0;
 }
 } // namespace
 void EditorWorkspaces::Dataset(bool big) {
@@ -240,6 +240,7 @@ std::span<const video::ClipView> EditorWorkspaces::QueryClips(editor::StableId t
     };
     visit(visit,1,0,clipTreeBase);
     queriedClips+=visibleClips.size();
+    for (const auto &clip:visibleClips) queriedKeys+=clip.keys.size();
     return visibleClips;
 }
 void EditorWorkspaces::RebuildKeyIndex() {
@@ -276,6 +277,7 @@ void EditorWorkspaces::RebuildKeyIndex() {
     }
 }
 std::span<const editor::Keyframe> EditorWorkspaces::QueryKeys(editor::CurveQuery query) {
+    ++queryCount;
     visibleKeys.clear();
     for (auto [begin,end]:keyChannels) {
         auto channel=std::span<const editor::Keyframe>(keys).subspan(begin,end-begin);
@@ -289,6 +291,7 @@ std::span<const editor::Keyframe> EditorWorkspaces::QueryKeys(editor::CurveQuery
     }
     curvePreviewKeys.resize(visibleKeys.size());
     curve.previewKeys=curvePreviewKeys;
+    queriedKeys+=visibleKeys.size();
     return visibleKeys;
 }
 void EditorWorkspaces::RebuildTrackLayout() {
@@ -1017,6 +1020,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     p.tracks = [](void *u, int a, int n) {
         auto &s = *static_cast<EditorWorkspaces *>(u);
         ++s.queryCount;
+        s.queriedTracks+=n;
         return std::span<const video::TrackView>(s.tracks).subspan(a, n);
     };
     p.clips = [](void *u, editor::StableId track, editor::Range range) {
@@ -1030,6 +1034,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         index=(std::min)(index,s.tracks.size());
         auto last=std::lower_bound(s.trackOffsets.begin()+index,s.trackOffsets.end(),lastPixel);
         auto end=(std::min)(static_cast<std::size_t>(last-s.trackOffsets.begin()),s.tracks.size());
+        s.queriedTracks+=end-index;
         return video::TrackLayout{std::span<const video::TrackView>(s.tracks).subspan(index,end-index),s.trackOffsets[index]};
     };
     p.totalHeight=s.trackOffsets.back();
