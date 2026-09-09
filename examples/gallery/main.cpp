@@ -484,6 +484,17 @@ int VerifyInspectorModel() {
     check(state.timeline.time.playhead==200,"next property key navigation");
     key(editor::PropertyKeyAction::Remove,100);
     check(state.propertyKeys[state.objectPropertyIds[1][4]].size()==1,"property key removal");
+    const auto originalKey=state.keys[1];
+    const auto keyCount=state.keys.size();
+    state.events.Clear();
+    state.events.Push({originalKey.id,state.revision,editor::Phase::Commit,editor::EditKind::Duplicate,{},
+        editor::Value{originalKey.tick+editor::TicksPerSecond,0,0,0,originalKey.value+.1}});
+    state.ApplyEvents();
+    auto source=std::find_if(state.keys.begin(),state.keys.end(),[&](const auto &key){return key.id==originalKey.id;});
+    auto duplicate=std::find_if(state.keys.begin(),state.keys.end(),[&](const auto &key){return key.id!=originalKey.id &&
+        key.channel==originalKey.channel && key.tick==originalKey.tick+editor::TicksPerSecond && key.value==originalKey.value+.1;});
+    check(state.keys.size()==keyCount+1 && source!=state.keys.end() && source->tick==originalKey.tick && duplicate!=state.keys.end(),
+        "curve duplication assigns a new ID and preserves source key");
     state.Dataset(true);
     auto visible=state.QueryKeys({{editor::FromSeconds(100),editor::FromSeconds(101)},-10,10});
     check(state.keyChannels.size()==3 && visible.size()<32,"100k curve query returns bounded keys from three channels");
