@@ -50,13 +50,10 @@ editor::Value Value(const ClipEdit &e, StableId track, double speed) {
     return {e.start, e.start + e.duration, e.sourceIn, track, speed};
 }
 void Toggle(editor::EventBuffer &out, const TrackView &track, std::uint64_t revision, int field, bool value) {
-    out.Push({track.id,
-              revision,
-              editor::Phase::Commit,
-              editor::EditKind::Toggle,
-              {0, 0, 0, 0, static_cast<double>(field), value ? 1. : 0.},
-              {0, 0, 0, 0, static_cast<double>(field), value ? 0. : 1.},
-              editor::CurrentModifiers()});
+    if (out.count>out.storage.size() || out.storage.size()-out.count<2) {out.overflow=true;return;}
+    editor::Value original{0,0,0,0,static_cast<double>(field),value ? 1. : 0.};
+    editor::Transaction edit;edit.Begin(track.id,revision,editor::EditKind::Toggle,original,editor::CurrentModifiers(),out);
+    edit.draft.proposed.y=value ? 0. : 1.;edit.Commit(revision,out);
 }
 std::size_t ActiveDrags(const TimelineState &s) {
     std::size_t count = s.drag.active + s.previousDrag.active + s.nextDrag.active;

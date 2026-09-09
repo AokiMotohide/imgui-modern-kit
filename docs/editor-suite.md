@@ -560,3 +560,7 @@ Timelineで選択済みclipをCtrlクリックすると選択解除だけを行�
 Razor emits a complete Split Begin/Commit pair with the original clip value, proposed cut, owner ID, starting revision and modifiers. Two event slots are reserved before publishing either event; shortage reports overflow with no partial transaction. Public ImGui IO regression verifies both paths.
 
 Razorは元clip値、分割提案、対象ID、開始revision、modifierを含むSplitのBegin／Commitを返します。出力前に2イベント分の容量を確認し、不足時は部分transactionを出さずoverflowを通知します。通常時と容量不足時を公開ImGui IOの回帰で確認しました。
+
+Track header toggles, including collapse and the narrow-pane control menu, emit a capacity-checked Begin/Commit pair with original and proposed boolean values. Insufficient capacity emits neither event and reports overflow. Public IO regression covers collapse, Source patch, narrow controls and shortage.
+
+Track headerのtoggleは、折り畳みと狭いpaneのmenuを含め、元値と提案値を持つBegin／Commitの組を返します。容量不足時はどちらも出力せずoverflowを通知します。折り畳み、Source patch、狭いpaneの操作と容量不足を公開IO回帰で確認しました。
