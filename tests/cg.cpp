@@ -354,7 +354,9 @@ int main() {
                        imkit::MakePrecisionTheme(imkit::ColorScheme::Dark));
         ImGui::End(); ImGui::Render();
     };
+    for (TransformTool tool:{TransformTool::Translate,TransformTool::Scale})
     for (Axis plane:{Axis::XY,Axis::YZ,Axis::ZX,Axis::Screen}) {
+        handleState.tool=tool;
         handleState.drag={};
         AlignCamera(handleState.camera,plane==Axis::YZ ? Axis::X : plane==Axis::ZX ? Axis::Y : Axis::Z);
         const auto origin=Project({},handleState.camera,handleView.min,handleView.size).screen;
@@ -379,6 +381,10 @@ int main() {
         double values[3]{};
         if (plane==Axis::Screen) {values[0]=.2;values[1]=.35;}
         else {values[a]=.2;values[b]=.35;}
+        if (tool==TransformTool::Scale) {
+            if (plane==Axis::Screen) values[0]=values[1]=values[2]=.55;
+            for (double &value:values) value+=1;
+        }
         const auto proposed=handleState.drag.draft.proposed;
         check(std::abs(proposed.x-values[0])<1e-5 && std::abs(proposed.y-values[1])<1e-5 &&
               std::abs(proposed.z-values[2])<1e-5,"plane/screen independent two dimensional translation");
@@ -415,6 +421,16 @@ int main() {
               handleEvents.Events()[0].kind==imkit::editor::EditKind::Rotate &&
               handleEvents.Events()[0].phase==imkit::editor::Phase::Commit,"rotation ring commits typed rotation");
     }
+    handleState.drag={}; AlignCamera(handleState.camera,Axis::Z);
+    auto ringCenter=Project({},handleState.camera,handleView.min,handleView.size).screen;
+    io.AddMousePosEvent(ringCenter.x+88,ringCenter.y);handleFrame();handleFrame();
+    io.AddMouseButtonEvent(0,true);handleFrame();
+    check(handleState.drag.active && handleState.activeAxis==Axis::Screen,"screen rotation ring begins");
+    io.AddMousePosEvent(ringCenter.x,ringCenter.y-88);handleFrame();
+    check(std::abs(handleState.drag.draft.proposed.z-3.141592653589793/2)<1e-6,
+          "screen ring rotates around view normal");
+    io.AddMouseButtonEvent(0,false);handleFrame();
+    check(!handleState.drag.active && handleEvents.count==1,"screen rotation commits once");
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
