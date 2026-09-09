@@ -487,6 +487,26 @@ void EditorWorkspaces::CopyClipEditingData(const video::ClipView &source,video::
 }
 void EditorWorkspaces::ApplyEvents() {
     bool changed = false;
+    const auto clipBodyEdit=[](editor::EditKind kind) {
+        return kind==editor::EditKind::Move || kind==editor::EditKind::Duplicate || kind==editor::EditKind::Split ||
+            kind==editor::EditKind::TrimStart || kind==editor::EditKind::TrimEnd || kind==editor::EditKind::Slip ||
+            kind==editor::EditKind::Ripple || kind==editor::EditKind::Roll || kind==editor::EditKind::Slide;
+    };
+    bool rejectClipBatch=false;
+    for (const auto &event:events.Events()) {
+        if (event.phase!=editor::Phase::Commit || event.revision!=revision || !clipBodyEdit(event.kind)) continue;
+        const auto clip=std::find_if(clips.begin(),clips.end(),[&](const auto &c){return c.id==event.target;});
+        if (clip==clips.end()) continue; // Other modules use the same typed edit kinds.
+        const auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==clip->track;});
+        rejectClipBatch|=clip->locked || track==tracks.end() || track->locked;
+        if (event.kind==editor::EditKind::Split) rejectClipBatch|=!video::SplitClip(*clip,event.proposed.first,{}).valid;
+        if (event.kind==editor::EditKind::Ripple) {
+            const auto end=clip->start+clip->duration;
+            rejectClipBatch|=std::any_of(clips.begin(),clips.end(),[&](const auto &c) {
+                return c.track==clip->track && c.start>=end && c.locked;
+            });
+        }
+    }
     std::map<editor::StableId,editor::StableId> duplicateLinks,duplicateGroups;
     const auto remapRelationship=[&](auto &mapping,editor::StableId id) {
         if (!id) return editor::StableId{0};
@@ -618,6 +638,7 @@ void EditorWorkspaces::ApplyEvents() {
         }
         auto clip = std::find_if(clips.begin(), clips.end(), [&](const auto &c) { return c.id == e.target; });
         if (clip!=clips.end()) {
+            if (rejectClipBatch && clipBodyEdit(e.kind)) continue;
             const auto ownerTrack=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==clip->track;});
             if (clip->locked || ownerTrack==tracks.end() || ownerTrack->locked) continue;
         }

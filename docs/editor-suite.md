@@ -675,3 +675,7 @@ Timelineの開始・終了trimはMoveと同じ完全query契約で選択・linke
 Slip uses complete selected/linked/group resolution and a shared timeline delta bounded by every member source range and speed. Placement and duration remain fixed. Public IO regression verifies a short remaining source handle constrains the whole set and both source edits commit.
 
 Slipも選択・linked・groupの全対象を解決し、各素材範囲と速度から共通のTimeline deltaを制限します。配置と長さは変えません。公開IO回帰で、関連素材の残り範囲が全体を制限し、両対象の素材位置変更がCommitされることを確認しました。
+
+Before applying clip-body Commit events, Gallery preflights the batch for locked clip/track owners, invalid Split calculations and locked Ripple followers. Failure rejects all clip-body edits in that batch before mutation. Host-model regression verifies that a late locked member leaves the first clip and revision unchanged.
+
+Galleryはclip本体のCommit適用前に、対象clip・trackのlock、分割計算、Ripple後続clipのlockをバッチ単位で検証します。失敗時はデータ変更前に同じバッチのclip本体編集をすべて拒否します。ホストモデル回帰で、後続の対象がロックされていても先頭clipとrevisionが変わらないことを確認しています。
