@@ -188,6 +188,19 @@ parent 0のReparentを返します。GalleryはStableIdの表示順をobject保�
 同じ親の行だけを交換します。lockedな隣接行は越えません。ホストmodel検証で行順変更と
 object ID・保存位置の維持を確認しています。
 
+Outliner Duplicate emits a host action for the selected row. Gallery appends an
+object with a new StableId, nine separately allocated property IDs, copied transform
+and restrictions, the same parent, and its own editable name. Mesh entries are
+included in both preview paths. Object/property storage grows with duplication while
+existing IDs and order references remain stable. Host-model checks prove independent
+transform editing and property IDs. Hierarchy subtree duplication and linked geometry
+semantics are not established by this single-object operation.
+OutlinerのDuplicateは対象行のホスト操作を返します。Galleryは新しいStableId、個別に割り当てた
+9個のproperty ID、コピーしたtransform・restriction、同じparent、独立した名前を持つobjectを追加します。
+meshは両previewへ含めます。保存領域は複製に応じて増え、既存IDと表示順参照を維持します。
+ホストmodel検証でproperty IDの独立性と元objectに影響しない移動を確認しています。
+この単一object操作では子孫階層の複製やlinked geometryの意味は検証していません。
+
 Outliner starts inline rename from its context menu or a double click. The public
 InputText widget edits the UTF-8 draft; Enter commits and Escape cancels. Rename
 events preserve original/proposed text and starting revision; terminal overflow is

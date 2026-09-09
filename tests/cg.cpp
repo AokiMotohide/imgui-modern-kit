@@ -549,12 +549,12 @@ int main() {
           handleEvents.Events().back().phase==imkit::editor::Phase::Cancel,"Outliner Escape cancels rename");
     io.AddKeyEvent(ImGuiKey_Escape,false);nameFrame();
     nameObject.parent=0x100000050ull;
-    openRename(2);
+    openRename(3);
     check(contextActions==1 && contextResult.target==nameObject.id && contextResult.kind==imkit::editor::EditKind::Reorder &&
           contextResult.proposed.offset==-1 && contextResult.proposed.parent==nameObject.parent,"Outliner Move up emits parent-scoped preceding sibling intent");
-    openRename(3);
-    check(contextActions==2 && contextResult.proposed.offset==1,"Outliner Move down emits following sibling intent");
     openRename(4);
+    check(contextActions==2 && contextResult.proposed.offset==1,"Outliner Move down emits following sibling intent");
+    openRename(5);
     check(contextActions==3 && contextResult.kind==imkit::editor::EditKind::Reparent &&
           contextResult.proposed.parent==0 && contextResult.original.parent==nameObject.parent,"Outliner Move to root retains original parent");
     ImGui::DestroyContext(context);
