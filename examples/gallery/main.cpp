@@ -519,6 +519,21 @@ int VerifyInspectorModel() {
         }
     }
     check(matches,"five handle modes preserve full-channel evaluation at visible boundaries");
+    const auto stripId=state.animationStrips[0].id,neighborId=state.animationStrips[1].id;
+    state.events.Clear();
+    state.events.Push({stripId,state.revision,editor::Phase::Update,editor::EditKind::StripSettings,{},
+        {0,0,1,0,2,3,.4}});state.ApplyEvents();
+    check(state.animationStrips[0].scale==1,"strip Update preserves host settings");
+    state.events.Clear();
+    state.events.Push({stripId,state.revision,editor::Phase::Commit,editor::EditKind::StripSettings,{},
+        {0,0,1,0,2,3,.4}});state.ApplyEvents();
+    check(state.animationStrips[0].scale==2 && state.animationStrips[0].repeat==3 &&
+        state.animationStrips[0].blend==.4 && state.animationStrips[0].muted,"strip Commit applies settings");
+    state.events.Clear();
+    state.events.Push({stripId,state.revision,editor::Phase::Commit,editor::EditKind::Reorder,{},
+        {0,0,1,neighborId}});state.ApplyEvents();
+    check(state.animationStrips[1].id==stripId && state.animationStrips[0].id==neighborId,
+        "strip Reorder swaps host order by StableId");
     std::puts("Evidence: host model/event application; no native OS or GUI input.");
     return failures?1:0;
 }
