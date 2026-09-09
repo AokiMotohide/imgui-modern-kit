@@ -512,6 +512,12 @@ void VerifyMonitors(Host &h,const std::filesystem::path &out) {
     h.Frame({},out/"monitor-details-light.png");
     h.s.dark=true;h.s.theme=MakePrecisionTheme(ColorScheme::Dark);h.s.scale=1.5f;h.Settle();
     h.Frame({},out/"monitor-details-dark-150.png");
+    s.events.Push({700002,s.revision,editor::Phase::Commit,editor::EditKind::Property,{},editor::Value{0,0,0,0,1.2}});
+    s.events.Push({700003,s.revision,editor::Phase::Commit,editor::EditKind::Property,{},editor::Value{0,0,0,0,.1}});
+    s.ApplyEvents();h.Frame({},out/"monitor-transform-host.png");
+    const bool transformed=s.clipPropertyValues[1]==1.2 && s.clipPropertyValues[2]==.1;
+    log<<(transformed ? "PASS " : "FAIL ")<<"host Inspector events change Monitor bounds parameters\n";
+    if (!transformed) throw std::runtime_error("Monitor bounds host apply failed");
     log<<"Public ImGui IO and native GL capture; native OS/IME input not tested.\n";
 }
 

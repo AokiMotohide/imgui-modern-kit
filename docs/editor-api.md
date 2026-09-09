@@ -279,6 +279,7 @@ and displayed as a marked outline, not a library topology analysis.
 | `EvaluateEnvelope(points,tick)` | Linear gain, constant endpoints, empty=1 / 線形gain、範囲外は端点、空なら1 |
 | `EditTransition(clip,end,delta)` | Pure duration edit, preserves the other end and clamps to clip duration / 他端を維持しclip長内に制限する純粋計算 |
 | `TransitionPicker(id,clip,revision,events,trackLocked)` | Atomic Begin/Commit type choice; host applies resulting transition kinds / 種別変更をBegin／Commitの一括イベントで返しホストが適用 |
+| `MonitorOptions::transformBounds`, `anchor` | Host-provided normalized display rectangle and point; independent of texture flip / texture反転とは独立したホスト指定の表示正規化矩形と点 |
 | `MonitorOptions::metadataPreset` | `Off`, `Clip`, `Details`; host owns choice / 選択状態はホスト所有 |
 | `MonitorOptions::clipName`, `markerComment`, `metadata` | UTF-8 strings/lines borrowed for the call; clipped to available overlay space / 呼出し中だけ借用するUTF-8文字列・行。overlay範囲内にclip |
 | `EditorPalette::effectClip`, `adjustmentClip`, `groupClip` | Semantic colors used by the corresponding Timeline track roles / 対応するTimeline track種別の意味色 |

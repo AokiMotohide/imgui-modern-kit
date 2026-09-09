@@ -60,6 +60,7 @@ int main() {
     const char *monitorLines[]={"1920 x 1080","Proxy"};
     video::MonitorOptions monitorOptions;monitorOptions.metadataPreset=video::MonitorMetadataPreset::Details;
     monitorOptions.clipName="Clip";monitorOptions.markerComment="Marker comment";monitorOptions.metadata=monitorLines;
+    monitorOptions.transform=true;monitorOptions.transformBounds={{.1,.25},{.9,.75}};
     video::Monitor("metadata monitor",{},ImVec2{200,120},time,monitorOptions,theme);
     video::EnvelopePoint envelopePoint{8001,0,1};
     (void)envelopePoint;

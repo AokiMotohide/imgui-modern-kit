@@ -815,6 +815,9 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     }
     video::MonitorOptions program{true,true,true,true,s.japanese ? "プログラム" : "Program",{.5f,.5f},true};
     program.metadataPreset=s.monitorMetadata;
+    const double extent=.3*std::max(0.,s.clipPropertyValues[1]),center=.5+s.clipPropertyValues[2];
+    program.transformBounds={{center-extent,.5-extent},{center+extent,.5+extent}};
+    program.anchor={static_cast<float>(center),.5f};
     char timing[96]{},source[96]{};
     const char *metadata[]={timing,source};
     if (s.monitorClipIndex<s.clips.size()) {
