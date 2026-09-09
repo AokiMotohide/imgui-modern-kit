@@ -896,6 +896,14 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
                 static constexpr std::array<editor::StableId,4> ids{900001,900002,900003,900004};
                 return mode==cg::UVSelection::Vertex ? std::span<const editor::StableId>(ids) : std::span<const editor::StableId>{};
             };
+            p.selectionQuery=[](void *u,editor::Rect,cg::UVSelection mode)->std::span<const editor::SelectablePoint> {
+                auto &host=*static_cast<EditorWorkspaces *>(u);
+                if (mode!=cg::UVSelection::Vertex) return {};
+                for (std::size_t i=0;i<host.uv.size();++i)
+                    host.uvSelectionPoints[i]={host.uv[i].id,host.uv[i].uv,false};
+                return host.uvSelectionPoints;
+            };
+            s.uvState.canvas.selectionPath=s.uvSelectionPath;
             s.uvState.bindings=std::span(s.bindings).first(s.bindingCount);
             cg::UVEditor("uv", p, texture, s.uvState, s.uvSelection, s.events, theme, {0, 0});
             ImGui::EndTabItem();

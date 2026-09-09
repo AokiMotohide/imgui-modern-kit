@@ -473,6 +473,20 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
         if (ImGui::IsMouseReleased(0))
             s.drag.Commit(p.revision, out);
     }
+    if (p.selectionQuery && !s.drag.active && (!hit || s.canvas.selecting)) {
+        struct Query {const UVProvider &provider;UVSelection mode;} query{p,s.selection};
+        editor::CanvasSelection(view,s.canvas,{&query,p.revision,
+            [](void *u,editor::Rect bounds) {
+                auto &q=*static_cast<Query *>(u);return q.provider.selectionQuery(q.provider.user,bounds,q.mode);
+            }},selection,out,theme,s.lassoSelect);
+    }
+    ImGui::PushID(id);
+    if (view.hovered && ImGui::IsMouseReleased(1) && !s.drag.active) ImGui::OpenPopup("UV selection options");
+    if (ImGui::BeginPopup("UV selection options")) {
+        ImGui::Checkbox("Lasso selection",&s.lassoSelect);
+        ImGui::EndPopup();
+    }
+    ImGui::PopID();
     editor::EndCanvas();
 }
 void AnimationStrips(const char *id, std::span<const StripView> strips, std::uint64_t revision,
