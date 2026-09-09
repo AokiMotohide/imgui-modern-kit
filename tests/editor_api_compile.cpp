@@ -46,6 +46,8 @@ int main() {
     editor::AssetBrowser("assets", {}, asset, selection, events);
     ImGui::EndChild();
     video::Timeline("timeline", {}, timeline, selection, events, theme, {300, 100});
+    (void)video::EditTransition(video::ClipView{},false,0);
+    (void)editor::EditKind::TransitionDuration;
     video::TrackView trackView;
     auto trackHeight=video::TrackExtent(trackView);
     (void)trackHeight;

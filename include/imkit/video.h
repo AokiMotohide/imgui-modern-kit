@@ -32,6 +32,12 @@ struct ClipView {
     Tick transitionIn = 0, transitionOut = 0;
     std::span<const AudioBucket> audioBuckets;
 };
+struct TransitionEdit {
+    Tick inDuration=0,outDuration=0;
+    bool valid=false;
+};
+// Delta changes the selected duration, not the clip position. The other end is preserved.
+TransitionEdit EditTransition(const ClipView &clip, bool end, Tick durationDelta);
 struct ClipConstraints {
     Tick mediaFirst = 0, mediaLast = editor::TicksPerSecond * 3600, minimumDuration = 1;
 };
