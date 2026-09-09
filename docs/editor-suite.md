@@ -155,6 +155,13 @@ engineを提供するものではありません。GalleryのColorタブはevent
 Outliner restriction/reparent events, UV transforms, DopeSheet and generic animation
 strip movement. `OrientationBasis` resolves world/local/view/parent/custom axes.
 Host-supplied pivotPosition represents the median, bounds or cursor location.
+Gallery computes the selection-origin median and world bounds (transformed cube
+vertices, origins for non-mesh entries), and offers editable cursor coordinates.
+The pivot stays fixed during a drag. DrawList and OpenGL previews apply both the
+transform and its companion position transaction.
+Galleryは選択originの平均とworld bounds（cubeの変換後頂点、非mesh項目はorigin）を計算し、
+cursor座標は入力で変更できます。drag中はpivotを固定し、DrawList・OpenGL双方のpreviewへ
+姿勢／scaleと位置のtransactionを反映します。
 Scene geometry, hierarchy validation, selection and animation runtime stay host-owned.
 CGは投影・navigation・object origin選択・軸gizmo・Outlinerの制限/reparent event・UV変換・
 Dope Sheet・animation strip移動を提供します。orientationは純粋関数で計算し、pivotPositionは
