@@ -896,19 +896,30 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
                              }};
             p.all=[](void *,cg::UVSelection mode)->std::span<const editor::StableId> {
                 static constexpr std::array<editor::StableId,4> ids{900001,900002,900003,900004};
+                static constexpr std::array<editor::StableId,4> edgeIds{1,2,3,4};
+                if (mode==cg::UVSelection::Edge) return edgeIds;
                 return mode==cg::UVSelection::Vertex ? std::span<const editor::StableId>(ids) : std::span<const editor::StableId>{};
             };
             p.selectionQuery=[](void *u,editor::Rect,cg::UVSelection mode)->std::span<const editor::SelectablePoint> {
                 auto &host=*static_cast<EditorWorkspaces *>(u);
-                if (mode!=cg::UVSelection::Vertex) return {};
-                for (std::size_t i=0;i<host.uv.size();++i)
-                    host.uvSelectionPoints[i]={host.uv[i].id,host.uv[i].uv,false};
+                if (mode!=cg::UVSelection::Vertex && mode!=cg::UVSelection::Edge) return {};
+                for (std::size_t i=0;i<host.uv.size();++i) {
+                    const auto &edge=host.edges[i];
+                    host.uvSelectionPoints[i]=mode==cg::UVSelection::Vertex ?
+                        editor::SelectablePoint{host.uv[i].id,host.uv[i].uv,false} :
+                        editor::SelectablePoint{edge.id,{(edge.a.x+edge.b.x)*.5,(edge.a.y+edge.b.y)*.5},false};
+                }
                 return host.uvSelectionPoints;
             };
             p.selected=[](void *u,std::span<const editor::StableId> ids,cg::UVSelection mode)->std::span<const cg::UVVertex> {
                 auto &host=*static_cast<EditorWorkspaces *>(u);std::size_t count=0;
-                if (mode==cg::UVSelection::Vertex) for (const auto &vertex:host.uv)
-                    if (std::find(ids.begin(),ids.end(),vertex.id)!=ids.end()) host.selectedUVVertices[count++]=vertex;
+                for (const auto &vertex:host.uv) {
+                    bool selected=mode==cg::UVSelection::Vertex && std::find(ids.begin(),ids.end(),vertex.id)!=ids.end();
+                    if (mode==cg::UVSelection::Edge) for (const auto &edge:host.edges)
+                        if ((edge.aVertex==vertex.id || edge.bVertex==vertex.id) &&
+                            std::find(ids.begin(),ids.end(),edge.id)!=ids.end()) selected=true;
+                    if (selected) host.selectedUVVertices[count++]=vertex;
+                }
                 return std::span<const cg::UVVertex>(host.selectedUVVertices).first(count);
             };
             s.uvState.companionDrags=s.uvCompanions;

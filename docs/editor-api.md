@@ -253,3 +253,10 @@ to the host texture dimensions for pixel tooltips. UDIM labels use 1001 + u + 10
 nonnegative tile rows and columns 0..9; other columns are explicitly outside this convention.
 UVの内部座標はnormalizedを維持します。pixel表示には`UVState::imageSize`へホストtextureの
 寸法を設定します。UDIMは非負の行と0..9列で1001 + u + 10vを表示し、範囲外は明示します。
+
+UV Edge mode keeps edge IDs in Selection. `selected` expands them into unique endpoint
+vertices; transform events target those vertex IDs. `UVEdge::aVertex/bVertex` link edge
+preview to vertex proposals. Gallery box/lasso tests edge midpoints.
+UV EdgeモードのSelectionは辺IDを保持します。`selected`は重複を除いた端点頂点へ展開し、
+変換イベントは頂点IDを対象にします。`UVEdge::aVertex/bVertex`で辺のプレビューを頂点の
+提案座標へ接続します。Galleryのbox/lasso選択は辺の中点を判定します。
