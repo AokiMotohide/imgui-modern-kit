@@ -1270,11 +1270,14 @@ int main(int argc, char **argv) {
             if (verifyLinkedClips) VerifyLinkedClips(h,out);
             if (verifyNormals) {
                 h.Page(9);h.s.editors.viewport.normals=true;h.s.editors.viewport.faceNormals=true;
+                h.s.editors.viewport.cameraFrame=true;h.s.editors.viewport.safeFrame=true;
+                h.s.editors.viewport.renderRegion=true;h.s.editors.viewport.passepartout=true;
+                h.s.editors.viewport.measurement=true;
                 const auto meshObject=std::find_if(h.s.editors.objects.begin(),h.s.editors.objects.end(),[](const auto &o){return o.geometry!=0;});
                 if (meshObject==h.s.editors.objects.end()) throw std::runtime_error("normal capture requires mesh object");
-                meshObject->transform.shear={.5,.2,0};h.Settle();
+                meshObject->transform.shear={.5,.2,0};h.s.editors.objectSelection.Set(meshObject->id);h.Settle();
                 h.Frame({},out/"cg-normals-light.png");
-                h.s.dark=true;h.s.theme=imkit::MakePrecisionTheme(imkit::ColorScheme::Dark);h.s.scale=1.5f;h.Settle();
+                h.s.editors.japanese=true;h.s.dark=true;h.s.theme=imkit::MakePrecisionTheme(imkit::ColorScheme::Dark);h.s.scale=1.5f;h.Settle();
                 h.Frame({},out/"cg-normals-dark-150.png");
             }
             if (verifyMonitors) VerifyMonitors(h,out);
