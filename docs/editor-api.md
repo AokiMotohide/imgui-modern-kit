@@ -153,3 +153,7 @@ CG Inspectorの成分編集とresetは選択objectへ同じ絶対値を適用し
 `FollowPlayhead` provides Off/Smooth/Page following in seconds. Smooth keeps a ten-percent screen margin in either direction; Page advances whole visible widths and handles reverse playback and multi-page jumps. `TimelineState.autoScroll` selects the behavior through Timeline options.
 
 `FollowPlayhead` は秒単位のOff/Smooth/Page追従を提供します。Smoothは進行方向の両側に表示幅の10%の余白を保ち、Pageは表示幅単位で切り替え、逆再生と複数page移動にも対応します。Timeline optionsで `TimelineState.autoScroll` を変更できます。
+
+TimeRuler draws frame-aligned major/minor ticks with density derived from horizontal zoom. Playback following updates the shared canvas before the Timeline ruler and clips draw. Invalid horizontal scale skips ruler geometry.
+
+TimeRulerは横zoomに応じた密度でフレーム単位のmajor/minor tickを描画します。Timelineは再生追従を共有canvasへ先に反映し、ルーラーとclipを描画します。横scaleが不正な場合はルーラー描画を省略します。

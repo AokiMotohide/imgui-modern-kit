@@ -454,16 +454,30 @@ void TimeRuler(const char *id, TimeState &s, CanvasState &canvas, std::span<cons
     ImGui::InvisibleButton(id, {width, height});
     auto *d = ImGui::GetWindowDrawList();
     d->PushClipRect(p, {p.x + width, p.y + height}, true);
-    double step = 1;
-    while (step * canvas.scale.x < 65)
-        step *= 2;
-    for (double second = std::ceil(canvas.origin.x / step) * step;
-         second < canvas.origin.x + width / canvas.scale.x; second += step) {
-        float x = p.x + static_cast<float>((second - canvas.origin.x) * canvas.scale.x);
-        d->AddLine({x, p.y + height - 8}, {x, p.y + height}, ImGui::GetColorU32(t.colors.muted));
-        char label[32];
-        FormatTimecode(FromSeconds(second), s.rate, s.dropFrame, label);
-        d->AddText({x + 3, p.y}, ImGui::GetColorU32(t.colors.muted), label);
+    if (!std::isfinite(canvas.scale.x) || canvas.scale.x<=0 || !std::isfinite(canvas.origin.x)) {
+        d->PopClipRect();
+        return;
+    }
+    double step = Valid(s.rate) ? static_cast<double>(s.rate.denominator)/s.rate.numerator : 1.;
+    while (step * canvas.scale.x < 65) step *= 2;
+    double minor=step;
+    while (minor*.5*canvas.scale.x>=8 && minor*.5>=
+           (Valid(s.rate)?static_cast<double>(s.rate.denominator)/s.rate.numerator:1.)) minor*=.5;
+    const double right=canvas.origin.x+width/canvas.scale.x;
+    // Integer indices avoid loss of loop progress at large absolute time positions.
+    const double first=std::ceil(canvas.origin.x/minor);
+    const int ticks=(std::min)(10000,static_cast<int>(std::ceil(width/(minor*canvas.scale.x)))+1);
+    for (int i=0;i<ticks;++i) {
+        double second=(first+i)*minor;
+        if (second>=right) break;
+        float x=p.x+static_cast<float>((second-canvas.origin.x)*canvas.scale.x);
+        const bool major=std::abs(second/step-std::round(second/step))<1e-6;
+        d->AddLine({x,p.y+height-(major?8:4)},{x,p.y+height},ImGui::GetColorU32(t.colors.muted));
+        if (major) {
+            char label[32];
+            FormatTimecode(FromSeconds(second),s.rate,s.dropFrame,label);
+            d->AddText({x+3,p.y},ImGui::GetColorU32(t.colors.muted),label);
+        }
     }
     for (auto m : markers) {
         auto x = p.x + static_cast<float>((Seconds(m.tick) - canvas.origin.x) * canvas.scale.x);
