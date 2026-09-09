@@ -652,6 +652,10 @@ Every operation passed its interaction check. Per-frame maxima were 7 queries, 3
 
 全操作で編集結果を確認しました。1 frame当たり最大7 query、返却30 clip・8編集key・6 track行でした。key数はclip内編集spanとCurve queryの隣接keyを返却ごとに数え、評価専用の全channel借用spanは含めません。測定区間のC++ newとImGui allocatorはともに0で、driver・OS allocationは計測対象外です。benchmarkはP95・返却数に加え、このallocation条件も判定します。native OS／IMEの検証ではありません。
 
-Gallery selected-clip resolution treats nonzero linked and group IDs as set IDs and expands their union transitively for Move, Duplicate and command Split. It deduplicates members, propagates missing/locked track ownership into the locked flag, and returns an empty result on missing IDs or scratch exhaustion so the Timeline completeness guard rejects the entire operation. Expansion runs on edit start, not steady drawing. Host-model regression verifies transitive membership, locked tracks and capacity rejection. This does not yet prove linked behavior for all trim tools or independent relationship remapping after duplication.
+Gallery selected-clip resolution treats nonzero linked and group IDs as set IDs and expands their union transitively for Move, Duplicate and command Split. It deduplicates members, propagates missing/locked track ownership into the locked flag, and returns an empty result on missing IDs or scratch exhaustion so the Timeline completeness guard rejects the entire operation. Expansion runs on edit start, not steady drawing. Host-model regression verifies transitive membership, locked tracks and capacity rejection. This does not yet prove linked behavior for all trim tools.
 
-Galleryは非0のlinked・group IDを集合IDとして扱い、移動・複製・コマンド分割の対象を関連先へ推移的に広げます。重複を除き、trackの消失・ロックをlockedへ反映します。ID欠落・作業領域不足は空の結果を返し、Timelineの完全性検査で操作全体を拒否します。展開は編集開始時だけ行います。ホストモデル回帰で関連の推移、locked track、容量不足を確認しました。全trimツールの連動や複製後の関係ID独立化は、この検証の対象ではありません。
+Galleryは非0のlinked・group IDを集合IDとして扱い、移動・複製・コマンド分割の対象を関連先へ推移的に広げます。重複を除き、trackの消失・ロックをlockedへ反映します。ID欠落・作業領域不足は空の結果を返し、Timelineの完全性検査で操作全体を拒否します。展開は編集開始時だけ行います。ホストモデル回帰で関連の推移、locked track、容量不足を確認しました。全trimツールの連動は、この検証の対象ではありません。
+
+Gallery Duplicate assigns new linked/group set IDs per event batch. Copies retain relationships with other copies in that batch while original relationship sets remain unchanged. Host-model regression checks a transitive linked/group selection and verifies that selecting the original set excludes the copies.
+
+Galleryの複製はイベントバッチごとに新しいlinked／group集合IDを割り当てます。同じバッチの複製同士の関係を維持し、元の集合は変更しません。ホストモデル回帰で推移的なlinked／group関係の複製と、元集合の選択に複製が混ざらないことを確認しています。

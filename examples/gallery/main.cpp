@@ -599,6 +599,18 @@ int VerifyInspectorModel() {
         const std::array ids{linked.clips[0].id};
         auto members=linked.QuerySelectedClips(ids);
         check(members.size()==3,"selected clip query resolves transitive linked and group membership");
+        const auto sourceCount=linked.clips.size();
+        for (const auto &clip:linked.clips)
+            linked.events.Push({clip.id,linked.revision,editor::Phase::Commit,editor::EditKind::Duplicate,{},
+                editor::Value{editor::FromSeconds(100)}});
+        linked.ApplyEvents();
+        std::vector<video::ClipView> duplicates;
+        for (const auto &clip:linked.clips) if (clip.start==editor::FromSeconds(100)) duplicates.push_back(clip);
+        check(linked.clips.size()==sourceCount*2 && duplicates.size()==3 &&
+              duplicates[0].linked!=123 && duplicates[0].linked!=0 && duplicates[0].linked==duplicates[1].linked &&
+              duplicates[1].group!=456 && duplicates[1].group!=0 && duplicates[1].group==duplicates[2].group,
+              "duplicate batch retains internal relationships with independent link and group IDs");
+        check(linked.QuerySelectedClips(ids).size()==3,"original linked selection excludes duplicated relationship sets");
         linked.tracks.front().locked=true;members=linked.QuerySelectedClips(ids);
         check(members.size()==3 && std::all_of(members.begin(),members.end(),[](const auto &c){return c.locked;}),
               "related clip query propagates locked owner tracks");

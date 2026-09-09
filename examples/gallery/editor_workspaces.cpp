@@ -484,6 +484,13 @@ void EditorWorkspaces::CopyClipEditingData(const video::ClipView &source,video::
 }
 void EditorWorkspaces::ApplyEvents() {
     bool changed = false;
+    std::map<editor::StableId,editor::StableId> duplicateLinks,duplicateGroups;
+    const auto remapRelationship=[&](auto &mapping,editor::StableId id) {
+        if (!id) return editor::StableId{0};
+        auto [entry,created]=mapping.try_emplace(id,0);
+        if (created) entry->second=nextId++;
+        return entry->second;
+    };
     for (const auto &e : events.Events()) {
         if (e.phase==editor::Phase::Begin && e.kind==editor::EditKind::Property)
             propertyGestureSelection.assign(objectSelection.storage.begin(),objectSelection.storage.begin()+objectSelection.count);
@@ -691,6 +698,8 @@ void EditorWorkspaces::ApplyEvents() {
                 auto copy = *clip;
                 copy.id = nextId++;
                 copy.start = e.proposed.first;
+                copy.linked=remapRelationship(duplicateLinks,clip->linked);
+                copy.group=remapRelationship(duplicateGroups,clip->group);
                 CopyClipEditingData(*clip,copy);
                 clips.push_back(copy);
                 changed = true;
