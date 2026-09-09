@@ -592,3 +592,7 @@ GalleryはTimelineのホスト判定を使用し、同一trackの後続clipがlo
 Gallery split copies Inspector values and property IDs to the right clip and assigns an independent inline key channel. Right-channel key ticks are shifted by the cut offset; values, interpolation and relative handle offsets are copied. The host retains off-clip keys in its channel storage. The model regression covers an interior key and Inspector independence. Boundary evaluation from the clipped inline span is not established by this check.
 
 Galleryのsplitは右clipへInspector値をコピーし、property IDとclip内key channelを独立させます。右channelのkey時刻から分割offsetを引き、値・補間mode・相対handleをコピーします。clip範囲外のkeyもホストchannel領域には保持します。モデル回帰で内部keyの時刻移動とInspectorの独立を確認しました。clip範囲に絞ったinline spanの境界評価は、この確認では保証していません。
+
+Gallery supplies full-channel `keyEvaluation` alongside the clipped key span. The split model regression now confirms equal original/right-channel interpolation at the cut and inside the right clip. Public IO verifies that inserting a key uses outside context rather than the visible-only span.
+
+Galleryはclip内key spanと併せて全channelの`keyEvaluation`を渡します。splitモデル回帰で分割点および右clip内部の補間値が元channelと一致することを確認しました。key挿入が可視spanだけでなくclip外contextを使うことも公開IOで確認しました。

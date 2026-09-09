@@ -39,6 +39,7 @@ struct ClipView {
     std::span<const EnvelopePoint> envelope;
     StableId keyChannel=0; // Explicit insertion channel, including when keys is empty.
     double keyDefaultValue=0;
+    std::span<const editor::Keyframe> keyEvaluation; // Optional full sorted channel for interpolation outside visible keys.
 };
 struct TransitionEdit {
     Tick inDuration=0,outDuration=0;

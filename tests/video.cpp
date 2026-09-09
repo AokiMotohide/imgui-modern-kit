@@ -354,6 +354,12 @@ int main() {
     keyCommand(ImGuiKey_F8,small);check(small.overflow && small.count==0,"clip insertion refuses partial event pair");
     transitionFixture.track.locked=true;keyCommand(ImGuiKey_F8,full);
     check(full.count==0,"locked track rejects clip key insertion");transitionFixture.track.locked=false;
+    editor::Keyframe outsideKeys[]={{7501,7100,editor::FromSeconds(-1),0},{7502,7100,editor::FromSeconds(4),1}};
+    outsideKeys[0].interpolation=editor::Interpolation::Linear;
+    transitionFixture.clip.keyEvaluation=outsideKeys;
+    timeline.time.playhead=editor::FromSeconds(1.5);keyCommand(ImGuiKey_F8,full);
+    check(full.count==2 && full.Events()[1].proposed.x==.5,"clip key insertion evaluates off-clip context instead of clipped visible keys");
+    transitionFixture.clip.keyEvaluation={};
     timeline.time.playhead=clipKeys[0].tick;keyCommand(ImGuiKey_F8,full);
     check(full.count==0,"clip insertion preserves existing key at current time");timeline.bindings={};
     transitionFixture.clip.keys={};timeline.keySelection=nullptr;

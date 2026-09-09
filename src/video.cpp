@@ -507,7 +507,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     if (out.storage.size()-out.count<2) out.overflow=true;
                     else {
                         editor::Value proposal;proposal.first=local;proposal.parent=clip.id;
-                        proposal.x=clip.keys.empty() ? clip.keyDefaultValue : editor::Evaluate(clip.keys,local);
+                        const auto evaluation=clip.keyEvaluation.empty() ? clip.keys : clip.keyEvaluation;
+                        proposal.x=evaluation.empty() ? clip.keyDefaultValue : editor::Evaluate(evaluation,local);
                         editor::Transaction action;action.Begin(clip.keyChannel,p.revision,editor::EditKind::KeyInsert,{},editor::CurrentModifiers(),out);
                         action.draft.proposed=proposal;action.Commit(p.revision,out);
                     }

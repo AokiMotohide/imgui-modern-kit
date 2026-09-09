@@ -625,6 +625,7 @@ int VerifyInspectorModel() {
         const auto sourceChannel=split.clips.front().keyChannel;
         split.keys.push_back({split.nextId++,sourceChannel,1000,.625});split.RebuildKeyIndex();
         split.clipProperties.at(id).values[1]=1.25;
+        const std::vector<editor::Keyframe> beforeKeys(split.clips.front().keyEvaluation.begin(),split.clips.front().keyEvaluation.end());
         auto applySplit=[&] {
             split.events.Push({id,split.revision,editor::Phase::Commit,editor::EditKind::Split,{},editor::Value{start+500}});
             split.ApplyEvents();
@@ -634,6 +635,10 @@ int VerifyInspectorModel() {
         const auto right=std::find_if(split.clips.begin(),split.clips.end(),[&](const auto &c){return c.track==split.tracks.front().id && c.start==start+500;});
         check(right!=split.clips.end() && split.clips.size()==count+1,"host splits clip at requested tick");
         if (right!=split.clips.end()) {
+            check(!right->keyEvaluation.empty() && right->keyEvaluation.front().tick<0 &&
+                  std::abs(editor::Evaluate(right->keyEvaluation,0)-editor::Evaluate(beforeKeys,500))<1e-10 &&
+                  std::abs(editor::Evaluate(right->keyEvaluation,250)-editor::Evaluate(beforeKeys,750))<1e-10,
+                  "split evaluation retains outside keys and preserves boundary interpolation");
             const auto rightKey=std::find_if(right->keys.begin(),right->keys.end(),[](const auto &key){return key.tick==500 && key.value==.625;});
             check(right->keyChannel!=sourceChannel && rightKey!=right->keys.end() &&
                   split.clipProperties.at(right->id).values[1]==1.25 &&

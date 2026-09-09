@@ -224,12 +224,13 @@ void EditorWorkspaces::RebuildKeyIndex() {
     }
     visibleKeys.reserve((std::min)(keys.size(),std::size_t{4096}));
     for (auto &clip:clips) {
-        clip.keys={};
+        clip.keys={};clip.keyEvaluation={};
         if (!clip.keyChannel) continue;
         const auto range=std::lower_bound(keyChannels.begin(),keyChannels.end(),clip.keyChannel,
             [&](const auto &range,auto id){return keys[range.first].channel<id;});
         if (range==keyChannels.end() || keys[range->first].channel!=clip.keyChannel) continue;
         auto channel=std::span<const editor::Keyframe>(keys).subspan(range->first,range->second-range->first);
+        clip.keyEvaluation=channel;
         auto first=std::lower_bound(channel.begin(),channel.end(),editor::Tick{0},[](const auto &key,auto tick){return key.tick<tick;});
         auto last=std::upper_bound(first,channel.end(),clip.duration,[](auto tick,const auto &key){return tick<key.tick;});
         clip.keys={first,last};
@@ -402,7 +403,7 @@ void EditorWorkspaces::CopyClipEditingData(const video::ClipView &source,video::
         for (auto &point:points) point.id=nextId++;
         copy.envelope=points;
     } else copy.envelope={};
-    copy.keys={};
+    copy.keys={};copy.keyEvaluation={};
     if (source.keyChannel) {
         copy.keyChannel=nextId++;
         const auto count=keys.size();
