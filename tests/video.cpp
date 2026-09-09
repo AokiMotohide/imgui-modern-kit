@@ -67,5 +67,54 @@ int main() {
     check(r[255] == 1 && r[0] == 1 && b[0] == 2, "scope channel bins");
     check(!video::BuildScopes(pixels, 3, 1, {r, g, b, l, waveform, vector}),
           "scope rejects mismatched dimensions");
+    auto *context = ImGui::CreateContext();
+    auto &io = ImGui::GetIO();
+    io.IniFilename = nullptr;
+    io.DisplaySize = {800,600};
+    io.DeltaTime = 1.f / 60;
+    unsigned char *fontPixels; int fontWidth, fontHeight;
+    io.Fonts->GetTexDataAsRGBA32(&fontPixels, &fontWidth, &fontHeight);
+    video::TimelineState timeline;
+    timeline.original.id = 1;
+    timeline.original.duration = 100;
+    video::TimelineProvider provider;
+    provider.revision = 7;
+    std::array<editor::Event,8> fullStorage;
+    std::array<editor::Event,1> smallStorage;
+    editor::EventBuffer full{fullStorage}, small{smallStorage};
+    editor::Selection selection{};
+    auto frame = [&](editor::EventBuffer &events) {
+        ImGui::NewFrame();
+        ImGui::SetNextWindowSize({780,580});
+        ImGui::Begin("Atomic timeline events");
+        video::Timeline("timeline", provider, timeline, selection, events,
+                        imkit::MakePrecisionTheme(imkit::ColorScheme::Dark), {600,300});
+        ImGui::End();
+        ImGui::Render();
+    };
+    timeline.drag.Begin(1,7,editor::EditKind::Move,{0,100},{},full);
+    timeline.nextDrag.Begin(2,7,editor::EditKind::Move,{100,200},{},full);
+    full.Clear();
+    frame(small);
+    check(small.overflow && small.count == 0 && timeline.drag.active && timeline.nextDrag.active,
+          "insufficient terminal capacity publishes no partial clip commit");
+    frame(full);
+    check(full.count == 2 && !timeline.drag.active && !timeline.nextDrag.active &&
+              full.Events()[0].phase == editor::Phase::Commit &&
+              full.Events()[1].phase == editor::Phase::Commit,
+          "clip commit retries atomically after release frame");
+    full.Clear(); small.Clear();
+    timeline.drag.Begin(1,7,editor::EditKind::Move,{0,100},{},full);
+    timeline.nextDrag.Begin(2,7,editor::EditKind::Move,{100,200},{},full);
+    full.Clear(); provider.revision = 8;
+    frame(small);
+    check(small.overflow && small.count == 0 && timeline.drag.active && timeline.nextDrag.active,
+          "insufficient cancel capacity preserves every clip transaction");
+    frame(full);
+    check(full.count == 2 && !timeline.drag.active && !timeline.nextDrag.active &&
+              full.Events()[0].phase == editor::Phase::Cancel &&
+              full.Events()[1].phase == editor::Phase::Cancel,
+          "revision cancellation retries as one complete batch");
+    ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }

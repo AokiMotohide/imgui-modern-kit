@@ -19,6 +19,35 @@ void Toggle(editor::EventBuffer &out, const TrackView &track, std::uint64_t revi
               {0, 0, 0, 0, static_cast<double>(field), value ? 0. : 1.},
               editor::CurrentModifiers()});
 }
+std::size_t ActiveDrags(const TimelineState &s) {
+    std::size_t count = s.drag.active + s.previousDrag.active + s.nextDrag.active;
+    for (const auto &member : s.memberDrags.first(s.memberCount))
+        count += member.transaction.active;
+    return count;
+}
+bool ReserveEvents(editor::EventBuffer &out, std::size_t count) {
+    if (out.count > out.storage.size() || count > out.storage.size() - out.count) {
+        out.overflow = true;
+        return false;
+    }
+    return true;
+}
+void EndDrags(TimelineState &s, std::uint64_t revision, bool cancel, editor::EventBuffer &out) {
+    // A gesture is one host batch. Never publish a partial terminal batch.
+    if (!ReserveEvents(out, ActiveDrags(s))) {
+        s.drag.draft.phase = cancel ? editor::Phase::Cancel : editor::Phase::Commit;
+        return;
+    }
+    auto finish = [&](editor::Transaction &tx) {
+        if (cancel) tx.Cancel(out);
+        else tx.Commit(revision, out);
+    };
+    finish(s.previousDrag);
+    finish(s.drag);
+    finish(s.nextDrag);
+    for (auto &member : s.memberDrags.first(s.memberCount))
+        finish(member.transaction);
+}
 } // namespace
 ClipEdit EditClip(const ClipView &c, editor::EditKind kind, Tick delta, ClipConstraints bounds) {
     ClipEdit result{c.start, c.duration, c.sourceIn, false};
@@ -137,12 +166,11 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                         editor::FromSeconds(s.canvas.origin.x +
                                             (view.max.x - view.min.x - s.headerWidth) / s.canvas.scale.x)};
     s.hovered = 0;
-    if (s.drag.active && (p.revision != s.drag.draft.revision || ImGui::IsKeyPressed(ImGuiKey_Escape))) {
-        s.drag.Cancel(out);
-        s.previousDrag.Cancel(out);
-        s.nextDrag.Cancel(out);
-        for (auto &member : s.memberDrags.first(s.memberCount))
-            member.transaction.Cancel(out);
+    if (s.drag.active) {
+        bool cancel = p.revision != s.drag.draft.revision || ImGui::IsKeyPressed(ImGuiKey_Escape) ||
+                      s.drag.draft.phase == editor::Phase::Cancel;
+        if (cancel || s.drag.draft.phase == editor::Phase::Commit)
+            EndDrags(s, p.revision, cancel, out);
     }
     int index = first;
     for (const auto &track : tracks) {
@@ -240,12 +268,12 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 s.hovered = clip.id;
             if (hit && track.kind == TrackKind::Caption && ImGui::IsMouseDoubleClicked(0) && !track.locked &&
                 !clip.locked) {
-                s.drag.Cancel(out);
+                EndDrags(s, p.revision, true, out);
                 s.editingCaption = clip.id;
                 std::snprintf(s.caption, sizeof(s.caption), "%s", clip.label);
             }
             if (hit && s.editingCaption != clip.id && ImGui::IsMouseClicked(0) && !track.locked &&
-                !clip.locked) {
+                !clip.locked && !s.drag.active) {
                 if (!selection.Contains(clip.id) || io.KeyCtrl)
                     selection.Set(clip.id, io.KeyCtrl, io.KeyCtrl);
                 auto kind = io.KeyAlt ? editor::EditKind::Duplicate : editor::EditKind::Move;
@@ -276,7 +304,23 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     if (kind == editor::EditKind::Slide)
                         available = available && neighbors.previous && !neighbors.previous->locked &&
                                     neighbors.previous->start + neighbors.previous->duration == clip.start;
-                    if (available && out.storage.size() - out.count >= 3) {
+                    auto members = (kind == editor::EditKind::Move || kind == editor::EditKind::Duplicate) &&
+                                           p.selected
+                                       ? p.selected(p.user, selection.storage.first(selection.count))
+                                       : std::span<const ClipView>{};
+                    std::size_t memberCount = 0;
+                    for (const auto &member : members)
+                        if (member.id != clip.id) {
+                            ++memberCount;
+                            available &= !member.locked;
+                        }
+                    if (memberCount > s.memberDrags.size()) {
+                        out.overflow = true;
+                        available = false;
+                    }
+                    const std::size_t required = 1 + (adjacent ? 1 : 0) +
+                                                 (kind == editor::EditKind::Slide ? 1 : 0) + memberCount;
+                    if (available && ReserveEvents(out, required)) {
                         s.memberCount = 0;
                         s.original = clip;
                         s.mouseStart = {io.MousePos.x, io.MousePos.y};
@@ -291,13 +335,9 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                             s.previousDrag.Begin(neighbors.previous->id, p.revision, kind,
                                                  Value(*neighbors.previous), editor::CurrentModifiers(), out);
                         }
-                        if ((kind == editor::EditKind::Move || kind == editor::EditKind::Duplicate) &&
-                            p.selected) {
-                            auto members = p.selected(p.user, selection.storage.first(selection.count));
+                        {
                             for (const auto &member : members)
-                                if (member.id != clip.id && !member.locked &&
-                                    s.memberCount < s.memberDrags.size() &&
-                                    out.count + 3 < out.storage.size() / 2) {
+                                if (member.id != clip.id) {
                                     auto &drag = s.memberDrags[s.memberCount++];
                                     drag.original = member;
                                     drag.transaction.Begin(member.id, p.revision, kind, Value(member),
@@ -310,7 +350,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         }
         draw->PopClipRect();
     }
-    if (s.drag.active) {
+    if (s.drag.active && s.drag.draft.phase != editor::Phase::Cancel &&
+        s.drag.draft.phase != editor::Phase::Commit && ReserveEvents(out, ActiveDrags(s))) {
         Tick delta = editor::FromSeconds((io.MousePos.x - s.mouseStart.x) / s.canvas.scale.x);
         s.guide = {};
         if (s.snapping && p.snap) {
@@ -364,13 +405,6 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             if (ImGui::IsMouseDown(0) && !(value == member.transaction.draft.proposed))
                 member.transaction.Update(p.revision, value, out);
         }
-        if (ImGui::IsMouseReleased(0)) {
-            s.previousDrag.Commit(p.revision, out);
-            s.drag.Commit(p.revision, out);
-            s.nextDrag.Commit(p.revision, out);
-            for (auto &member : s.memberDrags.first(s.memberCount))
-                member.transaction.Commit(p.revision, out);
-        }
         if (s.guide.snapped) {
             float x =
                 view.min.x + s.headerWidth +
@@ -378,6 +412,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             draw->AddLine({x, view.min.y}, {x, view.max.y}, ImGui::GetColorU32(theme.colors.warning), 2);
         }
     }
+    if (s.drag.active && !ImGui::IsMouseDown(0))
+        EndDrags(s, p.revision, s.drag.draft.phase == editor::Phase::Cancel, out);
     float playhead =
         view.min.x + s.headerWidth +
         static_cast<float>((editor::Seconds(s.time.playhead) - s.canvas.origin.x) * s.canvas.scale.x);

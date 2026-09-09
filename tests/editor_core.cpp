@@ -51,6 +51,20 @@ int main() {
     EventBuffer empty{{}};
     check(!tx.Begin(42, 1, EditKind::Move, {}, {}, empty) && !tx.active && empty.overflow,
           "capacity failure atomicity");
+    events.Clear();
+    tx.Begin(42, 7, EditKind::Move, original, {}, events);
+    tx.Cancel(empty);
+    check(tx.active && tx.draft.phase == Phase::Cancel, "cancel retained on overflow");
+    check(!tx.Commit(7, events) && !tx.active && events.Events().back().phase == Phase::Cancel,
+          "pending cancel cannot become commit");
+    events.Clear();
+    tx.Begin(42, 7, EditKind::Move, original, {}, events);
+    tx.Update(7, proposed, events);
+    check(!tx.Commit(7, empty) && tx.active && tx.draft.phase == Phase::Commit,
+          "commit retained on overflow");
+    check(!tx.Update(7, {}, events) && !tx.active && events.Events().back().phase == Phase::Commit &&
+              events.Events().back().proposed == proposed,
+          "pending commit retries without accepting new proposed values");
     CanvasState canvas{{2, 3}, {10, 20}};
     auto before = FromScreen({100, 80}, canvas, {});
     ZoomAt(canvas, {100, 80}, {2, 2});

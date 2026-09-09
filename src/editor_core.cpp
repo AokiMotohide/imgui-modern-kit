@@ -1,4 +1,5 @@
 #include <imkit/editor_core.h>
+#include "transaction_support.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -135,6 +136,10 @@ bool Transaction::Begin(StableId id, std::uint64_t rev, EditKind kind, Value val
 bool Transaction::Update(std::uint64_t rev, Value value, EventBuffer &out) {
     if (!active)
         return false;
+    if (draft.phase == Phase::Commit || draft.phase == Phase::Cancel) {
+        detail::ResumeTerminal(*this, rev, out);
+        return false;
+    }
     if (rev != draft.revision) {
         Cancel(out);
         return false;
@@ -154,9 +159,12 @@ bool Transaction::Commit(std::uint64_t rev, EventBuffer &out) {
         Cancel(out);
         return false;
     }
-    Event event = draft;
-    event.phase = Phase::Commit;
-    if (!out.Push(event))
+    if (draft.phase == Phase::Cancel) {
+        Cancel(out);
+        return false;
+    }
+    draft.phase = Phase::Commit;
+    if (!out.Push(draft))
         return false;
     active = false;
     return true;
@@ -164,10 +172,9 @@ bool Transaction::Commit(std::uint64_t rev, EventBuffer &out) {
 void Transaction::Cancel(EventBuffer &out) {
     if (!active)
         return;
-    Event event = draft;
-    event.phase = Phase::Cancel;
-    event.proposed = event.original;
-    if (out.Push(event))
+    draft.phase = Phase::Cancel;
+    draft.proposed = draft.original;
+    if (out.Push(draft))
         active = false;
 }
 bool Selection::Contains(StableId id) const {
@@ -541,6 +548,7 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
                  EventBuffer &out, const Theme &t, ImVec2 size) {
     auto view = BeginCanvas(id, s.canvas, size, t);
     s.view = view;
+    detail::ResumeTerminal(s.drag, provider.revision, out);
     DrawGrid(view, s.canvas, {1, 1}, t);
     if (s.drag.active && (provider.revision != s.drag.draft.revision || ImGui::IsKeyPressed(ImGuiKey_Escape)))
         s.drag.Cancel(out);
@@ -599,7 +607,7 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
             initial = {k.tick, 0, 0, 0, k.value};
         }
     }
-    if (view.hovered && hit && ImGui::IsMouseClicked(0)) {
+    if (view.hovered && hit && ImGui::IsMouseClicked(0) && !s.drag.active) {
         selection.Set(hit, ImGui::GetIO().KeyCtrl);
         s.side = side;
         s.mouseStart = {ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y};
@@ -626,6 +634,7 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
     EndCanvas();
 }
 void PropertyGrid(const char *id, const PropertyProvider &p, PropertyState &s, EventBuffer &out) {
+    detail::ResumeTerminal(s.drag, p.revision, out);
     ImGui::PushID(id);
     ImGui::SetNextItemWidth(-1);
     ImGui::InputTextWithHint("##search", "Search", s.search, sizeof(s.search));
