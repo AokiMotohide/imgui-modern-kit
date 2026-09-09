@@ -448,3 +448,7 @@ Clip top-edge square handles edit the in/out transition durations independently,
 Transition picker public-IO tests now cover choosing Fade on the in side and Crossfade on the out side, preservation of the opposite type, atomic rejection with a one-event buffer, and locked-clip input suppression. Native menu appearance and host playback are not covered by these tests.
 
 transition pickerの公開IOテストで、開始側のFade・終了側のCrossfade選択、反対側の種類の保持、1イベントbufferでの部分送信拒否、locked clipへの入力抑止を確認しました。native menuの表示とホスト再生はこのテストの検証範囲に含みません。
+
+Gallery provides a host-owned transition history example: right-click the query/commit status text for Undo transition or Redo transition. It records only the changed clip ID and transition values, clears the redo branch after a new edit, and clears history on dataset replacement. Replay rejects removed/locked targets, diverged values, or durations invalidated by another edit, and advances the host revision. Headless host-model verification covers duration apply/Undo/Redo and type apply/Undo. This history currently covers transition edits only; general editor Undo integration remains unfinished.
+
+Galleryにはホスト所有のtransition履歴例を追加しました。query／commit状態テキストを右クリックするとUndo transition／Redo transitionを選べます。変更clipのIDとtransition値だけを記録し、新規編集でRedo側を破棄、dataset切替で履歴を消去します。対象消失・ロック・値の不一致・別編集により長さが不正になる復元を拒否し、復元時にホストrevisionを進めます。headless host model検証で長さの適用／Undo／Redoと種類の適用／Undoを確認しました。現時点の履歴対象はtransition編集のみで、Editor全体のUndo統合は未完了です。

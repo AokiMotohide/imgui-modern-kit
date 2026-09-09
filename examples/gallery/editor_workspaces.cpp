@@ -113,10 +113,17 @@ void Options(EditorWorkspaces &s) {
     ImGui::Checkbox("Narrow panes", &s.narrow);
     ImGui::SameLine();
     ImGui::Text("%zu visible queries / %zu clips / %zu commits", s.queryCount, s.queriedClips, s.commits);
+    if (ImGui::BeginPopupContextItem("transition history")) {
+        if (ImGui::MenuItem("Undo transition",nullptr,false,s.transitionHistoryCursor>0)) s.UndoTransition();
+        if (ImGui::MenuItem("Redo transition",nullptr,false,s.transitionHistoryCursor<s.transitionHistory.size())) s.UndoTransition(true);
+        ImGui::EndPopup();
+    }
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Right-click for transition Undo / Redo");
     s.queryCount = s.queriedClips = 0;
 }
 } // namespace
 void EditorWorkspaces::Dataset(bool big) {
+    transitionHistory.clear();transitionHistoryCursor=0;
     large = big;
     tracks.clear();
     clips.clear();
@@ -324,6 +331,24 @@ std::span<const preview::Mesh> EditorWorkspaces::BuildSceneMeshes() {
     }
     return sceneMeshes;
 }
+bool EditorWorkspaces::UndoTransition(bool redo) {
+    if (redo ? transitionHistoryCursor>=transitionHistory.size() : transitionHistoryCursor==0) return false;
+    const auto &entry=transitionHistory[redo ? transitionHistoryCursor : transitionHistoryCursor-1];
+    auto clip=std::find_if(clips.begin(),clips.end(),[&](const auto &c){return c.id==entry.id;});
+    if (clip==clips.end() || clip->locked) return false;
+    const auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==clip->track;});
+    if (track==tracks.end() || track->locked) return false;
+    const auto &expected=redo ? entry.before : entry.after;
+    const auto &value=redo ? entry.after : entry.before;
+    if (clip->transitionIn!=expected.first || clip->transitionOut!=expected.last ||
+        static_cast<int>(clip->transitionInKind)!=expected.x || static_cast<int>(clip->transitionOutKind)!=expected.y ||
+        value.first<0 || value.last<0 || value.first>clip->duration || value.last>clip->duration-value.first) return false;
+    clip->transitionIn=value.first;clip->transitionOut=value.last;
+    clip->transitionInKind=static_cast<video::TransitionKind>(static_cast<int>(value.x));
+    clip->transitionOutKind=static_cast<video::TransitionKind>(static_cast<int>(value.y));
+    if (redo) ++transitionHistoryCursor;else --transitionHistoryCursor;
+    ++revision;return true;
+}
 void EditorWorkspaces::ApplyEvents() {
     bool changed = false;
     for (const auto &e : events.Events()) {
@@ -433,6 +458,11 @@ void EditorWorkspaces::ApplyEvents() {
             if (object.id==e.target && !object.locked) {object.label=renamedLabels[e.target].c_str();changed=true;}
         auto clip = std::find_if(clips.begin(), clips.end(), [&](const auto &c) { return c.id == e.target; });
         if (clip != clips.end()) {
+            auto transitionValue=[](const video::ClipView &c) {
+                editor::Value value;value.first=c.transitionIn;value.last=c.transitionOut;
+                value.x=static_cast<int>(c.transitionInKind);value.y=static_cast<int>(c.transitionOutKind);return value;
+            };
+            const auto transitionBefore=transitionValue(*clip);
             if (e.kind==editor::EditKind::TransitionType && !clip->locked && e.proposed.first>=0 && e.proposed.first<=3 && e.proposed.last>=0 && e.proposed.last<=3) {
                 const auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==clip->track;});
                 if (track!=tracks.end() && !track->locked) {
@@ -447,6 +477,12 @@ void EditorWorkspaces::ApplyEvents() {
                     clip->transitionOut=std::clamp(e.proposed.last,editor::Tick{0},clip->duration-clip->transitionIn);
                     changed=true;
                 }
+            }
+            if ((e.kind==editor::EditKind::TransitionType || e.kind==editor::EditKind::TransitionDuration) &&
+                !(transitionBefore==transitionValue(*clip))) {
+                transitionHistory.resize(transitionHistoryCursor);
+                transitionHistory.push_back({clip->id,transitionBefore,transitionValue(*clip)});
+                transitionHistoryCursor=transitionHistory.size();
             }
             if (e.kind == editor::EditKind::Rename) {
                 clip->label = renamedLabels[e.target].c_str();

@@ -16,6 +16,10 @@ struct EditorWorkspaces {
     editor::StableId mixerTrack = 0;
     editor::PropertyState mixerState;
     std::vector<video::ClipView> clips;
+    struct TransitionHistory {editor::StableId id;editor::Value before,after;};
+    std::vector<TransitionHistory> transitionHistory;
+    std::size_t transitionHistoryCursor=0;
+    bool UndoTransition(bool redo=false);
     std::vector<editor::Keyframe> keys, visibleKeys, curvePreviewKeys, selectedCurveKeys;
     std::vector<std::pair<std::size_t,std::size_t>> keyChannels;
     editor::Rect curveBounds{};
