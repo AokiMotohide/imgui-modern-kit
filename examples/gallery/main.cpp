@@ -512,8 +512,8 @@ void VerifyMonitors(Host &h,const std::filesystem::path &out) {
     h.Frame({},out/"monitor-details-light.png");
     h.s.dark=true;h.s.theme=MakePrecisionTheme(ColorScheme::Dark);h.s.scale=1.5f;h.Settle();
     h.Frame({},out/"monitor-details-dark-150.png");
-    s.events.Push({700002,s.revision,editor::Phase::Commit,editor::EditKind::Property,{},editor::Value{0,0,0,0,1.2}});
-    s.events.Push({700003,s.revision,editor::Phase::Commit,editor::EditKind::Property,{},editor::Value{0,0,0,0,.1}});
+    s.events.Push({s.clipPropertyIds[1],s.revision,editor::Phase::Commit,editor::EditKind::Property,{},editor::Value{0,0,0,0,1.2}});
+    s.events.Push({s.clipPropertyIds[2],s.revision,editor::Phase::Commit,editor::EditKind::Property,{},editor::Value{0,0,0,0,.1}});
     s.ApplyEvents();h.Frame({},out/"monitor-transform-host.png");
     const bool transformed=s.clipPropertyValues[1]==1.2 && s.clipPropertyValues[2]==.1;
     log<<(transformed ? "PASS " : "FAIL ")<<"host Inspector events change Monitor bounds parameters\n";
@@ -556,6 +556,17 @@ int VerifyInspectorModel() {
         std::printf("%s %s\n",ok?"PASS":"FAIL",name);
         if (!ok) ++failures;
     };
+    const auto firstClipId=state.clips.front().id,secondClipId=state.clips[1].id;
+    const auto firstScaleId=state.clipPropertyIds[1];
+    state.events.Push({firstScaleId,state.revision,editor::Phase::Commit,editor::EditKind::Property,{},editor::Value{0,0,0,0,1.5}});state.ApplyEvents();
+    state.selection.Set(secondClipId);state.SyncClipProperties();
+    check(state.clipPropertyIds[1]!=firstScaleId && state.clipPropertyValues[1]==1,"clip selection uses independent property IDs and defaults");
+    state.events.Push({firstScaleId,state.revision,editor::Phase::Commit,editor::EditKind::Property,{},editor::Value{0,0,0,0,2}});state.ApplyEvents();
+    state.selection.Set(firstClipId);state.SyncClipProperties();
+    check(state.clipPropertyValues[1]==1.5,"clip property value survives selection and rejects stale owner edit");
+    state.tracks.front().locked=true;
+    state.events.Push({firstScaleId,state.revision,editor::Phase::Commit,editor::EditKind::Property,{},editor::Value{0,0,0,0,2}});state.ApplyEvents();
+    check(state.clipProperties.at(firstClipId).values[1]==1.5,"locked track rejects clip Inspector edit");state.tracks.front().locked=false;
     const auto unchangedRevision=state.revision;
     const auto &unchangedClip=state.clips.front();
     editor::Value sameClip{unchangedClip.start,unchangedClip.start+unchangedClip.duration,unchangedClip.sourceIn,unchangedClip.track,unchangedClip.speed};
