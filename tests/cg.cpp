@@ -201,6 +201,18 @@ int main() {
     io.AddMouseButtonEvent(0,false);stripFrame();
     check(dopeEvents.count==1 && dopeEvents.Events()[0].phase==imkit::editor::Phase::Commit &&
         dopeEvents.Events()[0].proposed.last==imkit::editor::FromSeconds(4.25),"strip move commits translated range");
+    for (bool end:{false,true}) {
+        const float edge=ImGui::GetStyle().WindowPadding.x+(end?398.f:2.f);
+        io.AddMousePosEvent(stripOrigin.x+edge,stripOrigin.y+12);stripFrame();
+        io.AddMouseButtonEvent(0,true);stripFrame();
+        io.AddMousePosEvent(stripOrigin.x+edge+25,stripOrigin.y+12);stripFrame();
+        io.AddMouseButtonEvent(0,false);stripFrame();
+        check(dopeEvents.count==1 && dopeEvents.Events()[0].kind==
+            (end?imkit::editor::EditKind::TrimEnd:imkit::editor::EditKind::TrimStart) &&
+            dopeEvents.Events()[0].proposed.first==imkit::editor::FromSeconds(end?0:.25) &&
+            dopeEvents.Events()[0].proposed.last==imkit::editor::FromSeconds(end?4.25:4),
+            "strip edge drag trims only the chosen boundary");
+    }
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
