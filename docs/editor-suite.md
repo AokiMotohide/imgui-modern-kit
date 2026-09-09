@@ -163,11 +163,15 @@ Dope Sheet・animation strip移動を提供します。orientationは純粋関�
 `TransformAroundPivot` returns a complete TRS value with the object's position rotated
 or scaled about a supplied pivot. Its orthonormal basis determines constrained offset
 movement. Rotation composes the existing orientation rather than adding Euler angles.
-The pure calculation is available for host application; gizmo pivot-event integration
-is still pending. TRS does not represent shear from arbitrary affine transforms.
+The gizmo pairs rotation/scale with a position transaction when an external pivot
+changes the object offset. Begin, Update and terminal batches preflight event capacity;
+a short terminal buffer retains both transactions for retry. Gallery OpenGL preview
+applies the companion position. TRS does not represent shear from arbitrary affine transforms.
 TransformAroundPivotは指定pivotの周りに位置を回転・拡大縮小したTRSを返します。
 直交正規basisで変位を拘束し、回転はEuler角の加算ではなく既存姿勢との合成で計算します。
-ホストが使える純粋計算であり、gizmoのpivot eventへの接続は未完了です。
+gizmoは外部pivotで位置が変わる回転・scaleに位置transactionを併用します。
+Begin・Update・終了eventは必要容量を事前確認し、終了buffer不足では両transactionを再試行まで保持します。
+GalleryのOpenGL previewは位置側の提案も反映します。
 TRSは任意のアフィン変換によるshearを表現しません。
 
 `TransformGizmo` draws translation axes, XY/YZ/ZX plane handles and a screen handle;

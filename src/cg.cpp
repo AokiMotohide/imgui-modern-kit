@@ -300,9 +300,21 @@ void ViewportObjects(const ViewportView &v, std::span<const ObjectView> objects,
 void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportState &s, std::uint64_t revision,
                     editor::EventBuffer &out, const Theme &) {
     constexpr double Pi=3.14159265358979323846;
-    detail::ResumeTerminal(s.drag, revision, out);
-    if (s.drag.active && (revision != s.drag.draft.revision || ImGui::IsKeyPressed(ImGuiKey_Escape)))
-        s.drag.Cancel(out);
+    auto finish=[&](bool cancel) {
+        const std::size_t count=1+(s.pivotDrag.active ? 1 : 0);
+        s.drag.draft.phase=cancel ? editor::Phase::Cancel : editor::Phase::Commit;
+        if (s.pivotDrag.active) s.pivotDrag.draft.phase=s.drag.draft.phase;
+        if (out.storage.size()-out.count<count) {out.overflow=true;return;}
+        if (cancel) {s.drag.Cancel(out);if (s.pivotDrag.active) s.pivotDrag.Cancel(out);}
+        else {s.drag.Commit(revision,out);if (s.pivotDrag.active) s.pivotDrag.Commit(revision,out);}
+    };
+    if (s.drag.active && (revision!=s.drag.draft.revision || object.id!=s.drag.draft.target || object.locked ||
+                         !s.gizmo || s.tool==TransformTool::Select || ImGui::IsKeyPressed(ImGuiKey_Escape))) {
+        finish(true);return;
+    }
+    if (s.drag.active && (s.drag.draft.phase==editor::Phase::Commit || s.drag.draft.phase==editor::Phase::Cancel)) {
+        finish(s.drag.draft.phase==editor::Phase::Cancel);return;
+    }
     if (!s.gizmo || s.tool == TransformTool::Select || object.locked)
         return;
     auto pivot = s.pivot == Pivot::Individual ? object.transform.translation : s.pivotPosition;
@@ -408,6 +420,9 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
         (s.drag.draft.kind==editor::EditKind::Rotate ? TransformTool::Rotate :
          s.drag.draft.kind==editor::EditKind::Scale ? TransformTool::Scale : TransformTool::Translate) : hitTool;
     if (v.hovered && hit != Axis::None && ImGui::IsMouseClicked(0) && !s.drag.active) {
+        const bool needsPosition=s.pivot!=Pivot::Individual && operation!=TransformTool::Translate &&
+            (object.transform.translation.x!=pivot.x || object.transform.translation.y!=pivot.y || object.transform.translation.z!=pivot.z);
+        if (out.storage.size()-out.count < (needsPosition ? 2u : 1u)) {out.overflow=true;return;}
         s.activeAxis = hit;
         s.mouseStart = {mouse.x, mouse.y};
         s.original = object.transform;
@@ -418,6 +433,8 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
                            : operation == TransformTool::Scale ? object.transform.scale
                                                             : object.transform.translation);
         s.drag.Begin(object.id, revision, kind, value, editor::CurrentModifiers(), out);
+        if (needsPosition) s.pivotDrag.Begin(object.id,revision,editor::EditKind::Translate,
+                                            Value(object.transform.translation),editor::CurrentModifiers(),out);
     }
     if (s.drag.active) {
         double delta = ((mouse.x - s.mouseStart.x) - (mouse.y - s.mouseStart.y)) * .01;
@@ -469,15 +486,23 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
             const double end=std::atan2(-(mouse.y-center.screen.y),mouse.x-center.screen.x);
             dv={0,0,std::remainder(end-start,2*Pi)};
         }
-        auto result = TransformDelta(s.original, operation, s.activeAxis, dv, basis, s.snap ? .1 : 0,
+        auto result = TransformAroundPivot(s.original, operation, s.activeAxis, dv, basis, pivot, s.snap ? .1 : 0,
                                      ImGui::GetIO().KeyShift);
         auto value = Value(operation == TransformTool::Rotate  ? result.rotation
                            : operation == TransformTool::Scale ? result.scale
                                                             : result.translation);
-        if (ImGui::IsMouseDown(0) && !(value == s.drag.draft.proposed))
-            s.drag.Update(revision, value, out);
-        if (ImGui::IsMouseReleased(0))
-            s.drag.Commit(revision, out);
+        if (ImGui::IsMouseDown(0)) {
+            const auto position=Value(result.translation);
+            const bool mainChanged=!(value==s.drag.draft.proposed);
+            const bool positionChanged=s.pivotDrag.active && !(position==s.pivotDrag.draft.proposed);
+            const std::size_t count=(mainChanged ? 1u : 0u)+(positionChanged ? 1u : 0u);
+            if (out.storage.size()-out.count<count) out.overflow=true;
+            else {
+                if (mainChanged) s.drag.Update(revision,value,out);
+                if (positionChanged) s.pivotDrag.Update(revision,position,out);
+            }
+        }
+        if (ImGui::IsMouseReleased(0)) finish(false);
     }
 }
 void EndViewport() {
