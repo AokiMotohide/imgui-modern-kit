@@ -487,6 +487,28 @@ void BenchmarkEditors(Host &h,const std::filesystem::path &out) {
     if (!allPassed) throw std::runtime_error("Editor benchmark did not meet interaction, size, query or P95 gates; see report");
 }
 
+void VerifyTrackControls(Host &h,const std::filesystem::path &out) {
+    using namespace imkit;
+    auto &s=h.s.editors;s.japanese=false;s.timeline.headerWidth=340;h.Page(8);
+    std::ofstream log(out/"track-controls.txt");
+    auto require=[&](bool ok,const char *label) {
+        log<<(ok ? "PASS " : "FAIL ")<<label<<'\n';log.flush();
+        if (!ok) throw std::runtime_error(label);
+    };
+    h.ClickAt({s.timeline.view.min.x+12,s.timeline.view.min.y+40});
+    require(!s.tracks.front().visible,"native track visibility icon changes host state");
+    h.mouse={-100,-100};h.Frame({},out/"track-icons-light.png");
+    h.ClickAt({s.timeline.view.min.x+12,s.timeline.view.min.y+40});
+    require(s.tracks.front().visible,"native visibility icon restores host state");
+    s.japanese=true;s.timeline.headerWidth=150;h.s.dark=true;
+    h.s.theme=MakePrecisionTheme(ColorScheme::Dark);h.s.scale=1.5f;h.Settle();
+    h.ClickAt({s.timeline.view.min.x+15,s.timeline.view.min.y+38});
+    h.mouse={-100,-100};h.Frame({},out/"track-menu-japanese-dark-150.png");
+    h.Key(ImGuiKey_Home);h.Key(ImGuiKey_DownArrow);h.Key(ImGuiKey_Enter);
+    require(s.tracks.front().mute,"native Japanese icon menu applies mute to host track");
+    log<<"Public ImGui IO and native GL backbuffer; native OS/IME input not tested.\n";
+}
+
 void VerifyMonitors(Host &h,const std::filesystem::path &out) {
     using namespace imkit;
     auto &s=h.s.editors;h.Page(8);
@@ -861,7 +883,7 @@ int VerifyInspectorModel() {
     return failures?1:0;
 }
 int main(int argc, char **argv) {
-    bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false, benchmarkEditors = false, verifyMonitors = false;
+    bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false, benchmarkEditors = false, verifyMonitors = false, verifyTrackControls = false;
     int capturePage = -1, animationPage = -1;
     std::string iconSearch;
     std::filesystem::path out = "out/catalog";
@@ -874,6 +896,7 @@ int main(int argc, char **argv) {
         else if (a == "--verify")
             verify = true;
         else if (a == "--capture-editors") { capture = true; capturePage = -2; }
+        else if (a == "--verify-track-controls") verifyTrackControls=true;
         else if (a == "--verify-monitors") verifyMonitors=true;
         else if (a == "--benchmark-editors") benchmarkEditors=true;
         else if (a == "--verify-editors")
@@ -903,10 +926,10 @@ int main(int argc, char **argv) {
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_VISIBLE, capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors ? GLFW_FALSE : GLFW_TRUE);
+    glfwWindowHint(GLFW_VISIBLE, capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls ? GLFW_FALSE : GLFW_TRUE);
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
     Host h;
-    h.automated = capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors;
+    h.automated = capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls;
     h.window = glfwCreateWindow(1920, 1440, "ImKit Precision Layers", nullptr, nullptr);
     if (!h.window) {
         glfwTerminate();
@@ -1032,6 +1055,7 @@ int main(int argc, char **argv) {
             if (verify)
                 Verify(h, out);
             if (benchmarkEditors) BenchmarkEditors(h,out);
+            if (verifyTrackControls) VerifyTrackControls(h,out);
             if (verifyMonitors) VerifyMonitors(h,out);
             if (verifyEditors)
                 VerifyEditors(h, out, previewFunctions);
