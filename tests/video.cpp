@@ -228,6 +228,29 @@ int main() {
     timeline.bindings={};timeline.canvas.origin.x=7;
     io.AddKeyEvent(ImGuiKey_F8,true);frame(full);io.AddKeyEvent(ImGuiKey_F8,false);frame(full);
     check(timeline.canvas.origin.x==7,"empty bindings disable Fit shortcut");
+    struct TransitionFixture {video::TrackView track;video::ClipView clip;} transitionFixture;
+    transitionFixture.track.id=900;transitionFixture.track.label="Video";
+    transitionFixture.clip.id=901;transitionFixture.clip.track=900;transitionFixture.clip.label="Transition";
+    transitionFixture.clip.duration=editor::FromSeconds(3);
+    transitionFixture.clip.transitionIn=editor::FromSeconds(.5);
+    transitionFixture.clip.transitionOut=editor::FromSeconds(.5);
+    provider={};provider.user=&transitionFixture;provider.trackCount=1;provider.revision=1;
+    provider.tracks=[](void *u,int,int){return std::span<const video::TrackView>(&static_cast<TransitionFixture*>(u)->track,1);};
+    provider.clips=[](void *u,editor::StableId,editor::Range){return std::span<const video::ClipView>(&static_cast<TransitionFixture*>(u)->clip,1);};
+    timeline={};full.Clear();frame(full);frame(full);
+    for (int side=0;side<2;++side) {
+        const float x=timeline.view.min.x+timeline.headerWidth+(side ? 250.f : 50.f);
+        const float y=timeline.view.min.y+10;
+        full.Clear();io.AddMousePosEvent(x,y);frame(full);frame(full);
+        io.AddMouseButtonEvent(0,true);frame(full);
+        check(timeline.transitionDrag.active && timeline.transitionEnd==(side==1),"transition handle begins the selected end");
+        full.Clear();io.AddMousePosEvent(x+(side ? -50.f : 50.f),y);frame(full);
+        check(timeline.transitionDrag.draft.proposed.first==editor::FromSeconds(side ? .5 : 1.) &&
+              timeline.transitionDrag.draft.proposed.last==editor::FromSeconds(side ? 1. : .5),"transition handle changes only its duration");
+        full.Clear();io.AddMouseButtonEvent(0,false);frame(full);
+        check(full.count==1 && full.Events()[0].kind==editor::EditKind::TransitionDuration &&
+              full.Events()[0].phase==editor::Phase::Commit && !timeline.transitionDrag.active,"transition duration commits without moving the clip");
+    }
     video::ColorValues hostColors;
     video::ColorPropertyIds colorIds{101,307,509,701,907,1103};
     video::ColorState colorState;

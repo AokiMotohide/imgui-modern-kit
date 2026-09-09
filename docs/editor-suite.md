@@ -428,3 +428,9 @@ Curve／UVのcontext menuは、ホストが`CurveState::icons`／`UVState::icons
 The external Debug source consumer now compiles and runs the Component Stack type/owner options, Curve/UV host atlas fields, UV face query, and continuous gizmo state through the public editor targets. This is source-consumption evidence; it does not establish installed-package, Release, GPU, or native menu interaction coverage.
 
 外部Debug source consumerで、Component Stackのtype／owner options、Curve／UVのホストatlas、UV face query、連続回転ギズモの状態を公開editor target経由でコンパイル・実行しました。これはsource導入の検証であり、install済みpackage、Release、GPU、native menu操作の検証ではありません。
+
+### Timeline transition duration / Timelineのtransition長
+
+Clip top-edge square handles edit the in/out transition durations independently, including creation from zero. `EditKind::TransitionDuration` carries in duration in `Value::first` and out duration in `last`, with Begin/Update/Commit/Cancel phases. The sum is constrained to the clip duration. Locked clips/tracks reject editing; revision changes, Escape, or removal from the visible query cancel. Preview uses the transaction proposal and Gallery applies committed durations. Public ImGui IO tests cover both handles and their typed commits. Transition type selection, adjacent-clip overlap semantics, and native capture remain separate unfinished work.
+
+クリップ上端の四角いhandleで、開始側・終了側のtransition長を独立して編集し、ゼロからも追加できます。`EditKind::TransitionDuration`は`Value::first`に開始側の長さ、`last`に終了側の長さを格納し、Begin／Update／Commit／Cancelを返します。合計はclip duration以内に制限します。locked clip／trackは編集を拒否し、revision変更・Escape・可視queryからの消失で取り消します。previewは提案値を使用し、GalleryはCommitを適用します。両handleと型付きCommitを公開ImGui IOで確認しました。transition種類の選択、隣接clipのoverlap契約、native captureは引き続き未完了です。

@@ -433,6 +433,14 @@ void EditorWorkspaces::ApplyEvents() {
             if (object.id==e.target && !object.locked) {object.label=renamedLabels[e.target].c_str();changed=true;}
         auto clip = std::find_if(clips.begin(), clips.end(), [&](const auto &c) { return c.id == e.target; });
         if (clip != clips.end()) {
+            if (e.kind==editor::EditKind::TransitionDuration && !clip->locked) {
+                const auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==clip->track;});
+                if (track!=tracks.end() && !track->locked) {
+                    clip->transitionIn=std::clamp(e.proposed.first,editor::Tick{0},clip->duration);
+                    clip->transitionOut=std::clamp(e.proposed.last,editor::Tick{0},clip->duration-clip->transitionIn);
+                    changed=true;
+                }
+            }
             if (e.kind == editor::EditKind::Rename) {
                 clip->label = renamedLabels[e.target].c_str();
                 changed = true;

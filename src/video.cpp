@@ -223,6 +223,10 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     s.view = view;
     auto *draw = ImGui::GetWindowDrawList();
     const auto &io = ImGui::GetIO();
+    detail::ResumeTerminal(s.transitionDrag,p.revision,out);
+    if (s.transitionDrag.active && (p.revision!=s.transitionDrag.draft.revision || ImGui::IsKeyPressed(ImGuiKey_Escape)))
+        s.transitionDrag.Cancel(out);
+    bool transitionSeen=false;
     detail::ResumeTerminal(s.heightDrag,p.revision,out);
     if (s.heightDrag.active && ImGui::IsKeyPressed(ImGuiKey_Escape)) s.heightDrag.Cancel(out);
     if (view.hovered && s.tool == Tool::Hand && ImGui::IsMouseDragging(0))
@@ -380,14 +384,46 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 draw->AddQuadFilled({kx, ky - 4}, {kx + 4, ky}, {kx, ky + 4}, {kx - 4, ky},
                                     ImGui::GetColorU32(theme.colors.warning));
             }
-            if (clip.transitionIn)
-                draw->AddLine(
-                    a, {x + static_cast<float>(editor::Seconds(clip.transitionIn) * s.canvas.scale.x), b.y},
-                    ImGui::GetColorU32(theme.colors.text), 2);
-            if (clip.transitionOut)
-                draw->AddLine(
-                    {end - static_cast<float>(editor::Seconds(clip.transitionOut) * s.canvas.scale.x), b.y},
-                    {end, a.y}, ImGui::GetColorU32(theme.colors.text), 2);
+            Tick transitionIn=clip.transitionIn,transitionOut=clip.transitionOut;
+            const bool editingTransition=s.transitionDrag.active && s.transitionDrag.draft.target==clip.id;
+            if (editingTransition) {
+                transitionSeen=true;
+                if (track.locked || clip.locked) s.transitionDrag.Cancel(out);
+                else if (s.transitionDrag.draft.phase!=editor::Phase::Cancel &&
+                         s.transitionDrag.draft.phase!=editor::Phase::Commit) {
+                    auto proposed=s.transitionDrag.draft.original;
+                    const Tick delta=editor::FromSeconds((io.MousePos.x-s.transitionMouseStart)/s.canvas.scale.x);
+                    if (s.transitionEnd) proposed.last=std::clamp(proposed.last-delta,Tick{0},std::max(Tick{0},clip.duration-proposed.first));
+                    else proposed.first=std::clamp(proposed.first+delta,Tick{0},std::max(Tick{0},clip.duration-proposed.last));
+                    if (!(proposed==s.transitionDrag.draft.proposed)) s.transitionDrag.Update(p.revision,proposed,out);
+                }
+                if (s.transitionDrag.draft.phase!=editor::Phase::Cancel) {
+                    transitionIn=s.transitionDrag.draft.proposed.first;
+                    transitionOut=s.transitionDrag.draft.proposed.last;
+                }
+            }
+            bool transitionHit=false;
+            for (int side=0;side<2;++side) {
+                const float handleX=side ? end-float(editor::Seconds(transitionOut)*s.canvas.scale.x) :
+                                          x+float(editor::Seconds(transitionIn)*s.canvas.scale.x);
+                const ImVec2 handle{handleX,a.y+6};
+                draw->AddLine(side ? ImVec2{handleX,b.y} : a,
+                              side ? ImVec2{end,a.y} : ImVec2{handleX,b.y},ImGui::GetColorU32(theme.colors.text),2);
+                draw->AddRect({handle.x-4,handle.y-4},{handle.x+4,handle.y+4},
+                              ImGui::GetColorU32(theme.editor.marker),1,0,editingTransition ? 2.f : 1.f);
+                const bool hovered=view.hovered && handleX>=view.min.x+s.headerWidth &&
+                    std::abs(io.MousePos.x-handle.x)<=6 && std::abs(io.MousePos.y-handle.y)<=6;
+                transitionHit |= hovered;
+                if (hovered) {
+                    ImGui::SetTooltip(side ? "Transition out duration" : "Transition in duration");
+                    if (ImGui::IsMouseClicked(0) && !track.locked && !clip.locked && !s.drag.active && !s.transitionDrag.active) {
+                        editor::Value original;original.first=clip.transitionIn;original.last=clip.transitionOut;
+                        if (s.transitionDrag.Begin(clip.id,p.revision,editor::EditKind::TransitionDuration,original,editor::CurrentModifiers(),out)) {
+                            s.transitionEnd=side==1;s.transitionMouseStart=io.MousePos.x;transitionSeen=true;
+                        }
+                    }
+                }
+            }
             bool hit = view.hovered && io.MousePos.x >= (std::max)(x, view.min.x + s.headerWidth) &&
                        io.MousePos.x < end && io.MousePos.y >= a.y && io.MousePos.y < b.y;
             if (hit)
@@ -398,7 +434,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 s.editingCaption = clip.id;
                 std::snprintf(s.caption, sizeof(s.caption), "%s", clip.label);
             }
-            if (hit && s.editingCaption != clip.id && ImGui::IsMouseClicked(0) && !track.locked &&
+            if (hit && !transitionHit && !s.transitionDrag.active && s.editingCaption != clip.id && ImGui::IsMouseClicked(0) && !track.locked &&
                 !clip.locked && !s.drag.active) {
                 if (!selection.Contains(clip.id) || io.KeyCtrl)
                     selection.Set(clip.id, io.KeyCtrl, io.KeyCtrl);
@@ -475,6 +511,11 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             }
         }
         draw->PopClipRect();
+    }
+    if (s.transitionDrag.active) {
+        if (!transitionSeen) s.transitionDrag.Cancel(out);
+        else if (!out.overflow && !ImGui::IsMouseDown(0) && s.transitionDrag.draft.phase!=editor::Phase::Cancel)
+            s.transitionDrag.Commit(p.revision,out);
     }
     if (s.drag.active && s.drag.draft.phase != editor::Phase::Cancel &&
         s.drag.draft.phase != editor::Phase::Commit && ReserveEvents(out, ActiveDrags(s))) {
