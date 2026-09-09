@@ -583,6 +583,24 @@ double Evaluate(std::span<const Keyframe> keys, Tick tick, Extrapolation extrapo
     }
     return bez(a->value, a->value + resolvedA.right.y, b->value + resolvedB.left.y, b->value, (lo + hi) * .5);
 }
+namespace {
+bool CurveCapacity(const CurveState &s,EventBuffer &out) {
+    if (out.storage.size()-out.count>=1+s.companionCount) return true;
+    out.overflow=true;return false;
+}
+void FinishCurve(CurveState &s,std::uint64_t revision,bool cancel,EventBuffer &out) {
+    if (!s.drag.active) return;
+    cancel |= revision!=s.drag.draft.revision || s.drag.draft.phase==Phase::Cancel;
+    const auto phase=cancel?Phase::Cancel:Phase::Commit;
+    s.drag.draft.phase=phase;
+    for (auto &drag:s.companionDrags.first(s.companionCount)) drag.draft.phase=phase;
+    if (!CurveCapacity(s,out)) return;
+    if (cancel) s.drag.Cancel(out);else s.drag.Commit(revision,out);
+    for (auto &drag:s.companionDrags.first(s.companionCount))
+        if (cancel) drag.Cancel(out);else drag.Commit(revision,out);
+    s.companionCount=0;
+}
+}
 void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, Selection &selection,
                  EventBuffer &out, const Theme &t, ImVec2 size) {
     if (CommandPressed(Command::Fit,s.bindings,ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)))
@@ -597,10 +615,10 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
     s.fitRequested=false;
     auto view = BeginCanvas(id, s.canvas, size, t);
     s.view = view;
-    detail::ResumeTerminal(s.drag, provider.revision, out);
+    if (s.drag.active && (provider.revision!=s.drag.draft.revision || ImGui::IsKeyPressed(ImGuiKey_Escape) ||
+        s.drag.draft.phase==Phase::Cancel || s.drag.draft.phase==Phase::Commit))
+        FinishCurve(s,provider.revision,provider.revision!=s.drag.draft.revision || ImGui::IsKeyPressed(ImGuiKey_Escape),out);
     DrawGrid(view, s.canvas, {1, 1}, t);
-    if (s.drag.active && (provider.revision != s.drag.draft.revision || ImGui::IsKeyPressed(ImGuiKey_Escape)))
-        s.drag.Cancel(out);
     auto keys = provider.query
                     ? provider.query(provider.user,
                                      {{FromSeconds(view.visible.min.x), FromSeconds(view.visible.max.x)},
@@ -625,6 +643,10 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
             } else {
                 key->tick=s.drag.draft.original.first+FromSeconds(dx);
                 key->value=s.drag.draft.original.x+dy;
+            }
+            for (const auto &drag:s.companionDrags.first(s.companionCount)) {
+                auto member=std::find_if(preview.begin(),preview.end(),[&](const auto &item){return item.id==drag.draft.target;});
+                if (member!=preview.end()) {member->tick=drag.draft.original.first+FromSeconds(dx);member->value=drag.draft.original.x+dy;}
             }
             std::sort(preview.begin(),preview.end(),[](const auto &a,const auto &b){return a.channel!=b.channel?a.channel<b.channel:a.tick<b.tick;});
             keys=preview;
@@ -651,7 +673,7 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
         const auto resolved = ResolveHandles(channelKeys, i - channelBegin);
         Point v{Seconds(k.tick), -k.value};
         auto p = Screen(v, s.canvas, view.min);
-        if (provider.sample && previewChannel!=k.channel && i==channelBegin) {
+        if (provider.sample && !previewChannel && i==channelBegin) {
             const float width=view.max.x-view.min.x;
             const int segments=(std::max)(1,static_cast<int>(std::ceil(width/4)));
             ImVec2 previous{};
@@ -665,7 +687,7 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
                 previous=point;
             }
         }
-        if ((!provider.sample || previewChannel==k.channel) && i && keys[i - 1].channel == k.channel) {
+        if ((!provider.sample || previewChannel) && i && keys[i - 1].channel == k.channel) {
             auto &prev = keys[i - 1];
             ImVec2 old = Screen({Seconds(prev.tick), -prev.value}, s.canvas, view.min);
             for (int j = 1; j <= 32; ++j) {
@@ -740,10 +762,19 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
             selection.Set(hit, ImGui::GetIO().KeyCtrl);
         s.side = side;
         s.mouseStart = {ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y};
-        s.drag.Begin(hit, provider.revision, side ? EditKind::Handle : EditKind::Keyframe, initial,
-                     CurrentModifiers(), out);
+        auto members=!side && provider.selected ? provider.selected(provider.user,selection.storage.first(selection.count)) : std::span<const Keyframe>{};
+        std::size_t count=0;bool allowed=true;
+        for (const auto &member:members) if (member.id!=hit) {++count;allowed &= !member.locked;}
+        if (count>s.companionDrags.size() || out.storage.size()-out.count<1+count) {out.overflow=true;allowed=false;}
+        if (allowed) {
+            s.companionCount=0;
+            s.drag.Begin(hit, provider.revision, side ? EditKind::Handle : EditKind::Keyframe, initial,CurrentModifiers(), out);
+            for (const auto &member:members) if (member.id!=hit)
+                s.companionDrags[s.companionCount++].Begin(member.id,provider.revision,EditKind::Keyframe,
+                    Value{member.tick,0,0,0,member.value},CurrentModifiers(),out);
+        }
     }
-    if (s.drag.active) {
+    if (s.drag.active && s.drag.draft.phase!=Phase::Cancel && s.drag.draft.phase!=Phase::Commit && CurveCapacity(s,out)) {
         auto proposed = s.drag.draft.original;
         auto mouse = ImGui::GetIO().MousePos;
         double dx = (mouse.x - s.mouseStart.x) / s.canvas.scale.x,
@@ -755,11 +786,15 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
             proposed.first += FromSeconds(dx);
             proposed.x += dy;
         }
-        if (ImGui::IsMouseDown(0) && !(proposed == s.drag.draft.proposed))
-            s.drag.Update(provider.revision, proposed, out);
-        if (ImGui::IsMouseReleased(0))
-            s.drag.Commit(provider.revision, out);
+        if (ImGui::IsMouseDown(0)) {
+            if (!(proposed == s.drag.draft.proposed)) s.drag.Update(provider.revision, proposed, out);
+            for (auto &drag:s.companionDrags.first(s.companionCount)) {
+                auto value=drag.draft.original;value.first+=FromSeconds(dx);value.x+=dy;
+                if (!(value==drag.draft.proposed)) drag.Update(provider.revision,value,out);
+            }
+        }
     }
+    if (s.drag.active && !ImGui::IsMouseDown(0)) FinishCurve(s,provider.revision,false,out);
     EndCanvas();
 }
 void PropertyGrid(const char *id, const PropertyProvider &p, PropertyState &s, EventBuffer &out) {

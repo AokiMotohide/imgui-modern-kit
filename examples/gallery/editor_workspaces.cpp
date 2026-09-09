@@ -67,7 +67,11 @@ editor::CurveProvider Curves(EditorWorkspaces &s) {
                     if (s.keys[first].channel==id)
                         return editor::Evaluate(std::span<const editor::Keyframe>(s.keys).subspan(first,last-first),tick,mode);
                 return 0.;
-            },s.curveBounds};
+            },s.curveBounds,[](void *u,std::span<const editor::StableId> ids) {
+                auto &s=*static_cast<EditorWorkspaces*>(u);s.selectedCurveKeys.clear();
+                for (const auto &key:s.keys) if (std::find(ids.begin(),ids.end(),key.id)!=ids.end()) s.selectedCurveKeys.push_back(key);
+                return std::span<const editor::Keyframe>(s.selectedCurveKeys);
+            }};
 }
 void Options(EditorWorkspaces &s) {
     bool large = s.large;
@@ -148,6 +152,8 @@ void EditorWorkspaces::Dataset(bool big) {
     mixerTrack = audioStrips.empty() ? 0 : audioStrips.front().id;
     mixerState.drag.active = false;
     curve.drag.active = false;
+    curve.companionCount=0;
+    for (auto &drag:curveCompanions) drag.active=false;
     RebuildTrackLayout();
     ++revision;
 }
@@ -209,6 +215,8 @@ void EditorWorkspaces::Initialize() {
     Dataset(false);
     bindingCount = editor::MakeBindings(editor::ShortcutPreset::CapCut, bindings);
     timeline.memberDrags = clipDrags;
+    curveCompanions.resize(1024);
+    curve.companionDrags=curveCompanions;
     viewport.cameraView=&sceneCamera;
     preview::Cube(cubeVertices, cubeIndices);
     const char *names[] = {"Collection", "Hero cube", "Fill light", "Camera"};

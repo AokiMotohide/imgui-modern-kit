@@ -185,3 +185,7 @@ Curve Fitは秒/負の値座標による全channelの `CurveProvider.bounds` を
 Optional host-owned `CurveState.previewKeys` scratch (at least the visible query size) renders the drag proposal before commit, including sorted key crossings and resolved handle edits. Gallery maintains this scratch alongside its visible-key buffer. Clicking an already-selected key preserves the other selected IDs.
 
 ホスト所有の任意buffer `CurveState.previewKeys` に可視query以上の要素数を渡すと、commit前の移動案を描画します。keyの順序変更と解決済みhandle編集も反映します。Galleryは可視key bufferとともにこの領域を保持します。選択済みkeyをクリックしても他の選択IDを維持します。
+
+Curve multi-key move uses complete selected-key views from `CurveProvider.selected` and host-owned `CurveState.companionDrags`. Each key emits its own typed transaction with a shared time/value delta. Capacity is checked for the whole batch; terminal events retry together, and any locked selected member prevents the gesture. Gallery supplies these buffers and applies each committed key.
+
+Curveの複数key移動は `CurveProvider.selected` の全選択keyとホスト所有 `CurveState.companionDrags` を使います。各keyは共通の時間/値差分を持つtransactionを返します。容量はbatch全体で確認し、終端イベントも一括再送します。lockedな選択keyを含むgestureは開始しません。Galleryはbufferを提供し、各keyのcommitを反映します。
