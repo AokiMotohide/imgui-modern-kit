@@ -127,7 +127,8 @@ void EditorWorkspaces::Initialize() {
     for (int y = 0; y < 64; ++y)
         for (int x = 0; x < 64; ++x)
             pixels[y * 64 + x] = {x / 63.f, y / 63.f, (x + y) / 126.f, 1};
-    video::BuildScopes(pixels, 64, 64, {red, green, blue, luma, scopeWave, scopeVector});
+    video::BuildScopes(pixels, 64, 64, {red, green, blue, luma, scopeWave, scopeVector,
+                                      scopeRGB[0], scopeRGB[1], scopeRGB[2]});
 }
 void EditorWorkspaces::RenderPreview() {
     if (!initialized || !previewRenderer.Initialized())
@@ -267,6 +268,18 @@ void EditorWorkspaces::ApplyEvents() {
                     *fields[component] = e.proposed.x;
                     changed = true;
                 }
+        }
+        if (e.kind == editor::EditKind::Property) {
+            float *rgb = e.target == colorIds.lift ? colors.lift : e.target == colorIds.gamma ? colors.gamma :
+                         e.target == colorIds.gain ? colors.gain : nullptr;
+            if (rgb) {
+                rgb[0]=static_cast<float>(e.proposed.x); rgb[1]=static_cast<float>(e.proposed.y);
+                rgb[2]=static_cast<float>(e.proposed.z); changed=true;
+            }
+            float *scalar = e.target == colorIds.temperature ? &colors.temperature :
+                            e.target == colorIds.tint ? &colors.tint :
+                            e.target == colorIds.exposure ? &colors.exposure : nullptr;
+            if (scalar) { *scalar=static_cast<float>(e.proposed.x); changed=true; }
         }
         for (auto &key : keys)
             if (key.id == e.target) {
@@ -421,21 +434,34 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         return std::span<const editor::SnapCandidate>(s.snapCandidates).first(n);
     };
     float remaining = ImGui::GetContentRegionAvail().y;
-    float timelineHeight = (std::max)(140.f, remaining - 230);
+    float timelineHeight = (std::max)(140.f, remaining -
+        (s.activeVideoPanel == 1 ? 380.f * ImGui::GetFontSize()/14 : 230.f));
     s.timelineOrigin = ImGui::GetCursorScreenPos();
     video::Timeline("Timeline", p, s.timeline, s.selection, s.events, theme, {0, timelineHeight});
     ImGui::BeginChild("Audio color", {0, 0}, ImGuiChildFlags_Borders);
     if (ImGui::BeginTabBar("audio color")) {
         if (ImGui::BeginTabItem("Audio")) {
+            s.activeVideoPanel = 0;
             video::Waveform("wave", s.audio, {ImGui::GetContentRegionAvail().x - 80, 90}, theme);
             ImGui::SameLine();
             video::LevelMeter("meter", s.meter, s.meter, {50, 90}, theme);
             ImGui::EndTabItem();
         }
-        if (ImGui::BeginTabItem("Color")) {
-            video::Histogram("hist", s.luma, {350, 100}, theme);
+        if (ImGui::BeginTabItem("Color", nullptr, s.videoPanel == 1 ? ImGuiTabItemFlags_SetSelected : 0)) {
+            s.activeVideoPanel = 1;
+            s.videoPanel = -1;
+            float scopeWidth = (std::max)(40.f, (ImGui::GetContentRegionAvail().x-32)/5);
+            video::Histogram("hist", s.luma, {scopeWidth, 80}, theme);
             ImGui::SameLine();
-            video::ScopeImage("vectorscope", s.scopeVector, 256, 256, {100, 100}, theme);
+            video::ScopeImage("vectorscope", s.scopeVector, 256, 256, {scopeWidth, 80}, theme);
+            const ImVec4 tints[] = {{1,.25f,.25f,1},{.25f,1,.25f,1},{.3f,.5f,1,1}};
+            for (int channel=0; channel<3; ++channel) {
+                ImGui::SameLine();
+                ImGui::PushID(channel);
+                video::ScopeImage("RGB waveform", s.scopeRGB[channel],64,256,{scopeWidth,80},theme,tints[channel]);
+                ImGui::PopID();
+            }
+            video::ColorControls("Grade",s.colors,s.colorIds,s.revision,s.colorState,s.events);
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Keyframes / Curves")) {

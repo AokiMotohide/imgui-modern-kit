@@ -67,6 +67,13 @@ int main() {
     check(r[255] == 1 && r[0] == 1 && b[0] == 2, "scope channel bins");
     check(!video::BuildScopes(pixels, 3, 1, {r, g, b, l, waveform, vector}),
           "scope rejects mismatched dimensions");
+    std::array<std::uint32_t,512> redWave{},greenWave{},blueWave{};
+    check(video::BuildScopes(pixels,2,1,{r,g,b,l,waveform,vector,redWave,greenWave,blueWave}) &&
+              redWave[255*2] == 1 && redWave[1] == 1 && greenWave[255*2+1] == 1 &&
+              blueWave[0] == 1 && blueWave[1] == 1,
+          "RGB waveform preserves channel and horizontal pixel position");
+    check(!video::BuildScopes(pixels,2,1,{r,g,b,l,waveform,vector,redWave,{},blueWave}),
+          "partial RGB waveform buffers rejected before write");
     auto *context = ImGui::CreateContext();
     auto &io = ImGui::GetIO();
     io.IniFilename = nullptr;
@@ -115,6 +122,52 @@ int main() {
               full.Events()[0].phase == editor::Phase::Cancel &&
               full.Events()[1].phase == editor::Phase::Cancel,
           "revision cancellation retries as one complete batch");
+    video::ColorValues hostColors;
+    video::ColorPropertyIds colorIds{101,307,509,701,907,1103};
+    video::ColorState colorState;
+    std::uint64_t colorRevision=9;
+    int colorCommits=0;
+    bool colorCancelled=false;
+    auto colorFrame = [&] {
+        full.Clear();
+        ImGui::NewFrame();
+        ImGui::SetNextWindowPos({0,0});
+        ImGui::SetNextWindowSize({780,580});
+        ImGui::Begin("Three-way color");
+        video::ColorControls("grade",hostColors,colorIds,colorRevision,colorState,full);
+        ImGui::End();
+        ImGui::Render();
+        for (const auto &event : full.Events()) {
+            colorCancelled |= event.phase == editor::Phase::Cancel;
+            if (event.phase != editor::Phase::Commit) continue;
+            float *rgb = event.target==colorIds.lift ? hostColors.lift :
+                         event.target==colorIds.gamma ? hostColors.gamma : hostColors.gain;
+            rgb[0]=static_cast<float>(event.proposed.x); rgb[1]=static_cast<float>(event.proposed.y);
+            rgb[2]=static_cast<float>(event.proposed.z); ++colorCommits;
+        }
+    };
+    colorFrame(); colorFrame();
+    for (int wheel=0; wheel<3; ++wheel) {
+        const auto center=colorState.wheelCenters[wheel];
+        io.AddMousePosEvent(center.x,center.y); colorFrame();
+        io.AddMouseButtonEvent(0,true); colorFrame();
+        io.AddMousePosEvent(center.x+colorState.wheelRadius*.6f,center.y); colorFrame();
+        check(colorState.drag.active && colorCommits==wheel,"wheel preview remains uncommitted");
+        io.AddMouseButtonEvent(0,false); colorFrame();
+        const float *rgb=wheel==0 ? hostColors.lift : wheel==1 ? hostColors.gamma : hostColors.gain;
+        const float neutral=wheel==0 ? 0.f : 1.f;
+        const float pointerX=(std::floor(center.x+colorState.wheelRadius*.6f)-center.x)/colorState.wheelRadius;
+        check(colorCommits==wheel+1 && std::abs(rgb[0]-neutral-pointerX)<.001f &&
+                  std::abs(rgb[1]-neutral+pointerX*.5f)<.001f &&
+                  std::abs(rgb[2]-neutral+pointerX*.5f)<.001f,
+              "three-way wheel pointer gesture applies typed RGB proposal");
+    }
+    auto center=colorState.wheelCenters[0];
+    io.AddMousePosEvent(center.x,center.y); colorFrame();
+    io.AddMouseButtonEvent(0,true); colorFrame();
+    ++colorRevision; colorFrame();
+    io.AddMouseButtonEvent(0,false); colorFrame();
+    check(colorCancelled && colorCommits==3,"color gesture revision change cancels without host mutation");
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
