@@ -126,6 +126,8 @@ struct TimelineState {
     bool captionFocus=false;
     editor::Transaction keyDrag;
     double keyMouseStart=0;
+    std::span<editor::Transaction> keyCompanions; // Host scratch, stable during a gesture.
+    std::size_t keyCompanionCount=0;
     editor::Selection *keySelection=nullptr; // Optional non-owning selection distinct from clips.
 };
 // Resolves both moving edges; ignores every selected clip and filters disabled kinds.

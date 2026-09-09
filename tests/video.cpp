@@ -287,6 +287,20 @@ int main() {
     check(full.count==1 && full.Events()[0].kind==editor::EditKind::Keyframe && full.Events()[0].target==clipKey.id &&
           full.Events()[0].proposed.parent==transitionFixture.clip.id && full.Events()[0].phase==editor::Phase::Commit,
           "clip key commits local time with owner ID");
+    editor::Keyframe clipKeys[]={clipKey,clipKey};clipKeys[1].id=1902;clipKeys[1].tick=editor::FromSeconds(2);
+    transitionFixture.clip.keys=clipKeys;keySelection.Set(clipKeys[1].id,true);
+    editor::Transaction clipKeyCompanions[1];timeline.keyCompanions=clipKeyCompanions;
+    full.Clear();io.AddMousePosEvent(keyX,keyY);frame(full);io.AddMouseButtonEvent(0,true);frame(full);
+    check(timeline.keyCompanionCount==1 && full.count==2,"clip multi-key Begin covers complete selection");
+    full.Clear();io.AddMousePosEvent(keyX+300,keyY);frame(full);
+    check(timeline.keyDrag.draft.proposed.first==editor::FromSeconds(2) &&
+          clipKeyCompanions[0].draft.proposed.first==editor::FromSeconds(3),"clip multi-key clamp preserves spacing");
+    small.Clear();io.AddMouseButtonEvent(0,false);frame(small);
+    check(small.overflow && small.count==0 && timeline.keyDrag.active && clipKeyCompanions[0].active,
+          "clip multi-key terminal shortage retains all targets");
+    full.Clear();frame(full);
+    check(full.count==2 && full.Events()[0].phase==editor::Phase::Commit && full.Events()[1].phase==editor::Phase::Commit &&
+          !timeline.keyDrag.active && !clipKeyCompanions[0].active,"clip multi-key commits complete retry batch");
     transitionFixture.clip.keys={};timeline.keySelection=nullptr;
     transitionFixture.track.kind=video::TrackKind::Caption;
     auto beginCaption=[&] {

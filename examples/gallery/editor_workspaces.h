@@ -73,6 +73,7 @@ struct EditorWorkspaces {
     editor::CanvasState stripCanvas;
     editor::Transaction stripDrag;
     std::vector<editor::Transaction> curveCompanions;
+    std::array<editor::Transaction,64> clipKeyCompanions{};
     editor::PropertyState videoProperties, objectProperties;
     std::vector<editor::StableId> propertyGestureSelection;
     editor::AssetState assetState;
