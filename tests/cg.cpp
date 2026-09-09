@@ -495,14 +495,18 @@ int main() {
     handleEvents.storage=handleStorage;handleFrame();
     check(handleEvents.count==4 && !handleState.drag.active && !companionStorage[0].transform.active &&
           handleState.companionCount==0,"multi-object terminal retry commits entire batch");
-    for (int cancellation=0;cancellation<3;++cancellation) {
-        handleState.selectedObjects=selectedObjects;selectedObjects[1].locked=false;
+    for (int cancellation=0;cancellation<6;++cancellation) {
+        handleState.selectedObjects=selectedObjects;selectedObjects[1].locked=false;selectedObjects[1].visible=true;handleObject.visible=true;
+        handleState.pivotPosition={};
         io.AddMousePosEvent(ringCenter.x+88,ringCenter.y);handleFrame();handleFrame();
         io.AddMouseButtonEvent(0,true);handleFrame();
         check(handleState.companionCount==1,"multi-object cancellation setup");
         if (cancellation==0) handleState.selectedObjects={selectedObjects,1};
         else if (cancellation==1) selectedObjects[1].locked=true;
-        else ++handleObject.id;
+        else if (cancellation==2) ++handleObject.id;
+        else if (cancellation==3) handleObject.visible=false;
+        else if (cancellation==4) selectedObjects[1].visible=false;
+        else handleState.pivotPosition={0,0,1000};
         handleEvents.storage={handleStorage,3};handleFrame();
         check(handleEvents.count==0 && handleEvents.overflow && handleState.drag.active &&
               companionStorage[0].position.active,"cancellation overflow retains every target");
