@@ -249,6 +249,7 @@ struct CurveState {
     Extrapolation extrapolation = Extrapolation::Constant;
     std::span<const Binding> bindings;
     bool fitRequested = false;
+    std::span<Keyframe> previewKeys; // Optional host scratch, at least the query result size.
     int side = 0;
     Point mouseStart{};
     CanvasView view{};

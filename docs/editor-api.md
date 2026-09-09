@@ -181,3 +181,7 @@ Optional `CurveProvider.sample` evaluates a complete host channel at an exact ti
 Curve Fit uses optional complete-channel `CurveProvider.bounds` in seconds/negative-value coordinates. `CurveState.bindings` supplies the remappable Fit command; the context menu shares this action. Flat ranges expand by one unit before fitting. Gallery caches bounds during index rebuild.
 
 Curve Fitは秒/負の値座標による全channelの `CurveProvider.bounds` を使います。`CurveState.bindings` から変更可能なFit commandを渡し、context menuも同じ処理を使います。幅のない範囲は1単位に広げて表示し、Galleryはindex更新時に範囲を保持します。
+
+Optional host-owned `CurveState.previewKeys` scratch (at least the visible query size) renders the drag proposal before commit, including sorted key crossings and resolved handle edits. Gallery maintains this scratch alongside its visible-key buffer. Clicking an already-selected key preserves the other selected IDs.
+
+ホスト所有の任意buffer `CurveState.previewKeys` に可視query以上の要素数を渡すと、commit前の移動案を描画します。keyの順序変更と解決済みhandle編集も反映します。Galleryは可視key bufferとともにこの領域を保持します。選択済みkeyをクリックしても他の選択IDを維持します。

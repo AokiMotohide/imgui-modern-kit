@@ -607,6 +607,28 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
                                       -view.visible.max.y,
                                       -view.visible.min.y})
                     : std::span<const Keyframe>{};
+    StableId previewChannel=0;
+    if (s.drag.active && s.drag.draft.phase!=Phase::Cancel && s.previewKeys.size()>=keys.size()) {
+        std::copy(keys.begin(),keys.end(),s.previewKeys.begin());
+        auto preview=s.previewKeys.first(keys.size());
+        auto key=std::find_if(preview.begin(),preview.end(),[&](const auto &item){return item.id==s.drag.draft.target;});
+        if (key!=preview.end()) {
+            const auto mouse=ImGui::GetIO().MousePos;
+            const double dx=(mouse.x-s.mouseStart.x)/s.canvas.scale.x,dy=-(mouse.y-s.mouseStart.y)/s.canvas.scale.y;
+            previewChannel=key->channel;
+            if (s.side) {
+                auto first=std::find_if(preview.begin(),preview.end(),[&](const auto &item){return item.channel==key->channel;});
+                auto last=std::find_if(first,preview.end(),[&](const auto &item){return item.channel!=key->channel;});
+                *key=MoveHandle(ResolveHandles({first,last},static_cast<std::size_t>(key-first)),s.side<0,
+                    {s.drag.draft.original.x+dx,s.drag.draft.original.y+dy});
+            } else {
+                key->tick=s.drag.draft.original.first+FromSeconds(dx);
+                key->value=s.drag.draft.original.x+dy;
+            }
+            std::sort(preview.begin(),preview.end(),[](const auto &a,const auto &b){return a.channel!=b.channel?a.channel<b.channel:a.tick<b.tick;});
+            keys=preview;
+        }
+    }
     auto *d = ImGui::GetWindowDrawList();
     StableId hit = 0;
     int side = 0;
@@ -628,7 +650,7 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
         const auto resolved = ResolveHandles(channelKeys, i - channelBegin);
         Point v{Seconds(k.tick), -k.value};
         auto p = Screen(v, s.canvas, view.min);
-        if (provider.sample && i==channelBegin) {
+        if (provider.sample && previewChannel!=k.channel && i==channelBegin) {
             const float width=view.max.x-view.min.x;
             const int segments=(std::max)(1,static_cast<int>(std::ceil(width/4)));
             ImVec2 previous{};
@@ -642,7 +664,7 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
                 previous=point;
             }
         }
-        if (!provider.sample && i && keys[i - 1].channel == k.channel) {
+        if ((!provider.sample || previewChannel==k.channel) && i && keys[i - 1].channel == k.channel) {
             auto &prev = keys[i - 1];
             ImVec2 old = Screen({Seconds(prev.tick), -prev.value}, s.canvas, view.min);
             for (int j = 1; j <= 32; ++j) {
@@ -713,7 +735,8 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
     if (view.hovered && hit && ImGui::IsMouseClicked(0) && !s.drag.active) {
         auto active=std::find_if(keys.begin(),keys.end(),[&](const auto &key){return key.id==hit;});
         if (active!=keys.end()) s.activeChannel=active->channel;
-        selection.Set(hit, ImGui::GetIO().KeyCtrl);
+        if (!selection.Contains(hit) || ImGui::GetIO().KeyCtrl)
+            selection.Set(hit, ImGui::GetIO().KeyCtrl);
         s.side = side;
         s.mouseStart = {ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y};
         s.drag.Begin(hit, provider.revision, side ? EditKind::Handle : EditKind::Keyframe, initial,

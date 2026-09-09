@@ -16,7 +16,7 @@ struct EditorWorkspaces {
     editor::StableId mixerTrack = 0;
     editor::PropertyState mixerState;
     std::vector<video::ClipView> clips;
-    std::vector<editor::Keyframe> keys, visibleKeys;
+    std::vector<editor::Keyframe> keys, visibleKeys, curvePreviewKeys;
     std::vector<std::pair<std::size_t,std::size_t>> keyChannels;
     editor::Rect curveBounds{};
     void RebuildKeyIndex();
