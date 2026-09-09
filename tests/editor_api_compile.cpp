@@ -68,7 +68,14 @@ int main() {
     ImGui::BeginChild("outliner", {300, 100});
     cg::Outliner("tree", {}, outliner, selection, events);
     ImGui::EndChild();
-    cg::UVEditor("uv", {}, {}, uv, selection, events, theme, {300, 100});
+    cg::UVProvider uvProvider;
+    uvProvider.all=[](void *,cg::UVSelection)->std::span<const editor::StableId>{return {};};
+    uvProvider.selected=[](void *,std::span<const editor::StableId>,cg::UVSelection)->std::span<const cg::UVVertex>{return {};};
+    uvProvider.selectionQuery=[](void *,editor::Rect,cg::UVSelection)->std::span<const editor::SelectablePoint>{return {};};
+    uv.bindings={};uv.imageSize={1920,1080};uv.coordinates=cg::UVCoordinates::Pixel;
+    uv.companionDrags={};uv.canvas.selectionPath={};uv.checker=true;uv.showTexture=false;uv.grid=true;
+    cg::UVEdge edge;edge.aVertex=1;edge.bVertex=2;
+    cg::UVEditor("uv", uvProvider, {}, uv, selection, events, theme, {300, 100});
     cg::DopeSheet("dope", {}, curve, selection, events, theme, {300, 100});
     cg::AnimationStrips("strips", {}, 1, canvas, drag, events, theme, {300, 100});
     std::array<preview::Vertex, 24> vertices;
