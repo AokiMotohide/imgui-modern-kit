@@ -128,11 +128,24 @@ void ViewportObjects(const ViewportView &view, std::span<const ObjectView> visib
 void TransformGizmo(const ViewportView &view, const ObjectView &object, ViewportState &state,
                     std::uint64_t revision, editor::EventBuffer &events, const Theme &theme);
 void EndViewport();
+enum class OutlinerFilter { All, Visible, Hidden, Locked, Selected };
+struct OutlinerLabels {
+    const char *search="Search", *name="Name";
+    std::array<const char *,5> filters{"All objects","Visible","Hidden","Locked","Selected"};
+    std::array<const char *,4> restrictions{"Visible","Selectable","Renderable","Locked"};
+    const char *rename="Rename", *duplicate="Duplicate", *linkedDuplicate="Linked duplicate";
+    const char *linkGeometry="Link geometry to active", *singleUser="Make geometry single user";
+    const char *moveUp="Move up", *moveDown="Move down", *moveRoot="Move to root";
+    const char *expand="Expand hierarchy", *collapse="Collapse hierarchy";
+};
 struct OutlinerState {
     char search[128]{}, rename[256]{};
     StableId renaming = 0;
     editor::Transaction renameTransaction;
     bool renameFocus=false;
+    OutlinerFilter filter=OutlinerFilter::All; // Host provider filters rows, preserving matching ancestors.
+    OutlinerLabels labels{};
+    const IconAtlas *icons=nullptr;
 };
 void Outliner(const char *id, const SceneProvider &provider, OutlinerState &state,
               editor::Selection &selection, editor::EventBuffer &events);

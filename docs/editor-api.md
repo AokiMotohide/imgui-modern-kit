@@ -383,3 +383,16 @@ and selected silhouette; they do not establish native OS/IME input acceptance.
 Viewportは選択・移動・回転・拡縮、表示メニュー、カメラ、寸法へ既存アイコンを再利用し、
 選択ツールを背景と下線でも区別します。`out/cg-overlays-integrated/`のnative captureは
 lightと日本語dark 150%で枠・法線・選択輪郭を確認したものです。状態を直接設定した描画確認で、OS／IME入力の合格根拠ではありません。
+
+### Outliner filters and labels / Outlinerのfilterと表示文字列
+
+`OutlinerState::filter` selects all, visible, hidden, locked or selected objects.
+The host applies it with the text search when building provider rows and `visibleCount`,
+including ancestors of matches. Gallery opens matching paths while a filter is active.
+`labels` supplies borrowed UTF-8 UI/context strings; `icons` supplies a borrowed atlas
+for restriction controls, whose checked state also uses an underline.
+
+`OutlinerState::filter`は全対象・表示・非表示・ロック・選択対象を切り替えます。
+ホストが検索文字列と併せてprovider行数と行を構築し、一致対象の祖先も含めます。
+Galleryはfilter中に一致する階層を展開します。`labels`は非所有UTF-8文字列、`icons`は
+非所有atlasです。制限状態の操作はアイコンと有効状態の下線で表示します。
