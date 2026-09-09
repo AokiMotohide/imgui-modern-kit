@@ -52,39 +52,43 @@
     },
     {
       "operation": "Group",
-      "widget": "CanvasSelection",
-      "disposition": "new",
-      "icon": "Group",
+      "widget": "Timeline clip context menu",
+      "disposition": "reuse",
+      "icon": "Layers",
       "tooltip": "Group",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "menu navigation highlight and disabled text; explicit create/detach labels",
+      "status": "integrated",
+      "composition": "Shared relationship glyph; action labels distinguish creating a set from detaching the clicked clip."
     },
     {
       "operation": "Ungroup",
-      "widget": "CanvasSelection",
-      "disposition": "new",
-      "icon": "Ungroup",
+      "widget": "Timeline clip context menu",
+      "disposition": "reuse",
+      "icon": "Layers",
       "tooltip": "Ungroup",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "menu navigation highlight and disabled text; explicit create/detach labels",
+      "status": "integrated",
+      "composition": "Shared relationship glyph; action labels distinguish creating a set from detaching the clicked clip."
     },
     {
       "operation": "LinkItems",
-      "widget": "CanvasSelection",
+      "widget": "Timeline clip context menu",
       "disposition": "reuse",
       "icon": "Link",
       "tooltip": "Link Items",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "menu navigation highlight and disabled text; explicit create/detach labels",
+      "status": "integrated",
+      "composition": "Shared relationship glyph; action labels distinguish creating a set from detaching the clicked clip."
     },
     {
       "operation": "UnlinkItems",
-      "widget": "CanvasSelection",
-      "disposition": "new",
-      "icon": "UnlinkItems",
+      "widget": "Timeline clip context menu",
+      "disposition": "reuse",
+      "icon": "Link",
       "tooltip": "Unlink Items",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "menu navigation highlight and disabled text; explicit create/detach labels",
+      "status": "integrated",
+      "composition": "Shared relationship glyph; action labels distinguish creating a set from detaching the clicked clip."
     },
     {
       "operation": "Rename",

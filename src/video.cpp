@@ -924,9 +924,17 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             if (ImGui::BeginPopup("transition-picker")) {
                 if (track.kind==TrackKind::Audio && ImGui::MenuItem("Add envelope point",nullptr,false,!clip.locked && !track.locked && !s.envelopeDrag.active))
                     EnvelopeAction(out,clip,p.revision,clip.id,s.envelopeContextTick,EvaluateEnvelope(clip.envelope,s.envelopeContextTick),1);
+                const auto relationItem=[&](const char *label,int relation,bool enabled) {
+                    if (s.icons) {
+                        Icon(*s.icons,relation ? IconId::Layers : IconId::Link,
+                             {ImGui::GetFontSize(),ImGui::GetStyleColorVec4(enabled ? ImGuiCol_Text : ImGuiCol_TextDisabled)});
+                        ImGui::SameLine();
+                    }
+                    return ImGui::MenuItem(label,nullptr,false,enabled);
+                };
                     for (int relation=0;relation<2;++relation) {
                         const auto set=relation ? clip.group : clip.linked;
-                        if (ImGui::MenuItem(relation ? s.labels.ungroup : s.labels.unlink,nullptr,false,
+                        if (relationItem(relation ? s.labels.ungroup : s.labels.unlink,relation,
                             set && !track.locked && !clip.locked && !s.drag.active)) {
                             if (ReserveEvents(out,2)) {
                                 editor::Value original;original.parent=set;original.offset=relation;
@@ -937,7 +945,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                         }
                     }
                     for (int relation=0;relation<2;++relation)
-                        if (ImGui::MenuItem(relation ? s.labels.groupSelection : s.labels.linkSelection,nullptr,false,
+                        if (relationItem(relation ? s.labels.groupSelection : s.labels.linkSelection,relation,
                             selection.count>1 && selection.Contains(clip.id) && p.selected && !s.drag.active && !track.locked && !clip.locked)) {
                             const auto ids=selection.storage.first(selection.count);
                             const auto members=p.selected(p.user,ids);

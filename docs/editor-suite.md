@@ -703,3 +703,7 @@ EditClipは素材余白のTick変換を範囲内へ制限し、広い素材範�
 Unit-speed EditClip and SplitClip keep source-range checks, source handles and source offsets in integer arithmetic. Regression verifies a Slip offset and split cut two ticks below Tick max and rejects a source overrun of one tick at that scale. Non-unit speeds retain checked floating-point rescaling.
 
 1倍速のEditClip／SplitClipは素材範囲・余白・素材位置を整数演算で保持します。Tick上限の2 tick手前のSlip・分割を正確に処理し、同じ桁で1 tickだけ素材範囲を超える入力を拒否する回帰が合格しました。1倍以外は範囲検証付きの浮動小数点倍率変換を使用します。
+
+Link/group context actions reuse Link/Layers icons, with explicit create/detach labels and disabled styling. The operation map records the four integrated Timeline actions. Native public-IO creation and removal checks passed with the icons; the Japanese menu backbuffer was visually inspected.
+
+link／groupのcontext actionはLink／Layersを再利用し、作成・解除を操作名とdisabled表示で区別します。対応表へTimelineの4操作の統合を記録しました。アイコン付きの作成・解除はnative公開IO検証が合格し、日本語メニューのbackbufferを目視確認しています。
