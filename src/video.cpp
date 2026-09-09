@@ -979,9 +979,14 @@ void Monitor(const char *id, ImTextureRef texture, ImVec2 size, const editor::Ti
             d->AddLine({p.x, p.y + size.y * i / 3}, {p.x + size.x, p.y + size.y * i / 3}, color);
         }
     if (o.transform) {
-        d->AddRect({p.x + size.x * .2f, p.y + size.y * .2f}, {p.x + size.x * .8f, p.y + size.y * .8f},
-                   ImGui::GetColorU32(theme.colors.accent), 0.f, 2.f, ImDrawFlags_None);
-        d->AddCircle({p.x + size.x * o.anchor.x, p.y + size.y * o.anchor.y}, 5, color);
+        const auto &bounds=o.transformBounds;
+        const ImVec2 minimum{p.x+float(size.x*bounds.min.x),p.y+float(size.y*bounds.min.y)};
+        const ImVec2 maximum{p.x+float(size.x*bounds.max.x),p.y+float(size.y*bounds.max.y)};
+        if (std::isfinite(minimum.x) && std::isfinite(minimum.y) && std::isfinite(maximum.x) && std::isfinite(maximum.y) &&
+            minimum.x<maximum.x && minimum.y<maximum.y)
+            d->AddRect(minimum,maximum,ImGui::GetColorU32(theme.colors.accent),0.f,2.f,ImDrawFlags_None);
+        const ImVec2 anchor{p.x+size.x*o.anchor.x,p.y+size.y*o.anchor.y};
+        if (std::isfinite(anchor.x) && std::isfinite(anchor.y)) d->AddCircle(anchor,5,color);
     }
     const float padding=std::max(3.f,ImGui::GetFontSize()*.25f);
     const float lineHeight=ImGui::GetFontSize()+2*padding;

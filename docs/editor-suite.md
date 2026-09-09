@@ -535,3 +535,8 @@ Monitorの見出しとtimecodeは、不透明なtheme surface背景とtheme text
 `CommandPressed` suppresses editor binding dispatch while any popup is open, preserving menu keyboard navigation. A regression test confirms that Home in the Monitor menu does not also invoke Timeline Fit. Video/CG direct regression tests pass after this focus change.
 
 `CommandPressed`はpopupが開いている間、Editor bindingを発火させずmenuのキーボード操作を優先します。Monitor menuのHomeキーがTimeline Fitにも伝わらないことを回帰確認し、Video／CGの直接回帰テストも合格しました。
+
+
+`MonitorOptions::transformBounds` replaces the fixed transform rectangle with host-supplied normalized display coordinates. `anchor` uses the same display space; `flipY` affects only texture UVs. Non-finite or inverted bounds are omitted, and the monitor clips bounds that extend outside its display. Gallery's Scale/Position X Inspector values drive the rectangle and anchor as a host overlay example; this does not transform decoded media. `--verify-monitors` applies those property Commit values and captures the resulting rectangle in `out/monitor-host-bounds/monitor-transform-host.png`. API compilation and native 150% rendering were verified.
+
+`MonitorOptions::transformBounds`で固定枠をホスト指定の表示正規化座標へ置き換えました。`anchor`も同じ表示座標で、`flipY`はtexture UVだけへ作用します。非有限値や逆転した矩形は描画せず、表示外へ広がる枠はMonitor内へclipします。GalleryではScale／Position XのInspector値から枠とanchorを算出するホストoverlay例を接続しました。decode済みmediaの変形処理ではありません。`--verify-monitors`でproperty Commitを適用し、`out/monitor-host-bounds/monitor-transform-host.png`へ結果を保存しました。API compileと150% native描画を確認しています。

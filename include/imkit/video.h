@@ -154,6 +154,7 @@ struct MonitorOptions {
     MonitorMetadataPreset metadataPreset=MonitorMetadataPreset::Clip;
     const char *clipName="", *markerComment=""; // Borrowed host UTF-8 strings.
     std::span<const char *const> metadata; // Extra lines for Details, borrowed for this call.
+    editor::Rect transformBounds{{.2,.2},{.8,.8}}; // Normalized display coordinates; texture flip does not flip overlays.
 };
 void Monitor(const char *id, ImTextureRef texture, ImVec2 size, const editor::TimeState &time,
              const MonitorOptions &options, const Theme &theme);
