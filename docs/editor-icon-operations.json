@@ -2002,21 +2002,21 @@
     },
     {
       "operation": "Lock",
-      "widget": "Shared editor controls",
+      "widget": "Timeline track header and compact track control menu; shared editor controls",
       "disposition": "reuse",
       "icon": "Lock",
       "tooltip": "Lock",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "toggle background and underline; checked menu item; state-specific Eye/EyeOff, Volume/Mute and Unlock/Lock glyphs",
+      "status": "Track header/menu connected and compiled; text fallback public IO regression passed; native icon route inspection pending"
     },
     {
       "operation": "Unlock",
-      "widget": "Shared editor controls",
+      "widget": "Timeline track header and compact track control menu; shared editor controls",
       "disposition": "reuse",
       "icon": "Unlock",
       "tooltip": "Unlock",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "toggle background and underline; checked menu item; state-specific Eye/EyeOff, Volume/Mute and Unlock/Lock glyphs",
+      "status": "Track header/menu connected and compiled; text fallback public IO regression passed; native icon route inspection pending"
     },
     {
       "operation": "Play",
@@ -2047,12 +2047,12 @@
     },
     {
       "operation": "Record",
-      "widget": "Shared editor controls",
+      "widget": "Timeline track header and compact track control menu; shared editor controls",
       "disposition": "reuse",
       "icon": "Record",
       "tooltip": "Record",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "toggle background and underline; checked menu item; state-specific Eye/EyeOff, Volume/Mute and Unlock/Lock glyphs",
+      "status": "Track header/menu connected and compiled; text fallback public IO regression passed; native icon route inspection pending"
     },
     {
       "operation": "Repeat",
@@ -2164,21 +2164,21 @@
     },
     {
       "operation": "Volume",
-      "widget": "Shared editor controls",
+      "widget": "Timeline track header and compact track control menu; shared editor controls",
       "disposition": "reuse",
       "icon": "Volume",
       "tooltip": "Volume",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "toggle background and underline; checked menu item; state-specific Eye/EyeOff, Volume/Mute and Unlock/Lock glyphs",
+      "status": "Track header/menu connected and compiled; text fallback public IO regression passed; native icon route inspection pending"
     },
     {
       "operation": "Mute",
-      "widget": "Shared editor controls",
+      "widget": "Timeline track header and compact track control menu; shared editor controls",
       "disposition": "reuse",
       "icon": "Mute",
       "tooltip": "Mute",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "toggle background and underline; checked menu item; state-specific Eye/EyeOff, Volume/Mute and Unlock/Lock glyphs",
+      "status": "Track header/menu connected and compiled; text fallback public IO regression passed; native icon route inspection pending"
     },
     {
       "operation": "Microphone",
@@ -2209,21 +2209,21 @@
     },
     {
       "operation": "Eye",
-      "widget": "Shared editor controls",
+      "widget": "Timeline track header and compact track control menu; shared editor controls",
       "disposition": "reuse",
       "icon": "Eye",
       "tooltip": "Eye",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "toggle background and underline; checked menu item; state-specific Eye/EyeOff, Volume/Mute and Unlock/Lock glyphs",
+      "status": "Track header/menu connected and compiled; text fallback public IO regression passed; native icon route inspection pending"
     },
     {
       "operation": "EyeOff",
-      "widget": "Shared editor controls",
+      "widget": "Timeline track header and compact track control menu; shared editor controls",
       "disposition": "reuse",
       "icon": "EyeOff",
       "tooltip": "EyeOff",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "toggle background and underline; checked menu item; state-specific Eye/EyeOff, Volume/Mute and Unlock/Lock glyphs",
+      "status": "Track header/menu connected and compiled; text fallback public IO regression passed; native icon route inspection pending"
     },
     {
       "operation": "Move",
