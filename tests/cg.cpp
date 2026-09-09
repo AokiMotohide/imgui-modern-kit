@@ -165,6 +165,11 @@ int main() {
     check(dopeEvents.count==2 && dopeEvents.Events()[0].phase==imkit::editor::Phase::Cancel &&
         dopeEvents.Events()[1].phase==imkit::editor::Phase::Cancel,"Dope Sheet revision change cancels complete batch");
     io.AddMouseButtonEvent(0,false);dopeFrame();
+    io.AddKeyEvent(ImGuiMod_Ctrl,true);dopeFrame();
+    io.AddMousePosEvent(dopeX,dopeY);dopeFrame();io.AddMouseButtonEvent(0,true);dopeFrame();
+    check(dopeSelection.count==1 && !dopeSelection.Contains(901) && !dopeState.drag.active &&
+        dopeEvents.count==0,"Ctrl deselection does not begin a Dope Sheet edit");
+    io.AddMouseButtonEvent(0,false);dopeFrame();io.AddKeyEvent(ImGuiMod_Ctrl,false);dopeFrame();
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }

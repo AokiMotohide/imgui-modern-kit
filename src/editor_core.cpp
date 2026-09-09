@@ -814,8 +814,10 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
     if (view.hovered && hit && ImGui::IsMouseClicked(0) && !s.drag.active) {
         auto active=std::find_if(keys.begin(),keys.end(),[&](const auto &key){return key.id==hit;});
         if (active!=keys.end()) s.activeChannel=active->channel;
-        if (!selection.Contains(hit) || ImGui::GetIO().KeyCtrl)
-            selection.Set(hit, ImGui::GetIO().KeyCtrl);
+        if (!selection.Contains(hit) || ImGui::GetIO().KeyCtrl) {
+            if (!selection.Set(hit,ImGui::GetIO().KeyCtrl,ImGui::GetIO().KeyCtrl)) out.overflow=true;
+            if (!selection.Contains(hit)) {EndCanvas();return;}
+        }
         s.side = side;
         s.mouseStart = {ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y};
         auto members=!side && provider.selected ? provider.selected(provider.user,selection.storage.first(selection.count)) : std::span<const Keyframe>{};
