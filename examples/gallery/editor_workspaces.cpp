@@ -59,6 +59,7 @@ editor::AssetProvider Assets(EditorWorkspaces &s) {
 editor::CurveProvider Curves(EditorWorkspaces &s) {
     s.curve.bindings=std::span(s.bindings).first(s.bindingCount);
     s.curve.rate=s.timeline.time.rate;
+    s.curve.time=s.timeline.time.playhead;
     return {&s, s.revision, [](void *u, editor::CurveQuery q) {
                 auto &s = *static_cast<EditorWorkspaces *>(u);
                 return s.QueryKeys(q);
@@ -72,6 +73,15 @@ editor::CurveProvider Curves(EditorWorkspaces &s) {
                 auto &s=*static_cast<EditorWorkspaces*>(u);s.selectedCurveKeys.clear();
                 for (const auto &key:s.keys) if (std::find(ids.begin(),ids.end(),key.id)!=ids.end()) s.selectedCurveKeys.push_back(key);
                 return std::span<const editor::Keyframe>(s.selectedCurveKeys);
+            },[](void *u,editor::StableId id,editor::Tick tick,bool next)->const editor::Keyframe* {
+                const auto &s=*static_cast<EditorWorkspaces*>(u);
+                for (auto [first,last]:s.keyChannels) if (s.keys[first].channel==id) {
+                    auto begin=s.keys.begin()+first,end=s.keys.begin()+last;
+                    auto key=std::lower_bound(begin,end,tick,[](const auto &key,auto tick){return key.tick<tick;});
+                    if (next) {if (key!=end && key->tick==tick) ++key;return key==end?nullptr:&*key;}
+                    return key==begin?nullptr:&*--key;
+                }
+                return nullptr;
             }};
 }
 void Options(EditorWorkspaces &s) {
@@ -426,8 +436,13 @@ void EditorWorkspaces::ApplyEvents() {
                             e.target == colorIds.exposure ? &colors.exposure : nullptr;
             if (scalar) { *scalar=static_cast<float>(e.proposed.x); changed=true; }
         }
+        if (e.kind==editor::EditKind::KeyInsert) {
+            auto existing=std::find_if(keys.begin(),keys.end(),[&](const auto &key){return key.channel==e.target && key.tick==e.proposed.first;});
+            if (existing==keys.end()) {keys.push_back({nextId++,e.target,e.proposed.first,e.proposed.x});changed=true;}
+        }
         for (auto &key : keys)
             if (key.id == e.target) {
+                if (e.kind==editor::EditKind::Navigate) {timeline.time.playhead=key.tick;keySelection.Set(key.id);}
                 if (key.locked) continue;
                 if (e.kind==editor::EditKind::Remove) {
                     keys.erase(keys.begin()+(&key-keys.data()));

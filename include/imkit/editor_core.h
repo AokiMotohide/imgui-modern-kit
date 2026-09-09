@@ -67,7 +67,8 @@ enum class EditKind {
     PropertyKey,
     KeyInterpolation,
     KeyHandleMode,
-    KeyScale
+    KeyScale,
+    KeyInsert
 };
 // Exact integer/time fields must never travel through floating point channels.
 struct Value {
@@ -240,6 +241,7 @@ struct CurveProvider {
     double (*sample)(void *, StableId channel, Tick, Extrapolation) = nullptr;
     std::optional<Rect> bounds; // Complete key bounds in seconds / negative value coordinates.
     std::span<const Keyframe> (*selected)(void *, std::span<const StableId>) = nullptr;
+    const Keyframe *(*neighbor)(void *, StableId channel, Tick, bool next) = nullptr;
 };
 struct CurveState {
     CanvasState canvas{{0, -1}, {100, 100}};
@@ -256,6 +258,7 @@ struct CurveState {
     std::size_t companionCount = 0;
     bool scaleTime = false, scaling = false;
     Tick scalePivot = 0;
+    Tick time = 0;
     bool snapToFrame = false;
     FrameRate rate{};
     int side = 0;
