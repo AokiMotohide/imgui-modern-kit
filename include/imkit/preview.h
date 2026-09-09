@@ -20,6 +20,14 @@ struct Triangle {
 // Returns required triangle count; writes only within host scratch capacity.
 std::size_t DrawListPreview(ImDrawList &draw, std::span<const Mesh> meshes, const cg::Camera &camera,
                             ImVec2 origin, ImVec2 size, std::span<Triangle> scratch);
+struct NormalOverlayOptions {
+    bool vertices=true,faces=false;
+    double length=.2; // World-space length after normalization.
+    ImU32 color=IM_COL32(80,180,240,255);
+};
+// DrawList overlay, without depth occlusion. Returns drawn normal segments; inputs remain borrowed.
+std::size_t DrawMeshNormals(ImDrawList &draw,std::span<const Mesh> meshes,const cg::Camera &camera,
+                           ImVec2 origin,ImVec2 size,NormalOverlayOptions options={});
 bool Cube(std::span<Vertex> vertices, std::span<std::uint32_t> indices); // 24 vertices, 36 indices.
 bool Sphere(std::span<Vertex> vertices, std::span<std::uint32_t> indices, int slices = 24, int rings = 12);
 // OpenGL 3.3 core function pointers, supplied by the host with a current context.

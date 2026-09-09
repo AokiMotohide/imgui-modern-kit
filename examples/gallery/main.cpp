@@ -1086,7 +1086,7 @@ int VerifyInspectorModel() {
     return failures?1:0;
 }
 int main(int argc, char **argv) {
-    bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false, benchmarkEditors = false, verifyMonitors = false, verifyTrackControls = false, verifyLinkedClips = false;
+    bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false, benchmarkEditors = false, verifyMonitors = false, verifyTrackControls = false, verifyLinkedClips = false, verifyNormals = false;
     int capturePage = -1, animationPage = -1;
     std::string iconSearch;
     std::filesystem::path out = "out/catalog";
@@ -1099,6 +1099,7 @@ int main(int argc, char **argv) {
         else if (a == "--verify")
             verify = true;
         else if (a == "--capture-editors") { capture = true; capturePage = -2; }
+        else if (a == "--verify-normals") verifyNormals=true;
         else if (a == "--verify-linked-clips") verifyLinkedClips=true;
         else if (a == "--verify-track-controls") verifyTrackControls=true;
         else if (a == "--verify-monitors") verifyMonitors=true;
@@ -1130,10 +1131,10 @@ int main(int argc, char **argv) {
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_VISIBLE, capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls || verifyLinkedClips ? GLFW_FALSE : GLFW_TRUE);
+    glfwWindowHint(GLFW_VISIBLE, capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls || verifyLinkedClips || verifyNormals ? GLFW_FALSE : GLFW_TRUE);
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
     Host h;
-    h.automated = capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls || verifyLinkedClips;
+    h.automated = capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls || verifyLinkedClips || verifyNormals;
     h.window = glfwCreateWindow(1920, 1440, "ImKit Precision Layers", nullptr, nullptr);
     if (!h.window) {
         glfwTerminate();
@@ -1261,6 +1262,15 @@ int main(int argc, char **argv) {
             if (benchmarkEditors) BenchmarkEditors(h,out);
             if (verifyTrackControls) VerifyTrackControls(h,out);
             if (verifyLinkedClips) VerifyLinkedClips(h,out);
+            if (verifyNormals) {
+                h.Page(9);h.s.editors.viewport.normals=true;h.s.editors.viewport.faceNormals=true;
+                const auto meshObject=std::find_if(h.s.editors.objects.begin(),h.s.editors.objects.end(),[](const auto &o){return o.geometry!=0;});
+                if (meshObject==h.s.editors.objects.end()) throw std::runtime_error("normal capture requires mesh object");
+                meshObject->transform.shear={.5,.2,0};h.Settle();
+                h.Frame({},out/"cg-normals-light.png");
+                h.s.dark=true;h.s.theme=imkit::MakePrecisionTheme(imkit::ColorScheme::Dark);h.s.scale=1.5f;h.Settle();
+                h.Frame({},out/"cg-normals-dark-150.png");
+            }
             if (verifyMonitors) VerifyMonitors(h,out);
             if (verifyEditors)
                 VerifyEditors(h, out, previewFunctions);

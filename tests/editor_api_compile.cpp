@@ -129,6 +129,7 @@ int main() {
     std::array<preview::Triangle, 12> scratch;
     preview::Mesh mesh{1, vertices, indices};
     preview::DrawListPreview(*ImGui::GetWindowDrawList(), {&mesh, 1}, {}, {0, 0}, {100, 100}, scratch);
+    preview::DrawMeshNormals(*ImGui::GetWindowDrawList(),{&mesh,1},{},{0,0},{100,100},{true,true,.2});
     ImGui::End();
     ImGui::Render();
     ImGui::DestroyContext(context);

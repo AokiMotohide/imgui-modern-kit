@@ -72,6 +72,40 @@ std::size_t DrawListPreview(ImDrawList &draw, std::span<const Mesh> meshes, cons
     draw.PopClipRect();
     return needed;
 }
+std::size_t DrawMeshNormals(ImDrawList &draw,std::span<const Mesh> meshes,const cg::Camera &camera,
+                           ImVec2 origin,ImVec2 size,NormalOverlayOptions options) {
+    if (!(options.length>0) || !std::isfinite(options.length) || size.x<=0 || size.y<=0) return 0;
+    std::size_t count=0;
+    draw.PushClipRect(origin,{origin.x+size.x,origin.y+size.y},true);
+    const auto line=[&](cg::Vec3 position,cg::Vec3 normal) {
+        const auto length=std::hypot(normal.x,normal.y,normal.z);
+        if (!(length>0) || !std::isfinite(length)) return;
+        const auto factor=options.length/length;
+        const auto a=cg::Project(position,camera,origin,size);
+        const auto b=cg::Project({position.x+normal.x*factor,position.y+normal.y*factor,position.z+normal.z*factor},camera,origin,size);
+        if (a.visible && b.visible) {draw.AddLine(a.screen,b.screen,options.color,1.5f);++count;}
+    };
+    for (const auto &mesh:meshes) {
+        const auto basis=cg::NormalBasis(mesh.transform);
+        if (options.vertices) for (const auto &vertex:mesh.vertices)
+            line(Transform({vertex.position[0],vertex.position[1],vertex.position[2]},mesh.transform),
+                {basis.x.x*vertex.normal[0]+basis.y.x*vertex.normal[1]+basis.z.x*vertex.normal[2],
+                 basis.x.y*vertex.normal[0]+basis.y.y*vertex.normal[1]+basis.z.y*vertex.normal[2],
+                 basis.x.z*vertex.normal[0]+basis.y.z*vertex.normal[1]+basis.z.z*vertex.normal[2]});
+        if (options.faces) for (std::size_t i=0;i+2<mesh.indices.size();i+=3) {
+            cg::Vec3 p[3];bool valid=true;
+            for (int j=0;j<3;++j) {
+                const auto index=mesh.indices[i+j];if (index>=mesh.vertices.size()) {valid=false;break;}
+                const auto &v=mesh.vertices[index];p[j]=Transform({v.position[0],v.position[1],v.position[2]},mesh.transform);
+            }
+            if (!valid) continue;
+            const cg::Vec3 u{p[1].x-p[0].x,p[1].y-p[0].y,p[1].z-p[0].z},v{p[2].x-p[0].x,p[2].y-p[0].y,p[2].z-p[0].z};
+            line({(p[0].x+p[1].x+p[2].x)/3,(p[0].y+p[1].y+p[2].y)/3,(p[0].z+p[1].z+p[2].z)/3},
+                 {u.y*v.z-u.z*v.y,u.z*v.x-u.x*v.z,u.x*v.y-u.y*v.x});
+        }
+    }
+    draw.PopClipRect();return count;
+}
 bool Cube(std::span<Vertex> vertices, std::span<std::uint32_t> indices) {
     if (vertices.size() < 24 || indices.size() < 36)
         return false;
