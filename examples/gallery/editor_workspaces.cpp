@@ -184,6 +184,8 @@ std::span<const editor::Keyframe> EditorWorkspaces::QueryKeys(editor::CurveQuery
         for (int i=0;i<2 && last!=channel.end();++i) ++last;
         visibleKeys.insert(visibleKeys.end(),first,last);
     }
+    curvePreviewKeys.resize(visibleKeys.size());
+    curve.previewKeys=curvePreviewKeys;
     return visibleKeys;
 }
 void EditorWorkspaces::RebuildTrackLayout() {
