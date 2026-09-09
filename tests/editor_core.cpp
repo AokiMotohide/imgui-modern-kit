@@ -280,6 +280,32 @@ int main() {
     io.AddMouseButtonEvent(0,false);curveFrame();
     check(curveCancelled && curveCancelCount==2 && !curveState.drag.active && !companionDrags[0].active && curveSource[0].tick==FromSeconds(1),
         "Escape cancels curve preview without host mutation");
+    for (bool cancel:{false,true}) {
+        propertyEvents.storage=propertyStorage;propertyEvents.Clear();
+        curveState.drag.Begin(6101,curveProvider.revision,EditKind::Keyframe,{FromSeconds(1),0,0,0,.5},{},propertyEvents);
+        companionDrags[0].Begin(6103,curveProvider.revision,EditKind::Keyframe,{FromSeconds(2),0,0,0,.7},{},propertyEvents);
+        curveState.companionCount=1;
+        propertyEvents.storage=std::span(propertyStorage).first(1);
+        if (cancel) ++curveProvider.revision;
+        curveFrame();
+        check(propertyEvents.overflow && propertyEvents.count==0 && curveState.drag.active && companionDrags[0].active,
+            "short curve terminal buffer emits no partial batch");
+        propertyEvents.storage=propertyStorage;curveFrame();
+        check(propertyEvents.count==2 && !curveState.drag.active && !companionDrags[0].active &&
+            propertyEvents.Events()[0].phase==(cancel?Phase::Cancel:Phase::Commit) &&
+            propertyEvents.Events()[1].phase==(cancel?Phase::Cancel:Phase::Commit),
+            "curve terminal retry preserves Commit or Cancel for every key");
+    }
+    propertyEvents.storage=std::span(propertyStorage).first(1);
+    io.AddMousePosEvent(static_cast<float>(curvePoint.x),static_cast<float>(curvePoint.y));curveFrame();
+    io.AddMouseButtonEvent(0,true);curveFrame();
+    check(propertyEvents.overflow && propertyEvents.count==0 && !curveState.drag.active,
+        "short curve Begin buffer cannot start a partial selection");
+    io.AddMouseButtonEvent(0,false);curveFrame();propertyEvents.storage=propertyStorage;
+    curveSource[1].locked=true;
+    io.AddMouseButtonEvent(0,true);curveFrame();
+    check(propertyEvents.count==0 && !curveState.drag.active,"locked companion rejects whole curve gesture");
+    io.AddMouseButtonEvent(0,false);curveFrame();
     ImGui::DestroyContext(context);
     std::puts(failures ? "FAIL editor core"
                        : "PASS timebase, drop-frame, snap, transaction, canvas and curves");
