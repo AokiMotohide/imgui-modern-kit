@@ -395,6 +395,13 @@ int main() {
           "clip body drag keeps parent window stationary");
     io.AddMouseButtonEvent(0,false);frame(full);
     check(!timeline.drag.active && full.Events().back().phase==editor::Phase::Commit,"clip body drag commits normally");
+    full.Clear();io.AddKeyEvent(ImGuiMod_Ctrl,true);frame(full);
+    io.AddMouseButtonEvent(0,true);frame(full);
+    check(!selection.Contains(transitionFixture.clip.id) && !timeline.drag.active && full.count==0 && !full.overflow,
+          "Ctrl-click deselects clip without starting edit transaction");
+    io.AddMousePosEvent(clipOrigin.x+timeline.headerWidth+160,clipOrigin.y+25);frame(full);
+    io.AddMouseButtonEvent(0,false);frame(full);io.AddKeyEvent(ImGuiMod_Ctrl,false);frame(full);
+    check(full.count==0 && !timeline.drag.active,"deselected clip emits no Update or Commit after mouse movement");
     video::EnvelopePoint envelope[]={{2901,editor::FromSeconds(.5),.5},{2902,editor::FromSeconds(1.5),1}};
     check(video::EvaluateEnvelope(envelope,editor::FromSeconds(1))==.75 && video::EvaluateEnvelope({},0)==1,
           "volume envelope linearly interpolates gain and defaults to unity");
