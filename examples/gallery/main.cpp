@@ -452,6 +452,23 @@ int VerifyInspectorModel() {
     check(state.clips.front().transitionInKind==video::TransitionKind::Fade && state.UndoTransition() &&
           state.clips.front().transitionInKind==video::TransitionKind::Dissolve,"transition kind host apply and Undo");
     state.UndoTransition();
+    auto audioClip=std::find_if(state.clips.begin(),state.clips.end(),[](const auto &c){return !c.envelope.empty();});
+    const auto envelopeCount=audioClip->envelope.size();
+    auto envelopeEdit=[&](editor::StableId target,editor::Tick action,editor::Tick tick,double gain) {
+        editor::Event event{target,state.revision,editor::Phase::Commit,editor::EditKind::AudioEnvelope};
+        event.proposed.parent=audioClip->id;event.proposed.offset=action;event.proposed.first=tick;event.proposed.x=gain;
+        state.events.Push(event);state.ApplyEvents();
+    };
+    envelopeEdit(audioClip->id,1,editor::FromSeconds(2),.8);
+    auto addedPoint=std::find_if(audioClip->envelope.begin(),audioClip->envelope.end(),[](const auto &p){return p.tick==editor::FromSeconds(2);});
+    check(audioClip->envelope.size()==envelopeCount+1 && addedPoint!=audioClip->envelope.end(),"envelope insert refreshes host span");
+    if (addedPoint!=audioClip->envelope.end()) {
+        const auto pointId=addedPoint->id;
+        envelopeEdit(pointId,0,editor::FromSeconds(2.2),1.4);
+        check(std::any_of(audioClip->envelope.begin(),audioClip->envelope.end(),[&](const auto &p){return p.id==pointId && p.gain==1.4;}),"envelope edit preserves point identity");
+        envelopeEdit(pointId,2,0,1);
+        check(audioClip->envelope.size()==envelopeCount,"envelope remove refreshes host span");
+    }
     const auto rendererComponent=state.components[0].view.id,wireComponent=state.components[1].view.id;
     state.events.Push({wireComponent,state.revision,editor::Phase::Commit,editor::EditKind::Toggle,{}, {0,0,0,0,0,1}});state.ApplyEvents();
     check(state.BuildSceneMeshes().front().wire,"enabled wire component changes preview rendering");

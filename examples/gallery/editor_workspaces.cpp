@@ -124,9 +124,7 @@ void Options(EditorWorkspaces &s) {
 } // namespace
 void EditorWorkspaces::Dataset(bool big) {
     transitionHistory.clear();transitionHistoryCursor=0;
-    volumeEnvelope={video::EnvelopePoint{nextId++,editor::FromSeconds(.5),.5},
-                    video::EnvelopePoint{nextId++,editor::FromSeconds(1.5),1},
-                    video::EnvelopePoint{nextId++,editor::FromSeconds(3),.7}};
+    clipEnvelopes.clear();
     large = big;
     tracks.clear();
     clips.clear();
@@ -167,7 +165,11 @@ void EditorWorkspaces::Dataset(bool big) {
             }
             clip.proxy = i % 7 == 0;
             if (track.kind == video::TrackKind::Audio) clip.audioBuckets=audio;
-            if (t==1 && i==0) clip.envelope=volumeEnvelope;
+            if (t==1 && i==0) {
+                auto &points=clipEnvelopes[clip.id];
+                points={{nextId++,editor::FromSeconds(.5),.5},{nextId++,editor::FromSeconds(1.5),1},{nextId++,editor::FromSeconds(3),.7}};
+                clip.envelope=points;
+            }
             clips.push_back(clip);
         }
     }
@@ -401,9 +403,25 @@ void EditorWorkspaces::ApplyEvents() {
             }
         }
         if (e.kind==editor::EditKind::AudioEnvelope) {
-            for (auto &point:volumeEnvelope) if (point.id==e.target && !point.locked) {
-                point.tick=e.proposed.first;point.gain=std::clamp(e.proposed.x,0.,2.);changed=true;
+            auto owner=std::find_if(clips.begin(),clips.end(),[&](const auto &c){return c.id==e.proposed.parent;});
+            if (owner==clips.end() || owner->locked || !std::isfinite(e.proposed.x)) continue;
+            auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==owner->track;});
+            if (track==tracks.end() || track->locked) continue;
+            auto &points=clipEnvelopes[owner->id];
+            auto point=std::find_if(points.begin(),points.end(),[&](const auto &p){return p.id==e.target;});
+            if (e.proposed.offset==1 && e.target==owner->id) {
+                const auto tick=std::clamp(e.proposed.first,editor::Tick{0},owner->duration);
+                auto same=std::find_if(points.begin(),points.end(),[&](const auto &p){return p.tick==tick;});
+                if (same==points.end()) {points.push_back({nextId++,tick,std::clamp(e.proposed.x,0.,2.)});changed=true;}
+            } else if (point!=points.end() && !point->locked) {
+                if (e.proposed.offset==2) {points.erase(point);changed=true;}
+                else if (e.proposed.offset==0) {
+                    point->tick=std::clamp(e.proposed.first,editor::Tick{0},owner->duration);
+                    point->gain=std::clamp(e.proposed.x,0.,2.);changed=true;
+                }
             }
+            std::sort(points.begin(),points.end(),[](const auto &a,const auto &b){return a.tick<b.tick;});
+            owner->envelope=points;
         }
         if (e.kind == editor::EditKind::Select)
             continue;
