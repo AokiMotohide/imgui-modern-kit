@@ -54,6 +54,9 @@ struct EditorWorkspaces {
     std::array<video::TimelineState::MemberDrag, 32> clipDrags{};
     std::array<video::ClipView, 64> selectedClips{};
     editor::CurveState curve;
+    std::array<cg::StripView,3> animationStrips{};
+    editor::CanvasState stripCanvas;
+    editor::Transaction stripDrag;
     std::vector<editor::Transaction> curveCompanions;
     editor::PropertyState videoProperties, objectProperties;
     std::vector<editor::StableId> propertyGestureSelection;
