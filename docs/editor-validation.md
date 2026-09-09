@@ -89,3 +89,12 @@ DebugのvideoテストはRGB waveformのchannel/横位置、不完全bufferの�
 RGB提案値・host Commit・revision Cancelを確認します。API fixtureと外部consumerの増分ビルドも成功しました。
 専用の--verify-colorは3つのwheelをGalleryのhost値へ適用し、light/darkの実backbufferを保存します。
 画像でwheel・RGB paradeの描画を確認しました。native OS/IME・色管理の検証ではありません。
+
+Audio focused tests cover native fader and pan public-IO Commit, explicit nonadjacent
+property IDs, mute control events, locked controls, and nonfinite first PCM sample
+sanitization. Debug video/API fixtures pass. The Gallery Video backbuffer includes
+PCM min/max clip waveforms and the connected mixer/stereo meters; artifacts are in
+`out/editor-audio-debug/`. No media playback/recording engine or OS audio device is tested.
+音声のfocused testはfader/panの公開IO Commit、隣接しない明示ID、mute event、locked操作、PCM先頭の非有限値を
+確認し、Debug video/API fixtureは成功しました。GalleryのVideo backbufferでPCM波形・mixer・stereo meterを確認します。
+media再生/録音engine・OS audio deviceの検証ではありません。

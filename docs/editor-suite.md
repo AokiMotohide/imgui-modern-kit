@@ -94,6 +94,22 @@ host responsibilities. Monitor flipY explicitly selects texture UV orientation.
 PCMはinterleaved spanとchannelを指定します。scopeはCPU RGBAだけを集計し、decode・再生・
 resample・色管理は行いません。衝突方針・Undo・media loading・保存もホスト責務です。
 
+`AudioStripView::gainId` and `panId` explicitly identify independent properties;
+zero IDs disable those controls. AudioStrip provides a native vertical gain fader
+and pan slider, emitting transactions through the host `PropertyState`. Mute/Solo/
+Record emit Toggle events on the strip ID with a `TrackControl` selector in x and
+the boolean value in y. Locked strips emit no edits. Labels are host-supplied UTF-8.
+`ClipView::audioBuckets` is a non-owning min/max bucket view for actual clip waveform
+drawing. The Gallery supplies PCM buckets and a channel selector, applies edits to
+host mixer values and shared track flags, and shows synthetic stereo meter response
+with pan, gain and mute/solo. Record is an arming flag, not a recorder implementation.
+AudioStripのgain/panは独立した明示IDで識別し、IDが0ならdisabledになります。nativeの縦faderとpan sliderは
+ホストのPropertyStateを使ってtransactionを返します。Mute/Solo/Recordはstrip IDへのToggle eventで、xが
+TrackControl・yがboolです。locked時は編集eventを出しません。表示文字列はホスト指定UTF-8です。
+ClipView::audioBucketsは非所有のmin/max bucketでclip波形へ接続します。GalleryはPCM bucket・channel選択・
+ホストのmixer値と共有track flagへの適用・pan/gain/mute/soloに応じた合成stereo meterを提供します。
+Recordはarming状態であり、録音engineは含みません。
+
 `ScopeBuffers` accepts optional red/green/blue waveform spans, each `width * 256`
 bins. Supply all three or leave all empty. Histogram and waveform bin ranges are
 clamped to [0,1]; nonfinite components become zero. The tinted `ScopeImage` overload

@@ -4,7 +4,9 @@ namespace imkit::video {
 using editor::StableId;
 using editor::Tick;
 enum class TrackKind { Video, Audio, Caption, Effect, Adjustment, Group };
+enum class TrackControl { Visible, Mute, Solo, Locked, Record, Target, Source, Expanded, Height };
 enum class Tool { Select, Razor, Ripple, Roll, Slip, Slide, Hand };
+struct AudioBucket;
 struct TrackView {
     StableId id = 0;
     const char *label = "";
@@ -23,6 +25,7 @@ struct ClipView {
     std::span<const float> waveform;
     std::span<const editor::Keyframe> keys;
     Tick transitionIn = 0, transitionOut = 0;
+    std::span<const AudioBucket> audioBuckets;
 };
 struct ClipConstraints {
     Tick mediaFirst = 0, mediaLast = editor::TicksPerSecond * 3600, minimumDuration = 1;
@@ -120,6 +123,10 @@ struct AudioStripView {
     const char *label = "";
     double gain = 1, pan = 0;
     bool mute = false, solo = false, record = false;
+    StableId gainId = 0, panId = 0; // Explicit property IDs. Zero disables the corresponding control.
+    bool locked = false;
+    const char *gainLabel = "Gain", *panLabel = "Pan", *muteLabel = "Mute", *soloLabel = "Solo",
+               *recordLabel = "Record";
 };
 void AudioStrip(const AudioStripView &strip, std::uint64_t revision, editor::PropertyState &state,
                 editor::EventBuffer &events);

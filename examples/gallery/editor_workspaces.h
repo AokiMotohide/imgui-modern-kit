@@ -9,6 +9,9 @@
 namespace imkit::gallery {
 struct EditorWorkspaces {
     std::vector<video::TrackView> tracks;
+    std::vector<video::AudioStripView> audioStrips;
+    editor::StableId mixerTrack = 0;
+    editor::PropertyState mixerState;
     std::vector<video::ClipView> clips;
     std::vector<editor::Keyframe> keys;
     std::array<cg::ObjectView, 4> objects{};
@@ -44,6 +47,7 @@ struct EditorWorkspaces {
     std::array<video::AudioBucket, 128> audio{};
     std::array<float, 512> pcm{};
     video::MeterState meter;
+    video::MeterState rightMeter;
     std::array<std::uint32_t, 256> red{}, green{}, blue{}, luma{};
     std::array<std::uint32_t, 16384> scopeWave{};
     std::array<std::array<std::uint32_t, 16384>,3> scopeRGB{};

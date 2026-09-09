@@ -73,6 +73,16 @@ public-IO automation. Neither overload provides a color management pipeline.
 両overloadはthree-way wheelとlevel sliderを描画します。ColorStateの中心座標・半径はホストのoverlay・
 公開IO自動操作に使えます。色管理pipelineは含みません。
 
+Audio API inventory / 音声操作API一覧:
+
+| API | Contract / 契約 |
+|---|---|
+| `TrackControl` | Stable Toggle field selector in event x; boolean state in y / track flagの明示selector |
+| `AudioStripView::gainId, panId` | Explicit property IDs; zero disabled; no arithmetic ID inference / gain・panの独立ID |
+| `AudioStripView::locked` and label pointers | Host restriction and UTF-8 labels / 制限と表示文字列 |
+| `AudioStrip(...)` | Native gain fader/pan transactions; mute/solo/record state events / 音声操作event |
+| `ClipView::audioBuckets` | Non-owning PCM min/max buckets rendered inside clips / clip波形の非所有データ |
+
 Populate every function pointer from the current OpenGL 3.3 context, initialize the
 renderer, render non-owning mesh views and pass `Texture()` to the host UI. Use flipped
 UVs for the FBO image. `Pick(x,y)` accepts top-left coordinates. Always call Shutdown

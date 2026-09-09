@@ -2,6 +2,7 @@
 #include <array>
 #include <cmath>
 #include <cstdio>
+#include <limits>
 using namespace imkit;
 int main() {
     int failures = 0;
@@ -52,6 +53,11 @@ int main() {
     video::BuildAudioBuckets(pcm, 2, 0, buckets);
     check(buckets[0].minimum == -1 && buckets[0].maximum == 1 && buckets[0].rms == 1 && buckets[1].rms == 0,
           "PCM channel buckets");
+    const float invalidPCM[]={std::numeric_limits<float>::quiet_NaN(),.5f};
+    video::AudioBucket sanitized;
+    video::BuildAudioBuckets(invalidPCM,1,0,{&sanitized,1});
+    check(sanitized.minimum==0 && sanitized.maximum==.5f && std::isfinite(sanitized.rms),
+          "first nonfinite PCM sample does not contaminate min/max");
     video::MeterState meter;
     video::UpdateMeter(meter, pcm, .1f);
     check(meter.heldPeak == 1, "meter peak");
@@ -168,6 +174,54 @@ int main() {
     ++colorRevision; colorFrame();
     io.AddMouseButtonEvent(0,false); colorFrame();
     check(colorCancelled && colorCommits==3,"color gesture revision change cancels without host mutation");
+    video::AudioStripView strip;
+    strip.id=29; strip.gainId=1307; strip.panId=9011; strip.label="Mix";
+    editor::PropertyState audioState;
+    ImVec2 faderPoint{},panPoint{},mutePoint{};
+    int audioCommits=0;
+    auto audioFrame = [&] {
+        full.Clear();
+        ImGui::NewFrame();
+        ImGui::SetNextWindowPos({0,0});
+        ImGui::SetNextWindowSize({780,580});
+        ImGui::Begin("Audio channel");
+        auto p=ImGui::GetCursorScreenPos();
+        float top=p.y+ImGui::GetTextLineHeightWithSpacing();
+        const auto &style=ImGui::GetStyle();
+        float panX=p.x+32+style.ItemInnerSpacing.x+ImGui::CalcTextSize(strip.gainLabel).x+style.ItemSpacing.x;
+        faderPoint={p.x+16,top+20};
+        panPoint={panX+ImGui::GetFontSize()*8,
+                  top+ImGui::GetFrameHeight()*.5f};
+        mutePoint={panX+8,
+                   top+ImGui::GetFrameHeightWithSpacing()+ImGui::GetFrameHeight()*.5f};
+        video::AudioStrip(strip,1,audioState,full);
+        ImGui::End(); ImGui::Render();
+        for (const auto &event:full.Events()) {
+            check(event.target==strip.gainId || event.target==strip.panId || event.target==strip.id,
+                  "audio events use explicit property IDs rather than neighboring IDs");
+            if (event.phase!=editor::Phase::Commit) continue;
+            ++audioCommits;
+            if (event.target==strip.gainId) strip.gain=event.proposed.x;
+            if (event.target==strip.panId) strip.pan=event.proposed.x;
+            if (event.target==strip.id && event.proposed.x==static_cast<double>(video::TrackControl::Mute))
+                strip.mute=event.proposed.y!=0;
+        }
+    };
+    audioFrame(); audioFrame();
+    auto clickAudio=[&](ImVec2 p) {
+        io.AddMousePosEvent(p.x,p.y); audioFrame();
+        io.AddMouseButtonEvent(0,true); audioFrame();
+        io.AddMouseButtonEvent(0,false); audioFrame();
+    };
+    clickAudio(faderPoint);
+    check(strip.gain>2 && audioCommits==1,"audio fader host commit through public IO");
+    clickAudio(panPoint);
+    check(strip.pan>0 && audioCommits==2,"audio pan host commit through public IO");
+    clickAudio(mutePoint);
+    check(strip.mute && audioCommits==3,"audio mute track control event");
+    strip.locked=true;
+    clickAudio(faderPoint); clickAudio(mutePoint);
+    check(audioCommits==3 && strip.mute,"locked audio controls emit no edits");
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }

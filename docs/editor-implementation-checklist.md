@@ -21,7 +21,7 @@ until the named operations and their direct checks are complete.
 | Snap targets/guide/magnet, scrolling/zoom/fit | Timeline | Complete targets and representative gesture checks pending | Partial / 部分 |
 | Transition/caption/property keys | Timeline, Video workspace | Handles, picker, inline edits and host application pending | Open / 未完了 |
 | Media bin/monitors/transport/overlays/Inspector | Monitor, Transport, Video workspace | Selection routing, overlay controls and metadata presets pending | Partial / 部分 |
-| PCM buckets/envelope/meter/hold/pan/fader/track audio | Waveform, LevelMeter, CPU utilities | tests/video.cpp; envelope and complete audio controls pending | Partial / 部分 |
+| PCM buckets/envelope/meter/hold/pan/fader/track audio | Waveform, LevelMeter, AudioStrip, CPU utilities | tests/video.cpp verifies PCM/fader/pan/mute/locked controls; clip min/max waveform and host mixer connected; envelope pending | Partial / 部分 |
 | Histogram/luma/RGB/vector scopes, three-way wheels, color curves | ScopeImage, Histogram, BuildScopes, ColorControls | RGB bins and three wheel public-IO transactions tested; Gallery host application connected; full color curve controls pending | Partial / 部分 |
 | Camera modes/shading/overlays/navigation/alignment | cg viewport and camera utilities | Orthographic range, navigation gizmo and full display routing pending | Partial / 部分 |
 | Click/box/lasso, restrictions and selection sync | cg viewport, Outliner | Origin picking exists; complete selection workflows pending | Partial / 部分 |
