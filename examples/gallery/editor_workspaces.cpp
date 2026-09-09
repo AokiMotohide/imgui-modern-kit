@@ -513,7 +513,8 @@ void EditorWorkspaces::ApplyEvents() {
                 }
             }
         for (auto &v : uv)
-            if (v.id == e.target && e.kind == editor::EditKind::Translate) {
+            if (v.id == e.target && (e.kind == editor::EditKind::Translate ||
+                e.kind == editor::EditKind::Rotate || e.kind == editor::EditKind::Scale)) {
                 v.uv = {e.proposed.x, e.proposed.y};
                 changed = true;
             }

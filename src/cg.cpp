@@ -453,9 +453,12 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
     if (s.drag.active && (s.drag.draft.revision != p.revision || ImGui::IsKeyPressed(ImGuiKey_Escape)))
         s.drag.Cancel(out);
     if (view.hovered && hit && ImGui::IsMouseClicked(0) && !s.drag.active) {
-        selection.Set(hit, ImGui::GetIO().KeyCtrl, ImGui::GetIO().KeyCtrl);
+        if (!selection.Set(hit,ImGui::GetIO().KeyCtrl,ImGui::GetIO().KeyCtrl)) out.overflow=true;
+        if (!selection.Contains(hit)) {editor::EndCanvas();return;}
         s.mouseStart = {mouse.x, mouse.y};
-        s.drag.Begin(hit, p.revision, editor::EditKind::Translate, Value({original.x, original.y, 0}),
+        const auto kind=s.tool==TransformTool::Rotate?editor::EditKind::Rotate:
+            s.tool==TransformTool::Scale?editor::EditKind::Scale:editor::EditKind::Translate;
+        s.drag.Begin(hit, p.revision, kind, Value({original.x, original.y, 0}),
                      editor::CurrentModifiers(), out);
     }
     if (s.drag.active) {
@@ -484,6 +487,13 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
     if (view.hovered && ImGui::IsMouseReleased(1) && !s.drag.active) ImGui::OpenPopup("UV selection options");
     if (ImGui::BeginPopup("UV selection options")) {
         ImGui::Checkbox("Lasso selection",&s.lassoSelect);
+        int tool=s.tool==TransformTool::Rotate?1:s.tool==TransformTool::Scale?2:0;
+        if (ImGui::Combo("Transform",&tool,"Move\0Rotate\0Scale\0"))
+            s.tool=tool==1?TransformTool::Rotate:tool==2?TransformTool::Scale:TransformTool::Translate;
+        double pivot[2]={s.pivot.x,s.pivot.y};
+        if (ImGui::DragScalarN("Pivot",ImGuiDataType_Double,pivot,2,.01f)) s.pivot={pivot[0],pivot[1]};
+        const double minimum=0,maximum=1;
+        ImGui::DragScalar("Snap step",ImGuiDataType_Double,&s.snap,.001f,&minimum,&maximum,"%.3f",ImGuiSliderFlags_AlwaysClamp);
         ImGui::EndPopup();
     }
     ImGui::PopID();
