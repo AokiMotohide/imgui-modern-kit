@@ -622,6 +622,9 @@ int VerifyInspectorModel() {
         const auto id=split.clips.front().id;const auto start=split.clips.front().start;
         split.clipEnvelopes[id]={{split.nextId++,0,.5},{split.nextId++,1000,1.5}};
         split.clips.front().envelope=split.clipEnvelopes.at(id);
+        const auto sourceChannel=split.clips.front().keyChannel;
+        split.keys.push_back({split.nextId++,sourceChannel,1000,.625});split.RebuildKeyIndex();
+        split.clipProperties.at(id).values[1]=1.25;
         auto applySplit=[&] {
             split.events.Push({id,split.revision,editor::Phase::Commit,editor::EditKind::Split,{},editor::Value{start+500}});
             split.ApplyEvents();
@@ -631,6 +634,11 @@ int VerifyInspectorModel() {
         const auto right=std::find_if(split.clips.begin(),split.clips.end(),[&](const auto &c){return c.track==split.tracks.front().id && c.start==start+500;});
         check(right!=split.clips.end() && split.clips.size()==count+1,"host splits clip at requested tick");
         if (right!=split.clips.end()) {
+            const auto rightKey=std::find_if(right->keys.begin(),right->keys.end(),[](const auto &key){return key.tick==500 && key.value==.625;});
+            check(right->keyChannel!=sourceChannel && rightKey!=right->keys.end() &&
+                  split.clipProperties.at(right->id).values[1]==1.25 &&
+                  split.clipProperties.at(right->id).ids[1]!=split.clipProperties.at(id).ids[1],
+                  "split copies Inspector and rebases independent right key channel");
             const auto &left=split.clipEnvelopes.at(id);
             check(left.size()==2 && left.back().tick==500 && left.back().gain==1 &&
                   right->envelope.size()==2 && right->envelope.front().tick==0 && right->envelope.front().gain==1 &&
