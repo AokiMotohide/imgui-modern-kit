@@ -170,6 +170,16 @@ int main() {
     check(dopeSelection.count==1 && !dopeSelection.Contains(901) && !dopeState.drag.active &&
         dopeEvents.count==0,"Ctrl deselection does not begin a Dope Sheet edit");
     io.AddMouseButtonEvent(0,false);dopeFrame();io.AddKeyEvent(ImGuiMod_Ctrl,false);dopeFrame();
+    dopeSelection.Set(901,true);
+    std::array dopeBindings{imkit::editor::Binding{imkit::editor::Command::Delete,ImGuiKey_F9}};
+    dopeState.bindings=dopeBindings;
+    io.AddKeyEvent(ImGuiKey_F9,true);dopeFrame();
+    check(dopeEvents.count==2 && dopeEvents.Events()[0].kind==imkit::editor::EditKind::Remove &&
+        dopeEvents.Events()[1].kind==imkit::editor::EditKind::Remove,"Dope Sheet remapped Delete removes full selection");
+    io.AddKeyEvent(ImGuiKey_F9,false);dopeFrame();dopeKeys[1].locked=true;
+    io.AddKeyEvent(ImGuiKey_F9,true);dopeFrame();
+    check(dopeEvents.count==0,"Dope Sheet locked member blocks full Delete batch");
+    io.AddKeyEvent(ImGuiKey_F9,false);dopeFrame();
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }

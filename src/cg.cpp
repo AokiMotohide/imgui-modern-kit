@@ -530,6 +530,20 @@ void DopeSheet(const char *id, const editor::CurveProvider &p, editor::CurveStat
                   p.user,
                   {{editor::FromSeconds(view.visible.min.x), editor::FromSeconds(view.visible.max.x)}, 0, 0})
             : std::span<const editor::Keyframe>{};
+    if (!s.drag.active && selection.count && editor::CommandPressed(editor::Command::Delete,s.bindings,
+        ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows))) {
+        auto targets=p.selected ? p.selected(p.user,selection.storage.first(selection.count))
+                                : std::span<const editor::Keyframe>{};
+        if (!p.selected && selection.count==1) {
+            auto key=std::find_if(keys.begin(),keys.end(),[&](const auto &k){return selection.Contains(k.id);});
+            if (key!=keys.end()) targets={&*key,1};
+        }
+        bool available=targets.size()==selection.count;
+        if (!available) out.overflow=true;
+        for (const auto &key:targets) available &= !key.locked;
+        if (available && capacity(targets.size())) for (const auto &key:targets)
+            Emit(out,key.id,p.revision,editor::EditKind::Remove,{key.tick,0,0,0,key.value});
+    }
     StableId channel = 0, hit = 0;
     int row = -1;
     editor::Value original{};
