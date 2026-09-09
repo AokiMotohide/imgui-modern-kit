@@ -892,6 +892,11 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
                                  return std::span<const cg::UVEdge>(
                                      static_cast<EditorWorkspaces *>(u)->edges);
                              }};
+            p.all=[](void *,cg::UVSelection mode)->std::span<const editor::StableId> {
+                static constexpr std::array<editor::StableId,4> ids{900001,900002,900003,900004};
+                return mode==cg::UVSelection::Vertex ? std::span<const editor::StableId>(ids) : std::span<const editor::StableId>{};
+            };
+            s.uvState.bindings=std::span(s.bindings).first(s.bindingCount);
             cg::UVEditor("uv", p, texture, s.uvState, s.uvSelection, s.events, theme, {0, 0});
             ImGui::EndTabItem();
         }

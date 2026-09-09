@@ -411,6 +411,18 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
               editor::Selection &selection, editor::EventBuffer &out, const Theme &theme, ImVec2 size) {
     auto view = editor::BeginCanvas(id, s.canvas, size, theme);
     s.view = view;
+    if (!s.drag.active && editor::CommandPressed(editor::Command::SelectAll,s.bindings,
+        ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows))) {
+        if (!p.all) out.overflow=true;
+        else {
+            auto ids=p.all(p.user,s.selection);
+            if (ids.size()>selection.storage.size() || ids.size()>out.storage.size()-out.count) out.overflow=true;
+            else {
+                selection.Clear();
+                for (auto selected:ids) {selection.Set(selected,true);Emit(out,selected,p.revision,editor::EditKind::Select);}
+            }
+        }
+    }
     auto *d = ImGui::GetWindowDrawList();
     if (texture.GetTexID())
         d->AddImage(texture, UVScreen({0, 0}, s.canvas, view.min), UVScreen({1, 1}, s.canvas, view.min));
