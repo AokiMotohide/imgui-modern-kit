@@ -486,8 +486,10 @@ void AnimationStrips(const char *id, std::span<const StripView> strips, std::uin
         float x = view.min.x +
                   static_cast<float>((editor::Seconds(range.first) - canvas.origin.x) * canvas.scale.x);
         float w = static_cast<float>(editor::Seconds(range.last - range.first) * canvas.scale.x);
-        d->AddRectFilled({x, y}, {x + w, y + 26},
-                         ImGui::GetColorU32(strip.muted ? theme.colors.muted : theme.colors.accent), 4);
+        const auto fill=strip.muted?theme.colors.muted:theme.colors.accent;
+        const auto textColor=ImGui::GetColorU32(fill.x*.2126f+fill.y*.7152f+fill.z*.0722f>.5f ?
+            ImVec4{.06f,.06f,.08f,1}:ImVec4{.96f,.96f,.98f,1});
+        d->AddRectFilled({x, y}, {x + w, y + 26},ImGui::GetColorU32(fill),4);
         d->PushClipRect({x,y},{x+(std::max)(1.f,w),y+26},true);
         if (repeat>1 && std::isfinite(repeat)) {
             const int divisions=static_cast<int>((std::min)(repeat,128.));
@@ -501,7 +503,7 @@ void AnimationStrips(const char *id, std::span<const StripView> strips, std::uin
         char description[256];
         std::snprintf(description,sizeof(description),"%s  x%.2f / %.2f repeats%s%s",strip.label,scale,repeat,
             strip.muted?" [Muted]":"",strip.locked?" [Locked]":"");
-        d->AddText({x + 4, y + 4}, ImGui::GetColorU32(theme.colors.text), description);
+        d->AddText({x + 4, y + 4}, textColor, description);
         d->PopClipRect();
         ImGui::SetCursorScreenPos({x, y});
         ImGui::PushID(reinterpret_cast<void *>(static_cast<std::uintptr_t>(strip.id)));
