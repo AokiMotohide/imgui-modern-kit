@@ -198,6 +198,7 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
     int shading=s.shading==Shading::Wireframe ? 0 : 1;
     if (ImGui::Combo("##shading",&shading,"Wireframe\0Solid\0"))
         s.shading=shading==0 ? Shading::Wireframe : Shading::Solid;
+    if (s.tool==TransformTool::Select) ImGui::Checkbox("Lasso selection",&s.lassoSelection);
     ViewportView v{ImGui::GetCursorScreenPos(), ImGui::GetContentRegionAvail(), ImGui::IsWindowHovered()};
     auto *d = ImGui::GetWindowDrawList();
     d->PushClipRect(v.min, {v.min.x + v.size.x, v.min.y + v.size.y}, true);
@@ -293,9 +294,30 @@ void ViewportObjects(const ViewportView &v, std::span<const ObjectView> objects,
             }
         }
     if (v.hovered && hit && ImGui::IsMouseClicked(0) && !s.drag.active) {
-        selection.Set(hit, ImGui::GetIO().KeyCtrl, ImGui::GetIO().KeyCtrl);
-        Emit(out, hit, revision, editor::EditKind::Select);
+        if (selection.Set(hit, ImGui::GetIO().KeyCtrl, ImGui::GetIO().KeyCtrl)) Emit(out,hit,revision,editor::EditKind::Select);
+        else out.overflow=true;
     }
+    if (s.selectionCanvas.selecting && s.selectionRevision!=revision) s.selectionCanvas.selecting=false;
+    if (s.tool!=TransformTool::Select || s.drag.active) {s.selectionCanvas.selecting=false;return;}
+    const bool inside=v.hovered && mouse.x>=v.min.x && mouse.x<=v.min.x+v.size.x && mouse.y>=v.min.y && mouse.y<=v.min.y+v.size.y;
+    if (s.selectionCanvas.selecting || (!hit && inside && ImGui::IsMouseClicked(0))) {
+        std::size_t count=0;
+        for (const auto &object:objects) if (object.visible && object.selectable && !object.locked) {
+            const auto projected=Project(object.transform.translation,s.camera,v.min,v.size);
+            if (!projected.visible) continue;
+            if (count==s.selectionPoints.size()) {out.overflow=true;s.selectionCanvas.selecting=false;return;}
+            s.selectionPoints[count++]={object.id,{projected.screen.x-v.min.x,projected.screen.y-v.min.y},false};
+        }
+        auto points=s.selectionPoints.first(count);
+        const editor::CanvasView canvas{v.min,{v.min.x+v.size.x,v.min.y+v.size.y},{{0,0},{v.size.x,v.size.y}},inside};
+        s.selectionCanvas.origin={};s.selectionCanvas.scale={1,1};
+        const bool wasSelecting=s.selectionCanvas.selecting;
+        editor::CanvasSelection(canvas,s.selectionCanvas,{&points,revision,[](void *user,editor::Rect) {
+            return std::span<const editor::SelectablePoint>(*static_cast<std::span<editor::SelectablePoint>*>(user));
+        }},selection,out,theme,s.lassoSelection);
+        if (!wasSelecting && s.selectionCanvas.selecting) s.selectionRevision=revision;
+    }
+
 }
 void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportState &s, std::uint64_t revision,
                     editor::EventBuffer &out, const Theme &) {

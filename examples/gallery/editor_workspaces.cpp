@@ -949,6 +949,9 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
         preview::DrawListPreview(*ImGui::GetWindowDrawList(),s.BuildSceneMeshes(),s.viewport.camera,
                                  view.min,view.size,s.scratch);
     }
+    s.viewportSelectionPoints.resize(s.objects.size());
+    s.viewport.selectionPoints=s.viewportSelectionPoints;
+    s.viewport.selectionCanvas.selectionPath=s.viewportSelectionPath;
     cg::ViewportObjects(view, s.objects, s.viewport, s.objectSelection, s.revision, s.events, theme);
     if (!s.viewport.drag.active) {
         if (s.viewport.pivot==cg::Pivot::Cursor) s.viewport.pivotPosition=s.cursorPivot;

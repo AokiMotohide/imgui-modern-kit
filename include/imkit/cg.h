@@ -80,6 +80,10 @@ struct ViewportState {
     std::span<const ObjectView> selectedObjects; // Complete host selection, including offscreen objects.
     std::span<TransformCompanion> companions; // Host storage; keep stable throughout a gesture.
     std::size_t companionCount=0;
+    editor::CanvasState selectionCanvas;
+    std::span<editor::SelectablePoint> selectionPoints;
+    bool lassoSelection=false;
+    std::uint64_t selectionRevision=0;
 };
 struct ViewportView {
     ImVec2 min{}, size{};
