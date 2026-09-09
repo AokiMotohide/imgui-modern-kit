@@ -632,3 +632,22 @@ Move and Duplicate also require a complete selected-clip query for multiple sele
 Gallery clip queries use an end-time segment tree rebuilt after host edits. Track/start bounds and subtree maximum ends prune nonoverlapping clips without a fixed lookback. The borrowed query result uses host scratch reserved during rebuild. A focused 100,000-clip fixture verifies a long overlapping clip, track isolation, duration updates, fewer than 150 visited nodes for a sparse query and unchanged scratch capacity. These are query-contract checks, not a replacement for final Release frame measurements.
 
 Galleryのclip検索はホスト編集後に再構築する終了時刻のsegment treeを使用します。track・開始時刻の範囲と部分木の最大終了時刻で範囲外を除外し、固定秒数の探索制限をなくしました。返却spanは再構築時に確保したホスト領域を借用します。10万clipの回帰で長いclip、track分離、duration変更、疎な検索の訪問node数150未満、作業領域の容量不変を確認しています。これは検索契約の検証であり、最終Releaseフレーム計測は別途必要です。
+
+### Interval-index performance checkpoint / 区間索引の性能確認
+
+Release, 1920×1440, 256 tracks, 100,096 clips and 100,000 keys; 20 warm-up and 180 measured frames per operation. Public ImGui IO drives the native GL window. The wall-time boundary includes host apply, preview render, ImGui, GL submission and swap with vsync off. This checkpoint includes the interval clip index and selected-clip completeness guards; it does not establish completion of the whole suite.
+
+Release・1920×1440・256 track・100,096 clip・100,000 keyで、操作ごとに20 warm-up frame後の180 frameを測定しました。公開ImGui IOでnative GL windowを操作し、ホスト適用・preview描画・ImGui・GL送信・swapを含むwall時間です。vsyncは無効です。区間索引と選択clipの完全性検査を含む時点の測定であり、Suite全体の完成を証明するものではありません。
+
+| Operation / 操作 | P95 ms | Max ms | Terminal frame ms / 確定frame |
+|---|---:|---:|---:|
+| Pan | 1.8873 | 2.5984 | 1.0424 |
+| Zoom | 1.6569 | 2.5332 | 1.7151 |
+| Selection | 1.6229 | 2.1567 | 0.9766 |
+| Clip drag | 1.6642 | 1.8953 | 8.5416 |
+| Clip trim | 1.6272 | 2.2675 | 7.1264 |
+| Keyframe drag | 1.5771 | 3.0091 | 9.3691 |
+
+Every operation passed its interaction check. Per-frame maxima were 7 queries, 30 returned clips, 8 returned editing keys and 6 returned track rows. Keys count clip-local editing spans and Curve query neighbors per return; full borrowed evaluation channels are excluded. C++ new and ImGui allocator counts were both zero during the measured interval; driver/OS allocations are excluded. The benchmark now enforces these allocation gates as well as P95 and bounded query results.
+
+全操作で編集結果を確認しました。1 frame当たり最大7 query、返却30 clip・8編集key・6 track行でした。key数はclip内編集spanとCurve queryの隣接keyを返却ごとに数え、評価専用の全channel借用spanは含めません。測定区間のC++ newとImGui allocatorはともに0で、driver・OS allocationは計測対象外です。benchmarkはP95・返却数に加え、このallocation条件も判定します。native OS／IMEの検証ではありません。

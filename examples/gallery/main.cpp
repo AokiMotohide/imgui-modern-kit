@@ -411,7 +411,7 @@ void BenchmarkEditors(Host &h,const std::filesystem::path &out) {
     using namespace imkit;
     auto &s=h.s.editors;
     std::ofstream report(out/"editor-performance.csv");
-    report<<"operation,frames,p95_ms,max_ms,queries_max,clips_max,cpp_new,imgui_allocations,interaction_verified\n";
+    report<<"operation,frames,p95_ms,max_ms,queries_max,clips_max,keys_max,tracks_max,cpp_new,imgui_allocations,interaction_verified\n";
     std::ofstream context(out/"editor-performance-context.txt");
 #ifdef NDEBUG
     context<<"configuration=Release\n";
@@ -421,6 +421,7 @@ void BenchmarkEditors(Host &h,const std::filesystem::path &out) {
     int width=0,height=0;glfwGetFramebufferSize(h.window,&width,&height);
     context<<"framebuffer="<<width<<'x'<<height<<"\n20 warm-up frames, 180 measured frames per operation.\n"
         <<"Boundary: Host::Frame wall time including host event apply, preview render, ImGui, GL submission and swap; vsync off.\n"
+        <<"Returned keys include clip-local editing spans and Curve query neighbors, counted per return; full borrowed evaluation channels are excluded. Tracks count returned Timeline rows.\n"
         <<"Allocations: C++ new and ImGui allocator calls; excludes driver/internal OS allocation.\n"
         <<"Public ImGui IO, hidden native GL window; not native OS/IME input.\n";
     const char *names[]={"pan","zoom","selection","clip_drag","clip_trim","keyframe_drag"};
@@ -458,12 +459,13 @@ void BenchmarkEditors(Host &h,const std::filesystem::path &out) {
             }
         };
         for (int i=0;i<20;++i) frame(i);
-        std::array<double,180> timings{};std::size_t queries=0,clips=0;
+        std::array<double,180> timings{};std::size_t queries=0,clips=0,keys=0,tracks=0;
         h.imguiAllocations=0;h.countImGuiAllocations=true;gallery::CountAllocations(true);
         for (int i=0;i<180;++i) {
             const auto begin=std::chrono::steady_clock::now();frame(i);
             timings[i]=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-begin).count();
             queries=std::max(queries,s.queryCount);clips=std::max(clips,s.queriedClips);
+            keys=std::max(keys,s.queriedKeys);tracks=std::max(tracks,s.queriedTracks);
         }
         gallery::CountAllocations(false);h.countImGuiAllocations=false;
         const auto allocations=gallery::AllocationCount(),imguiAllocations=h.imguiAllocations;
@@ -480,9 +482,9 @@ void BenchmarkEditors(Host &h,const std::filesystem::path &out) {
         if (operation==5) gestureValid &= std::any_of(s.keys.begin(),s.keys.end(),[&](const auto &key){return key.id==editedKey && key.tick!=oldKeyTick;});
         std::sort(timings.begin(),timings.end());
         report<<names[operation]<<",180,"<<timings[170]<<','<<timings.back()<<','<<queries<<','<<clips<<','
-            <<allocations<<','<<imguiAllocations<<','<<gestureValid<<'\n';report.flush();
+            <<keys<<','<<tracks<<','<<allocations<<','<<imguiAllocations<<','<<gestureValid<<'\n';report.flush();
         context<<names[operation]<<" terminal_frame_ms="<<terminalMs<<" tracks="<<s.tracks.size()<<" clips="<<s.clips.size()<<" keys="<<s.keys.size()<<'\n';context.flush();
-        allPassed &= gestureValid && timings[170]<=16.7 && queries<30 && clips<1000;
+        allPassed &= gestureValid && timings[170]<=16.7 && queries<30 && clips<1000 && keys<1000 && tracks<30 && allocations==0 && imguiAllocations==0;
     }
     if (!allPassed) throw std::runtime_error("Editor benchmark did not meet interaction, size, query or P95 gates; see report");
 }
