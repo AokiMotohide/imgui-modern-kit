@@ -442,6 +442,18 @@ int VerifyInspectorModel() {
         std::printf("%s %s\n",ok?"PASS":"FAIL",name);
         if (!ok) ++failures;
     };
+    const auto rendererComponent=state.components[0].view.id,wireComponent=state.components[1].view.id;
+    state.events.Push({wireComponent,state.revision,editor::Phase::Commit,editor::EditKind::Toggle,{}, {0,0,0,0,0,1}});state.ApplyEvents();
+    check(state.BuildSceneMeshes().front().wire,"enabled wire component changes preview rendering");
+    state.events.Push({wireComponent,state.revision,editor::Phase::Commit,editor::EditKind::Reorder,{},
+        {0,0,-1,state.objects[1].id}});state.ApplyEvents();
+    check(!state.BuildSceneMeshes().front().wire,"component order changes renderer override result");
+    state.events.Push({rendererComponent,state.revision,editor::Phase::Commit,editor::EditKind::Toggle,{}, {0,0,0,0,0,0}});state.ApplyEvents();
+    check(state.BuildSceneMeshes().empty(),"disabled renderer component removes preview mesh");
+    state.events.Push({rendererComponent,state.revision,editor::Phase::Commit,editor::EditKind::Toggle,{}, {0,0,0,0,0,1}});state.ApplyEvents();
+    state.events.Push({wireComponent,state.revision,editor::Phase::Commit,editor::EditKind::Reorder,{},
+        {0,0,1,state.objects[1].id}});state.ApplyEvents();
+    state.events.Push({wireComponent,state.revision,editor::Phase::Commit,editor::EditKind::Toggle,{}, {0,0,0,0,0,0}});state.ApplyEvents();
     state.RebuildOutlinerRows();check(state.outlinerRows.size()==4,"Outliner expanded hierarchy includes all rows");
     state.objects[0].expanded=false;state.RebuildOutlinerRows();
     check(state.outlinerRows.size()==1,"Outliner collapse hides descendants");

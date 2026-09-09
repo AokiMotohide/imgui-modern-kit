@@ -684,6 +684,41 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
     }
     ImGui::PopID();
 }
+void ComponentStack(const char *id,std::span<const ComponentView> components,
+                    std::uint64_t revision,editor::EventBuffer &out) {
+    ImGui::PushID(id);
+    if (ImGui::BeginTable("components",3,ImGuiTableFlags_RowBg|ImGuiTableFlags_SizingStretchProp)) {
+        ImGui::TableSetupColumn("Enabled",ImGuiTableColumnFlags_WidthFixed,ImGui::GetFrameHeight());
+        ImGui::TableSetupColumn("Component",ImGuiTableColumnFlags_WidthStretch);
+        ImGui::TableSetupColumn("Actions",ImGuiTableColumnFlags_WidthFixed,ImGui::GetFrameHeight());
+        for (const auto &component:components) {
+            ImGui::PushID(reinterpret_cast<void*>(static_cast<std::uintptr_t>(component.id)));
+            ImGui::TableNextRow();ImGui::TableNextColumn();
+            bool enabled=component.enabled;ImGui::BeginDisabled(component.locked);
+            if (ImGui::Checkbox("##enabled",&enabled))
+                Emit(out,component.id,revision,editor::EditKind::Toggle,Value({0,component.enabled?1.:0.,0}),Value({0,enabled?1.:0.,0}));
+            ImGui::EndDisabled();ImGui::TableNextColumn();
+            if (ImGui::Selectable(component.label,component.expanded))
+                Emit(out,component.id,revision,editor::EditKind::Toggle,Value({1,component.expanded?1.:0.,0}),Value({1,component.expanded?0.:1.,0}));
+            if (component.expanded) ImGui::TextWrapped("%s",component.description);
+            ImGui::TableNextColumn();
+            if (ImGui::Button("...")) ImGui::OpenPopup("actions");
+            if (ImGui::BeginPopup("actions")) {
+                if (ImGui::MenuItem(component.locked?"Unlock":"Lock"))
+                    Emit(out,component.id,revision,editor::EditKind::Toggle,Value({2,component.locked?1.:0.,0}),Value({2,component.locked?0.:1.,0}));
+                ImGui::BeginDisabled(component.locked);
+                if (ImGui::MenuItem("Move up")) Emit(out,component.id,revision,editor::EditKind::Reorder,{},editor::Value{0,0,-1,component.owner});
+                if (ImGui::MenuItem("Move down")) Emit(out,component.id,revision,editor::EditKind::Reorder,{},editor::Value{0,0,1,component.owner});
+                if (ImGui::MenuItem("Remove")) Emit(out,component.id,revision,editor::EditKind::Remove);
+                ImGui::EndDisabled();ImGui::EndPopup();
+            }
+            ImGui::PopID();
+        }
+        ImGui::EndTable();
+    }
+    ImGui::PopID();
+}
+
 editor::Point TransformUV(editor::Point p, editor::Point pivot, editor::Point translation, double angle,
                           editor::Point scale, double snap) {
     double x = (p.x - pivot.x) * scale.x, y = (p.y - pivot.y) * scale.y, c = std::cos(angle),

@@ -72,6 +72,8 @@ int main() {
     cg::EndViewport();
     ImGui::BeginChild("outliner", {300, 100});
     cg::Outliner("tree", {}, outliner, selection, events);
+    const cg::ComponentView component{123,456,"Renderer","Host-owned component"};
+    cg::ComponentStack("stack",{&component,1},1,events);
     ImGui::EndChild();
     cg::UVProvider uvProvider;
     uvProvider.all=[](void *,cg::UVSelection)->std::span<const editor::StableId>{return {};};

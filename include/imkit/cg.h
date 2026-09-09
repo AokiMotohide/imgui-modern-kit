@@ -101,6 +101,14 @@ struct OutlinerState {
 };
 void Outliner(const char *id, const SceneProvider &provider, OutlinerState &state,
               editor::Selection &selection, editor::EventBuffer &events);
+struct ComponentView {
+    StableId id=0, owner=0;
+    const char *label="", *description="";
+    bool enabled=true, expanded=false, locked=false;
+};
+// Toggle fields: 0 enabled, 1 expanded, 2 locked. Reorder carries owner and offset -1/+1.
+void ComponentStack(const char *id, std::span<const ComponentView> components,
+                    std::uint64_t revision, editor::EventBuffer &events);
 struct UVVertex {
     StableId id = 0, island = 0;
     editor::Point uv{};
