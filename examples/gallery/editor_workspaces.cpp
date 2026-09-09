@@ -496,7 +496,7 @@ void EditorWorkspaces::ApplyEvents() {
     const auto clipBodyEdit=[](editor::EditKind kind) {
         return kind==editor::EditKind::Move || kind==editor::EditKind::Duplicate || kind==editor::EditKind::Split ||
             kind==editor::EditKind::TrimStart || kind==editor::EditKind::TrimEnd || kind==editor::EditKind::Slip ||
-            kind==editor::EditKind::Ripple || kind==editor::EditKind::Roll || kind==editor::EditKind::Slide;
+            kind==editor::EditKind::Ripple || kind==editor::EditKind::Roll || kind==editor::EditKind::Slide || kind==editor::EditKind::Link;
     };
     bool rejectClipBatch=false;
     for (const auto &event:events.Events()) {
@@ -505,6 +505,10 @@ void EditorWorkspaces::ApplyEvents() {
         if (clip==clips.end()) continue; // Other modules use the same typed edit kinds.
         const auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==clip->track;});
         rejectClipBatch|=clip->locked || track==tracks.end() || track->locked;
+        if (event.kind==editor::EditKind::Link) {
+            const auto relation=event.proposed.offset%2 ? clip->group : clip->linked;
+            rejectClipBatch|=event.proposed.offset<0 || event.proposed.offset>3 || relation!=event.original.parent;
+        }
         if (event.kind==editor::EditKind::Split) rejectClipBatch|=!video::SplitClip(*clip,event.proposed.first,{}).valid;
         if (event.kind==editor::EditKind::Ripple) {
             const auto end=clip->start+clip->duration;
@@ -513,6 +517,7 @@ void EditorWorkspaces::ApplyEvents() {
             });
         }
     }
+    editor::StableId createdLink=0,createdGroup=0;
     std::map<editor::StableId,editor::StableId> duplicateLinks,duplicateGroups,splitLinks,splitGroups;
     const auto remapRelationship=[&](auto &mapping,editor::StableId id) {
         if (!id) return editor::StableId{0};
@@ -653,9 +658,15 @@ void EditorWorkspaces::ApplyEvents() {
         if (e.kind==editor::EditKind::Rename) for (auto &object:objects)
             if (object.id==e.target && !object.locked) {object.label=renamedLabels[e.target].c_str();changed=true;}
         if (clip != clips.end()) {
-            if (e.kind==editor::EditKind::Link && (e.proposed.offset==0 || e.proposed.offset==1)) {
-                auto &relation=e.proposed.offset ? clip->group : clip->linked;
-                if (relation==e.original.parent && relation!=e.proposed.parent) {relation=e.proposed.parent;changed=true;}
+            if (e.kind==editor::EditKind::Link && e.proposed.offset>=0 && e.proposed.offset<=3) {
+                auto &relation=e.proposed.offset%2 ? clip->group : clip->linked;
+                auto set=e.proposed.parent;
+                if (e.proposed.offset>=2) {
+                    auto &created=e.proposed.offset==2 ? createdLink : createdGroup;
+                    if (!created) created=nextId++;
+                    set=created;
+                }
+                if (relation==e.original.parent && relation!=set) {relation=set;changed=true;}
             }
             auto transitionValue=[](const video::ClipView &c) {
                 editor::Value value;value.first=c.transitionIn;value.last=c.transitionOut;
@@ -1150,6 +1161,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     s.timeline.trackLabels={};
     if (s.japanese) {
         s.timeline.labels.unlink="clipのリンクを解除";s.timeline.labels.ungroup="groupから外す";
+        s.timeline.labels.linkSelection="選択clipをリンク";s.timeline.labels.groupSelection="選択clipをgroup化";
         s.timeline.labels.tools={"選択","分割","リップル","ロール","スリップ","スライド","手のひら"};
         s.timeline.labels.tooltips={"clipを選択","カーソル位置で分割","trimして後続clipを移動","隣接clipの境界を移動",
             "clip位置を保ち素材範囲を変更","clipを移動して隣接clipをtrim","Timelineをpan"};
