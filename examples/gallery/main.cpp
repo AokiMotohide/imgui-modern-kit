@@ -649,6 +649,18 @@ int VerifyInspectorModel() {
     state.tracks.front().locked=true;
     state.events.Push({firstScaleId,state.revision,editor::Phase::Commit,editor::EditKind::Property,{},editor::Value{0,0,0,0,2}});state.ApplyEvents();
     check(state.clipProperties.at(firstClipId).values[1]==1.5,"locked track rejects clip Inspector edit");state.tracks.front().locked=false;
+    const auto lockedClip=state.clips.front();const auto lockedRevision=state.revision;
+    state.tracks.front().locked=true;
+    for (auto kind:{editor::EditKind::Move,editor::EditKind::TrimStart,editor::EditKind::TrimEnd,
+                   editor::EditKind::Ripple,editor::EditKind::Roll,editor::EditKind::Slip,editor::EditKind::Slide}) {
+        state.events.Push({lockedClip.id,state.revision,editor::Phase::Commit,kind,{},
+            {lockedClip.start+1,lockedClip.start+lockedClip.duration+1,lockedClip.sourceIn+1,lockedClip.track,lockedClip.speed}});
+        state.ApplyEvents();
+        check(state.revision==lockedRevision && state.clips.front().start==lockedClip.start &&
+              state.clips.front().duration==lockedClip.duration && state.clips.front().sourceIn==lockedClip.sourceIn,
+              "locked track rejects host clip edit without changing revision");
+    }
+    state.tracks.front().locked=false;
     const auto unchangedRevision=state.revision;
     const auto &unchangedClip=state.clips.front();
     editor::Value sameClip{unchangedClip.start,unchangedClip.start+unchangedClip.duration,unchangedClip.sourceIn,unchangedClip.track,unchangedClip.speed};

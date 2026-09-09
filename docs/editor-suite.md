@@ -576,3 +576,7 @@ Timelineのtrack操作へホストatlasのEye／EyeOff、Volume／Mute、Unlock�
 `--verify-track-controls` now exercises the native icon route: visibility off/on and Japanese compact-menu mute reach host track state. Light inline controls and dark 150% Japanese menu captures are in `out/track-controls-native/`. Text fallback buttons beside icons use the same height when an atlas is present. This is public ImGui IO, not native OS/IME verification.
 
 `--verify-track-controls`でnative icon経路の表示off／onと日本語省略menuのmuteがホストtrackへ反映されることを確認しました。lightのinline操作とdark・150%の日本語menuを`out/track-controls-native/`へcaptureしました。atlas使用時は文字ボタンもiconと同じ高さに揃えています。これは公開ImGui IOでの確認で、native OS／IME確認ではありません。
+
+Gallery validates clip/track ownership and locks before applying clip edits, including before writing rename storage. Its model regression verifies that locked-track Move, both trims, Ripple, Roll, Slip and Slide leave clip data and host revision unchanged.
+
+Galleryはclip編集の適用前にclip／trackの存在とlockを確認し、rename保存領域への書込み前にも拒否します。locked trackのMove、両端trim、Ripple、Roll、Slip、Slideがclip値とホストrevisionを変えないことをモデル回帰で確認しました。

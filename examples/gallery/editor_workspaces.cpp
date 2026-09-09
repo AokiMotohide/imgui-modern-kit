@@ -537,11 +537,15 @@ void EditorWorkspaces::ApplyEvents() {
                 }
             }
         }
+        auto clip = std::find_if(clips.begin(), clips.end(), [&](const auto &c) { return c.id == e.target; });
+        if (clip!=clips.end()) {
+            const auto ownerTrack=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==clip->track;});
+            if (clip->locked || ownerTrack==tracks.end() || ownerTrack->locked) continue;
+        }
         if (e.kind == editor::EditKind::Rename)
             renamedLabels[e.target] = e.proposedText.data();
         if (e.kind==editor::EditKind::Rename) for (auto &object:objects)
             if (object.id==e.target && !object.locked) {object.label=renamedLabels[e.target].c_str();changed=true;}
-        auto clip = std::find_if(clips.begin(), clips.end(), [&](const auto &c) { return c.id == e.target; });
         if (clip != clips.end()) {
             auto transitionValue=[](const video::ClipView &c) {
                 editor::Value value;value.first=c.transitionIn;value.last=c.transitionOut;
