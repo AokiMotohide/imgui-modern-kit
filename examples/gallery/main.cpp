@@ -407,6 +407,86 @@ void VerifyEditors(Host &h, const std::filesystem::path &out, const imkit::previ
     log<<"Public IO and actual GPU; native OS/IME and media decode not tested.\n";
 }
 
+void BenchmarkEditors(Host &h,const std::filesystem::path &out) {
+    using namespace imkit;
+    auto &s=h.s.editors;
+    std::ofstream report(out/"editor-performance.csv");
+    report<<"operation,frames,p95_ms,max_ms,queries_max,clips_max,cpp_new,imgui_allocations,interaction_verified\n";
+    std::ofstream context(out/"editor-performance-context.txt");
+#ifdef NDEBUG
+    context<<"configuration=Release\n";
+#else
+    context<<"configuration=Debug (not Release acceptance)\n";
+#endif
+    int width=0,height=0;glfwGetFramebufferSize(h.window,&width,&height);
+    context<<"framebuffer="<<width<<'x'<<height<<"\n20 warm-up frames, 180 measured frames per operation.\n"
+        <<"Boundary: Host::Frame wall time including host event apply, preview render, ImGui, GL submission and swap; vsync off.\n"
+        <<"Allocations: C++ new and ImGui allocator calls; excludes driver/internal OS allocation.\n"
+        <<"Public ImGui IO, hidden native GL window; not native OS/IME input.\n";
+    const char *names[]={"pan","zoom","selection","clip_drag","clip_trim","keyframe_drag"};
+    bool allPassed=width==1920 && height==1440;
+    for (int operation=0;operation<6;++operation) {
+        s.Dataset(true);s.timeline={};s.timeline.snapping=false;
+        h.Page(8);h.Settle(20);
+        const auto &clip=s.clips.front();const auto clipId=clip.id;
+        const auto startTick=clip.start,originalDuration=clip.duration;
+        const float left=s.timeline.view.min.x+s.timeline.headerWidth;
+        ImVec2 start{left+100,s.timeline.view.min.y+25};
+        if (operation==4) start.x=left+float(editor::Seconds(clip.duration)*s.timeline.canvas.scale.x)-3;
+        if (operation==5) {
+            if (clip.keys.empty()) throw std::runtime_error("benchmark requires inline clip keys");
+            start.x=left+float(editor::Seconds(clip.keys[clip.keys.size()/2].tick)*s.timeline.canvas.scale.x);
+            start.y=s.timeline.view.min.y+video::TrackExtent(s.tracks.front())-16;
+        }
+        s.timeline.tool=operation==0 ? video::Tool::Hand : video::Tool::Select;
+        h.mouse=start;h.Frame();
+        if (operation!=1 && operation!=2) h.Frame([](auto &io){io.AddMouseButtonEvent(0,true);});
+        const auto editedKey=s.timeline.keyDrag.draft.target;
+        const auto oldKeyTick=s.timeline.keyDrag.draft.original.first;
+        bool gestureValid=operation<3 || (operation==5 ? s.timeline.keyDrag.active : s.timeline.drag.active);
+        if (operation==4) gestureValid &= s.timeline.drag.draft.kind==editor::EditKind::TrimEnd;
+        const auto origin=s.timeline.canvas.origin.x,scale=s.timeline.canvas.scale.x;
+        auto frame=[&](int index) {
+            if (operation==1) {
+                h.Frame([&](auto &io){io.AddKeyEvent(ImGuiMod_Ctrl,true);io.AddMouseWheelEvent(0,index%2 ? -.04f : .05f);});
+            } else if (operation==2) {
+                h.mouse={left+(index/2%2 ? 500.f : 100.f),start.y};
+                h.Frame([&](auto &io){io.AddMouseButtonEvent(0,index%2==0);});
+            } else {
+                const float distance=operation==4 ? -20.f : 20.f;
+                h.mouse={start.x+distance+float(index%20)*.3f,start.y};h.Frame();
+            }
+        };
+        for (int i=0;i<20;++i) frame(i);
+        std::array<double,180> timings{};std::size_t queries=0,clips=0;
+        h.imguiAllocations=0;h.countImGuiAllocations=true;gallery::CountAllocations(true);
+        for (int i=0;i<180;++i) {
+            const auto begin=std::chrono::steady_clock::now();frame(i);
+            timings[i]=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-begin).count();
+            queries=std::max(queries,s.queryCount);clips=std::max(clips,s.queriedClips);
+        }
+        gallery::CountAllocations(false);h.countImGuiAllocations=false;
+        const auto allocations=gallery::AllocationCount(),imguiAllocations=h.imguiAllocations;
+        // Commit is outside steady drag sampling; report its cost separately.
+        const auto terminalBegin=std::chrono::steady_clock::now();
+        h.Frame([](auto &io){io.AddMouseButtonEvent(0,false);io.AddKeyEvent(ImGuiMod_Ctrl,false);});
+        const auto terminalMs=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-terminalBegin).count();
+        const auto found=std::find_if(s.clips.begin(),s.clips.end(),[&](const auto &c){return c.id==clipId;});
+        if (operation==0) gestureValid &= s.timeline.canvas.origin.x!=origin;
+        if (operation==1) gestureValid &= s.timeline.canvas.scale.x!=scale;
+        if (operation==2) gestureValid &= s.selection.count>0;
+        if (operation==3) gestureValid &= found!=s.clips.end() && found->start!=startTick;
+        if (operation==4) gestureValid &= found!=s.clips.end() && found->duration!=originalDuration;
+        if (operation==5) gestureValid &= std::any_of(s.keys.begin(),s.keys.end(),[&](const auto &key){return key.id==editedKey && key.tick!=oldKeyTick;});
+        std::sort(timings.begin(),timings.end());
+        report<<names[operation]<<",180,"<<timings[170]<<','<<timings.back()<<','<<queries<<','<<clips<<','
+            <<allocations<<','<<imguiAllocations<<','<<gestureValid<<'\n';report.flush();
+        context<<names[operation]<<" terminal_frame_ms="<<terminalMs<<" tracks="<<s.tracks.size()<<" clips="<<s.clips.size()<<" keys="<<s.keys.size()<<'\n';context.flush();
+        allPassed &= gestureValid && timings[170]<=16.7 && queries<30 && clips<1000;
+    }
+    if (!allPassed) throw std::runtime_error("Editor benchmark did not meet interaction, size, query or P95 gates; see report");
+}
+
 void VerifyColor(Host &h, const std::filesystem::path &out) {
     auto &s=h.s.editors;
     s.videoPanel=1; h.Page(8); h.Settle(4);
@@ -656,7 +736,7 @@ int VerifyInspectorModel() {
     return failures?1:0;
 }
 int main(int argc, char **argv) {
-    bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false;
+    bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false, benchmarkEditors = false;
     int capturePage = -1, animationPage = -1;
     std::string iconSearch;
     std::filesystem::path out = "out/catalog";
@@ -669,6 +749,7 @@ int main(int argc, char **argv) {
         else if (a == "--verify")
             verify = true;
         else if (a == "--capture-editors") { capture = true; capturePage = -2; }
+        else if (a == "--benchmark-editors") benchmarkEditors=true;
         else if (a == "--verify-editors")
             verifyEditors = true;
         else if (a == "--verify-icons")
@@ -696,10 +777,10 @@ int main(int argc, char **argv) {
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_VISIBLE, capture || verify || verifyIcons || verifyEditors || verifyColor ? GLFW_FALSE : GLFW_TRUE);
+    glfwWindowHint(GLFW_VISIBLE, capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors ? GLFW_FALSE : GLFW_TRUE);
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
     Host h;
-    h.automated = capture || verify || verifyIcons || verifyEditors || verifyColor;
+    h.automated = capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors;
     h.window = glfwCreateWindow(1920, 1440, "ImKit Precision Layers", nullptr, nullptr);
     if (!h.window) {
         glfwTerminate();
@@ -824,6 +905,7 @@ int main(int argc, char **argv) {
             std::filesystem::create_directories(out);
             if (verify)
                 Verify(h, out);
+            if (benchmarkEditors) BenchmarkEditors(h,out);
             if (verifyEditors)
                 VerifyEditors(h, out, previewFunctions);
             if (verifyColor)
