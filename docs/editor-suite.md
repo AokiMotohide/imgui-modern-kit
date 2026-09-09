@@ -480,3 +480,7 @@ transition handleも公開InvisibleButtonのhit領域を使用し、ドラッグ
 The focused Timeline uses host `Duplicate`/`Delete` bindings for selected keys in the last edited clip. Duplicate offsets the whole selection by one frame, reduced uniformly at the clip boundary; Delete removes selected keys. Locked members reject the whole command, and event capacity is reserved for all Begin/Commit pairs. Text input and active gestures suppress these commands. Gallery rebuilds its clip-key span from the owning channel and time range, so copied keys are not hidden by the old six-key sample limit. Public IO tests cover remapped keys, lock rejection, and capacity rejection; the Gallery host-model verifier passes.
 
 focusを持つTimelineは、最後にkey編集したclip内の選択keyにホストのDuplicate／Delete bindingを適用します。複製は全選択keyを1frameずらし、clip端では共通offsetを縮めます。Deleteは選択keyを削除します。locked対象があれば全体を拒否し、全Begin／Commit対の容量を事前確保します。文字入力中・操作中は実行しません。Galleryは所有channelと時間範囲からclip-key spanを再構築し、旧6key固定の上限で複製結果が隠れないようにしました。キー割当変更・ロック・容量不足を公開IOで確認し、Gallery host model検証も合格しました。
+
+Timeline Hand mode registers a public InvisibleButton across the time canvas, captures its left drag, and scrolls time horizontally and tracks vertically. Clip click-selection and caption editing are suppressed in this mode. Public IO verifies horizontal pan without window movement, clip selection changes, or edit events.
+
+TimelineのHand modeは時間軸領域に公開InvisibleButtonを登録し、左dragを受けて横方向は時間、縦方向はtrackをスクロールします。このmodeではclipのclick選択とcaption編集を抑止します。公開IOで、ウィンドウ移動・clip選択変更・編集イベントを起こさず横panできることを確認しました。
