@@ -145,11 +145,15 @@ editor::SnapResult ResolveTimelineSnap(const TimelineState &state, Tick delta,
 void Timeline(const char *id, const TimelineProvider &provider, TimelineState &state,
               editor::Selection &selection, editor::EventBuffer &events, const Theme &theme,
               ImVec2 size = {0, 300});
+enum class MonitorMetadataPreset { Off, Clip, Details };
 struct MonitorOptions {
     bool safeArea = true, guides = false, showTimecode = true, transform = false;
     const char *label = "";
     ImVec2 anchor{.5f, .5f};
     bool flipY = false;
+    MonitorMetadataPreset metadataPreset=MonitorMetadataPreset::Clip;
+    const char *clipName="", *markerComment=""; // Borrowed host UTF-8 strings.
+    std::span<const char *const> metadata; // Extra lines for Details, borrowed for this call.
 };
 void Monitor(const char *id, ImTextureRef texture, ImVec2 size, const editor::TimeState &time,
              const MonitorOptions &options, const Theme &theme);
