@@ -142,3 +142,8 @@ Release版の上記コマンドで、GPU lifecycleなどの無関係な検証を
 An unchanged Move/TrimStart/TrimEnd/Ripple/Roll/Slip/Slide Commit preserves the host revision and bypasses index rebuilding. The headless host-model verifier covers all seven kinds. The benchmark clears selection before each operation and validates the expected selected StableId, so an idle frame with a preexisting selection cannot pass its selection check.
 
 値が変わらないMove／TrimStart／TrimEnd／Ripple／Roll／Slip／SlideのCommitでは、ホストrevisionと索引を維持します。7種をheadlessのホスト適用検証で確認しました。benchmarkは操作ごとにselectionを空にし、期待する選択先StableIdを確認するため、既存selectionを残しただけの無操作フレームは選択検証に合格しません。
+
+
+The incremental external Debug `imkit_editor_consumer` build and CPU-frame execution now cover the Timeline host atlas and five edit-tool IconIds, explicit clip key channel/default, transition picker/edit, envelope point/evaluation, six clip-role palette fields, and Monitor metadata options. The consumer defines its own ImGui target and uses the public module targets through `add_subdirectory`. This is source-consumer evidence; installed-package, Release-consumer and GPU execution are separate gates. The generated `api-inventory.json` inventories native Dear ImGui overloads; custom editor additions are listed in `editor-api.md`.
+
+外部Debug `imkit_editor_consumer`の増分ビルドとCPUフレーム実行で、Timelineのホストatlas・5編集ツールIconId、clipの明示key channel／既定値、transition picker／計算、envelope点／評価、6種clip色、Monitor metadata設定を確認しました。consumerは自身のImGui targetを定義し、`add_subdirectory`経由の公開module targetを使用します。install済みpackage・Release consumer・GPU実行は別gateです。生成`api-inventory.json`はDear ImGui標準overload用であり、独自Editor追加APIは`editor-api.md`に記載しています。

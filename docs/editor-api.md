@@ -9,7 +9,7 @@ by the host. All module targets publish C++20 and retain the host's ImGui target
 | Target | Header / namespace | Main API |
 |---|---|---|
 | `imkit::editor_core` | `imkit/editor_core.h`, `imkit::editor` | `StableId`, `Tick`, `FrameRate`, `FrameToTick`, `TickToFrame`, `FormatTimecode`, `ParseTimecode`, `EventBuffer`, `Transaction`, `Selection`, `ResolveSnap`, `CanvasState`, `BeginCanvas`, `CanvasSelection`, `TimeRuler`, `Transport`, `CurveEditor`, `ResolveHandles`, `MoveHandle`, `Evaluate`, `PropertyGrid`, `AssetBrowser`, `Splitter`, `StatusBar` |
-| `imkit::video` | `imkit/video.h`, `imkit::video` | `TimelineProvider`, `TimelineState`, `Timeline`, `EditClip`, `RollClips`, `SlideClip`, `SplitClip`, `Monitor`, `BuildAudioBuckets`, `UpdateMeter`, `Waveform`, `LevelMeter`, `AudioStrip`, `BuildScopes`, `Histogram`, `ScopeImage`, `ColorControls` |
+| `imkit::video` | `imkit/video.h`, `imkit::video` | `TimelineProvider`, `TimelineState`, `Timeline`, `EditClip`, `RollClips`, `SlideClip`, `SplitClip`, `EditTransition`, `TransitionPicker`, `EvaluateEnvelope`, `Monitor`, `MonitorOptions`, `BuildAudioBuckets`, `UpdateMeter`, `Waveform`, `LevelMeter`, `AudioStrip`, `BuildScopes`, `Histogram`, `ScopeImage`, `ColorControls` |
 | `imkit::cg` | `imkit/cg.h`, `imkit::cg` | `Project`, `TransformDelta`, `OrientationBasis`, `BeginViewport`, `ViewportObjects`, `TransformGizmo`, `Outliner`, `TransformUV`, `UVEditor`, `DopeSheet`, `AnimationStrips` |
 | `imkit::cg` | `imkit/preview.h`, `imkit::preview` | `Vertex`, `Mesh`, `Triangle`, `Cube`, `Sphere`, `DrawListPreview` |
 | `imkit::preview_opengl3` | `imkit/preview.h`, `imkit::preview` | `GLFunctions`, `OpenGL3Renderer::Init/Resize/Render/Pick/Shutdown/Texture` |
@@ -268,3 +268,21 @@ and displayed as a marked outline, not a library topology analysis.
 `UVFace`は順序付き頂点spanを非所有参照し、面IDとisland IDを保持します。面内クリックで
 選択し、`selected`は選択IDを重複のない構成頂点へ展開します。`overlap`はホストが計算し、
 ライブラリは輪郭とラベルで表示します。トポロジー解析は行いません。
+
+
+## Timeline and monitor additions / TimelineとMonitorの追加API
+
+| API | Host contract / ホスト契約 |
+|---|---|
+| `ClipView::keyChannel`, `keyDefaultValue` | Explicit insertion channel and empty-channel default; never inferred from adjacent IDs / 明示的な追加先channelと空channelの値。隣接IDから推定しない |
+| `ClipView::envelope`, `EnvelopePoint` | Borrowed time-sorted local-tick points with StableId, gain and lock / StableId・gain・lockを持つclip内時刻順の非所有点列 |
+| `EvaluateEnvelope(points,tick)` | Linear gain, constant endpoints, empty=1 / 線形gain、範囲外は端点、空なら1 |
+| `EditTransition(clip,end,delta)` | Pure duration edit, preserves the other end and clamps to clip duration / 他端を維持しclip長内に制限する純粋計算 |
+| `TransitionPicker(id,clip,revision,events,trackLocked)` | Atomic Begin/Commit type choice; host applies resulting transition kinds / 種別変更をBegin／Commitの一括イベントで返しホストが適用 |
+| `MonitorOptions::metadataPreset` | `Off`, `Clip`, `Details`; host owns choice / 選択状態はホスト所有 |
+| `MonitorOptions::clipName`, `markerComment`, `metadata` | UTF-8 strings/lines borrowed for the call; clipped to available overlay space / 呼出し中だけ借用するUTF-8文字列・行。overlay範囲内にclip |
+| `EditorPalette::effectClip`, `adjustmentClip`, `groupClip` | Semantic colors used by the corresponding Timeline track roles / 対応するTimeline track種別の意味色 |
+
+Timeline `AddKey` emits `KeyInsert` with target=channel, parent=clip, first=clip-local tick, x=value. Previous/next key commands emit `Navigate` with target=key, parent=clip, first=destination timeline tick. Envelope actions use `AudioEnvelope`: target=point for edit/remove or clip for insert, parent=clip, first=local tick, x=gain, offset=0 edit/1 insert/2 remove. Storage, stable IDs, revision changes and actual application remain host responsibilities.
+
+Timelineの`AddKey`はtarget=channel、parent=clip、first=clip内tick、x=値の`KeyInsert`を返します。前後key操作の`Navigate`はtarget=key、parent=clip、first=移動先timeline tickです。`AudioEnvelope`は編集／削除でtarget=point、追加でtarget=clip、parent=clip、first=clip内tick、x=gain、offset=0編集／1追加／2削除を使用します。格納領域・StableId・revision更新・データ適用はホストの責任です。

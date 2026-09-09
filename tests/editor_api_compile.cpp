@@ -30,12 +30,17 @@ int main() {
     cg::ViewportState viewport;
     cg::OutlinerState outliner;
     cg::UVState uv;
-    curve.icons=&icons;uv.icons=&icons;viewport.icons=&icons;
+    curve.icons=&icons;uv.icons=&icons;viewport.icons=&icons;timeline.icons=&icons;
     viewport.rotationAngle=0;viewport.rotationMouse={};
     editor::Transaction drag;
     ImGui::NewFrame();
     ImGui::SetNextWindowSize({1200, 800});
     ImGui::Begin("Editor API consumer");
+    for (auto glyph:{IconId::Razor,IconId::RippleEdit,IconId::RollingEdit,IconId::SlipEdit,IconId::SlideEdit}) {
+        if (!GetIconInfo(glyph)) return 1;
+        Icon(icons,glyph,{.size=16});ImGui::SameLine();
+    }
+    ImGui::NewLine();
     editor::TimeRuler("time", time, canvas, {}, 1, events, theme);
     editor::Transport(time, {});
     editor::CurveEditor("curve", {}, curve, selection, events, theme, {300, 100});
