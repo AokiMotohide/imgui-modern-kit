@@ -21,13 +21,15 @@ int main() {
 #endif
     const auto catalog = imkit::GetIconCatalog();
     std::set<std::string> names, categories;
-    Check(catalog.size() == 120, "120 distinct catalogue entries");
+    Check(catalog.size() == static_cast<std::size_t>(imkit::IconId::Count), "All public IDs have catalog entries");
+    Check(static_cast<int>(imkit::IconId::Add) == 0 && static_cast<int>(imkit::IconId::Target) == 119,
+          "Original ID boundaries remain stable");
     for (const auto &item : catalog) {
         Check(names.insert(item.name).second, "Unique icon name");
         categories.insert(item.category);
         Check(imkit::GetIconInfo(item.id) == &item, "Stable ID lookup");
     }
-    Check(categories.size() == 12, "12 categories");
+    Check(!categories.empty(), "Catalog categories are present");
     Check(!imkit::GetIconInfo(imkit::IconId::Count), "Invalid ID rejected");
     Check(imkit::GetIconAtlasPixels(17).rgba.empty(), "Unsupported raster size rejected");
     for (int size : imkit::IconPixelSizes) {

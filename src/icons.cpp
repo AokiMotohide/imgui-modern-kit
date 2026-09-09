@@ -8,6 +8,8 @@ namespace imkit {
 namespace {
 // Generated from the individually generated source images by tools/build_icons.py.
 #include "icons_data.inc"
+static_assert(std::size(kCatalog) == static_cast<std::size_t>(IconId::Count));
+static_assert(kAtlasColumns * kAtlasRows >= std::size(kCatalog));
 int Index(int size) {
     for (int i = 0; i < static_cast<int>(IconPixelSizes.size()); ++i)
         if (IconPixelSizes[i] == size)
@@ -82,7 +84,7 @@ IconAtlasPixels GetIconAtlasPixels(int iconPixels) {
         for (int i = 0; i < 6; ++i) {
             auto &rgba = result[i];
             const int cell = IconPixelSizes[i] + 4;
-            rgba.reserve(cell * cell * 16 * 8 * 4);
+            rgba.reserve(cell * cell * kAtlasColumns * kAtlasRows * 4);
             for (std::size_t j = kOffsets[i]; j < kOffsets[i + 1]; j += 2)
                 for (int n = 0; n < kAlphaRle[j]; ++n)
                     rgba.insert(rgba.end(), {255, 255, 255, kAlphaRle[j + 1]});
@@ -90,17 +92,17 @@ IconAtlasPixels GetIconAtlasPixels(int iconPixels) {
         return result;
     }();
     const int cell = iconPixels + 4;
-    return {cell * 16, cell * 8, iconPixels, decoded[index]};
+    return {cell * kAtlasColumns, cell * kAtlasRows, iconPixels, decoded[index]};
 }
 IconRegion GetIconRegion(IconId id, int iconPixels) {
     if (!GetIconInfo(id) || Index(iconPixels) < 0)
         return {};
     const int cell = iconPixels + 4;
     const int index = static_cast<int>(id);
-    const float x = static_cast<float>((index % 16) * cell + 2);
-    const float y = static_cast<float>((index / 16) * cell + 2);
-    return {{x / (cell * 16), y / (cell * 8)},
-            {(x + iconPixels) / (cell * 16), (y + iconPixels) / (cell * 8)}};
+    const float x = static_cast<float>((index % kAtlasColumns) * cell + 2);
+    const float y = static_cast<float>((index / kAtlasColumns) * cell + 2);
+    return {{x / (cell * kAtlasColumns), y / (cell * kAtlasRows)},
+            {(x + iconPixels) / (cell * kAtlasColumns), (y + iconPixels) / (cell * kAtlasRows)}};
 }
 bool IconAtlas::SetTexture(int iconPixels, ImTextureRef texture) {
     const int i = Index(iconPixels);
