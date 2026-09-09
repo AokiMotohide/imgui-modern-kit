@@ -912,6 +912,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
                 return std::span<const cg::UVVertex>(host.selectedUVVertices).first(count);
             };
             s.uvState.companionDrags=s.uvCompanions;
+            s.uvState.imageSize={2,2};
             s.uvState.canvas.selectionPath=s.uvSelectionPath;
             s.uvState.bindings=std::span(s.bindings).first(s.bindingCount);
             cg::UVEditor("uv", p, texture, s.uvState, s.uvSelection, s.events, theme, {0, 0});
