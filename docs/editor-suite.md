@@ -548,3 +548,7 @@ GalleryのClip Inspectorは選択clipごとに個別割当のproperty IDとホ�
 Gallery ordinary clip duplication now copies Inspector values/flags, property animation keys, the inline key channel and audio envelope into independent host storage with newly allocated IDs. Media thumbnail/waveform resources remain borrowed. Locked clip or track owners reject duplication. The focused host-model verifier checks copied values and key IDs and confirms that editing a duplicated envelope leaves its source unchanged. Split remapping is a separate operation and is not covered by this duplication check.
 
 Galleryの通常clip複製では、Inspector値・flags、property animation key、clip内key channel、audio envelopeを新しいIDと独立したホスト領域へコピーします。mediaのthumbnail／waveform資源は非所有参照を維持します。clipまたはtrackがlockedの場合は複製を拒否します。モデル検証で値とkey IDのコピー、および複製先envelopeの編集が元clipへ影響しないことを確認しました。split時の再配置は別操作であり、この複製検証には含みません。
+
+Gallery split partitions the host audio envelope at the cut. It interpolates a boundary point when needed, preserves left-side point IDs, and assigns new IDs and clip-local ticks to the right side. Both halves retain the original linear gain evaluation. Locked tracks reject the host split. The model verifier checks the boundary, shifted points, independence and gain on each side.
+
+Galleryのsplitは音量envelopeを分割位置で分け、必要な境界点を補間します。左側の既存point IDを保持し、右側には新しいIDとclipローカル時刻を割り当てるため、両側で分割前の線形gain評価を維持します。locked trackのsplitはホストでも拒否します。モデル検証で境界、時刻移動、IDの独立、両側のgainを確認しました。

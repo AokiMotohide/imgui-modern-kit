@@ -574,6 +574,8 @@ void EditorWorkspaces::ApplyEvents() {
                 changed = true;
             }
             if (e.kind == editor::EditKind::Split) {
+                const auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==clip->track;});
+                if (clip->locked || track==tracks.end() || track->locked) continue;
                 auto split = video::SplitClip(*clip, e.proposed.first, {});
                 if (split.valid) {
                     auto right = *clip;
@@ -581,6 +583,24 @@ void EditorWorkspaces::ApplyEvents() {
                     right.start = split.right.start;
                     right.duration = split.right.duration;
                     right.sourceIn = split.right.sourceIn;
+                    if (!clip->envelope.empty()) {
+                        const auto localCut=split.left.duration;
+                        const auto gain=video::EvaluateEnvelope(clip->envelope,localCut);
+                        std::vector<video::EnvelopePoint> leftPoints,rightPoints;
+                        for (const auto &point:clip->envelope) {
+                            if (point.tick<=localCut) leftPoints.push_back(point);
+                            if (point.tick>=localCut) {
+                                auto moved=point;moved.id=nextId++;moved.tick-=localCut;rightPoints.push_back(moved);
+                            }
+                        }
+                        if (leftPoints.empty() || leftPoints.back().tick!=localCut)
+                            leftPoints.push_back({nextId++,localCut,gain});
+                        if (rightPoints.empty() || rightPoints.front().tick!=0)
+                            rightPoints.insert(rightPoints.begin(),{nextId++,0,gain});
+                        clipEnvelopes[clip->id]=std::move(leftPoints);
+                        clipEnvelopes[right.id]=std::move(rightPoints);
+                        clip->envelope=clipEnvelopes.at(clip->id);right.envelope=clipEnvelopes.at(right.id);
+                    }
                     clip->duration = split.left.duration;
                     clips.push_back(right);
                     changed = true;

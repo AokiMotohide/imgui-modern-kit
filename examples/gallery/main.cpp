@@ -592,6 +592,30 @@ int VerifyInspectorModel() {
                   "duplicate envelope edits preserve original clip");
         }
     }
+    {
+        auto splitStorage=std::make_unique<gallery::EditorWorkspaces>();auto &split=*splitStorage;split.Initialize();
+        const auto id=split.clips.front().id;const auto start=split.clips.front().start;
+        split.clipEnvelopes[id]={{split.nextId++,0,.5},{split.nextId++,1000,1.5}};
+        split.clips.front().envelope=split.clipEnvelopes.at(id);
+        auto applySplit=[&] {
+            split.events.Push({id,split.revision,editor::Phase::Commit,editor::EditKind::Split,{},editor::Value{start+500}});
+            split.ApplyEvents();
+        };
+        const auto count=split.clips.size();split.tracks.front().locked=true;applySplit();
+        check(split.clips.size()==count,"locked track rejects host clip split");split.tracks.front().locked=false;applySplit();
+        const auto right=std::find_if(split.clips.begin(),split.clips.end(),[&](const auto &c){return c.track==split.tracks.front().id && c.start==start+500;});
+        check(right!=split.clips.end() && split.clips.size()==count+1,"host splits clip at requested tick");
+        if (right!=split.clips.end()) {
+            const auto &left=split.clipEnvelopes.at(id);
+            check(left.size()==2 && left.back().tick==500 && left.back().gain==1 &&
+                  right->envelope.size()==2 && right->envelope.front().tick==0 && right->envelope.front().gain==1 &&
+                  right->envelope.back().tick==500 && right->envelope.back().gain==1.5 &&
+                  right->envelope.front().id!=left.back().id,
+                  "split interpolates envelope boundary and shifts independent right points to local time");
+            check(video::EvaluateEnvelope(left,250)==.75 && video::EvaluateEnvelope(right->envelope,250)==1.25,
+                  "split envelope preserves original gain on both sides");
+        }
+    }
     const auto firstClipId=state.clips.front().id,secondClipId=state.clips[1].id;
     const auto firstScaleId=state.clipPropertyIds[1];
     state.events.Push({firstScaleId,state.revision,editor::Phase::Commit,editor::EditKind::Property,{},editor::Value{0,0,0,0,1.5}});state.ApplyEvents();
