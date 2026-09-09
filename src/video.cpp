@@ -387,7 +387,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             if (values[f]) ImGui::PushStyleColor(ImGuiCol_Button,theme.colors.accent);
             ImGui::PushID(f);
             const bool pressed=s.icons && controlIcons[f]!=IconId::Count ?
-                IconButton("control",*s.icons,controlIcons[f],tooltips[f],{controlIconSize}) : ImGui::SmallButton(labels[f]);
+                IconButton("control",*s.icons,controlIcons[f],tooltips[f],{controlIconSize}) :
+                s.icons ? ImGui::Button(labels[f],{0,controlIconSize+2*ImGui::GetStyle().FramePadding.y}) : ImGui::SmallButton(labels[f]);
             if (pressed) Toggle(out,track,p.revision,f,values[f]);
             ImGui::PopID();
             if (values[f]) {

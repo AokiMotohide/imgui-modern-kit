@@ -2007,7 +2007,8 @@
       "icon": "Lock",
       "tooltip": "Lock",
       "state": "toggle background and underline; checked menu item; state-specific Eye/EyeOff, Volume/Mute and Unlock/Lock glyphs",
-      "status": "Track header/menu connected and compiled; text fallback public IO regression passed; native icon route inspection pending"
+      "status": "Track header/menu native light and Japanese dark 150% inspected; visibility and mute host changes verified through public IO",
+      "evidence": "out/track-controls-native/track-controls.txt; track-icons-light.png; track-menu-japanese-dark-150.png (local captures)"
     },
     {
       "operation": "Unlock",
@@ -2016,7 +2017,8 @@
       "icon": "Unlock",
       "tooltip": "Unlock",
       "state": "toggle background and underline; checked menu item; state-specific Eye/EyeOff, Volume/Mute and Unlock/Lock glyphs",
-      "status": "Track header/menu connected and compiled; text fallback public IO regression passed; native icon route inspection pending"
+      "status": "Track header/menu native light and Japanese dark 150% inspected; visibility and mute host changes verified through public IO",
+      "evidence": "out/track-controls-native/track-controls.txt; track-icons-light.png; track-menu-japanese-dark-150.png (local captures)"
     },
     {
       "operation": "Play",
@@ -2052,7 +2054,8 @@
       "icon": "Record",
       "tooltip": "Record",
       "state": "toggle background and underline; checked menu item; state-specific Eye/EyeOff, Volume/Mute and Unlock/Lock glyphs",
-      "status": "Track header/menu connected and compiled; text fallback public IO regression passed; native icon route inspection pending"
+      "status": "Track header/menu native light and Japanese dark 150% inspected; visibility and mute host changes verified through public IO",
+      "evidence": "out/track-controls-native/track-controls.txt; track-icons-light.png; track-menu-japanese-dark-150.png (local captures)"
     },
     {
       "operation": "Repeat",
@@ -2169,7 +2172,8 @@
       "icon": "Volume",
       "tooltip": "Volume",
       "state": "toggle background and underline; checked menu item; state-specific Eye/EyeOff, Volume/Mute and Unlock/Lock glyphs",
-      "status": "Track header/menu connected and compiled; text fallback public IO regression passed; native icon route inspection pending"
+      "status": "Track header/menu native light and Japanese dark 150% inspected; visibility and mute host changes verified through public IO",
+      "evidence": "out/track-controls-native/track-controls.txt; track-icons-light.png; track-menu-japanese-dark-150.png (local captures)"
     },
     {
       "operation": "Mute",
@@ -2178,7 +2182,8 @@
       "icon": "Mute",
       "tooltip": "Mute",
       "state": "toggle background and underline; checked menu item; state-specific Eye/EyeOff, Volume/Mute and Unlock/Lock glyphs",
-      "status": "Track header/menu connected and compiled; text fallback public IO regression passed; native icon route inspection pending"
+      "status": "Track header/menu native light and Japanese dark 150% inspected; visibility and mute host changes verified through public IO",
+      "evidence": "out/track-controls-native/track-controls.txt; track-icons-light.png; track-menu-japanese-dark-150.png (local captures)"
     },
     {
       "operation": "Microphone",
@@ -2214,7 +2219,8 @@
       "icon": "Eye",
       "tooltip": "Eye",
       "state": "toggle background and underline; checked menu item; state-specific Eye/EyeOff, Volume/Mute and Unlock/Lock glyphs",
-      "status": "Track header/menu connected and compiled; text fallback public IO regression passed; native icon route inspection pending"
+      "status": "Track header/menu native light and Japanese dark 150% inspected; visibility and mute host changes verified through public IO",
+      "evidence": "out/track-controls-native/track-controls.txt; track-icons-light.png; track-menu-japanese-dark-150.png (local captures)"
     },
     {
       "operation": "EyeOff",
@@ -2223,7 +2229,8 @@
       "icon": "EyeOff",
       "tooltip": "EyeOff",
       "state": "toggle background and underline; checked menu item; state-specific Eye/EyeOff, Volume/Mute and Unlock/Lock glyphs",
-      "status": "Track header/menu connected and compiled; text fallback public IO regression passed; native icon route inspection pending"
+      "status": "Track header/menu native light and Japanese dark 150% inspected; visibility and mute host changes verified through public IO",
+      "evidence": "out/track-controls-native/track-controls.txt; track-icons-light.png; track-menu-japanese-dark-150.png (local captures)"
     },
     {
       "operation": "Move",

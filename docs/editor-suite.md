@@ -572,3 +572,7 @@ Galleryの日本語modeは`TrackLabels`を通じてtrack操作を翻訳します
 Timeline track controls reuse Eye/EyeOff, Volume/Mute, Unlock/Lock and Record from the host icon atlas. The compact menu includes the same glyphs with labels and checked state. Active inline controls retain a background and underline. Without an atlas, host text buttons remain available. Solo, Target and Source still use host labels. Build and text-route public IO regression pass; native inspection of this icon route remains pending.
 
 Timelineのtrack操作へホストatlasのEye／EyeOff、Volume／Mute、Unlock／Lock、Recordを接続しました。省略menuも同じglyph、操作名、check状態を表示します。activeのinline操作は背景と下線を維持し、atlas未指定時はホスト文字ボタンを使用します。Solo／Target／Sourceは引き続きホストラベルを使用します。ビルドと文字ボタン経路の公開IO回帰は通過し、このicon経路のnative確認は未実施です。
+
+`--verify-track-controls` now exercises the native icon route: visibility off/on and Japanese compact-menu mute reach host track state. Light inline controls and dark 150% Japanese menu captures are in `out/track-controls-native/`. Text fallback buttons beside icons use the same height when an atlas is present. This is public ImGui IO, not native OS/IME verification.
+
+`--verify-track-controls`でnative icon経路の表示off／onと日本語省略menuのmuteがホストtrackへ反映されることを確認しました。lightのinline操作とdark・150%の日本語menuを`out/track-controls-native/`へcaptureしました。atlas使用時は文字ボタンもiconと同じ高さに揃えています。これは公開ImGui IOでの確認で、native OS／IME確認ではありません。
