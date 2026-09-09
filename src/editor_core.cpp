@@ -290,6 +290,7 @@ void CanvasSelection(const CanvasView &v, CanvasState &s, const SelectionProvide
         s.lasso = lasso;
         s.selectionStart = mouse;
         s.pathCount = 0;
+        if (lasso && s.selectionPath.size()<3) {out.overflow=true;s.selecting=false;return;}
         if (!s.selectionPath.empty())
             s.selectionPath[s.pathCount++] = mouse;
     }
@@ -298,6 +299,9 @@ void CanvasSelection(const CanvasView &v, CanvasState &s, const SelectionProvide
     if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
         s.selecting = false;
         return;
+    }
+    if (s.lasso && ImGui::IsMouseDown(0) && s.pathCount==s.selectionPath.size()) {
+        out.overflow=true;s.selecting=false;return;
     }
     if (s.lasso && ImGui::IsMouseDown(0) && s.pathCount < s.selectionPath.size()) {
         const auto previous = s.selectionPath[s.pathCount - 1];
@@ -320,18 +324,23 @@ void CanvasSelection(const CanvasView &v, CanvasState &s, const SelectionProvide
     } else
         d->AddRect(Screen(bounds.min, s, v.min), Screen(bounds.max, s, v.min), color);
     if (ImGui::IsMouseReleased(0)) {
-        if (!io.KeyCtrl && !io.KeyShift)
-            selection.Clear();
         auto points = p.query ? p.query(p.user, bounds) : std::span<const SelectablePoint>{};
-        for (auto point : points)
-            if (!point.locked &&
-                (!s.lasso || InPolygon(point.position, s.selectionPath.first(s.pathCount)))) {
-                if (!s.lasso && (point.position.x < bounds.min.x || point.position.x > bounds.max.x ||
-                                 point.position.y < bounds.min.y || point.position.y > bounds.max.y))
-                    continue;
-                if (selection.Set(point.id, true))
-                    Action(out, point.id, p.revision, s.lasso ? EditKind::LassoSelect : EditKind::BoxSelect);
+        const bool additive=io.KeyCtrl || io.KeyShift;
+        auto inside=[&](const SelectablePoint &point) {
+            return !point.locked && (s.lasso?InPolygon(point.position,s.selectionPath.first(s.pathCount)):
+                point.position.x>=bounds.min.x && point.position.x<=bounds.max.x &&
+                point.position.y>=bounds.min.y && point.position.y<=bounds.max.y);
+        };
+        std::size_t targets=0,required=additive?selection.count:0;
+        for (auto point:points) if (inside(point)) {++targets;if (!additive || !selection.Contains(point.id)) ++required;}
+        if (required>selection.storage.size() || targets>out.storage.size()-out.count) out.overflow=true;
+        else {
+            if (!additive) selection.Clear();
+            for (auto point:points) if (inside(point)) {
+                selection.Set(point.id,true);
+                Action(out,point.id,p.revision,s.lasso?EditKind::LassoSelect:EditKind::BoxSelect);
             }
+        }
         s.selecting = false;
     }
 }
@@ -754,6 +763,7 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
         ImGui::Checkbox("Ghost other channels",&s.ghostOtherChannels);
         ImGui::Checkbox("Snap to frame",&s.snapToFrame);
         ImGui::Checkbox("Scale key timing",&s.scaleTime);
+        ImGui::Checkbox("Lasso selection",&s.lassoSelect);
         if (provider.sample) {
             int mode=static_cast<int>(s.extrapolation);
             if (ImGui::Combo("Extrapolation",&mode,"Constant\0Linear\0Repeat\0"))
@@ -848,6 +858,8 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
         }
     }
     if (s.drag.active && !ImGui::IsMouseDown(0)) FinishCurve(s,provider.revision,false,out);
+    if (provider.selectionQuery && !s.drag.active && (!hit || s.canvas.selecting))
+        CanvasSelection(view,s.canvas,{provider.user,provider.revision,provider.selectionQuery},selection,out,t,s.lassoSelect);
     EndCanvas();
 }
 void PropertyGrid(const char *id, const PropertyProvider &p, PropertyState &s, EventBuffer &out) {

@@ -160,7 +160,7 @@ struct CanvasView {
 CanvasView BeginCanvas(const char *id, CanvasState &state, ImVec2 size, const Theme &theme);
 void EndCanvas();
 void DrawGrid(const CanvasView &view, const CanvasState &state, Point spacing, const Theme &theme);
-// Host supplies selectionPath scratch for lasso; full buffers retain the last point.
+// Host supplies selectionPath scratch for lasso; exhausted buffers cancel and report overflow.
 void CanvasSelection(const CanvasView &view, CanvasState &state, const SelectionProvider &provider,
                      Selection &selection, EventBuffer &events, const Theme &theme, bool lasso = false);
 enum class Command {
@@ -242,6 +242,7 @@ struct CurveProvider {
     std::optional<Rect> bounds; // Complete key bounds in seconds / negative value coordinates.
     std::span<const Keyframe> (*selected)(void *, std::span<const StableId>) = nullptr;
     const Keyframe *(*neighbor)(void *, StableId channel, Tick, bool next) = nullptr;
+    std::span<const SelectablePoint> (*selectionQuery)(void *, Rect) = nullptr;
 };
 struct CurveState {
     CanvasState canvas{{0, -1}, {100, 100}};
@@ -258,6 +259,7 @@ struct CurveState {
     std::size_t companionCount = 0;
     bool scaleTime = false, scaling = false;
     Tick scalePivot = 0;
+    bool lassoSelect = false;
     Tick time = 0;
     bool snapToFrame = false;
     FrameRate rate{};
