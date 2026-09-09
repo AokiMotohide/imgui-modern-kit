@@ -269,6 +269,7 @@ void ViewportObjects(const ViewportView &v, std::span<const ObjectView> objects,
 }
 void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportState &s, std::uint64_t revision,
                     editor::EventBuffer &out, const Theme &) {
+    constexpr double Pi=3.14159265358979323846;
     detail::ResumeTerminal(s.drag, revision, out);
     if (s.drag.active && (revision != s.drag.draft.revision || ImGui::IsKeyPressed(ImGuiKey_Escape)))
         s.drag.Cancel(out);
@@ -295,14 +296,40 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
         if (length < 1)
             continue;
         projected[i] = {static_cast<float>(dx), static_cast<float>(dy)};
+        if (s.tool == TransformTool::Rotate) continue;
         ImVec2 tip{center.screen.x + static_cast<float>(dx / length * 70),
                    center.screen.y + static_cast<float>(dy / length * 70)};
         d->AddLine(center.screen, tip, colors[i], 3);
-        d->AddCircleFilled(tip, 6, colors[i]);
+        if (s.tool == TransformTool::Scale)
+            d->AddRectFilled({tip.x-6,tip.y-6},{tip.x+6,tip.y+6},colors[i]);
+        else d->AddCircleFilled(tip, 6, colors[i]);
         const char *label = i == 0 ? "X" : i == 1 ? "Y" : "Z";
         d->AddText({tip.x + 8, tip.y}, colors[i], label);
         if (std::hypot(mouse.x - tip.x, mouse.y - tip.y) < 12)
             hit = static_cast<Axis>(i + 1);
+    }
+    if (s.tool == TransformTool::Rotate) {
+        double nearest = 8;
+        for (int axis=0; axis<3; ++axis) {
+            const auto u=projected[(axis+1)%3], w=projected[(axis+2)%3];
+            const double extent=std::max(std::hypot(u.x,u.y),std::hypot(w.x,w.y));
+            if (extent<1 || std::abs(u.x*w.y-u.y*w.x)<1e-6) continue;
+            ImVec2 ring[64];
+            for (int k=0;k<64;++k) {
+                const double angle=k*2*Pi/64;
+                ring[k]={float(center.screen.x+70/extent*(u.x*std::cos(angle)+w.x*std::sin(angle))),
+                         float(center.screen.y+70/extent*(u.y*std::cos(angle)+w.y*std::sin(angle)))};
+            }
+            d->AddPolyline(ring,64,colors[axis],ImDrawFlags_Closed,
+                           s.drag.active && s.activeAxis==static_cast<Axis>(axis+1) ? 4.f : 2.f);
+            for (int k=0;k<64;++k) {
+                const auto x=ring[k], y=ring[(k+1)%64];
+                const double dx=y.x-x.x,dy=y.y-x.y,length=dx*dx+dy*dy;
+                const double f=length>0 ? std::clamp(((mouse.x-x.x)*dx+(mouse.y-x.y)*dy)/length,0.,1.) : 0;
+                const double distance=std::hypot(mouse.x-x.x-f*dx,mouse.y-x.y-f*dy);
+                if (distance<nearest) {nearest=distance;hit=static_cast<Axis>(axis+1);}
+            }
+        }
     }
     if (s.tool == TransformTool::Translate || s.tool == TransformTool::Unified) {
         for (int plane = 0; plane < 3; ++plane) {
@@ -369,6 +396,18 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
                 }
                 dv = {values[0], values[1], values[2]};
             }
+        }
+        if (s.tool == TransformTool::Rotate && s.activeAxis>=Axis::X && s.activeAxis<=Axis::Z) {
+            const int axis=static_cast<int>(s.activeAxis)-1;
+            const auto u=projected[(axis+1)%3], w=projected[(axis+2)%3];
+            const double det=u.x*w.y-u.y*w.x;
+            auto angle=[&](double x,double y) {
+                x-=center.screen.x; y-=center.screen.y;
+                return std::atan2((u.x*y-u.y*x)/det,(x*w.y-y*w.x)/det);
+            };
+            const double rotation=std::abs(det)>1e-6 ?
+                std::remainder(angle(mouse.x,mouse.y)-angle(s.mouseStart.x,s.mouseStart.y),2*Pi) : 0;
+            dv={axis==0 ? rotation : 0,axis==1 ? rotation : 0,axis==2 ? rotation : 0};
         }
         auto result = TransformDelta(s.original, s.tool, s.activeAxis, dv, basis, s.snap ? .1 : 0,
                                      ImGui::GetIO().KeyShift);
