@@ -497,6 +497,35 @@ void AnimationStrips(const char *id, std::span<const StripView> strips, std::uin
         if (ImGui::IsItemDeactivated() && drag.active)
             drag.Commit(revision, out);
         ImGui::EndDisabled();
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) && ImGui::IsMouseReleased(1))
+            ImGui::OpenPopup("strip settings");
+        if (ImGui::BeginPopup("strip settings")) {
+            const editor::Value original{strip.range.first,strip.range.last,
+                (strip.muted?1:0)|(strip.locked?2:0),strip.channel,strip.scale,strip.repeat,strip.blend};
+            auto value=drag.active && drag.draft.target==strip.id &&
+                drag.draft.kind==editor::EditKind::StripSettings ? drag.draft.proposed : original;
+            ImGui::BeginDisabled(strip.locked);
+            auto setting=[&](const char *label,double &field,double low,double high) {
+                bool changed=ImGui::DragScalar(label,ImGuiDataType_Double,&field,.01f,&low,&high,"%.3f");
+                if (ImGui::IsItemActivated())
+                    drag.Begin(strip.id,revision,editor::EditKind::StripSettings,original,editor::CurrentModifiers(),out);
+                if (changed && drag.active) drag.Update(revision,value,out);
+                if (ImGui::IsItemDeactivated() && drag.active) drag.Commit(revision,out);
+            };
+            setting("Scale",value.x,.001,1000);setting("Repeat",value.y,.001,1000);setting("Blend",value.z,0,1);
+            bool muted=strip.muted;
+            if (ImGui::Checkbox("Mute",&muted)) {
+                value=original;value.offset=muted?value.offset|1:value.offset&~editor::Tick{1};
+                Emit(out,strip.id,revision,editor::EditKind::StripSettings,original,value);
+            }
+            ImGui::EndDisabled();
+            bool locked=strip.locked;
+            if (ImGui::Checkbox("Lock",&locked)) {
+                value=original;value.offset=locked?value.offset|2:value.offset&~editor::Tick{2};
+                Emit(out,strip.id,revision,editor::EditKind::StripSettings,original,value);
+            }
+            ImGui::EndPopup();
+        }
         ImGui::PopID();
     }
     editor::EndCanvas();

@@ -68,7 +68,8 @@ enum class EditKind {
     KeyInterpolation,
     KeyHandleMode,
     KeyScale,
-    KeyInsert
+    KeyInsert,
+    StripSettings
 };
 // Exact integer/time fields must never travel through floating point channels.
 struct Value {
