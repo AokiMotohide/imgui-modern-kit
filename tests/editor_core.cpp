@@ -247,19 +247,23 @@ int main() {
         Keyframe{6103,7,FromSeconds(2),.7},Keyframe{6107,7,FromSeconds(3),.4}};
     std::array<Keyframe,3> curveScratch{};
     CurveState curveState;curveState.previewKeys=curveScratch;
+    std::array<Transaction,2> companionDrags;curveState.companionDrags=companionDrags;
     CurveProvider curveProvider{&curveSource,1,[](void *user,CurveQuery) {
         return std::span<const Keyframe>(*static_cast<std::array<Keyframe,3>*>(user));
     }};
+    curveProvider.selected=[](void *user,std::span<const StableId>) {
+        return std::span<const Keyframe>(*static_cast<std::array<Keyframe,3>*>(user)).first(2);
+    };
     std::array<StableId,4> curveIds{};
     Selection curveSelection{curveIds};curveSelection.Set(6101);curveSelection.Set(6103,true);
-    bool curveCancelled=false;
+    bool curveCancelled=false;int curveCancelCount=0;
     auto curveFrame=[&] {
         propertyEvents.Clear();ImGui::NewFrame();
         ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({780,400});ImGui::Begin("Curve preview");
         CurveEditor("curve",curveProvider,curveState,curveSelection,propertyEvents,
             imkit::MakePrecisionTheme(imkit::ColorScheme::Dark),{600,300});
         ImGui::End();ImGui::Render();
-        for (auto event:propertyEvents.Events()) curveCancelled |= event.phase==Phase::Cancel;
+        for (auto event:propertyEvents.Events()) if (event.phase==Phase::Cancel) {curveCancelled=true;++curveCancelCount;}
     };
     curveFrame();curveFrame();
     auto curvePoint=ToScreen({1,-.5},curveState.canvas,{curveState.view.min.x,curveState.view.min.y});
@@ -269,10 +273,12 @@ int main() {
     io.AddMousePosEvent(static_cast<float>(curvePoint.x+25),static_cast<float>(curvePoint.y-10));curveFrame();
     check(curveState.drag.active && curveScratch[0].tick==FromSeconds(1.25) &&
         std::abs(curveScratch[0].value-.6)<1e-9,"curve preview follows public IO drag before commit");
+    check(curveScratch[1].tick==FromSeconds(2.25) && std::abs(curveScratch[1].value-.8)<1e-9,
+        "companion key preview moves by the same delta");
     check(curveSource[0].tick==FromSeconds(1) && curveSource[0].value==.5,"curve preview leaves host keys unchanged");
     io.AddKeyEvent(ImGuiKey_Escape,true);curveFrame();io.AddKeyEvent(ImGuiKey_Escape,false);curveFrame();
     io.AddMouseButtonEvent(0,false);curveFrame();
-    check(curveCancelled && !curveState.drag.active && curveSource[0].tick==FromSeconds(1),
+    check(curveCancelled && curveCancelCount==2 && !curveState.drag.active && !companionDrags[0].active && curveSource[0].tick==FromSeconds(1),
         "Escape cancels curve preview without host mutation");
     ImGui::DestroyContext(context);
     std::puts(failures ? "FAIL editor core"
