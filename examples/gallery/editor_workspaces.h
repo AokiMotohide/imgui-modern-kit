@@ -11,6 +11,7 @@ struct EditorWorkspaces {
     const IconAtlas *icons = nullptr; // Host-owned renderer resources.
     std::vector<video::TrackView> tracks;
     std::vector<double> trackOffsets;
+    editor::Range timelineBounds{};
     std::vector<video::AudioStripView> audioStrips;
     editor::StableId mixerTrack = 0;
     editor::PropertyState mixerState;
