@@ -30,6 +30,19 @@ Transactionは元値と提案値を返します。previewは確定データと�
 保持します。確定または外部変更でrevisionを進めると継続dragをcancelします。buffer不足は
 overflowで通知し、ホストが容量確保またはbufferを空にして終端eventを再試行します。
 
+Commit/Cancel intent survives overflow. Widgets retry pending terminal events on
+subsequent calls even if the edited row is clipped. A pending Cancel cannot become
+Commit, and a pending Commit no longer accepts value updates. Timeline reserves the
+complete multi-clip batch before Begin, Update or termination; insufficient scratch
+or event capacity is reported without silently dropping selected members. A locked
+member rejects the whole linked/group move. Providers must return unique member IDs
+and increment revision when a target disappears or its restrictions change.
+Commit/Cancelの意図はoverflow後も保持し、編集行がclipされても次回widget呼出しで再送します。
+Cancel待機はCommitへ変わらず、Commit待機は新しい提案値を受け付けません。Timelineは複数clipの
+Begin・Update・終了に必要なevent容量をまとめて確認し、scratch不足時に一部対象だけを開始しません。
+locked memberを含む移動は全体を拒否します。providerはmember IDを重複させず、対象消失・制限変更時に
+revisionを進めてください。
+
 `CanvasState`, `VisibleRange`, `ZoomAt`, `Fit`, `InPolygon`, `ResolveSnap` are reusable
 math operations. `BeginCanvas`/`EndCanvas` pair around public DrawList content.
 `CurveProvider` must return time-sorted keys per channel with neighboring keys for

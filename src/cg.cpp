@@ -1,4 +1,5 @@
 #include <imkit/cg.h>
+#include "transaction_support.h"
 #include <algorithm>
 #include <cmath>
 namespace imkit::cg {
@@ -199,6 +200,7 @@ void ViewportObjects(const ViewportView &v, std::span<const ObjectView> objects,
 }
 void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportState &s, std::uint64_t revision,
                     editor::EventBuffer &out, const Theme &) {
+    detail::ResumeTerminal(s.drag, revision, out);
     if (s.drag.active && (revision != s.drag.draft.revision || ImGui::IsKeyPressed(ImGuiKey_Escape)))
         s.drag.Cancel(out);
     if (!s.gizmo || s.tool == TransformTool::Select || object.locked)
@@ -231,7 +233,7 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
         if (std::hypot(mouse.x - tip.x, mouse.y - tip.y) < 12)
             hit = static_cast<Axis>(i + 1);
     }
-    if (v.hovered && hit != Axis::None && ImGui::IsMouseClicked(0)) {
+    if (v.hovered && hit != Axis::None && ImGui::IsMouseClicked(0) && !s.drag.active) {
         s.activeAxis = hit;
         s.mouseStart = {mouse.x, mouse.y};
         s.original = object.transform;
@@ -366,9 +368,10 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
             original = vertex.uv;
         }
     }
+    detail::ResumeTerminal(s.drag, p.revision, out);
     if (s.drag.active && (s.drag.draft.revision != p.revision || ImGui::IsKeyPressed(ImGuiKey_Escape)))
         s.drag.Cancel(out);
-    if (view.hovered && hit && ImGui::IsMouseClicked(0)) {
+    if (view.hovered && hit && ImGui::IsMouseClicked(0) && !s.drag.active) {
         selection.Set(hit, ImGui::GetIO().KeyCtrl, ImGui::GetIO().KeyCtrl);
         s.mouseStart = {mouse.x, mouse.y};
         s.drag.Begin(hit, p.revision, editor::EditKind::Translate, Value({original.x, original.y, 0}),
@@ -394,10 +397,11 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
 void AnimationStrips(const char *id, std::span<const StripView> strips, std::uint64_t revision,
                      editor::CanvasState &canvas, editor::Transaction &drag, editor::EventBuffer &out,
                      const Theme &theme, ImVec2 size) {
+    detail::ResumeTerminal(drag, revision, out);
     auto view = editor::BeginCanvas(id, canvas, size, theme);
     auto *d = ImGui::GetWindowDrawList();
     int row = 0;
-    if (drag.active && drag.draft.revision != revision)
+    if (drag.active && (drag.draft.revision != revision || ImGui::IsKeyPressed(ImGuiKey_Escape)))
         drag.Cancel(out);
     for (const auto &strip : strips) {
         float y = view.min.y + row++ * 30;
@@ -431,6 +435,7 @@ void AnimationStrips(const char *id, std::span<const StripView> strips, std::uin
 }
 void DopeSheet(const char *id, const editor::CurveProvider &p, editor::CurveState &s,
                editor::Selection &selection, editor::EventBuffer &out, const Theme &theme, ImVec2 size) {
+    detail::ResumeTerminal(s.drag, p.revision, out);
     s.canvas.wheelZoomY = false;
     auto view = editor::BeginCanvas(id, s.canvas, size, theme);
     auto *d = ImGui::GetWindowDrawList();
@@ -466,7 +471,7 @@ void DopeSheet(const char *id, const editor::CurveProvider &p, editor::CurveStat
     }
     if (s.drag.active && (s.drag.draft.revision != p.revision || ImGui::IsKeyPressed(ImGuiKey_Escape)))
         s.drag.Cancel(out);
-    if (view.hovered && hit && ImGui::IsMouseClicked(0)) {
+    if (view.hovered && hit && ImGui::IsMouseClicked(0) && !s.drag.active) {
         selection.Set(hit, ImGui::GetIO().KeyCtrl, ImGui::GetIO().KeyCtrl);
         s.mouseStart = {mouse.x, mouse.y};
         s.drag.Begin(hit, p.revision, editor::EditKind::Keyframe, original, editor::CurrentModifiers(), out);

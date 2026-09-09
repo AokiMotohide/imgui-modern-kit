@@ -66,3 +66,13 @@ Evidence: `out/editor-normal-debug/editors-interaction.txt`.
 Debugのimkit.cgで回転・非等方scale後のDrawListの色を既知のnormalから計算した期待値と比較し、
 実Galleryで同じ変換のOpenGL textureを読み戻してLambertの期待値とobject IDを確認しました。
 両方合格し、既存のGPU lifecycleと代表公開IO操作も通過しました。native OS/IME確認ではありません。
+
+Transaction regressions additionally cover retained Commit/Cancel on overflow,
+rejecting a value update after a pending Commit, and preventing Cancel-to-Commit
+conversion. Public Timeline calls with a one-event buffer verify that two-clip
+termination emits no partial batch, and that release and revision cancellation
+complete on a later call with sufficient capacity. Debug Core/Video tests and the
+existing Gallery interaction runner passed (`out/editor-transaction-debug/`).
+transaction回帰はoverflow後の終端保持、Commit待機中の値変更拒否、CancelのCommit化防止を検証します。
+公開Timelineへ容量1のbufferを渡し、2 clipの終了を部分送信せず、容量回復後にrelease・revision cancelを
+まとめて完了することを確認しました。Debug Core/Videoテストと既存Gallery操作は合格です。
