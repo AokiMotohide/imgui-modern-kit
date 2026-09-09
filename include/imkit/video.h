@@ -122,6 +122,8 @@ struct TimelineState {
     editor::Transaction transitionDrag;
     bool transitionEnd=false;
     double transitionMouseStart=0;
+    editor::Transaction captionDrag;
+    bool captionFocus=false;
 };
 // Resolves both moving edges; ignores every selected clip and filters disabled kinds.
 editor::SnapResult ResolveTimelineSnap(const TimelineState &state, Tick delta,
