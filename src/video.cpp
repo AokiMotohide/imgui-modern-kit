@@ -1017,14 +1017,14 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                         available = available && neighbors.previous && !neighbors.previous->locked &&
                                     neighbors.previous->start + neighbors.previous->duration == clip.start;
                     auto members = (kind == editor::EditKind::Move || kind == editor::EditKind::Duplicate ||
-                                           kind == editor::EditKind::TrimStart || kind == editor::EditKind::TrimEnd || kind == editor::EditKind::Slip) &&
+                                           kind == editor::EditKind::TrimStart || kind == editor::EditKind::TrimEnd || kind == editor::EditKind::Slip || kind == editor::EditKind::Ripple) &&
                                            p.selected
                                        ? p.selected(p.user, selection.storage.first(selection.count))
                                        : std::span<const ClipView>{};
                     // A selection query must resolve the complete edit set, even offscreen.
                     // Reject incomplete or ambiguous host scratch before publishing any Begin.
                     if (kind == editor::EditKind::Move || kind == editor::EditKind::Duplicate ||
-                                           kind == editor::EditKind::TrimStart || kind == editor::EditKind::TrimEnd || kind == editor::EditKind::Slip) {
+                                           kind == editor::EditKind::TrimStart || kind == editor::EditKind::TrimEnd || kind == editor::EditKind::Slip || kind == editor::EditKind::Ripple) {
                         if (!p.selected && selection.count > 1) {
                             out.overflow = true;
                             available = false;
@@ -1048,7 +1048,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     for (const auto &member : members)
                         if (member.id != clip.id) {
                             ++memberCount;
-                            available &= !member.locked;
+                            available &= !member.locked && (!p.canBeginEdit || p.canBeginEdit(p.user,member.id,kind));
                         }
                     if (memberCount > s.memberDrags.size()) {
                         out.overflow = true;
@@ -1119,7 +1119,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         }
         auto constraints = p.constraints ? p.constraints(p.user, s.original.id) : ClipConstraints{};
         const bool trimMembers=s.drag.draft.kind==editor::EditKind::TrimStart || s.drag.draft.kind==editor::EditKind::TrimEnd ||
-            s.drag.draft.kind==editor::EditKind::Slip;
+            s.drag.draft.kind==editor::EditKind::Slip || s.drag.draft.kind==editor::EditKind::Ripple;
         if (trimMembers && s.memberCount) {
             const auto constrain=[&](const ClipView &clip,ClipConstraints limits) {
                 const auto edit=EditClip(clip,s.drag.draft.kind,delta,limits);

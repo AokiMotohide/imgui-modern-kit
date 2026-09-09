@@ -834,6 +834,13 @@ int VerifyInspectorModel() {
         ripple.clips[1].locked=false;apply();
         check(ripple.clips.front().duration==source.duration+100 && ripple.clips[1].start==following.start+100,
               "unlocked ripple applies source trim and following shift together");
+        const auto first=ripple.clips[0],second=ripple.clips[1],third=ripple.clips[2];
+        for (const auto &clip : {second,first}) ripple.events.Push({clip.id,ripple.revision,editor::Phase::Commit,editor::EditKind::Ripple,{},
+            {clip.start,clip.start+clip.duration+50,clip.sourceIn,clip.track,clip.speed}});
+        ripple.ApplyEvents();
+        check(ripple.clips[0].duration==first.duration+50 && ripple.clips[1].duration==second.duration+50 &&
+              ripple.clips[1].start==second.start+50 && ripple.clips[2].start==third.start+100,
+              "multiple ripple trims sum original follower shifts regardless of commit order");
     }
     const auto firstClipId=state.clips.front().id,secondClipId=state.clips[1].id;
     const auto firstScaleId=state.clipPropertyIds[1];
