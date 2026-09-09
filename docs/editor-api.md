@@ -161,3 +161,7 @@ TimeRulerは横zoomに応じた密度でフレーム単位のmajor/minor tickを
 Timeline Fit uses `TimelineProvider.contentRange`, with 24 logical pixels of horizontal padding, preserving vertical scale/scroll. The host supplies `TimelineState.bindings` for the Fit command; the icon button uses the same action. Gallery caches the total range when rebuilding edited data, not during visible queries.
 
 TimelineのFitは `TimelineProvider.contentRange` に左右24論理pixelの余白を付け、縦scale/scrollを維持します。ホストは `TimelineState.bindings` でFitキーを渡し、アイコンボタンも同じ処理を使います。Galleryは編集データ更新時に全体範囲を保持し、可視query中には全件走査しません。
+
+Gallery curve queries use a channel/time index and return channel-contiguous visible keys plus two neighbors at each boundary for automatic tangents. The index is rebuilt on data changes; queries use binary search per channel and reusable host scratch storage. The sample includes three channels.
+
+Galleryのcurve queryはchannel/time indexを使い、channelごとに連続した可視keyと、自動接線用に各境界の隣接2keyを返します。indexはデータ変更時に更新し、queryはchannelごとの二分探索とホストの再利用bufferを使います。sampleは3channelを含みます。

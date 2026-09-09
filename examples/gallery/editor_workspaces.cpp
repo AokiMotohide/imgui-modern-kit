@@ -59,15 +59,7 @@ editor::AssetProvider Assets(EditorWorkspaces &s) {
 editor::CurveProvider Curves(EditorWorkspaces &s) {
     return {&s, s.revision, [](void *u, editor::CurveQuery q) {
                 auto &s = *static_cast<EditorWorkspaces *>(u);
-                auto first = std::lower_bound(s.keys.begin(), s.keys.end(), q.time.first,
-                                              [](const auto &k, auto t) { return k.tick < t; });
-                if (first != s.keys.begin())
-                    --first;
-                auto last = std::upper_bound(first, s.keys.end(), q.time.last,
-                                             [](auto t, const auto &k) { return t < k.tick; });
-                if (last != s.keys.end())
-                    ++last;
-                return std::span<const editor::Keyframe>(first, last);
+                return s.QueryKeys(q);
             }};
 }
 void Options(EditorWorkspaces &s) {
@@ -126,13 +118,21 @@ void EditorWorkspaces::Dataset(bool big) {
     for (int i = 0; i < (large ? 100000 : 12); ++i) {
         editor::Keyframe key;
         key.id = 500000 + i;
-        key.channel = 1;
-        key.tick = editor::FromSeconds(i * .5);
+        key.channel = large ? 1+i/33334 : 1;
+        key.tick = editor::FromSeconds((large ? i%33334 : i) * .5);
         key.value = .5 + .4 * std::sin(i * .8);
         key.left = {-.15, 0};
         key.right = {.15, 0};
         keys.push_back(key);
     }
+    if (!large) for (int channel=2;channel<=3;++channel) for (int i=0;i<4;++i) {
+        editor::Keyframe key;
+        key.id=510000+channel*100+i;key.channel=channel;
+        key.tick=editor::FromSeconds(i*1.5);key.value=.5+.3*std::sin(i+channel);
+        key.handles=editor::HandleMode::AutoClamped;
+        keys.push_back(key);
+    }
+    RebuildKeyIndex();
     if (!clips.empty())
         clips.front().keys = std::span<const editor::Keyframe>(keys).first(6);
     selection.Clear();
@@ -143,6 +143,32 @@ void EditorWorkspaces::Dataset(bool big) {
     curve.drag.active = false;
     RebuildTrackLayout();
     ++revision;
+}
+void EditorWorkspaces::RebuildKeyIndex() {
+    std::sort(keys.begin(),keys.end(),[](const auto &a,const auto &b) {
+        return a.channel!=b.channel ? a.channel<b.channel : a.tick<b.tick;
+    });
+    keyChannels.clear();
+    for (std::size_t first=0;first<keys.size();) {
+        std::size_t last=first+1;
+        while (last<keys.size() && keys[last].channel==keys[first].channel) ++last;
+        keyChannels.emplace_back(first,last);first=last;
+    }
+    visibleKeys.reserve((std::min)(keys.size(),std::size_t{4096}));
+}
+std::span<const editor::Keyframe> EditorWorkspaces::QueryKeys(editor::CurveQuery query) {
+    visibleKeys.clear();
+    for (auto [begin,end]:keyChannels) {
+        auto channel=std::span<const editor::Keyframe>(keys).subspan(begin,end-begin);
+        auto first=std::lower_bound(channel.begin(),channel.end(),query.time.first,
+            [](const auto &key,auto tick){return key.tick<tick;});
+        auto last=std::upper_bound(first,channel.end(),query.time.last,
+            [](auto tick,const auto &key){return tick<key.tick;});
+        for (int i=0;i<2 && first!=channel.begin();++i) --first;
+        for (int i=0;i<2 && last!=channel.end();++i) ++last;
+        visibleKeys.insert(visibleKeys.end(),first,last);
+    }
+    return visibleKeys;
 }
 void EditorWorkspaces::RebuildTrackLayout() {
     timelineBounds={};
@@ -448,7 +474,7 @@ void EditorWorkspaces::ApplyEvents() {
         std::sort(clips.begin(), clips.end(), [](const auto &a, const auto &b) {
             return a.track != b.track ? a.track < b.track : a.start < b.start;
         });
-        std::sort(keys.begin(), keys.end(), [](const auto &a, const auto &b) { return a.tick < b.tick; });
+        RebuildKeyIndex();
     }
     events.Clear();
 }

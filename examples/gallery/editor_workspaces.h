@@ -16,7 +16,10 @@ struct EditorWorkspaces {
     editor::StableId mixerTrack = 0;
     editor::PropertyState mixerState;
     std::vector<video::ClipView> clips;
-    std::vector<editor::Keyframe> keys;
+    std::vector<editor::Keyframe> keys, visibleKeys;
+    std::vector<std::pair<std::size_t,std::size_t>> keyChannels;
+    void RebuildKeyIndex();
+    std::span<const editor::Keyframe> QueryKeys(editor::CurveQuery query);
     std::array<cg::ObjectView, 4> objects{};
     std::array<std::array<editor::StableId,9>,4> objectPropertyIds{{
         {930011,930023,930037,931013,931027,931039,932003,932017,932029},

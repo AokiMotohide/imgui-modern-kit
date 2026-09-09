@@ -480,6 +480,23 @@ int VerifyInspectorModel() {
     check(state.timeline.time.playhead==200,"next property key navigation");
     key(editor::PropertyKeyAction::Remove,100);
     check(state.propertyKeys[state.objectPropertyIds[1][4]].size()==1,"property key removal");
+    state.Dataset(true);
+    auto visible=state.QueryKeys({{editor::FromSeconds(100),editor::FromSeconds(101)},-10,10});
+    check(state.keyChannels.size()==3 && visible.size()<32,"100k curve query returns bounded keys from three channels");
+    bool ordered=true;
+    for (std::size_t i=1;i<visible.size();++i)
+        ordered &= visible[i-1].channel<visible[i].channel ||
+            (visible[i-1].channel==visible[i].channel && visible[i-1].tick<=visible[i].tick);
+    check(ordered,"curve query keeps each channel contiguous and time sorted");
+    const auto sample=editor::FromSeconds(100.25);
+    bool matches=true;
+    for (auto [first,last]:state.keyChannels) {
+        auto channel=std::span<const editor::Keyframe>(state.keys).subspan(first,last-first);
+        auto a=std::find_if(visible.begin(),visible.end(),[&](const auto &key){return key.channel==channel.front().channel;});
+        auto b=std::find_if(a,visible.end(),[&](const auto &key){return key.channel!=channel.front().channel;});
+        matches &= std::abs(editor::Evaluate(channel,sample)-editor::Evaluate({a,b},sample))<1e-9;
+    }
+    check(matches,"visible curve evaluation agrees with full channel");
     std::puts("Evidence: host model/event application; no native OS or GUI input.");
     return failures?1:0;
 }
