@@ -1045,8 +1045,17 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         }
         return std::span<const video::ClipView>(s.selectedClips).first(n);
     };
+    s.timeline.labels={};
     s.timeline.trackLabels={};
     if (s.japanese) {
+        s.timeline.labels.tools={"選択","分割","リップル","ロール","スリップ","スライド","手のひら"};
+        s.timeline.labels.tooltips={"clipを選択","カーソル位置で分割","trimして後続clipを移動","隣接clipの境界を移動",
+            "clip位置を保ち素材範囲を変更","clipを移動して隣接clipをtrim","Timelineをpan"};
+        s.timeline.labels.snap="スナップ";s.timeline.labels.magnet="マグネット";s.timeline.labels.magnetTooltip="Timelineの対象へ吸着";
+        s.timeline.labels.options="Timeline設定";s.timeline.labels.follow="再生位置に追従";s.timeline.labels.frameGrid="フレーム単位";
+        s.timeline.labels.followModes={"なし","滑らか","ページ"};
+        s.timeline.labels.snapKinds={"フレーム","再生位置","marker","clip端","keyframe","in／out","選択範囲端"};
+        s.timeline.labels.fit="全体表示";s.timeline.labels.fitTooltip="Timeline全体を表示";
         s.timeline.trackLabels.buttons={"表示","消音","ソロ","固定","録音","対象","素材"};
         s.timeline.trackLabels.names={"表示","ミュート","ソロ","ロック","録音待機","編集対象track","素材patch"};
         s.timeline.trackLabels.controls="track操作";s.timeline.trackLabels.height="track高さ";

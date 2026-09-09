@@ -32,6 +32,7 @@ int main() {
     cg::UVState uv;
     video::ClipView evaluationClip;evaluationClip.keyEvaluation={};
     video::TimelineProvider gate;gate.canBeginEdit=[](void *,editor::StableId,editor::EditKind){return true;};
+    timeline.labels.fit="Frame all clips";timeline.labels.followModes[0]="Disabled";
     timeline.trackLabels.controls="Track actions";timeline.trackLabels.names[0]="Visibility";
     curve.icons=&icons;uv.icons=&icons;viewport.icons=&icons;timeline.icons=&icons;
     viewport.rotationAngle=0;viewport.rotationMouse={};
