@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <fstream>
 #include <functional>
+#include <memory>
 #include <stdexcept>
 #include <cstdio>
 #include <cstring>
@@ -427,12 +428,69 @@ void VerifyColor(Host &h, const std::filesystem::path &out) {
     }
 }
 } // namespace
+int VerifyInspectorModel() {
+    using namespace imkit;
+    auto storage=std::make_unique<gallery::EditorWorkspaces>();
+    auto &state=*storage;
+    state.Initialize();
+    int failures=0;
+    auto check=[&](bool ok,const char *name) {
+        std::printf("%s %s\n",ok?"PASS":"FAIL",name);
+        if (!ok) ++failures;
+    };
+    state.objectSelection.Set(state.objects[1].id);
+    state.objectSelection.Set(state.objects[2].id,true);
+    auto send=[&](editor::Phase phase,int component,double value,editor::EditKind kind=editor::EditKind::Property) {
+        state.events.Clear();
+        state.events.Push({state.objectPropertyIds[1][component],state.revision,phase,kind,{},editor::Value{0,0,0,0,value}});
+        state.ApplyEvents();
+    };
+    send(editor::Phase::Begin,4,.6);send(editor::Phase::Commit,4,.6);
+    check(state.objects[1].transform.rotation.y==.6 && state.objects[2].transform.rotation.y==.6,
+          "explicit rotation property applies to selected objects");
+    send(editor::Phase::Begin,8,1.8);send(editor::Phase::Commit,8,1.8);
+    check(state.objects[1].transform.scale.z==1.8 && state.objects[2].transform.scale.z==1.8,
+          "scale property applies to selected objects");
+    send(editor::Phase::Commit,8,1,editor::EditKind::Reset);
+    check(state.objects[1].transform.scale.z==1 && state.objects[2].transform.scale.z==1,"scale reset uses unit value");
+    state.objects[2].locked=true;
+    send(editor::Phase::Begin,4,2);send(editor::Phase::Commit,4,2);
+    check(state.objects[1].transform.rotation.y==.6 && state.objects[2].transform.rotation.y==.6,
+          "locked selected object rejects whole edit");
+    state.objects[2].locked=false;
+    state.propertyFlags[state.objectPropertyIds[2][4]]=16;
+    send(editor::Phase::Begin,4,2);send(editor::Phase::Commit,4,2);
+    check(state.objects[1].transform.rotation.y==.6,"locked selected property rejects whole edit");
+    state.propertyFlags[state.objectPropertyIds[2][4]]=0;
+    send(editor::Phase::Begin,4,2);
+    state.objectSelection.Set(state.objects[1].id);
+    send(editor::Phase::Commit,4,2);
+    check(state.objects[1].transform.rotation.y==.6,"selection change rejects gesture commit");
+    auto key=[&](editor::PropertyKeyAction action,editor::Tick tick) {
+        state.events.Clear();
+        state.events.Push({state.objectPropertyIds[1][4],state.revision,editor::Phase::Commit,
+            editor::EditKind::PropertyKey,{},editor::Value{tick,0,static_cast<editor::Tick>(action),0,.6}});
+        state.ApplyEvents();
+    };
+    key(editor::PropertyKeyAction::Add,100);key(editor::PropertyKeyAction::Add,200);
+    check(state.propertyKeys[state.objectPropertyIds[1][4]].size()==2,"property keys stored in host channel");
+    key(editor::PropertyKeyAction::Previous,200);
+    check(state.timeline.time.playhead==100,"previous property key navigation");
+    key(editor::PropertyKeyAction::Next,100);
+    check(state.timeline.time.playhead==200,"next property key navigation");
+    key(editor::PropertyKeyAction::Remove,100);
+    check(state.propertyKeys[state.objectPropertyIds[1][4]].size()==1,"property key removal");
+    std::puts("Evidence: host model/event application; no native OS or GUI input.");
+    return failures?1:0;
+}
 int main(int argc, char **argv) {
     bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false;
     int capturePage = -1;
     std::filesystem::path out = "out/catalog";
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
+        if (a == "--verify-inspector-model")
+            return VerifyInspectorModel();
         if (a == "--capture")
             capture = true;
         else if (a == "--verify")

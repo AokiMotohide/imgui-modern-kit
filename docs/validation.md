@@ -41,3 +41,7 @@ The public-IO integration log is `out/catalog/interaction.txt`; renderer details
 
 See [editor-validation.md](editor-validation.md) for focused CPU, external consumer, public IO, real GPU and performance evidence. The full Editor Suite 1.0 acceptance remains incomplete.
 Editor拡張の検証結果は上記を参照してください。Editor Suite 1.0全体の受入は未完了です。
+
+Focused Inspector host verification: `imkit_gallery.exe --verify-inspector-model` checks selected-object rotation/scale/reset, locked object/property rejection, selection-change rejection and property key add/remove/navigation without creating a graphics context. This is model/event evidence, not native input acceptance.
+
+Inspectorのホスト処理確認は `imkit_gallery.exe --verify-inspector-model` で行います。複数objectの回転・scale・reset、object/property lockと選択変更による拒否、property keyの追加・削除・前後移動を確認します。graphics contextは作成せず、native入力の検証ではありません。
