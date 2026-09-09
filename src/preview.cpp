@@ -106,6 +106,47 @@ std::size_t DrawMeshNormals(ImDrawList &draw,std::span<const Mesh> meshes,const 
     }
     draw.PopClipRect();return count;
 }
+std::size_t DrawMeshOutline(ImDrawList &draw,const Mesh &mesh,const cg::Camera &camera,
+    ImVec2 origin,ImVec2 size,std::span<OutlineEdge> scratch,ImU32 color,float thickness) {
+    const auto needed=mesh.indices.size()/3*3;
+    if (scratch.size()<needed || size.x<=0 || size.y<=0 || !(thickness>0)) return needed;
+    std::size_t count=0;
+    for (std::size_t i=0;i<needed;i+=3) {
+        std::array<float,3> p[3];ImVec2 screen[3];bool valid=true;
+        for (int j=0;j<3;++j) {
+            const auto index=mesh.indices[i+j];
+            if (index>=mesh.vertices.size()) {valid=false;break;}
+            const auto &vertex=mesh.vertices[index];
+            std::copy_n(vertex.position,3,p[j].begin());
+            if (!std::all_of(p[j].begin(),p[j].end(),[](float x){return std::isfinite(x);})) {valid=false;break;}
+            const auto projected=cg::Project(Transform({p[j][0],p[j][1],p[j][2]},mesh.transform),camera,origin,size);
+            if (!projected.visible) {valid=false;break;}
+            screen[j]=projected.screen;
+        }
+        if (!valid) continue;
+        const double area=(screen[1].x-screen[0].x)*(screen[2].y-screen[0].y)-
+                          (screen[1].y-screen[0].y)*(screen[2].x-screen[0].x);
+        if (area==0 || !std::isfinite(area)) continue;
+        for (int j=0;j<3;++j) {
+            const int k=(j+1)%3;
+            auto edge=OutlineEdge{p[j],p[k],screen[j],screen[k],area>0};
+            if (edge.b<edge.a) {std::swap(edge.a,edge.b);std::swap(edge.screenA,edge.screenB);}
+            scratch[count++]=edge;
+        }
+    }
+    auto edges=scratch.first(count);
+    std::sort(edges.begin(),edges.end(),[](const auto &a,const auto &b){return a.a<b.a || (a.a==b.a && a.b<b.b);});
+    draw.PushClipRect(origin,{origin.x+size.x,origin.y+size.y},true);
+    for (std::size_t i=0;i<count;) {
+        std::size_t end=i+1;bool front=edges[i].front,back=!front;
+        while (end<count && edges[end].a==edges[i].a && edges[end].b==edges[i].b) {
+            front|=edges[end].front;back|=!edges[end].front;++end;
+        }
+        if (end==i+1 || (front && back)) draw.AddLine(edges[i].screenA,edges[i].screenB,color,thickness);
+        i=end;
+    }
+    draw.PopClipRect();return needed;
+}
 bool Cube(std::span<Vertex> vertices, std::span<std::uint32_t> indices) {
     if (vertices.size() < 24 || indices.size() < 36)
         return false;

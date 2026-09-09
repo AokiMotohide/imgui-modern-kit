@@ -1355,7 +1355,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
         l.alignView="軸をクリックして視点を整列";
         l.overlays="表示";l.axes="軸";l.origins="原点";
         l.cameraFrame="カメラ枠";l.safeFrame="安全枠";l.renderRegion="レンダー領域";
-        l.passepartout="枠外を暗くする";l.measurement="寸法";
+        l.passepartout="枠外を暗くする";l.measurement="寸法";l.selectionOutline="選択輪郭";
     }
 
     s.curve.icons=s.icons;
@@ -1385,6 +1385,12 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
         preview::DrawListPreview(*ImGui::GetWindowDrawList(),s.BuildSceneMeshes(),s.viewport.camera,
                                  view.min,view.size,s.scratch);
     }
+    if (s.viewport.selectionOutline) for (const auto &mesh:s.BuildSceneMeshes())
+        if (s.objectSelection.Contains(mesh.id)) {
+            if (s.outlineScratch.size()<mesh.indices.size()) s.outlineScratch.resize(mesh.indices.size());
+            preview::DrawMeshOutline(*ImGui::GetWindowDrawList(),mesh,s.viewport.camera,view.min,view.size,
+                s.outlineScratch,ImGui::GetColorU32(theme.colors.accent));
+        }
     if (s.viewport.normals || s.viewport.faceNormals)
         preview::DrawMeshNormals(*ImGui::GetWindowDrawList(),s.BuildSceneMeshes(),s.viewport.camera,view.min,view.size,
             {s.viewport.normals,s.viewport.faceNormals,.2,ImGui::GetColorU32(theme.colors.accent)});

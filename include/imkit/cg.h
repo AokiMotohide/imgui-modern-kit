@@ -76,7 +76,7 @@ struct ViewportLabels {
     const char *overlays="Overlays", *axes="Axes", *origins="Origins";
     const char *cameraFrame="Camera frame", *safeFrame="Safe frame";
     const char *renderRegion="Render region", *passepartout="Passepartout";
-    const char *measurement="Measurement";
+    const char *measurement="Measurement", *selectionOutline="Selection outline";
 };
 struct ViewportState {
     Camera camera{};
@@ -109,6 +109,7 @@ struct ViewportState {
     double rotationAngle=0; // Unwrapped gesture angle in radians.
     ViewportLabels labels{};
     bool cameraFrame=false, renderRegion=false, passepartout=false, measurement=false;
+    bool selectionOutline=true;
     double frameAspect=16.0/9.0;
     editor::Rect renderBounds{{.1,.1},{.9,.9}}; // Normalized within camera frame.
     float passepartoutOpacity=.65f;

@@ -129,6 +129,8 @@ int main() {
     std::array<preview::Triangle, 12> scratch;
     preview::Mesh mesh{1, vertices, indices};
     preview::DrawListPreview(*ImGui::GetWindowDrawList(), {&mesh, 1}, {}, {0, 0}, {100, 100}, scratch);
+    std::array<preview::OutlineEdge,36> outline;
+    preview::DrawMeshOutline(*ImGui::GetWindowDrawList(),mesh,{},{0,0},{100,100},outline,IM_COL32_WHITE);
     preview::DrawMeshNormals(*ImGui::GetWindowDrawList(),{&mesh,1},{},{0,0},{100,100},{true,true,.2});
     ImGui::End();
     ImGui::Render();
