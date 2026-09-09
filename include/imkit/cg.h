@@ -73,6 +73,10 @@ struct ViewportLabels {
     const char *vertexNormals="Vertex normals", *faceNormals="Face normals";
     const char *boxSelect="Box select", *lassoSelect="Lasso select";
     const char *alignView="Align view: click an axis";
+    const char *overlays="Overlays", *axes="Axes", *origins="Origins";
+    const char *cameraFrame="Camera frame", *safeFrame="Safe frame";
+    const char *renderRegion="Render region", *passepartout="Passepartout";
+    const char *measurement="Measurement";
 };
 struct ViewportState {
     Camera camera{};
@@ -104,6 +108,12 @@ struct ViewportState {
     editor::Point rotationMouse{}; // Previous sample for continuous ring rotation.
     double rotationAngle=0; // Unwrapped gesture angle in radians.
     ViewportLabels labels{};
+    bool cameraFrame=false, renderRegion=false, passepartout=false, measurement=false;
+    double frameAspect=16.0/9.0;
+    editor::Rect renderBounds{{.1,.1},{.9,.9}}; // Normalized within camera frame.
+    float passepartoutOpacity=.65f;
+    Vec3 measurementStart{},measurementEnd{}; // Host world-space endpoints.
+
 };
 struct ViewportView {
     ImVec2 min{}, size{};

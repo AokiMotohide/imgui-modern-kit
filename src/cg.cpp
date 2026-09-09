@@ -234,6 +234,18 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
     int shading=s.shading==Shading::Wireframe ? 0 : 1;
     if (ImGui::Combo("##shading",&shading,s.labels.shading.data(), 2))
         s.shading=shading==0 ? Shading::Wireframe : Shading::Solid;
+    ImGui::SameLine();
+    if (ImGui::Button(s.labels.overlays)) ImGui::OpenPopup("viewport-overlays");
+    if (ImGui::BeginPopup("viewport-overlays")) {
+        ImGui::Checkbox(s.labels.axes,&s.axes);
+        ImGui::Checkbox(s.labels.origins,&s.origins);
+        ImGui::Checkbox(s.labels.cameraFrame,&s.cameraFrame);
+        ImGui::Checkbox(s.labels.safeFrame,&s.safeFrame);
+        ImGui::Checkbox(s.labels.renderRegion,&s.renderRegion);
+        ImGui::Checkbox(s.labels.passepartout,&s.passepartout);
+        ImGui::Checkbox(s.labels.measurement,&s.measurement);
+        ImGui::EndPopup();
+    }
     if (s.tool==TransformTool::Select) {
         if (s.icons) {
             for (int i=0;i<2;++i) {
@@ -321,6 +333,42 @@ void ViewportObjects(const ViewportView &v, std::span<const ObjectView> objects,
                      editor::Selection &selection, std::uint64_t revision, editor::EventBuffer &out,
                      const Theme &theme) {
     auto *d = ImGui::GetWindowDrawList();
+    if (v.size.x>0 && v.size.y>0 && std::isfinite(s.frameAspect) && s.frameAspect>0) {
+        float width=v.size.x*.9f,height=static_cast<float>(width/s.frameAspect);
+        if (height>v.size.y*.9f) {height=v.size.y*.9f;width=static_cast<float>(height*s.frameAspect);}
+        const ImVec2 a{v.min.x+(v.size.x-width)*.5f,v.min.y+(v.size.y-height)*.5f};
+        const ImVec2 b{a.x+width,a.y+height};
+        const ImU32 color=ImGui::GetColorU32(theme.colors.muted);
+        if (s.passepartout) {
+            const auto shade=IM_COL32(0,0,0,static_cast<int>(255*std::clamp(s.passepartoutOpacity,0.f,1.f)));
+            d->AddRectFilled(v.min,{v.min.x+v.size.x,a.y},shade);
+            d->AddRectFilled({v.min.x,b.y},{v.min.x+v.size.x,v.min.y+v.size.y},shade);
+            d->AddRectFilled({v.min.x,a.y},{a.x,b.y},shade);
+            d->AddRectFilled({b.x,a.y},{v.min.x+v.size.x,b.y},shade);
+        }
+        if (s.cameraFrame) d->AddRect(a,b,color);
+        if (s.safeFrame) for (float margin : {.05f,.1f})
+            d->AddRect({a.x+width*margin,a.y+height*margin},{b.x-width*margin,b.y-height*margin},color);
+        if (s.renderRegion) {
+            const float x0=static_cast<float>(std::clamp(s.renderBounds.min.x,0.0,1.0));
+            const float y0=static_cast<float>(std::clamp(s.renderBounds.min.y,0.0,1.0));
+            const float x1=static_cast<float>(std::clamp(s.renderBounds.max.x,0.0,1.0));
+            const float y1=static_cast<float>(std::clamp(s.renderBounds.max.y,0.0,1.0));
+            if (x1>x0 && y1>y0) d->AddRect({a.x+width*x0,a.y+height*y0},{a.x+width*x1,a.y+height*y1},ImGui::GetColorU32(theme.colors.accent));
+        }
+    }
+    if (s.measurement) {
+        const auto a=Project(s.measurementStart,s.camera,v.min,v.size);
+        const auto b=Project(s.measurementEnd,s.camera,v.min,v.size);
+        if (a.visible && b.visible) {
+            const auto delta=Add(s.measurementEnd,Mul(s.measurementStart,-1));
+            char label[64];std::snprintf(label,sizeof(label),"%.4g",std::hypot(delta.x,delta.y,delta.z));
+            const auto color=ImGui::GetColorU32(theme.colors.accent);
+            d->AddLine(a.screen,b.screen,color,2);
+            d->AddCircleFilled(a.screen,3,color);d->AddCircleFilled(b.screen,3,color);
+            d->AddText({(a.screen.x+b.screen.x)*.5f+4,(a.screen.y+b.screen.y)*.5f+4},color,label);
+        }
+    }
     StableId hit = 0;
     double depth = 1e30;
     auto mouse = ImGui::GetIO().MousePos;
@@ -331,9 +379,9 @@ void ViewportObjects(const ViewportView &v, std::span<const ObjectView> objects,
                 continue;
             bool selected = selection.Contains(o.id);
             float r = selected ? 9.f : 5.f;
-            d->AddCircle(p.screen, r, ImGui::GetColorU32(selected ? theme.colors.warning : theme.colors.text),
+            if (s.origins) d->AddCircle(p.screen, r, ImGui::GetColorU32(selected ? theme.colors.warning : theme.colors.text),
                          0, selected ? 2.f : 1.f);
-            d->AddText({p.screen.x + 12, p.screen.y}, ImGui::GetColorU32(theme.colors.muted), o.label);
+            if (s.origins) d->AddText({p.screen.x + 12, p.screen.y}, ImGui::GetColorU32(theme.colors.muted), o.label);
             if (o.selectable && !o.locked && std::hypot(mouse.x - p.screen.x, mouse.y - p.screen.y) < 12 &&
                 p.depth < depth) {
                 hit = o.id;

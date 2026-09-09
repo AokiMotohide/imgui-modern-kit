@@ -341,3 +341,19 @@ storage through each viewport submission. Defaults are English; Gallery supplies
 `cg::ViewportState::labels`でツール、投影、orientation、pivot、shading、overlay、
 navigationの表示文字列をUTF-8で指定できます。文字列は非所有参照で、ホストが描画中の寿命を保証します。
 既定は英語、Galleryは日本語切替に接続しています。
+
+### Viewport framing and measurement / 枠と寸法表示
+
+`ViewportState` exposes camera-frame, safe-frame, render-region, passepartout and
+measurement overlays, submitted by `ViewportObjects` after the host preview.
+`frameAspect` fits a centered frame with a 5% viewport margin. Safe frames use 5%
+and 10% insets. `renderBounds` is normalized within that frame; it is a visual guide,
+not a renderer scissor. `measurementStart/End` are host-owned world coordinates;
+the label reports distance in host world units. These DrawList overlays have no depth occlusion.
+Gallery measures two selected origins, or the selected origin from world zero.
+
+`ViewportState`でカメラ枠、安全枠、レンダー領域、枠外暗転、寸法を指定し、ホストのpreview後に
+`ViewportObjects`で描画します。`frameAspect`の枠はviewportの上下左右に最低5%の余白を取り、
+安全枠はその内側5%・10%です。`renderBounds`は枠内の正規化座標で、描画範囲制限ではなく表示ガイドです。
+寸法端点はホストのワールド座標、数値はホストの距離単位です。overlayは深度遮蔽を行いません。
+Galleryは選択した2原点間、単一選択ではワールド原点からの距離を表示します。
