@@ -97,6 +97,11 @@ struct UVEdge {
     bool selected = false, seam = false;
     StableId aVertex=0,bVertex=0;
 };
+struct UVFace {
+    StableId id=0,island=0;
+    std::span<const UVVertex> vertices;
+    bool overlap=false;
+};
 enum class UVSelection { Vertex, Edge, Face, Island };
 enum class UVCoordinates { Normalized, Pixel, Tiles };
 struct UVProvider {
@@ -104,6 +109,7 @@ struct UVProvider {
     std::uint64_t revision = 0;
     std::span<const UVVertex> (*vertices)(void *, editor::Rect) = nullptr;
     std::span<const UVEdge> (*edges)(void *, editor::Rect) = nullptr;
+    std::span<const UVFace> (*faces)(void *, editor::Rect) = nullptr;
     std::span<const StableId> (*all)(void *, UVSelection) = nullptr;
     std::span<const UVVertex> (*selected)(void *, std::span<const StableId>, UVSelection) = nullptr;
     std::span<const editor::SelectablePoint> (*selectionQuery)(void *, editor::Rect, UVSelection) = nullptr;

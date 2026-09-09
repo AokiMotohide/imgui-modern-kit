@@ -490,6 +490,24 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
             if (distance<best) {best=distance;hit=edge.id;}
         }
     }
+    if (p.faces) for (const auto &face:p.faces(p.user,view.visible)) {
+        if (face.vertices.size()<3) continue;
+        const auto id=s.selection==UVSelection::Island?face.island:face.id;
+        bool inside=false;
+        const bool selected=(s.selection==UVSelection::Face || s.selection==UVSelection::Island) && selection.Contains(id);
+        for (std::size_t i=0,j=face.vertices.size()-1;i<face.vertices.size();j=i++) {
+            auto a=UVScreen(preview(face.vertices[j].id,face.vertices[j].uv),s.canvas,view.min);
+            auto b=UVScreen(preview(face.vertices[i].id,face.vertices[i].uv),s.canvas,view.min);
+            if ((a.y>mouse.y)!=(b.y>mouse.y) && mouse.x<(b.x-a.x)*(mouse.y-a.y)/(b.y-a.y)+a.x) inside=!inside;
+            if (selected || face.overlap)
+                d->AddLine(a,b,ImGui::GetColorU32(face.overlap?theme.colors.destructive:theme.colors.warning),selected?3.f:2.f);
+        }
+        if (inside && view.hovered && (s.selection==UVSelection::Face || s.selection==UVSelection::Island)) hit=id;
+        if (face.overlap) {
+            auto position=UVScreen(preview(face.vertices.front().id,face.vertices.front().uv),s.canvas,view.min);
+            d->AddText(position,ImGui::GetColorU32(theme.colors.destructive),"Overlap");
+        }
+    }
     auto capacity=[&] {
         if (out.storage.size()-out.count>=1+s.companionCount) return true;
         out.overflow=true;return false;
@@ -555,7 +573,7 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
     if (view.hovered && ImGui::IsMouseReleased(1) && !s.drag.active) ImGui::OpenPopup("UV selection options");
     if (ImGui::BeginPopup("UV selection options")) {
         int selectionMode=static_cast<int>(s.selection);
-        if (ImGui::Combo("Selection",&selectionMode,"Vertex\0Edge\0")) {
+        if (ImGui::Combo("Selection",&selectionMode,"Vertex\0Edge\0Face\0Island\0")) {
             s.selection=static_cast<UVSelection>(selectionMode);selection.Clear();
         }
         ImGui::Checkbox("Checker",&s.checker);
