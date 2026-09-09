@@ -404,3 +404,9 @@ Dope Sheetは既存の複数キー選択をドラッグ時に維持します。�
 最初の選択キーを基準とした時間scaleとフレームsnapを設定できます。値は維持します。
 ホストデータを変更せず提案tickをプレビューし、Commit／Cancelは全対象を一括で返します。
 イベント容量不足時は全transactionを保持して再試行します。
+
+### Viewport theme colors / ViewportのTheme色
+
+`BeginViewport` uses `Theme::editor.canvas`, `grid`, and `axisX/Y/Z` for its background, grid, scene axes, and navigation gizmo. `TransformGizmo` uses the same axis tokens and `editor.gizmo` for screen-space handles. Plane fills preserve the token alpha, multiplied by 65/255; active handles also change outline thickness. Hosts can customize these tokens without changing global ImGui colors.
+
+`BeginViewport`の背景・grid・scene軸・navigation gizmoは`Theme::editor.canvas`、`grid`、`axisX/Y/Z`を使用します。`TransformGizmo`も同じ軸tokenを使い、screen-space handleには`editor.gizmo`を使用します。平面の塗りはtokenのalphaに65/255を乗じ、active handleは輪郭の太さでも区別します。ホストはImGuiのグローバル色を変えずにこれらのtokenを指定できます。
