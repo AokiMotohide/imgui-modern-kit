@@ -174,6 +174,7 @@ void Transaction::Cancel(EventBuffer &out) {
         return;
     draft.phase = Phase::Cancel;
     draft.proposed = draft.original;
+    draft.proposedText = draft.originalText;
     if (out.Push(draft))
         active = false;
 }

@@ -456,3 +456,7 @@ Galleryにはホスト所有のtransition履歴例を追加しました。query�
 Caption double-click now starts a host-visible Rename transaction and focuses the native InputText widget. Updates carry both original and proposed UTF-8 text; Enter commits, Escape restores the original text in Cancel. Revision changes, locked targets, and removal from the visible query terminate the transaction, with terminal events retained on buffer shortage. Oversized original labels are rejected instead of silently truncated. Public IO tests verify UTF-8 Enter and Escape; native OS/IME composition has not been tested.
 
 captionのdouble-clickはホストへRenameのBeginを返し、標準InputTextへfocusを移します。Updateは元のUTF-8文字列と提案文字列を含み、Enterで確定、Escapeでは元の文字列をCancelへ戻します。revision変更・対象ロック・可視queryからの消失で終了し、buffer不足時は終了イベントを保持します。長すぎる元labelは黙って切り詰めず拒否します。公開IOでUTF-8のEnter／Escapeを確認しました。native OS／IME変換は未検証です。
+
+`Transaction::Cancel` restores both `proposed` and `proposedText` from their original values before attempting delivery. Revision-driven cancellation and retries after buffer shortage therefore have the same text contract as explicit Escape. Core, caption, and Outliner focused regressions pass.
+
+`Transaction::Cancel`は送信前に`proposed`と`proposedText`を元の値へ戻します。revision変更による取消しとbuffer不足後の再送も、明示的なEscapeと同じ文字列契約になります。Core・caption・Outlinerの直接回帰テストが合格しています。
