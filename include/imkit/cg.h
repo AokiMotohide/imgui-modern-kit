@@ -47,6 +47,7 @@ struct ObjectView {
     bool selected = false, visible = true, selectable = true, renderable = true, locked = false;
     int depth = 0;
     bool expanded = true, hasChildren = false;
+    StableId geometry=0; // Optional host-owned geometry data block; zero means none.
 };
 struct SceneProvider {
     void *user = nullptr;

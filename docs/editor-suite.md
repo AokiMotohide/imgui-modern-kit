@@ -193,13 +193,27 @@ object with a new StableId, nine separately allocated property IDs, copied trans
 and restrictions, the same parent, and its own editable name. Mesh entries are
 included in both preview paths. Object/property storage grows with duplication while
 existing IDs and order references remain stable. Host-model checks prove independent
-transform editing and property IDs. Hierarchy subtree duplication and linked geometry
-semantics are not established by this single-object operation.
+transform editing and property IDs. Hierarchy subtree duplication is not established by this single-object operation.
 OutlinerのDuplicateは対象行のホスト操作を返します。Galleryは新しいStableId、個別に割り当てた
 9個のproperty ID、コピーしたtransform・restriction、同じparent、独立した名前を持つobjectを追加します。
 meshは両previewへ含めます。保存領域は複製に応じて増え、既存IDと表示順参照を維持します。
 ホストmodel検証でproperty IDの独立性と元objectに影響しない移動を確認しています。
-この単一object操作では子孫階層の複製やlinked geometryの意味は検証していません。
+この単一object操作では子孫階層の複製は検証していません。
+
+`ObjectView::geometry` is an optional opaque host geometry ID. Outliner offers Linked
+duplicate when it is nonzero (`Duplicate`, proposed.offset=1). Ordinary duplication
+copies Gallery vertex/index storage; linked duplication shares its geometry ID while
+keeping an independent object transform and property IDs. `LinkGeometry` uses
+proposed.parent as the source object ID; zero requests a private copy of current data.
+Gallery applies Link geometry to active and Make geometry single user. Model checks
+cover shared preview data, independent-copy isolation, unlink and relink. The library
+does not allocate, clone, or own geometry itself.
+ObjectView::geometryは任意のホストgeometry IDです。0以外の行にLinked duplicateを表示し、
+Duplicateのproposed.offset=1で返します。通常複製ではGalleryの頂点／indexをコピーし、linkedでは
+geometry IDを共有します。objectのtransformとproperty IDは個別です。LinkGeometryは
+proposed.parentに参照元object IDを入れ、0では現在のデータを独立コピーします。
+Galleryはactive objectとのlinkとsingle user化を適用し、共有preview・独立コピーの分離・unlink・
+relinkをmodelで確認しています。ライブラリ自体はgeometryを確保・複製・所有しません。
 
 Outliner starts inline rename from its context menu or a double click. The public
 InputText widget edits the UTF-8 draft; Enter commits and Escape cancels. Rename
