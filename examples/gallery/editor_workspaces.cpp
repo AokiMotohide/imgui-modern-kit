@@ -229,6 +229,7 @@ void EditorWorkspaces::RebuildKeyIndex() {
         if (!keyChannels.empty()) {
             auto [begin,end]=keyChannels.front();
             auto channel=std::span<const editor::Keyframe>(keys).subspan(begin,end-begin);
+            clips.front().keyChannel=channel.front().channel;
             auto first=std::lower_bound(channel.begin(),channel.end(),editor::Tick{0},[](const auto &key,auto tick){return key.tick<tick;});
             auto last=std::upper_bound(first,channel.end(),clips.front().duration,[](auto tick,const auto &key){return tick<key.tick;});
             clips.front().keys={first,last};
@@ -677,12 +678,19 @@ void EditorWorkspaces::ApplyEvents() {
             if (scalar) { *scalar=static_cast<float>(e.proposed.x); changed=true; }
         }
         if (e.kind==editor::EditKind::KeyInsert) {
+            if (e.proposed.parent) {
+                auto owner=std::find_if(clips.begin(),clips.end(),[&](const auto &c){return c.id==e.proposed.parent;});
+                if (owner==clips.end() || owner->locked || owner->keyChannel!=e.target ||
+                    e.proposed.first<0 || e.proposed.first>owner->duration) continue;
+                auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==owner->track;});
+                if (track==tracks.end() || track->locked) continue;
+            }
             auto existing=std::find_if(keys.begin(),keys.end(),[&](const auto &key){return key.channel==e.target && key.tick==e.proposed.first;});
             if (existing==keys.end()) {keys.push_back({nextId++,e.target,e.proposed.first,e.proposed.x});changed=true;}
         }
         for (auto &key : keys)
             if (key.id == e.target) {
-                if (e.kind==editor::EditKind::Navigate) {timeline.time.playhead=key.tick;keySelection.Set(key.id);}
+                if (e.kind==editor::EditKind::Navigate) {timeline.time.playhead=e.proposed.parent ? e.proposed.first : key.tick;keySelection.Set(key.id);}
                 if (key.locked) continue;
                 if (e.kind==editor::EditKind::Remove) {
                     keys.erase(keys.begin()+(&key-keys.data()));

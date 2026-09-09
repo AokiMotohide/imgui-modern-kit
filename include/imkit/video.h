@@ -37,6 +37,8 @@ struct ClipView {
     std::span<const AudioBucket> audioBuckets;
     TransitionKind transitionInKind=TransitionKind::Dissolve,transitionOutKind=TransitionKind::Dissolve;
     std::span<const EnvelopePoint> envelope;
+    StableId keyChannel=0; // Explicit insertion channel, including when keys is empty.
+    double keyDefaultValue=0;
 };
 struct TransitionEdit {
     Tick inDuration=0,outDuration=0;

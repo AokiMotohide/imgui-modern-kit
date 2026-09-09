@@ -47,6 +47,7 @@ int main() {
     ImGui::EndChild();
     video::Timeline("timeline", {}, timeline, selection, events, theme, {300, 100});
     (void)video::EditTransition(video::ClipView{},false,0);
+    video::ClipView keyedClip;keyedClip.keyChannel=7100;keyedClip.keyDefaultValue=1;
     (void)editor::EditKind::TransitionDuration;
     video::TransitionPicker("transition types",{},1,events);
     (void)video::EvaluateEnvelope({},0);
