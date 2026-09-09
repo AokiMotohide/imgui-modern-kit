@@ -231,3 +231,17 @@ UVのedge/face/island操作、strip scale/repeat/blend、editor icon追加、完
 
 Version remains 0.2.0 until 1.0 acceptance is complete. No 1.0 tag or Release is created.
 1.0の受入完了まではversionを0.2.0に保持し、1.0 tag/Releaseは作成しません。
+
+Dope Sheet preserves an existing multi-key selection on drag. Provide `CurveProvider::selected`
+and `CurveState::companionDrags` for the complete selection, including offscreen keys.
+Drag moves time only; Alt-drag duplicates, and the context menu enables timing scale
+around the earliest selected key or frame snap. Values remain unchanged. The preview
+uses proposed ticks without mutating host data. Commit and Cancel require room for the
+whole batch; insufficient event capacity retains all transactions for retry.
+
+Dope Sheetは既存の複数キー選択をドラッグ時に維持します。画面外を含む選択全体を
+`CurveProvider::selected`で返し、`CurveState::companionDrags`を確保してください。
+ドラッグは時間だけを移動し、Altドラッグは複製します。右クリックメニューで、
+最初の選択キーを基準とした時間scaleとフレームsnapを設定できます。値は維持します。
+ホストデータを変更せず提案tickをプレビューし、Commit／Cancelは全対象を一括で返します。
+イベント容量不足時は全transactionを保持して再試行します。
