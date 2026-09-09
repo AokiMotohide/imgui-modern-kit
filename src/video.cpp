@@ -89,6 +89,36 @@ void EndDrags(TimelineState &s, std::uint64_t revision, bool cancel, editor::Eve
     for (auto &member : s.memberDrags.first(s.memberCount))
         finish(member.transaction);
 }
+void SplitBatch(const TimelineProvider &p,std::span<const ClipView> clips,std::span<const StableId> ids,
+                Tick tick,editor::EventBuffer &out) {
+    bool available=true;
+    for (const auto id:ids)
+        if (std::none_of(clips.begin(),clips.end(),[&](const auto &clip){return clip.id==id;})) {
+            out.overflow=true;available=false;
+        }
+    std::size_t count=0;
+    const auto eligible=[&](const ClipView &clip) {
+        return tick>clip.start &&
+            static_cast<long double>(tick)-clip.start<clip.duration;
+    };
+    for (std::size_t i=0;i<clips.size();++i) {
+        const auto &clip=clips[i];
+        if (!eligible(clip) || std::any_of(clips.begin(),clips.begin()+i,
+            [&](const auto &other){return other.id==clip.id;})) continue;
+        ++count;
+        available &= SplitClip(clip,tick,p.constraints ? p.constraints(p.user,clip.id) : ClipConstraints{}).valid;
+        if (p.canBeginEdit && !p.canBeginEdit(p.user,clip.id,editor::EditKind::Split)) available=false;
+    }
+    if (available && ReserveEvents(out,count*2))
+        for (std::size_t i=0;i<clips.size();++i) {
+            const auto &clip=clips[i];
+            if (!eligible(clip) || std::any_of(clips.begin(),clips.begin()+i,
+                [&](const auto &other){return other.id==clip.id;})) continue;
+            editor::Transaction edit;
+            edit.Begin(clip.id,p.revision,editor::EditKind::Split,Value(clip),editor::CurrentModifiers(),out);
+            edit.draft.proposed.first=tick;edit.Commit(p.revision,out);
+        }
+}
 } // namespace
 float TrackExtent(const TrackView &track) {
     return track.expanded ? (std::max)(64.f,std::isfinite(track.height) ? track.height : 64.f) : 32.f;
@@ -319,34 +349,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     if (editor::CommandPressed(editor::Command::Split,s.bindings,keyCommands && !s.heightDrag.active) &&
         selection.count && p.selected) {
         const auto ids=selection.storage.first(selection.count);
-        const auto clips=p.selected(p.user,ids);
-        bool available=true;
-        for (const auto id:ids)
-            if (std::none_of(clips.begin(),clips.end(),[&](const auto &clip){return clip.id==id;})) {
-                out.overflow=true;available=false;
-            }
-        std::size_t count=0;
-        const auto eligible=[&](const ClipView &clip) {
-            return s.time.playhead>clip.start &&
-                static_cast<long double>(s.time.playhead)-clip.start<clip.duration;
-        };
-        for (std::size_t i=0;i<clips.size();++i) {
-            const auto &clip=clips[i];
-            if (!eligible(clip) || std::any_of(clips.begin(),clips.begin()+i,
-                [&](const auto &other){return other.id==clip.id;})) continue;
-            ++count;
-            available &= SplitClip(clip,s.time.playhead,p.constraints ? p.constraints(p.user,clip.id) : ClipConstraints{}).valid;
-            if (p.canBeginEdit && !p.canBeginEdit(p.user,clip.id,editor::EditKind::Split)) available=false;
-        }
-        if (available && ReserveEvents(out,count*2))
-            for (std::size_t i=0;i<clips.size();++i) {
-                const auto &clip=clips[i];
-                if (!eligible(clip) || std::any_of(clips.begin(),clips.begin()+i,
-                    [&](const auto &other){return other.id==clip.id;})) continue;
-                editor::Transaction edit;
-                edit.Begin(clip.id,p.revision,editor::EditKind::Split,Value(clip),editor::CurrentModifiers(),out);
-                edit.draft.proposed.first=s.time.playhead;edit.Commit(p.revision,out);
-            }
+        SplitBatch(p,p.selected(p.user,ids),ids,s.time.playhead,out);
     }
     const bool duplicateKeys=editor::CommandPressed(editor::Command::Duplicate,s.bindings,keyCommands);
     const bool removeKeys=editor::CommandPressed(editor::Command::Delete,s.bindings,keyCommands);
@@ -921,12 +924,9 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     auto split = Value(clip);
                     split.first = editor::FromSeconds(
                         s.canvas.origin.x + (io.MousePos.x - view.min.x - s.headerWidth) / s.canvas.scale.x);
-                    if (SplitClip(clip,split.first,p.constraints ? p.constraints(p.user,clip.id) : ClipConstraints{}).valid &&
-                        ReserveEvents(out,2)) {
-                        editor::Transaction edit;
-                        edit.Begin(clip.id,p.revision,editor::EditKind::Split,Value(clip),editor::CurrentModifiers(),out);
-                        edit.draft.proposed=split;edit.Commit(p.revision,out);
-                    }
+                    const std::span<const StableId> ids(&clip.id,1);
+                    const auto members=p.selected ? p.selected(p.user,ids) : std::span<const ClipView>(&clip,1);
+                    SplitBatch(p,members,ids,split.first,out);
                 } else if (s.tool != Tool::Hand) {
                     auto neighbors =
                         p.neighbors ? p.neighbors(p.user, clip.id) : TimelineProvider::Neighbors{};

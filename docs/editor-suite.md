@@ -679,3 +679,7 @@ Slipも選択・linked・groupの全対象を解決し、各素材範囲と速�
 Before applying clip-body Commit events, Gallery preflights the batch for locked clip/track owners, invalid Split calculations and locked Ripple followers. Failure rejects all clip-body edits in that batch before mutation. Host-model regression verifies that a late locked member leaves the first clip and revision unchanged.
 
 Galleryはclip本体のCommit適用前に、対象clip・trackのlock、分割計算、Ripple後続clipのlockをバッチ単位で検証します。失敗時はデータ変更前に同じバッチのclip本体編集をすべて拒否します。ホストモデル回帰で、後続の対象がロックされていても先頭clipとrevisionが変わらないことを確認しています。
+
+Razor now resolves the clicked clip through the selected provider to include related linked/group members, and shares the command Split batch validator. Related clips crossing the cut split at the same timeline tick; a locked eligible member rejects the whole operation. Public IO regression covers an offscreen related clip and lock rejection.
+
+Razorもクリック対象をselected providerで解決してlinked／groupの関連先を含め、コマンド分割と同じバッチ検証を使います。切断時刻をまたぐ関連clipを同じTimeline tickで分割し、対象にlockがあれば全体を拒否します。公開IO回帰で画面外の関連clipとlockによる拒否を確認しています。
