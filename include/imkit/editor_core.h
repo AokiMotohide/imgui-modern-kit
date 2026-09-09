@@ -63,7 +63,8 @@ enum class EditKind {
     Navigate,
     Range,
     Marker,
-    TrackHeight
+    TrackHeight,
+    PropertyKey
 };
 // Exact integer/time fields must never travel through floating point channels.
 struct Value {
@@ -240,6 +241,8 @@ struct CurveState {
 };
 void CurveEditor(const char *id, const CurveProvider &provider, CurveState &state, Selection &selection,
                  EventBuffer &events, const Theme &theme, ImVec2 size = {0, 220});
+enum class PropertyKeyAction { Add, Remove, Previous, Next };
+// PropertyKey events: target=property ID, first=current tick, offset=action, x=value.
 enum class PropertyFlags : unsigned {
     None = 0,
     Mixed = 1,
@@ -268,6 +271,7 @@ struct PropertyState {
     Transaction drag;
     double draft = 0;
     const IconAtlas *icons = nullptr; // Non-owning host atlas.
+    Tick time = 0;
 };
 void PropertyGrid(const char *id, const PropertyProvider &provider, PropertyState &state,
                   EventBuffer &events);
