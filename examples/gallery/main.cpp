@@ -488,15 +488,22 @@ int VerifyInspectorModel() {
         ordered &= visible[i-1].channel<visible[i].channel ||
             (visible[i-1].channel==visible[i].channel && visible[i-1].tick<=visible[i].tick);
     check(ordered,"curve query keeps each channel contiguous and time sorted");
-    const auto sample=editor::FromSeconds(100.25);
     bool matches=true;
-    for (auto [first,last]:state.keyChannels) {
-        auto channel=std::span<const editor::Keyframe>(state.keys).subspan(first,last-first);
-        auto a=std::find_if(visible.begin(),visible.end(),[&](const auto &key){return key.channel==channel.front().channel;});
-        auto b=std::find_if(a,visible.end(),[&](const auto &key){return key.channel!=channel.front().channel;});
-        matches &= std::abs(editor::Evaluate(channel,sample)-editor::Evaluate({a,b},sample))<1e-9;
+    for (auto mode:{editor::HandleMode::Auto,editor::HandleMode::AutoClamped,editor::HandleMode::Vector,
+                   editor::HandleMode::Aligned,editor::HandleMode::Free}) {
+        for (auto &key:state.keys) key.handles=mode;
+        visible=state.QueryKeys({{editor::FromSeconds(100.1),editor::FromSeconds(100.9)},-10,10});
+        for (auto [first,last]:state.keyChannels) {
+            auto channel=std::span<const editor::Keyframe>(state.keys).subspan(first,last-first);
+            auto a=std::find_if(visible.begin(),visible.end(),[&](const auto &key){return key.channel==channel.front().channel;});
+            auto b=std::find_if(a,visible.end(),[&](const auto &key){return key.channel!=channel.front().channel;});
+            for (double seconds:{100.1,100.25,100.75,100.9}) {
+                const auto sample=editor::FromSeconds(seconds);
+                matches &= std::abs(editor::Evaluate(channel,sample)-editor::Evaluate({a,b},sample))<1e-9;
+            }
+        }
     }
-    check(matches,"visible curve evaluation agrees with full channel");
+    check(matches,"five handle modes preserve full-channel evaluation at visible boundaries");
     std::puts("Evidence: host model/event application; no native OS or GUI input.");
     return failures?1:0;
 }
