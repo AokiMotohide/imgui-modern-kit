@@ -119,30 +119,45 @@ void SplitBatch(const TimelineProvider &p,std::span<const ClipView> clips,std::s
             edit.draft.proposed.first=tick;edit.Commit(p.revision,out);
         }
 }
+Tick AvailableTicks(std::uint64_t sourceTicks,double speed) {
+    const auto value=std::floor(static_cast<long double>(sourceTicks)/speed);
+    return value>=std::ldexp(1.L,63) ? std::numeric_limits<Tick>::max() : static_cast<Tick>(value);
+}
+bool AddTick(Tick a,Tick b,Tick &out) {
+    if ((b>0 && a>std::numeric_limits<Tick>::max()-b) ||
+        (b<0 && a<std::numeric_limits<Tick>::min()-b)) return false;
+    out=a+b;return true;
+}
 } // namespace
 float TrackExtent(const TrackView &track) {
     return track.expanded ? (std::max)(64.f,std::isfinite(track.height) ? track.height : 64.f) : 32.f;
 }
 ClipEdit EditClip(const ClipView &c, editor::EditKind kind, Tick delta, ClipConstraints bounds) {
     ClipEdit result{c.start, c.duration, c.sourceIn, false};
-    if (c.locked || c.duration < bounds.minimumDuration || c.speed <= 0 || !std::isfinite(c.speed) ||
+    if (c.locked || bounds.minimumDuration<1 || c.duration < bounds.minimumDuration || c.speed <= 0 || !std::isfinite(c.speed) ||
         bounds.mediaLast < bounds.mediaFirst)
         return result;
     if (c.sourceIn < bounds.mediaFirst || c.sourceIn > bounds.mediaLast ||
-        c.duration * c.speed > bounds.mediaLast - c.sourceIn)
+        static_cast<long double>(c.duration)*c.speed > static_cast<long double>(static_cast<std::uint64_t>(bounds.mediaLast)-static_cast<std::uint64_t>(c.sourceIn)) ||
+        c.start>std::numeric_limits<Tick>::max()-c.duration)
         return result;
-    Tick before = static_cast<Tick>(std::floor((c.sourceIn - bounds.mediaFirst) / c.speed));
-    Tick after = static_cast<Tick>(std::floor((bounds.mediaLast - c.sourceIn) / c.speed)) - c.duration;
+    Tick before=AvailableTicks(static_cast<std::uint64_t>(c.sourceIn)-static_cast<std::uint64_t>(bounds.mediaFirst),c.speed);
+    Tick after=AvailableTicks(static_cast<std::uint64_t>(bounds.mediaLast)-static_cast<std::uint64_t>(c.sourceIn),c.speed)-c.duration;
+    const auto advanceSource=[&](Tick amount) {
+        const auto mapped=std::round(static_cast<long double>(amount)*c.speed);
+        if (!std::isfinite(mapped) || mapped < -std::ldexp(1.L,63) || mapped >= std::ldexp(1.L,63)) return false;
+        return AddTick(c.sourceIn,c.speed==1 ? amount : static_cast<Tick>(mapped),result.sourceIn);
+    };
     switch (kind) {
     case editor::EditKind::Move:
     case editor::EditKind::Duplicate:
-        result.start += delta;
+        if (!AddTick(c.start,delta,result.start)) return result;
         break;
     case editor::EditKind::TrimStart:
-        delta = std::clamp(delta, -before, c.duration - bounds.minimumDuration);
-        result.start += delta;
+        delta = std::clamp(delta, -std::min(before,std::numeric_limits<Tick>::max()-c.duration), c.duration - bounds.minimumDuration);
+        if (!AddTick(c.start,delta,result.start)) return result;
         result.duration -= delta;
-        result.sourceIn += static_cast<Tick>(std::llround(delta * c.speed));
+        if (!advanceSource(delta)) return result;
         break;
     case editor::EditKind::TrimEnd:
     case editor::EditKind::Ripple:
@@ -152,11 +167,13 @@ ClipEdit EditClip(const ClipView &c, editor::EditKind kind, Tick delta, ClipCons
         break;
     case editor::EditKind::Slip:
         delta = std::clamp(delta, -before, after);
-        result.sourceIn += static_cast<Tick>(std::llround(delta * c.speed));
+        if (!advanceSource(delta)) return result;
         break;
     default:
         return result;
     }
+    if (result.start>std::numeric_limits<Tick>::max()-result.duration || result.sourceIn<bounds.mediaFirst ||
+        result.sourceIn>bounds.mediaLast) return result;
     result.valid = true;
     return result;
 }
@@ -1093,8 +1110,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 if (!edit.valid) {delta=0;return;}
                 Tick applied=s.drag.draft.kind==editor::EditKind::TrimStart ? edit.start-clip.start : edit.duration-clip.duration;
                 if (s.drag.draft.kind==editor::EditKind::Slip) {
-                    const auto before=static_cast<Tick>(std::floor((clip.sourceIn-limits.mediaFirst)/clip.speed));
-                    const auto after=static_cast<Tick>(std::floor((limits.mediaLast-clip.sourceIn)/clip.speed))-clip.duration;
+                    const auto before=AvailableTicks(static_cast<std::uint64_t>(clip.sourceIn)-static_cast<std::uint64_t>(limits.mediaFirst),clip.speed);
+                    const auto after=AvailableTicks(static_cast<std::uint64_t>(limits.mediaLast)-static_cast<std::uint64_t>(clip.sourceIn),clip.speed)-clip.duration;
                     applied=std::clamp(delta,-before,after);
                 }
                 delta=delta>=0 ? std::min(delta,applied) : std::max(delta,applied);

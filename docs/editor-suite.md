@@ -695,3 +695,7 @@ The small Gallery dataset includes a linked video/audio pair at 8 seconds, with 
 Clip headers reuse Link and Layers glyphs for linked/group membership when a host atlas is available. Name placement reserves badge width; narrow clips omit badges when space is insufficient, retaining the underline and existing relationship tooltip. The native linked-clips verifier passed with the badges, and its light backbuffer was visually inspected.
 
 clip headerはホストatlasがあればLinkとLayersをlinked／group表示へ再利用します。名前の位置はbadge幅を避け、狭いclipではbadgeを省略して下線と既存の関係tooltipを残します。badge付きのnative連動移動検証は合格し、lightのbackbufferを目視確認しました。
+
+EditClip now bounds source-handle conversion before casting to Tick, avoids signed subtraction across wide media ranges, and checks timeline additions and source shifts. Extremely slow valid clips can still move without overflowing unused handle calculations. Focused regression covers low speed, signed media extremes and timeline end overflow; existing trim/Slip/related-edit regressions pass.
+
+EditClipは素材余白のTick変換を範囲内へ制限し、広い素材範囲の符号付き減算overflow、Timeline加算、素材位置移動を検証します。極端に低速な有効clipも、未使用の余白計算をoverflowさせず移動できます。低速、素材範囲の両極、Timeline終了時刻overflowと、既存trim／Slip／関連編集の回帰が合格しています。
