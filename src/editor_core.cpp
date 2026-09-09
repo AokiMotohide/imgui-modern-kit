@@ -608,6 +608,7 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
                                       -view.visible.min.y})
                     : std::span<const Keyframe>{};
     StableId previewChannel=0;
+    if (s.drag.active && !s.previewKeys.empty() && s.previewKeys.size()<keys.size()) out.overflow=true;
     if (s.drag.active && s.drag.draft.phase!=Phase::Cancel && s.previewKeys.size()>=keys.size()) {
         std::copy(keys.begin(),keys.end(),s.previewKeys.begin());
         auto preview=s.previewKeys.first(keys.size());

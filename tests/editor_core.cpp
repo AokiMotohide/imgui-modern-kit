@@ -243,6 +243,37 @@ int main() {
     io.AddMouseButtonEvent(0,false);assetFrame();
     check(navigation==1,"breadcrumb navigation public IO");
     check(assetFixture.valid && assetFixture.queries>0,"filtered count precedes bounded visible asset query");
+    std::array<Keyframe,3> curveSource{Keyframe{6101,7,FromSeconds(1),.5},
+        Keyframe{6103,7,FromSeconds(2),.7},Keyframe{6107,7,FromSeconds(3),.4}};
+    std::array<Keyframe,3> curveScratch{};
+    CurveState curveState;curveState.previewKeys=curveScratch;
+    CurveProvider curveProvider{&curveSource,1,[](void *user,CurveQuery) {
+        return std::span<const Keyframe>(*static_cast<std::array<Keyframe,3>*>(user));
+    }};
+    std::array<StableId,4> curveIds{};
+    Selection curveSelection{curveIds};curveSelection.Set(6101);curveSelection.Set(6103,true);
+    bool curveCancelled=false;
+    auto curveFrame=[&] {
+        propertyEvents.Clear();ImGui::NewFrame();
+        ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({780,400});ImGui::Begin("Curve preview");
+        CurveEditor("curve",curveProvider,curveState,curveSelection,propertyEvents,
+            imkit::MakePrecisionTheme(imkit::ColorScheme::Dark),{600,300});
+        ImGui::End();ImGui::Render();
+        for (auto event:propertyEvents.Events()) curveCancelled |= event.phase==Phase::Cancel;
+    };
+    curveFrame();curveFrame();
+    auto curvePoint=ToScreen({1,-.5},curveState.canvas,{curveState.view.min.x,curveState.view.min.y});
+    io.AddMousePosEvent(static_cast<float>(curvePoint.x),static_cast<float>(curvePoint.y));curveFrame();
+    io.AddMouseButtonEvent(0,true);curveFrame();
+    check(curveSelection.count==2,"clicking selected curve key preserves multi-selection");
+    io.AddMousePosEvent(static_cast<float>(curvePoint.x+25),static_cast<float>(curvePoint.y-10));curveFrame();
+    check(curveState.drag.active && curveScratch[0].tick==FromSeconds(1.25) &&
+        std::abs(curveScratch[0].value-.6)<1e-9,"curve preview follows public IO drag before commit");
+    check(curveSource[0].tick==FromSeconds(1) && curveSource[0].value==.5,"curve preview leaves host keys unchanged");
+    io.AddKeyEvent(ImGuiKey_Escape,true);curveFrame();io.AddKeyEvent(ImGuiKey_Escape,false);curveFrame();
+    io.AddMouseButtonEvent(0,false);curveFrame();
+    check(curveCancelled && !curveState.drag.active && curveSource[0].tick==FromSeconds(1),
+        "Escape cancels curve preview without host mutation");
     ImGui::DestroyContext(context);
     std::puts(failures ? "FAIL editor core"
                        : "PASS timebase, drop-frame, snap, transaction, canvas and curves");
