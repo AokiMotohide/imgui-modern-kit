@@ -1858,5 +1858,20 @@
       1002,
       1045
     ]
+  },
+  {
+    "name": "SelectPointer",
+    "source": "assets/icons/originals/SelectPointer.png",
+    "sha256": "7d217866401065610df8c917fc8e907b00f4bb76d3ce55e6cc6b8a82b7a9bff3",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      312,
+      222,
+      944,
+      1061
+    ]
   }
 ]
