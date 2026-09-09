@@ -193,8 +193,22 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
     for (int i = 0; i < 5; ++i) {
         if (i)
             ImGui::SameLine();
-        if (ImGui::Selectable(tools[i], static_cast<int>(s.tool) == i, 0, {ImGui::CalcTextSize(tools[i]).x+ImGui::GetStyle().FramePadding.x*2, ImGui::GetFrameHeight()}))
-            s.tool = static_cast<TransformTool>(i);
+        const bool active=static_cast<int>(s.tool)==i;
+        bool clicked=false;
+        if (s.icons && i<4) {
+            constexpr IconId toolIcons[]={IconId::SelectPointer,IconId::Move,IconId::Rotate,IconId::Scale};
+            ImGui::PushID(i);
+            if (active) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+            clicked=IconLabelButton("tool",*s.icons,toolIcons[i],tools[i],{16*ImGui::GetFontSize()/14});
+            if (active) {
+                const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
+                ImGui::GetWindowDrawList()->AddLine({a.x+3,b.y-2},{b.x-3,b.y-2},ImGui::GetColorU32(theme.colors.accent),2);
+                ImGui::PopStyleColor();
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s",tools[i]);
+            ImGui::PopID();
+        } else clicked=ImGui::Selectable(tools[i],active,0,{ImGui::CalcTextSize(tools[i]).x+ImGui::GetStyle().FramePadding.x*2,ImGui::GetFrameHeight()});
+        if (clicked) s.tool=static_cast<TransformTool>(i);
     }
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImGui::GetFontSize()*9);
@@ -202,6 +216,7 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
     if (ImGui::BeginCombo("##projection",projections[static_cast<int>(s.camera.projection)])) {
         for (int i=0;i<3;++i) {
             ImGui::BeginDisabled(i==2 && !s.cameraView);
+            if (i==2 && s.icons) {Icon(*s.icons,IconId::Camera,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
             if (ImGui::Selectable(projections[i],static_cast<int>(s.camera.projection)==i))
                 s.camera.projection=static_cast<Projection>(i);
             ImGui::EndDisabled();
@@ -235,15 +250,19 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
     if (ImGui::Combo("##shading",&shading,s.labels.shading.data(), 2))
         s.shading=shading==0 ? Shading::Wireframe : Shading::Solid;
     ImGui::SameLine();
-    if (ImGui::Button(s.labels.overlays)) ImGui::OpenPopup("viewport-overlays");
+    const bool overlayClicked=s.icons ? IconLabelButton("overlays",*s.icons,IconId::Layers,s.labels.overlays,{16*ImGui::GetFontSize()/14}) : ImGui::Button(s.labels.overlays);
+    if (overlayClicked) ImGui::OpenPopup("viewport-overlays");
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s",s.labels.overlays);
     if (ImGui::BeginPopup("viewport-overlays")) {
         ImGui::Checkbox(s.labels.axes,&s.axes);
         ImGui::Checkbox(s.labels.origins,&s.origins);
         ImGui::Checkbox(s.labels.selectionOutline,&s.selectionOutline);
+        if (s.icons) {Icon(*s.icons,IconId::Camera,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
         ImGui::Checkbox(s.labels.cameraFrame,&s.cameraFrame);
         ImGui::Checkbox(s.labels.safeFrame,&s.safeFrame);
         ImGui::Checkbox(s.labels.renderRegion,&s.renderRegion);
         ImGui::Checkbox(s.labels.passepartout,&s.passepartout);
+        if (s.icons) {Icon(*s.icons,IconId::Ruler,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
         ImGui::Checkbox(s.labels.measurement,&s.measurement);
         ImGui::EndPopup();
     }

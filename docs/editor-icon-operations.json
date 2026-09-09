@@ -1169,8 +1169,8 @@
       "disposition": "reuse",
       "icon": "Camera",
       "tooltip": "Camera View",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "labeled control, checked state and keyboard focus; overlays popup button",
+      "status": "integrated in BeginViewport; native capture pending"
     },
     {
       "operation": "ViewFront",
@@ -1283,8 +1283,8 @@
       "disposition": "reuse",
       "icon": "Layers",
       "tooltip": "Overlay",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending",
+      "state": "labeled control, checked state and keyboard focus; overlays popup button",
+      "status": "integrated in BeginViewport; native capture pending",
       "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
     },
     {
@@ -1329,8 +1329,8 @@
       "disposition": "reuse",
       "icon": "Ruler",
       "tooltip": "Measurement",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "labeled control, checked state and keyboard focus; overlays popup button",
+      "status": "integrated in BeginViewport; native capture pending"
     },
     {
       "operation": "CameraFrame",
@@ -1338,8 +1338,8 @@
       "disposition": "reuse",
       "icon": "Camera",
       "tooltip": "Camera Frame",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "labeled control, checked state and keyboard focus; overlays popup button",
+      "status": "integrated in BeginViewport; native capture pending"
     },
     {
       "operation": "RenderRegion",

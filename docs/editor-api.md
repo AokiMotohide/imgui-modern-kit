@@ -373,3 +373,13 @@ normal/UVの継ぎ目でindexが分かれていても、同一位置の頂点は
 ホストが三角形の辺ごとに`OutlineEdge` scratchを用意し、戻り値は必要容量を返します。
 不足時は部分描画せず、メモリ確保やmesh保持も行いません。深度遮蔽はなく、near planeを横切る三角形は省略します。
 Galleryは両preview経路で選択IDと輪郭表示切替へ接続しています。
+
+The viewport reuses SelectPointer/Move/Rotate/Scale for transform tools, Layers for
+the overlay menu, Camera for camera choices/frame, and Ruler for measurement.
+Selected tools retain a background and underline. Native state-driven captures in
+`out/cg-overlays-integrated/` cover light and Japanese dark 150% framing, normals,
+and selected silhouette; they do not establish native OS/IME input acceptance.
+
+Viewportは選択・移動・回転・拡縮、表示メニュー、カメラ、寸法へ既存アイコンを再利用し、
+選択ツールを背景と下線でも区別します。`out/cg-overlays-integrated/`のnative captureは
+lightと日本語dark 150%で枠・法線・選択輪郭を確認したものです。状態を直接設定した描画確認で、OS／IME入力の合格根拠ではありません。
