@@ -459,7 +459,10 @@ void TimeRuler(const char *id, TimeState &s, CanvasState &canvas, std::span<cons
         return;
     }
     double step = Valid(s.rate) ? static_cast<double>(s.rate.denominator)/s.rate.numerator : 1.;
-    while (step * canvas.scale.x < 65) step *= 2;
+    char tickLabel[32];
+    FormatTimecode(-TicksPerSecond,s.rate,s.dropFrame,tickLabel);
+    const float labelSpacing=ImGui::CalcTextSize(tickLabel).x+8;
+    while (step * canvas.scale.x < labelSpacing) step *= 2;
     double minor=step;
     while (minor*.5*canvas.scale.x>=8 && minor*.5>=
            (Valid(s.rate)?static_cast<double>(s.rate.denominator)/s.rate.numerator:1.)) minor*=.5;
