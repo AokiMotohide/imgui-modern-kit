@@ -287,3 +287,7 @@ and displayed as a marked outline, not a library topology analysis.
 Timeline `AddKey` emits `KeyInsert` with target=channel, parent=clip, first=clip-local tick, x=value. Previous/next key commands emit `Navigate` with target=key, parent=clip, first=destination timeline tick. Envelope actions use `AudioEnvelope`: target=point for edit/remove or clip for insert, parent=clip, first=local tick, x=gain, offset=0 edit/1 insert/2 remove. Storage, stable IDs, revision changes and actual application remain host responsibilities.
 
 Timelineの`AddKey`はtarget=channel、parent=clip、first=clip内tick、x=値の`KeyInsert`を返します。前後key操作の`Navigate`はtarget=key、parent=clip、first=移動先timeline tickです。`AudioEnvelope`は編集／削除でtarget=point、追加でtarget=clip、parent=clip、first=clip内tick、x=gain、offset=0編集／1追加／2削除を使用します。格納領域・StableId・revision更新・データ適用はホストの責任です。
+
+`video::TrackLabels`, stored in `TimelineState::trackLabels`, supplies borrowed UTF-8 strings for seven track buttons/tooltips (Visible through Source order), the compact controls menu, height control, boolean status and expand/collapse tooltip. Defaults retain English labels. Keep the strings valid for the Timeline call.
+
+`TimelineState::trackLabels`の`video::TrackLabels`は7つのtrackボタンとtooltip（VisibleからSourceの順）、省略menu、高さ操作、真偽状態、展開・折り畳みtooltipへ非所有UTF-8文字列を指定します。既定値は英語で、文字列はTimeline呼出し中有効に保つ必要があります。

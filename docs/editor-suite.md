@@ -564,3 +564,7 @@ Razorは元clip値、分割提案、対象ID、開始revision、modifierを含�
 Track header toggles, including collapse and the narrow-pane control menu, emit a capacity-checked Begin/Commit pair with original and proposed boolean values. Insufficient capacity emits neither event and reports overflow. Public IO regression covers collapse, Source patch, narrow controls and shortage.
 
 Track headerのtoggleは、折り畳みと狭いpaneのmenuを含め、元値と提案値を持つBegin／Commitの組を返します。容量不足時はどちらも出力せずoverflowを通知します。折り畳み、Source patch、狭いpaneの操作と容量不足を公開IO回帰で確認しました。
+
+Gallery Japanese mode supplies translated track controls via `TrackLabels`. Wider translated labels automatically use the compact menu when the header is too narrow. API compilation and public IO menu operation with a host UTF-8 label pass.
+
+Galleryの日本語modeは`TrackLabels`を通じてtrack操作を翻訳します。翻訳後のラベルがheader幅に収まらない場合は省略menuへ切り替わります。API compileとホストUTF-8ラベルを使用した公開IOのmenu操作を確認しました。

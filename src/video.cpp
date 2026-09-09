@@ -337,12 +337,13 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         ImGui::PushID(reinterpret_cast<void *>(static_cast<std::uintptr_t>(track.id)));
         if (ImGui::SmallButton(track.expanded ? "v" : ">"))
             Toggle(out,track,p.revision,static_cast<int>(TrackControl::Expanded),track.expanded);
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s",track.expanded ? s.trackLabels.collapse : s.trackLabels.expand);
         ImGui::SameLine(0,4);
         ImGui::TextUnformatted(track.label);
         if (ImGui::BeginPopupContextItem("track layout")) {
             float height=s.heightDrag.active && s.heightDrag.draft.target==track.id ?
                          static_cast<float>(s.heightDrag.draft.proposed.x) : track.height;
-            bool edited=ImGui::SliderFloat("Track height",&height,64,240,"%.0f px");
+            bool edited=ImGui::SliderFloat(s.trackLabels.height,&height,64,240,"%.0f px");
             if (ImGui::IsItemActivated())
                 s.heightDrag.Begin(track.id,p.revision,editor::EditKind::TrackHeight,
                                    {0,0,0,0,track.height},editor::CurrentModifiers(),out);
@@ -354,14 +355,14 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         }
         if (track.expanded) {
         ImGui::SetCursorScreenPos({view.min.x + 4, y + 30});
-        const char *labels[] = {"V", "M", "S", "L", "R", "T", "P"};
-        const char *tooltips[]={"Visible","Mute","Solo","Locked","Record armed","Target track","Source patch"};
+        const auto &labels=s.trackLabels.buttons;
+        const auto &tooltips=s.trackLabels.names;
         const bool values[] = {track.visible, track.mute,   track.solo,
                                track.locked,  track.record, track.target, track.source};
         float controlsWidth=12;
         for (auto label:labels) controlsWidth+=ImGui::CalcTextSize(label).x+2*ImGui::GetStyle().FramePadding.x;
         if (controlsWidth>s.headerWidth-8) {
-            if (ImGui::SmallButton("Controls")) ImGui::OpenPopup("track controls");
+            if (ImGui::SmallButton(s.trackLabels.controls)) ImGui::OpenPopup("track controls");
             if (ImGui::BeginPopup("track controls")) {
                 for (int f=0;f<7;++f)
                     if (ImGui::MenuItem(tooltips[f],nullptr,values[f])) Toggle(out,track,p.revision,f,values[f]);
@@ -378,7 +379,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 draw->AddLine({a.x+2,b.y-1},{b.x-2,b.y-1},ImGui::GetColorU32(theme.colors.text),2);
                 ImGui::PopStyleColor();
             }
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s: %s",tooltips[f],values[f] ? "On" : "Off");
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s: %s",tooltips[f],values[f] ? s.trackLabels.on : s.trackLabels.off);
         }
         }
         ImGui::PopID();

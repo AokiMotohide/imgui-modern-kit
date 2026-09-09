@@ -30,6 +30,7 @@ int main() {
     cg::ViewportState viewport;
     cg::OutlinerState outliner;
     cg::UVState uv;
+    timeline.trackLabels.controls="Track actions";timeline.trackLabels.names[0]="Visibility";
     curve.icons=&icons;uv.icons=&icons;viewport.icons=&icons;timeline.icons=&icons;
     viewport.rotationAngle=0;viewport.rotationMouse={};
     editor::Transaction drag;
