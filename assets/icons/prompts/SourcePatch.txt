@@ -1,0 +1,4 @@
+Use case: logo-brand. Generate one individual software toolbar icon named SourcePatch, meaning route source media into a timeline track. Geometry: a right-pointing horizontal arrow entering the open left side of a small outlined rectangular destination slot. Arrow shaft starts at grid x=3 and ends with its arrowhead at x=13; destination is a three-sided squared U bracket open to the left, extending from x=12 to x=21 and y=7 to y=17. Simple balanced horizontal routing symbol. Black 1.75-unit monoline on a 24-unit grid, rounded ends and corners, generous margins. True transparent RGBA background, fully opaque black strokes, no lettering, no shading, no extra symbols, no background fill. Square canvas, legible at 16px. One technical UI glyph, not a scene or contact sheet.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/SourcePatch.png

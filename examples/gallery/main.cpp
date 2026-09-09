@@ -509,6 +509,12 @@ void VerifyTrackControls(Host &h,const std::filesystem::path &out) {
     h.ClickAt({s.timeline.view.min.x+15,s.timeline.view.min.y+38});h.mouse={-100,-100};h.Frame();
     h.Key(ImGuiKey_Home);h.Key(ImGuiKey_DownArrow);h.Key(ImGuiKey_DownArrow);h.Key(ImGuiKey_Enter);
     require(s.tracks.front().solo,"native Solo glyph menu applies solo to host track");
+    for (int field:{5,6}) {
+        h.ClickAt({s.timeline.view.min.x+15,s.timeline.view.min.y+38});h.mouse={-100,-100};h.Frame();
+        h.Key(ImGuiKey_Home);for (int i=0;i<field;++i) h.Key(ImGuiKey_DownArrow);h.Key(ImGuiKey_Enter);
+        require(field==5 ? !s.tracks.front().target : s.tracks.front().source,
+                field==5 ? "native Target menu applies track target" : "native SourcePatch menu applies source patch");
+    }
     log<<"Public ImGui IO and native GL backbuffer; native OS/IME input not tested.\n";
 }
 
