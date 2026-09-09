@@ -441,6 +441,12 @@ int main() {
     io.AddMousePosEvent(ringCenter.x,ringCenter.y-88);handleFrame();
     check(std::abs(handleState.drag.draft.proposed.z-3.141592653589793/2)<1e-6,
           "screen ring rotates around view normal");
+    for (int step=2;step<=9;++step) {
+        const double angle=step*3.141592653589793/2;
+        io.AddMousePosEvent(float(ringCenter.x+88*std::cos(angle)),float(ringCenter.y-88*std::sin(angle)));
+        handleFrame();
+        check(std::abs(handleState.rotationAngle-angle)<.02,"screen rotation accumulates across multiple turns");
+    }
     io.AddMouseButtonEvent(0,false);handleFrame();
     check(!handleState.drag.active && handleEvents.count==1,"screen rotation commits once");
     handleState.tool=TransformTool::Unified;
