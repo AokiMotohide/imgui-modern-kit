@@ -574,6 +574,23 @@ int main() {
     openRename(5);
     check(contextActions==7 && contextResult.kind==imkit::editor::EditKind::LinkGeometry && contextResult.proposed.parent==0,
           "Single user context action requests private geometry copy");
+    ComponentView stackComponent{0x100000123ull,0x100000234ull,"Renderer","Host component"};
+    ImVec2 stackOrigin{};
+    auto stackFrame=[&] {
+        handleEvents.Clear();ImGui::NewFrame();ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({800,600});
+        ImGui::Begin("Component stack");stackOrigin=ImGui::GetCursorScreenPos();
+        ComponentStack("stack",{&stackComponent,1},9,handleEvents);
+        ImGui::End();ImGui::Render();
+    };
+    stackFrame();stackFrame();
+    io.AddMousePosEvent(stackOrigin.x+10,stackOrigin.y+10);stackFrame();
+    io.AddMouseButtonEvent(0,true);stackFrame();io.AddMouseButtonEvent(0,false);stackFrame();
+    check(handleEvents.count==1 && handleEvents.Events()[0].target==stackComponent.id &&
+          handleEvents.Events()[0].kind==imkit::editor::EditKind::Toggle && handleEvents.Events()[0].proposed.x==0 &&
+          handleEvents.Events()[0].proposed.y==0 && stackComponent.enabled,"ComponentStack enabled click emits proposal without changing host");
+    stackComponent.locked=true;stackFrame();
+    io.AddMouseButtonEvent(0,true);stackFrame();io.AddMouseButtonEvent(0,false);stackFrame();
+    check(handleEvents.count==0 && stackComponent.enabled,"locked ComponentStack rejects enabled edit");
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
