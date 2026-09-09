@@ -66,7 +66,9 @@ int main() {
     (void)cg::TransformAroundPivot({},cg::TransformTool::Rotate,cg::Axis::Z,{0,0,.2},{},{1,0,0});
     std::array<cg::TransformCompanion,2> transformCompanions{};
     viewport.companions=transformCompanions;viewport.selectedObjects={};
-    cg::TransformGizmo(view, {}, viewport, 1, events, theme);
+    cg::ObjectView geometryObject;geometryObject.geometry=700;
+    (void)editor::EditKind::LinkGeometry;
+    cg::TransformGizmo(view, geometryObject, viewport, 1, events, theme);
     cg::EndViewport();
     ImGui::BeginChild("outliner", {300, 100});
     cg::Outliner("tree", {}, outliner, selection, events);

@@ -519,7 +519,7 @@ int main() {
         Outliner("names",nameProvider,nameState,nameSelection,handleEvents);
         for (const auto &event:handleEvents.Events())
             if (event.kind==imkit::editor::EditKind::Reorder || event.kind==imkit::editor::EditKind::Reparent ||
-                event.kind==imkit::editor::EditKind::Duplicate) {
+                event.kind==imkit::editor::EditKind::Duplicate || event.kind==imkit::editor::EditKind::LinkGeometry) {
                 contextResult=event;++contextActions;
             }
         ImGui::End();ImGui::Render();
@@ -564,6 +564,16 @@ int main() {
     nameObject.locked=true;openRename(2);
     check(contextActions==4 && !nameState.renameTransaction.active,"locked Outliner row rejects duplicate context action");
     io.AddKeyEvent(ImGuiKey_Escape,true);nameFrame();io.AddKeyEvent(ImGuiKey_Escape,false);nameFrame();
+    nameObject.locked=false;nameObject.geometry=700;nameSelection.active=800;
+    openRename(3);
+    check(contextActions==5 && contextResult.kind==imkit::editor::EditKind::Duplicate && contextResult.proposed.offset==1,
+          "Linked duplicate context action requests shared geometry");
+    openRename(4);
+    check(contextActions==6 && contextResult.kind==imkit::editor::EditKind::LinkGeometry &&
+          contextResult.proposed.parent==800 && contextResult.original.parent==700,"Link geometry context action preserves source object and prior data ID");
+    openRename(5);
+    check(contextActions==7 && contextResult.kind==imkit::editor::EditKind::LinkGeometry && contextResult.proposed.parent==0,
+          "Single user context action requests private geometry copy");
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
