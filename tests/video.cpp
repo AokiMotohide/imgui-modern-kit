@@ -384,6 +384,18 @@ int main() {
     full.Clear();io.AddMouseButtonEvent(0,false);frame(full);
     check(full.count==1 && full.Events()[0].kind==editor::EditKind::AudioEnvelope &&
           full.Events()[0].target==2902 && full.Events()[0].phase==editor::Phase::Commit,"volume envelope emits typed Commit");
+    auto envelopeMenu=[&](float x,float y) {
+        full.Clear();io.AddMousePosEvent(x,y);frame(full);io.AddMouseButtonEvent(1,true);frame(full);
+        io.AddMouseButtonEvent(1,false);frame(full);io.AddMousePosEvent(790,590);frame(full);
+        io.AddKeyEvent(ImGuiKey_Home,true);frame(full);io.AddKeyEvent(ImGuiKey_Home,false);frame(full);
+        io.AddKeyEvent(ImGuiKey_Enter,true);frame(full);io.AddKeyEvent(ImGuiKey_Enter,false);frame(full);
+    };
+    envelopeMenu(timeline.view.min.x+timeline.headerWidth+210,timeline.view.min.y+25);
+    check(full.count==2 && full.Events()[1].kind==editor::EditKind::AudioEnvelope && full.Events()[1].proposed.offset==1 &&
+          full.Events()[1].target==transitionFixture.clip.id,"clip menu emits envelope insertion request");
+    envelopeMenu(envelopeX,envelopeY);
+    check(full.count==2 && full.Events()[1].kind==editor::EditKind::AudioEnvelope && full.Events()[1].proposed.offset==2 &&
+          full.Events()[1].target==2902,"point menu emits envelope removal request");
     transitionFixture.clip.envelope={};transitionFixture.track.kind=video::TrackKind::Video;
     ImVec2 pickerOrigin{};
     auto pickerFrame=[&](editor::EventBuffer &events) {

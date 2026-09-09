@@ -128,6 +128,7 @@ struct TimelineState {
     double transitionMouseStart=0;
     editor::Transaction envelopeDrag;
     editor::Point envelopeMouseStart{};
+    Tick envelopeContextTick=0;
     editor::Transaction captionDrag;
     bool captionFocus=false;
     editor::Transaction keyDrag;

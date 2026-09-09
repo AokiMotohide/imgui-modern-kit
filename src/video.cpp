@@ -24,6 +24,13 @@ TransitionEdit EditTransition(const ClipView &clip, bool end, Tick delta) {
     return result;
 }
 namespace {
+void EnvelopeAction(editor::EventBuffer &out,const ClipView &clip,std::uint64_t revision,
+                    StableId target,Tick tick,double gain,Tick action) {
+    if (out.storage.size()-out.count<2) {out.overflow=true;return;}
+    editor::Value original;original.parent=clip.id;original.first=tick;original.x=gain;
+    editor::Transaction edit;edit.Begin(target,revision,editor::EditKind::AudioEnvelope,original,editor::CurrentModifiers(),out);
+    edit.draft.proposed.offset=action;edit.Commit(revision,out);
+}
 void EndClipKeys(TimelineState &s,std::uint64_t revision,bool cancel,editor::EventBuffer &out) {
     if (!s.keyDrag.active) return;
     cancel |= revision!=s.keyDrag.draft.revision || s.keyDrag.draft.phase==editor::Phase::Cancel;
@@ -499,6 +506,11 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(clip.id)));
                     ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(point.id)));
                     ImGui::InvisibleButton("envelope",{10,10});const bool hovered=ImGui::IsItemHovered();
+                    if (ImGui::BeginPopupContextItem("envelope-actions")) {
+                        if (ImGui::MenuItem("Remove envelope point",nullptr,false,!point.locked && !clip.locked && !track.locked && !s.envelopeDrag.active))
+                            EnvelopeAction(out,clip,p.revision,point.id,point.tick,point.gain,2);
+                        ImGui::EndPopup();
+                    }
                     ImGui::PopID();ImGui::PopID();ImGui::SetCursorScreenPos(cursor);ImGui::Dummy({0,0});
                     envelopeHit |= hovered;
                     if (hovered) {
@@ -660,8 +672,13 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             if (hit)
                 s.hovered = clip.id;
             ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(clip.id)));
-            if (hit && ImGui::IsMouseClicked(1)) ImGui::OpenPopup("transition-picker");
+            if (hit && ImGui::IsMouseClicked(1)) {
+                s.envelopeContextTick=std::clamp(editor::FromSeconds((io.MousePos.x-x)/s.canvas.scale.x),Tick{0},std::max(Tick{0},clip.duration));
+                ImGui::OpenPopup("transition-picker");
+            }
             if (ImGui::BeginPopup("transition-picker")) {
+                if (track.kind==TrackKind::Audio && ImGui::MenuItem("Add envelope point",nullptr,false,!clip.locked && !track.locked && !s.envelopeDrag.active))
+                    EnvelopeAction(out,clip,p.revision,clip.id,s.envelopeContextTick,EvaluateEnvelope(clip.envelope,s.envelopeContextTick),1);
                 TransitionPicker("types",clip,p.revision,out,track.locked);
                 ImGui::EndPopup();
             }
