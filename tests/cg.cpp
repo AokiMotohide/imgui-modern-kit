@@ -489,6 +489,25 @@ int main() {
     handleEvents.storage=handleStorage;handleFrame();
     check(handleEvents.count==4 && !handleState.drag.active && !companionStorage[0].transform.active &&
           handleState.companionCount==0,"multi-object terminal retry commits entire batch");
+    for (int cancellation=0;cancellation<3;++cancellation) {
+        handleState.selectedObjects=selectedObjects;selectedObjects[1].locked=false;
+        io.AddMousePosEvent(ringCenter.x+88,ringCenter.y);handleFrame();handleFrame();
+        io.AddMouseButtonEvent(0,true);handleFrame();
+        check(handleState.companionCount==1,"multi-object cancellation setup");
+        if (cancellation==0) handleState.selectedObjects={selectedObjects,1};
+        else if (cancellation==1) selectedObjects[1].locked=true;
+        else ++handleObject.id;
+        handleEvents.storage={handleStorage,3};handleFrame();
+        check(handleEvents.count==0 && handleEvents.overflow && handleState.drag.active &&
+              companionStorage[0].position.active,"cancellation overflow retains every target");
+        handleEvents.storage=handleStorage;handleFrame();
+        bool allCancelled=handleEvents.count==4;
+        for (const auto &event:handleEvents.Events()) allCancelled &= event.phase==imkit::editor::Phase::Cancel;
+        check(allCancelled && !handleState.drag.active && !companionStorage[0].position.active,
+              "disappearance or lock cancels complete batch after capacity recovers");
+        io.AddMouseButtonEvent(0,false);handleFrame();
+        if (cancellation==2) --handleObject.id;
+    }
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }

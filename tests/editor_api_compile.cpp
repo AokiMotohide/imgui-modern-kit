@@ -64,6 +64,8 @@ int main() {
     cg::AlignCamera(viewport.camera,cg::Axis::Z);
     cg::ViewportObjects(view, {}, viewport, selection, 1, events, theme);
     (void)cg::TransformAroundPivot({},cg::TransformTool::Rotate,cg::Axis::Z,{0,0,.2},{},{1,0,0});
+    std::array<cg::TransformCompanion,2> transformCompanions{};
+    viewport.companions=transformCompanions;viewport.selectedObjects={};
     cg::TransformGizmo(view, {}, viewport, 1, events, theme);
     cg::EndViewport();
     ImGui::BeginChild("outliner", {300, 100});
