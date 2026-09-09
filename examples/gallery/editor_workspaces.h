@@ -75,6 +75,8 @@ struct EditorWorkspaces {
     cg::ViewportState viewport;
     cg::Vec3 cursorPivot{};
     std::vector<cg::ObjectView> gizmoSelection;
+    std::vector<editor::SelectablePoint> viewportSelectionPoints;
+    std::array<editor::Point,1024> viewportSelectionPath{};
     std::vector<cg::TransformCompanion> gizmoCompanions;
     cg::Camera sceneCamera{{0,0,0},0,.15,10,.65,5,cg::Projection::Perspective};
     cg::OutlinerState outliner;

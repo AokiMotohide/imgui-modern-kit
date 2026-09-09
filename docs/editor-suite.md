@@ -252,6 +252,19 @@ UTF-8 draftを編集し、Enterで確定、Escapeで取消します。eventに�
 ホストobjectへ適用します。公開IOでmenu開始・日本語UTF-8入力・確定・取消を検証しています。
 native IMEの検証には含めません。
 
+Viewport Select mode starts box selection on empty canvas; Lasso selection switches
+to the shared polygon-selection path. `selectionPoints` and
+`selectionCanvas.selectionPath` are host scratch storage. Candidates are projected
+origins from the supplied visible-object span, excluding hidden/unselectable/locked
+objects. Scratch overflow preserves selection and reports overflow; revision changes
+cancel the selection gesture. Gallery connects the result to its common object
+selection. Focused public IO tests exercise both shapes and exclude an outside origin.
+ViewportのSelect modeでは空白dragでbox選択し、Lasso selectionで共通polygon選択へ切り替えます。
+selectionPointsとselectionCanvas.selectionPathはホストのscratch領域です。渡された可視object spanの
+originを投影し、hidden・unselectable・locked対象を除外します。scratch不足は選択を維持して通知し、
+revision変更は選択gestureを取り消します。Galleryは共通object selectionへ接続しています。
+公開IOテストで両形状による選択と範囲外originの除外を確認しています。
+
 `TransformAroundPivot` returns a complete TRS value with the object's position rotated
 or scaled about a supplied pivot. Its orthonormal basis determines constrained offset
 movement. Rotation composes the existing orientation rather than adding Euler angles.

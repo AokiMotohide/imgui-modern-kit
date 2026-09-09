@@ -603,6 +603,32 @@ int main() {
           handleEvents.Events()[0].target==stackComponent.owner && handleEvents.Events()[0].proposed.parent==902,
           "ComponentStack add menu preserves owner and chosen type ID");
     io.AddKeyEvent(ImGuiKey_Enter,false);stackFrame();
+    ViewportState selectionViewport;selectionViewport.tool=TransformTool::Select;
+    selectionViewport.camera.projection=Projection::Orthographic;selectionViewport.camera.yaw=selectionViewport.camera.pitch=0;
+    imkit::editor::SelectablePoint projectedPoints[2];imkit::editor::Point viewportPath[16];
+    selectionViewport.selectionPoints=projectedPoints;selectionViewport.selectionCanvas.selectionPath=viewportPath;
+    ObjectView selectObjects[2];selectObjects[0].id=9101;selectObjects[1].id=9102;selectObjects[1].transform.translation={2,0,0};
+    auto viewportSelectionFrame=[&] {
+        handleEvents.Clear();ImGui::NewFrame();ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({800,600});
+        ImGui::Begin("Viewport selection");
+        ViewportObjects(handleView,selectObjects,selectionViewport,nameSelection,1,handleEvents,
+                        imkit::MakePrecisionTheme(imkit::ColorScheme::Dark));
+        ImGui::End();ImGui::Render();
+    };
+    viewportSelectionFrame();viewportSelectionFrame();
+    auto selectionCenter=Project({},selectionViewport.camera,handleView.min,handleView.size).screen;
+    for (bool lasso:{false,true}) {
+        nameSelection.Clear();selectionViewport.lassoSelection=lasso;
+        io.AddMousePosEvent(selectionCenter.x-30,selectionCenter.y-30);viewportSelectionFrame();
+        io.AddMouseButtonEvent(0,true);viewportSelectionFrame();
+        io.AddMousePosEvent(selectionCenter.x+30,selectionCenter.y-30);viewportSelectionFrame();
+        io.AddMousePosEvent(selectionCenter.x+30,selectionCenter.y+30);viewportSelectionFrame();
+        if (lasso) {io.AddMousePosEvent(selectionCenter.x-30,selectionCenter.y+30);viewportSelectionFrame();}
+        io.AddMouseButtonEvent(0,false);viewportSelectionFrame();
+        check(nameSelection.count==1 && nameSelection.Contains(9101) && !nameSelection.Contains(9102) &&
+              handleEvents.count==1 && handleEvents.Events()[0].kind==(lasso ? imkit::editor::EditKind::LassoSelect : imkit::editor::EditKind::BoxSelect),
+              "Viewport box/lasso selects only enclosed projected origins");
+    }
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }
