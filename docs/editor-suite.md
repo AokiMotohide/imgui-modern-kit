@@ -604,3 +604,7 @@ Timelineは時刻順のclip内key spanを二分探索し、可視区間の描画
 Timeline envelope rendering now binary-searches the visible interval and retains one neighboring point on each side for connecting segments. Active point validation uses original tick/ID separately from drawing, so culling a point inside a still-visible clip does not end its gesture. A 100,000-point fixture verifies bounded geometry; existing envelope edit/remove/insert regressions pass.
 
 Timelineのenvelope描画は可視区間を二分探索し、接続線用に両側の隣接点を1つずつ残します。操作点は描画とは別に開始時刻とIDで検証し、clipが可視のまま点だけ描画範囲外へ出ても操作を終了しません。10万点のfixtureで描画geometryが有界であることを確認し、既存のenvelope編集・削除・挿入回帰も通過しました。
+
+Track names are fine-clipped to the header width, with a bounded right-click item for the height menu and full text in a tooltip. Long mixed English/Japanese names were captured in narrow dark 150% headers in `out/track-label-clipping/`; existing Track control public IO and Video regressions pass.
+
+Track名はheader幅へfine clipし、高さmenuの右クリック領域も同じ幅へ制限します。全文はtooltipへ表示します。長い英日混在名を狭いdark・150% headerで`out/track-label-clipping/`へcaptureし、既存Track操作の公開IOとVideo回帰も通過しました。
