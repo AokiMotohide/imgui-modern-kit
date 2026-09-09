@@ -932,14 +932,14 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                         available = available && neighbors.previous && !neighbors.previous->locked &&
                                     neighbors.previous->start + neighbors.previous->duration == clip.start;
                     auto members = (kind == editor::EditKind::Move || kind == editor::EditKind::Duplicate ||
-                                           kind == editor::EditKind::TrimStart || kind == editor::EditKind::TrimEnd) &&
+                                           kind == editor::EditKind::TrimStart || kind == editor::EditKind::TrimEnd || kind == editor::EditKind::Slip) &&
                                            p.selected
                                        ? p.selected(p.user, selection.storage.first(selection.count))
                                        : std::span<const ClipView>{};
                     // A selection query must resolve the complete edit set, even offscreen.
                     // Reject incomplete or ambiguous host scratch before publishing any Begin.
                     if (kind == editor::EditKind::Move || kind == editor::EditKind::Duplicate ||
-                                           kind == editor::EditKind::TrimStart || kind == editor::EditKind::TrimEnd) {
+                                           kind == editor::EditKind::TrimStart || kind == editor::EditKind::TrimEnd || kind == editor::EditKind::Slip) {
                         if (!p.selected && selection.count > 1) {
                             out.overflow = true;
                             available = false;
@@ -1033,12 +1033,18 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             if (s.guide.snapped) delta=s.guide.tick-anchor;
         }
         auto constraints = p.constraints ? p.constraints(p.user, s.original.id) : ClipConstraints{};
-        const bool trimMembers=s.drag.draft.kind==editor::EditKind::TrimStart || s.drag.draft.kind==editor::EditKind::TrimEnd;
+        const bool trimMembers=s.drag.draft.kind==editor::EditKind::TrimStart || s.drag.draft.kind==editor::EditKind::TrimEnd ||
+            s.drag.draft.kind==editor::EditKind::Slip;
         if (trimMembers && s.memberCount) {
             const auto constrain=[&](const ClipView &clip,ClipConstraints limits) {
                 const auto edit=EditClip(clip,s.drag.draft.kind,delta,limits);
                 if (!edit.valid) {delta=0;return;}
-                const Tick applied=s.drag.draft.kind==editor::EditKind::TrimStart ? edit.start-clip.start : edit.duration-clip.duration;
+                Tick applied=s.drag.draft.kind==editor::EditKind::TrimStart ? edit.start-clip.start : edit.duration-clip.duration;
+                if (s.drag.draft.kind==editor::EditKind::Slip) {
+                    const auto before=static_cast<Tick>(std::floor((clip.sourceIn-limits.mediaFirst)/clip.speed));
+                    const auto after=static_cast<Tick>(std::floor((limits.mediaLast-clip.sourceIn)/clip.speed))-clip.duration;
+                    applied=std::clamp(delta,-before,after);
+                }
                 delta=delta>=0 ? std::min(delta,applied) : std::max(delta,applied);
             };
             constrain(s.original,constraints);

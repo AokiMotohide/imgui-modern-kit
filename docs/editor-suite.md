@@ -671,3 +671,7 @@ SplitClipは有限の正速度、最小duration、素材範囲、時刻・素材
 Timeline TrimStart and TrimEnd now resolve selected/linked/group members through the same complete-query contract as Move. All members share a delta constrained by every clip media range and minimum duration, and emit an atomic terminal batch. Public IO regression verifies an offscreen short member constraining both start trims and both Commit events. Ripple, Roll and Slide relationship behavior remains separately scoped.
 
 Timelineの開始・終了trimはMoveと同じ完全query契約で選択・linked・groupの関連clipを解決します。各clipの素材範囲と最小durationから共通deltaを制限し、終了イベントをまとめて返します。公開IO回帰で、画面外の短い関連clipによる開始trimの共通制限と、両対象のCommitを確認しました。Ripple・Roll・Slideの関連制約は別の対象です。
+
+Slip uses complete selected/linked/group resolution and a shared timeline delta bounded by every member source range and speed. Placement and duration remain fixed. Public IO regression verifies a short remaining source handle constrains the whole set and both source edits commit.
+
+Slipも選択・linked・groupの全対象を解決し、各素材範囲と速度から共通のTimeline deltaを制限します。配置と長さは変えません。公開IO回帰で、関連素材の残り範囲が全体を制限し、両対象の素材位置変更がCommitされることを確認しました。

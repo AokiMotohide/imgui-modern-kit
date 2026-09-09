@@ -507,6 +507,20 @@ int main() {
     full.Clear();io.AddMouseButtonEvent(0,false);frame(full);
     check(full.count==2 && full.Events()[0].phase==editor::Phase::Commit && full.Events()[1].phase==editor::Phase::Commit,
           "linked trim commits all members together");
+    timeline.tool=video::Tool::Slip;
+    transitionFixture.related[1].sourceIn=editor::FromSeconds(99.5);
+    full.Clear();io.AddMousePosEvent(clipOrigin.x+timeline.headerWidth+100,clipOrigin.y+25);frame(full);
+    io.AddMouseButtonEvent(0,true);frame(full);
+    io.AddMousePosEvent(clipOrigin.x+timeline.headerWidth+150,clipOrigin.y+25);frame(full);
+    check(timeline.drag.active && timeline.drag.draft.proposed.first==transitionFixture.clip.start &&
+          timeline.drag.draft.proposed.last==transitionFixture.clip.start+transitionFixture.clip.duration &&
+          timeline.drag.draft.proposed.offset==editor::FromSeconds(.2) &&
+          trimMembers[0].transaction.draft.proposed.offset==editor::FromSeconds(99.7),
+          "linked Slip preserves placement and shares tightest source upper bound");
+    full.Clear();io.AddMouseButtonEvent(0,false);frame(full);
+    check(full.count==2 && full.Events()[0].kind==editor::EditKind::Slip && full.Events()[1].kind==editor::EditKind::Slip,
+          "linked Slip commits source changes for every member");
+    timeline.tool=video::Tool::Select;
     provider.selected=nullptr;provider.constraints=nullptr;timeline.memberCount=0;timeline.memberDrags={};selection.Clear();
     io.AddMousePosEvent(clipOrigin.x+timeline.headerWidth+160,clipOrigin.y+25);frame(full);
     timeline.tool=video::Tool::Razor;full.Clear();frame(full);
