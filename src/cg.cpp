@@ -217,7 +217,7 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
         d->AddImage(texture, v.min, {v.min.x + v.size.x, v.min.y + v.size.y}, {0, 1}, {1, 0});
     else
         d->AddRectFilled(v.min, {v.min.x + v.size.x, v.min.y + v.size.y},
-                         ImGui::GetColorU32(theme.colors.canvas));
+                         ImGui::GetColorU32(theme.editor.canvas));
     auto line = [&](Vec3 a, Vec3 b, ImU32 color) {
         auto pa = Project(a, s.camera, v.min, v.size), pb = Project(b, s.camera, v.min, v.size);
         if (pa.visible && pb.visible)
@@ -226,14 +226,14 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
     if (s.grid)
         for (int i = -10; i <= 10; ++i) {
             line({static_cast<double>(i), 0, -10}, {static_cast<double>(i), 0, 10},
-                 ImGui::GetColorU32(theme.colors.border));
+                 ImGui::GetColorU32(theme.editor.grid));
             line({-10, 0, static_cast<double>(i)}, {10, 0, static_cast<double>(i)},
-                 ImGui::GetColorU32(theme.colors.border));
+                 ImGui::GetColorU32(theme.editor.grid));
         }
     if (s.axes) {
-        line({0, 0, 0}, {3, 0, 0}, IM_COL32(220, 85, 85, 255));
-        line({0, 0, 0}, {0, 3, 0}, IM_COL32(90, 195, 100, 255));
-        line({0, 0, 0}, {0, 0, 3}, IM_COL32(95, 145, 235, 255));
+        line({0, 0, 0}, {3, 0, 0}, ImGui::GetColorU32(theme.editor.axisX));
+        line({0, 0, 0}, {0, 3, 0}, ImGui::GetColorU32(theme.editor.axisY));
+        line({0, 0, 0}, {0, 0, 3}, ImGui::GetColorU32(theme.editor.axisZ));
     }
     bool navigationHovered=false;
     if (s.navigationGizmo && v.size.x>=110 && v.size.y>=110) {
@@ -243,7 +243,7 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
         navigationHovered=ImGui::IsItemHovered();
         auto basis=OrientationBasis(Orientation::View,{},s.camera);
         Vec3 axes[]={{1,0,0},{0,1,0},{0,0,1}};
-        const ImU32 colors[]={IM_COL32(220,85,85,255),IM_COL32(90,195,100,255),IM_COL32(95,145,235,255)};
+        const ImU32 colors[]={ImGui::GetColorU32(theme.editor.axisX),ImGui::GetColorU32(theme.editor.axisY),ImGui::GetColorU32(theme.editor.axisZ)};
         int hit=-1; double closest=12,front=-2;
         std::array<int,6> order{0,1,2,3,4,5};
         auto depthOf=[&](int i){return Dot(Mul(axes[i/2],i%2 ? -1 : 1),basis.z);};
@@ -331,7 +331,7 @@ void ViewportObjects(const ViewportView &v, std::span<const ObjectView> objects,
 
 }
 void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportState &s, std::uint64_t revision,
-                    editor::EventBuffer &out, const Theme &) {
+                    editor::EventBuffer &out, const Theme &theme) {
     constexpr double Pi=3.14159265358979323846;
     auto finish=[&](bool cancel) {
         std::size_t count=1+(s.pivotDrag.active ? 1 : 0);
@@ -373,8 +373,8 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
     auto basis = OrientationBasis(s.orientation, object.transform, s.camera, s.parentBasis, s.customBasis);
     auto *d = ImGui::GetWindowDrawList();
     const Vec3 axes[] = {basis.x, basis.y, basis.z};
-    const ImU32 colors[] = {IM_COL32(230, 85, 85, 255), IM_COL32(85, 220, 110, 255),
-                            IM_COL32(85, 145, 240, 255)};
+    const ImU32 colors[] = {ImGui::GetColorU32(theme.editor.axisX), ImGui::GetColorU32(theme.editor.axisY),
+                            ImGui::GetColorU32(theme.editor.axisZ)};
     ImVec2 projected[3]{};
     Axis hit = Axis::None;
     const bool unified=s.tool==TransformTool::Unified;
@@ -410,7 +410,7 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
     if (s.tool == TransformTool::Rotate || unified) {
         const float screenRadius=unified ? 130.f : 88.f;
         const float ringRadius=unified ? 88.f : 70.f;
-        d->AddCircle(center.screen,screenRadius,IM_COL32(230,230,230,255),64,
+        d->AddCircle(center.screen,screenRadius,ImGui::GetColorU32(theme.editor.gizmo),64,
                      s.drag.active && s.activeAxis==Axis::Screen ? 4.f : 2.f);
         if (std::abs(std::hypot(mouse.x-center.screen.x,mouse.y-center.screen.y)-screenRadius)<7)
             {hit=Axis::Screen;hitTool=TransformTool::Rotate;}
@@ -451,7 +451,9 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
                 corners[k] = {center.screen.x + x.x * distances[k][0] + y.x * distances[k][1],
                               center.screen.y + x.y * distances[k][0] + y.y * distances[k][1]};
             const Axis axis = static_cast<Axis>(static_cast<int>(Axis::XY) + plane);
-            d->AddConvexPolyFilled(corners, 4, (colors[plane] & 0x00ffffff) | IM_COL32(0,0,0,65));
+            auto fill = ImGui::ColorConvertU32ToFloat4(colors[plane]);
+            fill.w *= 65.f / 255.f;
+            d->AddConvexPolyFilled(corners, 4, ImGui::ColorConvertFloat4ToU32(fill));
             d->AddPolyline(corners, 4, colors[plane], ImDrawFlags_Closed,
                            s.drag.active && s.activeAxis == axis ? 3.f : 1.f);
             const double mx = mouse.x - center.screen.x, my = mouse.y - center.screen.y;
@@ -460,7 +462,7 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
             if (first >= 18 && first <= 34 && second >= 18 && second <= 34) {hit = axis;hitTool=unified ? TransformTool::Translate : s.tool;}
         }
         const ImVec2 low{center.screen.x - 7, center.screen.y - 7}, high{center.screen.x + 7, center.screen.y + 7};
-        d->AddRect(low, high, IM_COL32(230,230,230,255), 0, 0,
+        d->AddRect(low, high, ImGui::GetColorU32(theme.editor.gizmo), 0, 0,
                    s.drag.active && s.activeAxis == Axis::Screen ? 3.f : 2.f);
         if (mouse.x >= low.x && mouse.x <= high.x && mouse.y >= low.y && mouse.y <= high.y)
             {hit = Axis::Screen;hitTool=unified ? TransformTool::Translate : s.tool;}
