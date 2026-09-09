@@ -169,3 +169,7 @@ Galleryのcurve queryはchannel/time indexを使い、channelごとに連続し�
 Right-clicking a Curve key exposes interpolation and handle-mode menus. `KeyInterpolation`/`KeyHandleMode` commits target the explicit key ID and carry the enum value in `proposed.x`; Gallery validates and applies them. Locked keys reject these edits.
 
 Curveのkeyを右クリックすると補間とhandle modeのメニューを開きます。`KeyInterpolation` / `KeyHandleMode` のcommitは明示key IDをtargetにし、`proposed.x` にenum値を返します。Galleryは値を検証して適用し、locked keyへの編集は拒否します。
+
+`CurveState.activeChannel` follows clicked keys. With `ghostOtherChannels`, inactive channels draw as faint dashed curves with hollow key diamonds and no tangent handles; clicking a key activates its channel. The canvas context menu toggles ghost display.
+
+`CurveState.activeChannel` はクリックしたkeyのchannelへ切り替わります。`ghostOtherChannels` 有効時は他channelを薄い破線と中空diamondで描画し、接線handleを隠します。keyクリックでchannelをactiveにでき、canvas context menuからghost表示を切り替えられます。
