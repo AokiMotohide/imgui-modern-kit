@@ -1011,45 +1011,52 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     ImGui::SeparatorText("Inspector");
     auto object = std::find_if(s.objects.begin(), s.objects.end(),
                                [&](const auto &o) { return o.id == s.objectSelection.active; });
-    if (object != s.objects.end()) {
-        s.inspectorComponents.clear();
-        for (const auto &component:s.components) if (component.view.owner==object->id) s.inspectorComponents.push_back(component.view);
-        const cg::ComponentTypeView componentTypes[]={{7801,"Mesh renderer"},{7802,"Wireframe override"}};
-        cg::ComponentStack("Components",s.inspectorComponents,s.revision,s.events,
-            {object->id,object->geometry ? std::span<const cg::ComponentTypeView>(componentTypes) : std::span<const cg::ComponentTypeView>{},object->locked});
-        editor::PropertyView rows[] = {
-            {ObjectPropertyId(s, object->id, 0), "Position X", "Transform", object->transform.translation.x, 0},
-            {ObjectPropertyId(s, object->id, 1), "Position Y", "Transform", object->transform.translation.y, 0},
-            {ObjectPropertyId(s, object->id, 2), "Position Z", "Transform", object->transform.translation.z, 0},
-            {ObjectPropertyId(s, object->id, 3), "Rotation X (rad)", "Rotation", object->transform.rotation.x, 0},
-            {ObjectPropertyId(s, object->id, 4), "Rotation Y (rad)", "Rotation", object->transform.rotation.y, 0},
-            {ObjectPropertyId(s, object->id, 5), "Rotation Z (rad)", "Rotation", object->transform.rotation.z, 0},
-            {ObjectPropertyId(s, object->id, 6), "Scale X", "Scale", object->transform.scale.x, 1},
-            {ObjectPropertyId(s, object->id, 7), "Scale Y", "Scale", object->transform.scale.y, 1},
-            {ObjectPropertyId(s, object->id, 8), "Scale Z", "Scale", object->transform.scale.z, 1}};
-        for (auto &row:rows)
-            row.flags=static_cast<editor::PropertyFlags>(s.propertyFlags[row.id]|
-                (row.value!=row.defaultValue?2u:0u)|(object->locked?16u:0u));
-        for (int component=0;component<9;++component) {
-            unsigned flags=static_cast<unsigned>(rows[component].flags);
-            for (auto &target:s.objects) if (s.objectSelection.Contains(target.id)) {
-                if (TransformComponent(target.transform,component)!=rows[component].value) flags|=1u;
-                if (target.locked || (s.propertyFlags[ObjectPropertyId(s,target.id,component)]&16u)) flags|=16u;
+    if (object != s.objects.end() && ImGui::BeginTabBar("Inspector pages")) {
+        if (ImGui::BeginTabItem("Transform")) {
+            editor::PropertyView rows[] = {
+                {ObjectPropertyId(s, object->id, 0), "Position X", "Transform", object->transform.translation.x, 0},
+                {ObjectPropertyId(s, object->id, 1), "Position Y", "Transform", object->transform.translation.y, 0},
+                {ObjectPropertyId(s, object->id, 2), "Position Z", "Transform", object->transform.translation.z, 0},
+                {ObjectPropertyId(s, object->id, 3), "Rotation X (rad)", "Rotation", object->transform.rotation.x, 0},
+                {ObjectPropertyId(s, object->id, 4), "Rotation Y (rad)", "Rotation", object->transform.rotation.y, 0},
+                {ObjectPropertyId(s, object->id, 5), "Rotation Z (rad)", "Rotation", object->transform.rotation.z, 0},
+                {ObjectPropertyId(s, object->id, 6), "Scale X", "Scale", object->transform.scale.x, 1},
+                {ObjectPropertyId(s, object->id, 7), "Scale Y", "Scale", object->transform.scale.y, 1},
+                {ObjectPropertyId(s, object->id, 8), "Scale Z", "Scale", object->transform.scale.z, 1}};
+            for (auto &row:rows)
+                row.flags=static_cast<editor::PropertyFlags>(s.propertyFlags[row.id]|
+                    (row.value!=row.defaultValue?2u:0u)|(object->locked?16u:0u));
+            for (int component=0;component<9;++component) {
+                unsigned flags=static_cast<unsigned>(rows[component].flags);
+                for (auto &target:s.objects) if (s.objectSelection.Contains(target.id)) {
+                    if (TransformComponent(target.transform,component)!=rows[component].value) flags|=1u;
+                    if (target.locked || (s.propertyFlags[ObjectPropertyId(s,target.id,component)]&16u)) flags|=16u;
+                }
+                rows[component].flags=static_cast<editor::PropertyFlags>(flags);
             }
-            rows[component].flags=static_cast<editor::PropertyFlags>(flags);
+            s.objectProperties.icons=s.icons;
+            s.objectProperties.time=s.timeline.time.playhead;
+            for (auto &row:rows) {
+                auto channel=s.propertyKeys.find(row.id);
+                if (channel==s.propertyKeys.end() || channel->second.empty()) continue;
+                unsigned flags=static_cast<unsigned>(row.flags)|32u;
+                if (std::any_of(channel->second.begin(),channel->second.end(),[&](const auto &key){return key.tick==s.timeline.time.playhead;})) flags|=64u;
+                row.flags=static_cast<editor::PropertyFlags>(flags);
+            }
+            PropertyRows visibleProperties{std::span(rows).first(FilterProperties(rows,s.objectProperties.search))};
+            editor::PropertyProvider properties{&visibleProperties,s.revision,static_cast<int>(visibleProperties.rows.size()),PropertyRows::Query};
+            editor::PropertyGrid("object", properties, s.objectProperties, s.events);
+            ImGui::EndTabItem();
         }
-        s.objectProperties.icons=s.icons;
-        s.objectProperties.time=s.timeline.time.playhead;
-        for (auto &row:rows) {
-            auto channel=s.propertyKeys.find(row.id);
-            if (channel==s.propertyKeys.end() || channel->second.empty()) continue;
-            unsigned flags=static_cast<unsigned>(row.flags)|32u;
-            if (std::any_of(channel->second.begin(),channel->second.end(),[&](const auto &key){return key.tick==s.timeline.time.playhead;})) flags|=64u;
-            row.flags=static_cast<editor::PropertyFlags>(flags);
+        if (ImGui::BeginTabItem("Components")) {
+            s.inspectorComponents.clear();
+            for (const auto &component:s.components) if (component.view.owner==object->id) s.inspectorComponents.push_back(component.view);
+            const cg::ComponentTypeView componentTypes[]={{7801,"Mesh renderer"},{7802,"Wireframe override"}};
+            cg::ComponentStack("Components",s.inspectorComponents,s.revision,s.events,
+                {object->id,object->geometry ? std::span<const cg::ComponentTypeView>(componentTypes) : std::span<const cg::ComponentTypeView>{},object->locked});
+            ImGui::EndTabItem();
         }
-        PropertyRows visibleProperties{std::span(rows).first(FilterProperties(rows,s.objectProperties.search))};
-        editor::PropertyProvider properties{&visibleProperties,s.revision,static_cast<int>(visibleProperties.rows.size()),PropertyRows::Query};
-        editor::PropertyGrid("object", properties, s.objectProperties, s.events);
+        ImGui::EndTabBar();
     }
     ImGui::EndChild();
     ImGui::BeginChild("Assets", {side, 0}, ImGuiChildFlags_Borders);
