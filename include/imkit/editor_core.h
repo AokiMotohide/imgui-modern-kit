@@ -267,6 +267,7 @@ struct PropertyState {
     char search[128]{};
     Transaction drag;
     double draft = 0;
+    const IconAtlas *icons = nullptr; // Non-owning host atlas.
 };
 void PropertyGrid(const char *id, const PropertyProvider &provider, PropertyState &state,
                   EventBuffer &events);
