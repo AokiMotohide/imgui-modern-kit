@@ -31,7 +31,7 @@ int main() {
     cg::OutlinerState outliner;
     cg::UVState uv;
     video::ClipView evaluationClip;evaluationClip.keyEvaluation={};
-    video::TimelineLabels relationLabels;relationLabels.unlink="Unlink";relationLabels.ungroup="Detach";
+    video::TimelineLabels relationLabels;relationLabels.unlink="Unlink";relationLabels.ungroup="Detach";relationLabels.linkSelection="Link selected";relationLabels.groupSelection="Group selected";
     video::TimelineProvider gate;gate.isEditable=[](void *,editor::StableId){return true;};gate.canBeginEdit=[](void *,editor::StableId,editor::EditKind){return true;};
     timeline.labels.fit="Frame all clips";timeline.labels.followModes[0]="Disabled";
     timeline.trackLabels.controls="Track actions";timeline.trackLabels.names[0]="Visibility";

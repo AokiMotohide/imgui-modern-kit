@@ -874,21 +874,6 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(clip.id)));
                 ImGui::InvisibleButton("clip-body",{hitMax.x-hitMin.x,hitMax.y-hitMin.y});
                 hit=ImGui::IsItemHovered();
-                if (ImGui::BeginPopupContextItem("clip-relations")) {
-                    for (int relation=0;relation<2;++relation) {
-                        const auto set=relation ? clip.group : clip.linked;
-                        if (ImGui::MenuItem(relation ? s.labels.ungroup : s.labels.unlink,nullptr,false,
-                            set && !track.locked && !clip.locked && !s.drag.active)) {
-                            if (ReserveEvents(out,2)) {
-                                editor::Value original;original.parent=set;original.offset=relation;
-                                editor::Transaction edit;
-                                edit.Begin(clip.id,p.revision,editor::EditKind::Link,original,editor::CurrentModifiers(),out);
-                                edit.draft.proposed.parent=0;edit.Commit(p.revision,out);
-                            }
-                        }
-                    }
-                    ImGui::EndPopup();
-                }
                 ImGui::PopID();
                 ImGui::SetCursorScreenPos(cursor);ImGui::Dummy({0,0});
             }
@@ -907,13 +892,43 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 }
             }
             ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(clip.id)));
-            if (hit && ImGui::IsMouseClicked(1)) {
+            if (hit && !envelopeHit && !keyHit && ImGui::IsMouseClicked(1)) {
                 s.envelopeContextTick=std::clamp(editor::FromSeconds((io.MousePos.x-x)/s.canvas.scale.x),Tick{0},std::max(Tick{0},clip.duration));
                 ImGui::OpenPopup("transition-picker");
             }
             if (ImGui::BeginPopup("transition-picker")) {
                 if (track.kind==TrackKind::Audio && ImGui::MenuItem("Add envelope point",nullptr,false,!clip.locked && !track.locked && !s.envelopeDrag.active))
                     EnvelopeAction(out,clip,p.revision,clip.id,s.envelopeContextTick,EvaluateEnvelope(clip.envelope,s.envelopeContextTick),1);
+                    for (int relation=0;relation<2;++relation) {
+                        const auto set=relation ? clip.group : clip.linked;
+                        if (ImGui::MenuItem(relation ? s.labels.ungroup : s.labels.unlink,nullptr,false,
+                            set && !track.locked && !clip.locked && !s.drag.active)) {
+                            if (ReserveEvents(out,2)) {
+                                editor::Value original;original.parent=set;original.offset=relation;
+                                editor::Transaction edit;
+                                edit.Begin(clip.id,p.revision,editor::EditKind::Link,original,editor::CurrentModifiers(),out);
+                                edit.draft.proposed.parent=0;edit.Commit(p.revision,out);
+                            }
+                        }
+                    }
+                    for (int relation=0;relation<2;++relation)
+                        if (ImGui::MenuItem(relation ? s.labels.groupSelection : s.labels.linkSelection,nullptr,false,
+                            selection.count>1 && selection.Contains(clip.id) && p.selected && !s.drag.active && !track.locked && !clip.locked)) {
+                            const auto ids=selection.storage.first(selection.count);
+                            const auto members=p.selected(p.user,ids);
+                            bool complete=true,editable=true;
+                            for (const auto id:ids)
+                                complete &= std::count_if(members.begin(),members.end(),[&](const auto &m){return m.id==id;})==1;
+                            for (const auto &member:members) editable &= !member.locked;
+                            if (!complete) out.overflow=true;
+                            else if (editable && ReserveEvents(out,members.size()*2))
+                                for (const auto &member:members) {
+                                    editor::Value original;original.parent=relation ? member.group : member.linked;original.offset=relation+2;
+                                    editor::Transaction edit;
+                                    edit.Begin(member.id,p.revision,editor::EditKind::Link,original,editor::CurrentModifiers(),out);
+                                    edit.draft.proposed.parent=0;edit.Commit(p.revision,out);
+                                }
+                        }
                 TransitionPicker("types",clip,p.revision,out,track.locked);
                 ImGui::EndPopup();
             }

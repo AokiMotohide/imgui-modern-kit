@@ -519,11 +519,22 @@ void VerifyLinkedClips(Host &h,const std::filesystem::path &out) {
     s.japanese=true;h.Frame();
     h.mouse.y+=video::TrackExtent(s.tracks.front());h.Frame();
     h.Frame([](auto &io){io.AddMouseButtonEvent(1,true);});h.Frame([](auto &io){io.AddMouseButtonEvent(1,false);});
-    h.Key(ImGuiKey_Home);h.Key(ImGuiKey_DownArrow);h.Key(ImGuiKey_Enter);h.Settle(2);
+    h.Key(ImGuiKey_Home);h.Key(ImGuiKey_DownArrow);h.Key(ImGuiKey_DownArrow);h.Key(ImGuiKey_Enter);h.Settle(2);
     const auto audio=std::find_if(s.clips.begin(),s.clips.end(),[&](const auto &c){return c.id==before[1].id;});
     const bool ungrouped=audio!=s.clips.end() && !audio->group && audio->linked;
     log<<(ungrouped ? "PASS " : "FAIL ")<<"Japanese native context detaches group while preserving link\n";log.flush();
     if (!ungrouped) throw std::runtime_error("native ungroup did not preserve independent link relation");
+    s.selection.Set(target);s.selection.Set(before[1].id,true);
+    for (int relation=0;relation<2;++relation) {
+        h.Frame([](auto &io){io.AddMouseButtonEvent(1,true);});h.Frame([](auto &io){io.AddMouseButtonEvent(1,false);});
+        h.Key(ImGuiKey_Home);for (int i=0;i<3;++i) h.Key(ImGuiKey_DownArrow);h.Key(ImGuiKey_Enter);h.Settle(2);
+        const auto first=std::find_if(s.clips.begin(),s.clips.end(),[&](const auto &c){return c.id==target;});
+        const auto second=std::find_if(s.clips.begin(),s.clips.end(),[&](const auto &c){return c.id==before[1].id;});
+        const auto set=relation ? first->linked : first->group;
+        const bool joined=set && set==(relation ? second->linked : second->group);
+        log<<(joined ? "PASS " : "FAIL ")<<(relation ? "native selected link creation" : "native selected group creation")<<'\n';log.flush();
+        if (!joined) throw std::runtime_error("native relationship creation failed");
+    }
 }
 void VerifyTrackControls(Host &h,const std::filesystem::path &out) {
     using namespace imkit;
