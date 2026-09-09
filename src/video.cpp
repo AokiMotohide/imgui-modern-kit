@@ -983,11 +983,22 @@ void Monitor(const char *id, ImTextureRef texture, ImVec2 size, const editor::Ti
                    ImGui::GetColorU32(theme.colors.accent), 0.f, 2.f, ImDrawFlags_None);
         d->AddCircle({p.x + size.x * o.anchor.x, p.y + size.y * o.anchor.y}, 5, color);
     }
-    d->AddText({p.x + 8, p.y + 8}, color, o.label);
-    if (o.showTimecode) {
-        char label[32];
+    const float padding=std::max(3.f,ImGui::GetFontSize()*.25f);
+    const float lineHeight=ImGui::GetFontSize()+2*padding;
+    auto overlayText=[&](float top,const char *label) {
+        if (!label || !*label || size.x<=4*padding || size.y<lineHeight+2*padding) return;
+        const ImVec2 minimum{p.x+padding,top};
+        const ImVec2 maximum{std::min(p.x+size.x-padding,minimum.x+ImGui::CalcTextSize(label).x+2*padding),top+lineHeight};
+        auto background=theme.colors.surface;background.w=1;
+        d->AddRectFilled(minimum,maximum,ImGui::GetColorU32(background),theme.metrics.radius);
+        const ImVec4 bounds{minimum.x+padding,minimum.y+padding,maximum.x-padding,maximum.y-padding};
+        d->AddText(ImGui::GetFont(),ImGui::GetFontSize(),{bounds.x,bounds.y},ImGui::GetColorU32(theme.colors.text),label,nullptr,0,&bounds);
+    };
+    overlayText(p.y+padding,o.label);
+    if (o.showTimecode && (!o.label || !*o.label || size.y>=2*lineHeight+3*padding)) {
+        char label[32]{};
         editor::FormatTimecode(time.playhead, time.rate, time.dropFrame, label);
-        d->AddText({p.x + 8, p.y + size.y - 24}, color, label);
+        overlayText(p.y+size.y-lineHeight-padding,label);
     }
     d->PopClipRect();
     ImGui::PopID();
