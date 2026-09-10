@@ -206,8 +206,8 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
             ImGui::SameLine();
         const bool active=static_cast<int>(s.tool)==i;
         bool clicked=false;
-        if (s.icons && i<4) {
-            constexpr IconId toolIcons[]={IconId::SelectPointer,IconId::Move,IconId::Rotate,IconId::Scale};
+        if (s.icons) {
+            constexpr IconId toolIcons[]={IconId::SelectPointer,IconId::Move,IconId::Rotate,IconId::Scale,IconId::UnifiedTransform};
             ImGui::PushID(i);
             if (active) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
             clicked=IconLabelButton("tool",*s.icons,toolIcons[i],tools[i],{16*ImGui::GetFontSize()/14});
@@ -279,12 +279,16 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s",s.labels.overlays);
     if (ImGui::BeginPopup("viewport-overlays")) {
         ImGui::Checkbox(s.labels.axes,&s.axes);
+        if (s.icons) {Icon(*s.icons,IconId::ObjectOrigin,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
         ImGui::Checkbox(s.labels.origins,&s.origins);
+        if (s.icons) {Icon(*s.icons,IconId::SelectionOutline,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
         ImGui::Checkbox(s.labels.selectionOutline,&s.selectionOutline);
         if (s.icons) {Icon(*s.icons,IconId::Camera,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
         ImGui::Checkbox(s.labels.cameraFrame,&s.cameraFrame);
         ImGui::Checkbox(s.labels.safeFrame,&s.safeFrame);
+        if (s.icons) {Icon(*s.icons,IconId::RenderRegion,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
         ImGui::Checkbox(s.labels.renderRegion,&s.renderRegion);
+        if (s.icons) {Icon(*s.icons,IconId::Passepartout,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
         ImGui::Checkbox(s.labels.passepartout,&s.passepartout);
         if (s.icons) {Icon(*s.icons,IconId::Ruler,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
         ImGui::Checkbox(s.labels.measurement,&s.measurement);

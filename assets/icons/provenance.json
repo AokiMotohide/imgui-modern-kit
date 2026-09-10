@@ -2083,5 +2083,80 @@
       1063,
       989
     ]
+  },
+  {
+    "name": "ObjectOrigin",
+    "source": "assets/icons/originals/ObjectOrigin.png",
+    "sha256": "1c2358db28e206398c73f8fe990eb487f0c22edd4b0fbc5c8e08a61218c399c9",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      370,
+      371,
+      884,
+      881
+    ]
+  },
+  {
+    "name": "SelectionOutline",
+    "source": "assets/icons/originals/SelectionOutline.png",
+    "sha256": "9e40331ea83fde7e8feb1b6fa757ac25852ed1e4c8d0eff34e4b027b9431816d",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      319,
+      320,
+      935,
+      934
+    ]
+  },
+  {
+    "name": "RenderRegion",
+    "source": "assets/icons/originals/RenderRegion.png",
+    "sha256": "48ad969b54a0aaeec8d2d00084256d86174e7c24c5a0f803da1a79908a324d5d",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      283,
+      395,
+      971,
+      858
+    ]
+  },
+  {
+    "name": "Passepartout",
+    "source": "assets/icons/originals/Passepartout.png",
+    "sha256": "124fe902a3019ceb38de4a140753da382d4d49edf928bc265eccc45debcb9932",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      201,
+      334,
+      1053,
+      920
+    ]
+  },
+  {
+    "name": "UnifiedTransform",
+    "source": "assets/icons/originals/UnifiedTransform.png",
+    "sha256": "6676d4e5ea59ad7f8704abc852b12f63254c3fe8dddba04206875817909b4f0f",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      410,
+      255,
+      977,
+      921
+    ]
   }
 ]

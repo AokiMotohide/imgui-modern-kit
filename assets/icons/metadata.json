@@ -1,5 +1,5 @@
 {
-  "count": 139,
+  "count": 144,
   "categories": 13,
   "columns": 16,
   "rows": 9,
@@ -12,7 +12,7 @@
     64
   ],
   "padding": 2,
-  "originals": 139,
-  "variants": 834,
+  "originals": 144,
+  "variants": 864,
   "atlases": 6
 }

@@ -148,6 +148,11 @@ enum class IconId : std::uint16_t {
     AdjustmentTrack,
     VertexNormals,
     FaceNormals,
+    ObjectOrigin,
+    SelectionOutline,
+    RenderRegion,
+    Passepartout,
+    UnifiedTransform,
     Count
 };
 struct IconInfo {
