@@ -1,0 +1,4 @@
+Use case: logo-brand. Generate ONE individual technical software icon named TransitionDuration. Subject: two upright endpoint bars, with a horizontal double-headed arrow spanning the space between them; two small outlined clip blocks beneath the arrow, touching at a central cut. Uniform black rounded outline strokes equivalent to 2 units on a 24-unit grid, except explicitly described filled dots. True transparent RGBA background, no checkerboard drawing, no paper texture, no shadows, no lettering. Square canvas with generous margins. Compact optical design legible at 16px. No contact sheet or additional icons.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/TransitionDuration.png

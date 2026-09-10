@@ -24,6 +24,18 @@ TransitionEdit EditTransition(const ClipView &clip, bool end, Tick delta) {
     return result;
 }
 namespace {
+bool TransitionBadge(ImDrawList *draw,const IconAtlas *atlas,TransitionKind kind,bool outgoing,ImVec2 position,float size) {
+    if (!atlas || kind==TransitionKind::None) return false;
+    const float pixels=size*std::max(ImGui::GetIO().DisplayFramebufferScale.x,ImGui::GetIO().DisplayFramebufferScale.y);
+    std::size_t level=0;
+    while (level+1<IconPixelSizes.size() && IconPixelSizes[level]<pixels) ++level;
+    if (!atlas->textures[level].GetTexID()) return false;
+    const auto icon=kind==TransitionKind::Dissolve ? IconId::Dissolve : kind==TransitionKind::Fade ?
+        (outgoing ? IconId::FadeOut : IconId::FadeIn) : IconId::Crossfade;
+    const auto region=GetIconRegion(icon,IconPixelSizes[level]);
+    draw->AddImage(atlas->textures[level],position,{position.x+size,position.y+size},region.uv0,region.uv1,ImGui::GetColorU32(ImGuiCol_Text));
+    return true;
+}
 void EnvelopeAction(editor::EventBuffer &out,const ClipView &clip,std::uint64_t revision,
                     StableId target,Tick tick,double gain,Tick action) {
     if (out.storage.size()-out.count<2) {out.overflow=true;return;}
@@ -888,8 +900,11 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 const ImVec2 handle{handleX,a.y+6*handleScale};
                 const char *badge=type==TransitionKind::None ? "-" : type==TransitionKind::Dissolve ? "D" :
                                   type==TransitionKind::Fade ? "F" : "X";
-                if ((side ? transitionOut : transitionIn)>0)
-                    draw->AddText({handleX+(side ? -14.f : 6.f)*handleScale,a.y},ImGui::GetColorU32(theme.colors.text),badge);
+                if ((side ? transitionOut : transitionIn)>0) {
+                    const ImVec2 position{handleX+(side ? -22.f : 6.f)*handleScale,a.y};
+                    if (!TransitionBadge(draw,s.icons,type,side!=0,position,16*handleScale))
+                        draw->AddText(position,ImGui::GetColorU32(theme.colors.text),badge);
+                }
                 draw->AddLine(side ? ImVec2{handleX,b.y} : a,
                               side ? ImVec2{end,a.y} : ImVec2{handleX,b.y},ImGui::GetColorU32(theme.colors.text),2);
                 draw->AddRect({handle.x-radius,handle.y-radius},{handle.x+radius,handle.y+radius},
@@ -904,7 +919,10 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 }
                 transitionHit |= hovered;
                 if (hovered) {
-                    ImGui::SetTooltip(side ? "Transition out duration" : "Transition in duration");
+                    ImGui::BeginTooltip();
+                    if (s.icons) {Icon(*s.icons,IconId::TransitionDuration,{16*handleScale});ImGui::SameLine();}
+                    ImGui::TextUnformatted(side ? s.labels.transitions.outDuration : s.labels.transitions.inDuration);
+                    ImGui::EndTooltip();
                     if (ImGui::IsMouseClicked(0) && !track.locked && !clip.locked && !s.drag.active && !s.transitionDrag.active) {
                         editor::Value original;original.first=clip.transitionIn;original.last=clip.transitionOut;
                         if (s.transitionDrag.Begin(clip.id,p.revision,editor::EditKind::TransitionDuration,original,editor::CurrentModifiers(),out)) {
@@ -984,7 +1002,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                                     edit.draft.proposed.parent=0;edit.Commit(p.revision,out);
                                 }
                         }
-                TransitionPicker("types",clip,p.revision,out,track.locked);
+                TransitionPicker("types",clip,p.revision,out,track.locked,{s.icons,s.labels.transitions});
                 ImGui::EndPopup();
             }
             ImGui::PopID();
@@ -1299,14 +1317,32 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
 }
 void TransitionPicker(const char *id, const ClipView &clip, std::uint64_t revision,
                       editor::EventBuffer &events, bool trackLocked) {
+    TransitionPicker(id,clip,revision,events,trackLocked,{});
+}
+void TransitionPicker(const char *id,const ClipView &clip,std::uint64_t revision,
+                      editor::EventBuffer &events,bool trackLocked,const TransitionPickerOptions &options) {
     ImGui::PushID(id);
     ImGui::BeginDisabled(clip.locked || trackLocked);
-    const char *names[]={"None","Dissolve","Fade","Crossfade"};
+    const auto &names=options.labels.kinds;
+    if (options.icons) {
+        Icon(*options.icons,IconId::Transition,{16*ImGui::GetFontSize()/14});ImGui::SameLine();
+        ImGui::TextUnformatted(options.labels.title);
+    }
     editor::Value original;original.first=static_cast<Tick>(clip.transitionInKind);
     original.last=static_cast<Tick>(clip.transitionOutKind);
     for (int side=0;side<2;++side) {
         int selected=static_cast<int>(side ? clip.transitionOutKind : clip.transitionInKind);
-        if (ImGui::Combo(side ? "Transition out" : "Transition in",&selected,names,4)) {
+        bool changed=false;
+        if (ImGui::BeginCombo(side ? options.labels.out : options.labels.in,names[selected])) {
+            const IconId icons[]{IconId::Transition,IconId::Dissolve,side ? IconId::FadeOut : IconId::FadeIn,IconId::Crossfade};
+            for (int i=0;i<4;++i) {
+                if (options.icons && i) {Icon(*options.icons,icons[i],{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+                if (ImGui::Selectable(names[i],selected==i)) {selected=i;changed=true;}
+                if (selected==i) ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+        if (changed) {
             if (events.storage.size()-events.count<2) events.overflow=true;
             else {
                 auto proposed=original;

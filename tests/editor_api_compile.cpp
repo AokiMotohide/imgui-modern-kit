@@ -66,6 +66,7 @@ int main() {
     auto roleTheme=MakePrecisionTheme();roleTheme.editor.effectClip=roleTheme.editor.adjustmentClip=roleTheme.editor.groupClip={1,1,1,1};
     (void)editor::EditKind::TransitionDuration;
     video::TransitionPicker("transition types",{},1,events);
+    video::TransitionPicker("transition labels",{},1,events,false,video::TransitionPickerOptions{});
     (void)video::EvaluateEnvelope({},0);
     const char *monitorLines[]={"1920 x 1080","Proxy"};
     video::MonitorOptions monitorOptions;monitorOptions.metadataPreset=video::MonitorMetadataPreset::Details;

@@ -2278,5 +2278,95 @@
       840,
       845
     ]
+  },
+  {
+    "name": "Transition",
+    "source": "assets/icons/originals/Transition.png",
+    "sha256": "5359df2bb2d6ce09488413de95b7a458e5a40c9f784cb959aa0d7eaa31041e73",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      242,
+      312,
+      1011,
+      941
+    ]
+  },
+  {
+    "name": "Dissolve",
+    "source": "assets/icons/originals/Dissolve.png",
+    "sha256": "d459819bc4e072bb2ad1cf5280808e3edc6eb0d6cf54644e870a6e9b8df067fc",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      360,
+      386,
+      894,
+      873
+    ]
+  },
+  {
+    "name": "FadeIn",
+    "source": "assets/icons/originals/FadeIn.png",
+    "sha256": "acb8455c688d298c0e04bc3d74a5cbae4c1b01a0f312a7ec166a981476132aaf",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      236,
+      460,
+      1019,
+      810
+    ]
+  },
+  {
+    "name": "FadeOut",
+    "source": "assets/icons/originals/FadeOut.png",
+    "sha256": "311daa805d667f7911dd6e7f1f32f974b07251c00c8169378609200897ae71b5",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      229,
+      495,
+      1025,
+      812
+    ]
+  },
+  {
+    "name": "Crossfade",
+    "source": "assets/icons/originals/Crossfade.png",
+    "sha256": "6c44f4786071b1395e7d65d9e6e52d1c34e502fc9536c3e689dfaa5ff210777d",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      219,
+      434,
+      1035,
+      821
+    ]
+  },
+  {
+    "name": "TransitionDuration",
+    "source": "assets/icons/originals/TransitionDuration.png",
+    "sha256": "17b363b28b70cb5ec80eb01f391964d7f71105edcb840f19b7908add4259cdae",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      282,
+      451,
+      972,
+      823
+    ]
   }
 ]

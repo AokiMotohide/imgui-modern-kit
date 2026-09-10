@@ -739,3 +739,7 @@ AssetStateに非所有atlasとAssetLabelsを追加し、検索・表示モード
 CurveLabels exposes borrowed UTF-8 labels for key actions, fit, ghost, snapping, scaling, selection, interpolation, handles and extrapolation. Gallery supplies Japanese labels. Curve key actions reuse Keyframe with explicit text, Fit uses FitView and Ghost uses Eye/EyeOff. ComponentStackOptions accepts a borrowed atlas for add/type/lock/reorder/remove controls. UV display and transform controls reuse Grid, Image, Move, Rotate and Scale; bitmap resources remain host-owned.
 
 CurveLabelsはキー操作・Fit・Ghost・snap・scale・選択・補間・接線・外挿のUTF-8ラベルを非所有で受け取り、Galleryは日本語を渡します。キー操作は明示した操作名とKeyframeを共用し、FitはFitView、GhostはEye／EyeOffを使用します。ComponentStackOptionsへ非所有atlasを追加し、追加・種類・lock・並べ替え・削除に接続しました。UVの表示・変換操作はGrid／Image／Move／Rotate／Scaleを再利用し、bitmapリソースはホストが所有します。
+
+The six-argument TransitionPicker overload accepts TransitionPickerOptions for a borrowed atlas and UTF-8 TransitionLabels; the existing five-argument overload is retained. TimelineLabels::transitions supplies the same labels to the clip context picker and duration tooltips. Gallery supplies Japanese strings.
+
+6引数のTransitionPicker overloadは非所有atlasとUTF-8 TransitionLabelsをTransitionPickerOptionsで受け取り、従来の5引数overloadも維持します。TimelineLabels::transitionsはclip contextの種類選択と長さtooltipへ同じラベルを渡します。Galleryは日本語文字列を設定します。

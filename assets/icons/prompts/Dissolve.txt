@@ -1,0 +1,4 @@
+Use case: logo-brand. Generate ONE individual technical software icon named Dissolve. Subject: a thin outlined square video frame containing three columns of small dots that become progressively smaller from left to right; simple density fade symbol. Uniform black rounded outline strokes equivalent to 2 units on a 24-unit grid, except explicitly described filled dots. True transparent RGBA background, no checkerboard drawing, no paper texture, no shadows, no lettering. Square canvas with generous margins. Compact optical design legible at 16px. No contact sheet or additional icons.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/Dissolve.png

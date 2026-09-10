@@ -1,0 +1,4 @@
+Use case: logo-brand. Generate ONE individual technical software icon named Transition. Compact square composition: one small horizontal rounded rectangle clip at upper left, a second small horizontal rounded rectangle clip at lower right; between the two clips a short diagonal arrow pointing down and right. The two clips and arrow together fill an approximately square footprint, not a single horizontal row. Each clip contains no internal detail. Strong clean rounded black outline strokes of 2 units on a 24 unit grid. Optical design legible at 16 pixels with generous transparent margins. True transparent RGBA background, no lettering, no checkerboard drawing, no shadows, no contact sheet.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/Transition.png

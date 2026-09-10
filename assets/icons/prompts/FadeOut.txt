@@ -1,0 +1,4 @@
+Use case: logo-brand. Generate ONE individual technical software icon named FadeOut. Subject: a thin outlined wide rectangular frame containing one clean diagonal ramp falling from the upper left corner to the lower right corner; the triangular region below the ramp has two short horizontal hatch lines. Uniform black rounded outline strokes equivalent to 2 units on a 24-unit grid, except explicitly described filled dots. True transparent RGBA background, no checkerboard drawing, no paper texture, no shadows, no lettering. Square canvas with generous margins. Compact optical design legible at 16px. No contact sheet or additional icons.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/FadeOut.png
