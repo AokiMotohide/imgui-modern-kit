@@ -73,6 +73,8 @@ See [themes and customization](docs/themes.md) for contrast guarantees, font own
 
 ImKit includes action variants, switches, mixed selection, segmented controls, searchable selection, units, setting rows, validation, badges, notifications, toolbars and a tintable icon catalog. Standard Dear ImGui overloads remain available under the same applied theme.
 
+Persistent application chrome and optional host-loaded Inter/Noto Sans JP assets are covered by [application shell components](docs/shell-components.md).
+
 The Editor Suite demonstrates how the same contracts can support timelines, curves and 3D workspaces. It is an evolving advanced example; use its dedicated [module contracts](docs/editor-suite.md), [API reference](docs/editor-api.md) and [validation record](docs/editor-validation.md) instead of treating this README as its specification.
 
 ## Build the Gallery
@@ -123,6 +125,7 @@ The complete evidence and explicit exclusions are maintained in [validation](doc
 | Install and first frame | [Getting started](docs/getting-started.md) | [導入ガイド](docs/getting-started.ja.md) |
 | Presets, accent, fonts, scale | [Themes](docs/themes.md) | [テーマ](docs/themes.ja.md) |
 | Components and recipes | [Components](docs/components.md) | [コンポーネント](docs/components.ja.md) |
+| Application shell and font assets | [Shell components](docs/shell-components.md) | [Shell部品](docs/shell-components.ja.md) |
 | Gallery and real captures | [Gallery](docs/gallery.md) | [Gallery](docs/gallery.ja.md) |
 | Common failures | [Troubleshooting](docs/troubleshooting.md) | [トラブルシューティング](docs/troubleshooting.ja.md) |
 | Architecture and boundaries | [Architecture](docs/architecture.md) | [Architecture](docs/architecture.md) |

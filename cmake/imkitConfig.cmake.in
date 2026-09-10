@@ -1,4 +1,6 @@
 @PACKAGE_INIT@
+set(IMKIT_FONT_ASSET_DIR "${PACKAGE_PREFIX_DIR}/share/imkit/fonts")
+include("${CMAKE_CURRENT_LIST_DIR}/imkitFontAssets.cmake")
 if(NOT DEFINED IMKIT_IMGUI_TARGET OR NOT TARGET "${IMKIT_IMGUI_TARGET}")
     message(FATAL_ERROR "Create the host Dear ImGui target and set IMKIT_IMGUI_TARGET before find_package(imkit).")
 endif()

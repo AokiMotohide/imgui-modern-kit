@@ -15,6 +15,10 @@ option(IMKIT_BUILD_GALLERY "Build the ImKit development gallery" ${IMKIT_IS_TOP_
 option(IMKIT_BUILD_DESIGN_GALLERY "Build the experimental theme comparison gallery" OFF)
 option(IMKIT_BUILD_TESTS "Build the ImKit foundation tests" ${IMKIT_IS_TOP_LEVEL})
 
+set(IMKIT_FONT_ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets/fonts"
+    CACHE INTERNAL "ImKit optional host font assets" FORCE)
+include(cmake/imkitFontAssets.cmake)
+
 if(NOT DEFINED IMKIT_IMGUI_TARGET)
     set(IMKIT_IMGUI_TARGET "" CACHE STRING "Existing Dear ImGui CMake target used by ImKit")
 endif()
@@ -41,7 +45,7 @@ if(NOT TARGET "${IMKIT_IMGUI_TARGET}")
         "Create the Dear ImGui target before adding imgui-modern-kit.")
 endif()
 
-add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/components.cpp src/icons.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp)
+add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/components.cpp src/icons.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp src/shell.cpp)
 add_library(imkit::imkit ALIAS imkit)
 
 target_compile_features(imkit PUBLIC cxx_std_20)
@@ -122,6 +126,8 @@ install(DIRECTORY docs/ DESTINATION docs
 install(DIRECTORY examples/consumer DESTINATION examples)
 install(DIRECTORY assets/icons/ DESTINATION share/imkit/icons
     PATTERN "originals" EXCLUDE PATTERN "rejected" EXCLUDE)
+install(DIRECTORY assets/fonts/ DESTINATION share/imkit/fonts)
+install(FILES cmake/imkitFontAssets.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/imkit)
 install(FILES examples/design_gallery/assets/OFL.txt examples/design_gallery/assets/NotoSansJP-OFL.txt
     DESTINATION examples/design_gallery/assets)
 
@@ -173,8 +179,7 @@ if(IMKIT_BUILD_GALLERY)
             "${IMKIT_GALLERY_BACKEND_TARGET}"
             windowscodecs ole32
     )
-    add_custom_command(TARGET imkit_gallery POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_CURRENT_SOURCE_DIR}/examples/design_gallery/assets" "$<TARGET_FILE_DIR:imkit_gallery>/design-assets")
+    imkit_copy_font_assets(imkit_gallery "design-assets")
 endif()
 
 if(IMKIT_BUILD_DESIGN_GALLERY)
@@ -191,10 +196,7 @@ if(IMKIT_BUILD_DESIGN_GALLERY)
     target_compile_definitions(imkit_design_gallery PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
     target_link_libraries(imkit_design_gallery PRIVATE imkit::imkit
         "${IMKIT_GALLERY_BACKEND_TARGET}" windowscodecs ole32)
-    add_custom_command(TARGET imkit_design_gallery POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_CURRENT_SOURCE_DIR}/examples/design_gallery/assets"
-            "$<TARGET_FILE_DIR:imkit_design_gallery>/design-assets")
+    imkit_copy_font_assets(imkit_design_gallery "design-assets")
 endif()
 
 if(IMKIT_BUILD_TESTS)

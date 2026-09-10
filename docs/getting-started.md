@@ -25,7 +25,11 @@ target_include_directories(host_imgui PUBLIC ${IMGUI_SOURCE_DIR})
 set(IMKIT_IMGUI_TARGET host_imgui)
 add_subdirectory(external/imgui-modern-kit)
 target_link_libraries(your_app PRIVATE imkit::imkit)
+imkit_copy_font_assets(your_app "assets/fonts")
 ```
+
+The copy helper stages the optional Inter and Noto Sans JP files only. The host
+must load them into its own atlas and retain font/context lifetime ownership.
 
 Configure optional ImKit targets before `add_subdirectory` when it is embedded:
 

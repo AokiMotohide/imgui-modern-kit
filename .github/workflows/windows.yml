@@ -1,0 +1,17 @@
+name: windows
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  source-consumer:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build/ci -G "Visual Studio 17 2022" -A x64 -DIMKIT_BUILD_GALLERY=OFF -DIMKIT_BUILD_TESTS=ON
+      - name: Build
+        run: cmake --build build/ci --config Release --parallel
+      - name: Test
+        run: ctest --test-dir build/ci -C Release --output-on-failure

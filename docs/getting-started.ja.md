@@ -25,7 +25,11 @@ target_include_directories(host_imgui PUBLIC ${IMGUI_SOURCE_DIR})
 set(IMKIT_IMGUI_TARGET host_imgui)
 add_subdirectory(external/imgui-modern-kit)
 target_link_libraries(your_app PRIVATE imkit::imkit)
+imkit_copy_font_assets(your_app "assets/fonts")
 ```
+
+copy helperは任意のInter＋Noto Sans JP資産を配置するだけです。atlasへの読込、
+font pointer、Contextの寿命は利用側が所有します。
 
 埋め込み時に不要な開発targetは`add_subdirectory`より前に無効化します。
 

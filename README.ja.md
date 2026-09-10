@@ -73,6 +73,8 @@ for (const auto &preset : imkit::ThemePresets()) {
 
 重要度別action、switch、混在選択、segmented control、検索付き選択、単位入力、設定行、validation、badge、notification、toolbar、色変更可能なicon catalogを提供します。Theme適用中もDear ImGuiの標準overloadを利用できます。
 
+常設アプリShellと、ホストが読み込む任意のInter／Noto Sans JP資産は[アプリケーションShell部品](docs/shell-components.ja.md)を参照してください。
+
 Editor Suiteは同じ契約をTimeline、Curve、3D workspaceへ拡張する発展例です。更新中の詳細仕様をREADMEへ固定せず、[部品契約](docs/editor-suite.md)、[API](docs/editor-api.md)、[検証記録](docs/editor-validation.md)を正本とします。
 
 ## Galleryを実行
@@ -123,6 +125,7 @@ ctest --test-dir build/windows-debug -C Debug -R "imkit.(theme|workflow)" --outp
 | 導入と最初のframe | [導入ガイド](docs/getting-started.ja.md) | [Getting started](docs/getting-started.md) |
 | preset、accent、font、倍率 | [テーマ](docs/themes.ja.md) | [Themes](docs/themes.md) |
 | 部品と実装recipe | [コンポーネント](docs/components.ja.md) | [Components](docs/components.md) |
+| アプリShellとfont資産 | [Shell部品](docs/shell-components.ja.md) | [Shell components](docs/shell-components.md) |
 | Galleryと実capture | [Gallery](docs/gallery.ja.md) | [Gallery](docs/gallery.md) |
 | よくある問題 | [トラブルシューティング](docs/troubleshooting.ja.md) | [Troubleshooting](docs/troubleshooting.md) |
 | 設計と責務 | [Architecture](docs/architecture.md) | [Architecture](docs/architecture.md) |

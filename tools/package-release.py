@@ -18,7 +18,14 @@ version = re.search(r"project\(imgui-modern-kit VERSION ([\d.]+)",
 commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
 if subprocess.check_output(["git", "status", "--porcelain"], cwd=root, text=True).strip():
     raise RuntimeError("Commit the intended source tree before packaging")
-for name in ("imkit.lib", "imkitd.lib"):
+libraries = (
+    "imkit.lib", "imkitd.lib",
+    "imkit_editor_core.lib", "imkit_editor_cored.lib",
+    "imkit_video.lib", "imkit_videod.lib",
+    "imkit_cg.lib", "imkit_cgd.lib",
+    "imkit_preview_opengl3.lib", "imkit_preview_opengl3d.lib",
+)
+for name in libraries:
     if not (stage / "lib" / name).is_file():
         raise RuntimeError("Stage and validate both SDK configurations first")
 
@@ -33,6 +40,11 @@ manifest = {
             "windows_sdk": "10.0.26100.0", "Debug": "/MDd; imkitd.lib",
             "Release": "/MD; imkit.lib",
             "debug_metadata": "Embedded CodeView; source/object paths normalized. Executable sections and relocations unchanged."},
+    "modules": ["imkit", "editor_core", "video", "cg", "editor_suite", "preview_opengl3"],
+    "shell_components": ["AppBar", "WorkspaceHeader", "InspectorSection", "AdvancedSection",
+                         "BottomActionBar", "DiagnosticsDrawer", "ThemePicker"],
+    "font_assets": {"directory": "share/imkit/fonts", "manifest": "share/imkit/fonts/manifest.json",
+                    "ownership": "host-loaded and host-owned"},
     "validation": {"api_overloads": 365, "catalog_categories": 6,
                    "input": "public Dear ImGui IO events; native OS/IME not tested",
                    "consumer": "relocated SDK Debug and Release compile/link/run",
