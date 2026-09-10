@@ -1676,6 +1676,15 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
             s.uvState.imageSize={2,2};
             s.uvState.canvas.selectionPath=s.uvSelectionPath;
             s.uvState.bindings=std::span(s.bindings).first(s.bindingCount);
+            s.uvState.labels={};
+            if (s.japanese) {
+                auto &labels=s.uvState.labels;
+                labels.selection="選択単位";labels.modes={"頂点","辺","面","島"};
+                labels.checker="市松模様";labels.texture="テクスチャ";labels.grid="グリッド";
+                labels.box="矩形選択";labels.lasso="投げ縄選択";labels.coordinates="座標";
+                labels.coordinateModes={"正規化","ピクセル","UDIM"};labels.transform="変換";
+                labels.tools={"移動","回転","拡大縮小"};labels.pivot="ピボット";labels.snap="スナップ間隔";
+            }
             cg::UVEditor("uv", p, texture, s.uvState, s.uvSelection, s.events, theme, {0, 0});
             ImGui::EndTabItem();
         }

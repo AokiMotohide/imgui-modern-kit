@@ -2158,5 +2158,65 @@
       977,
       921
     ]
+  },
+  {
+    "name": "SelectVertex",
+    "source": "assets/icons/originals/SelectVertex.png",
+    "sha256": "13286ff69d756207c4226f203a4afe099546c439ac46c1e4181fbd56bafa6267",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      247,
+      305,
+      1007,
+      953
+    ]
+  },
+  {
+    "name": "SelectEdge",
+    "source": "assets/icons/originals/SelectEdge.png",
+    "sha256": "00034e9d5e705da3e3617575f12fee5ec95b3ff0df56cfbcb650daa01bb8aead",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      220,
+      290,
+      1017,
+      965
+    ]
+  },
+  {
+    "name": "SelectFace",
+    "source": "assets/icons/originals/SelectFace.png",
+    "sha256": "63558d48b7100dc99f9642fe4c607fc295afb08984db37cceeb14beae18d5dd1",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      260,
+      327,
+      994,
+      949
+    ]
+  },
+  {
+    "name": "SelectIsland",
+    "source": "assets/icons/originals/SelectIsland.png",
+    "sha256": "38742d70c3e0a2209fc1d91b4400ea663217ba6250fcb4a38731b9d7d5e27f75",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      260,
+      423,
+      995,
+      825
+    ]
   }
 ]

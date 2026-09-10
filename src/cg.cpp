@@ -1100,38 +1100,51 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
     ImGui::PushID(id);
     if (view.hovered && ImGui::IsMouseReleased(1) && !s.drag.active) ImGui::OpenPopup("UV selection options");
     if (ImGui::BeginPopup("UV selection options")) {
-        int selectionMode=static_cast<int>(s.selection);
-        if (ImGui::Combo("Selection",&selectionMode,"Vertex\0Edge\0Face\0Island\0")) {
-            s.selection=static_cast<UVSelection>(selectionMode);selection.Clear();
+        const int selectionMode=static_cast<int>(s.selection);
+        if (ImGui::BeginCombo(s.labels.selection,s.labels.modes[selectionMode])) {
+            constexpr IconId icons[]{IconId::SelectVertex,IconId::SelectEdge,IconId::SelectFace,IconId::SelectIsland};
+            for (int mode=0;mode<4;++mode) {
+                ImGui::PushID(mode);
+                if (s.icons) {Icon(*s.icons,icons[mode],{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+                if (ImGui::Selectable(s.labels.modes[mode],selectionMode==mode)) {
+                    s.selection=static_cast<UVSelection>(mode);selection.Clear();
+                }
+                if (selectionMode==mode) ImGui::SetItemDefaultFocus();
+                ImGui::PopID();
+            }
+            ImGui::EndCombo();
         }
-        ImGui::Checkbox("Checker",&s.checker);
-        ImGui::Checkbox("Texture",&s.showTexture);
-        ImGui::Checkbox("Grid",&s.grid);
+        ImGui::Checkbox(s.labels.checker,&s.checker);
+        ImGui::Checkbox(s.labels.texture,&s.showTexture);
+        ImGui::Checkbox(s.labels.grid,&s.grid);
         if (s.icons) {
             ImGui::BeginDisabled(s.drag.active || s.canvas.selecting);
             for (int mode=0;mode<2;++mode) {
                 if (mode) ImGui::SameLine();
                 const bool active=s.lassoSelect==(mode==1);
-                const char *label=mode ? (active ? "Lasso select (active)" : "Lasso select") :
-                                         (active ? "Box select (active)" : "Box select");
+                const char *label=mode ? s.labels.lasso : s.labels.box;
                 if (active) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
                 if (IconLabelButton(mode ? "lasso" : "box",*s.icons,
                                     mode ? IconId::LassoSelect : IconId::BoxSelect,label,
                                     {16*ImGui::GetFontSize()/14})) s.lassoSelect=mode==1;
-                if (active) ImGui::PopStyleColor();
+                if (active) {
+                    ImGui::PopStyleColor();
+                    const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
+                    ImGui::GetWindowDrawList()->AddLine({a.x+3,b.y-2},{b.x-3,b.y-2},ImGui::GetColorU32(ImGuiCol_Text),2);
+                }
             }
             ImGui::EndDisabled();
-        } else ImGui::Checkbox("Lasso selection",&s.lassoSelect);
+        } else ImGui::Checkbox(s.labels.lasso,&s.lassoSelect);
         int coordinates=static_cast<int>(s.coordinates);
-        if (ImGui::Combo("Coordinates",&coordinates,"Normalized\0Pixel\0UDIM\0"))
+        if (ImGui::Combo(s.labels.coordinates,&coordinates,s.labels.coordinateModes.data(),3))
             s.coordinates=static_cast<UVCoordinates>(coordinates);
         int tool=s.tool==TransformTool::Rotate?1:s.tool==TransformTool::Scale?2:0;
-        if (ImGui::Combo("Transform",&tool,"Move\0Rotate\0Scale\0"))
+        if (ImGui::Combo(s.labels.transform,&tool,s.labels.tools.data(),3))
             s.tool=tool==1?TransformTool::Rotate:tool==2?TransformTool::Scale:TransformTool::Translate;
         double pivot[2]={s.pivot.x,s.pivot.y};
-        if (ImGui::DragScalarN("Pivot",ImGuiDataType_Double,pivot,2,.01f)) s.pivot={pivot[0],pivot[1]};
+        if (ImGui::DragScalarN(s.labels.pivot,ImGuiDataType_Double,pivot,2,.01f)) s.pivot={pivot[0],pivot[1]};
         const double minimum=0,maximum=1;
-        ImGui::DragScalar("Snap step",ImGuiDataType_Double,&s.snap,.001f,&minimum,&maximum,"%.3f",ImGuiSliderFlags_AlwaysClamp);
+        ImGui::DragScalar(s.labels.snap,ImGuiDataType_Double,&s.snap,.001f,&minimum,&maximum,"%.3f",ImGuiSliderFlags_AlwaysClamp);
         ImGui::EndPopup();
     }
     ImGui::PopID();

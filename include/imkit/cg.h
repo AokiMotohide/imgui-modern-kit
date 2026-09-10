@@ -204,6 +204,14 @@ struct UVProvider {
     std::span<const UVVertex> (*selected)(void *, std::span<const StableId>, UVSelection) = nullptr;
     std::span<const editor::SelectablePoint> (*selectionQuery)(void *, editor::Rect, UVSelection) = nullptr;
 };
+struct UVLabels {
+    const char *selection="Selection",*checker="Checker",*texture="Texture",*grid="Grid";
+    std::array<const char *,4> modes{"Vertex","Edge","Face","Island"};
+    const char *box="Box select",*lasso="Lasso select",*coordinates="Coordinates",*transform="Transform";
+    std::array<const char *,3> coordinateModes{"Normalized","Pixel","UDIM"};
+    std::array<const char *,3> tools{"Move","Rotate","Scale"};
+    const char *pivot="Pivot",*snap="Snap step";
+};
 struct UVState {
     editor::CanvasState canvas{{-.1, -.1}, {300, 300}};
     editor::Transaction drag;
@@ -221,6 +229,7 @@ struct UVState {
     editor::Point pivot{.5, .5};
     editor::CanvasView view{};
     const IconAtlas *icons=nullptr; // Non-owning host atlas for selection controls.
+    UVLabels labels; // Borrowed UTF-8 display strings.
 };
 editor::Point TransformUV(editor::Point uv, editor::Point pivot, editor::Point translation,
                           double rotationRadians, editor::Point scale, double snap = 0);
