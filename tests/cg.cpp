@@ -570,7 +570,7 @@ int main() {
     };
     nameFrame();nameFrame();
     auto openRename=[&](int item=1) {
-        io.AddMousePosEvent(nameOrigin.x+35,nameOrigin.y+ImGui::GetFrameHeightWithSpacing()+10);nameFrame();
+        io.AddMousePosEvent(nameOrigin.x+35,nameOrigin.y+2*ImGui::GetFrameHeightWithSpacing()+10);nameFrame();
         io.AddMouseButtonEvent(1,true);nameFrame();io.AddMouseButtonEvent(1,false);nameFrame();nameFrame();
         io.AddMousePosEvent(790,590);nameFrame();
         io.AddKeyEvent(ImGuiKey_Home,true);nameFrame();io.AddKeyEvent(ImGuiKey_Home,false);nameFrame();

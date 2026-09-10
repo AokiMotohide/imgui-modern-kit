@@ -932,7 +932,7 @@ int VerifyInspectorModel() {
     state.events.Push({wireComponent,state.revision,editor::Phase::Commit,editor::EditKind::Reorder,{},
         {0,0,1,state.objects[1].id}});state.ApplyEvents();
     state.events.Push({wireComponent,state.revision,editor::Phase::Commit,editor::EditKind::Toggle,{}, {0,0,0,0,0,0}});state.ApplyEvents();
-    state.RebuildOutlinerRows();check(state.outlinerRows.size()==4,"Outliner expanded hierarchy includes all rows");
+    state.RebuildOutlinerRows();check(state.outlinerRows.size()==state.objects.size()+state.components.size(),"Outliner expanded hierarchy includes all rows");
     state.objects[0].expanded=false;state.RebuildOutlinerRows();
     check(state.outlinerRows.size()==1,"Outliner collapse hides descendants");
     std::snprintf(state.outliner.search,sizeof(state.outliner.search),"Camera");state.RebuildOutlinerRows();
@@ -941,7 +941,7 @@ int VerifyInspectorModel() {
     state.outliner.search[0]=0;state.objects[0].expanded=true;
     const auto oldParent=state.objects[3].parent;state.objects[3].parent=state.objects[1].id;
     state.RebuildOutlinerRows();
-    check(state.outlinerRows.size()==4 && state.outlinerRows[2].id==state.objects[3].id &&
+    check(state.outlinerRows.size()==state.objects.size()+state.components.size() && state.outlinerRows[2].id==state.objects[3].id &&
           state.outlinerRows[2].depth==2 && state.outlinerRows[1].hasChildren,"Outliner rebuild reflects reparented hierarchy");
     state.objects[3].parent=oldParent;
     const auto initialOrder=state.objectOrder;
@@ -1056,6 +1056,20 @@ int VerifyInspectorModel() {
     state.events.Push({stripId,state.revision,editor::Phase::Commit,editor::EditKind::StripSettings,{},
         {0,0,1,0,2,3,.4}});state.ApplyEvents();
     check(!state.animationStrips[1].locked,"locked strip accepts explicit unchanged-settings unlock");
+    {
+        auto tree=std::make_unique<gallery::EditorWorkspaces>();tree->Initialize();
+        tree->outliner.kindFilter=static_cast<int>(cg::ObjectKind::Modifier);tree->RebuildOutlinerRows();
+        check(tree->outlinerRows.size()==3 && tree->outlinerRows.back().kind==cg::ObjectKind::Modifier,
+              "Outliner modifier filter preserves collection and owner path");
+        const auto sourceComponent=tree->components[1].view.id;
+        tree->events.Push({sourceComponent,tree->revision,editor::Phase::Commit,editor::EditKind::Duplicate});tree->ApplyEvents();
+        const auto duplicateComponent=tree->components.back().view.id;
+        check(duplicateComponent!=sourceComponent && tree->objectSelection.active==duplicateComponent,
+              "Outliner component duplicate owns a new selected stable ID");
+        tree->events.Push({duplicateComponent,tree->revision,editor::Phase::Commit,editor::EditKind::Reparent,{},
+            {0,0,0,tree->objects[2].id}});tree->ApplyEvents();
+        check(tree->components.back().view.owner==tree->objects[2].id,"Outliner component reparent updates stack owner");
+    }
     const auto sourceId=state.objects[1].id;const auto sourceX=state.objects[1].transform.translation.x;
     const auto meshCountBeforeDuplicate=state.BuildSceneMeshes().size();
     state.events.Push({sourceId,state.revision,editor::Phase::Commit,editor::EditKind::Duplicate});state.ApplyEvents();
@@ -1154,7 +1168,8 @@ int main(int argc, char **argv) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_VISIBLE, capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls || verifyLinkedClips || verifyNormals ? GLFW_FALSE : GLFW_TRUE);
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
-    Host h;
+    auto hostStorage=std::make_unique<Host>();
+    auto &h=*hostStorage;
     h.automated = capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls || verifyLinkedClips || verifyNormals;
     h.window = glfwCreateWindow(1920, 1440, "ImKit Precision Layers", nullptr, nullptr);
     if (!h.window) {

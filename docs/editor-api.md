@@ -467,3 +467,17 @@ labels for Video/CG property panels and the component stack.
 `PropertyState::labels`と`ComponentStackOptions::labels`は見出し、状態接尾辞、
 context操作、keyframe tooltipの非所有UTF-8文字列を受けます。GalleryのVideo／CG
 propertyとcomponent stackは日本語切替へ接続しています。
+
+### Typed Outliner rows / Outlinerの行種別
+
+`ObjectView::kind` distinguishes object, collection, mesh, camera, light, component
+and modifier rows. `OutlinerState::kindFilter` (-1 for all) is applied by the host
+alongside text/state filters. Gallery includes component/renderer-override children
+and their ancestors, supports component rename/duplicate/reorder/reparent, and maps
+component selection to its owner's Inspector. Component restriction fields map
+visible to enabled and locked to component lock; unsupported restrictions are disabled.
+
+`ObjectView::kind`はObject／Collection／Mesh／Camera／Light／Component／Modifierを区別します。
+`kindFilter`（-1は全種類）をホストが検索・状態filterと併せて適用します。Galleryはcomponentと
+描画modifierを子行へ含め、名前変更・複製・並べ替え・所有対象変更を適用します。
+component選択では所有objectのInspectorを表示し、表示制限は有効状態、lockはcomponent lockへ対応します。
