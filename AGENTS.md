@@ -18,6 +18,7 @@
 
 ## 実装境界
 
+- 複数の制作ツールで再利用できるUIだけを本リポジトリへ置く。利用製品固有の型、用語、renderer adapter、保存処理はホスト側へ残す。
 - ライブラリはDear ImGuiのContext、backend、renderer、font、texture、永続化、workerを所有・初期化しない。Themeと状態の寿命もホストが管理する。
 - 公開overload、戻り値、default引数、ID、focus、callback、disabled、Begin/End、clipping、入力編集を維持する。入力widgetを独自挙動で置き換えない。
 - 公開APIは `include/imkit/`、実装は `src/` に分離する。非所有参照を所有扱いせず、scopeは対象Contextより先に破棄する。

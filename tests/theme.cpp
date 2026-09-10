@@ -55,14 +55,18 @@ int main() {
                                    e.proxy,e.error,e.locked,e.effectClip,e.adjustmentClip,e.groupClip};
         if (!std::all_of(editor.begin(), editor.end(), Valid))
             return 7;
+        if (imkit::ThemePresetFromId(info.id) != info.preset)
+            return 8;
     }
+    if (imkit::ThemePresetFromId("Graphite") || imkit::ThemePresetFromId("unknown"))
+        return 9;
     const auto light = imkit::MakeTheme(imkit::ThemePreset::PrecisionLight);
     const auto legacyLight = imkit::MakePrecisionTheme(imkit::ColorScheme::Light);
     const auto dark = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
     const auto legacyDark = imkit::MakePrecisionTheme(imkit::ColorScheme::Dark);
     if (light.colors.canvas.x != legacyLight.colors.canvas.x || dark.colors.canvas.x != legacyDark.colors.canvas.x ||
         light.colors.accent.x != legacyLight.colors.accent.x || dark.colors.accent.x != legacyDark.colors.accent.x)
-        return 8;
-    std::puts("12 theme presets and legacy factories validated");
+        return 10;
+    std::puts("12 theme presets, stable IDs and legacy factories validated");
     return 0;
 }
