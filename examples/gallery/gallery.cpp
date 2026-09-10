@@ -448,6 +448,173 @@ void Composites(GalleryState &s) {
     TextWrapped("Values and notifications belong to the host. Font files are optional catalog assets. No "
                 "operating-system font discovery or hidden context is used.");
 }
+struct PageInfo {
+    int page;
+    const char *group;
+    const char *title;
+    const char *keywords;
+};
+constexpr PageInfo Pages[] = {
+    {-1,"Start","Home","start overview quick integration design"},
+    {0,"Components","Actions & selection","button checkbox radio selectable action"},
+    {1,"Components","Numeric & units","slider drag range scalar vector unit"},
+    {2,"Components","Input, color & media","text input color image plot validation"},
+    {5,"Components","Composite controls","switch segment search badge notification toolbar japanese"},
+    {3,"Patterns","Hierarchy & data","tree table tabs sort drag drop"},
+    {4,"Patterns","Overlay & layout","popup modal tooltip docking settings"},
+    {10,"Themes & Icons","Theme presets","theme palette color accent light dark contrast"},
+    {6,"Themes & Icons","Icon catalog","icon glyph atlas camera projector"},
+    {7,"Editor Examples","Editor Core","ruler graph property asset animation"},
+    {8,"Editor Examples","Video Editor","timeline video audio transition fade"},
+    {9,"Editor Examples","3D Editor","viewport scene outliner gizmo cg"},
+};
+bool ContainsInsensitive(std::string_view text, std::string_view query) {
+    if (query.empty()) return true;
+    auto same=[](char a,char b) {
+        return std::tolower(static_cast<unsigned char>(a))==std::tolower(static_cast<unsigned char>(b));
+    };
+    return std::search(text.begin(),text.end(),query.begin(),query.end(),same)!=text.end();
+}
+bool PageMatches(const PageInfo &page,const char *query) {
+    return ContainsInsensitive(page.title,query)||ContainsInsensitive(page.group,query)||
+           ContainsInsensitive(page.keywords,query);
+}
+void ApplyPreset(GalleryState &s,int index) {
+    const auto presets=ThemePresets();
+    index=std::clamp(index,0,static_cast<int>(presets.size())-1);
+    const auto fonts=s.fonts;
+    const bool motion=s.theme.motion.enabled;
+    s.presetIndex=index;
+    s.theme=MakeTheme(presets[index].preset);
+    s.theme.fonts=fonts;
+    s.theme.motion.enabled=motion;
+    s.dark=s.theme.scheme==ColorScheme::Dark;
+}
+const char *PageCode(int page) {
+    switch(page) {
+    case 0:return "if (imkit::ActionButton(\"Apply\", imkit::ActionVariant::Primary, {}, {&theme})) {\n    SaveSettings();\n}";
+    case 1:return "imkit::DragFloatWithUnit(\"Exposure\", &exposure, \"EV\", 0.01f, -8.0f, 8.0f);";
+    case 2:return "imkit::InputTextWithHint(\"Name\", \"Display name\", name, sizeof(name));\nimkit::ValidationMessage(\"Required\", name[0] == 0, &theme);";
+    case 3:return "if (imkit::BeginTable(\"Items\", 3, ImGuiTableFlags_RowBg)) {\n    // Host-owned rows and selection.\n    imkit::EndTable();\n}";
+    case 4:return "if (imkit::BeginPopup(\"Actions\")) {\n    imkit::OverlayDecoration(theme);\n    imkit::EndPopup();\n}";
+    case 5:return "imkit::Toggle(\"Enabled\", &enabled, {&theme, &animation});\nimkit::StatusBadge(\"Ready\", imkit::StatusKind::Success, &theme);";
+    case 6:return "imkit::IconButton(icons, imkit::IconId::Settings, \"Settings\");";
+    case 10:return "auto theme = imkit::MakeTheme(imkit::ThemePreset::Ocean);\nimkit::SetAccent(theme, ImVec4(0.35f, 0.78f, 0.84f, 1.0f));\nimkit::ApplyTheme(theme);";
+    default:return "// Editor data, selection and undo stay in the host.\n// ImKit renders non-owning views and emits typed edit requests.";
+    }
+}
+void CodePanel(GalleryState &s,int page) {
+    SeparatorText("Use it / コード例");
+    BeginChild("Code sample",{0,88*s.scale},ImGuiChildFlags_Borders);
+    PushStyleColor(ImGuiCol_Text,s.theme.colors.muted);
+    TextUnformatted(PageCode(page));
+    PopStyleColor();
+    EndChild();
+    if(Button("Copy code##page")) {
+        SetClipboardText(PageCode(page));
+        ++s.copyClicks;
+    }
+    Record(s,"copy-code");
+    SameLine();TextDisabled("Host-owned state · native Dear ImGui behavior");
+}
+void PageIntro(GalleryState &s,int page) {
+    const auto found=std::find_if(std::begin(Pages),std::end(Pages),[&](const auto &entry){return entry.page==page;});
+    if(found!=std::end(Pages)) {
+        PushFont(s.fonts.emphasis,26*s.scale);TextUnformatted(found->title);PopFont();
+    }
+    const char *purpose="Live public API specimen. Interact with every state, then copy the minimal host-side pattern.";
+    if(page>=7&&page<=9) purpose="Advanced workspace example. Data, selection, undo and processing remain host-owned.";
+    if(page==10) purpose="Choose a complete semantic preset, then customize the accent or individual palette roles.";
+    TextWrapped("%s",purpose);
+    if(page!=10) CodePanel(s,page);
+    Spacing();Separator();Spacing();
+}
+void Home(GalleryState &s) {
+    PushFont(s.fonts.emphasis,36*s.scale);
+    TextUnformatted("Build focused tools, not another UI framework.");
+    PopFont();
+    TextColored(s.theme.colors.accent,"Precision Layers for Dear ImGui");
+    TextWrapped("A compact C++20 extension library for modern native controls, semantic themes and reusable editor surfaces. Your application keeps its renderer, context, data and frame lifecycle.");
+    Spacing();
+    if(ActionButton("Explore components",ActionVariant::Primary,{160*s.scale,0},{&s.theme,&s.animation})) s.page=0;
+    Record(s,"home-components");SameLine();
+    if(Button("Browse 12 themes")) s.page=10;
+    Record(s,"home-themes");SameLine();
+    if(Button("Open editor examples")) s.page=8;
+    Record(s,"home-editors");
+    SeparatorText("30-second start");
+    CodePanel(s,10);
+    SeparatorText("Designed for real native tools");
+    if(BeginTable("Home cards",3,ImGuiTableFlags_SizingStretchSame)) {
+        const char *titles[]={"Native by default","Explicit ownership","From controls to editors"};
+        const char *bodies[]={"Public Dear ImGui behavior, IDs, focus and input stay intact.",
+                              "No hidden context, renderer, worker, font loader or persistence.",
+                              "Use small components alone or compose data-heavy production surfaces."};
+        for(int i=0;i<3;++i) {TableNextColumn();BeginChild(titles[i],{0,112*s.scale},ImGuiChildFlags_Borders);
+            TextColored(s.theme.colors.accent,"%s",titles[i]);TextWrapped("%s",bodies[i]);EndChild();}
+        EndTable();
+    }
+    SeparatorText("Theme preview");
+    const auto presets=ThemePresets();
+    for(int i=0;i<static_cast<int>(presets.size());++i) {
+        if(i) SameLine();
+        const auto preview=MakeTheme(presets[i].preset);
+        PushID(i);if(ColorButton(presets[i].displayName.data(),preview.colors.accent,0,{28*s.scale,28*s.scale})) ApplyPreset(s,i);
+        if(IsItemHovered()) SetTooltip("%s",presets[i].displayName.data());PopID();
+    }
+}
+void Themes(GalleryState &s) {
+    Heading(s,"Theme presets / 配色プリセット");
+    TextWrapped("Every preset initializes component and editor semantic colors. Store the preset ID or a Theme copy in the host; ImKit never writes settings.");
+    RadioButton("All",&s.presetFilter,0);SameLine();RadioButton("Light",&s.presetFilter,1);SameLine();RadioButton("Dark",&s.presetFilter,2);
+    const auto presets=ThemePresets();
+    if(BeginTable("Preset grid",3,ImGuiTableFlags_SizingStretchSame|ImGuiTableFlags_BordersInnerV)) {
+        for(int i=0;i<static_cast<int>(presets.size());++i) {
+            const auto &info=presets[i];
+            if(s.presetFilter==1&&info.scheme!=ColorScheme::Light) continue;
+            if(s.presetFilter==2&&info.scheme!=ColorScheme::Dark) continue;
+            const auto preview=MakeTheme(info.preset);
+            TableNextColumn();PushID(i);BeginGroup();
+            ColorButton("canvas",preview.colors.canvas,ImGuiColorEditFlags_NoTooltip,{28*s.scale,28*s.scale});SameLine(0,3);
+            ColorButton("surface",preview.colors.surface,ImGuiColorEditFlags_NoTooltip,{28*s.scale,28*s.scale});SameLine(0,3);
+            ColorButton("accent",preview.colors.accent,ImGuiColorEditFlags_NoTooltip,{28*s.scale,28*s.scale});SameLine();
+            if(Selectable(info.displayName.data(),s.presetIndex==i,0,{0,32*s.scale})) ApplyPreset(s,i);
+            if(info.preset==ThemePreset::Ocean) Record(s,"preset-ocean");
+            TextDisabled("%s · %s",info.id.data(),info.scheme==ColorScheme::Dark?"Dark":"Light");
+            EndGroup();PopID();
+        }
+        EndTable();
+    }
+    SeparatorText("Customize the selected preset");
+    ImVec4 accent=s.theme.colors.accent;
+    if(ColorEdit4("Accent",&accent.x)) SetAccent(s.theme,accent);
+    SameLine();if(Button("Reset preset")) ApplyPreset(s,s.presetIndex);
+    SameLine();Checkbox("Edit every palette role",&s.palette);
+    CodePanel(s,10);
+}
+void Navigation(GalleryState &s,bool compact) {
+    if(compact) {
+        SetNextItemWidth(260*s.scale);
+        const auto current=std::find_if(std::begin(Pages),std::end(Pages),[&](auto &p){return p.page==s.page;});
+        const char *preview=current==std::end(Pages)?"Home":current->title;
+        if(BeginCombo("##page",preview)) {
+            for(const auto &page:Pages) if(Selectable(page.title,s.page==page.page)) s.page=page.page;
+            EndCombo();
+        }
+        Record(s,"compact-navigation");
+        return;
+    }
+    BeginChild("Navigation",{232*s.scale,0},ImGuiChildFlags_Borders);
+    const char *group=nullptr;
+    for(const auto &page:Pages) {
+        if(!PageMatches(page,s.gallerySearch)) continue;
+        if(!group||std::strcmp(group,page.group)!=0) {group=page.group;SeparatorText(group);}
+        if(Selectable(page.title,s.page==page.page)) s.page=page.page;
+        if(page.page==0) Record(s,"nav-components");
+        if(page.page==10) Record(s,"nav-themes");
+    }
+    EndChild();
+}
 } // namespace
 void Show(GalleryState &s) {
     s.probes.clear();
@@ -456,53 +623,32 @@ void Show(GalleryState &s) {
     ThemeScope scope(s.theme, s.scale);
     SetNextWindowPos({0, 0});
     SetNextWindowSize(ImGui::GetIO().DisplaySize);
-    Begin("Precision Layers catalog", nullptr,
-          ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar);
-    if(s.page>=8) {
-        const char *pages[]={"Basic","Numeric","Input","Hierarchy","Overlay","Composites","Icons","Editor Core","Video Editor","3D Editor"};
-        SetNextItemWidth(180*s.scale);Combo("##workspace",&s.page,pages,10);
-        SameLine();TextDisabled("Precision Layers %s",IMKIT_VERSION);
-        SameLine();if(Button(s.editors.japanese ? "表示設定" : "Appearance")) OpenPopup("editor-appearance");
-        if(BeginPopup("editor-appearance")) {
-            if(Checkbox("Dark",&s.dark)) s.theme=MakePrecisionTheme(s.dark ? ColorScheme::Dark : ColorScheme::Light);
-            Checkbox("日本語",&s.editors.japanese);SetNextItemWidth(160);SliderFloat("Scale",&s.scale,1,1.5f,"%.2f");
-            EndPopup();
+    Begin("Precision Layers catalog",nullptr,ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_NoSavedSettings);
+    PushFont(s.fonts.emphasis,22*s.scale);TextUnformatted("ImKit · Precision Layers");PopFont();
+    SameLine();TextDisabled("%s",IMKIT_VERSION);
+    SameLine(0,24*s.scale);SetNextItemWidth(300*s.scale);
+    InputTextWithHint("##gallery-search","Search components, APIs and use cases",s.gallerySearch,sizeof(s.gallerySearch));
+    Record(s,"gallery-search");SameLine();
+    if(Button("Appearance")) OpenPopup("gallery-appearance");
+    if(BeginPopup("gallery-appearance")) {
+        const auto presets=ThemePresets();
+        if(BeginCombo("Preset",presets[s.presetIndex].displayName.data())) {
+            for(int i=0;i<static_cast<int>(presets.size());++i)
+                if(Selectable(presets[i].displayName.data(),i==s.presetIndex)) ApplyPreset(s,i);
+            EndCombo();
         }
-        Separator();
-    } else {
-    PushFont(s.fonts.emphasis, 30);
-    TextUnformatted("Precision Layers");
-    PopFont();
-    TextDisabled("A modern component system for Dear ImGui / public API catalog");
-    Spacing();
-    const char *pages[] = {"Basic / Selection", "Numeric / Units",  "Input / Media",
-                           "Hierarchy / Table", "Overlay / Layout", "Composites / 日本語", "Icons", "Editor Core", "Video Editor", "CG Editor"};
-    for (int i = 0; i < 10; ++i) {
-        if (i)
-            SameLine();
-        PushID(i);
-        if (Button(pages[i]))
-            s.page = i;
-        PopID();
+        Checkbox("Animation",&s.theme.motion.enabled);SetNextItemWidth(160);SliderFloat("Scale",&s.scale,1,1.5f,"%.2f");
+        Checkbox("日本語",&s.editors.japanese);EndPopup();
     }
     Separator();
-    if (Checkbox("Dark", &s.dark))
-        s.theme = MakePrecisionTheme(s.dark ? ColorScheme::Dark : ColorScheme::Light);
-    SameLine();
-    Checkbox("Palette", &s.palette);
-    SameLine();
-    Checkbox("Animation", &s.theme.motion.enabled);
-    SameLine();
-    SetNextItemWidth(160);
-    SliderFloat("Scale", &s.scale, 1, 1.5f, "%.2f");
-    TextDisabled("Precision Layers %s / live public imkit API / Inter + Japanese fallback", IMKIT_VERSION);
-    Separator();
-    }
-    BeginChild("Component panel", {s.page >= 6 ? GetContentRegionAvail().x
-                                              : std::min(GetContentRegionAvail().x, 1120 * s.scale), 0},
-               ImGuiChildFlags_Borders, s.page == 4 ? ImGuiWindowFlags_MenuBar : 0);
+    const bool compact=GetContentRegionAvail().x<920*s.scale;
+    if(compact) {Navigation(s,true);Separator();}
+    else {Navigation(s,false);SameLine();}
+    BeginChild("Content",{0,0},ImGuiChildFlags_Borders,s.page==4?ImGuiWindowFlags_MenuBar:0);
     PushItemWidth(420 * s.scale);
+    if(s.page==-1) Home(s); else PageIntro(s,s.page);
     switch (s.page) {
+    case -1: break;
     case 0:
         Basic(s);
         break;
@@ -535,6 +681,9 @@ void Show(GalleryState &s) {
     case 9:
         s.editors.icons = &s.icons;
         CGWorkspace(s.editors, s.theme, s.texture);
+        break;
+    case 10:
+        Themes(s);
         break;
     }
     PopItemWidth();

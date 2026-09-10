@@ -14,6 +14,27 @@ ImVec4 Alpha(ImVec4 c, float a) {
     c.w = a;
     return c;
 }
+Palette Colors(unsigned canvas, unsigned surface, unsigned input, unsigned raised, unsigned text, unsigned muted,
+               unsigned border, unsigned accent, unsigned destructive, unsigned onDestructive, unsigned success,
+               unsigned warning) {
+    return {Hex(canvas), Hex(surface), Hex(input), Hex(raised), Hex(text), Hex(muted), Hex(border),
+            Hex(accent), {}, {}, {}, Hex(destructive), Hex(onDestructive), Hex(success), Hex(warning)};
+}
+Theme BuildTheme(ColorScheme scheme, Palette colors) {
+    Theme t;
+    t.scheme = scheme;
+    t.colors = colors;
+    SetAccent(t, t.colors.accent);
+    const bool dark = scheme == ColorScheme::Dark;
+    t.editor = {t.colors.canvas,t.colors.border,t.colors.muted,t.colors.surface,
+                t.colors.accent,t.colors.success,t.colors.warning,t.colors.text,t.colors.warning,
+                t.colors.warning,t.colors.focus,Hex(0xdb6565),Hex(0x5cab72),Hex(0x6699e0),
+                t.colors.accent,t.colors.success,t.colors.destructive,t.colors.warning,
+                t.colors.destructive,t.colors.muted,
+                Hex(dark ? 0xc791c9 : 0x864c8e),Hex(dark ? 0x72b7c6 : 0x347080),
+                Hex(dark ? 0x9ca2b0 : 0x626979)};
+    return t;
+}
 ImGuiStyle Style(const Theme &t, float scale) {
     IM_ASSERT(scale > 0 && std::isfinite(scale));
     ImGuiStyle s; // Always derive from unscaled values, never the last application.
@@ -125,33 +146,67 @@ ImGuiStyle Style(const Theme &t, float scale) {
     return s;
 }
 } // namespace
+std::span<const ThemePresetInfo> ThemePresets() noexcept {
+    static constexpr std::array presets = {
+        ThemePresetInfo{ThemePreset::PrecisionLight, "precision-light", "Precision Light", ColorScheme::Light},
+        ThemePresetInfo{ThemePreset::PrecisionDark, "precision-dark", "Precision Dark", ColorScheme::Dark},
+        ThemePresetInfo{ThemePreset::Graphite, "graphite", "Graphite", ColorScheme::Dark},
+        ThemePresetInfo{ThemePreset::Midnight, "midnight", "Midnight", ColorScheme::Dark},
+        ThemePresetInfo{ThemePreset::Ocean, "ocean", "Ocean", ColorScheme::Dark},
+        ThemePresetInfo{ThemePreset::Forest, "forest", "Forest", ColorScheme::Dark},
+        ThemePresetInfo{ThemePreset::WarmSand, "warm-sand", "Warm Sand", ColorScheme::Light},
+        ThemePresetInfo{ThemePreset::Rose, "rose", "Rose", ColorScheme::Light},
+        ThemePresetInfo{ThemePreset::Violet, "violet", "Violet", ColorScheme::Dark},
+        ThemePresetInfo{ThemePreset::Solar, "solar", "Solar", ColorScheme::Light},
+        ThemePresetInfo{ThemePreset::HighContrastLight, "high-contrast-light", "High Contrast Light", ColorScheme::Light},
+        ThemePresetInfo{ThemePreset::HighContrastDark, "high-contrast-dark", "High Contrast Dark", ColorScheme::Dark},
+    };
+    return presets;
+}
+Theme MakeTheme(ThemePreset preset) {
+    switch (preset) {
+    case ThemePreset::PrecisionLight:
+        return BuildTheme(ColorScheme::Light, Colors(0xedeef1,0xf8f9fb,0xeff1f5,0xffffff,
+                         0x242833,0x636b7b,0xcbd0da,0x6950b4,0xad3441,0xffffff,0x276341,0x805a12));
+    case ThemePreset::PrecisionDark:
+        return BuildTheme(ColorScheme::Dark, Colors(0x14161b,0x20232a,0x171a20,0x30343e,
+                         0xeff0f4,0xacb2bf,0x454d5c,0xbba8ff,0xf2a2a5,0x35191e,0x83c6a1,0xe4c17b));
+    case ThemePreset::Graphite:
+        return BuildTheme(ColorScheme::Dark, Colors(0x101214,0x1b1e21,0x14171a,0x292d31,
+                         0xf1f3f5,0xaeb5bd,0x454b52,0x78d6c6,0xff9ca6,0x281014,0x7fd8a6,0xf2c879));
+    case ThemePreset::Midnight:
+        return BuildTheme(ColorScheme::Dark, Colors(0x0b1020,0x141b30,0x10172a,0x202b48,
+                         0xf1f5ff,0xaab6d1,0x3b4968,0x8eafff,0xff9daa,0x2b1018,0x73d4b1,0xf3c86e));
+    case ThemePreset::Ocean:
+        return BuildTheme(ColorScheme::Dark, Colors(0x07191f,0x10272e,0x0b2027,0x19363e,
+                         0xeaf8fa,0xa5c5cb,0x35606a,0x56d3e5,0xffa0aa,0x2a1116,0x77d9ad,0xf0ca78));
+    case ThemePreset::Forest:
+        return BuildTheme(ColorScheme::Dark, Colors(0x0d1712,0x17261e,0x111e18,0x24382d,
+                         0xf0f8f2,0xa9c1b0,0x3d5c49,0x83d69c,0xffa1a8,0x2b1114,0x79d6a1,0xebc979));
+    case ThemePreset::WarmSand:
+        return BuildTheme(ColorScheme::Light, Colors(0xeee9df,0xfaf7f0,0xf2ede3,0xffffff,
+                         0x302a23,0x6e6255,0xcfc5b5,0x9b5c2e,0xa52f3e,0xffffff,0x2c6a48,0x7b5510));
+    case ThemePreset::Rose:
+        return BuildTheme(ColorScheme::Light, Colors(0xf2e8eb,0xfff8fa,0xf6edf0,0xffffff,
+                         0x34252b,0x735d66,0xd7c5cc,0xa9466b,0xa52e42,0xffffff,0x286746,0x79540d));
+    case ThemePreset::Violet:
+        return BuildTheme(ColorScheme::Dark, Colors(0x15101f,0x221a30,0x1a1427,0x332642,
+                         0xf5f0fb,0xbcaecb,0x554568,0xc19af5,0xff9ba8,0x2b1016,0x81d2a4,0xe8c572));
+    case ThemePreset::Solar:
+        return BuildTheme(ColorScheme::Light, Colors(0xeee8d5,0xfdf6e3,0xf4edda,0xffffff,
+                         0x2b3436,0x5f6b6d,0xc9c1ad,0x856500,0xa72e36,0xffffff,0x2f6d49,0x76540b));
+    case ThemePreset::HighContrastLight:
+        return BuildTheme(ColorScheme::Light, Colors(0xffffff,0xffffff,0xf5f5f5,0xffffff,
+                         0x000000,0x4a4a4a,0x767676,0x0037c1,0x9c001f,0xffffff,0x006b34,0x6b4b00));
+    case ThemePreset::HighContrastDark:
+        return BuildTheme(ColorScheme::Dark, Colors(0x000000,0x090909,0x000000,0x161616,
+                         0xffffff,0xc7c7c7,0x8a8a8a,0x6eb4ff,0xff8b9a,0x260008,0x72e0a3,0xffd36e));
+    }
+    IM_ASSERT(false && "Unknown ThemePreset");
+    return MakeTheme(ThemePreset::PrecisionLight);
+}
 Theme MakePrecisionTheme(ColorScheme scheme) {
-    Theme t;
-    t.scheme = scheme;
-    bool d = scheme == ColorScheme::Dark;
-    t.colors = {Hex(d ? 0x14161b : 0xedeef1),
-                Hex(d ? 0x20232a : 0xf8f9fb),
-                Hex(d ? 0x171a20 : 0xeff1f5),
-                Hex(d ? 0x30343e : 0xffffff),
-                Hex(d ? 0xeff0f4 : 0x242833),
-                Hex(d ? 0xacb2bf : 0x636b7b),
-                Hex(d ? 0x454d5c : 0xcbd0da),
-                Hex(d ? 0xbba8ff : 0x6950b4),
-                Hex(d ? 0x142031 : 0xffffff),
-                {},
-                {},
-                Hex(d ? 0xf2a2a5 : 0xad3441),
-                Hex(d ? 0x35191e : 0xffffff),
-                Hex(d ? 0x83c6a1 : 0x276341),
-                Hex(d ? 0xe4c17b : 0x805a12)};
-    SetAccent(t, t.colors.accent);
-    t.editor = {t.colors.canvas,t.colors.border,t.colors.muted,t.colors.surface,
-                t.colors.accent,t.colors.success,t.colors.warning,t.colors.text,t.colors.warning,
-                t.colors.warning,t.colors.focus,Hex(0xdb6565),Hex(0x5cab72),Hex(0x6699e0),
-                t.colors.accent,t.colors.success,t.colors.destructive,t.colors.warning,
-                t.colors.destructive,t.colors.muted,
-                Hex(d ? 0xc791c9 : 0x864c8e),Hex(d ? 0x72b7c6 : 0x347080),Hex(d ? 0x9ca2b0 : 0x626979)};
-    return t;
+    return MakeTheme(scheme == ColorScheme::Dark ? ThemePreset::PrecisionDark : ThemePreset::PrecisionLight);
 }
 void SetAccent(Theme &t, ImVec4 accent) {
     t.colors.accent = accent;
