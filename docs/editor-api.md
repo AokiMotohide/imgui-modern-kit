@@ -502,3 +502,49 @@ TimelineLabelsはclip情報・素材状態・envelope操作・keyドラッグの
 The nine-argument AnimationStrips overload adds borrowed StripOptions (atlas and UTF-8 StripLabels), retaining the existing eight-argument entry point. EditStripRange is a pure range edit: trims saturate at Tick bounds and preserve at least one Tick; invalid/empty ranges, unsupported kinds and overflowing moves return nullopt. Gallery uses it for strip dragging and provides Japanese setting labels. DopeSheet reuses CurveLabels for scale/snap settings.
 
 9引数AnimationStripsは非所有atlas・UTF-8 StripLabelsをStripOptionsで追加し、従来の8引数入口を維持します。EditStripRangeは純粋な範囲編集で、trimはTick境界に制限して最小1 Tickを保持します。不正/空範囲・未対応kind・Moveのoverflowではnulloptを返します。Galleryはstripドラッグに使用し、設定名を日本語で渡します。DopeSheetのscale/snap設定はCurveLabelsを共用します。
+
+## Range, marker and property array controls / 範囲・マーカー・配列
+
+`TimeState::rulerLabels` and `icons` borrow host display resources. TimeRuler draws
+work and In/Out intervals; endpoint drag changes host navigation state and Escape
+restores the starting range. The context menu edits range endpoints in seconds.
+Existing marker drag emits Begin/Update/Commit/Cancel with its explicit marker ID;
+context removal emits Remove. Add uses target zero so the host allocates a new ID.
+Gallery updates existing markers by ID and applies removal.
+
+`TimeState::rulerLabels`と`icons`はホストの表示資源を借用します。TimeRulerは作業範囲と
+In/Outを表示し、端点ドラッグでホストの移動範囲を更新、Escapeで開始時の範囲へ戻します。
+右クリックから秒単位の端点編集もできます。既存マーカーのドラッグは明示ID付きの
+Begin/Update/Commit/Cancel、削除はRemoveを返します。追加のtargetは0で、ホストがIDを
+採番します。Galleryは既存IDへの移動と削除を適用します。
+
+`PropertyView::arrayElement` enables reorder context actions when
+`PropertyProvider::neighbor(user,id,-1/+1)` supplies an unlocked sibling. Reorder
+carries the source ID and destination sibling ID in proposed.parent. The host owns
+order and storage. `PropertyView::icon` supplies an optional semantic glyph;
+`PropertyLabels::mixed/moveUp/moveDown` are borrowed UTF-8 strings. Mixed text is
+rendered as text, never interpreted as a numeric format string. Gallery demonstrates
+editable, reorderable custom parameters with reset, lock, favorite and key actions.
+
+`PropertyView::arrayElement`と`PropertyProvider::neighbor(user,id,-1/+1)`で配列の並べ替え
+操作を有効にします。ロックされた要素・隣接要素は移動できません。Reorderのtargetは移動元ID、
+proposed.parentは移動先の兄弟IDで、順序とデータはホスト所有です。`PropertyView::icon`は
+任意の意味glyph、`PropertyLabels::mixed/moveUp/moveDown`は借用UTF-8文字列です。
+mixed文字列は数値formatとして解釈しません。Galleryのカスタム配列では値編集・並べ替え・
+reset・lock・favorite・key操作をホストのデータへ反映します。
+
+`RippleDeletePosition` computes a surviving clip position from sorted, non-overlapping
+removed clips. It rejects interval overlap and tick overflow. Timeline emits a reserved
+related-clip RippleDelete batch. Gallery preflights related membership and locked
+followers before removing clips and shifting survivors together. Caption track context
+insertion emits CaptionInsert; Gallery creates a three-second synthetic caption in the
+first free interval at or after the requested playhead, then selects it for inline editing.
+
+`RippleDeletePosition`は時刻順で重複しない削除クリップから残存位置を計算し、重複・Tick溢れを
+拒否します。Timelineは関連クリップのRippleDeleteイベントをまとめて確保し、Galleryは
+関連対象と後続のロックを確認してから削除・後続移動を一括適用します。字幕trackの追加操作は
+CaptionInsertを返し、Galleryは指定再生位置以降の最初の空きに3秒の合成字幕を作成して選択します。
+
+`ComponentView::icon` and `ComponentTypeView::icon` let the host distinguish component
+and modifier rows/types with borrowed atlas glyphs. / 両iconフィールドによりcomponentとmodifierの
+行・追加候補をホスト指定glyphで区別できます。

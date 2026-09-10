@@ -67,6 +67,9 @@ struct ClipEdit {
     Tick rippleDelta = 0;
 };
 ClipEdit EditClip(const ClipView &clip, editor::EditKind kind, Tick delta, ClipConstraints constraints);
+// Removed clips must be sorted by track/start with non-overlapping positive ranges.
+// Returns the surviving clip position after closing preceding removed intervals; nullopt on invalid/overlapping input.
+std::optional<Tick> RippleDeletePosition(const ClipView &survivor,std::span<const ClipView> removed);
 // Maximum total duration of a transition centered on an adjacent cut. Each clip
 // supplies half of the overlap outside its trimmed source range. Zero rejects
 // gaps, different tracks, locked clips and invalid media ranges.
@@ -144,6 +147,7 @@ struct TimelineLabels {
     const char *proxy="Proxy",*missing="Missing media",*offline="Offline media",*locked="Locked";
     const char *addEnvelope="Add envelope point",*removeEnvelope="Remove envelope point";
     const char *envelope="Volume envelope",*dragKey="Drag keyframe time";
+    const char *rippleDelete="Ripple delete selected clips",*trimStart="Trim start",*trimEnd="Trim end",*addCaption="Add caption at or after playhead";
 };
 struct TimelineState {
     struct MemberDrag {

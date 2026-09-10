@@ -157,6 +157,21 @@ Tick CenteredTransitionLimit(const ClipView &left,const ClipView &right,
                                  static_cast<std::uint64_t>(rightBounds.mediaFirst),right.speed);
     return 2*std::min({post,pre,left.duration,right.duration,std::numeric_limits<Tick>::max()/2});
 }
+std::optional<Tick> RippleDeletePosition(const ClipView &survivor,std::span<const ClipView> removed) {
+    const auto add=[](Tick a,Tick b)->std::optional<Tick> {Tick value;return AddTick(a,b,value)?std::optional<Tick>(value):std::nullopt;};
+    if(survivor.duration<=0) return std::nullopt;
+    const auto survivorEnd=add(survivor.start,survivor.duration);if(!survivorEnd) return std::nullopt;
+    Tick shift=0,previousEnd=0;StableId previousTrack=0;bool first=true;
+    for(const auto &clip:removed) {
+        const auto end=add(clip.start,clip.duration);
+        if(clip.duration<=0 || !end || (!first && (clip.track<previousTrack || (clip.track==previousTrack && clip.start<previousEnd)))) return std::nullopt;
+        first=false;previousTrack=clip.track;previousEnd=*end;
+        if(clip.track!=survivor.track) continue;
+        if(clip.start<*survivorEnd && *end>survivor.start) return std::nullopt;
+        if(*end<=survivor.start) {auto sum=add(shift,clip.duration);if(!sum) return std::nullopt;shift=*sum;}
+    }
+    return add(survivor.start,-shift);
+}
 ClipEdit EditClip(const ClipView &c, editor::EditKind kind, Tick delta, ClipConstraints bounds) {
     ClipEdit result{c.start, c.duration, c.sourceIn, false};
     if (c.locked || bounds.minimumDuration<1 || c.duration < bounds.minimumDuration || c.speed <= 0 || !std::isfinite(c.speed) ||
@@ -347,9 +362,12 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         int follow=static_cast<int>(s.autoScroll);
         if (ImGui::Combo(s.labels.follow,&follow,s.labels.followModes.data(),static_cast<int>(s.labels.followModes.size())))
             s.autoScroll=static_cast<editor::AutoScroll>(follow);
+        if(s.icons) {Icon(*s.icons,IconId::SnapToFrame,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
         ImGui::Checkbox(s.labels.frameGrid, &s.snapToFrame);
         const auto &names=s.labels.snapKinds;
         for (unsigned i=1;i<7;++i) {
+            constexpr IconId glyphs[]{IconId::SnapToFrame,IconId::Timecode,IconId::Marker,IconId::SnapToClipEdge,IconId::Keyframe,IconId::WorkRange,IconId::SnapToSelection};
+            if(s.icons) {Icon(*s.icons,glyphs[i],{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
             bool enabled=(s.snapKinds & (1u<<i))!=0;
             if (ImGui::Checkbox(names[i],&enabled)) s.snapKinds ^= 1u<<i;
         }
@@ -372,6 +390,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             (timelineWidth-s.headerWidth)/s.canvas.scale.x,
             editor::Seconds(s.time.playhead),s.autoScroll);
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + s.headerWidth);
+    s.time.icons=s.icons;
     editor::TimeRuler("time", s.time, s.canvas, p.markers, p.revision, out, theme);
     s.canvas.wheelZoom = ImGui::GetIO().KeyCtrl;
     s.canvas.wheelZoomY = false;
@@ -483,8 +502,16 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         draw->AddText(ImGui::GetFont(),ImGui::GetFontSize(),nameMin,ImGui::GetColorU32(theme.colors.text),track.label,nullptr,0,&nameClip);
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s",track.label);
         if (ImGui::BeginPopupContextItem("track layout")) {
+            if(track.kind==TrackKind::Caption) {
+                if(s.icons) {Icon(*s.icons,IconId::CaptionAdd,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+                if(ImGui::MenuItem(s.labels.addCaption,nullptr,false,!track.locked) && ReserveEvents(out,2)) {
+                    editor::Transaction action;action.Begin(track.id,p.revision,editor::EditKind::CaptionInsert,{},editor::CurrentModifiers(),out);
+                    action.draft.proposed.first=s.time.playhead;action.Commit(p.revision,out);
+                }
+            }
             float height=s.heightDrag.active && s.heightDrag.draft.target==track.id ?
                          static_cast<float>(s.heightDrag.draft.proposed.x) : track.height;
+            if(s.icons) {Icon(*s.icons,IconId::TrackHeight,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
             bool edited=ImGui::SliderFloat(s.trackLabels.height,&height,64,240,"%.0f px");
             if (ImGui::IsItemActivated())
                 s.heightDrag.Begin(track.id,p.revision,editor::EditKind::TrackHeight,
@@ -951,6 +978,12 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 s.hovered = clip.id;
                 if (!io.MouseDown[0]) {
                     ImGui::BeginTooltip();ImGui::TextUnformatted(clip.label);
+                    if(s.tool==Tool::Select && (std::abs(io.MousePos.x-x)<7 || std::abs(io.MousePos.x-end)<7)) {
+                        const bool start=std::abs(io.MousePos.x-x)<std::abs(io.MousePos.x-end);
+                        if(s.icons) {Icon(*s.icons,start?IconId::TrimStart:IconId::TrimEnd,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+                        ImGui::TextUnformatted(start?s.labels.trimStart:s.labels.trimEnd);
+                    }
+                    if(s.icons) {Icon(*s.icons,IconId::PlaybackSpeed,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
                     ImGui::Text("%s: %s   %s: %.3gx",s.labels.duration,duration,s.labels.speed,value.x);
                     if (clip.linked) ImGui::Text("%s: %llu",s.labels.linked,static_cast<unsigned long long>(clip.linked));
                     if (clip.group) ImGui::Text("%s: %llu",s.labels.group,static_cast<unsigned long long>(clip.group));
@@ -970,6 +1003,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 ImGui::OpenPopup("transition-picker");
             }
             if (ImGui::BeginPopup("transition-picker")) {
+                if(track.kind==TrackKind::Audio && s.icons) {Icon(*s.icons,IconId::VolumeEnvelope,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
                 if (track.kind==TrackKind::Audio && ImGui::MenuItem(s.labels.addEnvelope,nullptr,false,!clip.locked && !track.locked && !s.envelopeDrag.active))
                     EnvelopeAction(out,clip,p.revision,clip.id,s.envelopeContextTick,EvaluateEnvelope(clip.envelope,s.envelopeContextTick),1);
                 const auto relationItem=[&](const char *label,int relation,bool enabled) {
@@ -1010,6 +1044,18 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                                     edit.draft.proposed.parent=0;edit.Commit(p.revision,out);
                                 }
                         }
+                if(s.icons) {Icon(*s.icons,IconId::RippleDelete,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+                if(ImGui::MenuItem(s.labels.rippleDelete,nullptr,false,selection.Contains(clip.id) && p.selected && !clip.locked && !track.locked && !s.drag.active)) {
+                    const auto ids=selection.storage.first(selection.count);const auto members=p.selected(p.user,ids);
+                    bool complete=!members.empty(),editable=true;
+                    for(auto id:ids) complete &= std::count_if(members.begin(),members.end(),[&](const auto &m){return m.id==id;})==1;
+                    for(const auto &member:members) editable &= !member.locked && (!p.isEditable || p.isEditable(p.user,member.id));
+                    if(!complete) out.overflow=true;
+                    else if(editable && ReserveEvents(out,members.size()*2)) for(const auto &member:members) {
+                        editor::Transaction action;action.Begin(member.id,p.revision,editor::EditKind::RippleDelete,{member.start,member.duration},editor::CurrentModifiers(),out);
+                        action.Commit(p.revision,out);
+                    }
+                }
                 TransitionPicker("types",clip,p.revision,out,track.locked,{s.icons,s.labels.transitions});
                 ImGui::EndPopup();
             }

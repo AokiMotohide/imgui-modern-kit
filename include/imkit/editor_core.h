@@ -74,7 +74,9 @@ enum class EditKind {
     ComponentAdd,
     TransitionDuration, // first=in duration, last=out duration; target=clip ID.
     TransitionType, // first=in kind, last=out kind; target=clip ID.
-    AudioEnvelope // first=local tick, x=gain, parent=clip ID; offset=0 edit/1 insert/2 remove; insert target=clip, otherwise point.
+    AudioEnvelope, // first=local tick, x=gain, parent=clip ID; offset=0 edit/1 insert/2 remove; insert target=clip, otherwise point.
+    RippleDelete, // target=removed clip; related clips are emitted as one reserved batch.
+    CaptionInsert // target=caption track, first=requested start; host chooses a free interval at or after it.
 };
 // Exact integer/time fields must never travel through floating point channels.
 struct Value {
@@ -217,6 +219,10 @@ struct TransportLabels {
     const char *goToStart="Go to start", *goToEnd="Go to end", *clearInOut="Clear In/Out";
     const char *reverse="Play reverse", *forward="Play forward";
 };
+struct TimeRulerLabels {
+    const char *work="Work range",*inOut="In / Out",*start="Start",*end="End";
+    const char *addMarker="Add marker",*removeMarker="Remove marker",*marker="Marker";
+};
 struct TimeState {
     Tick playhead = 0;
     Range work{0, TicksPerSecond * 10}, inOut{0, TicksPerSecond * 10};
@@ -224,6 +230,13 @@ struct TimeState {
     bool playing = false, loop = false, dropFrame = false;
     double playbackRate = 1;
     TransportLabels labels{};
+    const IconAtlas *icons=nullptr;
+    TimeRulerLabels rulerLabels{};
+    Transaction markerDrag;
+    StableId contextMarker=0;
+    Tick contextTime=0;
+    int rangeHandle=0; // 1/2 work start/end, 3/4 in/out start/end.
+    Range rangeOriginal{};
 };
 void TimeRuler(const char *id, TimeState &state, CanvasState &canvas, std::span<const Marker> markers,
                std::uint64_t revision, EventBuffer &events, const Theme &theme, float height = 32);
@@ -315,6 +328,8 @@ struct PropertyView {
     const char *label = "", *category = "";
     double value = 0, defaultValue = 0;
     PropertyFlags flags{};
+    bool arrayElement=false; // Enables neighbor-based reorder actions.
+    IconId icon=IconId::Count; // Optional semantic glyph.
 };
 struct PropertyProvider {
     void *user = nullptr;
@@ -322,12 +337,14 @@ struct PropertyProvider {
     int count = 0;
     // Host applies search/category filtering; the widget requests only clipped rows.
     std::span<const PropertyView> (*query)(void *, int first, int count, std::string_view search) = nullptr;
+    const PropertyView *(*neighbor)(void *,StableId,int direction)=nullptr; // Borrowed sibling, -1/+1; nullptr at boundary.
 };
 struct PropertyLabels {
     const char *search="Search", *property="Property", *value="Value", *key="Key";
     const char *modifiedSuffix=" (modified)", *overrideSuffix=" (override)", *lockedSuffix=" [locked]";
     const char *favorite="Favorite", *locked="Locked", *overrideValue="Override", *reset="Reset";
     const char *previousKey="Previous key", *nextKey="Next key", *addKey="Add keyframe", *removeKey="Remove keyframe";
+    const char *mixed="Mixed",*moveUp="Move up",*moveDown="Move down";
 };
 struct PropertyState {
     char search[128]{};

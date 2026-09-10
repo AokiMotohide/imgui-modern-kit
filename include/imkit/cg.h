@@ -81,6 +81,7 @@ struct ViewportLabels {
     const char *cameraFrame="Camera frame", *safeFrame="Safe frame";
     const char *renderRegion="Render region", *passepartout="Passepartout";
     const char *measurement="Measurement", *selectionOutline="Selection outline";
+    const char *orbit="Orbit: middle drag; Shift for pan";
 };
 struct ViewportState {
     Camera camera{};
@@ -159,8 +160,9 @@ struct ComponentView {
     StableId id=0, owner=0;
     const char *label="", *description="";
     bool enabled=true, expanded=false, locked=false;
+    IconId icon=IconId::Layers;
 };
-struct ComponentTypeView {StableId id=0;const char *label="";};
+struct ComponentTypeView {StableId id=0;const char *label="";IconId icon=IconId::LayerAdd;};
 struct ComponentLabels {
     const char *add="Add component", *enabled="Enabled", *component="Component", *actions="Actions";
     const char *lock="Lock", *unlock="Unlock", *moveUp="Move up", *moveDown="Move down", *remove="Remove";

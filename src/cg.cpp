@@ -243,6 +243,7 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
     ImGui::SameLine();
     ImGui::Checkbox(s.labels.gizmo, &s.gizmo);
     ImGui::SameLine();
+    if(s.icons) {Icon(*s.icons,IconId::TransformSnap,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
     ImGui::Checkbox(s.labels.snap, &s.snap);
     const auto normalToggle=[&](const char *id,IconId icon,const char *label,bool &enabled) {
         ImGui::SameLine();
@@ -272,8 +273,13 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImGui::GetFontSize()*7);
     int shading=s.shading==Shading::Wireframe ? 0 : 1;
-    if (ImGui::Combo("##shading",&shading,s.labels.shading.data(), 2))
-        s.shading=shading==0 ? Shading::Wireframe : Shading::Solid;
+    if(ImGui::BeginCombo("##shading",s.labels.shading[shading])) {
+        for(int i=0;i<2;++i) {
+            if(s.icons) {Icon(*s.icons,i?IconId::SolidShading:IconId::WireframeShading,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+            if(ImGui::Selectable(s.labels.shading[i],shading==i)) s.shading=i?Shading::Solid:Shading::Wireframe;
+        }
+        ImGui::EndCombo();
+    }
     ImGui::SameLine();
     const bool overlayClicked=s.icons ? IconLabelButton("overlays",*s.icons,IconId::Layers,s.labels.overlays,{16*ImGui::GetFontSize()/14}) : ImGui::Button(s.labels.overlays);
     if (overlayClicked) ImGui::OpenPopup("viewport-overlays");
@@ -364,7 +370,11 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
         }
         if (navigationHovered && hit>=0 && ImGui::IsMouseClicked(0))
             AlignCamera(s.camera,static_cast<Axis>(hit/2+1),hit%2!=0);
-        if (navigationHovered) ImGui::SetTooltip("%s",s.labels.alignView);
+        if(navigationHovered) {
+            ImGui::BeginTooltip();
+            if(s.icons) {Icon(*s.icons,IconId::AxisAlignment,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+            ImGui::TextUnformatted(s.labels.alignView);ImGui::EndTooltip();
+        }
         ImGui::SetCursorScreenPos(v.min);
     }
     if (v.hovered && !navigationHovered && ImGui::GetIO().MousePos.y >= v.min.y) {
@@ -375,6 +385,11 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
             else orbit={io.MouseDelta.x,io.MouseDelta.y};
         }
         NavigateCamera(s.camera,orbit,pan,io.MouseWheel,v.size.y);
+        if(ImGui::IsMouseDragging(2)) {
+            ImGui::BeginTooltip();
+            if(s.icons) {Icon(*s.icons,IconId::Orbit,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+            ImGui::TextUnformatted(s.labels.orbit);ImGui::EndTooltip();
+        }
     }
     v.hovered &= !navigationHovered;
     return v;
@@ -735,6 +750,7 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
     detail::ResumeTerminal(s.renameTransaction,p.revision,out);
     if (!s.renameTransaction.active) s.renaming=0;
     ImGui::PushID(id);
+    if(s.icons) {Icon(*s.icons,IconId::Hierarchy,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x*.45f);
     ImGui::InputText(s.labels.search, s.search, sizeof(s.search));
     ImGui::SameLine();ImGui::SetNextItemWidth(-1);
@@ -764,6 +780,10 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
                         Emit(out, row.id, p.revision, editor::EditKind::Toggle,
                              Value({4, row.expanded ? 1. : 0., 0}), Value({4, row.expanded ? 0. : 1., 0}));
                     ImGui::SameLine();
+                }
+                if(s.icons) {
+                    constexpr IconId kinds[]{IconId::Cube,IconId::Folder,IconId::Mesh,IconId::Camera,IconId::Light,IconId::Layers,IconId::Modifier};
+                    Icon(*s.icons,kinds[static_cast<int>(row.kind)],{16*ImGui::GetFontSize()/14});ImGui::SameLine();
                 }
                 if (row.kind!=ObjectKind::Object) {
                     ImGui::TextDisabled("%s",s.labels.kinds[static_cast<int>(row.kind)+1]);ImGui::SameLine();
@@ -813,6 +833,7 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
                         if (ImGui::MenuItem(s.labels.rename)) beginRename();
                         if (ImGui::MenuItem(s.labels.duplicate)) Emit(out,row.id,p.revision,editor::EditKind::Duplicate);
                         if (row.geometry) {
+                            if(s.icons) {Icon(*s.icons,IconId::LinkedDuplicate,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
                             if (ImGui::MenuItem(s.labels.linkedDuplicate)) Emit(out,row.id,p.revision,editor::EditKind::Duplicate,{},editor::Value{0,0,1});
                             if (selection.active && selection.active!=row.id && ImGui::MenuItem(s.labels.linkGeometry))
                                 Emit(out,row.id,p.revision,editor::EditKind::LinkGeometry,editor::Value{0,0,0,row.geometry},editor::Value{0,0,0,selection.active});
@@ -831,6 +852,7 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
                 }
                 if (!row.locked && !s.renameTransaction.active && ImGui::BeginDragDropSource()) {
                     ImGui::SetDragDropPayload("IMKIT_OBJECT", &row.id, sizeof(row.id));
+                    if(s.icons) {Icon(*s.icons,IconId::Reparent,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
                     ImGui::TextUnformatted(row.label);
                     ImGui::EndDragDropSource();
                 }
@@ -854,7 +876,7 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
                     bool draft = values[f];
                     bool changed=false;
                     if (s.icons) {
-                        const IconId glyphs[]={draft?IconId::Eye:IconId::EyeOff,draft?IconId::SelectAll:IconId::Deselect,IconId::Camera,draft?IconId::Lock:IconId::Unlock};
+                        const IconId glyphs[]={draft?IconId::Eye:IconId::EyeOff,draft?IconId::SelectAll:IconId::Unselectable,IconId::Camera,draft?IconId::Lock:IconId::Unlock};
                         if (draft) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
                         changed=IconButton("restriction",*s.icons,glyphs[f],labels[f],{16*ImGui::GetFontSize()/14});
                         if (draft) {
@@ -894,6 +916,7 @@ void ComponentStack(const char *id,std::span<const ComponentView> components,
         if (ImGui::BeginPopup("add")) {
             for (const auto &type:options.availableTypes) {
                 ImGui::PushID(reinterpret_cast<void*>(static_cast<std::uintptr_t>(type.id)));
+                glyph(type.icon);
                 if (ImGui::MenuItem(type.label)) Emit(out,options.owner,revision,editor::EditKind::ComponentAdd,{},editor::Value{0,0,0,type.id});
                 ImGui::PopID();
             }
@@ -912,7 +935,7 @@ void ComponentStack(const char *id,std::span<const ComponentView> components,
             if (ImGui::Checkbox("##enabled",&enabled))
                 Emit(out,component.id,revision,editor::EditKind::Toggle,Value({0,component.enabled?1.:0.,0}),Value({0,enabled?1.:0.,0}));
             ImGui::EndDisabled();ImGui::TableNextColumn();
-            glyph(IconId::Layers);
+            glyph(component.icon);
             if (ImGui::Selectable(component.label,component.expanded))
                 Emit(out,component.id,revision,editor::EditKind::Toggle,Value({1,component.expanded?1.:0.,0}),Value({1,component.expanded?0.:1.,0}));
             if (component.expanded) ImGui::TextWrapped("%s",component.description);

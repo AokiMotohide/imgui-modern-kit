@@ -29,6 +29,15 @@ int main() {
         auto bounded=video::ApplyColorCurves({-1,2,std::numeric_limits<float>::quiet_NaN(),1},{});
         check(bounded.r==0 && bounded.g==1 && bounded.b==0,"color curves bound nonfinite and out of range samples");
     }
+    {
+        video::ClipView removed;removed.id=1;removed.track=1;removed.start=10;removed.duration=5;
+        video::ClipView survivor;survivor.id=2;survivor.track=1;survivor.start=20;survivor.duration=5;
+        const std::array deleted{removed};
+        check(video::RippleDeletePosition(survivor,deleted)==15,"ripple delete closes preceding removed interval");
+        survivor.track=2;check(video::RippleDeletePosition(survivor,deleted)==20,"ripple delete preserves other tracks");
+        survivor.track=1;survivor.start=12;check(!video::RippleDeletePosition(survivor,deleted),"ripple delete rejects overlapping survivor");
+        survivor.start=20;std::array overlap{removed,removed};check(!video::RippleDeletePosition(survivor,overlap),"ripple delete rejects overlapping removed intervals");
+    }
     video::TimelineState snapping;
     {
         video::ClipView left,right;left.track=right.track=1;
