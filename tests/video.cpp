@@ -323,6 +323,19 @@ int main() {
         check(full.count==1 && full.Events()[0].kind==editor::EditKind::TransitionDuration &&
               full.Events()[0].phase==editor::Phase::Commit && !timeline.transitionDrag.active,"transition duration commits without moving the clip");
     }
+    provider.transitionLimit=[](void *,editor::StableId,bool){return editor::FromSeconds(.8);};
+    {
+        const float x=timeline.view.min.x+timeline.headerWidth+25,y=timeline.view.min.y+10;
+        full.Clear();io.AddMousePosEvent(x,y);frame(full);frame(full);
+        io.AddMouseButtonEvent(0,true);frame(full);
+        check(timeline.transitionDrag.active,"centered transition begins at half-duration handle");
+        full.Clear();io.AddMousePosEvent(x+50,y);frame(full);
+        check(timeline.transitionDrag.draft.proposed.first==editor::FromSeconds(.8),"centered transition clamps to host media handles");
+        full.Clear();io.AddMouseButtonEvent(0,false);frame(full);
+        check(!timeline.transitionDrag.active && full.count==1 && full.Events()[0].phase==editor::Phase::Commit,
+              "centered transition commits constrained duration");
+    }
+    provider.transitionLimit=nullptr;
     auto transitionEdit=video::EditTransition(transitionFixture.clip,false,editor::FromSeconds(100));
     check(transitionEdit.valid && transitionEdit.inDuration==editor::FromSeconds(2.5) &&
           transitionEdit.outDuration==editor::FromSeconds(.5),"transition clamp preserves opposite end");

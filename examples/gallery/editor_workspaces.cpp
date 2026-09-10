@@ -758,7 +758,9 @@ void EditorWorkspaces::ApplyEvents() {
                 const auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==clip->track;});
                 if (track!=tracks.end() && !track->locked) {
                     clip->transitionInKind=static_cast<video::TransitionKind>(e.proposed.first);
-                    clip->transitionOutKind=static_cast<video::TransitionKind>(e.proposed.last);changed=true;
+                    clip->transitionOutKind=static_cast<video::TransitionKind>(e.proposed.last);
+                    clip->transitionIn=std::min(clip->transitionIn,TransitionLimit(clip->id,false));
+                    clip->transitionOut=std::min(clip->transitionOut,TransitionLimit(clip->id,true));changed=true;
                 }
             }
             if (e.kind==editor::EditKind::TransitionDuration && !clip->locked) {
