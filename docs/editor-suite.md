@@ -731,3 +731,7 @@ CenteredTransitionLimitはcutを中心とするtransitionの最大総時間を�
 With transitionLimit supplied, Dissolve/Crossfade handles represent half of the total centered duration. The Timeline draws the overlap across the cut after visible clip bodies. Public ImGui IO verifies handle hit testing, media-limit clamping and Commit. Gallery clamps durations when changing transition type and preserves Undo/Redo.
 
 transitionLimitを指定したDissolve／Crossfadeでは、handleの距離がcutを中心とする総時間の半分になります。Timelineは可視clip本体の後にcutをまたぐ重なり範囲を描画します。公開ImGui IOでhandleのhit test、素材制約によるclamp、Commitが合格しました。Galleryは種類変更時にも長さを制限し、Undo／Redoを保持します。
+
+AssetState accepts a borrowed atlas and AssetLabels for UTF-8 search, display modes, tags, status filters and actions. Gallery connects existing Search, Grid, List, Tag, Filter, Edit, Duplicate, Delete, Loading, Warning and Error icons. Asset rename now emits Begin/Update/Commit/Cancel with original and proposed text, retries a terminal event after buffer exhaustion, and cancels on revision change or loss from the visible filtered query. Public IO regression covers these paths. Setting renaming to a visible ID still requests inline rename.
+
+AssetStateに非所有atlasとAssetLabelsを追加し、検索・表示モード・タグ・状態filter・操作名をUTF-8で指定できます。Galleryは既存Search／Grid／List／Tag／Filter／Edit／Duplicate／Delete／Loading／Warning／Errorを接続します。名前変更は元文字列・提案文字列付きBegin／Update／Commit／Cancelを返し、buffer不足でterminal eventを保持・再送します。revision変更、可視検索結果からの対象消失ではCancelします。これらは公開IO回帰で合格しました。renamingへ可視IDを設定する名前変更要求も維持します。

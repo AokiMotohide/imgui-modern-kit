@@ -344,6 +344,11 @@ struct AssetProvider {
     // Rebuild the host filter index before visible queries; optional for legacy providers.
     int (*filteredCount)(void *, std::string_view search) = nullptr;
 };
+struct AssetLabels {
+    const char *search="Search",*grid="Grid",*list="List",*tag="Tag";
+    std::array<const char *,6> statuses{"All statuses","Ready","Loading","Proxy","Missing","Error"};
+    const char *rename="Rename",*duplicate="Duplicate",*remove="Remove";
+};
 struct AssetState {
     char search[128]{}, rename[256]{};
     bool grid = true;
@@ -351,6 +356,10 @@ struct AssetState {
     char tag[64]{};
     int status = -1; // -1 means all statuses.
     std::span<const StableId> breadcrumbIds;
+    const IconAtlas *icons=nullptr;
+    AssetLabels labels;
+    Transaction renameTransaction;
+    bool renameFocus=false;
 };
 void AssetBrowser(const char *id, const AssetProvider &provider, AssetState &state, Selection &selection,
                   EventBuffer &events, std::span<const char *const> breadcrumbs = {});
