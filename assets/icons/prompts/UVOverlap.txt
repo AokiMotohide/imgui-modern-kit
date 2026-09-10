@@ -1,0 +1,4 @@
+Use case: logo-brand. Generate ONE individual technical software icon named UVOverlap. Subject: two thin outlined offset squares overlapping diagonally; three diagonal hatch marks confined to their shared central overlap, no hatching elsewhere. Uniform thin black rounded outline strokes equivalent to 1.75 units on a 24-unit grid, except explicitly described emphasized elements. True transparent RGBA background, no checkerboard drawing, no paper texture, no shadows, no lettering. Square canvas with generous margins. Simple optical design legible at 16px. No contact sheet or additional icons.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/UVOverlap.png

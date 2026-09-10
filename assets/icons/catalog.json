@@ -590,5 +590,21 @@
   {
     "name": "SelectIsland",
     "category": "Editor"
+  },
+  {
+    "name": "UVEditor",
+    "category": "Editor"
+  },
+  {
+    "name": "UVSeam",
+    "category": "Editor"
+  },
+  {
+    "name": "UVOverlap",
+    "category": "Editor"
+  },
+  {
+    "name": "UDIMTiles",
+    "category": "Editor"
   }
 ]

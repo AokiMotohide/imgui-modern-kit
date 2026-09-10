@@ -211,6 +211,7 @@ struct UVLabels {
     std::array<const char *,3> coordinateModes{"Normalized","Pixel","UDIM"};
     std::array<const char *,3> tools{"Move","Rotate","Scale"};
     const char *pivot="Pivot",*snap="Snap step";
+    const char *seams="Seams",*overlap="Overlap",*tiles="UDIM tiles",*pinned="Pinned";
 };
 struct UVState {
     editor::CanvasState canvas{{-.1, -.1}, {300, 300}};
@@ -230,6 +231,7 @@ struct UVState {
     editor::CanvasView view{};
     const IconAtlas *icons=nullptr; // Non-owning host atlas for selection controls.
     UVLabels labels; // Borrowed UTF-8 display strings.
+    bool showSeams=true,showOverlap=true;
 };
 editor::Point TransformUV(editor::Point uv, editor::Point pivot, editor::Point translation,
                           double rotationRadians, editor::Point scale, double snap = 0);

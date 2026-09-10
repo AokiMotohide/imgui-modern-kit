@@ -2218,5 +2218,65 @@
       995,
       825
     ]
+  },
+  {
+    "name": "UVEditor",
+    "source": "assets/icons/originals/UVEditor.png",
+    "sha256": "ad51008c539ae95b6ff12b69abe79584dc21f8d105813db59e79542ab4351e1a",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      279,
+      292,
+      978,
+      968
+    ]
+  },
+  {
+    "name": "UVSeam",
+    "source": "assets/icons/originals/UVSeam.png",
+    "sha256": "343b1ab5703956ae9bc901751b3b2bd05682ef1eab19ae0c30e57c7800a18dc0",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      270,
+      410,
+      985,
+      844
+    ]
+  },
+  {
+    "name": "UVOverlap",
+    "source": "assets/icons/originals/UVOverlap.png",
+    "sha256": "72c9623fdf9db8c3c6c17d56fc08ab49f334f6ee2f6e13076d7c91897004a7c4",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      312,
+      336,
+      943,
+      941
+    ]
+  },
+  {
+    "name": "UDIMTiles",
+    "source": "assets/icons/originals/UDIMTiles.png",
+    "sha256": "14e667cdef9c88ce2a49f4f2bde199cd78a816a48016d7689529c1cc6e115a98",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      414,
+      431,
+      840,
+      845
+    ]
   }
 ]

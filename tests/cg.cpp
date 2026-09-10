@@ -384,6 +384,16 @@ int main() {
             dopeEvents.count==3 && std::abs(dopeEvents.Events()[2].proposed.x-.3)<.001,
             "UV face and island drag expands to every constituent vertex");
     }
+    uvSelected.Clear();faces[0].overlap=true;allUVState.showOverlap=false;
+    io.AddMousePosEvent(790,590);uvFrame();uvFrame();
+    const auto withoutOverlap=ImGui::GetDrawData()->TotalVtxCount;
+    allUVState.showOverlap=true;uvFrame();
+    check(ImGui::GetDrawData()->TotalVtxCount>withoutOverlap && faces[0].overlap,
+          "UV overlap toggle draws host overlap without changing source data");
+    allUVState.showOverlap=false;allUVState.coordinates=UVCoordinates::Normalized;uvFrame();
+    const auto withoutTiles=ImGui::GetDrawData()->TotalVtxCount;
+    allUVState.coordinates=UVCoordinates::Tiles;uvFrame();
+    check(ImGui::GetDrawData()->TotalVtxCount>withoutTiles,"UV UDIM mode draws visible tile grid and labels");
     ViewportState handleState;
     handleState.camera.projection=Projection::Orthographic;
     handleState.camera.orthographicHeight=5;

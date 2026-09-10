@@ -1,0 +1,4 @@
+Use case: logo-brand. Generate ONE individual technical software icon named UVSeam. Two very simple outlined triangles facing away from each other, separated by a small vertical gap. The left triangle points left and the right triangle points right. Their two facing vertical edges are dashed, exactly three thick dash segments per edge. The remaining four slanted lines are continuous, rounded black strokes. Use visually substantial uniform 2.2 unit strokes on a 24 unit grid, with no internal edges, no vertex dots, no circles, no extra shapes. Compact square optical design readable at 16 pixels, centered, generous transparent margins. True transparent RGBA background, pure black ink, no lettering, no shadows, no checkerboard, no contact sheet.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/UVSeam.png

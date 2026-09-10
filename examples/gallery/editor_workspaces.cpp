@@ -1619,6 +1619,8 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("UV / Image",nullptr,s.animationPage==2?ImGuiTabItemFlags_SetSelected:0)) {
+            if (s.icons) {Icon(*s.icons,IconId::UVEditor,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+            ImGui::TextUnformatted(s.japanese ? "UVエディター" : "UV Editor");
             for (int i = 0; i < 4; ++i)
                 s.edges[i] = {static_cast<editor::StableId>(i + 1), s.uv[i].uv, s.uv[(i + 1) % 4].uv,
                     false,false,s.uv[i].id,s.uv[(i+1)%4].id};
@@ -1684,6 +1686,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
                 labels.box="矩形選択";labels.lasso="投げ縄選択";labels.coordinates="座標";
                 labels.coordinateModes={"正規化","ピクセル","UDIM"};labels.transform="変換";
                 labels.tools={"移動","回転","拡大縮小"};labels.pivot="ピボット";labels.snap="スナップ間隔";
+                labels.seams="シーム";labels.overlap="重なり";labels.tiles="UDIMタイル";labels.pinned="固定";
             }
             cg::UVEditor("uv", p, texture, s.uvState, s.uvSelection, s.events, theme, {0, 0});
             ImGui::EndTabItem();
