@@ -5,6 +5,23 @@
 
 namespace imkit {
 enum class ColorScheme { Light, Dark };
+enum class ContrastMode { Standard, HighContrast };
+enum class Density { Compact, Comfortable, Touch };
+enum class Easing { Linear, EaseOut, EaseInOut };
+struct Typography {
+    float caption=12, body=14, label=14, heading=18, title=26, monospace=13;
+};
+struct Spacing { std::array<float,8> steps{2,4,6,8,12,16,24,32}; };
+struct Radius { float small=2, control=4, overlay=6; };
+struct Stroke { float border=1, focus=2; };
+struct Elevation { float surface=0, raised=2, overlay=5; };
+struct Opacity { float disabled=1, scrim=.5f; };
+struct StateColors { ImVec4 rest{}, hover{}, pressed{}, focused{}, selected{}, disabled{}; };
+struct SemanticColors {
+    ImVec4 canvas{}, surface{}, surfaceRaised{}, overlay{}, text{}, textSecondary{}, textDisabled{};
+    ImVec4 border{}, accent{}, onAccent{}, success{}, warning{}, error{};
+    StateColors control{};
+};
 struct Palette {
     ImVec4 canvas, surface, input, raised, text, muted, border;
     ImVec4 accent, onAccent, selection, focus, destructive, onDestructive;
@@ -18,6 +35,8 @@ struct Metrics {
 struct Motion {
     float controlSeconds = .06f, overlaySeconds = .10f;
     bool enabled = true;
+    bool reducedMotion = false;
+    Easing easing = Easing::EaseOut;
 };
 struct FontSet {
     ImFont *regular = nullptr;
@@ -31,6 +50,15 @@ struct EditorPalette {
 };
 struct Theme {
     ColorScheme scheme = ColorScheme::Light;
+    ContrastMode contrast = ContrastMode::Standard;
+    Density density = Density::Comfortable;
+    SemanticColors semantic{};
+    Typography typography{};
+    Spacing spacing{};
+    Radius radius{};
+    Stroke stroke{};
+    Elevation elevation{};
+    Opacity opacity{};
     Palette colors{};
     Metrics metrics{};
     Motion motion{};
@@ -38,6 +66,13 @@ struct Theme {
     EditorPalette editor{};
 };
 Theme MakePrecisionTheme(ColorScheme scheme = ColorScheme::Light);
+Theme MakeTheme(ColorScheme scheme=ColorScheme::Light, ContrastMode contrast=ContrastMode::Standard,
+                Density density=Density::Comfortable);
+// Rebuilds the legacy rendering projections from semantic tokens, without changing fonts.
+void ResolveTheme(Theme& theme);
+void SetDensity(Theme& theme, Density density);
+float ContrastRatio(ImVec4 foreground, ImVec4 background);
+bool ValidateContrast(const Theme& theme);
 // Explicitly updates accent, onAccent, focus and selection only.
 void SetAccent(Theme &theme, ImVec4 accent);
 // Call outside Begin/End windows, before NewFrame. Does not load or own fonts.

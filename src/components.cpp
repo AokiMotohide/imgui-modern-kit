@@ -7,6 +7,21 @@
 
 namespace imkit {
 namespace {
+bool SemanticItem(ComponentOptions options, const char* label, accessibility::SemanticRole role,
+                  accessibility::SemanticAction action, bool checked=false) {
+    using namespace accessibility;
+    if(!options.accessibility) return false;
+    auto id=ImGui::GetItemID();
+    bool disabled=(ImGui::GetItemFlags()&ImGuiItemFlags_Disabled)!=0;
+    bool focus=options.accessibility->Take(id,SemanticAction::Focus);
+    if(focus && !disabled) { ImGui::SetKeyboardFocusHere(-1); ImGui::SetNavCursorVisible(true); }
+    bool requested=options.accessibility->Take(id,action);
+    SemanticNode node; node.id=id; node.parent=options.parent; node.role=role;
+    node.name=label; if(auto end=node.name.find("##");end!=std::string_view::npos) node.name=node.name.substr(0,end);
+    node.state.checked=checked; node.actions=action|SemanticAction::Focus;
+    AnnotateLastItem(*options.accessibility,node);
+    return requested && !disabled;
+}
 ImVec4 Mix(ImVec4 a, ImVec4 b, float t) {
     return {a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t, a.w + (b.w - a.w) * t};
 }
@@ -61,10 +76,11 @@ bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, 
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
     const auto id = ImGui::GetID(label);
     bool pressed = ImGui::Button(label, size);
+    pressed = SemanticItem(options,label,accessibility::SemanticRole::Button,accessibility::SemanticAction::Press) || pressed;
     if (options.animation) {
         const auto motion = t ? t->motion : Motion{};
         float a = options.animation->Update(id, ImGui::IsItemHovered() ? 1.f : 0.f, ImGui::GetIO().DeltaTime,
-                                            motion.controlSeconds, ImGui::GetFrameCount(), motion.enabled);
+                                            motion.controlSeconds, ImGui::GetFrameCount(), motion.enabled && !motion.reducedMotion);
         auto color = Accent(t);
         color.w *= a;
         if (a > 0)
@@ -77,8 +93,9 @@ bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, 
     ImGui::PopStyleColor(4);
     return pressed;
 }
-bool IconButton(const char *id, ImGuiDir direction, const char *accessibleLabel) {
+bool IconButton(const char *id, ImGuiDir direction, const char *accessibleLabel, ComponentOptions options) {
     bool pressed = ImGui::ArrowButton(id, direction);
+    pressed = SemanticItem(options,accessibleLabel,accessibility::SemanticRole::Button,accessibility::SemanticAction::Press) || pressed;
     if (ImGui::IsItemHovered() || ImGui::IsItemFocused())
         ImGui::SetTooltip("%s", accessibleLabel);
     return pressed;
@@ -91,6 +108,9 @@ bool Toggle(const char *label, bool *value, ComponentOptions options) {
     for (auto color : hidden)
         ImGui::PushStyleColor(color, ImVec4(0, 0, 0, 0));
     bool changed = ImGui::Checkbox(label, value);
+    if(SemanticItem(options,label,accessibility::SemanticRole::Toggle,accessibility::SemanticAction::Toggle,*value)) {
+        *value=!*value; changed=true;
+    }
     ImGui::PopStyleColor(6);
     auto min = ImGui::GetItemRectMin();
     float h = ImGui::GetFrameHeight(), round = h * .5f;
@@ -99,7 +119,7 @@ bool Toggle(const char *label, bool *value, ComponentOptions options) {
     if (options.animation) {
         auto motion = options.theme ? options.theme->motion : Motion{};
         position = options.animation->Update(id, position, ImGui::GetIO().DeltaTime, motion.controlSeconds,
-                                             ImGui::GetFrameCount(), motion.enabled);
+                                             ImGui::GetFrameCount(), motion.enabled && !motion.reducedMotion);
     }
     auto *d = ImGui::GetWindowDrawList();
     auto fill = Mix(style.Colors[ImGuiCol_FrameBg], Accent(options.theme), position);
@@ -129,7 +149,7 @@ bool IndeterminateCheckbox(const char *label, CheckState *value) {
     }
     return changed;
 }
-bool Segmented(const char *id, int *selected, std::span<const char *const> labels) {
+bool Segmented(const char *id, int *selected, std::span<const char *const> labels, ComponentOptions options) {
     bool changed = false;
     ImGui::PushID(id);
     ImGui::BeginGroup();
@@ -138,7 +158,8 @@ bool Segmented(const char *id, int *selected, std::span<const char *const> label
             ImGui::SameLine(0, 2);
         ImGui::PushID(i);
         if (imkit::Selectable(labels[i], *selected == i, 0,
-                              {ImGui::CalcTextSize(labels[i]).x + 20, ImGui::GetFrameHeight()})) {
+                              {ImGui::CalcTextSize(labels[i]).x + 20, ImGui::GetFrameHeight()}) |
+            SemanticItem(options,labels[i],accessibility::SemanticRole::Radio,accessibility::SemanticAction::Select,*selected==i)) {
             changed = *selected != i;
             *selected = i;
         }
@@ -149,14 +170,15 @@ bool Segmented(const char *id, int *selected, std::span<const char *const> label
     return changed;
 }
 bool SearchableCombo(const char *label, int *selected, std::span<const char *const> labels, char *search,
-                     std::size_t capacity, std::span<const bool> disabled) {
+                     std::size_t capacity, std::span<const bool> disabled, ComponentOptions options) {
     const char *preview =
         *selected >= 0 && *selected < static_cast<int>(labels.size()) ? labels[*selected] : "";
     bool changed = false;
     if (ImGui::BeginCombo(label, preview)) {
         if (ImGui::IsWindowAppearing())
             ImGui::SetKeyboardFocusHere();
-        ImGui::InputTextWithHint("##search", "Search...", search, capacity);
+        ImGui::InputTextWithHint("##search", options.locale?options.locale->Text("search","Search..."):"Search...", search, capacity);
+        SemanticItem(options,label,accessibility::SemanticRole::TextField,accessibility::SemanticAction::Focus);
         for (int i = 0; i < static_cast<int>(labels.size()); ++i)
             if (Contains(labels[i], search)) {
                 ImGui::PushID(i);
@@ -295,8 +317,8 @@ void OverlayDecoration(const Theme &t, AnimationState *state) {
         auto id = ImGui::GetID("##imkit-elevation");
         int frame = ImGui::GetFrameCount();
         if (ImGui::IsWindowAppearing())
-            state->Update(id, 0, 0, t.motion.overlaySeconds, frame, t.motion.enabled);
-        a = state->Update(id, 1, ImGui::GetIO().DeltaTime, t.motion.overlaySeconds, frame, t.motion.enabled);
+            state->Update(id, 0, 0, t.motion.overlaySeconds, frame, t.motion.enabled && !t.motion.reducedMotion);
+        a = state->Update(id, 1, ImGui::GetIO().DeltaTime, t.motion.overlaySeconds, frame, t.motion.enabled && !t.motion.reducedMotion);
     }
     auto p = ImGui::GetWindowPos(), size = ImGui::GetWindowSize();
     auto *d = ImGui::GetWindowDrawList();

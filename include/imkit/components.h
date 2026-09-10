@@ -1,5 +1,7 @@
 #pragma once
 #include <imkit/theme.h>
+#include <imkit/accessibility.h>
+#include <imkit/locale.h>
 #include <span>
 #include <cstddef>
 
@@ -10,19 +12,22 @@ enum class StatusKind { Neutral, Success, Warning, Error };
 struct ComponentOptions {
     const Theme *theme = nullptr; // Optional semantic overrides, never retained.
     AnimationState *animation = nullptr;
+    accessibility::AccessibilityFrame* accessibility = nullptr;
+    accessibility::StableId parent = 0;
+    const LocaleContext* locale = nullptr;
 };
 bool ActionButton(const char *label, ActionVariant variant = ActionVariant::Primary,
                   const ImVec2 &size = ImVec2(0, 0), ComponentOptions options = {});
-bool IconButton(const char *id, ImGuiDir direction, const char *accessibleLabel);
+bool IconButton(const char *id, ImGuiDir direction, const char *accessibleLabel, ComponentOptions options = {});
 bool Toggle(const char *label, bool *value, ComponentOptions options = {});
 inline bool Switch(const char *label, bool *value, ComponentOptions options = {}) {
     return Toggle(label, value, options);
 }
 bool IndeterminateCheckbox(const char *label, CheckState *value);
-bool Segmented(const char *id, int *selected, std::span<const char *const> labels);
+bool Segmented(const char *id, int *selected, std::span<const char *const> labels, ComponentOptions options = {});
 // Search text and selection are host-owned. Disabled item indices remain stable.
 bool SearchableCombo(const char *label, int *selected, std::span<const char *const> labels, char *search,
-                     std::size_t capacity, std::span<const bool> disabled = {});
+                     std::size_t capacity, std::span<const bool> disabled = {}, ComponentOptions options = {});
 bool InputScalarWithUnit(const char *label, ImGuiDataType type, void *value, const char *unit,
                          const void *step = nullptr, const void *fastStep = nullptr,
                          const char *format = nullptr, ImGuiInputTextFlags flags = 0);
