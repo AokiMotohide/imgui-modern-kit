@@ -167,6 +167,14 @@ enum class IconId : std::uint16_t {
     FadeOut,
     Crossfade,
     TransitionDuration,
+    SourceMonitor,
+    ProgramMonitor,
+    SafeArea,
+    Guides,
+    MetadataOverlay,
+    TransformBounds,
+    AnchorPoint,
+    ProxyMedia,
     Count
 };
 struct IconInfo {

@@ -820,6 +820,25 @@ int main() {
     strip.locked=true;
     clickAudio(faderPoint); clickAudio(mutePoint);
     check(audioCommits==3 && strip.mute,"locked audio controls emit no edits");
+    {
+        video::MonitorOptions options;
+        ImVec2 controlsOrigin{};
+        auto controlsFrame=[&] {
+            ImGui::NewFrame();ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({450,350});
+            ImGui::Begin("Monitor controls");controlsOrigin=ImGui::GetCursorScreenPos();
+            video::MonitorControls("display",options);ImGui::End();ImGui::Render();
+        };
+        controlsFrame();controlsFrame();
+        auto toggle=[&](int row) {
+            io.AddMousePosEvent(controlsOrigin.x+8,controlsOrigin.y+row*ImGui::GetFrameHeightWithSpacing()+8);
+            controlsFrame();io.AddMouseButtonEvent(0,true);controlsFrame();io.AddMouseButtonEvent(0,false);controlsFrame();
+        };
+        toggle(0);check(!options.safeArea,"Monitor controls change host safe-area option");
+        toggle(3);check(options.transform && !options.showAnchor.has_value(),"Monitor transform retains legacy anchor default");
+        toggle(4);check(options.showAnchor.has_value() && !*options.showAnchor,"Monitor anchor can be hidden independently");
+        toggle(3);toggle(4);
+        check(!options.transform && options.showAnchor.value_or(false),"Monitor anchor can remain visible without transform bounds");
+    }
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
 }

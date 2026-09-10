@@ -9,7 +9,7 @@ by the host. All module targets publish C++20 and retain the host's ImGui target
 | Target | Header / namespace | Main API |
 |---|---|---|
 | `imkit::editor_core` | `imkit/editor_core.h`, `imkit::editor` | `StableId`, `Tick`, `FrameRate`, `FrameToTick`, `TickToFrame`, `FormatTimecode`, `ParseTimecode`, `EventBuffer`, `Transaction`, `Selection`, `ResolveSnap`, `CanvasState`, `BeginCanvas`, `CanvasSelection`, `TimeRuler`, `Transport`, `CurveEditor`, `ResolveHandles`, `MoveHandle`, `Evaluate`, `PropertyGrid`, `AssetBrowser`, `Splitter`, `StatusBar` |
-| `imkit::video` | `imkit/video.h`, `imkit::video` | `TimelineProvider`, `TimelineState`, `Timeline`, `EditClip`, `RollClips`, `SlideClip`, `SplitClip`, `EditTransition`, `TransitionPicker`, `EvaluateEnvelope`, `Monitor`, `MonitorOptions`, `BuildAudioBuckets`, `UpdateMeter`, `Waveform`, `LevelMeter`, `AudioStrip`, `BuildScopes`, `Histogram`, `ScopeImage`, `ColorControls` |
+| `imkit::video` | `imkit/video.h`, `imkit::video` | `TimelineProvider`, `TimelineState`, `Timeline`, `EditClip`, `RollClips`, `SlideClip`, `SplitClip`, `EditTransition`, `TransitionPicker`, `EvaluateEnvelope`, `Monitor`, `MonitorOptions`, `MonitorControls`, `MonitorLabels`, `BuildAudioBuckets`, `UpdateMeter`, `Waveform`, `LevelMeter`, `AudioStrip`, `BuildScopes`, `Histogram`, `ScopeImage`, `ColorControls` |
 | `imkit::cg` | `imkit/cg.h`, `imkit::cg` | `Project`, `TransformDelta`, `OrientationBasis`, `BeginViewport`, `ViewportObjects`, `TransformGizmo`, `Outliner`, `TransformUV`, `UVEditor`, `DopeSheet`, `AnimationStrips` |
 | `imkit::cg` | `imkit/preview.h`, `imkit::preview` | `Vertex`, `Mesh`, `Triangle`, `Cube`, `Sphere`, `DrawListPreview` |
 | `imkit::preview_opengl3` | `imkit/preview.h`, `imkit::preview` | `GLFunctions`, `OpenGL3Renderer::Init/Resize/Render/Pick/Shutdown/Texture` |
@@ -481,3 +481,7 @@ visible to enabled and locked to component lock; unsupported restrictions are di
 `kindFilter`（-1は全種類）をホストが検索・状態filterと併せて適用します。Galleryはcomponentと
 描画modifierを子行へ含め、名前変更・複製・並べ替え・所有対象変更を適用します。
 component選択では所有objectのInspectorを表示し、表示制限は有効状態、lockはcomponent lockへ対応します。
+
+`MonitorControls(id, options, atlas, labels)` edits host-owned display options for safe area, guides, timecode, transform bounds, anchor and metadata preset. Atlas and UTF-8 labels are borrowed. `MonitorOptions::showAnchor` is optional: unset preserves the existing coupling to `transform`; an explicit bool controls anchor visibility independently. Gallery keeps separate Source/Program options and exposes controls in each monitor's context menu. No media state, texture or renderer is owned by this widget.
+
+MonitorControlsはホスト所有のセーフエリア・ガイド・timecode・変形枠・anchor・metadata設定を変更します。atlasとUTF-8ラベルは非所有です。MonitorOptions::showAnchorは未指定なら従来のtransform連動を維持し、bool指定時は独立して表示を制御します。GalleryはSource／Program別の設定を保持し、各Monitorのcontext menuへ公開部品を接続します。media状態・texture・rendererは所有しません。

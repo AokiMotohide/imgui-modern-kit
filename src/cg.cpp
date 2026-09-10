@@ -285,6 +285,7 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
         ImGui::Checkbox(s.labels.selectionOutline,&s.selectionOutline);
         if (s.icons) {Icon(*s.icons,IconId::Camera,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
         ImGui::Checkbox(s.labels.cameraFrame,&s.cameraFrame);
+        if (s.icons) {Icon(*s.icons,IconId::SafeArea,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
         ImGui::Checkbox(s.labels.safeFrame,&s.safeFrame);
         if (s.icons) {Icon(*s.icons,IconId::RenderRegion,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
         ImGui::Checkbox(s.labels.renderRegion,&s.renderRegion);

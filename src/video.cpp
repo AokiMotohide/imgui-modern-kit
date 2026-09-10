@@ -954,7 +954,10 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     ImGui::Text("Duration: %s   Speed: %.3gx",duration,value.x);
                     if (clip.linked) ImGui::Text("Linked: %llu",static_cast<unsigned long long>(clip.linked));
                     if (clip.group) ImGui::Text("Group: %llu",static_cast<unsigned long long>(clip.group));
-                    if (clip.proxy) ImGui::TextUnformatted("Proxy");
+                    if (clip.proxy) {
+                        if (s.icons) {Icon(*s.icons,IconId::ProxyMedia,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+                        ImGui::TextUnformatted("Proxy");
+                    }
                     if (clip.missing) ImGui::TextUnformatted("Missing media");
                     if (clip.offline) ImGui::TextUnformatted("Offline media");
                     if (track.locked || clip.locked) ImGui::TextUnformatted("Locked");
@@ -1360,6 +1363,24 @@ void TransitionPicker(const char *id,const ClipView &clip,std::uint64_t revision
     }
     ImGui::EndDisabled();ImGui::PopID();
 }
+void MonitorControls(const char *id,MonitorOptions &options,const IconAtlas *icons,const MonitorLabels &labels) {
+    ImGui::PushID(id);
+    auto toggle=[&](IconId icon,const char *label,bool &value) {
+        if (icons) {Icon(*icons,icon,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+        ImGui::Checkbox(label,&value);
+    };
+    toggle(IconId::SafeArea,labels.safeArea,options.safeArea);
+    toggle(IconId::Guides,labels.guides,options.guides);
+    ImGui::Checkbox(labels.timecode,&options.showTimecode);
+    toggle(IconId::TransformBounds,labels.bounds,options.transform);
+    bool anchor=options.showAnchor.value_or(options.transform);
+    const bool before=anchor;toggle(IconId::AnchorPoint,labels.anchor,anchor);
+    if (anchor!=before) options.showAnchor=anchor;
+    if (icons) {Icon(*icons,IconId::MetadataOverlay,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+    int preset=static_cast<int>(options.metadataPreset);
+    if (ImGui::Combo(labels.metadata,&preset,labels.presets.data(),3)) options.metadataPreset=static_cast<MonitorMetadataPreset>(preset);
+    ImGui::PopID();
+}
 void Monitor(const char *id, ImTextureRef texture, ImVec2 size, const editor::TimeState &time,
              const MonitorOptions &o, const Theme &theme) {
     ImGui::PushID(id);
@@ -1389,6 +1410,8 @@ void Monitor(const char *id, ImTextureRef texture, ImVec2 size, const editor::Ti
         if (std::isfinite(minimum.x) && std::isfinite(minimum.y) && std::isfinite(maximum.x) && std::isfinite(maximum.y) &&
             minimum.x<maximum.x && minimum.y<maximum.y)
             d->AddRect(minimum,maximum,ImGui::GetColorU32(theme.colors.accent),0.f,2.f,ImDrawFlags_None);
+    }
+    if (o.showAnchor.value_or(o.transform)) {
         const ImVec2 anchor{p.x+size.x*o.anchor.x,p.y+size.y*o.anchor.y};
         if (std::isfinite(anchor.x) && std::isfinite(anchor.y)) d->AddCircle(anchor,5,color);
     }

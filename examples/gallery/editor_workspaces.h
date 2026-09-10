@@ -127,6 +127,8 @@ struct EditorWorkspaces {
     video::ColorPropertyIds colorIds{910011, 910029, 910047, 910063, 910081, 910097};
     int videoPanel = -1, activeVideoPanel = 0;
     video::MonitorMetadataPreset monitorMetadata=video::MonitorMetadataPreset::Clip;
+    video::MonitorOptions sourceMonitorOptions{true,false,true,false};
+    video::MonitorOptions programMonitorOptions{true,true,true,true};
     std::uint64_t monitorRevision=0;
     editor::StableId monitorClipId=0;
     std::size_t monitorClipIndex=0;

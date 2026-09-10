@@ -1131,17 +1131,33 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
                       ImGuiChildFlags_Borders);
     float width = ImGui::GetContentRegionAvail().x;
     float monitorHeight = (std::max)(100.f, top - 100);
+    video::MonitorLabels monitorLabels;
+    if (s.japanese) {
+        monitorLabels.safeArea="セーフエリア";monitorLabels.guides="ガイド";monitorLabels.timecode="タイムコード";
+        monitorLabels.bounds="変形枠";monitorLabels.anchor="アンカーポイント";monitorLabels.metadata="付加情報";
+        monitorLabels.presets={"非表示","クリップ","詳細"};
+    }
     ImGui::BeginGroup();
-    video::Monitor("Source", texture, {width * .48f, monitorHeight}, s.timeline.time,
-                   {true, false, true, false, "Source / Studio"}, theme);
+    if (s.icons) {Icon(*s.icons,IconId::SourceMonitor,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+    ImGui::TextUnformatted(s.japanese ? "ソース" : "Source");
+    s.sourceMonitorOptions.label=s.japanese ? "ソース / Studio" : "Source / Studio";
+    video::Monitor("Source",texture,{width*.48f,monitorHeight},s.timeline.time,s.sourceMonitorOptions,theme);
+    if (ImGui::BeginPopupContextItem("source display")) {
+        video::MonitorControls("source",s.sourceMonitorOptions,s.icons,monitorLabels);ImGui::EndPopup();
+    }
     ImGui::EndGroup();
     ImGui::SameLine();
+    ImGui::BeginGroup();
+    if (s.icons) {Icon(*s.icons,IconId::ProgramMonitor,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+    ImGui::TextUnformatted(s.japanese ? "プログラム" : "Program");
     if (s.monitorRevision!=s.revision || s.monitorClipId!=s.selection.active) {
         s.monitorRevision=s.revision;s.monitorClipId=s.selection.active;
         auto clip=std::find_if(s.clips.begin(),s.clips.end(),[&](const auto &c){return c.id==s.monitorClipId;});
         s.monitorClipIndex=static_cast<std::size_t>(clip-s.clips.begin());
     }
-    video::MonitorOptions program{true,true,true,true,s.japanese ? "プログラム" : "Program",{.5f,.5f},true};
+    s.programMonitorOptions.metadataPreset=s.monitorMetadata;
+    auto program=s.programMonitorOptions;
+    program.label=s.japanese ? "プログラム" : "Program";program.flipY=true;
     program.metadataPreset=s.monitorMetadata;
     const double extent=.3*std::max(0.,s.clipPropertyValues[1]),center=.5+s.clipPropertyValues[2];
     program.transformBounds={{center-extent,.5-extent},{center+extent,.5+extent}};
@@ -1164,12 +1180,11 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
                    {width*.48f,monitorHeight},s.timeline.time,program,theme);
     s.programMonitorMin=ImGui::GetItemRectMin();s.programMonitorMax=ImGui::GetItemRectMax();
     if (ImGui::BeginPopupContextItem("monitor metadata")) {
-        const char *labels[]={s.japanese ? "非表示" : "No metadata",s.japanese ? "クリップ" : "Clip metadata",s.japanese ? "詳細" : "Detailed metadata"};
-        for (int i=0;i<3;++i)
-            if (ImGui::MenuItem(labels[i],nullptr,static_cast<int>(s.monitorMetadata)==i))
-                s.monitorMetadata=static_cast<video::MonitorMetadataPreset>(i);
+        video::MonitorControls("program",s.programMonitorOptions,s.icons,monitorLabels);
+        s.monitorMetadata=s.programMonitorOptions.metadataPreset;
         ImGui::EndPopup();
     }
+    ImGui::EndGroup();
     TransportLanguage(s.timeline.time,s.japanese);
     editor::Transport(s.timeline.time, std::span(s.bindings).first(s.bindingCount), s.icons);
     ImGui::EndChild();

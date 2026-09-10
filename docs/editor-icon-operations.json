@@ -754,75 +754,83 @@
     },
     {
       "operation": "SourceMonitor",
-      "widget": "Monitor / AssetBrowser / Timeline",
+      "widget": "MonitorControls and Gallery monitors; AssetBrowser/Timeline proxy state",
       "disposition": "new",
       "icon": "SourceMonitor",
       "tooltip": "Source Monitor",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "UTF-8 label, native checked/focus state; labelled source/program heading and proxy state",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/video.cpp; src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "ProgramMonitor",
-      "widget": "Monitor / AssetBrowser / Timeline",
+      "widget": "MonitorControls and Gallery monitors; AssetBrowser/Timeline proxy state",
       "disposition": "new",
       "icon": "ProgramMonitor",
       "tooltip": "Program Monitor",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "UTF-8 label, native checked/focus state; labelled source/program heading and proxy state",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/video.cpp; src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "SafeArea",
-      "widget": "Monitor / AssetBrowser / Timeline",
+      "widget": "MonitorControls and Gallery monitors; AssetBrowser/Timeline proxy state",
       "disposition": "new",
       "icon": "SafeArea",
       "tooltip": "Safe Area",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "UTF-8 label, native checked/focus state; labelled source/program heading and proxy state",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/video.cpp; src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "Guides",
-      "widget": "Monitor / AssetBrowser / Timeline",
+      "widget": "MonitorControls and Gallery monitors; AssetBrowser/Timeline proxy state",
       "disposition": "new",
       "icon": "Guides",
       "tooltip": "Guides",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "UTF-8 label, native checked/focus state; labelled source/program heading and proxy state",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/video.cpp; src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "MetadataOverlay",
-      "widget": "Monitor / AssetBrowser / Timeline",
+      "widget": "MonitorControls and Gallery monitors; AssetBrowser/Timeline proxy state",
       "disposition": "new",
       "icon": "MetadataOverlay",
       "tooltip": "Metadata Overlay",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "UTF-8 label, native checked/focus state; labelled source/program heading and proxy state",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/video.cpp; src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "TransformBounds",
-      "widget": "Monitor / AssetBrowser / Timeline",
+      "widget": "MonitorControls and Gallery monitors; AssetBrowser/Timeline proxy state",
       "disposition": "new",
       "icon": "TransformBounds",
       "tooltip": "Transform Bounds",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "UTF-8 label, native checked/focus state; labelled source/program heading and proxy state",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/video.cpp; src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "AnchorPoint",
-      "widget": "Monitor / AssetBrowser / Timeline",
+      "widget": "MonitorControls and Gallery monitors; AssetBrowser/Timeline proxy state",
       "disposition": "new",
       "icon": "AnchorPoint",
       "tooltip": "Anchor Point",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "UTF-8 label, native checked/focus state; labelled source/program heading and proxy state",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/video.cpp; src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "ProxyMedia",
-      "widget": "Monitor / AssetBrowser / Timeline",
+      "widget": "MonitorControls and Gallery monitors; AssetBrowser/Timeline proxy state",
       "disposition": "new",
       "icon": "ProxyMedia",
       "tooltip": "Proxy Media",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "UTF-8 label, native checked/focus state; labelled source/program heading and proxy state",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/video.cpp; src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "MissingMedia",
