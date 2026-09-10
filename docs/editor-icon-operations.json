@@ -1793,12 +1793,13 @@
     },
     {
       "operation": "UVEditor",
-      "widget": "UVEditor",
+      "widget": "Gallery UV heading",
       "disposition": "new",
       "icon": "UVEditor",
       "tooltip": "UVEditor",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "labelled heading",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "SelectVertex",
@@ -1842,21 +1843,23 @@
     },
     {
       "operation": "UVSeam",
-      "widget": "UVEditor",
+      "widget": "UVEditor display controls",
       "disposition": "new",
       "icon": "UVSeam",
       "tooltip": "UVSeam",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "active button background and underline, UTF-8 label",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "UVOverlap",
-      "widget": "UVEditor",
+      "widget": "UVEditor display controls",
       "disposition": "new",
       "icon": "UVOverlap",
       "tooltip": "UVOverlap",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "active button background and underline, UTF-8 label",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "UVCoordinatesPixel",
@@ -1878,12 +1881,13 @@
     },
     {
       "operation": "UDIMTiles",
-      "widget": "UVEditor",
+      "widget": "UVEditor display controls",
       "disposition": "new",
       "icon": "UDIMTiles",
       "tooltip": "UDIMTiles",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "active button background and underline, UTF-8 label",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "Checkerboard",

@@ -157,6 +157,10 @@ enum class IconId : std::uint16_t {
     SelectEdge,
     SelectFace,
     SelectIsland,
+    UVEditor,
+    UVSeam,
+    UVOverlap,
+    UDIMTiles,
     Count
 };
 struct IconInfo {

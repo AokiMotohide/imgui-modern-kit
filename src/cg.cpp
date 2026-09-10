@@ -959,6 +959,21 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
     if (s.showTexture && texture.GetTexID())
         d->AddImage(texture, UVScreen({0, 0}, s.canvas, view.min), UVScreen({1, 1}, s.canvas, view.min));
     if (s.grid) editor::DrawGrid(view, s.canvas, {.1, .1}, theme);
+    if (s.coordinates==UVCoordinates::Tiles) {
+        editor::DrawGrid(view,s.canvas,{1,1},theme);
+        const double step=std::max(1.,std::ceil(20./s.canvas.scale.y));
+        const double first=std::max(0.,std::floor(view.visible.min.y/step)*step);
+        // Labels follow visible tiles, with bounded density when zoomed out.
+        for (int row=0;row<64;++row) {
+            const double v=first+row*step;
+            if (v>view.visible.max.y) break;
+            for (int u=0;u<10;++u) if (u+1>=view.visible.min.x && u<=view.visible.max.x) {
+                char label[48];std::snprintf(label,sizeof(label),"%.0f",1001+u+10*v);
+                const auto position=UVScreen({double(u),v},s.canvas,view.min);
+                d->AddText({position.x+3,position.y+3},ImGui::GetColorU32(theme.colors.muted),label);
+            }
+        }
+    }
     auto vertices = p.vertices ? p.vertices(p.user, view.visible) : std::span<const UVVertex>{};
     auto edges = p.edges ? p.edges(p.user, view.visible) : std::span<const UVEdge>{};
     auto preview=[&](StableId vertexId,editor::Point original) {
@@ -972,10 +987,10 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
     };
     for (const auto &e : edges)
         d->AddLine(UVScreen(preview(e.aVertex,e.a), s.canvas, view.min), UVScreen(preview(e.bVertex,e.b), s.canvas, view.min),
-                   ImGui::GetColorU32(e.seam       ? theme.colors.destructive
+                   ImGui::GetColorU32(e.seam && s.showSeams ? theme.colors.destructive
                                       : (e.selected || (s.selection==UVSelection::Edge && selection.Contains(e.id))) ? theme.colors.warning
                                                    : theme.colors.text),
-                   e.seam ? 2.f : 1.f);
+                   e.seam && s.showSeams ? 2.f : 1.f);
     StableId hit = 0;
     editor::Point original{};
     auto mouse = ImGui::GetIO().MousePos;
@@ -995,14 +1010,14 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
         if (s.selection==UVSelection::Vertex && view.hovered && std::hypot(mouse.x - pos.x, mouse.y - pos.y) < 8) {
             d->AddCircle(pos,10,ImGui::GetColorU32(theme.colors.text));
             if (s.coordinates==UVCoordinates::Pixel)
-                ImGui::SetTooltip("Pixel (%.2f, %.2f)%s",vertex.uv.x*s.imageSize.x,vertex.uv.y*s.imageSize.y,
-                    vertex.pinned?" - Pinned":"");
+                ImGui::SetTooltip("%s (%.2f, %.2f)%s%s",s.labels.coordinateModes[1],vertex.uv.x*s.imageSize.x,vertex.uv.y*s.imageSize.y,
+                    vertex.pinned?" - ":"",vertex.pinned?s.labels.pinned:"");
             else if (s.coordinates==UVCoordinates::Tiles) {
                 const double u=std::floor(vertex.uv.x),v=std::floor(vertex.uv.y);
                 if (u>=0 && u<10 && v>=0)
                     ImGui::SetTooltip("UDIM %.0f - UV (%.3f, %.3f)",1001+u+10*v,vertex.uv.x-u,vertex.uv.y-v);
                 else ImGui::SetTooltip("Tile (%.0f, %.0f) - outside UDIM columns",u,v);
-            } else ImGui::SetTooltip("UV (%.3f, %.3f)%s",vertex.uv.x,vertex.uv.y,vertex.pinned?" - Pinned":"");
+            } else ImGui::SetTooltip("UV (%.3f, %.3f)%s%s",vertex.uv.x,vertex.uv.y,vertex.pinned?" - ":"",vertex.pinned?s.labels.pinned:"");
             hit = vertex.id;
             original = vertex.uv;
         }
@@ -1027,13 +1042,13 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
             auto a=UVScreen(preview(face.vertices[j].id,face.vertices[j].uv),s.canvas,view.min);
             auto b=UVScreen(preview(face.vertices[i].id,face.vertices[i].uv),s.canvas,view.min);
             if ((a.y>mouse.y)!=(b.y>mouse.y) && mouse.x<(b.x-a.x)*(mouse.y-a.y)/(b.y-a.y)+a.x) inside=!inside;
-            if (selected || face.overlap)
-                d->AddLine(a,b,ImGui::GetColorU32(face.overlap?theme.colors.destructive:theme.colors.warning),selected?3.f:2.f);
+            if (selected || (face.overlap && s.showOverlap))
+                d->AddLine(a,b,ImGui::GetColorU32(face.overlap && s.showOverlap ? theme.colors.destructive:theme.colors.warning),selected?3.f:2.f);
         }
         if (inside && view.hovered && (s.selection==UVSelection::Face || s.selection==UVSelection::Island)) hit=id;
-        if (face.overlap) {
+        if (face.overlap && s.showOverlap) {
             auto position=UVScreen(preview(face.vertices.front().id,face.vertices.front().uv),s.canvas,view.min);
-            d->AddText(position,ImGui::GetColorU32(theme.colors.destructive),"Overlap");
+            d->AddText(position,ImGui::GetColorU32(theme.colors.destructive),s.labels.overlap);
         }
     }
     auto capacity=[&] {
@@ -1117,6 +1132,23 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
         ImGui::Checkbox(s.labels.checker,&s.checker);
         ImGui::Checkbox(s.labels.texture,&s.showTexture);
         ImGui::Checkbox(s.labels.grid,&s.grid);
+        auto overlay=[&](const char *id,IconId icon,const char *label,bool &enabled) {
+            if (!s.icons) {ImGui::Checkbox(label,&enabled);return;}
+            const bool active=enabled;
+            if (active) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+            if (IconLabelButton(id,*s.icons,icon,label,{16*ImGui::GetFontSize()/14})) enabled=!enabled;
+            if (active) {
+                ImGui::PopStyleColor();
+                const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
+                ImGui::GetWindowDrawList()->AddLine({a.x+3,b.y-2},{b.x-3,b.y-2},ImGui::GetColorU32(ImGuiCol_Text),2);
+            }
+        };
+        overlay("seams",IconId::UVSeam,s.labels.seams,s.showSeams);
+        overlay("overlap",IconId::UVOverlap,s.labels.overlap,s.showOverlap);
+        bool tiles=s.coordinates==UVCoordinates::Tiles;
+        overlay("tiles",IconId::UDIMTiles,s.labels.tiles,tiles);
+        if (tiles!=(s.coordinates==UVCoordinates::Tiles))
+            s.coordinates=tiles ? UVCoordinates::Tiles : UVCoordinates::Normalized;
         if (s.icons) {
             ImGui::BeginDisabled(s.drag.active || s.canvas.selecting);
             for (int mode=0;mode<2;++mode) {

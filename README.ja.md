@@ -60,7 +60,7 @@ Releaseにはソースarchiveと、Debug/Release別ライブラリ、CMake設定
 ImKitのコードはMITです。Dear ImGui・GLFWにはそれぞれのライセンス、任意のInter・Noto Sans JPフォントにはSIL OFL 1.1が適用されます。[第三者通知](THIRD_PARTY_NOTICES.md)に原文、出典、固定hashを記載しています。Dear ImGuiやデザイン参照元との提携を示すものではありません。
 ## モダンアイコン
 
-148種類の生成アイコンを、テーマ色・任意色・サイズ指定で利用できます。
+152種類の生成アイコンを、テーマ色・任意色・サイズ指定で利用できます。
 アイコンのみのボタンと文字付きボタンに対応し、GPUリソースはホスト側で管理します。
 導入方法は [アイコン API](docs/icons.md)、実例は Gallery の **Icons** ページを参照してください。
 
