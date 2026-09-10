@@ -7,19 +7,21 @@ namespace imkit::gallery {
 namespace {
 void PropertyLanguage(editor::PropertyState &state,bool japanese) {
     state.labels={};if (!japanese) return;
+    state.labels.mixed="複数の値";state.labels.moveUp="上へ移動";state.labels.moveDown="下へ移動";
     auto &l=state.labels;l.search="検索";l.property="項目";l.value="値";l.key="キー";
     l.modifiedSuffix=" (変更済み)";l.overrideSuffix=" (上書き)";l.lockedSuffix=" [ロック]";
     l.favorite="お気に入り";l.locked="ロック";l.overrideValue="上書き";l.reset="既定値へ戻す";
     l.previousKey="前のキー";l.nextKey="次のキー";l.addKey="キーを追加";l.removeKey="キーを削除";
 }
 void TransportLanguage(editor::TimeState &time,bool japanese) {
-    time.labels={};
+    time.labels={};time.rulerLabels={};
     if (!japanese) return;
     auto &l=time.labels;l.play="再生";l.pause="一時停止";l.stop="停止";
     l.previousFrame="前のフレーム";l.nextFrame="次のフレーム";
     l.in="イン";l.out="アウト";l.loop="ループ";
     l.goToStart="先頭へ";l.goToEnd="末尾へ";l.clearInOut="イン／アウトを解除";
     l.reverse="逆再生";l.forward="順再生";
+    time.rulerLabels={"作業範囲","イン／アウト","開始","終了","マーカーを追加","マーカーを削除","マーカー"};
 }
 void ApplyGizmoPreview(preview::Mesh &mesh,const cg::ViewportState &viewport) {
     auto apply=[&](const editor::Transaction *transaction) {
@@ -483,6 +485,7 @@ void EditorWorkspaces::Initialize() {
     colorCurve.companionDrags=colorCurveCompanions;
     colorCurve.activeChannel=colorCurveChannels[0];colorCurve.fitRequested=true;
     colorCurve.time=editor::FromSeconds(.5);
+    for(int i=0;i<3;++i) customProperties[i]={nextId++,i==0?"Parameter A":i==1?"Parameter B":"Parameter C","Custom array",double(i),double(i),{},true};
     RebuildColorScopes();
 }
 void EditorWorkspaces::RebuildColorScopes() {
@@ -613,6 +616,33 @@ void EditorWorkspaces::CopyClipEditingData(const video::ClipView &source,video::
     }
 }
 void EditorWorkspaces::ApplyEvents() {
+    std::vector<video::ClipView> removedClips;
+    std::vector<std::pair<editor::StableId,editor::Tick>> deletePositions;
+    bool rejectDelete=false;
+    for(const auto &e:events.Events()) if(e.phase==editor::Phase::Commit && e.revision==revision && e.kind==editor::EditKind::RippleDelete) {
+        auto clip=std::find_if(clips.begin(),clips.end(),[&](const auto &c){return c.id==e.target;});
+        if(clip==clips.end()) {rejectDelete=true;continue;}
+        if(std::any_of(removedClips.begin(),removedClips.end(),[&](const auto &c){return c.id==e.target;})) {rejectDelete=true;continue;}
+        removedClips.push_back(*clip);
+    }
+    if(!removedClips.empty()) {
+        std::sort(removedClips.begin(),removedClips.end(),[](const auto &a,const auto &b){return a.track!=b.track?a.track<b.track:a.start<b.start;});
+        for(std::size_t i=0;i<removedClips.size();++i) {
+            const auto &c=removedClips[i];
+            if(c.duration<=0 || c.start>std::numeric_limits<editor::Tick>::max()-c.duration) {rejectDelete=true;break;}
+            if(i && removedClips[i-1].track==c.track && removedClips[i-1].start+removedClips[i-1].duration>c.start) {rejectDelete=true;break;}
+        }
+        for(const auto &clip:clips) {
+            const bool removed=std::any_of(removedClips.begin(),removedClips.end(),[&](const auto &c){return c.id==clip.id;});
+            const auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==clip.track;});
+            const bool locked=clip.locked || track==tracks.end() || track->locked;
+            if(removed) {rejectDelete |= locked;continue;}
+            for(const auto &c:removedClips) if((c.linked && c.linked==clip.linked) || (c.group && c.group==clip.group)) rejectDelete=true;
+            const auto position=video::RippleDeletePosition(clip,removedClips);
+            if(!position) {rejectDelete=true;continue;}
+            if(*position!=clip.start) {rejectDelete |= locked;deletePositions.emplace_back(clip.id,*position);}
+        }
+    }
     bool changed = false;
     const auto clipBodyEdit=[](editor::EditKind kind) {
         return kind==editor::EditKind::Move || kind==editor::EditKind::Duplicate || kind==editor::EditKind::Split ||
@@ -673,6 +703,39 @@ void EditorWorkspaces::ApplyEvents() {
         if (e.phase != editor::Phase::Commit || e.revision != revision)
             continue;
         ++commits;
+        if(e.kind==editor::EditKind::RippleDelete) continue;
+        if(e.kind==editor::EditKind::CaptionInsert) {
+            const auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==e.target;});
+            if(track==tracks.end() || track->locked || track->kind!=video::TrackKind::Caption) continue;
+            auto start=e.proposed.first;const auto duration=editor::FromSeconds(3);
+            for(const auto &c:clips) if(c.track==track->id && c.start<=std::numeric_limits<editor::Tick>::max()-c.duration) {
+                if(start>std::numeric_limits<editor::Tick>::max()-duration) break;
+                if(c.start<start+duration && c.start+c.duration>start) start=c.start+c.duration;
+            }
+            if(start>std::numeric_limits<editor::Tick>::max()-duration) continue;
+            video::ClipView clip;clip.id=nextId++;clip.track=track->id;clip.start=start;clip.duration=duration;
+            clip.keyChannel=nextId++;clip.label="Caption";
+            clips.push_back(clip);selection.Set(clip.id);changed=true;continue;
+        }
+        bool arrayTarget=false,arrayLocked=false;
+        for(auto &property:customProperties) if(property.id==e.target) {
+            arrayTarget=true;
+            if(e.kind==editor::EditKind::Toggle) {
+                const auto flag=static_cast<unsigned>(e.proposed.x);
+                if(flag==4 || flag==8 || flag==16) {property.flags=static_cast<editor::PropertyFlags>(e.proposed.y?static_cast<unsigned>(property.flags)|flag:static_cast<unsigned>(property.flags)&~flag);changed=true;}
+            }
+            if(static_cast<unsigned>(property.flags)&16u) {arrayLocked=true;break;}
+            if((e.kind==editor::EditKind::Property || e.kind==editor::EditKind::Reset) && std::isfinite(e.proposed.x)) {property.value=e.proposed.x;changed=true;}
+            if(e.kind==editor::EditKind::Reorder) {
+                auto other=std::find_if(customProperties.begin(),customProperties.end(),[&](const auto &p){return p.id==e.proposed.parent;});
+                if(other!=customProperties.end() && !(static_cast<unsigned>(other->flags)&16u)) {std::iter_swap(&property,other);changed=true;}
+            }
+            if(property.value!=property.defaultValue) property.flags=static_cast<editor::PropertyFlags>(static_cast<unsigned>(property.flags)|2u);
+            else property.flags=static_cast<editor::PropertyFlags>(static_cast<unsigned>(property.flags)&~2u);
+            break;
+        }
+        if(arrayTarget && (arrayLocked || e.kind!=editor::EditKind::PropertyKey)) continue;
+
         bool colorTarget=false,colorEdited=false;
         for(int c=0;c<3;++c) {
             auto &channel=colorCurveKeys[c];
@@ -747,8 +810,12 @@ void EditorWorkspaces::ApplyEvents() {
         }
         if (e.kind == editor::EditKind::Select)
             continue;
-        if (e.kind == editor::EditKind::Marker && markerCount < markers.size()) {
-            markers[markerCount++] = {nextId++, e.proposed.first, "Marker"};
+        if(e.kind==editor::EditKind::Remove) for(std::size_t i=0;i<markerCount;++i) if(markers[i].id==e.target) {
+            std::move(markers.begin()+i+1,markers.begin()+markerCount,markers.begin()+i);--markerCount;changed=true;break;
+        }
+        if (e.kind == editor::EditKind::Marker) {
+            if(e.target) {for(auto &m:std::span(markers).first(markerCount)) if(m.id==e.target) m.tick=e.proposed.first;}
+            else if(markerCount<markers.size()) markers[markerCount++] = {nextId++, e.proposed.first, "Marker"};
             changed = true;
         }
         if (e.kind==editor::EditKind::ComponentAdd && (e.proposed.parent==7801 || e.proposed.parent==7802)) {
@@ -1131,7 +1198,7 @@ void EditorWorkspaces::ApplyEvents() {
             const auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==owner->track;});
             if (track==tracks.end() || track->locked) continue;
         }
-        bool isProperty=clipProperty!=clipPropertyOwners.end();
+        bool isProperty=arrayTarget || clipProperty!=clipPropertyOwners.end();
         for (const auto &object:objects)
             for (int component=0;component<9;++component)
                 isProperty |= e.target==ObjectPropertyId(*this, object.id,component);
@@ -1176,6 +1243,13 @@ void EditorWorkspaces::ApplyEvents() {
                 }
             }
         }
+    }
+    if(!rejectDelete && !removedClips.empty()) {
+        const std::map<editor::StableId,editor::Tick> positions(deletePositions.begin(),deletePositions.end());
+        for(auto &clip:clips) if(auto position=positions.find(clip.id);position!=positions.end()) clip.start=position->second;
+        std::erase_if(clips,[&](const auto &clip){return std::any_of(removedClips.begin(),removedClips.end(),[&](const auto &c){return c.id==clip.id;});});
+        for(const auto &clip:removedClips) {clipEnvelopes.erase(clip.id);clipProperties.erase(clip.id);}
+        selection.Clear();changed=true;
     }
     if (!rejectClipBatch) for (const auto &[id,position]:ripplePositions) {
         const auto clip=std::find_if(clips.begin(),clips.end(),[&](const auto &c){return c.id==id;});
@@ -1270,7 +1344,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     editor::PropertyView props[] = {{s.clipPropertyIds[0], "Opacity", "Video", 1, 1, editor::PropertyFlags::Animated},
                                     {s.clipPropertyIds[1], "Scale", "Transform", 1, 1},
                                     {s.clipPropertyIds[2], "Position X", "Transform", 0, 0},
-                                    {s.clipPropertyIds[3], "Speed", "Retiming", 1, 1}};
+                                    {s.clipPropertyIds[3], "Speed", "Retiming", 1, 1,{},false,IconId::SpeedCurve}};
     for (int i = 0; i < 4; ++i) {
         props[i].value = s.clipPropertyValues[i];
         props[i].flags=static_cast<editor::PropertyFlags>(static_cast<unsigned>(props[i].flags)|
@@ -1365,6 +1439,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         s.timeline.labels.proxy="プロキシ";s.timeline.labels.missing="素材が見つかりません";
         s.timeline.labels.offline="素材がオフライン";s.timeline.labels.locked="ロック中";
         s.timeline.labels.addEnvelope="音量ポイントを追加";s.timeline.labels.removeEnvelope="音量ポイントを削除";
+        s.timeline.labels.addCaption="再生位置以降の空きに字幕を追加";s.timeline.labels.rippleDelete="選択クリップをリップル削除";s.timeline.labels.trimStart="開始端をトリム";s.timeline.labels.trimEnd="終了端をトリム";
         s.timeline.labels.envelope="音量エンベロープ";s.timeline.labels.dragKey="キーの時刻をドラッグ";
         s.timeline.labels.linkSelection="選択clipをリンク";s.timeline.labels.groupSelection="選択clipをgroup化";
         s.timeline.labels.tools={"選択","分割","リップル","ロール","スリップ","スライド","手のひら"};
@@ -1454,6 +1529,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
                 video::UpdateMeter(s.rightMeter,right,ImGui::GetIO().DeltaTime);
                 ImGui::SameLine();
             }
+            if(s.icons) {Icon(*s.icons,IconId::Waveform,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
             video::Waveform("wave", s.audio, {(std::max)(60.f,ImGui::GetContentRegionAvail().x - 80), 100}, theme);
             ImGui::SameLine();
             video::LevelMeter("meter", s.meter, s.rightMeter, {50, 100}, theme);
@@ -1473,7 +1549,9 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
                 video::ScopeImage("RGB waveform", s.scopeRGB[channel],64,256,{scopeWidth,80},theme,tints[channel]);
                 ImGui::PopID();
             }
-            video::ColorControls("Grade",s.colors,s.colorIds,s.revision,s.colorState,s.events);
+            video::ColorLabels colorLabels;
+            if(s.japanese) colorLabels={"リフト","ガンマ","ゲイン","色温度","色かぶり","露出","明るさ"};
+            video::ColorControls("Grade",s.colors,s.colorIds,s.revision,s.colorState,s.events,colorLabels);
             if(s.icons) {Icon(*s.icons,IconId::CurveEditor,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
             ImGui::BeginDisabled(s.colorCurve.drag.active);
             const char *channelsEn[]={"Red","Green","Blue"},*channelsJa[]={"赤","緑","青"};
@@ -1573,7 +1651,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
         l.grid="グリッド";l.gizmo="ギズモ";l.snap="スナップ";
         l.vertexNormals="頂点法線";l.faceNormals="面法線";
         l.boxSelect="矩形選択";l.lassoSelect="投げ縄選択";
-        l.alignView="軸をクリックして視点を整列";
+        l.alignView="軸をクリックして視点を整列";l.orbit="中ボタンドラッグで回転、Shift併用で平行移動";
         l.overlays="表示";l.axes="軸";l.origins="原点";
         l.cameraFrame="カメラ枠";l.safeFrame="安全枠";l.renderRegion="レンダー領域";
         l.passepartout="枠外を暗くする";l.measurement="寸法";l.selectionOutline="選択輪郭";
@@ -1714,12 +1792,35 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
         }
         if (ImGui::BeginTabItem("Components")) {
             s.inspectorComponents.clear();
-            for (const auto &component:s.components) if (component.view.owner==object->id) s.inspectorComponents.push_back(component.view);
-            const cg::ComponentTypeView componentTypes[]={{7801,"Mesh renderer"},{7802,"Wireframe override"}};
+            for (const auto &component:s.components) if (component.view.owner==object->id) {auto view=component.view;view.icon=component.wireOverride?IconId::Modifier:IconId::Layers;s.inspectorComponents.push_back(view);}
+            const cg::ComponentTypeView componentTypes[]={{7801,"Mesh renderer",IconId::LayerAdd},{7802,"Wireframe override",IconId::ModifierAdd}};
             cg::ComponentStackOptions options{object->id,object->geometry ? std::span<const cg::ComponentTypeView>(componentTypes) : std::span<const cg::ComponentTypeView>{},object->locked};
             options.icons=s.icons;
             if (s.japanese) options.labels={"コンポーネント追加","有効","コンポーネント","操作","ロック","ロック解除","上へ","下へ","削除"};
             cg::ComponentStack("Components",s.inspectorComponents,s.revision,s.events,options);
+            if(ImGui::CollapsingHeader(s.japanese?"カスタム配列":"Custom property array")) {
+                s.arrayProperties.time=s.timeline.time.playhead;
+                s.arrayProperties.icons=s.icons;PropertyLanguage(s.arrayProperties,s.japanese);
+                editor::PropertyProvider arrayProvider{&s,s.revision,3,[](void *u,int first,int count,std::string_view search) {
+                    auto &s=*static_cast<EditorWorkspaces*>(u);std::size_t size=0;ImGuiTextFilter filter(search.data());
+                    for(const auto &p:s.customProperties) if(filter.PassFilter(p.label)) {
+                        auto value=p;const auto channel=s.propertyKeys.find(p.id);
+                        if(channel!=s.propertyKeys.end() && !channel->second.empty()) {
+                            value.flags=static_cast<editor::PropertyFlags>(static_cast<unsigned>(value.flags)|32u);
+                            if(std::any_of(channel->second.begin(),channel->second.end(),[&](const auto &k){return k.tick==s.timeline.time.playhead;}))
+                                value.flags=static_cast<editor::PropertyFlags>(static_cast<unsigned>(value.flags)|64u);
+                        }
+                        s.filteredCustomProperties[size++]=value;
+                    }
+                    const auto begin=std::min(size,static_cast<std::size_t>(std::max(0,first)));
+                    return std::span<const editor::PropertyView>(s.filteredCustomProperties).subspan(begin,std::min(size-begin,static_cast<std::size_t>(std::max(0,count))));
+                },[](void *u,editor::StableId id,int direction)->const editor::PropertyView* {
+                    auto &s=*static_cast<EditorWorkspaces*>(u);
+                    for(int i=0;i<3;++i) if(s.customProperties[i].id==id && i+direction>=0 && i+direction<3) return &s.customProperties[i+direction];
+                    return nullptr;
+                }};
+                editor::PropertyGrid("custom-array",arrayProvider,s.arrayProperties,s.events);
+            }
             ImGui::EndTabItem();
         }
         ImGui::EndTabBar();

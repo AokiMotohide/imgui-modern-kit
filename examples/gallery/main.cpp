@@ -1,6 +1,8 @@
 #include <windows.h>
 #include <objbase.h>
 #include <GLFW/glfw3.h>
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include "gallery.h"
@@ -647,6 +649,33 @@ int VerifyInspectorModel() {
         if (!ok) ++failures;
     };
     {
+        auto listStorage=std::make_unique<gallery::EditorWorkspaces>();auto &list=*listStorage;list.Initialize();
+        const auto first=list.customProperties[0].id,second=list.customProperties[1].id;
+        list.events.Push({first,list.revision,editor::Phase::Commit,editor::EditKind::Reorder,{},editor::Value{0,0,1,second}});list.ApplyEvents();
+        check(list.customProperties[1].id==first && list.customProperties[0].id==second,"host reorders custom array by explicit sibling IDs");
+        list.events.Push({first,list.revision,editor::Phase::Commit,editor::EditKind::Property,{},editor::Value{0,0,0,0,42}});list.ApplyEvents();
+        check(list.customProperties[1].value==42,"array edit follows stable ID after reorder");
+        list.clips.resize(3);for(int i=0;i<3;++i) {list.clips[i].linked=0;list.clips[i].group=0;list.clips[i].track=1;list.clips[i].start=i*10;list.clips[i].duration=10;}
+        const auto removed=list.clips[0].id;list.clips[1].locked=true;
+        list.events.Push({removed,list.revision,editor::Phase::Commit,editor::EditKind::RippleDelete});list.ApplyEvents();
+        check(list.clips.size()==3 && list.clips[2].start==20,"locked follower rejects ripple delete atomically");
+        list.clips[1].locked=false;
+        list.events.Push({removed,list.revision,editor::Phase::Commit,editor::EditKind::RippleDelete});list.ApplyEvents();
+        check(list.clips.size()==2 && list.clips[0].start==0 && list.clips[1].start==10,"ripple delete removes target and shifts followers once");
+        auto track=std::find_if(list.tracks.begin(),list.tracks.end(),[](const auto &t){return t.kind==video::TrackKind::Caption;});
+        list.events.Push({track->id,list.revision,editor::Phase::Commit,editor::EditKind::CaptionInsert});list.ApplyEvents();
+        check(list.clips.size()==3 && list.selection.active==list.clips.back().id,"caption insertion creates and selects a host clip");
+    }
+    {
+        auto markerStorage=std::make_unique<gallery::EditorWorkspaces>();auto &marker=*markerStorage;marker.Initialize();
+        marker.events.Push({0,marker.revision,editor::Phase::Commit,editor::EditKind::Marker,{},editor::Value{100}});marker.ApplyEvents();
+        const auto count=marker.markerCount,id=marker.markers[count-1].id;
+        marker.events.Push({id,marker.revision,editor::Phase::Commit,editor::EditKind::Marker,{},editor::Value{200}});marker.ApplyEvents();
+        check(marker.markerCount==count && marker.markers[count-1].tick==200,"host marker move updates existing ID");
+        marker.events.Push({id,marker.revision,editor::Phase::Commit,editor::EditKind::Remove});marker.ApplyEvents();
+        check(marker.markerCount==count-1,"host removes selected marker");
+    }
+    {
         auto colorStorage=std::make_unique<gallery::EditorWorkspaces>();auto &color=*colorStorage;color.Initialize();
         const auto id=color.colorCurveKeys[0][1].id;
         const float before=color.pixels[32].r;
@@ -1128,7 +1157,8 @@ int VerifyInspectorModel() {
 }
 int main(int argc, char **argv) {
     bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false, benchmarkEditors = false, verifyMonitors = false, verifyTrackControls = false, verifyLinkedClips = false, verifyNormals = false;
-    int capturePage = -1, animationPage = -1;
+    int capturePage = -1, animationPage = -1, monitorIndex=-1;
+    bool listMonitors=false;
     std::string iconSearch;
     std::filesystem::path out = "out/catalog";
     for (int i = 1; i < argc; ++i) {
@@ -1151,6 +1181,8 @@ int main(int argc, char **argv) {
             verifyIcons = true;
         else if (a == "--verify-color")
             verifyColor = true;
+        else if(a=="--list-monitors") listMonitors=true;
+        else if(a=="--monitor" && i+1<argc) monitorIndex=std::stoi(argv[++i]);
         else if (a == "--output" && i + 1 < argc)
             out = argv[++i];
         else if (a == "--animation-page" && i + 1 < argc) {
@@ -1175,6 +1207,19 @@ int main(int argc, char **argv) {
     if (!glfwInit()) {
         CoUninitialize();
         return 1;
+    }
+    if(listMonitors || monitorIndex>=0) {
+        int count=0;auto monitors=glfwGetMonitors(&count);
+        for(int i=0;i<count;++i) {
+            int x=0,y=0;glfwGetMonitorPos(monitors[i],&x,&y);
+            const char *adapter=glfwGetWin32Adapter(monitors[i]);std::string adapterName;
+            DISPLAY_DEVICEA device{};device.cb=sizeof(device);
+            for(DWORD index=0;EnumDisplayDevicesA(nullptr,index,&device,0);++index)
+                if(adapter && std::strcmp(adapter,device.DeviceName)==0) {adapterName=device.DeviceString;break;}
+            if(listMonitors) std::printf("%d: %s | %s | position %d,%d\n",i,glfwGetMonitorName(monitors[i]),adapterName.c_str(),x,y);
+            if(i==monitorIndex) {glfwWindowHint(GLFW_POSITION_X,x+32);glfwWindowHint(GLFW_POSITION_Y,y+32);}
+        }
+        if(listMonitors || monitorIndex>=count) {glfwTerminate();CoUninitialize();return listMonitors?0:2;}
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -1345,6 +1390,14 @@ int main(int argc, char **argv) {
                         if (page == 6 || page >= 8) {
                             h.s.scale = 1.5f; h.Settle();
                             h.Frame({}, out / ("page-"+std::to_string(page)+(dark ? "-dark-150.png" : "-light-150.png")));
+                            if(page==6 || page==8) {
+                                const auto oldPanel=h.s.editors.activeVideoPanel;
+                                if(page==8) {h.s.editors.videoPanel=1;h.Settle();}
+                                h.mouse={1200,1320};h.Frame([](ImGuiIO &io){io.AddMouseWheelEvent(0,-100);});h.Settle();
+                                h.Frame({},out/((page==6?"icons-bottom":"color-curves")+std::string(dark?"-dark-150.png":"-light-150.png")));
+                                h.Frame([](ImGuiIO &io){io.AddMouseWheelEvent(0,100);});h.Settle();
+                                if(page==8) h.s.editors.videoPanel=oldPanel;
+                            }
                             h.s.scale = 1; h.Settle();
                         }
                         if (page == 6) {

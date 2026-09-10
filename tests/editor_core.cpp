@@ -444,6 +444,35 @@ int main() {
     boxGesture();
     check(propertyEvents.overflow && propertyEvents.count==0 && curveSelection.count==1 &&
         curveSelection.Contains(6107),"short selection storage preserves the old curve selection atomically");
+    {
+        TimeState ruler;CanvasState canvas;canvas.scale={100,100};
+        std::array<Marker,1> markers{{{7001,FromSeconds(1),"Marker"}}};
+        std::array<Event,8> storage;EventBuffer events{storage};ImVec2 origin;
+        auto rulerFrame=[&] {
+            events.Clear();ImGui::NewFrame();ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({780,300});
+            ImGui::Begin("Ruler contract");origin=ImGui::GetCursorScreenPos();
+            TimeRuler("ruler",ruler,canvas,markers,1,events,imkit::MakePrecisionTheme(imkit::ColorScheme::Dark));
+            ImGui::End();ImGui::Render();
+        };
+        rulerFrame();rulerFrame();io.AddMousePosEvent(origin.x+100,origin.y+19);rulerFrame();
+        io.AddMouseButtonEvent(0,true);rulerFrame();
+        check(ruler.markerDrag.active && events.count>=1 && events.Events()[0].phase==Phase::Begin,"marker drag begins a typed transaction");
+        io.AddMousePosEvent(origin.x+150,origin.y+19);rulerFrame();
+        io.AddMouseButtonEvent(0,false);rulerFrame();
+        check(events.count==1 && events.Events()[0].phase==Phase::Commit && events.Events()[0].target==7001 && events.Events()[0].proposed.first==FromSeconds(1.5),"marker drag commits proposed time without mutating source");
+        check(markers[0].tick==FromSeconds(1),"marker source remains host owned");
+        io.AddMousePosEvent(origin.x+100,origin.y+19);rulerFrame();io.AddMouseButtonEvent(0,true);rulerFrame();
+        io.AddKeyEvent(ImGuiKey_Escape,true);rulerFrame();
+        check(!ruler.markerDrag.active && events.count==1 && events.Events()[0].phase==Phase::Cancel,"Escape cancels marker edit");
+        io.AddKeyEvent(ImGuiKey_Escape,false);io.AddMouseButtonEvent(0,false);rulerFrame();
+        ruler.work={FromSeconds(.5),FromSeconds(4)};
+        io.AddMousePosEvent(origin.x+50,origin.y+26);rulerFrame();io.AddMouseButtonEvent(0,true);rulerFrame();
+        io.AddMousePosEvent(origin.x+80,origin.y+26);rulerFrame();
+        check(ruler.work.first==FromSeconds(.8),"work range handle updates host navigation state");
+        io.AddKeyEvent(ImGuiKey_Escape,true);rulerFrame();
+        check(ruler.work.first==FromSeconds(.5),"Escape restores work range");
+        io.AddKeyEvent(ImGuiKey_Escape,false);io.AddMouseButtonEvent(0,false);rulerFrame();
+    }
     ImGui::DestroyContext(context);
     std::puts(failures ? "FAIL editor core"
                        : "PASS timebase, drop-frame, snap, transaction, canvas and curves");
