@@ -382,6 +382,7 @@ void EditorWorkspaces::Initialize() {
         objects[i].id = 1000000 + i;
         objectOrder[i]=objects[i].id;
         objects[i].label = names[i];
+        objects[i].kind=i==0 ? cg::ObjectKind::Collection : i==1 ? cg::ObjectKind::Mesh : i==2 ? cg::ObjectKind::Light : cg::ObjectKind::Camera;
         objects[i].parent = i ? 1000000 : 0;
         objects[i].depth = i ? 1 : 0;
         objects[i].hasChildren = i == 0;
@@ -654,7 +655,14 @@ void EditorWorkspaces::ApplyEvents() {
         if (component!=components.end()) {
             const auto owner=std::find_if(objects.begin(),objects.end(),[&](const auto &v){return v.id==component->view.owner;});
             if (owner==objects.end() || (owner->locked && !(e.kind==editor::EditKind::Toggle && e.proposed.x==1))) continue;
-            if (e.kind==editor::EditKind::Toggle) {
+            if (!component->view.locked && e.kind==editor::EditKind::Rename) {
+                renamedLabels[e.target]=e.proposedText.data();component->view.label=renamedLabels[e.target].c_str();changed=true;
+            } else if (!component->view.locked && e.kind==editor::EditKind::Duplicate) {
+                auto copy=*component;copy.view.id=nextId++;components.push_back(copy);objectSelection.Set(copy.view.id);changed=true;continue;
+            } else if (!component->view.locked && e.kind==editor::EditKind::Reparent) {
+                const auto destination=std::find_if(objects.begin(),objects.end(),[&](const auto &o){return o.id==e.proposed.parent;});
+                if (destination!=objects.end() && !destination->locked) {component->view.owner=destination->id;changed=true;}
+            } else if (e.kind==editor::EditKind::Toggle) {
                 const int field=static_cast<int>(e.proposed.x);
                 if (field==2) {component->view.locked=e.proposed.y!=0;changed=true;}
                 else if (field==1) {component->view.expanded=e.proposed.y!=0;changed=true;}
@@ -1372,28 +1380,36 @@ void EditorWorkspaces::RebuildOutlinerRows() {
     std::sort(ordered.begin(),ordered.end(),[&](const auto &a,const auto &b){
         return std::find(objectOrder.begin(),objectOrder.end(),a.id)<std::find(objectOrder.begin(),objectOrder.end(),b.id);
     });
+    for (const auto &component:components) {
+        const auto owner=std::find_if(objects.begin(),objects.end(),[&](const auto &o){return o.id==component.view.owner;});
+        if (owner==objects.end()) continue;
+        cg::ObjectView row;row.id=component.view.id;row.parent=component.view.owner;row.label=component.view.label;
+        row.kind=component.wireOverride ? cg::ObjectKind::Modifier : cg::ObjectKind::Component;
+        row.visible=component.view.enabled;row.locked=component.view.locked || owner->locked;row.expanded=component.view.expanded;
+        row.transform=owner->transform;ordered.push_back(row);
+    }
     ImGuiTextFilter filter(outliner.search);
     auto matches=[&](auto &&self,const cg::ObjectView &object,std::size_t depth)->bool {
-        if (depth>objects.size()) return false;
+        if (depth>ordered.size()) return false;
         const bool stateMatches=outliner.filter==cg::OutlinerFilter::All ||
             (outliner.filter==cg::OutlinerFilter::Visible && object.visible) ||
             (outliner.filter==cg::OutlinerFilter::Hidden && !object.visible) ||
             (outliner.filter==cg::OutlinerFilter::Locked && object.locked) ||
             (outliner.filter==cg::OutlinerFilter::Selected && objectSelection.Contains(object.id));
-        if (stateMatches && filter.PassFilter(object.label)) return true;
+        if (stateMatches && (outliner.kindFilter<0 || outliner.kindFilter==static_cast<int>(object.kind)) && filter.PassFilter(object.label)) return true;
         for (const auto &child:ordered) if (child.parent==object.id && self(self,child,depth+1)) return true;
         return false;
     };
     auto append=[&](auto &&self,const cg::ObjectView &object,int depth)->void {
-        if (depth>=static_cast<int>(objects.size()) || !matches(matches,object,0)) return;
+        if (depth>=static_cast<int>(ordered.size()) || !matches(matches,object,0)) return;
         auto row=object;row.depth=depth;
-        row.hasChildren=std::any_of(objects.begin(),objects.end(),[&](const auto &child){return child.parent==object.id;});
+        row.hasChildren=std::any_of(ordered.begin(),ordered.end(),[&](const auto &child){return child.parent==object.id;});
         outlinerRows.push_back(row);
-        if (object.expanded || filter.IsActive() || outliner.filter!=cg::OutlinerFilter::All)
+        if (object.expanded || filter.IsActive() || outliner.filter!=cg::OutlinerFilter::All || outliner.kindFilter>=0)
             for (const auto &child:ordered) if (child.parent==object.id) self(self,child,depth+1);
     };
     for (const auto &object:ordered)
-        if (!object.parent || std::none_of(objects.begin(),objects.end(),[&](const auto &parent){return parent.id==object.parent;}))
+        if (!object.parent || std::none_of(ordered.begin(),ordered.end(),[&](const auto &parent){return parent.id==object.parent;}))
             append(append,object,0);
 }
 void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) {
@@ -1487,6 +1503,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     if (s.japanese) {
         auto &l=s.outliner.labels;l.search="検索";l.name="名前";
         l.filters={"すべて","表示中","非表示","ロック中","選択中"};
+        l.kinds={"全種類","オブジェクト","コレクション","メッシュ","カメラ","ライト","コンポーネント","モディファイア"};
         l.restrictions={"表示","選択可能","レンダー対象","ロック"};
         l.rename="名前変更";l.duplicate="複製";l.linkedDuplicate="リンク複製";
         l.linkGeometry="アクティブ対象の形状を共有";l.singleUser="形状を独立化";
@@ -1503,8 +1520,11 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     cg::Outliner("Hierarchy", scene, s.outliner, s.objectSelection, s.events);
     ImGui::EndChild();
     ImGui::SeparatorText("Inspector");
+    auto inspectorOwner=s.objectSelection.active;
+    const auto selectedComponent=std::find_if(s.components.begin(),s.components.end(),[&](const auto &c){return c.view.id==inspectorOwner;});
+    if (selectedComponent!=s.components.end()) inspectorOwner=selectedComponent->view.owner;
     auto object = std::find_if(s.objects.begin(), s.objects.end(),
-                               [&](const auto &o) { return o.id == s.objectSelection.active; });
+                               [&](const auto &o) { return o.id == inspectorOwner; });
     if (object != s.objects.end() && ImGui::BeginTabBar("Inspector pages")) {
         if (ImGui::BeginTabItem("Transform")) {
             editor::PropertyView rows[] = {

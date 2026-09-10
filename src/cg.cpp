@@ -738,6 +738,8 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
     ImGui::SameLine();ImGui::SetNextItemWidth(-1);
     int filter=static_cast<int>(s.filter);
     if (ImGui::Combo("##filter",&filter,s.labels.filters.data(),5)) s.filter=static_cast<OutlinerFilter>(filter);
+    int kind=s.kindFilter+1;
+    if (ImGui::Combo("##kind",&kind,s.labels.kinds.data(),8)) s.kindFilter=kind-1;
     if (ImGui::BeginTable("tree", 5,
                           ImGuiTableFlags_Resizable | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY)) {
         ImGui::TableSetupColumn(s.labels.name, ImGuiTableColumnFlags_WidthStretch);
@@ -751,6 +753,7 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
                                 : std::span<const ObjectView>{};
             for (const auto &row : rows) {
                 ImGui::PushID(reinterpret_cast<void *>(static_cast<std::uintptr_t>(row.id)));
+                const bool componentRow=row.kind==ObjectKind::Component || row.kind==ObjectKind::Modifier;
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 ImGui::Indent(row.depth * 14.f);
@@ -759,6 +762,9 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
                         Emit(out, row.id, p.revision, editor::EditKind::Toggle,
                              Value({4, row.expanded ? 1. : 0., 0}), Value({4, row.expanded ? 0. : 1., 0}));
                     ImGui::SameLine();
+                }
+                if (row.kind!=ObjectKind::Object) {
+                    ImGui::TextDisabled("%s",s.labels.kinds[static_cast<int>(row.kind)+1]);ImGui::SameLine();
                 }
                 auto beginRename=[&] {
                     if (row.locked || s.renameTransaction.active) return;
@@ -813,7 +819,7 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
                         }
                         if (ImGui::MenuItem(s.labels.moveUp)) Emit(out,row.id,p.revision,editor::EditKind::Reorder,{},editor::Value{0,0,-1,row.parent});
                         if (ImGui::MenuItem(s.labels.moveDown)) Emit(out,row.id,p.revision,editor::EditKind::Reorder,{},editor::Value{0,0,1,row.parent});
-                        if (row.parent && ImGui::MenuItem(s.labels.moveRoot)) Emit(out,row.id,p.revision,editor::EditKind::Reparent,editor::Value{0,0,0,row.parent},{});
+                        if (!componentRow && row.parent && ImGui::MenuItem(s.labels.moveRoot)) Emit(out,row.id,p.revision,editor::EditKind::Reparent,editor::Value{0,0,0,row.parent},{});
                         if (row.hasChildren) {
                             if (ImGui::MenuItem(s.labels.expand)) Emit(out,row.id,p.revision,editor::EditKind::Toggle,{},Value({5,1,0}));
                             if (ImGui::MenuItem(s.labels.collapse)) Emit(out,row.id,p.revision,editor::EditKind::Toggle,{},Value({5,0,0}));
@@ -841,6 +847,8 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
                 for (int f = 0; f < 4; ++f) {
                     ImGui::TableNextColumn();
                     ImGui::PushID(f);
+                    ImGui::BeginDisabled(componentRow && (f==1 || f==2));
+                    const int field=componentRow && f==3 ? 2 : f;
                     bool draft = values[f];
                     bool changed=false;
                     if (s.icons) {
@@ -856,10 +864,11 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
                     } else changed=ImGui::Checkbox("##restriction", &draft);
                     if (changed)
                         Emit(out, row.id, p.revision, editor::EditKind::Toggle,
-                             Value({static_cast<double>(f), values[f] ? 1. : 0., 0}),
-                             Value({static_cast<double>(f), draft ? 1. : 0., 0}));
+                             Value({static_cast<double>(field), values[f] ? 1. : 0., 0}),
+                             Value({static_cast<double>(field), draft ? 1. : 0., 0}));
                     if (ImGui::IsItemHovered())
                         ImGui::SetTooltip("%s", labels[f]);
+                    ImGui::EndDisabled();
                     ImGui::PopID();
                 }
                 ImGui::PopID();
