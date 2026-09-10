@@ -7,6 +7,8 @@
 - Extend source/SDK packaging, installed-consumer verification and Windows CI for the complete Editor Suite and shell surface.
 - Add `ThemePresetFromId()` for host-owned stable preset persistence and document pinned-submodule/local-source development.
 - 安定preset IDの復元APIと、固定submodule／ローカルソースを切り替える並行開発手順を追加。
+- Open the native Gallery on the Components page instead of an empty initial canvas.
+- native Galleryの初期表示を空画面ではなくComponents pageへ修正。
 - Add twelve discoverable named themes with stable IDs, complete editor palettes and checked contrast thresholds.
 - Redesign the native Gallery around guided onboarding, searchable navigation, live examples and copyable code.
 - Refresh the English/Japanese onboarding documentation and add a reproducible native README animation.
