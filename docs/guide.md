@@ -101,3 +101,9 @@ Open **Editor Core**, **Video Editor**, or **CG Editor** in the native Gallery. 
 ## Design system foundations
 
 See [API migration, provider ownership and current implementation boundaries](design-system.md).
+
+## Generic workflow and image components
+
+See [workflow API, ownership, coordinates and Gallery](workflow-components.md).
+Use Generic Workspace, Feedback / States and Preview Tiles. Keep notification
+time/queues, textures, selection and resize dimensions in host-owned state.
