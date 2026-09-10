@@ -89,6 +89,7 @@ int main() {
     video::Histogram("histogram", {}, {100, 50}, theme);
     video::ScopeImage("scope", {}, 0, 0, {100, 50}, theme);
     video::ScopeImage("tinted scope", {}, 0, 0, {100,50}, theme, {1,0,0,1});
+    (void)video::ApplyColorCurves({0,0,0,1},video::ColorCurveSet{});
     video::ColorValues colorValues;
     video::ColorState colorState;
     video::ColorControls("Color draft", colorValues);

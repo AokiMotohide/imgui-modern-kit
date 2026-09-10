@@ -264,6 +264,10 @@ struct ColorValues {
     float lift[3]{}, gamma[3]{1, 1, 1}, gain[3]{1, 1, 1};
     float temperature = 0, tint = 0, exposure = 0;
 };
+// Curve key time maps normalized input 0..1 to 0..TicksPerSecond; key value is output.
+// Each channel must be sorted by tick. Empty channels are identity. Inputs/outputs are clamped to 0..1; alpha is preserved.
+struct ColorCurveSet {std::span<const editor::Keyframe> red,green,blue;};
+Rgba ApplyColorCurves(Rgba input,const ColorCurveSet &curves);
 bool ColorControls(const char *id, ColorValues &hostDraft);
 struct ColorPropertyIds {
     StableId lift = 0, gamma = 0, gain = 0, temperature = 0, tint = 0, exposure = 0;

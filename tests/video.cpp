@@ -19,6 +19,16 @@ int main() {
             std::fprintf(stderr, "FAIL %s\n", s);
         }
     };
+    {
+        std::array<editor::Keyframe,2> inverted{{{1,10,0,1},{2,10,editor::FromSeconds(1),0}}};
+        for(auto &key:inverted) key.interpolation=editor::Interpolation::Linear;
+        auto identity=video::ApplyColorCurves({.25f,.5f,.75f,.3f},{});
+        check(identity.r==.25f && identity.g==.5f && identity.b==.75f && identity.a==.3f,"empty color curves preserve RGBA");
+        auto mapped=video::ApplyColorCurves({.25f,.5f,.75f,.3f},{inverted,{},{}});
+        check(std::abs(mapped.r-.75f)<1e-5f && mapped.g==.5f && mapped.b==.75f && mapped.a==.3f,"color curves evaluate channels independently and preserve alpha");
+        auto bounded=video::ApplyColorCurves({-1,2,std::numeric_limits<float>::quiet_NaN(),1},{});
+        check(bounded.r==0 && bounded.g==1 && bounded.b==0,"color curves bound nonfinite and out of range samples");
+    }
     video::TimelineState snapping;
     {
         video::ClipView left,right;left.track=right.track=1;

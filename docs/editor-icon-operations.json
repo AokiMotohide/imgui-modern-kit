@@ -1168,7 +1168,7 @@
       "icon": "CurveEditor",
       "tooltip": "Color Curves",
       "state": "button background, focus outline and disabled styling",
-      "status": "shared CurveEditor original generated; color curve integration review pending",
+      "status": "shared CurveEditor icon connected to Gallery RGB curve control; native capture pending",
       "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
     },
     {
