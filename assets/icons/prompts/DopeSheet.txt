@@ -1,0 +1,4 @@
+Use case: logo-brand. Generate ONE individual technical software icon named DopeSheet. Subject: a thin outlined square panel with three horizontal rows of small diamond keyframes; the diamonds align into two time columns, no curve or play triangle. Uniform clean black rounded outline strokes equivalent to 2 units on a 24-unit grid. Compact approximately square optical footprint readable at 16px, generous transparent margins. True transparent RGBA background. No lettering, shadows, checkerboard drawing, paper, contact sheet or extra icons.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/DopeSheet.png

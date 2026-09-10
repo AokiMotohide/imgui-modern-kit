@@ -246,9 +246,19 @@ struct StripView {
     double scale = 1, repeat = 1, blend = 1;
     bool muted = false, locked = false;
 };
+// Trim clamps to at least one Tick; overflowing Move and unsupported edits return nullopt.
+std::optional<editor::Range> EditStripRange(editor::Range range,editor::EditKind kind,editor::Tick delta);
 void AnimationStrips(const char *id, std::span<const StripView> visible, std::uint64_t revision,
                      editor::CanvasState &canvas, editor::Transaction &drag, editor::EventBuffer &events,
                      const Theme &theme, ImVec2 size = {0, 180});
+struct StripLabels {
+    const char *scale="Scale",*repeat="Repeat",*blend="Blend",*mute="Mute",*lock="Lock";
+    const char *moveUp="Move up",*moveDown="Move down",*repeats="repeats",*muted=" [Muted]",*locked=" [Locked]";
+};
+struct StripOptions {const IconAtlas *icons=nullptr;StripLabels labels;};
+void AnimationStrips(const char *id,std::span<const StripView> visible,std::uint64_t revision,
+                     editor::CanvasState &canvas,editor::Transaction &drag,editor::EventBuffer &events,
+                     const Theme &theme,ImVec2 size,const StripOptions &options);
 void DopeSheet(const char *id, const editor::CurveProvider &provider, editor::CurveState &state,
                editor::Selection &selection, editor::EventBuffer &events, const Theme &theme,
                ImVec2 size = {0, 200});

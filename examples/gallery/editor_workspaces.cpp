@@ -1645,19 +1645,37 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     ImGui::EndChild();
     ImGui::SameLine();
     ImGui::BeginChild("Animation UV", {0, 0}, ImGuiChildFlags_Borders);
+    if (s.icons) {
+        Icon(*s.icons,IconId::AnimationTimeline,{16*ImGui::GetFontSize()/14});
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s",s.japanese ? "アニメーション時間軸" : "Animation timeline");
+        ImGui::SameLine();
+    }
     TransportLanguage(s.timeline.time,s.japanese);
     editor::Transport(s.timeline.time, std::span(s.bindings).first(s.bindingCount), s.icons);
     if (ImGui::BeginTabBar("Animation editors")) {
         if (ImGui::BeginTabItem("Graph Editor",nullptr,s.animationPage==0?ImGuiTabItemFlags_SetSelected:0)) {
+            if (s.icons) {Icon(*s.icons,IconId::CurveEditor,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+            ImGui::TextUnformatted(s.japanese ? "カーブエディター" : "Curve Editor");
             editor::CurveEditor("graph", Curves(s), s.curve, s.keySelection, s.events, theme, {0, 0});
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Dope Sheet",nullptr,s.animationPage==1?ImGuiTabItemFlags_SetSelected:0)) {
+            if (s.icons) {Icon(*s.icons,IconId::DopeSheet,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+            ImGui::TextUnformatted(s.japanese ? "ドープシート" : "Dope Sheet");
             cg::DopeSheet("dope", Curves(s), s.curve, s.keySelection, s.events, theme, {0, 0});
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Animation strips",nullptr,s.animationPage==3?ImGuiTabItemFlags_SetSelected:0)) {
-            cg::AnimationStrips("strips",s.animationStrips,s.revision,s.stripCanvas,s.stripDrag,s.events,theme,{0,0});
+            if (s.icons) {Icon(*s.icons,IconId::AnimationStrip,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+            ImGui::TextUnformatted(s.japanese ? "アニメーションストリップ" : "Animation strips");
+            cg::StripOptions options{s.icons};
+            if (s.japanese) {
+                auto &labels=options.labels;
+                labels.scale="時間倍率";labels.repeat="繰り返し";labels.blend="混合率";labels.mute="ミュート";labels.lock="ロック";
+                labels.moveUp="上へ移動";labels.moveDown="下へ移動";labels.repeats="回";
+                labels.muted=" [ミュート]";labels.locked=" [ロック]";
+            }
+            cg::AnimationStrips("strips",s.animationStrips,s.revision,s.stripCanvas,s.stripDrag,s.events,theme,{0,0},options);
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("UV / Image",nullptr,s.animationPage==2?ImGuiTabItemFlags_SetSelected:0)) {

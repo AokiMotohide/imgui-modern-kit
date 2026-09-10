@@ -175,6 +175,13 @@ enum class IconId : std::uint16_t {
     TransformBounds,
     AnchorPoint,
     ProxyMedia,
+    TangentLinked,
+    TangentBroken,
+    CurveEditor,
+    AnimationTimeline,
+    DopeSheet,
+    AnimationStrip,
+    StripBlend,
     Count
 };
 struct IconInfo {
