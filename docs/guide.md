@@ -84,7 +84,7 @@ The binary SDK is Windows x64, MSVC v145, `/MD` Release and `/MDd` Debug, with D
 # Create the matching host_imgui target first.
 set(IMKIT_IMGUI_TARGET host_imgui)
 set(IMKIT_SDK_ABI_CONFIRMED ON) # only after checking the manifest and settings
-find_package(imkit 0.2 CONFIG REQUIRED)
+find_package(imkit 1.0 CONFIG REQUIRED)
 target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
 

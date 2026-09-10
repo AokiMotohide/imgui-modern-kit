@@ -101,77 +101,22 @@ C++のUV計算も生成した配置を使用します。`stable-ids.json`は既�
 
 ## Native Gallery
 
-Open the **Icons** page for name/category search, 16–64px sizes, custom tint, copyable
-C++ snippets, and live icon-only/label/disabled controls. Use:
+The Icons page provides category/name search, six sizes, tint and interaction states.
+The final catalog has 206 originals (120 stable existing IDs + 86 additions), 1236
+size variants and six atlases. The operation map records 250 uses, including 55
+native control/drawing representations that do not need separate bitmaps.
 
-```powershell
-build/windows-debug/catalog/Debug/imkit_gallery.exe --verify-icons --capture --page 6 --output out/icons
-```
+Iconsページでカテゴリ・名前、6サイズ、tintと操作状態を確認できます。原画は206個
+（既存120 ID保持＋追加86）、サイズ別PNGは1236枚、atlasは6枚です。250用途の対応表には、
+bitmapを必要としないnative操作・描画55用途も記録しています。
 
-This focused run uses public Dear ImGui IO events and captures the real OpenGL
-backbuffer at 16px and 20px on both themes. It does not claim native OS input automation.
+All added originals are referenced by editor controls. Native light/dark captures
+cover 16px and 150% scale, including the scrolled end of the catalog. Icon mouse,
+keyboard, disabled and tint checks pass on the NVIDIA OpenGL context. Generation
+validates every original/hash/size/atlas; see [acceptance](editor-validation.md).
 
-BoxSelect and LassoSelect are separate ImageGen originals, connected to Viewport selection mode.
-The catalog now contains 206 originals and 1236 size variants; the original 120 IDs remain stable.
-BoxSelectとLassoSelectは個別のImageGen原画から生成し、Viewportの選択modeへ接続しています。
-原画206枚・サイズ別PNG1236枚で、既存120 IDの順序と数値は維持しています。
+追加原画は編集部品へ接続しています。nativeのlight/dark・16px・150%と一覧末尾をcaptureし、
+NVIDIAのOpenGL Contextでmouse・keyboard・disabled・tintを確認しました。生成処理は全原画hash・
+サイズ・atlasを検査します。[検証](editor-validation.md)も参照してください。
 
-HandPan is an individual built-in ImageGen original with its saved prompt and provenance hash. Timeline uses it for the Hand tool. Native Icon Gallery inspection covers 16px light and 150% dark in `out/hand-pan-native/`. The catalog contains 206 originals, 1236 variants, and six atlases.
-
-HandPanは組込みImageGenによる個別原画で、promptとprovenance hashを保存しています。TimelineのHand toolへ接続し、`out/hand-pan-native/`のnative Icon Galleryで16px lightと150% darkを確認しました。原画206枚・派生PNG1236枚・atlas6枚です。
-
-
-Razor, RippleEdit, and SlipEdit each have an individual built-in ImageGen original and saved prompt. Timeline connects them to split-at-cursor, ripple trim, and source slip tools. Native Icon Gallery was inspected at 16px light and 150% dark in `out/timeline-edit-icons/`. RollingEdit and SlideEdit were generated successfully on retry, with individual prompts and originals. All seven Timeline tool selectors now use icons when a host atlas is provided. Their 16px light and 150% dark appearance was inspected in `out/roll-slide-icons/`.
-
-Razor・RippleEdit・SlipEditは組込みImageGenの個別原画とpromptを保存し、Timelineのカーソル位置分割・ripple trim・source slipへ接続しました。`out/timeline-edit-icons/`のnative Icon Galleryで16px lightと150% darkを確認しました。RollingEditとSlideEditも再試行で個別原画を生成し、promptを保存しました。ホストatlasがある場合、Timelineの7ツールすべてをアイコンで操作できます。`out/roll-slide-icons/`で16px lightと150% darkを確認しました。
-
-Solo uses a separately generated headphones-and-dot original, saved prompt and provenance hash. It is connected to the Timeline track button/menu. Native 16px light and 150% dark Icon Gallery captures are in `out/solo-icons-native/`; the host Solo toggle passes `--verify-track-controls`. The catalog contains 206 originals, 1236 size variants, six atlases and 798328 embedded RLE bytes. Existing IDs remain stable. Install includes generated assets and prompts while excluding originals, as before.
-
-Soloはheadphoneと中央点を持つ個別生成原画で、promptとprovenance hashを保存し、Timelineのtrackボタン／menuへ接続しました。`out/solo-icons-native/`で16px light・150% darkを確認し、`--verify-track-controls`でホストSolo状態への反映を確認しました。原画206枚、派生PNG1236枚、atlas6枚、埋込みRLE 798328 bytesで、既存IDは維持しています。installは従来どおり原画を除外し、生成資産とpromptを含みます。
-
-SourcePatch is an individual ImageGen original with saved prompt and provenance hash, integrated into track source controls. Track targeting reuses Target rather than adding a synonymous original. Native 16px light and 150% dark captures are in `out/source-patch-icons/`; Source and Target menu changes reach host state in `out/source-target-native/track-controls.txt`. The catalog contains 206 originals, 1236 PNG variants and six atlases.
-
-SourcePatchはpromptとprovenance hashを保存した個別ImageGen原画で、trackの素材patch操作へ接続しました。編集先指定は同義の原画を追加せず既存Targetを再利用します。`out/source-patch-icons/`で16px light・150% darkを確認し、`out/source-target-native/track-controls.txt`でSource／Targetのホスト反映を確認しました。原画206枚、派生PNG1236枚、atlas6枚です。
-
-Six Timeline track headings now use Video, Audio, Text, EffectTrack, AdjustmentTrack and Layers. EffectTrack and AdjustmentTrack are separate ImageGen originals with prompts/hashes; the other four reuse existing IDs. Native 16px light, 150% dark and all six heading roles were inspected in `out/track-kind-icons/` and `out/track-kinds-native/`. There are 206 originals, 1236 PNG variants, six atlases and 798328 embedded RLE bytes.
-
-Timelineの6種類の見出しへVideo、Audio、Text、EffectTrack、AdjustmentTrack、Layersを接続しました。EffectTrackとAdjustmentTrackはprompt／hashを保存した個別ImageGen原画で、他4種類は既存IDを再利用します。`out/track-kind-icons/`と`out/track-kinds-native/`で16px light、150% dark、6種類の見出しを確認しました。原画206枚、派生PNG1236枚、atlas6枚、埋込みRLE 798328 bytesです。
-
-VertexNormals and FaceNormals are separate built-in ImageGen originals with saved prompts
-and SHA-256 provenance. Three vertex arrows and one face-center arrow distinguish their
-meaning. BeginViewport connects both to real normal overlays with labeled toggles,
-active backgrounds and underlines. All six sizes are derived by build_icons.py; originals
-remain excluded from install, while generated assets and prompts follow the existing install rules.
-
-VertexNormalsとFaceNormalsは個別のImageGen原画で、promptとSHA-256を保存しています。
-頂点の3矢印と面中央の1矢印で意味を区別し、実際の法線overlay切替へ接続しています。
-有効状態は背景と下線でも表示します。6サイズは同じ生成処理で派生し、原画を除く既存のinstall規則を維持します。
-
-ObjectOrigin, SelectionOutline, RenderRegion, Passepartout and UnifiedTransform use
-individual ImageGen originals and saved prompts. They are connected to the viewport
-menu and Unified tool. Six-size derivatives and embedded atlases retain the existing
-ID prefix, alpha/tint format and original-excluding install rules.
-
-ObjectOrigin、SelectionOutline、RenderRegion、Passepartout、UnifiedTransformは個別原画と
-promptを保存し、Viewportの表示メニューと統合ツールへ接続しました。6サイズ・埋込みatlasを
-同じ処理で生成し、既存ID・alpha/tint形式・原画を除くinstall規則を維持しています。
-
-SelectVertex, SelectEdge, SelectFace and SelectIsland are individually generated originals connected to the UV selection menu. The menu uses native selection/focus states and host UTF-8 labels. All six PNG sizes and atlases pass generation validation; native GPU inspection remains pending because GLFW cannot create an OpenGL context on this session.
-
-SelectVertex／SelectEdge／SelectFace／SelectIslandは個別生成した原画で、UVの選択メニューへ接続しました。nativeの選択・focus状態とホスト指定UTF-8ラベルを使用します。PNG全6サイズとatlasの生成検証は合格しました。このセッションではGLFWがOpenGL contextを作成できず、native GPUでの表示確認は未実施です。
-
-UVEditor, UVSeam, UVOverlap and UDIMTiles have individual generated originals, saved prompts and provenance hashes. UVSeam was simplified after the 16px alpha validation rejected its first original. Display toggles control seam/overlap overlays; UDIM mode draws visible tile boundaries and numbers with bounded label density. Native GPU appearance remains unverified in the current session.
-
-UVEditor／UVSeam／UVOverlap／UDIMTilesに個別生成原画・prompt・provenance hashを追加しました。UVSeamは最初の原画が16px alpha検査を通らず、簡略化した原画へ差し替えました。表示切替はシーム・重なりの描画へ接続し、UDIMモードは表示範囲内のタイル境界と番号を密度制限付きで描きます。現在のセッションでのnative GPU表示は未検証です。
-
-Transition, Dissolve, FadeIn, FadeOut, Crossfade and TransitionDuration use individual generated originals and saved prompts/hashes. TransitionPicker displays the appropriate incoming/outgoing fade glyph, and Timeline uses atlas badges plus a duration glyph in the handle tooltip. Badge raster level follows framebuffer scale. Labels remain available without an atlas; native GPU appearance is pending.
-
-Transition／Dissolve／FadeIn／FadeOut／Crossfade／TransitionDurationに個別原画・prompt・hashを追加しました。TransitionPickerは開始・終了に対応したFade glyphを表示し、Timelineはatlas badgeとhandle tooltipの長さglyphを使用します。badgeのraster levelはframebuffer scaleへ追従します。atlas未指定でも文字で操作でき、native GPU表示は未検証です。
-
-SourceMonitor, ProgramMonitor, SafeArea, Guides, MetadataOverlay, TransformBounds, AnchorPoint and ProxyMedia have individual originals and saved prompts/hashes. Gallery monitor headings and MonitorControls use them; CG Safe Frame shares SafeArea, and AssetBrowser/Timeline share ProxyMedia. All six size/atlas generation checks passed; native GPU appearance remains pending.
-
-SourceMonitor／ProgramMonitor／SafeArea／Guides／MetadataOverlay／TransformBounds／AnchorPoint／ProxyMediaの個別原画・prompt・hashを追加しました。GalleryのMonitor見出しとMonitorControlsへ接続し、CG Safe FrameはSafeArea、AssetBrowser／TimelineはProxyMediaを共用します。全6サイズとatlasの生成検査は合格し、native GPU表示は未検証です。
-
-TangentLinked/TangentBroken identify Aligned/Free handle modes. CurveEditor, AnimationTimeline, DopeSheet and AnimationStrip mark Gallery editor roles; StripBlend marks the strip blend setting. Seven individual originals have saved prompts and hashes. The six-size generation checks pass; latest native GPU appearance remains pending.
-
-TangentLinked／TangentBrokenはAligned／Free接線モードへ接続しました。CurveEditor／AnimationTimeline／DopeSheet／AnimationStripはGalleryの役割表示、StripBlendはstripの混合率設定に使います。7原画のprompt・hashを保存し、全6サイズ生成検査は合格しました。最新native GPU表示は未検証です。
+![Editor icons at 150%](images/editor-icons-1.0.png)

@@ -1,0 +1,13 @@
+configuration=Release
+framebuffer=1920x1440
+20 warm-up frames, 180 measured frames per operation.
+Boundary: Host::Frame wall time including host event apply, preview render, ImGui, GL submission and swap; vsync off.
+Returned keys include clip-local editing spans and Curve query neighbors, counted per return; full borrowed evaluation channels are excluded. Tracks count returned Timeline rows.
+Allocations: C++ new and ImGui allocator calls; excludes driver/internal OS allocation.
+Public ImGui IO, hidden native GL window; not native OS/IME input.
+pan terminal_frame_ms=1.1883 tracks=256 clips=100096 keys=100000
+zoom terminal_frame_ms=0.9846 tracks=256 clips=100096 keys=100000
+selection terminal_frame_ms=0.9936 tracks=256 clips=100096 keys=100000
+clip_drag terminal_frame_ms=8.9656 tracks=256 clips=100096 keys=100000
+clip_trim terminal_frame_ms=10.8067 tracks=256 clips=100096 keys=100000
+keyframe_drag terminal_frame_ms=12.1895 tracks=256 clips=100096 keys=100000

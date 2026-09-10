@@ -1,148 +1,114 @@
-# Editor validation / Editor検証
+# Editor Suite 1.0 validation / 検証結果
 
-Full Editor Suite 1.0 acceptance is **incomplete**. Tests below verify only their
-named contracts. They do not certify all requested editor workflows.
-Editor Suite 1.0全体の受入は**未完了**です。以下は記載した契約だけを検証します。
+Validated on 2026-09-10: Windows x64, MSVC 19.51 (v145), Dear ImGui 1.92.9b-docking,
+NVIDIA GeForce RTX 3090 Ti, OpenGL 3.3 NVIDIA 616.56. Tests use public ImGui IO;
+they are not native OS/IME automation.
+2026-09-10、Windows x64・MSVC 19.51・Dear ImGui 1.92.9b-docking・RTX 3090 Ti・
+OpenGL 3.3 NVIDIA 616.56で確認しました。入力は公開ImGui IOで、native OS/IME自動操作ではありません。
 
-CPU fixtures cover frame/tick conversion, NTSC drop-frame minute boundaries and
-negative pre-roll, fixed-buffer transactions and revision cancellation, snap,
-cursor-centered zoom, polygon inclusion, curve interpolation and handle modes,
-constrained trim/roll/slide/slip/split, PCM buckets, meter hold, scopes, projection
-and UV transforms. `imkit.editor_api_compile` exercises the public targets within
-a CPU ImGui frame; an external consumer compiles and links the same fixture.
-CPU fixtureは時間境界、整数event、cancel、snap、canvas、curve、clip編集計算、PCM/meter/scope、
-投影、UVを検証します。API fixtureはCPU ImGui frame、外部consumerは独立ホストtargetで確認します。
+## Build and contracts / ビルドと契約
 
-Historical native Gallery runs checked OpenGL indexed cubes and sphere, depth
-ordering, 64-bit ID picking, background picking, FBO resize, resource deletion and
-reinitialization. It drives Timeline move/end trim/split, CG X-axis gizmo, curve key
-movement and UV vertex movement through public Dear ImGui IO. It also checks shared
-object selection. Renderer observed: NVIDIA GeForce RTX 3090 Ti, OpenGL 3.3.0,
-NVIDIA 616.56, Dear ImGui 1.92.9b.
-実Galleryでcube/sphere、depth、64bit picking、背景、resize、削除/再初期化を確認します。
-公開IOでTimeline移動/終端trim/split、CG X軸gizmo、curve key移動、UV vertex移動を検証します。
-過去の実行環境はRTX 3090 Ti、OpenGL 3.3.0、NVIDIA 616.56、ImGui 1.92.9bでした。
+Debug and Release passed the seven CPU/API/icon/context fixtures. After scoped changes,
+only affected Core/Video/CG/API/icon targets were rerun. Source consumption with an
+external host ImGui target passed in Debug; an installed 1.0 Release SDK consumer
+compiled, linked and ran the full editor API fixture. The installed package contains
+all five static libraries, headers, notices, 1236 icon PNGs and six atlases; originals
+are intentionally excluded while prompts/provenance remain available.
+
+Debug/Releaseの7つのCPU・API・icon・Context fixtureが合格しました。局所修正後は影響targetだけを
+再確認しています。独立したホストImGui targetを持つDebug source consumerと、install済み1.0 Release
+SDKのEditor API consumerはcompile/link/実行に合格しました。SDKは5静的library・header・notice・
+1236 PNG・6 atlasを含み、原画を除外してprompt/provenanceを保持します。
+
+Core fixtures cover timecode/snap, retained terminal events, revision/capacity handling,
+property/asset actions and multi-key curve operations. Video covers edit calculations,
+related members/locks, transition source handles, caption/key/envelope and audio/color
+controls. CG covers affine orientation/pivot, gizmo transactions, hierarchy, animation
+strips and all UV selection units. `--verify-inspector-model` additionally checks host
+Commit/Cancel application, array reorder, RGB curves, marker edits, ripple deletion,
+caption insertion and selection/property restrictions without opening a GL context.
+
+Coreは時間・snap・終端保持・revision/容量・property/asset・複数curve編集、Videoは編集計算・関連対象/
+lock・transition・caption/key/envelope・audio/color、CGはアフィン変換/pivot・gizmo・階層・strip・UVを
+検証します。`--verify-inspector-model`ではGL Contextなしでホストの確定/取消、配列、RGB curve、marker、
+ripple削除、caption追加、選択・property制限も確認します。
 
 ```powershell
-ctest --test-dir build/windows-debug -C Debug -R "imkit.(editor_core|video|cg|editor_api_compile)" --output-on-failure
-build/windows-debug/catalog/Release/imkit_gallery.exe --verify-editors --capture-editors --output out/editor-release
+ctest --test-dir build/windows-debug -C Debug -R '^imkit.(editor_core|video|cg|editor_api_compile|icons|api_compile|context_smoke)$' --output-on-failure
+ctest --test-dir build/windows-debug -C Release -R '^imkit.(editor_core|video|cg|editor_api_compile|icons|api_compile|context_smoke)$' --output-on-failure
+build/windows-debug/catalog/Release/imkit_gallery.exe --verify-inspector-model
 ```
 
-`--capture-editors` captures Editor Core and light/dark Video/CG workspaces, including
-150% scale, from the real backbuffer. Artifacts under `out/` are uncommitted.
-The earlier pan-only fixture built 256 tracks, 100096 clips and 100000 keys, warmed 20
-frames, then measured 180 panning frames at 1920×1440 with swap interval zero.
-Its CPU wall time includes UI construction, GL submission and swap. It reports
-visible query/clip counts and separate C++ `new` and ImGui allocator counts; driver
-and operating-system allocations are outside these counters.
-captureは実backbufferで、out/配下は非コミットです。過去のpan専用fixtureは256 track・100096 clip・
-100000 key、20 frame warm-up後180 pan frameを1920×1440・swap interval 0で計測します。
-CPU wall timeにはUI構築・GL投入・swapを含みます。C++ newとImGui allocatorは別計数し、
-driver/OS内部allocationは計数対象外です。
+## GPU and native captures / 実GPUとcapture
 
-Native OS/IME, media decode/playback, real project integration, complete editor
-workflow coverage and distribution/SDK-package acceptance have not been performed.
-native OS/IME・実media decode/再生・実project統合・全編集workflow・配布SDK受入は未実施です。
+The native verifier passed indexed cube/sphere rendering, depth and full 64-bit ID
+picking, background picks, FBO resize and invalid-resize preservation, Shutdown and
+reinitialization, rotated/nonuniform/sheared mesh normals and lighting. Public IO also
+moved/trimmed/split timeline clips, transformed CG/UV selections and moved curve keys.
+Icon mouse/keyboard/disabled/tint checks and three color-wheel host commits passed.
 
-## Recorded Release result / Release実測
+実GPUでcube/sphere・depth・64bit picking・背景ID・FBO resize・不正resize時の保持・Shutdown/
+再初期化・回転/非均等scale/shear後のnormalとlightingを確認しました。公開IOによるclip移動/trim/split、
+CG/UV変換、curve key移動、iconのmouse/keyboard/disabled/tint、3色wheelのホスト確定も合格しました。
 
-2026-09-09, Windows x64 MSVC Release, RTX 3090 Ti: **CPU frame P95 3.3495 ms**
-for 180 panning frames. Maximum visible queries: **9**; visible clips: **40**.
-Tracked C++ new allocations: **0**; ImGui allocations: **0** after warm-up.
-This passes the 16.7 ms target for this pan fixture only, not every editor operation.
-Raw logs and captures are under `out/editor-release/`.
-2026-09-09のRelease pan fixtureはP95 **3.3495 ms**、最大**9 query / 40可視clip**、
-C++ new／ImGui allocationはともに**0**でした。このpan fixtureは16.7 ms目標を満たしますが、
-全編集操作の性能合格を意味しません。実ログ・captureはout/editor-release/配下です。
+Light/dark Core/Video/CG and icon captures include Japanese and 150% examples. All 86
+added glyphs were inspected in the native catalog at 16px and 150%, including scrolling
+to its end. Color curves have a dedicated scrolled-pane capture. Capture scroll input
+is placed outside embedded canvases so it does not unintentionally zoom their content.
+NVIDIA display selection via `--monitor 0` resolved the earlier WGL startup failure in
+this multi-adapter session; no display-driver or OS configuration was changed.
 
-## Normal transform regression / normal変換の回帰確認
+Core/Video/CG/Iconをlight/dark・日本語・150%の代表画面でcaptureしました。追加86 glyphはnative一覧の
+16px・150%で末尾まで確認し、色補正curveにも専用captureを保存しました。capture時は埋込みcanvasの外へ
+scroll入力を送り、意図せず拡大率を変えないようにしています。複数adapter環境での従来のWGL起動失敗は
+`--monitor 0`によるNVIDIA画面指定で解消し、driver/OS設定は変更していません。
 
-2026-09-09 Debug: `imkit.cg` checks DrawList triangle color against a known
-inverse-transpose normal under rotation and nonuniform scale. The native
-`--verify-editors` runner reads the OpenGL color texture for the same transform
-and checks the expected Lambert result and exact object ID. Both passed, together
-with the existing GPU lifecycle and representative public-IO checks.
-Evidence: `out/editor-normal-debug/editors-interaction.txt`.
-Debugのimkit.cgで回転・非等方scale後のDrawListの色を既知のnormalから計算した期待値と比較し、
-実Galleryで同じ変換のOpenGL textureを読み戻してLambertの期待値とobject IDを確認しました。
-両方合格し、既存のGPU lifecycleと代表公開IO操作も通過しました。native OS/IME確認ではありません。
+```powershell
+build/windows-debug/catalog/Release/imkit_gallery.exe --list-monitors
+build/windows-debug/catalog/Release/imkit_gallery.exe --monitor 0 --verify-editors --capture-editors --output out/editor-gpu
+build/windows-debug/catalog/Release/imkit_gallery.exe --monitor 0 --capture --page 6 --icon-search Editor --output out/editor-icons
+```
 
-Transaction regressions additionally cover retained Commit/Cancel on overflow,
-rejecting a value update after a pending Commit, and preventing Cancel-to-Commit
-conversion. Public Timeline calls with a one-event buffer verify that two-clip
-termination emits no partial batch, and that release and revision cancellation
-complete on a later call with sufficient capacity. Debug Core/Video tests and the
-existing Gallery interaction runner passed (`out/editor-transaction-debug/`).
-transaction回帰はoverflow後の終端保持、Commit待機中の値変更拒否、CancelのCommit化防止を検証します。
-公開Timelineへ容量1のbufferを渡し、2 clipの終了を部分送信せず、容量回復後にrelease・revision cancelを
-まとめて完了することを確認しました。Debug Core/Videoテストと既存Gallery操作は合格です。
+## Release performance / Release性能
 
-## Color controls / 色操作
+1920x1440; 256 tracks, 100096 clips, 100000 keys; vsync off. Each operation used 20
+warm-up and 180 measured frames. The measured boundary is Host::Frame wall time,
+including host apply, preview, ImGui, GL submission and swap. All interactions passed
+their state-change checks and the P95 target of 16.7 ms.
 
-Debug `imkit.video` verifies RGB waveform channel/column placement, rejects partial
-RGB buffers, and drives all three wheels through public ImGui IO. It checks RGB
-proposals, deferred host Commit and revision Cancel. `imkit.editor_api_compile`
-and the incremental external `imkit_editor_consumer` target compile the new overloads.
-The focused native `--verify-color` runner applies all three wheel commits to Gallery
-host values and captures light/dark backbuffers (`out/editor-color-debug/`).
-DebugのvideoテストはRGB waveformのchannel/横位置、不完全bufferの拒否、3つのwheelの公開IO操作、
-RGB提案値・host Commit・revision Cancelを確認します。API fixtureと外部consumerの増分ビルドも成功しました。
-専用の--verify-colorは3つのwheelをGalleryのhost値へ適用し、light/darkの実backbufferを保存します。
-画像でwheel・RGB paradeの描画を確認しました。native OS/IME・色管理の検証ではありません。
+1920x1440、256 track・100096 clip・100000 key、vsync無効です。各操作20 frame warm-up後に180 frameを
+測定しました。Host::Frame全体（ホスト適用・preview・ImGui・GL送信・swap）を含み、全操作の状態変化確認と
+P95 16.7 ms目標に合格しました。
 
-Audio focused tests cover native fader and pan public-IO Commit, explicit nonadjacent
-property IDs, mute control events, locked controls, and nonfinite first PCM sample
-sanitization. Debug video/API fixtures pass. The Gallery Video backbuffer includes
-PCM min/max clip waveforms and the connected mixer/stereo meters; artifacts are in
-`out/editor-audio-debug/`. No media playback/recording engine or OS audio device is tested.
-音声のfocused testはfader/panの公開IO Commit、隣接しない明示ID、mute event、locked操作、PCM先頭の非有限値を
-確認し、Debug video/API fixtureは成功しました。GalleryのVideo backbufferでPCM波形・mixer・stereo meterを確認します。
-media再生/録音engine・OS audio deviceの検証ではありません。
-
-Debug CG tests verify orthographic projected-size changes, view-relative pan,
-six axis alignments, camera-view navigation protection, and public IO wheel/axis
-gizmo clicks. The non-owning host camera is checked through BeginViewport.
-The API fixture covers NavigateCamera/AlignCamera. These checks do not certify
-all transform-gizmo or camera-overlay requirements.
-Debug CGテストはorthographic投影倍率・view相対pan・6軸alignment・camera表示のnavigation保護と、
-公開IOのwheel/gizmoクリックを確認します。BeginViewport経由でホストcamera参照も確認しました。
-API fixtureは新しいcamera関数を呼びます。全transform gizmo・camera overlayの合格を意味しません。
-
-Variable track layout tests check the queried visible pixel interval, expanded and
-collapsed extents, and public-IO collapse/source-patch events. Debug Video and API
-fixtures passed. The native editor verifier also passed Timeline move/end-trim/split
-and the existing shared selection, curve and UV paths using the indexed Gallery
-track layout (`out/editor-track-layout-debug/`). This is not full track-role/icon
-acceptance or native OS input evidence.
-可変track配置のテストは可視pixel区間query、展開・折り畳み高、公開IOのcollapse/source eventを確認します。
-Debug Video/API fixtureと、累積高さqueryへ切り替えたGalleryでの移動・終端trim・split・選択・Curve・UVの
-既存操作は成功しました。全track role・icon受入やnative OS入力の検証ではありません。
-
-
-## Saved six-operation Release benchmark / 保存済み6操作測定
-
-The saved `out/editor-benchmark-related-edits-fixed/editor-performance.csv` and `editor-performance-context.txt` contain the following results. They predate the latest camera, icon and UI changes and are not final acceptance of the current HEAD. The independent `--benchmark-editors` mode measures 20 warm-up and 180 sample frames per operation at 1920×1440, 256 tracks, 100096 clips and 100000 keys. Input uses public ImGui IO in a hidden native GL window with vsync off. `Host::Frame` wall time includes host event application, preview rendering, ImGui, GL submission and swap. Continuous-drag terminal frames are measured separately.
-
-保存済みCSVとcontextから転記した結果です。最新のcamera・icon・UI変更より前の測定であり、現在のHEADの最終受入ではありません。1920×1440、256 track、100096 clip、100000 keyで、各操作20 warm-up＋180測定frameです。非表示native GL windowへ公開IOを注入し、vsyncを無効にしています。測定境界は編集適用・preview・ImGui・GL発行・swapを含むHost::Frameです。連続dragの終端frameは別に測定します。
-
-| Operation / 操作 | P95 ms | Max ms | Terminal ms |
+| Operation | P95 ms | Max ms | C++ new / ImGui allocations |
 |---|---:|---:|---:|
-| Pan | 1.6822 | 2.2616 | 1.9811 |
-| Zoom | 1.7300 | 2.9294 | 0.9631 |
-| Selection | 1.7890 | 2.4931 | 1.0157 |
-| Clip drag | 1.8730 | 2.4208 | 9.2084 |
-| Clip end trim | 1.6781 | 2.3307 | 8.3003 |
-| Inline keyframe drag | 1.7585 | 2.1366 | 9.3105 |
+| pan | 1.6981 | 2.8342 | 0 / 0 |
+| zoom | 1.7868 | 2.8660 | 0 / 0 |
+| selection | 1.8210 | 5.4273 | 0 / 0 |
+| clip_drag | 1.7946 | 2.6771 | 0 / 0 |
+| clip_trim | 1.8727 | 3.1109 | 0 / 0 |
+| keyframe_drag | 1.7302 | 3.1683 | 0 / 0 |
 
-All six saved interactions passed their state-change checks and the 16.7 ms P95 target. Each recorded at most seven visible queries, 30 clips, eight keys and six track rows, with zero measured steady C++ new and ImGui allocations. Key counts include returned clip-local editing spans and Curve neighbors, excluding full borrowed evaluation channels. Driver/OS allocations and the separate terminal frame are outside the steady allocation result. Native OS/IME is not covered. The latest GPU attempt failed GLFW/WGL context creation; final GPU capture and Release measurement remain outstanding rather than inferred from these earlier results.
+Maximum returned work: 7 queries, 30 clips, 8 keys and 6 track rows. Steady allocations
+exclude driver/OS internals and the separate terminal frame. Terminal clip drag/trim/key
+drag measured 8.9656/10.8067/12.1895 ms. Full borrowed evaluation channels are excluded
+from returned-key counts. [CSV](evidence/editor-performance.csv) and
+[measurement context](evidence/editor-performance-context.txt) preserve the raw record.
 
-保存された6操作はいずれも状態変化確認とP95 16.7 ms目標に合格しています。各操作の最大値は7 query・30 clip・8 key・6 track行で、定常C++ new／ImGui allocationは0です。key数はclip内編集spanとCurveの隣接keyを数え、非所有の全評価channelは除きます。driver／OS allocationと別測定の終端frameは定常allocation結果に含めません。native OS／IME確認ではありません。直近のGPU試行はGLFW/WGL context作成に失敗しており、最終GPU captureとRelease測定は未実施です。
+最大返却量は7 query・30 clip・8 key・6 track行です。定常allocationはdriver/OS内部と別測定の終端frameを
+除きます。clip drag/trim/key dragの終端は8.9656/10.8067/12.1895 msです。非所有の全評価channelは返却key数に
+含めません。上記CSVと測定条件に原記録を保存しています。
 
-An unchanged Move/TrimStart/TrimEnd/Ripple/Roll/Slip/Slide Commit preserves the host revision and bypasses index rebuilding. The headless host-model verifier covers all seven kinds. The benchmark clears selection before each operation and validates the expected selected StableId, so an idle frame with a preexisting selection cannot pass its selection check.
+## Unperformed and excluded / 未実施と対象外
 
-値が変わらないMove／TrimStart／TrimEnd／Ripple／Roll／Slip／SlideのCommitでは、ホストrevisionと索引を維持します。7種をheadlessのホスト適用検証で確認しました。benchmarkは操作ごとにselectionを空にし、期待する選択先StableIdを確認するため、既存selectionを残しただけの無操作フレームは選択検証に合格しません。
+Native OS/IME input and real-project integration were not performed. Media decoding,
+resampling, full color management, node editing, UV unwrap, IK/simulation/animation
+runtime, PBR/shadows and format loading are outside this UI suite. DrawList preview
+has no z-buffer; OpenGL state restoration and current-context lifetime belong to the host.
+The packaged SDK is Release/x64/MSVC v145 with /MD and a host-provided matching ImGui;
+use a source build for other ABI/configuration combinations.
 
-
-An earlier incremental external Debug `imkit_editor_consumer` build and CPU-frame execution covered the Timeline host atlas and five edit-tool IconIds, explicit clip key channel/default, transition picker/edit, envelope point/evaluation, six clip-role palette fields, and Monitor metadata options. The consumer defines its own ImGui target and uses the public module targets through `add_subdirectory`. This is source-consumer evidence; installed-package, Release-consumer and GPU execution are separate gates. The generated `api-inventory.json` inventories native Dear ImGui overloads; custom editor additions are listed in `editor-api.md`.
-
-過去の外部Debug `imkit_editor_consumer`の増分ビルドとCPUフレーム実行で、Timelineのホストatlas・5編集ツールIconId、clipの明示key channel／既定値、transition picker／計算、envelope点／評価、6種clip色、Monitor metadata設定を確認しました。consumerは自身のImGui targetを定義し、`add_subdirectory`経由の公開module targetを使用します。install済みpackage・Release consumer・GPU実行は別gateです。生成`api-inventory.json`はDear ImGui標準overload用であり、独自Editor追加APIは`editor-api.md`に記載しています。
+native OS/IME入力と実project統合は未実施です。media decode、resample、本格色管理、node、UV unwrap、
+IK/simulation/animation runtime、PBR/shadow、形式loaderは対象外です。DrawListにはz-bufferがなく、GL状態復元と
+current Contextの寿命はホスト責任です。SDKはRelease/x64/MSVC v145・/MDと一致するホストImGui向けで、
+異なるABI/構成にはsource buildを使用してください。

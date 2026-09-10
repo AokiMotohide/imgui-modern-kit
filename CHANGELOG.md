@@ -1,18 +1,15 @@
 # Changelog / 変更履歴
 
-## Unreleased — Editor Suite development
+## 1.0.0 — 2026-09-10
 
-- Add host-owned editor events/timebase/canvas/curve/property/asset APIs and optional Video, CG and OpenGL3 preview modules.
-- Add native Video/CG workspaces, CPU fixtures, public IO/GPU verifier and a 100k synthetic dataset.
-- Editor Suite 1.0 acceptance is incomplete; version remains 0.2.0. See `docs/editor-suite.md` for missing functionality.
-- ホスト所有Editor API、Video/CG/OpenGL3 preview、実Galleryと検証を追加。1.0は未完成のためversionは0.2.0を保持。
-
-## Unreleased — Modern icons
-
-- Add 120 individually generated outline icons, six PNG sizes, embedded tintable atlases and host-owned texture bindings.
-- Add `Icon`, icon-ID `IconButton`, `IconLabelButton`, catalogue metadata and the native Icons Gallery page.
-- Preserve the direction-arrow button overload and the host-owned renderer/context contract.
-- 120種類のアイコン、色・サイズ指定API、実Gallery一覧とアイコン専用検証を追加。
+- Complete Editor Core, Video, CG and optional OpenGL3 preview with host-owned data and typed edits.
+- Connect related timeline edits, transitions/captions/audio/color curves, hierarchy/Inspector, gizmos, animation and UV workflows in the native Gallery.
+- Preserve 120 IconIds and add 86 originals: 206 icons, 1236 PNG variants, six atlases.
+- Validate Debug/Release, public IO, native GPU and 100k interaction performance; document source/SDK consumption and GL lifetime.
+- Core・Video・CG・任意OpenGL3 previewとホスト所有の型付き編集を完成。
+- Timeline関連編集・transition/caption/audio/color curve、階層/Inspector・gizmo・animation・UVをnative Galleryへ接続。
+- 既存120 IconIdを保持して86原画を追加。合計206アイコン・1236 PNG・6 atlas。
+- Debug/Release・公開IO・実GPU・10万件操作性能を検証し、導入・所有権・GL寿命を文書化。
 
 ## 0.2.0 — Precision Layers
 

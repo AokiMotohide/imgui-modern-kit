@@ -1392,10 +1392,11 @@ int main(int argc, char **argv) {
                             h.Frame({}, out / ("page-"+std::to_string(page)+(dark ? "-dark-150.png" : "-light-150.png")));
                             if(page==6 || page==8) {
                                 const auto oldPanel=h.s.editors.activeVideoPanel;
-                                if(page==8) {h.s.editors.videoPanel=1;h.Settle();}
-                                h.mouse={1200,1320};h.Frame([](ImGuiIO &io){io.AddMouseWheelEvent(0,-100);});h.Settle();
+                                if(page==8) {h.s.editors.videoPanel=1;h.s.editors.colorCurve.fitRequested=true;h.Settle();}
+                                h.mouse={page==8?h.s.editors.colorCurve.view.max.x+16:1200,1320};h.Frame([](ImGuiIO &io){io.AddMouseWheelEvent(0,-100);});h.Settle();
+                                const auto scrollMouse=h.mouse;h.mouse={-100,-100};h.Settle();
                                 h.Frame({},out/((page==6?"icons-bottom":"color-curves")+std::string(dark?"-dark-150.png":"-light-150.png")));
-                                h.Frame([](ImGuiIO &io){io.AddMouseWheelEvent(0,100);});h.Settle();
+                                h.mouse=scrollMouse;h.Frame([](ImGuiIO &io){io.AddMouseWheelEvent(0,100);});h.Settle();
                                 if(page==8) h.s.editors.videoPanel=oldPanel;
                             }
                             h.s.scale = 1; h.Settle();

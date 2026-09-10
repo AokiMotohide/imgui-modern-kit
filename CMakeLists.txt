@@ -3,7 +3,7 @@ if(POLICY CMP0141)
     cmake_policy(SET CMP0141 NEW)
 endif()
 
-project(imgui-modern-kit VERSION 0.2.0 LANGUAGES CXX)
+project(imgui-modern-kit VERSION 1.0.0 LANGUAGES CXX)
 
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(IMKIT_IS_TOP_LEVEL ON)

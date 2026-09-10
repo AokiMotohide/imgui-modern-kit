@@ -1,6 +1,6 @@
 # imgui-modern-kit
 
-[日本語](README.ja.md) · [User guide](docs/guide.md) · [API coverage](docs/api-coverage.md) · [Release v0.2.0](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v0.2.0)
+[日本語](README.ja.md) · [User guide](docs/guide.md) · [API coverage](docs/api-coverage.md) · [CHANGELOG](CHANGELOG.md)
 
 **Precision Layers** is a modern, compact design system for Dear ImGui: neutral layered surfaces, 28 px controls, 6 px spacing, 4 px corners, restrained borders, clear selection marks, and distinct action variants. Light and dark palettes are editable values.
 
@@ -66,6 +66,10 @@ ImKit code is MIT. Dear ImGui and GLFW have their own licenses; optional Inter a
 label buttons. GPU textures remain host-owned. See [icon integration](docs/icons.md)
 and the **Icons** page in the native Gallery.
 
-## Editor Suite development
+## Editor Suite 1.0
 
-Experimental `editor_core`, `video`, `cg`, `preview_opengl3` and `editor_suite` targets are available. The native Gallery contains Video and CG workspaces. **The requested 1.0 feature set is not complete.** See [module contracts and remaining work](docs/editor-suite.md), [API reference](docs/editor-api.md) and [validation](docs/editor-validation.md).
+`editor_core`, `video`, `cg`, `preview_opengl3` and `editor_suite` provide reusable
+editing controls with host-owned data and typed events. The native Gallery connects
+Video/CG workspaces, RGB color curves, animation and UV tools, plus 206 icons.
+See [module contracts](docs/editor-suite.md), [API reference](docs/editor-api.md),
+[validation and performance](docs/editor-validation.md) and [acceptance matrix](docs/editor-implementation-checklist.md).
