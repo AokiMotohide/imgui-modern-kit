@@ -741,8 +741,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                                                             : theme.editor.videoClip;
             color.w *= selected ? .8f : .35f;
             draw->AddRectFilled(a, b, ImGui::GetColorU32(color), 4);
-            draw->AddRect(a, b, ImGui::GetColorU32(selected ? theme.colors.focus : theme.colors.border), 4, 0,
-                          selected ? 2.f : 1.f);
+            draw->AddRect(a, b, ImGui::GetColorU32(selected ? theme.colors.focus : theme.colors.border), 4,
+                          selected ? 2.f : 1.f, ImDrawFlags_None);
             const bool editBand=clip.transitionIn || clip.transitionOut || p.editing.fades || p.editing.cut;
             const float nameY=y+4+(editBand ? ImGui::GetFontSize()+3.f : 3.f);
             const ImVec4 textBounds{x+4,a.y+1,end-4,b.y-1};
@@ -1097,7 +1097,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 draw->AddLine(side ? ImVec2{handleX,b.y} : a,
                               side ? ImVec2{end,a.y} : ImVec2{handleX,b.y},ImGui::GetColorU32(theme.colors.text),2);
                 draw->AddRect({handle.x-radius,handle.y-radius},{handle.x+radius,handle.y+radius},
-                              ImGui::GetColorU32(theme.editor.marker),1,0,editingTransition ? 2.f : 1.f);
+                              ImGui::GetColorU32(theme.editor.marker),1,editingTransition ? 2.f : 1.f,ImDrawFlags_None);
                 bool hovered=false;
                 if (handleX>=view.min.x+s.headerWidth && handleX<=view.max.x && handle.y>=view.min.y && handle.y<=view.max.y) {
                     const auto cursor=ImGui::GetCursorScreenPos();
