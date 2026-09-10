@@ -126,6 +126,8 @@ int main() {
     cg::UVEditor("uv", uvProvider, {}, uv, selection, events, theme, {300, 100});
     cg::DopeSheet("dope", {}, curve, selection, events, theme, {300, 100});
     cg::AnimationStrips("strips", {}, 1, canvas, drag, events, theme, {300, 100});
+    cg::AnimationStrips("strip options",{},1,canvas,drag,events,theme,{300,100},cg::StripOptions{});
+    (void)cg::EditStripRange({0,100},editor::EditKind::Move,10);
     std::array<preview::Vertex, 24> vertices;
     std::array<std::uint32_t, 36> indices;
     preview::Cube(vertices, indices);

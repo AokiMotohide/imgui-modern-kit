@@ -830,9 +830,12 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
             }
             if (ImGui::BeginMenu(s.labels.handles)) {
                 const auto &names=s.labels.handleModes;
-                for (int i=0;i<5;++i) if (ImGui::MenuItem(names[i],nullptr,static_cast<int>(key->handles)==i))
-                    Action(out,key->id,provider.revision,EditKind::KeyHandleMode,
-                        Value{0,0,0,0,static_cast<double>(key->handles)},Value{0,0,0,0,static_cast<double>(i)});
+                for (int i=0;i<5;++i) {
+                    if (i>=3) glyph(i==3?IconId::TangentLinked:IconId::TangentBroken);
+                    if (ImGui::MenuItem(names[i],nullptr,static_cast<int>(key->handles)==i))
+                        Action(out,key->id,provider.revision,EditKind::KeyHandleMode,
+                            Value{0,0,0,0,static_cast<double>(key->handles)},Value{0,0,0,0,static_cast<double>(i)});
+                }
                 ImGui::EndMenu();
             }
             ImGui::EndDisabled();

@@ -2488,5 +2488,110 @@
       978,
       891
     ]
+  },
+  {
+    "name": "TangentLinked",
+    "source": "assets/icons/originals/TangentLinked.png",
+    "sha256": "c5fd1b7aa0e6737fb25341efed914cee95fb72d5c1669d649737d524b219c297",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      280,
+      322,
+      977,
+      937
+    ]
+  },
+  {
+    "name": "TangentBroken",
+    "source": "assets/icons/originals/TangentBroken.png",
+    "sha256": "625ca1f242aff371dc229236d1a9462a525404f346e93c485b30872aee909ff6",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      225,
+      374,
+      1022,
+      855
+    ]
+  },
+  {
+    "name": "CurveEditor",
+    "source": "assets/icons/originals/CurveEditor.png",
+    "sha256": "0e92cbeb6389fe88811457f86dbe85cf109022e3b49ca87bcef5dac2c0cdc491",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      297,
+      326,
+      956,
+      942
+    ]
+  },
+  {
+    "name": "AnimationTimeline",
+    "source": "assets/icons/originals/AnimationTimeline.png",
+    "sha256": "ce7158e31d0c665669c3aa12d58a58b44584e0fa0de06ac1f3d749a648a60020",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      350,
+      380,
+      904,
+      874
+    ]
+  },
+  {
+    "name": "DopeSheet",
+    "source": "assets/icons/originals/DopeSheet.png",
+    "sha256": "78f3299af902c61db5fde6cd9bb3c86b8d80063982ccf3ad38c68221015408c2",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      377,
+      389,
+      877,
+      866
+    ]
+  },
+  {
+    "name": "AnimationStrip",
+    "source": "assets/icons/originals/AnimationStrip.png",
+    "sha256": "38a9781435927725fddc05e7149fecf2554f09ee5e7d32fc325aa4dc9e40198b",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      260,
+      443,
+      1010,
+      875
+    ]
+  },
+  {
+    "name": "StripBlend",
+    "source": "assets/icons/originals/StripBlend.png",
+    "sha256": "948a73120d1e9f30c0b73644331c1ff2a0c8c2f52c356ef0b8031696932c07a0",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      279,
+      478,
+      975,
+      801
+    ]
   }
 ]

@@ -2,6 +2,7 @@
 #include <imkit/preview.h>
 #include <cmath>
 #include <cstdio>
+#include <limits>
 using namespace imkit::cg;
 int main() {
     int failures = 0;
@@ -11,6 +12,18 @@ int main() {
             std::fprintf(stderr, "FAIL %s\n", s);
         }
     };
+    {
+        using imkit::editor::EditKind;using imkit::editor::Tick;
+        const auto low=std::numeric_limits<Tick>::min(),high=std::numeric_limits<Tick>::max();
+        check(!EditStripRange({high-10,high},EditKind::Move,1),"strip Move rejects overflowing end");
+        check(!EditStripRange({low,low+10},EditKind::Move,-1),"strip Move rejects overflowing start");
+        const auto start=EditStripRange({high-10,high},EditKind::TrimStart,high);
+        check(start && start->first==high-1 && start->last==high,"strip start trim clamps overflow to one Tick");
+        const auto end=EditStripRange({low,low+10},EditKind::TrimEnd,low);
+        check(end && end->first==low && end->last==low+1,"strip end trim clamps underflow to one Tick");
+        const auto moved=EditStripRange({-10,10},EditKind::Move,5);
+        check(moved && moved->first==-5 && moved->last==15,"strip move preserves range across zero");
+    }
     auto center = Project({}, Camera{}, {0, 0}, {800, 600});
     check(center.visible && center.screen.x == 400 && center.screen.y == 300, "camera center");
     Camera c;

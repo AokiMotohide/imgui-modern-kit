@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <limits>
 namespace imkit::cg {
 namespace {
 Vec3 Add(Vec3 a, Vec3 b) {
@@ -1200,9 +1201,28 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
     ImGui::PopID();
     editor::EndCanvas();
 }
+std::optional<editor::Range> EditStripRange(editor::Range range,editor::EditKind kind,editor::Tick delta) {
+    using Tick=editor::Tick;
+    if (range.first>=range.last) return std::nullopt;
+    const auto minimum=std::numeric_limits<Tick>::min(),maximum=std::numeric_limits<Tick>::max();
+    auto overflows=[&](Tick value) {return delta>0 ? value>maximum-delta : delta<0 && value<minimum-delta;};
+    auto saturated=[&](Tick value) {return overflows(value) ? (delta>0 ? maximum : minimum) : value+delta;};
+    if (kind==editor::EditKind::TrimStart) range.first=std::min(saturated(range.first),range.last-1);
+    else if (kind==editor::EditKind::TrimEnd) range.last=std::max(saturated(range.last),range.first+1);
+    else if (kind==editor::EditKind::Move) {
+        if (overflows(range.first) || overflows(range.last)) return std::nullopt;
+        range.first+=delta;range.last+=delta;
+    } else return std::nullopt;
+    return range;
+}
 void AnimationStrips(const char *id, std::span<const StripView> strips, std::uint64_t revision,
                      editor::CanvasState &canvas, editor::Transaction &drag, editor::EventBuffer &out,
                      const Theme &theme, ImVec2 size) {
+    AnimationStrips(id,strips,revision,canvas,drag,out,theme,size,{});
+}
+void AnimationStrips(const char *id,std::span<const StripView> strips,std::uint64_t revision,
+                     editor::CanvasState &canvas,editor::Transaction &drag,editor::EventBuffer &out,
+                     const Theme &theme,ImVec2 size,const StripOptions &options) {
     detail::ResumeTerminal(drag, revision, out);
     auto view = editor::BeginCanvas(id, canvas, size, theme);
     auto *d = ImGui::GetWindowDrawList();
@@ -1222,7 +1242,7 @@ void AnimationStrips(const char *id, std::span<const StripView> strips, std::uin
         }
         float x = view.min.x +
                   static_cast<float>((editor::Seconds(range.first) - canvas.origin.x) * canvas.scale.x);
-        float w = static_cast<float>(editor::Seconds(range.last - range.first) * canvas.scale.x);
+        float w = static_cast<float>((editor::Seconds(range.last)-editor::Seconds(range.first))*canvas.scale.x);
         const auto fill=strip.muted?theme.colors.muted:theme.colors.accent;
         const auto textColor=ImGui::GetColorU32(fill.x*.2126f+fill.y*.7152f+fill.z*.0722f>.5f ?
             ImVec4{.06f,.06f,.08f,1}:ImVec4{.96f,.96f,.98f,1});
@@ -1238,8 +1258,8 @@ void AnimationStrips(const char *id, std::span<const StripView> strips, std::uin
         d->AddLine({x+2,y+24},{x+2+(std::max)(0.f,w-4)*static_cast<float>(std::clamp(blend,0.,1.)),y+24},
                    ImGui::GetColorU32(theme.colors.text),2);
         char description[256];
-        std::snprintf(description,sizeof(description),"%s  x%.2f / %.2f repeats%s%s",strip.label,scale,repeat,
-            strip.muted?" [Muted]":"",strip.locked?" [Locked]":"");
+        std::snprintf(description,sizeof(description),"%s  x%.2f / %.2f %s%s%s",strip.label,scale,repeat,options.labels.repeats,
+            strip.muted?options.labels.muted:"",strip.locked?options.labels.locked:"");
         d->AddText({x + 4, y + 4}, textColor, description);
         d->PopClipRect();
         ImGui::SetCursorScreenPos({x, y});
@@ -1256,10 +1276,9 @@ void AnimationStrips(const char *id, std::span<const StripView> strips, std::uin
         if (ImGui::IsItemActive() && drag.active) {
             auto value = drag.draft.proposed;
             auto delta = editor::FromSeconds(ImGui::GetIO().MouseDelta.x / canvas.scale.x);
-            if (drag.draft.kind==editor::EditKind::TrimStart) value.first=(std::min)(value.first+delta,value.last-1);
-            else if (drag.draft.kind==editor::EditKind::TrimEnd) value.last=(std::max)(value.last+delta,value.first+1);
-            else {value.first+=delta;value.last+=delta;}
-            if (delta)
+            const auto edited=EditStripRange({value.first,value.last},drag.draft.kind,delta);
+            if (edited) {value.first=edited->first;value.last=edited->last;}
+            if (delta && edited)
                 drag.Update(revision, value, out);
         }
         if (ImGui::IsItemDeactivated() && drag.active)
@@ -1268,6 +1287,9 @@ void AnimationStrips(const char *id, std::span<const StripView> strips, std::uin
         if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) && ImGui::IsMouseReleased(1))
             ImGui::OpenPopup("strip settings");
         if (ImGui::BeginPopup("strip settings")) {
+            auto glyph=[&](IconId icon) {
+                if (options.icons) {Icon(*options.icons,icon,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+            };
             const editor::Value original{strip.range.first,strip.range.last,
                 (strip.muted?1:0)|(strip.locked?2:0),strip.channel,strip.scale,strip.repeat,strip.blend};
             auto value=drag.active && drag.draft.target==strip.id &&
@@ -1280,24 +1302,29 @@ void AnimationStrips(const char *id, std::span<const StripView> strips, std::uin
                 if (changed && drag.active) drag.Update(revision,value,out);
                 if (ImGui::IsItemDeactivated() && drag.active) drag.Commit(revision,out);
             };
-            setting("Scale",value.x,.001,1000);setting("Repeat",value.y,.001,1000);setting("Blend",value.z,0,1);
+            glyph(IconId::Scale);setting(options.labels.scale,value.x,.001,1000);
+            glyph(IconId::Repeat);setting(options.labels.repeat,value.y,.001,1000);
+            glyph(IconId::StripBlend);setting(options.labels.blend,value.z,0,1);
             const auto index=static_cast<std::size_t>(&strip-strips.data());
             for (int direction:{-1,1}) {
                 const auto neighbor=static_cast<std::ptrdiff_t>(index)+direction;
                 const bool available=neighbor>=0 && neighbor<static_cast<std::ptrdiff_t>(strips.size()) &&
                     !strips[neighbor].locked;
-                if (ImGui::MenuItem(direction<0?"Move up":"Move down",nullptr,false,available))
+                glyph(direction<0?IconId::ArrowUp:IconId::ArrowDown);
+                if (ImGui::MenuItem(direction<0?options.labels.moveUp:options.labels.moveDown,nullptr,false,available))
                     Emit(out,strip.id,revision,editor::EditKind::Reorder,{},
                          {0,0,direction,strips[neighbor].id});
             }
             bool muted=strip.muted;
-            if (ImGui::Checkbox("Mute",&muted)) {
+            glyph(IconId::Mute);
+            if (ImGui::Checkbox(options.labels.mute,&muted)) {
                 value=original;value.offset=muted?value.offset|1:value.offset&~editor::Tick{1};
                 Emit(out,strip.id,revision,editor::EditKind::StripSettings,original,value);
             }
             ImGui::EndDisabled();
             bool locked=strip.locked;
-            if (ImGui::Checkbox("Lock",&locked)) {
+            glyph(locked?IconId::Lock:IconId::Unlock);
+            if (ImGui::Checkbox(options.labels.lock,&locked)) {
                 value=original;value.offset=locked?value.offset|2:value.offset&~editor::Tick{2};
                 Emit(out,strip.id,revision,editor::EditKind::StripSettings,original,value);
             }
@@ -1404,8 +1431,8 @@ void DopeSheet(const char *id, const editor::CurveProvider &p, editor::CurveStat
     if (view.hovered && ImGui::IsMouseReleased(ImGuiMouseButton_Right) && !s.drag.active)
         ImGui::OpenPopup("dope-options");
     if (ImGui::BeginPopup("dope-options")) {
-        ImGui::Checkbox("Scale key timing",&s.scaleTime);
-        ImGui::Checkbox("Snap to frame",&s.snapToFrame);
+        ImGui::Checkbox(s.labels.scale,&s.scaleTime);
+        ImGui::Checkbox(s.labels.snap,&s.snapToFrame);
         ImGui::EndPopup();
     }
     ImGui::PopID();

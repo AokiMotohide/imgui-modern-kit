@@ -686,21 +686,23 @@
     },
     {
       "operation": "TangentLinked",
-      "widget": "CurveEditor / PropertyGrid",
+      "widget": "CurveEditor handle mode; Gallery Animation workspace; AnimationStrips settings",
       "disposition": "new",
       "icon": "TangentLinked",
       "tooltip": "Tangent Linked",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "labelled native selected/disabled state and role heading",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "TangentBroken",
-      "widget": "CurveEditor / PropertyGrid",
+      "widget": "CurveEditor handle mode; Gallery Animation workspace; AnimationStrips settings",
       "disposition": "new",
       "icon": "TangentBroken",
       "tooltip": "Tangent Broken",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "labelled native selected/disabled state and role heading",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "ExtrapolateConstant",
@@ -745,12 +747,13 @@
     },
     {
       "operation": "CurveEditor",
-      "widget": "CurveEditor / PropertyGrid",
+      "widget": "CurveEditor handle mode; Gallery Animation workspace; AnimationStrips settings",
       "disposition": "new",
       "icon": "CurveEditor",
       "tooltip": "Curve Editor",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "labelled native selected/disabled state and role heading",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "SourceMonitor",
@@ -1165,7 +1168,7 @@
       "icon": "CurveEditor",
       "tooltip": "Color Curves",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending",
+      "status": "shared CurveEditor original generated; color curve integration review pending",
       "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
     },
     {
@@ -1733,31 +1736,34 @@
     },
     {
       "operation": "AnimationTimeline",
-      "widget": "DopeSheet / CurveEditor / AnimationStrips",
+      "widget": "CurveEditor handle mode; Gallery Animation workspace; AnimationStrips settings",
       "disposition": "new",
       "icon": "AnimationTimeline",
       "tooltip": "Animation Timeline",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "labelled native selected/disabled state and role heading",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "DopeSheet",
-      "widget": "DopeSheet / CurveEditor / AnimationStrips",
+      "widget": "CurveEditor handle mode; Gallery Animation workspace; AnimationStrips settings",
       "disposition": "new",
       "icon": "DopeSheet",
       "tooltip": "Dope Sheet",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "labelled native selected/disabled state and role heading",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "GraphEditor",
-      "widget": "DopeSheet / CurveEditor / AnimationStrips",
+      "widget": "CurveEditor handle mode; Gallery Animation workspace; AnimationStrips settings",
       "disposition": "shared-new",
       "icon": "CurveEditor",
       "tooltip": "Graph Editor",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending",
-      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
+      "state": "labelled native selected/disabled state and role heading",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation.",
+      "evidence": "assets/icons/provenance.json; src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "ChannelList",
@@ -1780,12 +1786,13 @@
     },
     {
       "operation": "AnimationStrip",
-      "widget": "DopeSheet / CurveEditor / AnimationStrips",
+      "widget": "CurveEditor handle mode; Gallery Animation workspace; AnimationStrips settings",
       "disposition": "new",
       "icon": "AnimationStrip",
       "tooltip": "Animation Strip",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "labelled native selected/disabled state and role heading",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "StripScale",
@@ -1807,12 +1814,13 @@
     },
     {
       "operation": "StripBlend",
-      "widget": "DopeSheet / CurveEditor / AnimationStrips",
+      "widget": "CurveEditor handle mode; Gallery Animation workspace; AnimationStrips settings",
       "disposition": "new",
       "icon": "StripBlend",
       "tooltip": "Strip Blend",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "labelled native selected/disabled state and role heading",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "UVEditor",

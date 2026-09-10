@@ -662,5 +662,33 @@
   {
     "name": "ProxyMedia",
     "category": "Editor"
+  },
+  {
+    "name": "TangentLinked",
+    "category": "Editor"
+  },
+  {
+    "name": "TangentBroken",
+    "category": "Editor"
+  },
+  {
+    "name": "CurveEditor",
+    "category": "Editor"
+  },
+  {
+    "name": "AnimationTimeline",
+    "category": "Editor"
+  },
+  {
+    "name": "DopeSheet",
+    "category": "Editor"
+  },
+  {
+    "name": "AnimationStrip",
+    "category": "Editor"
+  },
+  {
+    "name": "StripBlend",
+    "category": "Editor"
   }
 ]

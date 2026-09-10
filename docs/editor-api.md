@@ -489,3 +489,7 @@ MonitorControlsはホスト所有のセーフエリア・ガイド・timecode・
 TimelineLabels also supplies borrowed UTF-8 clip metadata/status, envelope actions and key-drag tooltip labels. Host strings are passed as text arguments rather than printf formats. Gallery supplies Japanese translations.
 
 TimelineLabelsはclip情報・素材状態・envelope操作・keyドラッグのtooltipも非所有UTF-8で受け取ります。ホスト文字列はprintf形式ではなく文字列引数として扱い、Galleryは日本語訳を渡します。
+
+The nine-argument AnimationStrips overload adds borrowed StripOptions (atlas and UTF-8 StripLabels), retaining the existing eight-argument entry point. EditStripRange is a pure range edit: trims saturate at Tick bounds and preserve at least one Tick; invalid/empty ranges, unsupported kinds and overflowing moves return nullopt. Gallery uses it for strip dragging and provides Japanese setting labels. DopeSheet reuses CurveLabels for scale/snap settings.
+
+9引数AnimationStripsは非所有atlas・UTF-8 StripLabelsをStripOptionsで追加し、従来の8引数入口を維持します。EditStripRangeは純粋な範囲編集で、trimはTick境界に制限して最小1 Tickを保持します。不正/空範囲・未対応kind・Moveのoverflowではnulloptを返します。Galleryはstripドラッグに使用し、設定名を日本語で渡します。DopeSheetのscale/snap設定はCurveLabelsを共用します。
