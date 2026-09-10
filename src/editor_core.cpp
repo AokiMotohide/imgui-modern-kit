@@ -417,7 +417,7 @@ bool CommandPressed(Command command, std::span<const Binding> bindings, bool foc
         ImGui::IsPopupOpen(nullptr,ImGuiPopupFlags_AnyPopupId|ImGuiPopupFlags_AnyPopupLevel))
         return false;
     for (auto b : bindings)
-        if (b.command == command && ImGui::IsKeyChordPressed(b.chord))
+        if (b.command == command && (b.chord & ~ImGuiMod_Mask_) && ImGui::IsKeyChordPressed(b.chord))
             return true;
     return false;
 }

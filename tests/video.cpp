@@ -592,6 +592,19 @@ int main() {
     check(small.overflow && small.count==0,"Split reserves entire selection event batch");
     selection.storage[1]=999;splitCommand(full);
     check(full.overflow && full.count==0,"incomplete selected query prevents partial Split");
+    selection.storage[1]=902;
+    for (const auto command:{editor::Command::Delete,editor::Command::Duplicate}) {
+        splitBindings[0].command=command;
+        splitCommand(full);
+        check(full.count==4 && full.Events()[1].phase==editor::Phase::Commit &&
+              full.Events()[3].target==902 && full.Events()[1].kind==
+              (command==editor::Command::Delete ? editor::EditKind::Remove : editor::EditKind::Duplicate),
+              "remapped clip command includes offscreen selection");
+        splitClips[1].locked=true;splitCommand(full);
+        check(full.count==0,"locked clip rejects complete keyboard edit");
+        splitClips[1].locked=false;splitCommand(small);
+        check(small.overflow && small.count==0,"clip keyboard edit reserves complete batch");
+    }
     provider.selected=nullptr;provider.user=savedUser;provider.tracks=savedTracks;provider.clips=savedClips;
     selection.Clear();timeline.bindings={};
     selection.storage[0]=transitionFixture.clip.id;selection.storage[1]=902;selection.count=2;
@@ -614,6 +627,21 @@ int main() {
     provider.constraints=[](void *,editor::StableId){return video::ClipConstraints{0,editor::FromSeconds(100),editor::FromSeconds(.1)};};
     std::array<video::TimelineState::MemberDrag,2> trimMembers;
     timeline.memberDrags=trimMembers;timeline.snapping=false;
+    selection.Set(transitionFixture.clip.id);selection.Set(902,true);
+    io.AddMousePosEvent(clipOrigin.x+timeline.headerWidth+50,clipOrigin.y+25);frame(full);
+    full.Clear();io.AddMouseButtonEvent(0,true);frame(full);
+    check(timeline.drag.active && timeline.memberCount==1 && selection.count==2,
+          "selected clip body starts complete multi-move without collapsing selection");
+    io.AddMousePosEvent(clipOrigin.x+timeline.headerWidth+100,clipOrigin.y+25);frame(full);
+    check(timeline.drag.draft.proposed.first-timeline.drag.draft.original.first==
+          trimMembers[0].transaction.draft.proposed.first-trimMembers[0].transaction.draft.original.first &&
+          timeline.drag.draft.proposed.first>timeline.drag.draft.original.first,
+          "multi-clip move preserves spacing including offscreen companion");
+    io.AddMousePosEvent(clipOrigin.x+timeline.headerWidth+10,clipOrigin.y+25);frame(full);
+    check(timeline.drag.draft.proposed.first==0 && trimMembers[0].transaction.draft.proposed.first==0,
+          "multi-clip move clamps whole selection at timeline start");
+    io.AddKeyEvent(ImGuiKey_Escape,true);frame(full);
+    io.AddKeyEvent(ImGuiKey_Escape,false);io.AddMouseButtonEvent(0,false);frame(full);
     selection.Set(transitionFixture.clip.id);full.Clear();
     io.AddMousePosEvent(clipOrigin.x+timeline.headerWidth+2,clipOrigin.y+25);frame(full);
     io.AddMouseButtonEvent(0,true);frame(full);
@@ -917,6 +945,14 @@ int main() {
         auto move=[&](float x,float y){io.AddMousePosEvent(x,y);render();render();};
         render();render();
         const auto origin=state.view.min;
+        std::array allBindings{editor::Binding{editor::Command::SelectAll,ImGuiKey_F8}};
+        state.bindings=allBindings;
+        move(origin.x+state.headerWidth+450,origin.y+140);
+        io.AddMouseButtonEvent(0,true);render();io.AddMouseButtonEvent(0,false);render();
+        clipsSelected.Clear();
+        io.AddKeyEvent(ImGuiKey_F8,true);render();io.AddKeyEvent(ImGuiKey_F8,false);render();
+        check(clipsSelected.Contains(410),"remapped Select All uses complete host selection query");
+        state.bindings={};clipsSelected.Clear();
         move(origin.x+state.headerWidth+400,origin.y+50);io.AddMouseButtonEvent(0,true);render();
         move(origin.x+state.headerWidth+100,origin.y+10);io.AddMouseButtonEvent(0,false);render();
         check(clipsSelected.Contains(410) && !state.boxSelecting,"public IO box selects an intersecting clip");

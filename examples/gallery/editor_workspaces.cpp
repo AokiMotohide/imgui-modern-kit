@@ -238,6 +238,38 @@ void Options(EditorWorkspaces &s) {
     ImGui::EndDisabled();
     if (editor::CommandPressed(editor::Command::Undo,bindings,focused)) s.Undo();
     if (editor::CommandPressed(editor::Command::Redo,bindings,focused)) s.Undo(true);
+    ImGui::SameLine();
+    if (ImGui::SmallButton(s.japanese ? "ショートカット" : "Shortcuts")) ImGui::OpenPopup("editor-shortcuts");
+    if (ImGui::BeginPopup("editor-shortcuts")) {
+        const char *presets[]={"CapCut","Premiere","Blender"};
+        if (ImGui::Combo(s.japanese ? "基本設定" : "Preset",&s.shortcutPreset,presets,3))
+            s.bindingCount=editor::MakeBindings(static_cast<editor::ShortcutPreset>(s.shortcutPreset),s.bindings);
+        ImGui::TextUnformatted(s.japanese ? "キーと修飾キーを変更できます。同じ割当は赤で表示します。" : "Choose a key and modifiers. Conflicting bindings are red.");
+        const char *names[]={"Play / Pause","Stop","Previous frame","Next frame","Set In","Set Out","Loop","Split","Delete","Duplicate","Select all","Fit","Add key","Previous key","Next key","Undo","Redo","Play reverse","Play forward","Pause","Select tool","Razor tool","Ripple tool","Roll tool","Slip tool","Slide tool","Hand tool","Go to start","Go to end","Clear In / Out","Insert source","Overwrite source","Append source","Copy clips","Cut clips","Paste clips"};
+        ImGui::BeginChild("binding-list",{560,360});
+        for (std::size_t i=0;i<s.bindingCount;++i) {
+            auto &b=s.bindings[i];ImGui::PushID(static_cast<int>(i));
+            ImGui::TextUnformatted(names[static_cast<int>(b.command)]);
+            const auto key=static_cast<ImGuiKey>(b.chord & ~ImGuiMod_Mask_);
+            ImGui::SetNextItemWidth(180);
+            if (ImGui::BeginCombo("##key",key==ImGuiKey_None ? "None" : ImGui::GetKeyName(key))) {
+                if (ImGui::Selectable("None",!b.chord)) b.chord=0;
+                for (int k=ImGuiKey_NamedKey_BEGIN;k<=ImGuiKey_F24;++k)
+                    if (ImGui::Selectable(ImGui::GetKeyName(static_cast<ImGuiKey>(k)),key==k)) b.chord=(b.chord & ImGuiMod_Mask_) | k;
+                ImGui::EndCombo();
+            }
+            for (const auto modifier: {ImGuiMod_Ctrl,ImGuiMod_Shift,ImGuiMod_Alt,ImGuiMod_Super}) {
+                ImGui::SameLine();bool enabled=(b.chord & modifier)!=0;
+                const char *label=modifier==ImGuiMod_Ctrl ? "Ctrl" : modifier==ImGuiMod_Shift ? "Shift" : modifier==ImGuiMod_Alt ? "Alt" : "Super";
+                if (ImGui::Checkbox(label,&enabled) && (b.chord & ~ImGuiMod_Mask_))
+                    b.chord=enabled ? b.chord | modifier : b.chord & ~modifier;
+            }
+            const bool conflict=b.chord && std::any_of(s.bindings.begin(),s.bindings.begin()+s.bindingCount,[&](const auto &other){return &other!=&b && other.chord==b.chord;});
+            if (conflict) ImGui::TextColored({1,.4f,.3f,1},"%s",s.japanese ? "同じキー割当があります" : "Shared key binding");
+            ImGui::PopID();
+        }
+        ImGui::EndChild();ImGui::EndPopup();
+    }
     s.queryCount = s.queriedClips = s.queriedKeys = s.queriedTracks = 0;
 }
 } // namespace
@@ -891,7 +923,7 @@ void EditorWorkspaces::ApplyEvents() {
         rejectFrame|=e.proposed.first<0 || e.proposed.last<=e.proposed.first;
         if(destination!=tracks.end()) for(const auto &other:QueryClips(destination->id,{e.proposed.first,e.proposed.last})) {
             const bool moves=std::any_of(events.Events().begin(),events.Events().end(),[&](const auto &m){return m.phase==editor::Phase::Commit && m.kind==editor::EditKind::Move && m.target==other.id;});
-            if(!moves) rejectFrame=true;
+            if(!moves && other.start<e.proposed.last && other.start+other.duration>e.proposed.first) rejectFrame=true;
         }
     }
     for(const auto &e:events.Events()) if(e.phase==editor::Phase::Commit) {

@@ -103,6 +103,7 @@ struct EditorWorkspaces {
     editor::EventBuffer events{eventStorage};
     std::array<editor::Binding, 48> bindings{};
     std::size_t bindingCount = 0;
+    int shortcutPreset = 0;
     video::TimelineState timeline;
     std::array<video::TimelineState::MemberDrag, 32> clipDrags{};
     std::array<video::ClipView, 64> selectedClips{};

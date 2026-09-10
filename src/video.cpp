@@ -500,6 +500,40 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     const bool addKey=editor::CommandPressed(editor::Command::AddKey,s.bindings,keyCommands);
     const bool previousKey=editor::CommandPressed(editor::Command::PreviousKey,s.bindings,keyCommands);
     const bool nextKey=editor::CommandPressed(editor::Command::NextKey,s.bindings,keyCommands);
+    if (editor::CommandPressed(editor::Command::SelectAll,s.bindings,keyCommands) && p.editing.box) {
+        const auto ids=p.editing.box(p.editing.user,
+            {std::numeric_limits<Tick>::lowest(),std::numeric_limits<Tick>::max()},
+            0,std::numeric_limits<double>::max());
+        if (ids.size()>selection.storage.size()) out.overflow=true;
+        else {selection.Clear();for (auto id:ids) selection.Set(id,true);if (s.keySelection) s.keySelection->Clear();}
+    }
+    // A selected clip key owns Delete/Duplicate; otherwise edit the complete clip set.
+    if ((removeKeys || duplicateKeys) && selection.count &&
+        (!s.keySelection || !s.keySelection->count) && p.selected) {
+        const auto ids=selection.storage.first(selection.count);
+        const auto members=p.selected(p.user,ids);
+        bool complete=true,editable=true;
+        const auto kind=removeKeys ? editor::EditKind::Remove : editor::EditKind::Duplicate;
+        Tick first=std::numeric_limits<Tick>::max(),last=0;
+        for (auto id:ids) complete &= std::count_if(members.begin(),members.end(),[&](const auto &c){return c.id==id;})==1;
+        for (std::size_t i=0;i<members.size();++i) {
+            const auto &c=members[i];
+            complete &= std::none_of(members.begin(),members.begin()+i,[&](const auto &other){return other.id==c.id;});
+            editable &= !c.locked && (!p.canBeginEdit || p.canBeginEdit(p.user,c.id,kind));
+            first=std::min(first,c.start);last=std::max(last,c.start+c.duration);
+        }
+        if (!complete) out.overflow=true;
+        else if (editable && !members.empty() && ReserveEvents(out,members.size()*2)) {
+            const Tick delta=last-first;
+            bool fits=true;
+            for (const auto &c:members) fits &= removeKeys || c.start+c.duration<=std::numeric_limits<Tick>::max()-delta;
+            if (fits) for (const auto &c:members) {
+                editor::Transaction action;action.Begin(c.id,p.revision,kind,Value(c),editor::CurrentModifiers(),out);
+                if (!removeKeys) {action.draft.proposed.first+=delta;action.draft.proposed.last+=delta;}
+                action.Commit(p.revision,out);
+            }
+        }
+    }
     bool heightEditorSeen=false;
     detail::ResumeTerminal(s.heightDrag,p.revision,out);
     if (s.heightDrag.active && ImGui::IsKeyPressed(ImGuiKey_Escape)) s.heightDrag.Cancel(out);
@@ -1210,6 +1244,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     out.overflow=true;continue;
                 }
                 if (!selection.Contains(clip.id)) continue; // Toggle-off is selection only.
+                selection.active=clip.id;
+                if (s.keySelection) s.keySelection->Clear();
                 auto kind = io.KeyAlt ? editor::EditKind::Duplicate : editor::EditKind::Move;
                 if (io.MousePos.x - x < 7)
                     kind = editor::EditKind::TrimStart;
@@ -1440,6 +1476,15 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             if (s.guide.snapped) delta=s.guide.tick-anchor;
         }
         auto constraints = p.constraints ? p.constraints(p.user, s.original.id) : ClipConstraints{};
+        if (s.drag.draft.kind==editor::EditKind::Move || s.drag.draft.kind==editor::EditKind::Duplicate) {
+            Tick minimum=-s.original.start;
+            Tick maximum=std::numeric_limits<Tick>::max()-s.original.start-s.original.duration;
+            for (const auto &member:s.memberDrags.first(s.memberCount)) {
+                minimum=std::max(minimum,-member.original.start);
+                maximum=std::min(maximum,std::numeric_limits<Tick>::max()-member.original.start-member.original.duration);
+            }
+            delta=std::clamp(delta,minimum,maximum);
+        }
         const bool trimMembers=s.drag.draft.kind==editor::EditKind::TrimStart || s.drag.draft.kind==editor::EditKind::TrimEnd ||
             s.drag.draft.kind==editor::EditKind::Slip || s.drag.draft.kind==editor::EditKind::Ripple;
         if (trimMembers && s.memberCount) {

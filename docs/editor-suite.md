@@ -55,6 +55,39 @@ query completeness, scratch sizes and overloads.
 
 ## Editor controls / 編集部品
 
+Timeline selection keeps the selected set when dragging a selected clip; Shift adds
+and Ctrl toggles clips. Move/Duplicate clamp the entire set at timeline zero without
+changing spacing. `TimelineState::memberDrags` must hold all companion transactions,
+and `TimelineProvider::selected` must resolve offscreen and linked members with lock
+information. The host must test strict interval overlap: touching clip ends are valid.
+
+タイムラインは選択済みクリップのドラッグで複数選択を維持し、Shiftで追加、Ctrlで切り替えます。
+移動・複製は選択全体を時刻0で制限し、間隔を維持します。`memberDrags`には全同行対象の
+transaction容量を用意し、`selected`は画面外・リンク対象とlock状態も返してください。
+ホストの衝突判定では端同士の接触を許可し、区間の内部が重なる場合だけを重複とします。
+
+Timeline `SelectAll` uses `editing.box` over the full Tick and track-height range;
+return unique editable clip IDs, including offscreen clips. Insufficient selection
+storage preserves the previous set. Delete and Duplicate emit complete selected-clip
+Begin/Commit batches when no clip key is selected. Duplicate offsets the set by its
+total time extent. A selected clip key takes precedence; clicking a clip body or
+selecting all clips clears key selection. The host owns collision policy and Undo.
+
+全選択は`editing.box`へ全Tick・全track高さの範囲を渡します。画面外も含む編集可能な
+clip IDを重複なく返してください。選択容量不足では元の選択を保持します。clip内キーが
+未選択ならDelete・Duplicateは選択clip全体のBegin/Commitを返し、複製位置は選択全体の
+時間幅だけ後方です。キー選択を優先し、clip本体クリック・clip全選択でキー選択を解除します。
+衝突方針とUndoはホストの責任です。
+
+The Gallery Shortcuts popup edits the same host-owned bindings used by the editor,
+including modifiers and unbinding, and flags shared chords. Changes last for the
+Gallery session; persistence belongs to the consuming application. Presets are
+starter maps, not complete replicas of the named applications.
+
+Galleryの「ショートカット」は実行時と同じホスト所有bindingを編集し、修飾キー・割当解除・
+重複表示に対応します。変更はGalleryセッション中に有効で、保存は利用アプリが担当します。
+プリセットは初期割当であり、各製品のキー設定全体を再現するものではありません。
+
 Core supplies canvas pan/zoom/fit, box/lasso selection, time ruler and editable ranges,
 marker edits, transport, multi-key curves and Bezier handles, property states and array
 reorder, numeric copy/paste, and filtered/renamable asset grid/list views.

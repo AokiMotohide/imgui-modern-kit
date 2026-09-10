@@ -744,6 +744,12 @@ int VerifyTimelineModel() {
         s.events.Clear();s.events.Push({id,s.revision,editor::Phase::Begin,kind});
         s.events.Push({id,s.revision,editor::Phase::Commit,kind,{},value});s.ApplyEvents();
     };
+    check(s.CanMoveClips(s.selection.storage.first(1),0,71,71),"touching clip boundary is not a move collision");
+    const auto beforeTouch=s.revision;
+    edit(81,editor::EditKind::Move,{editor::FromSeconds(5),editor::FromSeconds(7),editor::FromSeconds(10),71,1});
+    check(s.FindClip(81)->start==editor::FromSeconds(5) && s.revision>beforeTouch,
+          "host commits move flush against neighboring clip");
+    check(s.Undo() && s.FindClip(81)->start==editor::FromSeconds(1),"boundary move undo restores original position");
     edit(81,editor::EditKind::ClipFades,{editor::FromSeconds(.5),editor::FromSeconds(.25),0,0,1,2});
     check(s.FindClip(81)->fades.inDuration==editor::FromSeconds(.5),"host applies independent fade");
     check(s.Undo() && s.FindClip(81)->fades.inDuration==0,"fade undo restores model");
@@ -758,6 +764,18 @@ int VerifyTimelineModel() {
     check(!s.CanMoveClips(s.selection.storage.first(1),0,71,74),"cross-track move rejects incompatible track");
     check(!s.CanMoveClips(s.selection.storage.first(1),editor::FromSeconds(2),71,71),"move rejects unselected collision");
     s.selection.Set(82,true);check(s.CanMoveClips(s.selection.storage.first(2),0,71,72),"move excludes complete selected set from collisions");
+    s.events.Clear();
+    for (auto id:{81,82}) {
+        const auto *clip=s.FindClip(id);
+        editor::Value original{clip->start,clip->start+clip->duration,clip->sourceIn,clip->track,clip->speed};
+        auto proposed=original;proposed.first+=editor::TicksPerSecond;proposed.last+=editor::TicksPerSecond;
+        s.events.Push({static_cast<editor::StableId>(id),s.revision,editor::Phase::Commit,editor::EditKind::Move,original,proposed});
+    }
+    s.ApplyEvents();
+    check(s.FindClip(81)->start==editor::FromSeconds(2) && s.FindClip(82)->start==editor::FromSeconds(4),
+          "host commits complete multi-clip move preserving spacing");
+    check(s.Undo() && s.FindClip(81)->start==editor::FromSeconds(1) && s.FindClip(82)->start==editor::FromSeconds(3),
+          "one undo restores complete multi-clip move");
     const auto selected=p.editing.box(&s,{editor::FromSeconds(1.5),editor::FromSeconds(3.5)},0,60);
     check(selected.size()==2,"rectangle intersects clips even without their centers");
     s.trackSelection.Set(71);s.trackSelection.Set(72,true);

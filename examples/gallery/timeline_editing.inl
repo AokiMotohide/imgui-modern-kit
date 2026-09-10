@@ -18,7 +18,9 @@ bool EditorWorkspaces::CanMoveClips(std::span<const editor::StableId> ids,editor
         const auto destination=DestinationTrack(c.track,anchor,hovered);
         if(c.locked || !destination || delta < -c.start || delta>std::numeric_limits<editor::Tick>::max()-c.start-c.duration) return false;
         const auto overlaps=QueryClips(destination,{c.start+delta,c.start+delta+c.duration});
-        for(const auto &other:overlaps) if(!contains(other.id)) return false;
+        for(const auto &other:overlaps)
+            if(!contains(other.id) && other.start<c.start+delta+c.duration &&
+               other.start+other.duration>c.start+delta) return false;
     }
     return true;
 }
