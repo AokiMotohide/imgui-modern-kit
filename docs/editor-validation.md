@@ -13,7 +13,7 @@ a CPU ImGui frame; an external consumer compiles and links the same fixture.
 CPU fixtureは時間境界、整数event、cancel、snap、canvas、curve、clip編集計算、PCM/meter/scope、
 投影、UVを検証します。API fixtureはCPU ImGui frame、外部consumerは独立ホストtargetで確認します。
 
-The native Gallery verifier checks actual OpenGL indexed cubes and sphere, depth
+Historical native Gallery runs checked OpenGL indexed cubes and sphere, depth
 ordering, 64-bit ID picking, background picking, FBO resize, resource deletion and
 reinitialization. It drives Timeline move/end trim/split, CG X-axis gizmo, curve key
 movement and UV vertex movement through public Dear ImGui IO. It also checks shared
@@ -21,7 +21,7 @@ object selection. Renderer observed: NVIDIA GeForce RTX 3090 Ti, OpenGL 3.3.0,
 NVIDIA 616.56, Dear ImGui 1.92.9b.
 実Galleryでcube/sphere、depth、64bit picking、背景、resize、削除/再初期化を確認します。
 公開IOでTimeline移動/終端trim/split、CG X軸gizmo、curve key移動、UV vertex移動を検証します。
-GPUはRTX 3090 Ti、OpenGL 3.3.0、NVIDIA 616.56、ImGui 1.92.9bです。
+過去の実行環境はRTX 3090 Ti、OpenGL 3.3.0、NVIDIA 616.56、ImGui 1.92.9bでした。
 
 ```powershell
 ctest --test-dir build/windows-debug -C Debug -R "imkit.(editor_core|video|cg|editor_api_compile)" --output-on-failure
@@ -30,12 +30,12 @@ build/windows-debug/catalog/Release/imkit_gallery.exe --verify-editors --capture
 
 `--capture-editors` captures Editor Core and light/dark Video/CG workspaces, including
 150% scale, from the real backbuffer. Artifacts under `out/` are uncommitted.
-The performance fixture builds 256 tracks, 100096 clips and 100000 keys, warms 20
-frames, then measures 180 panning frames at 1920×1440 with swap interval zero.
+The earlier pan-only fixture built 256 tracks, 100096 clips and 100000 keys, warmed 20
+frames, then measured 180 panning frames at 1920×1440 with swap interval zero.
 Its CPU wall time includes UI construction, GL submission and swap. It reports
 visible query/clip counts and separate C++ `new` and ImGui allocator counts; driver
 and operating-system allocations are outside these counters.
-captureは実backbufferで、out/配下は非コミットです。性能fixtureは256 track・100096 clip・
+captureは実backbufferで、out/配下は非コミットです。過去のpan専用fixtureは256 track・100096 clip・
 100000 key、20 frame warm-up後180 pan frameを1920×1440・swap interval 0で計測します。
 CPU wall timeにはUI構築・GL投入・swapを含みます。C++ newとImGui allocatorは別計数し、
 driver/OS内部allocationは計数対象外です。
@@ -119,31 +119,30 @@ Debug Video/API fixtureと、累積高さqueryへ切り替えたGalleryでの移
 既存操作は成功しました。全track role・icon受入やnative OS入力の検証ではありません。
 
 
-## Release representative interaction benchmark (2026-09-10)
+## Saved six-operation Release benchmark / 保存済み6操作測定
 
-Run `imkit_gallery.exe --benchmark-editors --output out/editor-benchmark-noop-fix` from the Release build. This independent mode avoids rerunning GPU lifecycle and unrelated interaction checks. Each operation uses 20 warm-up frames and 180 measured frames at 1920x1440, 256 tracks, 100096 clips and 100000 keys. Inputs use public ImGui IO in a hidden native OpenGL window with vsync disabled. The wall-time boundary is `Host::Frame`, including host event application, preview rendering, ImGui, GL submission and swap. Dataset construction and warm-up are excluded. Continuous-drag Commit is measured separately after sampling; selection sampling includes press/release cycles. Allocation counters cover the frame thread's C++ new/new[] (including aligned forms) and ImGui allocation calls, excluding driver and OS allocations and the separate terminal frame.
+The saved `out/editor-benchmark-related-edits-fixed/editor-performance.csv` and `editor-performance-context.txt` contain the following results. They predate the latest camera, icon and UI changes and are not final acceptance of the current HEAD. The independent `--benchmark-editors` mode measures 20 warm-up and 180 sample frames per operation at 1920×1440, 256 tracks, 100096 clips and 100000 keys. Input uses public ImGui IO in a hidden native GL window with vsync off. `Host::Frame` wall time includes host event application, preview rendering, ImGui, GL submission and swap. Continuous-drag terminal frames are measured separately.
 
-| Operation | P95 ms | Max ms | Terminal frame ms |
+保存済みCSVとcontextから転記した結果です。最新のcamera・icon・UI変更より前の測定であり、現在のHEADの最終受入ではありません。1920×1440、256 track、100096 clip、100000 keyで、各操作20 warm-up＋180測定frameです。非表示native GL windowへ公開IOを注入し、vsyncを無効にしています。測定境界は編集適用・preview・ImGui・GL発行・swapを含むHost::Frameです。連続dragの終端frameは別に測定します。
+
+| Operation / 操作 | P95 ms | Max ms | Terminal ms |
 |---|---:|---:|---:|
-| Pan | 1.8436 | 2.6793 | 1.1380 |
-| Zoom | 1.7098 | 2.6866 | 0.9678 |
-| Selection | 1.7788 | 3.0781 | 1.0639 |
-| Clip drag | 1.7482 | 2.2089 | 6.2553 |
-| Clip end trim | 1.6466 | 2.5658 | 7.5608 |
-| Inline keyframe drag | 1.8557 | 3.1569 | 7.6767 |
+| Pan | 1.6822 | 2.2616 | 1.9811 |
+| Zoom | 1.7300 | 2.9294 | 0.9631 |
+| Selection | 1.7890 | 2.4931 | 1.0157 |
+| Clip drag | 1.8730 | 2.4208 | 9.2084 |
+| Clip end trim | 1.6781 | 2.3307 | 8.3003 |
+| Inline keyframe drag | 1.7585 | 2.1366 | 9.3105 |
 
-Each operation returned at most 30 clips through at most 7 visible track/clip queries per frame, with zero counted C++ and ImGui allocations in its sampling interval. These six P95 values meet 16.7 ms on the current PC; the selection maximum was 3.0781 ms after skipping unchanged host clip edits. Reports are local `out/editor-benchmark-noop-fix/editor-performance.csv` and `editor-performance-context.txt`. The mode checks changed pan/zoom state, selection of the expected second clip, actual clip/key Commit values and trim kind, and fails on missing interaction, wrong framebuffer size, excessive visible queries or P95. It does not constitute complete Editor Suite acceptance or native OS/IME verification. Returned inline-key and track-row counts are not separately instrumented yet.
+All six saved interactions passed their state-change checks and the 16.7 ms P95 target. Each recorded at most seven visible queries, 30 clips, eight keys and six track rows, with zero measured steady C++ new and ImGui allocations. Key counts include returned clip-local editing spans and Curve neighbors, excluding full borrowed evaluation channels. Driver/OS allocations and the separate terminal frame are outside the steady allocation result. Native OS/IME is not covered. The latest GPU attempt failed GLFW/WGL context creation; final GPU capture and Release measurement remain outstanding rather than inferred from these earlier results.
 
-Release版の上記コマンドで、GPU lifecycleなどの無関係な検証を再実行せず6操作を測定できます。条件は1920x1440、256 track、100096 clip、100000 key、各20 warm-up＋180測定フレームです。非表示native OpenGL windowへ公開ImGui IOを注入し、vsyncを無効にしています。計測境界はホスト編集適用・preview描画・ImGui・GL発行・swapを含む`Host::Frame`の壁時計時間です。dataset構築とwarm-upは除外し、連続dragのCommitは別測定、選択は押下・解放を測定区間へ含めます。allocationはフレームスレッドのC++ new／new[]（alignedを含む）とImGui呼出しで、driver／OSと別測定の終了フレームは対象外です。
-
-値が変わらないclip編集の索引再構築を省いた結果、選択のP95は10.6984msから1.7788ms、最大値は3.0781msになりました。表の6操作はいずれもP95 16.7ms以下です。各操作の最大値は7可視track／clip query・30返却clip、測定区間のC++／ImGui allocationは0です。pan／zoomの状態変化、期待する2番目のclipのselection、clip／keyの実Commit値、trim種別を確認します。入力不成立、framebuffer条件不一致、query上限、P95未達は失敗にします。inline keyとtrack行の返却数はまだ個別計測していません。この測定だけでEditor Suite全体やnative OS／IMEの受入完了とはしません。
-
+保存された6操作はいずれも状態変化確認とP95 16.7 ms目標に合格しています。各操作の最大値は7 query・30 clip・8 key・6 track行で、定常C++ new／ImGui allocationは0です。key数はclip内編集spanとCurveの隣接keyを数え、非所有の全評価channelは除きます。driver／OS allocationと別測定の終端frameは定常allocation結果に含めません。native OS／IME確認ではありません。直近のGPU試行はGLFW/WGL context作成に失敗しており、最終GPU captureとRelease測定は未実施です。
 
 An unchanged Move/TrimStart/TrimEnd/Ripple/Roll/Slip/Slide Commit preserves the host revision and bypasses index rebuilding. The headless host-model verifier covers all seven kinds. The benchmark clears selection before each operation and validates the expected selected StableId, so an idle frame with a preexisting selection cannot pass its selection check.
 
 値が変わらないMove／TrimStart／TrimEnd／Ripple／Roll／Slip／SlideのCommitでは、ホストrevisionと索引を維持します。7種をheadlessのホスト適用検証で確認しました。benchmarkは操作ごとにselectionを空にし、期待する選択先StableIdを確認するため、既存selectionを残しただけの無操作フレームは選択検証に合格しません。
 
 
-The incremental external Debug `imkit_editor_consumer` build and CPU-frame execution now cover the Timeline host atlas and five edit-tool IconIds, explicit clip key channel/default, transition picker/edit, envelope point/evaluation, six clip-role palette fields, and Monitor metadata options. The consumer defines its own ImGui target and uses the public module targets through `add_subdirectory`. This is source-consumer evidence; installed-package, Release-consumer and GPU execution are separate gates. The generated `api-inventory.json` inventories native Dear ImGui overloads; custom editor additions are listed in `editor-api.md`.
+An earlier incremental external Debug `imkit_editor_consumer` build and CPU-frame execution covered the Timeline host atlas and five edit-tool IconIds, explicit clip key channel/default, transition picker/edit, envelope point/evaluation, six clip-role palette fields, and Monitor metadata options. The consumer defines its own ImGui target and uses the public module targets through `add_subdirectory`. This is source-consumer evidence; installed-package, Release-consumer and GPU execution are separate gates. The generated `api-inventory.json` inventories native Dear ImGui overloads; custom editor additions are listed in `editor-api.md`.
 
-外部Debug `imkit_editor_consumer`の増分ビルドとCPUフレーム実行で、Timelineのホストatlas・5編集ツールIconId、clipの明示key channel／既定値、transition picker／計算、envelope点／評価、6種clip色、Monitor metadata設定を確認しました。consumerは自身のImGui targetを定義し、`add_subdirectory`経由の公開module targetを使用します。install済みpackage・Release consumer・GPU実行は別gateです。生成`api-inventory.json`はDear ImGui標準overload用であり、独自Editor追加APIは`editor-api.md`に記載しています。
+過去の外部Debug `imkit_editor_consumer`の増分ビルドとCPUフレーム実行で、Timelineのホストatlas・5編集ツールIconId、clipの明示key channel／既定値、transition picker／計算、envelope点／評価、6種clip色、Monitor metadata設定を確認しました。consumerは自身のImGui targetを定義し、`add_subdirectory`経由の公開module targetを使用します。install済みpackage・Release consumer・GPU実行は別gateです。生成`api-inventory.json`はDear ImGui標準overload用であり、独自Editor追加APIは`editor-api.md`に記載しています。
