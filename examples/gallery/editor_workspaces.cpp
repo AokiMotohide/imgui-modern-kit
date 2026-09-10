@@ -1285,6 +1285,11 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         s.timeline.labels.transitions.in="開始側";s.timeline.labels.transitions.out="終了側";
         s.timeline.labels.transitions.inDuration="開始側の長さ";s.timeline.labels.transitions.outDuration="終了側の長さ";
         s.timeline.labels.transitions.kinds={"なし","ディゾルブ","フェード","クロスフェード"};
+        s.timeline.labels.duration="長さ";s.timeline.labels.speed="速度";s.timeline.labels.linked="リンク";s.timeline.labels.group="グループ";
+        s.timeline.labels.proxy="プロキシ";s.timeline.labels.missing="素材が見つかりません";
+        s.timeline.labels.offline="素材がオフライン";s.timeline.labels.locked="ロック中";
+        s.timeline.labels.addEnvelope="音量ポイントを追加";s.timeline.labels.removeEnvelope="音量ポイントを削除";
+        s.timeline.labels.envelope="音量エンベロープ";s.timeline.labels.dragKey="キーの時刻をドラッグ";
         s.timeline.labels.linkSelection="選択clipをリンク";s.timeline.labels.groupSelection="選択clipをgroup化";
         s.timeline.labels.tools={"選択","分割","リップル","ロール","スリップ","スライド","手のひら"};
         s.timeline.labels.tooltips={"clipを選択","カーソル位置で分割","trimして後続clipを移動","隣接clipの境界を移動",
