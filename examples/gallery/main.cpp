@@ -1342,6 +1342,7 @@ int VerifyInspectorModel() {
     return failures?1:0;
 }
 int main(int argc, char **argv) {
+    bool verifyWorkflow=false;
     bool captureDesign=false;
     bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false, benchmarkEditors = false, verifyMonitors = false, verifyTrackControls = false, verifyLinkedClips = false, verifyNormals = false;
     int capturePage = -1, animationPage = -1, monitorIndex=-1, captureWidth=1920,captureHeight=1440;
@@ -1352,6 +1353,7 @@ int main(int argc, char **argv) {
     std::filesystem::path out = "out/catalog";
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
+        if(a=="--verify-workflow") {verifyWorkflow=true;capture=true;continue;}
         if(a=="--capture-design-system") {captureDesign=true; capture=true; continue;}
         if (a == "--verify-timeline-model") return VerifyTimelineModel();
         if (a == "--verify-inspector-model")
@@ -1570,7 +1572,27 @@ int main(int argc, char **argv) {
                 VerifyColor(h, out);
             if (verifyIcons)
                 VerifyIcons(h, out);
-            if(captureDesign) {
+            if(verifyWorkflow) {
+                std::ofstream log(out/"workflow-interaction.txt");
+                auto check=[&](bool ok,const char* text){log<<(ok?"PASS ":"FAIL ")<<text<<'\n';if(!ok)throw std::runtime_error(text);};
+                h.Page(15);h.s.workflow.notice=false;h.Settle();
+                bool before=h.s.workflow.chip;h.Click("workflow-chip");check(h.s.workflow.chip!=before,"filter chip click");
+                auto bounds=h.s.probes.at("workflow-canvas");h.mouse=bounds.Center();h.Frame();
+                auto scale=h.s.workflow.image.canvas.scale.x;
+                h.Frame([](auto& io){io.AddMouseWheelEvent(0,1);});h.Settle();
+                check(h.s.workflow.image.canvas.scale.x>scale,"image cursor zoom");
+                h.Key(ImGuiKey_Tab);h.Key(ImGuiKey_Space);
+                for(int dark=0;dark<2;++dark)for(int contrast=0;contrast<2;++contrast)for(int density=0;density<3;++density){
+                    h.s.dark=dark!=0;h.s.theme=imkit::MakeTheme(static_cast<imkit::ColorScheme>(dark),static_cast<imkit::ContrastMode>(contrast),static_cast<imkit::Density>(density));
+                    h.s.theme.motion.reducedMotion=true;
+                    for(int page:{15,16,17}){h.Page(page);h.Frame({},out/("workflow-"+std::to_string(page)+"-"+std::to_string(dark)+"-"+std::to_string(contrast)+"-"+std::to_string(density)+".png"));}
+                }
+                h.s.workflow.japanese=true;h.s.workflow.vertical=true;h.s.workflow.disabled=true;
+                glfwSetWindowSize(h.window,640,800);h.Page(17);h.Frame({},out/"workflow-narrow-disabled.png");
+                h.s.workflow.disabled=false;h.Page(15);h.Frame({},out/"workflow-japanese.png");
+                check(true,"Light/Dark, contrast, density, reduced motion, Japanese, narrow, disabled GPU captures");
+                log<<"Public ImGui IO and native GPU backbuffer; native OS/IME and external applications are not tested.\n";
+            } else if(captureDesign) {
                 for(int dark=0;dark<2;++dark) for(int contrast=0;contrast<2;++contrast) for(int density=0;density<3;++density) {
                     h.s.dark=dark!=0;
                     h.s.theme=imkit::MakeTheme(static_cast<imkit::ColorScheme>(dark),static_cast<imkit::ContrastMode>(contrast),static_cast<imkit::Density>(density));

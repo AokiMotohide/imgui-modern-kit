@@ -1265,13 +1265,22 @@ void AssetBrowser(const char *id, const AssetProvider &p, AssetState &s, Selecti
     ImGui::PopID();
 }
 bool Splitter(const char *id, float &pane, float total, bool vertical, float minimum) {
-    ImGui::InvisibleButton(id, vertical ? ImVec2{6, ImGui::GetContentRegionAvail().y}
-                                        : ImVec2{ImGui::GetContentRegionAvail().x, 6});
+    const float thickness=(std::max)(1.f,ImGui::GetStyle().ItemSpacing.x);
+    ImGui::InvisibleButton(id, vertical ? ImVec2{thickness, (std::max)(1.f,ImGui::GetContentRegionAvail().y)}
+                                        : ImVec2{(std::max)(1.f,ImGui::GetContentRegionAvail().x), thickness},ImGuiButtonFlags_EnableNav);
     if (ImGui::IsItemHovered() || ImGui::IsItemActive())
         ImGui::SetMouseCursor(vertical ? ImGuiMouseCursor_ResizeEW : ImGuiMouseCursor_ResizeNS);
-    if (!ImGui::IsItemActive())
+    float delta=0;
+    if(ImGui::IsItemFocused()) {
+        ImGui::SetNavCursorVisible(true);
+        if(ImGui::IsKeyPressed(vertical?ImGuiKey_LeftArrow:ImGuiKey_UpArrow))delta-=ImGui::GetFontSize();
+        if(ImGui::IsKeyPressed(vertical?ImGuiKey_RightArrow:ImGuiKey_DownArrow))delta+=ImGui::GetFontSize();
+    }
+    if (!ImGui::IsItemActive() && delta==0)
         return false;
-    pane = std::clamp(pane + (vertical ? ImGui::GetIO().MouseDelta.x : ImGui::GetIO().MouseDelta.y),
+    if(!std::isfinite(total)||total<=0)return false;
+    if(ImGui::IsItemActive() && ImGui::IsMouseDown(0))delta+=vertical?ImGui::GetIO().MouseDelta.x:ImGui::GetIO().MouseDelta.y;
+    pane = std::clamp(pane + delta,
                       (std::min)(minimum, total * .5f), (std::max)(minimum, total - minimum));
     return true;
 }
