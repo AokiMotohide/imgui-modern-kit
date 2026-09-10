@@ -1,0 +1,79 @@
+[
+  {
+    "header": "include/imkit/theme.h",
+    "types": [
+      "ColorScheme",
+      "ContrastMode",
+      "Density",
+      "Easing",
+      "Typography",
+      "SpacingTokens",
+      "Radius",
+      "Stroke",
+      "Elevation",
+      "Opacity",
+      "StateColors",
+      "SemanticColors",
+      "Palette",
+      "Metrics",
+      "Motion",
+      "FontSet",
+      "EditorPalette",
+      "Theme",
+      "ThemeScope",
+      "AnimationState"
+    ],
+    "contract": "docs/design-system.md"
+  },
+  {
+    "header": "include/imkit/accessibility.h",
+    "types": [
+      "SemanticRole",
+      "SemanticAction",
+      "SemanticState",
+      "SemanticNode",
+      "AccessibilityTree",
+      "AccessibilitySink",
+      "ActionRequest",
+      "ActionQueue",
+      "AccessibilityFrame"
+    ],
+    "contract": "docs/design-system.md"
+  },
+  {
+    "header": "include/imkit/accessibility_win32.h",
+    "types": [
+      "Win32ActionSink"
+    ],
+    "contract": "docs/design-system.md"
+  },
+  {
+    "header": "include/imkit/locale.h",
+    "types": [
+      "TextDirection",
+      "LocaleContext"
+    ],
+    "contract": "docs/design-system.md"
+  },
+  {
+    "header": "include/imkit/patterns.h",
+    "types": [
+      "Command",
+      "CommandPaletteState",
+      "SplitButtonResult",
+      "ToolbarState",
+      "DialogState",
+      "DialogResult",
+      "FormFieldInfo",
+      "AdaptiveSplitState",
+      "VisibleRange",
+      "ListProvider",
+      "DataColumn",
+      "DataAction",
+      "DataEvent",
+      "DataProvider",
+      "DataTableState"
+    ],
+    "contract": "docs/design-system.md"
+  }
+]

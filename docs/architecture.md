@@ -1,5 +1,9 @@
 # Architecture / 設計
 
+The cross-cutting design-system additions, explicit semantic frame, locale and provider contracts are documented in [design-system.md](design-system.md). Legacy palette/metrics are rendering projections of the new semantic tokens when using `MakeTheme`/`ResolveTheme`.
+
+横断デザインシステム、明示的な意味frame、locale、provider契約は[刷新文書](design-system.md)に記録します。`MakeTheme`/`ResolveTheme`では従来palette/metricsを新tokenの描画用導出値として扱います。
+
 Precision Layers separates semantic design, native behavior and host state.
 
 | Layer | Responsibility / 責務 |

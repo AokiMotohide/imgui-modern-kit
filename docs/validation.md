@@ -1,5 +1,9 @@
 # Validation / 検証
 
+Design-system foundation verification and remaining implementation: [design-system.md](design-system.md#recorded-verification--今回の検証). This is separate from the Editor Suite 2.0 record below.
+
+デザインシステム基盤の検証・残る実装は[刷新文書](design-system.md)を参照してください。以下のEditor Suite 2.0記録とは別の検証です。
+
 Editor Suite 2.0 results and boundaries: [Editor refresh](editor-refresh.md#recorded-verification-2026-09-10--今回の検証結果).
 Editor Suite 2.0の今回の結果と検証範囲は[刷新記録](editor-refresh.md)を参照してください。以下の従来記録とは区別します。
 

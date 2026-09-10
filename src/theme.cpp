@@ -243,7 +243,7 @@ void AnimationState::Prune(int frame, int age) {
         if (e.used && frame - e.frame > age)
             e = {};
 }
-float AnimationState::Update(ImGuiID id, float target, float dt, float seconds, int frame, bool enabled) {
+float AnimationState::Update(ImGuiID id, float target, float dt, float seconds, int frame, bool enabled, Easing easing) {
     Entry *slot = nullptr;
     for (auto &e : entries_)
         if (e.used && e.id == id) {
@@ -259,17 +259,19 @@ float AnimationState::Update(ImGuiID id, float target, float dt, float seconds, 
         if (!slot)
             slot = &*std::min_element(entries_.begin(), entries_.end(),
                                       [](auto &a, auto &b) { return a.frame < b.frame; });
-        *slot = {id, target, frame, true};
+        *slot = {id, target, frame, true, target, target, 0};
         return target;
     }
     if (slot->frame != frame) {
-        float step = seconds > 0 ? std::max(0.f, dt) / seconds : 1;
-        slot->value =
-            !enabled || seconds <= 0 ? target : slot->value + std::clamp(target - slot->value, -step, step);
+        if(slot->target!=target) { slot->from=slot->value; slot->target=target; slot->elapsed=0; }
+        slot->elapsed+=std::max(0.f,dt);
+        float step=seconds>0?std::clamp(slot->elapsed/seconds,0.f,1.f):1.f;
+        if(easing==Easing::EaseOut) step=1-(1-step)*(1-step);
+        if(easing==Easing::EaseInOut) step=step*step*(3-2*step);
+        slot->value=!enabled || seconds<=0?target:slot->from+(target-slot->from)*step;
         slot->frame = frame;
     }
-    if (!enabled)
-        slot->value = target;
+    if (!enabled) { slot->value=slot->from=slot->target=target; slot->elapsed=0; }
     return slot->value;
 }
 } // namespace imkit

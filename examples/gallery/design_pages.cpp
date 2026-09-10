@@ -47,7 +47,7 @@ void DesignPages::Show(int section,Theme& theme) {
         const char* languages[]={"English","日本語","Pseudo RTL"}; ImGui::Combo("Language",&language,languages,3);
         const char* crumbs[]={"Workspace","Documents","Current record"}; Breadcrumbs("path",crumbs,options);
         const Command commands[]={{1,"New record","Ctrl+N"},{2,"Command palette","Ctrl+K"},{3,"Show notification"},{4,"Unavailable","",true,"Waiting for host data"}};
-        auto action=ResponsiveToolbar("commands",toolbar,commands,options);
+        auto action=section==14?ResponsiveToolbar("commands",toolbar,commands,options):Toolbar("commands",toolbar,commands,options);
         if(action==1) { ++clicks; toast=true; }
         if(action==2) palette.open=true;
         if(action==3) toast=true;

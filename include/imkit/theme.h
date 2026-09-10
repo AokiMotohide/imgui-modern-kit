@@ -95,7 +95,8 @@ class ThemeScope {
 class AnimationState {
   public:
     void Reset(std::uint64_t contextGeneration = 0);
-    float Update(ImGuiID id, float target, float dt, float seconds, int frame, bool enabled = true);
+    float Update(ImGuiID id, float target, float dt, float seconds, int frame, bool enabled = true,
+                 Easing easing = Easing::Linear);
     void Prune(int frame, int maxAge = 120);
     std::uint64_t Generation() const {
         return generation_;
@@ -107,6 +108,7 @@ class AnimationState {
         float value = 0;
         int frame = -1;
         bool used = false;
+        float from = 0, target = 0, elapsed = 0;
     };
     std::array<Entry, 256> entries_{};
     std::uint64_t generation_ = 0;

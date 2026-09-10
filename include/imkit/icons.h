@@ -1,4 +1,5 @@
 #pragma once
+#include <imkit/accessibility.h>
 
 #include <imkit/version.h>
 #include <array>
@@ -320,6 +321,8 @@ struct IconAtlas {
 struct IconOptions {
     float size = 20; // Logical pixels. Raster level follows DisplayFramebufferScale.
     std::optional<ImVec4> color{}; // Absent: current ImGuiCol_Text. Style alpha applies once.
+    accessibility::AccessibilityFrame* accessibility=nullptr;
+    accessibility::StableId parent=0;
 };
 // Missing texture/invalid ID: Icon reserves space; buttons are disabled.
 void Icon(const IconAtlas &atlas, IconId icon, IconOptions options = {});

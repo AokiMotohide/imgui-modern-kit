@@ -75,12 +75,18 @@ SplitButtonResult SplitButton(const char* id,const char* label,ComponentOptions 
     ImGui::PopID(); return result;
 }
 StableId ResponsiveToolbar(const char* id,ToolbarState& s,std::span<const Command> commands,ComponentOptions o) {
+    const auto parent=o.parent; const auto group=ImGui::GetID(id); auto origin=ImGui::GetCursorScreenPos();
+    if(o.accessibility) o.parent=group;
     ImGui::PushID(id); StableId result=0;
     s.focused=std::clamp(s.focused,0,std::max(0,static_cast<int>(commands.size())-1));
+    if(!commands.empty() && commands[s.focused].disabled) {
+        for(int i=0;i<static_cast<int>(commands.size());++i) if(!commands[i].disabled) {s.focused=i;break;}
+    }
     float right=ImGui::GetCursorScreenPos().x+ImGui::GetContentRegionAvail().x;
-    for(int i=0;i<static_cast<int>(commands.size());++i) {
+    for(int visual=0;visual<static_cast<int>(commands.size());++visual) {
+        int i=o.locale?o.locale->VisualIndex(visual,static_cast<int>(commands.size())):visual;
         auto& c=commands[i]; auto width=ImGui::CalcTextSize(c.label).x+2*ImGui::GetStyle().FramePadding.x;
-        if(i && ImGui::GetItemRectMax().x+ImGui::GetStyle().ItemSpacing.x+width<right) ImGui::SameLine();
+        if(visual && ImGui::GetItemRectMax().x+ImGui::GetStyle().ItemSpacing.x+width<right) ImGui::SameLine();
         ImGui::PushID(static_cast<int>(c.id)); ImGui::PushTabStop(i==s.focused);
         if(i==s.focused && s.focusPending) { ImGui::SetKeyboardFocusHere(); s.focusPending=false; }
         ImGui::BeginDisabled(c.disabled);
@@ -91,13 +97,38 @@ StableId ResponsiveToolbar(const char* id,ToolbarState& s,std::span<const Comman
             if(ImGui::IsKeyPressed(ImGuiKey_LeftArrow)) next=(i+static_cast<int>(commands.size())-1)%static_cast<int>(commands.size());
             if(ImGui::IsKeyPressed(ImGuiKey_Home)) next=0;
             if(ImGui::IsKeyPressed(ImGuiKey_End)) next=static_cast<int>(commands.size())-1;
+            if(next!=i) {
+                int direction=(ImGui::IsKeyPressed(ImGuiKey_LeftArrow) || ImGui::IsKeyPressed(ImGuiKey_End))?-1:1;
+                for(int skip=0;commands[next].disabled && skip<static_cast<int>(commands.size());++skip)
+                    next=(next+direction+static_cast<int>(commands.size()))%static_cast<int>(commands.size());
+            }
             if(next!=i) { s.focused=next; s.focusPending=true; }
         }
         if(c.disabled && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) ImGui::SetTooltip("%s",c.disabledReason);
         ImGui::EndDisabled(); ImGui::PopTabStop(); ImGui::PopID();
-    } ImGui::PopID(); return result;
+    }
+    if(o.accessibility) { accessibility::SemanticNode node; node.id=group; node.parent=parent; node.name=id;
+        node.role=accessibility::SemanticRole::Toolbar; node.minimum=origin; node.maximum=ImGui::GetItemRectMax(); o.accessibility->Add(node); }
+    ImGui::PopID(); return result;
 }
-StableId Toolbar(const char* id,ToolbarState& s,std::span<const Command> commands,ComponentOptions o) { return ResponsiveToolbar(id,s,commands,o); }
+StableId Toolbar(const char* id,ToolbarState& s,std::span<const Command> commands,ComponentOptions o) {
+    float available=ImGui::GetContentRegionAvail().x,used=0;
+    float overflow=ImGui::CalcTextSize(Text(o,"more","More")).x+2*ImGui::GetStyle().FramePadding.x+ImGui::GetStyle().ItemSpacing.x;
+    std::size_t count=0;
+    for(;count<commands.size();++count) {
+        float width=ImGui::CalcTextSize(commands[count].label).x+2*ImGui::GetStyle().FramePadding.x+ImGui::GetStyle().ItemSpacing.x;
+        if(used+width+(count+1<commands.size()?overflow:0)>available) break;
+        used+=width;
+    }
+    ImGui::PushID(id);
+    auto result=ResponsiveToolbar("visible",s,commands.first(count),o);
+    if(count<commands.size()) {
+        if(count) ImGui::SameLine();
+        if(ActionButton(Text(o,"more","More"),ActionVariant::Ghost,{},o)) ImGui::OpenPopup("overflow");
+        if(auto selected=Menu("overflow",commands.subspan(count),o)) result=selected;
+    }
+    ImGui::PopID(); return result;
+}
 bool DialogLauncher(const char* label,DialogState& s,ComponentOptions o) {
     if(s.restoreFocus) { ImGui::SetKeyboardFocusHere(); s.restoreFocus=false; }
     if(ActionButton(label,ActionVariant::Secondary,{},o)) { s.open=true; s.initialFocus=true; return true; } return false;
@@ -198,6 +229,9 @@ void DataTable(const char* id,DataTableState& s,const DataProvider& p,std::span<
     if(columns.empty() || !p.id || !p.cell) { ImGui::PopID(); return; }
     s.focusedRow=std::clamp(s.focusedRow,0,p.count-1); s.focusedColumn=std::clamp(s.focusedColumn,0,static_cast<int>(columns.size())-1);
     if(ImGui::BeginTable("grid",static_cast<int>(columns.size()),ImGuiTableFlags_Resizable|ImGuiTableFlags_Hideable|ImGuiTableFlags_Sortable|ImGuiTableFlags_ScrollY|ImGuiTableFlags_RowBg,{0,height})) {
+        const auto gridID=ImGui::GetID("##semantic-grid");
+        if(o.accessibility) { accessibility::SemanticNode node; node.id=gridID; node.parent=o.parent; node.role=accessibility::SemanticRole::Grid; node.name=id;
+            node.minimum=ImGui::GetCursorScreenPos(); node.maximum={node.minimum.x+ImGui::GetContentRegionAvail().x,node.minimum.y+height};o.accessibility->Add(node); }
         for(int v=0;v<static_cast<int>(columns.size());++v) { int c=o.locale?o.locale->VisualIndex(v,static_cast<int>(columns.size())):v;
             ImGui::TableSetupColumn(columns[c].label,ImGuiTableColumnFlags_WidthFixed,columns[c].width,static_cast<ImGuiID>(c+1)); }
         ImGui::TableSetupScrollFreeze(0,1); ImGui::TableHeadersRow();
@@ -212,6 +246,11 @@ void DataTable(const char* id,DataTableState& s,const DataProvider& p,std::span<
             for(int row=clip.DisplayStart;row<clip.DisplayEnd;++row) {
                 auto key=p.id(p.user,row); ImGui::PushID(static_cast<int>(key>>32)); ImGui::PushID(static_cast<int>(key));
                 ImGui::TableNextRow();
+                auto rowID=ImGui::GetID("##semantic-row");
+                if(o.accessibility) { accessibility::SemanticNode node;node.id=rowID;node.parent=gridID;node.role=p.depth?accessibility::SemanticRole::TreeItem:accessibility::SemanticRole::Row;
+                    node.name=p.cell(p.user,row,0);node.state.selected=p.selected && p.selected(p.user,key);
+                    node.state.expandable=p.expandable && p.expandable(p.user,row);node.state.expanded=p.expanded && p.expanded(p.user,row);
+                    node.minimum=ImGui::GetCursorScreenPos();node.maximum={node.minimum.x+ImGui::GetContentRegionAvail().x,node.minimum.y+ImGui::GetFrameHeight()};o.accessibility->Add(node); }
                 for(int visual=0;visual<static_cast<int>(columns.size());++visual) {
                     if(!ImGui::TableSetColumnIndex(visual)) continue;
                     int c=o.locale?o.locale->VisualIndex(visual,static_cast<int>(columns.size())):visual;
@@ -255,7 +294,11 @@ void DataTable(const char* id,DataTableState& s,const DataProvider& p,std::span<
                             s.editingRow=key; s.editingColumn=columns[c].id; Copy(s.edit,sizeof(s.edit),text); s.focusEditor=true;
                         }
                         if(ImGui::BeginPopupContextItem("context")) { if(ImGui::MenuItem(Text(o,"row_action","Row action"))) Apply(p,{DataAction::Context,key,columns[c].id}); ImGui::EndPopup(); }
-                        Node(o,text,accessibility::SemanticRole::Cell);
+                        if(o.accessibility) { accessibility::SemanticNode node; node.id=ImGui::GetItemID();node.parent=rowID;node.name=text;node.role=accessibility::SemanticRole::Cell;node.state.selected=selected;
+                            node.actions=accessibility::SemanticAction::Focus|accessibility::SemanticAction::Select;
+                            if(o.accessibility->Take(node.id,accessibility::SemanticAction::Focus)) { s.focusedRow=row;s.focusedColumn=c;s.focusPending=true; }
+                            if(o.accessibility->Take(node.id,accessibility::SemanticAction::Select)) Apply(p,{DataAction::Select,key,columns[c].id,row,row});
+                            accessibility::AnnotateLastItem(*o.accessibility,node); }
                     }
                     if(c==0 && p.depth) ImGui::Unindent(std::max(0,p.depth(p.user,row))*14.f);
                     ImGui::PopID();

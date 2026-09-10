@@ -54,7 +54,18 @@ bool ButtonImpl(const char *id, const IconAtlas &atlas, IconId icon, const char 
                         std::max(size, textSize.y) + 2 * style.FramePadding.y};
     ImGui::PushID(id);
     ImGui::BeginDisabled(!Ready(atlas, icon, level));
-    const bool pressed = ImGui::Button("##icon", extent);
+    bool pressed = ImGui::Button("##icon", extent);
+    if(options.accessibility) {
+        using namespace accessibility;
+        SemanticNode n; n.id=ImGui::GetItemID(); n.parent=options.parent; n.role=SemanticRole::Button;
+        n.name=view.substr(0,visibleLength); n.actions=SemanticAction::Press|SemanticAction::Focus;
+        bool disabled=(ImGui::GetItemFlags()&ImGuiItemFlags_Disabled)!=0;
+        bool requested=options.accessibility->Take(n.id,SemanticAction::Press);
+        if(options.accessibility->Take(n.id,SemanticAction::Focus) && !disabled) ImGui::SetKeyboardFocusHere(-1);
+        pressed=pressed || (requested && !disabled);
+        AnnotateLastItem(*options.accessibility,n);
+    }
+    if(ImGui::IsItemFocused()) ImGui::SetNavCursorVisible(true);
     const auto p = ImGui::GetItemRectMin();
     Draw(atlas, icon, level, {p.x + style.FramePadding.x, p.y + (extent.y - size) / 2},
          size, Color(options));

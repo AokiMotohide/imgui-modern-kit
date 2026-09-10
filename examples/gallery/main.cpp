@@ -1636,7 +1636,7 @@ int main(int argc, char **argv) {
             std::ofstream info(out / "capture-info.txt");
             info << "Renderer: " << glGetString(GL_RENDERER) << "\nOpenGL: " << glGetString(GL_VERSION)
                  << "\nDear ImGui: " << ImGui::GetVersion()
-                 << "\nActual OpenGL backbuffer before swap, 1920x1440. Icons use ImageGen source assets.\nInput verifier "
+                 << "\nActual OpenGL backbuffer before swap, " << captureWidth << "x" << captureHeight << ". Icons use recorded raster/code sources.\nInput verifier "
                     "uses public IO; native IME not tested.\n";
         } else
             while (!glfwWindowShouldClose(h.window))

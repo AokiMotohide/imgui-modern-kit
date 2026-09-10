@@ -87,7 +87,7 @@ bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, 
     if (options.animation) {
         const auto motion = t ? t->motion : Motion{};
         float a = options.animation->Update(id, ImGui::IsItemHovered() ? 1.f : 0.f, ImGui::GetIO().DeltaTime,
-                                            motion.controlSeconds, ImGui::GetFrameCount(), motion.enabled && !motion.reducedMotion);
+                                            motion.controlSeconds, ImGui::GetFrameCount(), motion.enabled && !motion.reducedMotion, motion.easing);
         auto color = Accent(t);
         color.w *= a;
         if (a > 0)
@@ -126,7 +126,7 @@ bool Toggle(const char *label, bool *value, ComponentOptions options) {
     if (options.animation) {
         auto motion = options.theme ? options.theme->motion : Motion{};
         position = options.animation->Update(id, position, ImGui::GetIO().DeltaTime, motion.controlSeconds,
-                                             ImGui::GetFrameCount(), motion.enabled && !motion.reducedMotion);
+                                             ImGui::GetFrameCount(), motion.enabled && !motion.reducedMotion, motion.easing);
     }
     auto *d = ImGui::GetWindowDrawList();
     auto fill = Mix(style.Colors[ImGuiCol_FrameBg], Accent(options.theme), position);
@@ -324,8 +324,8 @@ void OverlayDecoration(const Theme &t, AnimationState *state) {
         auto id = ImGui::GetID("##imkit-elevation");
         int frame = ImGui::GetFrameCount();
         if (ImGui::IsWindowAppearing())
-            state->Update(id, 0, 0, t.motion.overlaySeconds, frame, t.motion.enabled && !t.motion.reducedMotion);
-        a = state->Update(id, 1, ImGui::GetIO().DeltaTime, t.motion.overlaySeconds, frame, t.motion.enabled && !t.motion.reducedMotion);
+            state->Update(id, 0, 0, t.motion.overlaySeconds, frame, t.motion.enabled && !t.motion.reducedMotion, t.motion.easing);
+        a = state->Update(id, 1, ImGui::GetIO().DeltaTime, t.motion.overlaySeconds, frame, t.motion.enabled && !t.motion.reducedMotion, t.motion.easing);
     }
     auto p = ImGui::GetWindowPos(), size = ImGui::GetWindowSize();
     auto *d = ImGui::GetWindowDrawList();

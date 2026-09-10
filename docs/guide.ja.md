@@ -91,6 +91,10 @@ target_link_libraries(your_app PRIVATE imkit::imkit)
 
 検証の範囲と制約は[検証記録](validation.md)、ライセンスは[第三者通知](../THIRD_PARTY_NOTICES.md)を参照してください。公開IOによる統合確認と、native OS/IME・実機の受け入れ確認は別です。
 
-## Editor workspace開発版
+## Editor Suite 2.0 workspace
 
-native GalleryのEditor Core／Video Editor／CG Editorを開きます。`--verify-editors --capture-editors --output out/editors`で公開IO検証と150%を含む実backbuffer画像を取得できます。中ボタンでpan/orbit、TimelineはCtrl+wheelでzoom、clip端でtrim、Razorでsplit、gizmo軸端でdragします。UV/Graphタブの点も編集できます。[未達項目](editor-suite.md)が残る開発版であり、1.0受入完了ではありません。
+native GalleryのEditor Core／Video Editor／CG Editorを開きます。`--verify-editors --capture-editors --output out/editors`で公開IO検証と150%を含む実backbuffer画像を取得できます。中ボタンでpan/orbit、TimelineはCtrl+wheelでzoom、clip端でtrim、Razorでsplit、gizmo軸端でdragします。UV/Graphタブの点も編集できます。[Editor Suite 2.0の検証結果と範囲](editor-refresh.md)を参照してください。
+
+## デザインシステム基盤
+
+[API移行・provider所有権・今回の実装範囲](design-system.md)を参照してください。
