@@ -554,5 +554,25 @@
   {
     "name": "FaceNormals",
     "category": "Editor"
+  },
+  {
+    "name": "ObjectOrigin",
+    "category": "Editor"
+  },
+  {
+    "name": "SelectionOutline",
+    "category": "Editor"
+  },
+  {
+    "name": "RenderRegion",
+    "category": "Editor"
+  },
+  {
+    "name": "Passepartout",
+    "category": "Editor"
+  },
+  {
+    "name": "UnifiedTransform",
+    "category": "Editor"
   }
 ]

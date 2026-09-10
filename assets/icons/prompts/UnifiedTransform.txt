@@ -1,0 +1,4 @@
+Use case: logo-brand. Generate ONE individual technical software icon named UnifiedTransform. Subject: a single center with an arrow extending upward, a diagonal arrow extending right, and a short curved rotation arrow around the center; combined move rotate scale gizmo symbol. Uniform thin black rounded outline strokes equivalent to 1.75 units on a 24-unit grid, except explicitly described filled elements. True transparent RGBA background, no checkerboard drawing, no paper texture, no shadows, no lettering. Square canvas with generous margins. Simple optical design legible at 16px. No contact sheet or additional icons.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/UnifiedTransform.png
