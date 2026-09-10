@@ -1,6 +1,6 @@
 # imgui-modern-kit
 
-[English](README.md) · [Release v0.2.0](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v0.2.0) · [利用ガイド](docs/guide.ja.md) · [API対応表](docs/api-coverage.md)
+[English](README.md) · [CHANGELOG](CHANGELOG.md) · [利用ガイド](docs/guide.ja.md) · [API対応表](docs/api-coverage.md)
 
 **Precision Layers**は、Dear ImGui向けのコンパクトなモダンデザインです。無彩色に近い階層面、28pxの基本操作高さ、6pxの間隔、4pxの角丸、細い境界、選択マーク、重要度別のボタンを備えます。light/darkの配色は値として変更できます。
 
@@ -64,6 +64,10 @@ ImKitのコードはMITです。Dear ImGui・GLFWにはそれぞれのライセ�
 アイコンのみのボタンと文字付きボタンに対応し、GPUリソースはホスト側で管理します。
 導入方法は [アイコン API](docs/icons.md)、実例は Gallery の **Icons** ページを参照してください。
 
-## Editor Suite開発版
+## Editor Suite 1.0
 
-`editor_core`、`video`、`cg`、`preview_opengl3`、`editor_suite` targetと、native GalleryのVideo/CG workspaceを追加しています。**1.0の要求機能は未完成です。** [module契約・残作業](docs/editor-suite.md)、[API reference](docs/editor-api.md)、[検証](docs/editor-validation.md)を参照してください。
+`editor_core`・`video`・`cg`・`preview_opengl3`・`editor_suite`は、ホスト所有のデータと
+型付きイベントで再利用できる編集部品です。native GalleryでVideo/CG、RGB色補正カーブ、
+animation、UV編集と206アイコンを操作できます。
+[部品契約](docs/editor-suite.md)、[API](docs/editor-api.md)、
+[検証・性能](docs/editor-validation.md)、[実装確認表](docs/editor-implementation-checklist.md)を参照してください。

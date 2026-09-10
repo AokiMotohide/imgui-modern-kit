@@ -1,0 +1,7 @@
+operation,frames,p95_ms,max_ms,queries_max,clips_max,keys_max,tracks_max,cpp_new,imgui_allocations,interaction_verified
+pan,180,1.6981,2.8342,7,30,8,6,0,0,1
+zoom,180,1.7868,2.866,7,30,8,6,0,0,1
+selection,180,1.821,5.4273,7,30,8,6,0,0,1
+clip_drag,180,1.7946,2.6771,7,30,8,6,0,0,1
+clip_trim,180,1.8727,3.1109,7,30,8,6,0,0,1
+keyframe_drag,180,1.7302,3.1683,7,30,8,6,0,0,1

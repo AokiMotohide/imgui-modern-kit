@@ -157,7 +157,7 @@ void Basic(GalleryState &s) {
     TextDisabled("Unavailable");
     TextWrapped("A neutral palette separates the canvas, panels, inputs and overlays. Standard Dear ImGui "
                 "behavior is retained.");
-    LabelText("Version", "0.2.0");
+    LabelText("Version", "%s", IMKIT_VERSION);
     BulletText("Keyboard focus and selection are different states.");
     TextLink("Local link action");
     PushID("first");
@@ -483,7 +483,7 @@ void Show(GalleryState &s) {
     SameLine();
     SetNextItemWidth(160);
     SliderFloat("Scale", &s.scale, 1, 1.5f, "%.2f");
-    TextDisabled("Precision Layers 0.2.0 / live public imkit API / Inter + Japanese fallback");
+    TextDisabled("Precision Layers %s / live public imkit API / Inter + Japanese fallback", IMKIT_VERSION);
     Separator();
     BeginChild("Component panel", {s.page >= 6 ? GetContentRegionAvail().x
                                               : std::min(GetContentRegionAvail().x, 1120 * s.scale), 0},

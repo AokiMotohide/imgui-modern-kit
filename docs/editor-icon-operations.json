@@ -1,5 +1,5 @@
 {
-  "status": "In progress; planned new names are not public IconIds.",
+  "status": "Editor Suite 1.0 integration map",
   "operations": [
     {
       "operation": "SelectPointer",
@@ -8,8 +8,8 @@
       "icon": "SelectPointer",
       "tooltip": "Select clips",
       "state": "button background, focus outline and disabled styling",
-      "status": "generated and connected; native dark 100% and light 150% appearance inspected",
-      "evidence": "out/select-pointer-native/page-8-dark.png; out/select-pointer-native/page-8-light-150.png (local captures, not distributed)"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "BoxSelect",
@@ -18,8 +18,8 @@
       "icon": "BoxSelect",
       "tooltip": "Box Select",
       "state": "button background, focus outline and disabled styling",
-      "status": "generated and connected; native 16px light and 150% dark appearance inspected; Curve/UV integration compiled, native menu inspection pending",
-      "evidence": "out/selection-icons-native/icons-16-light.png; out/selection-icons-150-fit/page-6-dark-150.png (local captures, not distributed)"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "LassoSelect",
@@ -28,8 +28,8 @@
       "icon": "LassoSelect",
       "tooltip": "Lasso Select",
       "state": "button background, focus outline and disabled styling",
-      "status": "generated and connected; native 16px light and 150% dark appearance inspected; Curve/UV integration compiled, native menu inspection pending",
-      "evidence": "out/selection-icons-native/icons-16-light.png; out/selection-icons-150-fit/page-6-dark-150.png (local captures, not distributed)"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "HandPan",
@@ -38,8 +38,8 @@
       "icon": "HandPan",
       "tooltip": "Pan timeline",
       "state": "button background, focus outline and disabled styling",
-      "status": "generated and connected; native 16px light and 150% dark appearance inspected",
-      "evidence": "out/hand-pan-native/icons-16-light.png; out/hand-pan-native/page-6-dark-150.png (local captures, not distributed)"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "FrameSelected",
@@ -48,7 +48,8 @@
       "icon": "FitView",
       "tooltip": "Frame Selected",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Group",
@@ -57,8 +58,9 @@
       "icon": "Layers",
       "tooltip": "Group",
       "state": "menu navigation highlight and disabled text; explicit create/detach labels",
-      "status": "integrated",
-      "composition": "Shared relationship glyph; action labels distinguish creating a set from detaching the clicked clip."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Shared relationship glyph; action labels distinguish creating a set from detaching the clicked clip.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Ungroup",
@@ -67,8 +69,9 @@
       "icon": "Layers",
       "tooltip": "Ungroup",
       "state": "menu navigation highlight and disabled text; explicit create/detach labels",
-      "status": "integrated",
-      "composition": "Shared relationship glyph; action labels distinguish creating a set from detaching the clicked clip."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Shared relationship glyph; action labels distinguish creating a set from detaching the clicked clip.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "LinkItems",
@@ -77,8 +80,9 @@
       "icon": "Link",
       "tooltip": "Link Items",
       "state": "menu navigation highlight and disabled text; explicit create/detach labels",
-      "status": "integrated",
-      "composition": "Shared relationship glyph; action labels distinguish creating a set from detaching the clicked clip."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Shared relationship glyph; action labels distinguish creating a set from detaching the clicked clip.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "UnlinkItems",
@@ -87,8 +91,9 @@
       "icon": "Link",
       "tooltip": "Unlink Items",
       "state": "menu navigation highlight and disabled text; explicit create/detach labels",
-      "status": "integrated",
-      "composition": "Shared relationship glyph; action labels distinguish creating a set from detaching the clicked clip."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Shared relationship glyph; action labels distinguish creating a set from detaching the clicked clip.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Rename",
@@ -97,8 +102,8 @@
       "icon": "Edit",
       "tooltip": "Rename",
       "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
-      "status": "connected in AssetBrowser; native GPU inspection pending",
-      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Razor",
@@ -107,8 +112,8 @@
       "icon": "Razor",
       "tooltip": "Razor",
       "state": "button background, focus outline and disabled styling",
-      "status": "generated and connected; native 16px light and 150% dark inspected",
-      "evidence": "out/timeline-edit-icons/icons-16-light.png; out/timeline-edit-icons/page-6-dark-150.png (local captures, not distributed)"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SplitClip",
@@ -117,8 +122,9 @@
       "icon": "Razor",
       "tooltip": "Split Clip",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending",
-      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "TrimStart",
@@ -127,7 +133,8 @@
       "icon": "TrimStart",
       "tooltip": "Trim Start",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "TrimEnd",
@@ -136,7 +143,8 @@
       "icon": "TrimEnd",
       "tooltip": "Trim End",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "RippleEdit",
@@ -145,8 +153,8 @@
       "icon": "RippleEdit",
       "tooltip": "Ripple Edit",
       "state": "button background, focus outline and disabled styling",
-      "status": "generated and connected; native 16px light and 150% dark inspected",
-      "evidence": "out/timeline-edit-icons/icons-16-light.png; out/timeline-edit-icons/page-6-dark-150.png (local captures, not distributed)"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "RippleDelete",
@@ -155,7 +163,8 @@
       "icon": "RippleDelete",
       "tooltip": "Ripple Delete",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "RollingEdit",
@@ -164,8 +173,8 @@
       "icon": "RollingEdit",
       "tooltip": "Rolling Edit",
       "state": "button background, focus outline and disabled styling",
-      "status": "generated and connected; native 16px light and 150% dark inspected",
-      "evidence": "out/roll-slide-icons/icons-16-light.png; out/roll-slide-icons/page-6-dark-150.png (local captures, not distributed)"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SlipEdit",
@@ -174,8 +183,8 @@
       "icon": "SlipEdit",
       "tooltip": "Slip Edit",
       "state": "button background, focus outline and disabled styling",
-      "status": "generated and connected; native 16px light and 150% dark inspected",
-      "evidence": "out/timeline-edit-icons/icons-16-light.png; out/timeline-edit-icons/page-6-dark-150.png (local captures, not distributed)"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SlideEdit",
@@ -184,8 +193,8 @@
       "icon": "SlideEdit",
       "tooltip": "Slide Edit",
       "state": "button background, focus outline and disabled styling",
-      "status": "generated and connected; native 16px light and 150% dark inspected",
-      "evidence": "out/roll-slide-icons/icons-16-light.png; out/roll-slide-icons/page-6-dark-150.png (local captures, not distributed)"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Magnet",
@@ -194,7 +203,8 @@
       "icon": "Magnet",
       "tooltip": "Magnet",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SnapToFrame",
@@ -203,7 +213,8 @@
       "icon": "SnapToFrame",
       "tooltip": "Snap To Frame",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SnapToMarker",
@@ -212,8 +223,9 @@
       "icon": "Marker",
       "tooltip": "Snap To Marker",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending",
-      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SnapToClipEdge",
@@ -222,7 +234,8 @@
       "icon": "SnapToClipEdge",
       "tooltip": "Snap To Clip Edge",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SnapToKeyframe",
@@ -231,8 +244,9 @@
       "icon": "Keyframe",
       "tooltip": "Snap To Keyframe",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending",
-      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SnapToSelection",
@@ -241,7 +255,8 @@
       "icon": "SnapToSelection",
       "tooltip": "Snap To Selection",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "LinkedClips",
@@ -250,8 +265,9 @@
       "icon": "Link",
       "tooltip": "Linked clip set ID in clip tooltip",
       "state": "link glyph and related clip underline",
-      "status": "integrated",
-      "composition": "Existing Link glyph identifies linked membership; Layers identifies group membership."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Existing Link glyph identifies linked membership; Layers identifies group membership.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "TrackHeight",
@@ -260,7 +276,8 @@
       "icon": "TrackHeight",
       "tooltip": "Track Height",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "FitTimeline",
@@ -269,7 +286,8 @@
       "icon": "FitView",
       "tooltip": "Fit Timeline",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "VideoTrack",
@@ -278,8 +296,8 @@
       "icon": "Video",
       "tooltip": "Video Track",
       "state": "role glyph with host UTF-8 kind tooltip, label and existing track state controls",
-      "status": "connected and native track heading inspected; new glyphs inspected at 16px light and 150% dark",
-      "evidence": "out/track-kinds-native/track-icons-light.png; out/track-kind-icons/icons-16-light.png; page-6-dark-150.png"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "AudioTrack",
@@ -288,8 +306,8 @@
       "icon": "Audio",
       "tooltip": "Audio Track",
       "state": "role glyph with host UTF-8 kind tooltip, label and existing track state controls",
-      "status": "connected and native track heading inspected; new glyphs inspected at 16px light and 150% dark",
-      "evidence": "out/track-kinds-native/track-icons-light.png; out/track-kind-icons/icons-16-light.png; page-6-dark-150.png"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "CaptionTrack",
@@ -298,8 +316,8 @@
       "icon": "Text",
       "tooltip": "Caption Track",
       "state": "role glyph with host UTF-8 kind tooltip, label and existing track state controls",
-      "status": "connected and native track heading inspected; new glyphs inspected at 16px light and 150% dark",
-      "evidence": "out/track-kinds-native/track-icons-light.png; out/track-kind-icons/icons-16-light.png; page-6-dark-150.png"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "EffectTrack",
@@ -308,8 +326,8 @@
       "icon": "EffectTrack",
       "tooltip": "Effect Track",
       "state": "role glyph with host UTF-8 kind tooltip, label and existing track state controls",
-      "status": "connected and native track heading inspected; new glyphs inspected at 16px light and 150% dark",
-      "evidence": "out/track-kinds-native/track-icons-light.png; out/track-kind-icons/icons-16-light.png; page-6-dark-150.png"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "AdjustmentTrack",
@@ -318,8 +336,8 @@
       "icon": "AdjustmentTrack",
       "tooltip": "Adjustment Track",
       "state": "role glyph with host UTF-8 kind tooltip, label and existing track state controls",
-      "status": "connected and native track heading inspected; new glyphs inspected at 16px light and 150% dark",
-      "evidence": "out/track-kinds-native/track-icons-light.png; out/track-kind-icons/icons-16-light.png; page-6-dark-150.png"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "GroupTrack",
@@ -328,8 +346,8 @@
       "icon": "Layers",
       "tooltip": "Group Track",
       "state": "role glyph with host UTF-8 kind tooltip, label and existing track state controls",
-      "status": "connected and native track heading inspected; new glyphs inspected at 16px light and 150% dark",
-      "evidence": "out/track-kinds-native/track-icons-light.png; out/track-kind-icons/icons-16-light.png; page-6-dark-150.png"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "TrackAdd",
@@ -338,7 +356,8 @@
       "icon": "LayerAdd",
       "tooltip": "Track Add",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Solo",
@@ -347,8 +366,8 @@
       "icon": "Solo",
       "tooltip": "Solo",
       "state": "active background and underline; menu check mark",
-      "status": "generated and connected; native 16px light and 150% dark inspected; public IO menu changes host solo",
-      "evidence": "out/solo-icons-native/icons-16-light.png; page-6-dark-150.png; out/solo-track-native/track-controls.txt"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SourcePatch",
@@ -357,8 +376,8 @@
       "icon": "SourcePatch",
       "tooltip": "Source Patch",
       "state": "active background and underline; checked menu item",
-      "status": "connected; native Japanese menu host state verified",
-      "evidence": "out/source-target-native/track-controls.txt; out/source-patch-icons/icons-16-light.png; page-6-dark-150.png"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "TrackTarget",
@@ -367,8 +386,8 @@
       "icon": "Target",
       "tooltip": "Track Target",
       "state": "active background and underline; checked menu item",
-      "status": "connected; native Japanese menu host state verified",
-      "evidence": "out/source-target-native/track-controls.txt; out/source-patch-icons/icons-16-light.png; page-6-dark-150.png"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "PreviousFrame",
@@ -377,7 +396,8 @@
       "icon": "PreviousFrame",
       "tooltip": "Previous Frame",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "NextFrame",
@@ -386,7 +406,8 @@
       "icon": "NextFrame",
       "tooltip": "Next Frame",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "GoToStart",
@@ -395,8 +416,9 @@
       "icon": "PreviousTrack",
       "tooltip": "Go To Start",
       "state": "button background, focus outline and disabled styling",
-      "status": "integrated; native interaction capture pending",
-      "composition": "Existing direction or boundary glyph paired with explicit action label."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Existing direction or boundary glyph paired with explicit action label.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "GoToEnd",
@@ -405,8 +427,9 @@
       "icon": "NextTrack",
       "tooltip": "Go To End",
       "state": "button background, focus outline and disabled styling",
-      "status": "integrated; native interaction capture pending",
-      "composition": "Existing direction or boundary glyph paired with explicit action label."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Existing direction or boundary glyph paired with explicit action label.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "PlayReverse",
@@ -415,8 +438,9 @@
       "icon": "ArrowLeft",
       "tooltip": "Play Reverse",
       "state": "button background, focus outline and disabled styling",
-      "status": "integrated; native interaction capture pending",
-      "composition": "Existing direction or boundary glyph paired with explicit action label."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Existing direction or boundary glyph paired with explicit action label.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Rewind",
@@ -425,7 +449,8 @@
       "icon": "Rewind",
       "tooltip": "Rewind",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "FastForward",
@@ -434,7 +459,8 @@
       "icon": "FastForward",
       "tooltip": "Fast Forward",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SetInPoint",
@@ -443,7 +469,8 @@
       "icon": "SetInPoint",
       "tooltip": "Set In Point",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SetOutPoint",
@@ -452,7 +479,8 @@
       "icon": "SetOutPoint",
       "tooltip": "Set Out Point",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "ClearInOut",
@@ -461,8 +489,9 @@
       "icon": "Reset",
       "tooltip": "Clear In Out",
       "state": "button background, focus outline and disabled styling",
-      "status": "integrated; native interaction capture pending",
-      "composition": "Existing direction or boundary glyph paired with explicit action label."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Existing direction or boundary glyph paired with explicit action label.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "WorkRange",
@@ -471,7 +500,8 @@
       "icon": "WorkRange",
       "tooltip": "Work Range",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "LoopRange",
@@ -480,8 +510,9 @@
       "icon": "Repeat",
       "tooltip": "Loop Range",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending",
-      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Timecode",
@@ -490,7 +521,8 @@
       "icon": "Timecode",
       "tooltip": "Timecode",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Marker",
@@ -499,7 +531,8 @@
       "icon": "Marker",
       "tooltip": "Marker",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "MarkerAdd",
@@ -508,8 +541,9 @@
       "icon": "Marker",
       "tooltip": "Marker Add",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending",
-      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "MarkerRemove",
@@ -518,8 +552,9 @@
       "icon": "Marker",
       "tooltip": "Marker Remove",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending",
-      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "PreviousMarker",
@@ -528,8 +563,9 @@
       "icon": "Marker",
       "tooltip": "Previous Marker",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending",
-      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "NextMarker",
@@ -538,8 +574,9 @@
       "icon": "Marker",
       "tooltip": "Next Marker",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending",
-      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Keyframe",
@@ -548,7 +585,8 @@
       "icon": "Keyframe",
       "tooltip": "Keyframe",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "KeyframeAdd",
@@ -557,9 +595,9 @@
       "icon": "Keyframe",
       "tooltip": "Keyframe Add",
       "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
-      "status": "connected; native GPU inspection pending",
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
       "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators.",
-      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "KeyframeRemove",
@@ -568,9 +606,9 @@
       "icon": "Keyframe",
       "tooltip": "Keyframe Remove",
       "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
-      "status": "connected; native GPU inspection pending",
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
       "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators.",
-      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "PreviousKeyframe",
@@ -579,9 +617,9 @@
       "icon": "Keyframe",
       "tooltip": "Previous Keyframe",
       "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
-      "status": "connected; native GPU inspection pending",
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
       "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators.",
-      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "NextKeyframe",
@@ -590,9 +628,9 @@
       "icon": "Keyframe",
       "tooltip": "Next Keyframe",
       "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
-      "status": "connected; native GPU inspection pending",
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
       "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators.",
-      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "AutoKeyframe",
@@ -601,8 +639,9 @@
       "icon": "Keyframe",
       "tooltip": "Auto Keyframe",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending",
-      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "InterpolationConstant",
@@ -611,8 +650,9 @@
       "icon": null,
       "tooltip": "Interpolation Constant",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "InterpolationLinear",
@@ -621,8 +661,9 @@
       "icon": null,
       "tooltip": "Interpolation Linear",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "InterpolationBezier",
@@ -631,8 +672,9 @@
       "icon": null,
       "tooltip": "Interpolation Bezier",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "HandleAuto",
@@ -641,8 +683,9 @@
       "icon": null,
       "tooltip": "Handle Auto",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "HandleAutoClamped",
@@ -651,8 +694,9 @@
       "icon": null,
       "tooltip": "Handle Auto Clamped",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "HandleVector",
@@ -661,8 +705,9 @@
       "icon": null,
       "tooltip": "Handle Vector",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "HandleAligned",
@@ -671,8 +716,9 @@
       "icon": null,
       "tooltip": "Handle Aligned",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "HandleFree",
@@ -681,8 +727,9 @@
       "icon": null,
       "tooltip": "Handle Free",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "TangentLinked",
@@ -691,8 +738,8 @@
       "icon": "TangentLinked",
       "tooltip": "Tangent Linked",
       "state": "labelled native selected/disabled state and role heading",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "TangentBroken",
@@ -701,8 +748,8 @@
       "icon": "TangentBroken",
       "tooltip": "Tangent Broken",
       "state": "labelled native selected/disabled state and role heading",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "ExtrapolateConstant",
@@ -711,8 +758,9 @@
       "icon": null,
       "tooltip": "Extrapolate Constant",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "ExtrapolateLinear",
@@ -721,8 +769,9 @@
       "icon": null,
       "tooltip": "Extrapolate Linear",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "ExtrapolateRepeat",
@@ -731,8 +780,9 @@
       "icon": null,
       "tooltip": "Extrapolate Repeat",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "GhostCurve",
@@ -741,9 +791,9 @@
       "icon": "Eye",
       "tooltip": "Ghost Curve",
       "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
-      "status": "connected; native GPU inspection pending",
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
       "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators.",
-      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "CurveEditor",
@@ -752,8 +802,8 @@
       "icon": "CurveEditor",
       "tooltip": "Curve Editor",
       "state": "labelled native selected/disabled state and role heading",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SourceMonitor",
@@ -762,8 +812,8 @@
       "icon": "SourceMonitor",
       "tooltip": "Source Monitor",
       "state": "UTF-8 label, native checked/focus state; labelled source/program heading and proxy state",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/video.cpp; src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "ProgramMonitor",
@@ -772,8 +822,8 @@
       "icon": "ProgramMonitor",
       "tooltip": "Program Monitor",
       "state": "UTF-8 label, native checked/focus state; labelled source/program heading and proxy state",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/video.cpp; src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SafeArea",
@@ -782,8 +832,8 @@
       "icon": "SafeArea",
       "tooltip": "Safe Area",
       "state": "UTF-8 label, native checked/focus state; labelled source/program heading and proxy state",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/video.cpp; src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Guides",
@@ -792,8 +842,8 @@
       "icon": "Guides",
       "tooltip": "Guides",
       "state": "UTF-8 label, native checked/focus state; labelled source/program heading and proxy state",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/video.cpp; src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "MetadataOverlay",
@@ -802,8 +852,8 @@
       "icon": "MetadataOverlay",
       "tooltip": "Metadata Overlay",
       "state": "UTF-8 label, native checked/focus state; labelled source/program heading and proxy state",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/video.cpp; src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "TransformBounds",
@@ -812,8 +862,8 @@
       "icon": "TransformBounds",
       "tooltip": "Transform Bounds",
       "state": "UTF-8 label, native checked/focus state; labelled source/program heading and proxy state",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/video.cpp; src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "AnchorPoint",
@@ -822,8 +872,8 @@
       "icon": "AnchorPoint",
       "tooltip": "Anchor Point",
       "state": "UTF-8 label, native checked/focus state; labelled source/program heading and proxy state",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/video.cpp; src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "ProxyMedia",
@@ -832,8 +882,8 @@
       "icon": "ProxyMedia",
       "tooltip": "Proxy Media",
       "state": "UTF-8 label, native checked/focus state; labelled source/program heading and proxy state",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/video.cpp; src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "MissingMedia",
@@ -842,8 +892,8 @@
       "icon": "Warning",
       "tooltip": "Missing Media",
       "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
-      "status": "connected in AssetBrowser; native GPU inspection pending",
-      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "OfflineMedia",
@@ -852,7 +902,8 @@
       "icon": "Disconnected",
       "tooltip": "Offline Media",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "RelinkMedia",
@@ -861,7 +912,8 @@
       "icon": "Link",
       "tooltip": "Relink Media",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Transition",
@@ -870,8 +922,8 @@
       "icon": "Transition",
       "tooltip": "Transition",
       "state": "labelled native combo selection and disabled state; bitmap badge; geometric handle outline",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/video.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Dissolve",
@@ -880,8 +932,8 @@
       "icon": "Dissolve",
       "tooltip": "Dissolve",
       "state": "labelled native combo selection and disabled state; bitmap badge; geometric handle outline",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/video.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "FadeIn",
@@ -890,8 +942,8 @@
       "icon": "FadeIn",
       "tooltip": "Fade In",
       "state": "labelled native combo selection and disabled state; bitmap badge; geometric handle outline",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/video.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "FadeOut",
@@ -900,8 +952,8 @@
       "icon": "FadeOut",
       "tooltip": "Fade Out",
       "state": "labelled native combo selection and disabled state; bitmap badge; geometric handle outline",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/video.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Crossfade",
@@ -910,8 +962,8 @@
       "icon": "Crossfade",
       "tooltip": "Crossfade",
       "state": "labelled native combo selection and disabled state; bitmap badge; geometric handle outline",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/video.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "TransitionDuration",
@@ -920,8 +972,8 @@
       "icon": "TransitionDuration",
       "tooltip": "Transition Duration",
       "state": "labelled native combo selection and disabled state; bitmap badge; geometric handle outline",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/video.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Caption",
@@ -930,7 +982,8 @@
       "icon": "Text",
       "tooltip": "Caption",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "CaptionAdd",
@@ -939,7 +992,8 @@
       "icon": "CaptionAdd",
       "tooltip": "Caption Add",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "PlaybackSpeed",
@@ -948,7 +1002,8 @@
       "icon": "PlaybackSpeed",
       "tooltip": "Playback Speed",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SpeedCurve",
@@ -957,7 +1012,8 @@
       "icon": "SpeedCurve",
       "tooltip": "Speed Curve",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Waveform",
@@ -966,7 +1022,8 @@
       "icon": "Waveform",
       "tooltip": "Waveform",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "VolumeEnvelope",
@@ -975,7 +1032,8 @@
       "icon": "VolumeEnvelope",
       "tooltip": "Volume Envelope",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "StereoMeter",
@@ -984,8 +1042,9 @@
       "icon": null,
       "tooltip": "Stereo Meter",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "PeakHold",
@@ -994,8 +1053,9 @@
       "icon": null,
       "tooltip": "Peak Hold",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "AudioClipping",
@@ -1004,8 +1064,9 @@
       "icon": null,
       "tooltip": "Audio Clipping",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Pan",
@@ -1014,8 +1075,9 @@
       "icon": null,
       "tooltip": "Pan",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Fader",
@@ -1024,8 +1086,9 @@
       "icon": null,
       "tooltip": "Fader",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "AudioFadeIn",
@@ -1034,8 +1097,9 @@
       "icon": "FadeIn",
       "tooltip": "Audio Fade In",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending",
-      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "AudioFadeOut",
@@ -1044,8 +1108,9 @@
       "icon": "FadeOut",
       "tooltip": "Audio Fade Out",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending",
-      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "AudioCrossfade",
@@ -1054,8 +1119,9 @@
       "icon": "Crossfade",
       "tooltip": "Audio Crossfade",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending",
-      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Histogram",
@@ -1064,8 +1130,9 @@
       "icon": null,
       "tooltip": "Histogram",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "LumaWaveform",
@@ -1074,8 +1141,9 @@
       "icon": null,
       "tooltip": "Luma Waveform",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "RGBWaveform",
@@ -1084,8 +1152,9 @@
       "icon": null,
       "tooltip": "RGBWaveform",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Vectorscope",
@@ -1094,8 +1163,9 @@
       "icon": null,
       "tooltip": "Vectorscope",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "ColorWheel",
@@ -1104,8 +1174,9 @@
       "icon": "Palette",
       "tooltip": "Color Wheel",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending",
-      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Lift",
@@ -1114,7 +1185,8 @@
       "icon": null,
       "tooltip": "Lift",
       "state": "native geometry, label and focus outline",
-      "status": "native interaction review pending"
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Gamma",
@@ -1123,7 +1195,8 @@
       "icon": null,
       "tooltip": "Gamma",
       "state": "native geometry, label and focus outline",
-      "status": "native interaction review pending"
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Gain",
@@ -1132,7 +1205,8 @@
       "icon": null,
       "tooltip": "Gain",
       "state": "native geometry, label and focus outline",
-      "status": "native interaction review pending"
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Temperature",
@@ -1141,7 +1215,8 @@
       "icon": null,
       "tooltip": "Temperature",
       "state": "native geometry, label and focus outline",
-      "status": "native interaction review pending"
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Tint",
@@ -1150,7 +1225,8 @@
       "icon": null,
       "tooltip": "Tint",
       "state": "native geometry, label and focus outline",
-      "status": "native interaction review pending"
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Exposure",
@@ -1159,7 +1235,8 @@
       "icon": null,
       "tooltip": "Exposure",
       "state": "native geometry, label and focus outline",
-      "status": "native interaction review pending"
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "ColorCurves",
@@ -1168,8 +1245,9 @@
       "icon": "CurveEditor",
       "tooltip": "Color Curves",
       "state": "button background, focus outline and disabled styling",
-      "status": "shared CurveEditor icon connected to Gallery RGB curve control; native capture pending",
-      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "PerspectiveView",
@@ -1178,8 +1256,9 @@
       "icon": null,
       "tooltip": "Perspective View",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "OrthographicView",
@@ -1188,8 +1267,9 @@
       "icon": null,
       "tooltip": "Orthographic View",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "CameraView",
@@ -1198,7 +1278,8 @@
       "icon": "Camera",
       "tooltip": "Camera View",
       "state": "labeled control, checked state and keyboard focus; overlays popup button",
-      "status": "integrated in BeginViewport; native capture pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "ViewFront",
@@ -1207,8 +1288,9 @@
       "icon": null,
       "tooltip": "View Front",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "ViewBack",
@@ -1217,8 +1299,9 @@
       "icon": null,
       "tooltip": "View Back",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "ViewLeft",
@@ -1227,8 +1310,9 @@
       "icon": null,
       "tooltip": "View Left",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "ViewRight",
@@ -1237,8 +1321,9 @@
       "icon": null,
       "tooltip": "View Right",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "ViewTop",
@@ -1247,8 +1332,9 @@
       "icon": null,
       "tooltip": "View Top",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "ViewBottom",
@@ -1257,8 +1343,9 @@
       "icon": null,
       "tooltip": "View Bottom",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Orbit",
@@ -1267,7 +1354,8 @@
       "icon": "Orbit",
       "tooltip": "Orbit",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "AxisAlignment",
@@ -1276,7 +1364,8 @@
       "icon": "AxisAlignment",
       "tooltip": "Axis Alignment",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "NavigationGizmo",
@@ -1285,7 +1374,8 @@
       "icon": null,
       "tooltip": "Navigation Gizmo",
       "state": "native geometry, label and focus outline",
-      "status": "native interaction review pending"
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "WireframeShading",
@@ -1294,7 +1384,8 @@
       "icon": "WireframeShading",
       "tooltip": "Wireframe Shading",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SolidShading",
@@ -1303,7 +1394,8 @@
       "icon": "SolidShading",
       "tooltip": "Solid Shading",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Overlay",
@@ -1312,8 +1404,9 @@
       "icon": "Layers",
       "tooltip": "Overlay",
       "state": "labeled control, checked state and keyboard focus; overlays popup button",
-      "status": "integrated in BeginViewport; native capture pending",
-      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "ObjectOrigin",
@@ -1322,7 +1415,8 @@
       "icon": "ObjectOrigin",
       "tooltip": "Object Origin",
       "state": "button background, focus outline and disabled styling",
-      "status": "generated and integrated in BeginViewport; native capture pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SelectionOutline",
@@ -1331,7 +1425,8 @@
       "icon": "SelectionOutline",
       "tooltip": "Selection Outline",
       "state": "button background, focus outline and disabled styling",
-      "status": "generated and integrated in BeginViewport; native capture pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "VertexNormals",
@@ -1340,7 +1435,8 @@
       "icon": "VertexNormals",
       "tooltip": "Vertex Normals",
       "state": "labeled toggle, active background and underline, focus and tooltip",
-      "status": "integrated; native light 16px capture inspected; dark 150% capture generated"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "FaceNormals",
@@ -1349,7 +1445,8 @@
       "icon": "FaceNormals",
       "tooltip": "Face Normals",
       "state": "labeled toggle, active background and underline, focus and tooltip",
-      "status": "integrated; native light 16px capture inspected; dark 150% capture generated"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Measurement",
@@ -1358,7 +1455,8 @@
       "icon": "Ruler",
       "tooltip": "Measurement",
       "state": "labeled control, checked state and keyboard focus; overlays popup button",
-      "status": "integrated in BeginViewport; native capture pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "CameraFrame",
@@ -1367,7 +1465,8 @@
       "icon": "Camera",
       "tooltip": "Camera Frame",
       "state": "labeled control, checked state and keyboard focus; overlays popup button",
-      "status": "integrated in BeginViewport; native capture pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "RenderRegion",
@@ -1376,7 +1475,8 @@
       "icon": "RenderRegion",
       "tooltip": "Render Region",
       "state": "button background, focus outline and disabled styling",
-      "status": "generated and integrated in BeginViewport; native capture pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Passepartout",
@@ -1385,7 +1485,8 @@
       "icon": "Passepartout",
       "tooltip": "Passepartout",
       "state": "button background, focus outline and disabled styling",
-      "status": "generated and integrated in BeginViewport; native capture pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "UnifiedTransform",
@@ -1394,7 +1495,8 @@
       "icon": "UnifiedTransform",
       "tooltip": "Unified Transform",
       "state": "button background, focus outline and disabled styling",
-      "status": "generated and integrated in BeginViewport; native capture pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "AxisX",
@@ -1403,7 +1505,8 @@
       "icon": null,
       "tooltip": "Axis X",
       "state": "native geometry, label and focus outline",
-      "status": "native interaction review pending"
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "AxisY",
@@ -1412,7 +1515,8 @@
       "icon": null,
       "tooltip": "Axis Y",
       "state": "native geometry, label and focus outline",
-      "status": "native interaction review pending"
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "AxisZ",
@@ -1421,7 +1525,8 @@
       "icon": null,
       "tooltip": "Axis Z",
       "state": "native geometry, label and focus outline",
-      "status": "native interaction review pending"
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "PlaneXY",
@@ -1430,7 +1535,8 @@
       "icon": null,
       "tooltip": "Plane XY",
       "state": "native geometry, label and focus outline",
-      "status": "native interaction review pending"
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "PlaneYZ",
@@ -1439,7 +1545,8 @@
       "icon": null,
       "tooltip": "Plane YZ",
       "state": "native geometry, label and focus outline",
-      "status": "native interaction review pending"
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "PlaneZX",
@@ -1448,7 +1555,8 @@
       "icon": null,
       "tooltip": "Plane ZX",
       "state": "native geometry, label and focus outline",
-      "status": "native interaction review pending"
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "ScreenPlane",
@@ -1457,7 +1565,8 @@
       "icon": null,
       "tooltip": "Screen Plane",
       "state": "native geometry, label and focus outline",
-      "status": "native interaction review pending"
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "OrientationWorld",
@@ -1466,8 +1575,9 @@
       "icon": null,
       "tooltip": "Orientation World",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "OrientationLocal",
@@ -1476,8 +1586,9 @@
       "icon": null,
       "tooltip": "Orientation Local",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "OrientationView",
@@ -1486,8 +1597,9 @@
       "icon": null,
       "tooltip": "Orientation View",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "OrientationParent",
@@ -1496,8 +1608,9 @@
       "icon": null,
       "tooltip": "Orientation Parent",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "OrientationCustom",
@@ -1506,8 +1619,9 @@
       "icon": null,
       "tooltip": "Orientation Custom",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "PivotIndividual",
@@ -1516,8 +1630,9 @@
       "icon": null,
       "tooltip": "Pivot Individual",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "PivotMedian",
@@ -1526,8 +1641,9 @@
       "icon": null,
       "tooltip": "Pivot Median",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "PivotBounds",
@@ -1536,8 +1652,9 @@
       "icon": null,
       "tooltip": "Pivot Bounds",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "PivotCursor",
@@ -1546,8 +1663,9 @@
       "icon": null,
       "tooltip": "Pivot Cursor",
       "state": "selected check/radio mark, focus outline and disabled styling",
-      "status": "native interaction review pending",
-      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry."
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "composition": "Labeled menu/radio choice or directly drawn continuous control; no bitmap replaces its interactive geometry.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "TransformSnap",
@@ -1556,7 +1674,8 @@
       "icon": "TransformSnap",
       "tooltip": "Transform Snap",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Hierarchy",
@@ -1565,7 +1684,8 @@
       "icon": "Hierarchy",
       "tooltip": "Hierarchy",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Collection",
@@ -1574,7 +1694,8 @@
       "icon": "Folder",
       "tooltip": "Collection",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "CollectionAdd",
@@ -1583,7 +1704,8 @@
       "icon": "LayerAdd",
       "tooltip": "Collection Add",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SceneObject",
@@ -1592,7 +1714,8 @@
       "icon": "Cube",
       "tooltip": "Scene Object",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Mesh",
@@ -1601,7 +1724,8 @@
       "icon": "Mesh",
       "tooltip": "Mesh",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Light",
@@ -1610,7 +1734,8 @@
       "icon": "Light",
       "tooltip": "Light",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Component",
@@ -1619,8 +1744,8 @@
       "icon": "Layers",
       "tooltip": "Component",
       "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
-      "status": "connected; native GPU inspection pending",
-      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "ComponentAdd",
@@ -1629,8 +1754,8 @@
       "icon": "LayerAdd",
       "tooltip": "Component Add",
       "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
-      "status": "connected; native GPU inspection pending",
-      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Modifier",
@@ -1639,7 +1764,8 @@
       "icon": "Modifier",
       "tooltip": "Modifier",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "ModifierAdd",
@@ -1648,7 +1774,8 @@
       "icon": "ModifierAdd",
       "tooltip": "Modifier Add",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Reparent",
@@ -1657,7 +1784,8 @@
       "icon": "Reparent",
       "tooltip": "Reparent",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "LinkedDuplicate",
@@ -1666,7 +1794,8 @@
       "icon": "LinkedDuplicate",
       "tooltip": "Linked Duplicate",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Selectable",
@@ -1675,8 +1804,9 @@
       "icon": "Target",
       "tooltip": "Selectable",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending",
-      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Unselectable",
@@ -1685,7 +1815,8 @@
       "icon": "Unselectable",
       "tooltip": "Unselectable",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Renderable",
@@ -1694,8 +1825,9 @@
       "icon": "Eye",
       "tooltip": "Renderable",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending",
-      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "NonRenderable",
@@ -1704,8 +1836,9 @@
       "icon": "EyeOff",
       "tooltip": "Non Renderable",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending",
-      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "PropertyOverride",
@@ -1714,7 +1847,8 @@
       "icon": null,
       "tooltip": "Property Override",
       "state": "native geometry, label and focus outline",
-      "status": "native interaction review pending"
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "MixedValue",
@@ -1723,7 +1857,8 @@
       "icon": null,
       "tooltip": "Mixed Value",
       "state": "native geometry, label and focus outline",
-      "status": "native interaction review pending"
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "ArrayProperty",
@@ -1732,7 +1867,8 @@
       "icon": "ArrayProperty",
       "tooltip": "Array Property",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "AnimationTimeline",
@@ -1741,8 +1877,8 @@
       "icon": "AnimationTimeline",
       "tooltip": "Animation Timeline",
       "state": "labelled native selected/disabled state and role heading",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "DopeSheet",
@@ -1751,8 +1887,8 @@
       "icon": "DopeSheet",
       "tooltip": "Dope Sheet",
       "state": "labelled native selected/disabled state and role heading",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "GraphEditor",
@@ -1761,9 +1897,9 @@
       "icon": "CurveEditor",
       "tooltip": "Graph Editor",
       "state": "labelled native selected/disabled state and role heading",
-      "status": "individual original generated and connected; native GPU inspection pending",
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
       "composition": "Shared semantic glyph; action label and directional or plus/minus indicator distinguish the operation.",
-      "evidence": "assets/icons/provenance.json; src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "ChannelList",
@@ -1772,7 +1908,8 @@
       "icon": "List",
       "tooltip": "Channel List",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SummaryRow",
@@ -1781,8 +1918,9 @@
       "icon": "Layers",
       "tooltip": "Summary Row",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending",
-      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators.",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "AnimationStrip",
@@ -1791,8 +1929,8 @@
       "icon": "AnimationStrip",
       "tooltip": "Animation Strip",
       "state": "labelled native selected/disabled state and role heading",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "StripScale",
@@ -1801,7 +1939,8 @@
       "icon": "Scale",
       "tooltip": "Strip Scale",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "StripRepeat",
@@ -1810,7 +1949,8 @@
       "icon": "Repeat",
       "tooltip": "Strip Repeat",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "StripBlend",
@@ -1819,8 +1959,8 @@
       "icon": "StripBlend",
       "tooltip": "Strip Blend",
       "state": "labelled native selected/disabled state and role heading",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "UVEditor",
@@ -1829,8 +1969,8 @@
       "icon": "UVEditor",
       "tooltip": "UVEditor",
       "state": "labelled heading",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SelectVertex",
@@ -1839,8 +1979,8 @@
       "icon": "SelectVertex",
       "tooltip": "Select Vertex",
       "state": "native selected row, focus outline and text label",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/cg.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SelectEdge",
@@ -1849,8 +1989,8 @@
       "icon": "SelectEdge",
       "tooltip": "Select Edge",
       "state": "native selected row, focus outline and text label",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/cg.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SelectFace",
@@ -1859,8 +1999,8 @@
       "icon": "SelectFace",
       "tooltip": "Select Face",
       "state": "native selected row, focus outline and text label",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/cg.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SelectIsland",
@@ -1869,8 +2009,8 @@
       "icon": "SelectIsland",
       "tooltip": "Select Island",
       "state": "native selected row, focus outline and text label",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/cg.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "UVSeam",
@@ -1879,8 +2019,8 @@
       "icon": "UVSeam",
       "tooltip": "UVSeam",
       "state": "active button background and underline, UTF-8 label",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "UVOverlap",
@@ -1889,8 +2029,8 @@
       "icon": "UVOverlap",
       "tooltip": "UVOverlap",
       "state": "active button background and underline, UTF-8 label",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "UVCoordinatesPixel",
@@ -1899,7 +2039,8 @@
       "icon": null,
       "tooltip": "UVCoordinates Pixel",
       "state": "native geometry, label and focus outline",
-      "status": "native interaction review pending"
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "UVCoordinatesNormalized",
@@ -1908,7 +2049,8 @@
       "icon": null,
       "tooltip": "UVCoordinates Normalized",
       "state": "native geometry, label and focus outline",
-      "status": "native interaction review pending"
+      "status": "native control/drawing; module tests and native Gallery reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "UDIMTiles",
@@ -1917,8 +2059,8 @@
       "icon": "UDIMTiles",
       "tooltip": "UDIMTiles",
       "state": "active button background and underline, UTF-8 label",
-      "status": "individual original generated and connected; native GPU inspection pending",
-      "evidence": "assets/icons/provenance.json; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Checkerboard",
@@ -1927,9 +2069,9 @@
       "icon": "Grid",
       "tooltip": "Checkerboard",
       "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
-      "status": "connected; native GPU inspection pending",
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
       "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators.",
-      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Add",
@@ -1938,7 +2080,8 @@
       "icon": "Add",
       "tooltip": "Add",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Delete",
@@ -1947,8 +2090,8 @@
       "icon": "Delete",
       "tooltip": "Delete",
       "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
-      "status": "connected in AssetBrowser; native GPU inspection pending",
-      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Edit",
@@ -1957,43 +2100,48 @@
       "icon": "Edit",
       "tooltip": "Edit",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Undo",
-      "widget": "Shared editor controls",
+      "widget": "Gallery transition history context menu",
       "disposition": "reuse",
       "icon": "Undo",
       "tooltip": "Undo",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Redo",
-      "widget": "Shared editor controls",
+      "widget": "Gallery transition history context menu",
       "disposition": "reuse",
       "icon": "Redo",
       "tooltip": "Redo",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Copy",
-      "widget": "Shared editor controls",
+      "widget": "PropertyGrid value context menu",
       "disposition": "reuse",
       "icon": "Copy",
       "tooltip": "Copy",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Paste",
-      "widget": "Shared editor controls",
+      "widget": "PropertyGrid value context menu",
       "disposition": "reuse",
       "icon": "Paste",
       "tooltip": "Paste",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Duplicate",
@@ -2002,8 +2150,8 @@
       "icon": "Duplicate",
       "tooltip": "Duplicate",
       "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
-      "status": "connected in AssetBrowser; native GPU inspection pending",
-      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "SelectAll",
@@ -2012,16 +2160,18 @@
       "icon": "SelectAll",
       "tooltip": "SelectAll",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Deselect",
-      "widget": "Shared editor controls",
+      "widget": "UV selection context menu",
       "disposition": "reuse",
       "icon": "Deselect",
       "tooltip": "Deselect",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Search",
@@ -2030,8 +2180,8 @@
       "icon": "Search",
       "tooltip": "Search",
       "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
-      "status": "connected in AssetBrowser; native GPU inspection pending",
-      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Filter",
@@ -2040,8 +2190,8 @@
       "icon": "Filter",
       "tooltip": "Filter",
       "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
-      "status": "connected in AssetBrowser; native GPU inspection pending",
-      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Tag",
@@ -2050,8 +2200,8 @@
       "icon": "Tag",
       "tooltip": "Tag",
       "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
-      "status": "connected in AssetBrowser; native GPU inspection pending",
-      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Star",
@@ -2060,7 +2210,8 @@
       "icon": "Star",
       "tooltip": "Star",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Lock",
@@ -2069,8 +2220,8 @@
       "icon": "Lock",
       "tooltip": "Lock",
       "state": "toggle background and underline; checked menu item; state-specific Eye/EyeOff, Volume/Mute and Unlock/Lock glyphs",
-      "status": "Track header/menu native light and Japanese dark 150% inspected; visibility and mute host changes verified through public IO",
-      "evidence": "out/track-controls-native/track-controls.txt; track-icons-light.png; track-menu-japanese-dark-150.png (local captures)"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Unlock",
@@ -2079,8 +2230,8 @@
       "icon": "Unlock",
       "tooltip": "Unlock",
       "state": "toggle background and underline; checked menu item; state-specific Eye/EyeOff, Volume/Mute and Unlock/Lock glyphs",
-      "status": "Track header/menu native light and Japanese dark 150% inspected; visibility and mute host changes verified through public IO",
-      "evidence": "out/track-controls-native/track-controls.txt; track-icons-light.png; track-menu-japanese-dark-150.png (local captures)"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Play",
@@ -2089,7 +2240,8 @@
       "icon": "Play",
       "tooltip": "Play",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Pause",
@@ -2098,7 +2250,8 @@
       "icon": "Pause",
       "tooltip": "Pause",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Stop",
@@ -2107,7 +2260,8 @@
       "icon": "Stop",
       "tooltip": "Stop",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Record",
@@ -2116,8 +2270,8 @@
       "icon": "Record",
       "tooltip": "Record",
       "state": "toggle background and underline; checked menu item; state-specific Eye/EyeOff, Volume/Mute and Unlock/Lock glyphs",
-      "status": "Track header/menu native light and Japanese dark 150% inspected; visibility and mute host changes verified through public IO",
-      "evidence": "out/track-controls-native/track-controls.txt; track-icons-light.png; track-menu-japanese-dark-150.png (local captures)"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Repeat",
@@ -2126,7 +2280,8 @@
       "icon": "Repeat",
       "tooltip": "Repeat",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Image",
@@ -2135,8 +2290,8 @@
       "icon": "Image",
       "tooltip": "Image",
       "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
-      "status": "connected; native GPU inspection pending",
-      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Video",
@@ -2145,7 +2300,8 @@
       "icon": "Video",
       "tooltip": "Video",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Audio",
@@ -2154,7 +2310,8 @@
       "icon": "Audio",
       "tooltip": "Audio",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Text",
@@ -2163,7 +2320,8 @@
       "icon": "Text",
       "tooltip": "Text",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Comment",
@@ -2172,7 +2330,8 @@
       "icon": "Comment",
       "tooltip": "Comment",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Monitor",
@@ -2181,7 +2340,8 @@
       "icon": "Monitor",
       "tooltip": "Monitor",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Grid",
@@ -2190,8 +2350,8 @@
       "icon": "Grid",
       "tooltip": "Grid",
       "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
-      "status": "connected in AssetBrowser; native GPU inspection pending",
-      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "List",
@@ -2200,8 +2360,8 @@
       "icon": "List",
       "tooltip": "List",
       "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
-      "status": "connected in AssetBrowser; native GPU inspection pending",
-      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Loading",
@@ -2210,8 +2370,8 @@
       "icon": "Loading",
       "tooltip": "Loading",
       "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
-      "status": "connected in AssetBrowser; native GPU inspection pending",
-      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Warning",
@@ -2220,8 +2380,8 @@
       "icon": "Warning",
       "tooltip": "Warning",
       "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
-      "status": "connected in AssetBrowser; native GPU inspection pending",
-      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Error",
@@ -2230,8 +2390,8 @@
       "icon": "Error",
       "tooltip": "Error",
       "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
-      "status": "connected in AssetBrowser; native GPU inspection pending",
-      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Volume",
@@ -2240,8 +2400,8 @@
       "icon": "Volume",
       "tooltip": "Volume",
       "state": "toggle background and underline; checked menu item; state-specific Eye/EyeOff, Volume/Mute and Unlock/Lock glyphs",
-      "status": "Track header/menu native light and Japanese dark 150% inspected; visibility and mute host changes verified through public IO",
-      "evidence": "out/track-controls-native/track-controls.txt; track-icons-light.png; track-menu-japanese-dark-150.png (local captures)"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Mute",
@@ -2250,8 +2410,8 @@
       "icon": "Mute",
       "tooltip": "Mute",
       "state": "toggle background and underline; checked menu item; state-specific Eye/EyeOff, Volume/Mute and Unlock/Lock glyphs",
-      "status": "Track header/menu native light and Japanese dark 150% inspected; visibility and mute host changes verified through public IO",
-      "evidence": "out/track-controls-native/track-controls.txt; track-icons-light.png; track-menu-japanese-dark-150.png (local captures)"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Microphone",
@@ -2260,7 +2420,8 @@
       "icon": "Microphone",
       "tooltip": "Microphone",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Camera",
@@ -2269,7 +2430,8 @@
       "icon": "Camera",
       "tooltip": "Camera",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Ruler",
@@ -2278,7 +2440,8 @@
       "icon": "Ruler",
       "tooltip": "Ruler",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Eye",
@@ -2287,8 +2450,8 @@
       "icon": "Eye",
       "tooltip": "Eye",
       "state": "toggle background and underline; checked menu item; state-specific Eye/EyeOff, Volume/Mute and Unlock/Lock glyphs",
-      "status": "Track header/menu native light and Japanese dark 150% inspected; visibility and mute host changes verified through public IO",
-      "evidence": "out/track-controls-native/track-controls.txt; track-icons-light.png; track-menu-japanese-dark-150.png (local captures)"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "EyeOff",
@@ -2297,8 +2460,8 @@
       "icon": "EyeOff",
       "tooltip": "EyeOff",
       "state": "toggle background and underline; checked menu item; state-specific Eye/EyeOff, Volume/Mute and Unlock/Lock glyphs",
-      "status": "Track header/menu native light and Japanese dark 150% inspected; visibility and mute host changes verified through public IO",
-      "evidence": "out/track-controls-native/track-controls.txt; track-icons-light.png; track-menu-japanese-dark-150.png (local captures)"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Move",
@@ -2307,8 +2470,8 @@
       "icon": "Move",
       "tooltip": "Move",
       "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
-      "status": "connected; native GPU inspection pending",
-      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Rotate",
@@ -2317,8 +2480,8 @@
       "icon": "Rotate",
       "tooltip": "Rotate",
       "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
-      "status": "connected; native GPU inspection pending",
-      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Scale",
@@ -2327,8 +2490,8 @@
       "icon": "Scale",
       "tooltip": "Scale",
       "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
-      "status": "connected; native GPU inspection pending",
-      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Folder",
@@ -2337,7 +2500,8 @@
       "icon": "Folder",
       "tooltip": "Folder",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "FolderOpen",
@@ -2346,7 +2510,8 @@
       "icon": "FolderOpen",
       "tooltip": "FolderOpen",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Cube",
@@ -2355,7 +2520,8 @@
       "icon": "Cube",
       "tooltip": "Cube",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Layers",
@@ -2364,7 +2530,8 @@
       "icon": "Layers",
       "tooltip": "Layers",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "LayerAdd",
@@ -2373,7 +2540,8 @@
       "icon": "LayerAdd",
       "tooltip": "LayerAdd",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Reset",
@@ -2382,26 +2550,43 @@
       "icon": "Reset",
       "tooltip": "Reset",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "Pin",
-      "widget": "Shared editor controls",
+      "widget": "UV vertex state tooltip and pin overlay",
       "disposition": "reuse",
       "icon": "Pin",
       "tooltip": "Pin",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     },
     {
       "operation": "PinOff",
-      "widget": "Shared editor controls",
+      "widget": "UV vertex state tooltip and pin overlay",
       "disposition": "reuse",
       "icon": "PinOff",
       "tooltip": "PinOff",
       "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "status": "glyph integrated in editor controls; 16px and 150% native atlas reviewed",
+      "evidence": "docs/editor-validation.md; tests/editor_core.cpp, tests/video.cpp, tests/cg.cpp; native Gallery"
     }
   ],
-  "policy": "New and shared-new are planned glyphs, not generated or integrated assets. Native choices still require implementation and interaction verification."
+  "policy": "new/shared-new identify added originals; reuse identifies existing IconIds; native uses purpose-built controls or DrawList rather than a bitmap. States and tooltips describe the corresponding control, not a separate image per state.",
+  "summary": {
+    "operations": 250,
+    "originals": 206,
+    "preserved_ids": 120,
+    "added_originals": 86,
+    "png_variants": 1236,
+    "atlases": 6,
+    "dispositions": {
+      "new": 82,
+      "reuse": 102,
+      "shared-new": 11,
+      "native": 55
+    }
+  }
 }

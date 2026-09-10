@@ -37,15 +37,10 @@ The public-IO integration log is `out/catalog/interaction.txt`; renderer details
 
 対応版・環境以外、native OS/IME、実機、他アプリへの導入は未検証です。標準のreorder/resize/drag-dropの全組合せを再試験していません。日本語の字形範囲、通常weight、数値の標準レイアウトを明示し、未実施の受け入れ確認を合格扱いしません。
 
-## Editor extension
+## Editor Suite 1.0
 
-See [editor-validation.md](editor-validation.md) for focused CPU, external consumer, public IO, real GPU and performance evidence. The full Editor Suite 1.0 acceptance remains incomplete.
-Editor拡張の検証結果は上記を参照してください。Editor Suite 1.0全体の受入は未完了です。
-
-Focused Inspector host verification: `imkit_gallery.exe --verify-inspector-model` checks selected-object rotation/scale/reset, locked object/property rejection, selection-change rejection and property key add/remove/navigation without creating a graphics context. This is model/event evidence, not native input acceptance.
-
-Inspectorのホスト処理確認は `imkit_gallery.exe --verify-inspector-model` で行います。複数objectの回転・scale・reset、object/property lockと選択変更による拒否、property keyの追加・削除・前後移動を確認します。graphics contextは作成せず、native入力の検証ではありません。
-
-The no-capture Gallery frame path reuses an empty filesystem path. Reconstructing it per frame caused one C++ allocation under the Debug runtime. A focused 180-frame Debug pan run at 1920x1440 with 256 tracks, 100096 clips and 100000 keys measured P95 2.3645 ms, at most 7 queries/30 visible clips, and zero C++ new/ImGui allocations. This is a pan-only measurement; it does not satisfy the full Release interaction performance gate.
-
-captureしないGalleryフレームでは空のfilesystem pathを再利用します。毎フレームの構築がDebug runtimeで1回のC++ allocationを発生させていました。1920x1440、256 track、100096 clip、100000 keyのDebug pan 180フレームではP95 2.3645ms、最大7 query・30可視clip、C++ new/ImGui allocationとも0でした。panのみの測定であり、Releaseで全代表操作を確認する性能gateの完了を意味しません。
+See [Editor validation](editor-validation.md) for CPU/public IO, source and installed
+consumers, native GPU, captures and the six-operation Release performance result.
+EditorのCPU・公開IO・source/SDK consumer・実GPU・capture・6操作のRelease性能は上記を参照してください。
+Native OS/IME and real-project integration remain separate, unperformed categories.
+native OS/IMEと実project統合は別区分で、未実施です。
