@@ -26,6 +26,7 @@ struct EditorWorkspaces {
     std::vector<TransitionHistory> transitionHistory;
     std::size_t transitionHistoryCursor=0;
     bool UndoTransition(bool redo=false);
+    editor::Tick TransitionLimit(editor::StableId id,bool outgoing) const;
     std::vector<editor::Keyframe> keys, visibleKeys, curvePreviewKeys, selectedCurveKeys;
     std::vector<std::pair<std::size_t,std::size_t>> keyChannels;
     editor::Rect curveBounds{};

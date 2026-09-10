@@ -898,9 +898,9 @@ int VerifyInspectorModel() {
     check(state.clips.front().transitionIn==editor::FromSeconds(.2) && state.UndoTransition() &&
           state.clips.front().transitionIn==0,"transition duration host apply and Undo");
     check(state.UndoTransition(true) && state.clips.front().transitionOut==editor::FromSeconds(.3),"transition duration Redo");
-    state.events.Push({transitionClip,state.revision,editor::Phase::Commit,editor::EditKind::TransitionType,{}, {2,3}});state.ApplyEvents();
-    check(state.clips.front().transitionInKind==video::TransitionKind::Fade && state.UndoTransition() &&
-          state.clips.front().transitionInKind==video::TransitionKind::Dissolve,"transition kind host apply and Undo");
+    state.events.Push({transitionClip,state.revision,editor::Phase::Commit,editor::EditKind::TransitionType,{}, {1,3}});state.ApplyEvents();
+    check(state.clips.front().transitionInKind==video::TransitionKind::Dissolve && state.UndoTransition() &&
+          state.clips.front().transitionInKind==video::TransitionKind::Fade,"transition kind host apply and Undo");
     state.UndoTransition();
     auto audioClip=std::find_if(state.clips.begin(),state.clips.end(),[](const auto &c){return !c.envelope.empty();});
     const auto envelopeCount=audioClip->envelope.size();

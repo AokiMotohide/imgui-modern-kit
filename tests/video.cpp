@@ -20,6 +20,22 @@ int main() {
         }
     };
     video::TimelineState snapping;
+    {
+        video::ClipView left,right;left.track=right.track=1;
+        left.duration=10;right.start=10;right.duration=10;right.sourceIn=3;
+        video::ClipConstraints bounds{0,20,1};
+        check(video::CenteredTransitionLimit(left,right,bounds,bounds)==6,"centered transition uses both source handles");
+        left.speed=1.5;
+        check(video::CenteredTransitionLimit(left,right,bounds,bounds)==6,"transition handles account for playback speed");
+        right.sourceIn=0;
+        check(video::CenteredTransitionLimit(left,right,bounds,bounds)==0,"transition cannot read before incoming media");
+        right.sourceIn=3;right.start=11;
+        check(video::CenteredTransitionLimit(left,right,bounds,bounds)==0,"transition rejects a gap");
+        right.start=10;right.locked=true;
+        check(video::CenteredTransitionLimit(left,right,bounds,bounds)==0,"transition rejects locked neighbor");
+        right.locked=false;left.start=std::numeric_limits<editor::Tick>::max();
+        check(video::CenteredTransitionLimit(left,right,bounds,bounds)==0,"transition rejects overflowing cut");
+    }
     snapping.original.id=1;
     snapping.original.start=editor::FromSeconds(1);
     snapping.original.duration=editor::FromSeconds(2);
