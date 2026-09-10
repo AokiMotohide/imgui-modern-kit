@@ -778,46 +778,58 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
         ImGui::OpenPopup("key settings");
     }
     if (ImGui::BeginPopup("key settings")) {
-        if (ImGui::MenuItem("Add key at playhead",nullptr,false,s.activeChannel!=0 && !s.drag.active)) addKey=true;
-        if (ImGui::MenuItem("Previous key",nullptr,false,provider.neighbor!=nullptr)) previousKey=true;
-        if (ImGui::MenuItem("Next key",nullptr,false,provider.neighbor!=nullptr)) nextKey=true;
-        if (ImGui::MenuItem("Delete selected keys",nullptr,false,selection.count>0 && !s.drag.active)) removeKeys=true;
-        if (ImGui::MenuItem("Fit all channels",nullptr,false,provider.bounds.has_value())) s.fitRequested=true;
-        ImGui::Checkbox("Ghost other channels",&s.ghostOtherChannels);
-        ImGui::Checkbox("Snap to frame",&s.snapToFrame);
-        ImGui::Checkbox("Scale key timing",&s.scaleTime);
+        auto glyph=[&](IconId icon) {
+            if (s.icons) {Icon(*s.icons,icon,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+        };
+        glyph(IconId::Keyframe);
+        if (ImGui::MenuItem(s.labels.add,nullptr,false,s.activeChannel!=0 && !s.drag.active)) addKey=true;
+        glyph(IconId::Keyframe);
+        if (ImGui::MenuItem(s.labels.previous,nullptr,false,provider.neighbor!=nullptr)) previousKey=true;
+        glyph(IconId::Keyframe);
+        if (ImGui::MenuItem(s.labels.next,nullptr,false,provider.neighbor!=nullptr)) nextKey=true;
+        glyph(IconId::Keyframe);
+        if (ImGui::MenuItem(s.labels.remove,nullptr,false,selection.count>0 && !s.drag.active)) removeKeys=true;
+        glyph(IconId::FitView);
+        if (ImGui::MenuItem(s.labels.fit,nullptr,false,provider.bounds.has_value())) s.fitRequested=true;
+        glyph(s.ghostOtherChannels ? IconId::Eye : IconId::EyeOff);
+        ImGui::Checkbox(s.labels.ghost,&s.ghostOtherChannels);
+        ImGui::Checkbox(s.labels.snap,&s.snapToFrame);
+        glyph(IconId::Scale);ImGui::Checkbox(s.labels.scale,&s.scaleTime);
         if (s.icons) {
             ImGui::BeginDisabled(s.drag.active || s.canvas.selecting);
             for (int mode=0;mode<2;++mode) {
                 if (mode) ImGui::SameLine();
                 const bool active=s.lassoSelect==(mode==1);
-                const char *label=mode ? (active ? "Lasso select (active)" : "Lasso select") :
-                                         (active ? "Box select (active)" : "Box select");
+                const char *label=mode ? s.labels.lasso : s.labels.box;
                 if (active) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
                 if (IconLabelButton(mode ? "lasso" : "box",*s.icons,
                                     mode ? IconId::LassoSelect : IconId::BoxSelect,label,
                                     {16*ImGui::GetFontSize()/14})) s.lassoSelect=mode==1;
-                if (active) ImGui::PopStyleColor();
+                if (active) {
+                    ImGui::PopStyleColor();
+                    const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
+                    ImGui::GetWindowDrawList()->AddLine({a.x+3,b.y-2},{b.x-3,b.y-2},ImGui::GetColorU32(ImGuiCol_Text),2);
+                }
             }
             ImGui::EndDisabled();
-        } else ImGui::Checkbox("Lasso selection",&s.lassoSelect);
+        } else ImGui::Checkbox(s.labels.lasso,&s.lassoSelect);
         if (provider.sample) {
             int mode=static_cast<int>(s.extrapolation);
-            if (ImGui::Combo("Extrapolation",&mode,"Constant\0Linear\0Repeat\0"))
+            if (ImGui::Combo(s.labels.extrapolation,&mode,s.labels.extrapolations.data(),3))
                 s.extrapolation=static_cast<Extrapolation>(mode);
         }
         auto key=std::find_if(keys.begin(),keys.end(),[&](const auto &value){return value.id==s.contextKey;});
         if (key!=keys.end()) {
             ImGui::BeginDisabled(key->locked);
-            if (ImGui::BeginMenu("Interpolation")) {
-                const char *names[]={"Constant","Linear","Bezier"};
+            if (ImGui::BeginMenu(s.labels.interpolation)) {
+                const auto &names=s.labels.interpolations;
                 for (int i=0;i<3;++i) if (ImGui::MenuItem(names[i],nullptr,static_cast<int>(key->interpolation)==i))
                     Action(out,key->id,provider.revision,EditKind::KeyInterpolation,
                         Value{0,0,0,0,static_cast<double>(key->interpolation)},Value{0,0,0,0,static_cast<double>(i)});
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu("Handle mode")) {
-                const char *names[]={"Auto","Auto Clamped","Vector","Aligned","Free"};
+            if (ImGui::BeginMenu(s.labels.handles)) {
+                const auto &names=s.labels.handleModes;
                 for (int i=0;i<5;++i) if (ImGui::MenuItem(names[i],nullptr,static_cast<int>(key->handles)==i))
                     Action(out,key->id,provider.revision,EditKind::KeyHandleMode,
                         Value{0,0,0,0,static_cast<double>(key->handles)},Value{0,0,0,0,static_cast<double>(i)});

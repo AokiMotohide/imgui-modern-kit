@@ -97,6 +97,16 @@ editor::AssetProvider Assets(EditorWorkspaces &s) {
         }};
 }
 editor::CurveProvider Curves(EditorWorkspaces &s) {
+    s.curve.labels={};
+    if (s.japanese) {
+        auto &labels=s.curve.labels;
+        labels.add="再生位置にキーを追加";labels.previous="前のキー";labels.next="次のキー";labels.remove="選択キーを削除";
+        labels.fit="全チャンネルを表示";labels.ghost="他チャンネルを薄く表示";labels.snap="フレームへ吸着";
+        labels.scale="キーの時間を拡大縮小";labels.box="矩形選択";labels.lasso="投げ縄選択";
+        labels.extrapolation="外挿";labels.interpolation="補間";labels.handles="ハンドルモード";
+        labels.extrapolations={"一定","直線","繰り返し"};labels.interpolations={"一定","直線","ベジェ"};
+        labels.handleModes={"自動","自動・制限付き","ベクトル","整列","自由"};
+    }
     s.curve.bindings=std::span(s.bindings).first(s.bindingCount);
     s.curve.rate=s.timeline.time.rate;
     s.curve.time=s.timeline.time.playhead;
@@ -1597,6 +1607,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
             for (const auto &component:s.components) if (component.view.owner==object->id) s.inspectorComponents.push_back(component.view);
             const cg::ComponentTypeView componentTypes[]={{7801,"Mesh renderer"},{7802,"Wireframe override"}};
             cg::ComponentStackOptions options{object->id,object->geometry ? std::span<const cg::ComponentTypeView>(componentTypes) : std::span<const cg::ComponentTypeView>{},object->locked};
+            options.icons=s.icons;
             if (s.japanese) options.labels={"コンポーネント追加","有効","コンポーネント","操作","ロック","ロック解除","上へ","下へ","削除"};
             cg::ComponentStack("Components",s.inspectorComponents,s.revision,s.events,options);
             ImGui::EndTabItem();

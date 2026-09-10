@@ -552,43 +552,47 @@
     },
     {
       "operation": "KeyframeAdd",
-      "widget": "CurveEditor / PropertyGrid",
+      "widget": "CurveEditor context menu",
       "disposition": "reuse",
       "icon": "Keyframe",
       "tooltip": "Keyframe Add",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending",
-      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
+      "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
+      "status": "connected; native GPU inspection pending",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators.",
+      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "KeyframeRemove",
-      "widget": "CurveEditor / PropertyGrid",
+      "widget": "CurveEditor context menu",
       "disposition": "reuse",
       "icon": "Keyframe",
       "tooltip": "Keyframe Remove",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending",
-      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
+      "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
+      "status": "connected; native GPU inspection pending",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators.",
+      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "PreviousKeyframe",
-      "widget": "CurveEditor / PropertyGrid",
+      "widget": "CurveEditor context menu",
       "disposition": "reuse",
       "icon": "Keyframe",
       "tooltip": "Previous Keyframe",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending",
-      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
+      "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
+      "status": "connected; native GPU inspection pending",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators.",
+      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "NextKeyframe",
-      "widget": "CurveEditor / PropertyGrid",
+      "widget": "CurveEditor context menu",
       "disposition": "reuse",
       "icon": "Keyframe",
       "tooltip": "Next Keyframe",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending",
-      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
+      "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
+      "status": "connected; native GPU inspection pending",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators.",
+      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "AutoKeyframe",
@@ -730,13 +734,14 @@
     },
     {
       "operation": "GhostCurve",
-      "widget": "CurveEditor / PropertyGrid",
+      "widget": "CurveEditor context menu",
       "disposition": "reuse",
       "icon": "Eye",
       "tooltip": "Ghost Curve",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending",
-      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
+      "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
+      "status": "connected; native GPU inspection pending",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators.",
+      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "CurveEditor",
@@ -1592,21 +1597,23 @@
     },
     {
       "operation": "Component",
-      "widget": "Hierarchy / PropertyGrid / AssetBrowser",
+      "widget": "ComponentStack",
       "disposition": "reuse",
       "icon": "Layers",
       "tooltip": "Component",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
+      "status": "connected; native GPU inspection pending",
+      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "ComponentAdd",
-      "widget": "Hierarchy / PropertyGrid / AssetBrowser",
+      "widget": "ComponentStack",
       "disposition": "reuse",
       "icon": "LayerAdd",
       "tooltip": "Component Add",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
+      "status": "connected; native GPU inspection pending",
+      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "Modifier",
@@ -1893,13 +1900,14 @@
     },
     {
       "operation": "Checkerboard",
-      "widget": "UVEditor",
+      "widget": "UVEditor options",
       "disposition": "reuse",
       "icon": "Grid",
       "tooltip": "Checkerboard",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending",
-      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators."
+      "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
+      "status": "connected; native GPU inspection pending",
+      "composition": "Use the semantic base glyph with a labeled action; key add/remove and navigation use explicit plus/minus/left/right DrawList indicators.",
+      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "Add",
@@ -2100,12 +2108,13 @@
     },
     {
       "operation": "Image",
-      "widget": "Shared editor controls",
+      "widget": "UVEditor options",
       "disposition": "reuse",
       "icon": "Image",
       "tooltip": "Image",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
+      "status": "connected; native GPU inspection pending",
+      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "Video",
@@ -2271,30 +2280,33 @@
     },
     {
       "operation": "Move",
-      "widget": "Shared editor controls",
+      "widget": "UVEditor options",
       "disposition": "reuse",
       "icon": "Move",
       "tooltip": "Move",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
+      "status": "connected; native GPU inspection pending",
+      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "Rotate",
-      "widget": "Shared editor controls",
+      "widget": "UVEditor options",
       "disposition": "reuse",
       "icon": "Rotate",
       "tooltip": "Rotate",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
+      "status": "connected; native GPU inspection pending",
+      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "Scale",
-      "widget": "Shared editor controls",
+      "widget": "UVEditor options",
       "disposition": "reuse",
       "icon": "Scale",
       "tooltip": "Scale",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "native selected/focus/disabled state with UTF-8 label; toggle background and underline",
+      "status": "connected; native GPU inspection pending",
+      "evidence": "src/editor_core.cpp; src/cg.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "Folder",
