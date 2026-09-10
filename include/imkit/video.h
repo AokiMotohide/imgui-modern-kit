@@ -76,12 +76,14 @@ struct PairEdit {
     ClipEdit left, right;
     bool valid = false;
 };
+// Requires positive-duration adjacent clips on the same track; overflowing cuts are invalid.
 PairEdit RollClips(const ClipView &left, const ClipView &right, Tick delta, ClipConstraints leftBounds,
                    ClipConstraints rightBounds);
 struct TripleEdit {
     ClipEdit previous, current, next;
     bool valid = false;
 };
+// All three clips must be adjacent on the same track with representable cut positions.
 TripleEdit SlideClip(const ClipView &previous, const ClipView &current, const ClipView &next, Tick delta,
                      ClipConstraints previousBounds, ClipConstraints currentBounds,
                      ClipConstraints nextBounds);

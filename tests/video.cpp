@@ -121,6 +121,25 @@ int main() {
           "slide keeps middle media and neighbor boundaries");
     third.start = 201;
     check(!video::SlideClip(c, right, third, 1, bounds, bounds, bounds).valid, "slide rejects gaps");
+    {
+        video::ClipView a,b,d;
+        a.start=tickMax-20;a.duration=10;b.start=tickMax-10;b.duration=10;b.sourceIn=10;
+        const video::ClipConstraints media{0,40,1};
+        const auto nearLimit=video::RollClips(a,b,-5,media,media);
+        check(nearLimit.valid && nearLimit.left.duration==5 && nearLimit.right.start==tickMax-15,
+              "Roll retains exact adjacent cuts near Tick maximum");
+        a.duration=30;b.start=std::numeric_limits<editor::Tick>::min()+9;
+        check(!video::RollClips(a,b,0,media,media).valid,"Roll rejects overflowing adjacent cut");
+        a.start=tickMax-20;a.duration=10;b.start=tickMax-10;b.duration=20;
+        d.start=std::numeric_limits<editor::Tick>::min()+9;d.duration=10;
+        check(!video::SlideClip(a,b,d,0,media,media,media).valid,"Slide rejects overflowing middle cut");
+        a.start=0;b.start=10;b.duration=10;d.start=20;b.track=1;
+        check(!video::RollClips(a,b,0,media,media).valid && !video::SlideClip(a,b,d,0,media,media,media).valid,
+              "Roll and Slide reject adjacent positions on different tracks");
+        b.track=0;a.duration=std::numeric_limits<editor::Tick>::min();
+        check(!video::RollClips(a,b,0,media,media).valid && !video::SlideClip(a,b,d,0,media,media,media).valid,
+              "Roll and Slide reject negative durations before boundary arithmetic");
+    }
     c.locked = true;
     check(!video::EditClip(c, editor::EditKind::Move, 1, bounds).valid, "locked math");
     float pcm[] = {-1, .2f, 1, .4f, 0, .6f, 0, .8f};

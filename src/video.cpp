@@ -205,7 +205,9 @@ ClipEdit EditClip(const ClipView &c, editor::EditKind kind, Tick delta, ClipCons
     return result;
 }
 PairEdit RollClips(const ClipView &a, const ClipView &b, Tick delta, ClipConstraints ac, ClipConstraints bc) {
-    if (a.start + a.duration != b.start || a.locked || b.locked)
+    Tick cut=0;
+    if (a.track!=b.track || a.duration<=0 || b.duration<=0 ||
+        !AddTick(a.start,a.duration,cut) || cut!=b.start || a.locked || b.locked)
         return {};
     auto left = EditClip(a, editor::EditKind::TrimEnd, delta, ac);
     auto right = EditClip(b, editor::EditKind::TrimStart, delta, bc);
@@ -245,7 +247,10 @@ SplitResult SplitClip(const ClipView &c, Tick tick, ClipConstraints bounds) {
 }
 TripleEdit SlideClip(const ClipView &a, const ClipView &b, const ClipView &c, Tick delta, ClipConstraints ac,
                      ClipConstraints bc, ClipConstraints cc) {
-    if (a.start + a.duration != b.start || b.start + b.duration != c.start || a.locked || b.locked ||
+    Tick firstCut=0,secondCut=0;
+    if (a.track!=b.track || b.track!=c.track || a.duration<=0 || b.duration<=0 || c.duration<=0 ||
+        !AddTick(a.start,a.duration,firstCut) || firstCut!=b.start ||
+        !AddTick(b.start,b.duration,secondCut) || secondCut!=c.start || a.locked || b.locked ||
         c.locked)
         return {};
     auto left = EditClip(a, editor::EditKind::TrimEnd, delta, ac),
