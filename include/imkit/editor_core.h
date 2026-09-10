@@ -262,6 +262,15 @@ struct CurveProvider {
     const Keyframe *(*neighbor)(void *, StableId channel, Tick, bool next) = nullptr;
     std::span<const SelectablePoint> (*selectionQuery)(void *, Rect) = nullptr;
 };
+struct CurveLabels {
+    const char *add="Add key at playhead",*previous="Previous key",*next="Next key",*remove="Delete selected keys";
+    const char *fit="Fit all channels",*ghost="Ghost other channels",*snap="Snap to frame",*scale="Scale key timing";
+    const char *box="Box select",*lasso="Lasso select",*extrapolation="Extrapolation";
+    const char *interpolation="Interpolation",*handles="Handle mode";
+    std::array<const char *,3> extrapolations{"Constant","Linear","Repeat"};
+    std::array<const char *,3> interpolations{"Constant","Linear","Bezier"};
+    std::array<const char *,5> handleModes{"Auto","Auto Clamped","Vector","Aligned","Free"};
+};
 struct CurveState {
     CanvasState canvas{{0, -1}, {100, 100}};
     Transaction drag;
@@ -285,6 +294,7 @@ struct CurveState {
     Point mouseStart{};
     CanvasView view{};
     const IconAtlas *icons=nullptr; // Non-owning host atlas for selection controls.
+    CurveLabels labels; // Borrowed UTF-8 display strings.
 };
 void CurveEditor(const char *id, const CurveProvider &provider, CurveState &state, Selection &selection,
                  EventBuffer &events, const Theme &theme, ImVec2 size = {0, 220});

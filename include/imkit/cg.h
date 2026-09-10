@@ -170,6 +170,7 @@ struct ComponentStackOptions {
     std::span<const ComponentTypeView> availableTypes;
     bool locked=false;
     ComponentLabels labels{};
+    const IconAtlas *icons=nullptr; // Borrowed host atlas.
 };
 // Toggle fields: 0 enabled, 1 expanded, 2 locked. Reorder carries owner and offset -1/+1.
 // ComponentAdd targets options.owner and carries the chosen type ID in proposed.parent.

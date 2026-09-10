@@ -881,9 +881,14 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
 void ComponentStack(const char *id,std::span<const ComponentView> components,
                     std::uint64_t revision,editor::EventBuffer &out,const ComponentStackOptions &options) {
     ImGui::PushID(id);
+    auto glyph=[&](IconId icon) {
+        if (options.icons) {Icon(*options.icons,icon,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+    };
     if (options.owner && !options.availableTypes.empty()) {
         ImGui::BeginDisabled(options.locked);
-        if (ImGui::Button(options.labels.add)) ImGui::OpenPopup("add");
+        const bool add=options.icons ? IconLabelButton("add-component",*options.icons,IconId::LayerAdd,
+            options.labels.add,{16*ImGui::GetFontSize()/14}) : ImGui::Button(options.labels.add);
+        if (add) ImGui::OpenPopup("add");
         if (ImGui::BeginPopup("add")) {
             for (const auto &type:options.availableTypes) {
                 ImGui::PushID(reinterpret_cast<void*>(static_cast<std::uintptr_t>(type.id)));
@@ -905,6 +910,7 @@ void ComponentStack(const char *id,std::span<const ComponentView> components,
             if (ImGui::Checkbox("##enabled",&enabled))
                 Emit(out,component.id,revision,editor::EditKind::Toggle,Value({0,component.enabled?1.:0.,0}),Value({0,enabled?1.:0.,0}));
             ImGui::EndDisabled();ImGui::TableNextColumn();
+            glyph(IconId::Layers);
             if (ImGui::Selectable(component.label,component.expanded))
                 Emit(out,component.id,revision,editor::EditKind::Toggle,Value({1,component.expanded?1.:0.,0}),Value({1,component.expanded?0.:1.,0}));
             if (component.expanded) ImGui::TextWrapped("%s",component.description);
@@ -912,12 +918,16 @@ void ComponentStack(const char *id,std::span<const ComponentView> components,
             if (ImGui::Button("...")) ImGui::OpenPopup("actions");
             if (ImGui::BeginPopup("actions")) {
                 ImGui::BeginDisabled(options.locked);
+                glyph(component.locked?IconId::Unlock:IconId::Lock);
                 if (ImGui::MenuItem(component.locked?options.labels.unlock:options.labels.lock))
                     Emit(out,component.id,revision,editor::EditKind::Toggle,Value({2,component.locked?1.:0.,0}),Value({2,component.locked?0.:1.,0}));
                 ImGui::EndDisabled();
                 ImGui::BeginDisabled(component.locked || options.locked);
+                glyph(IconId::ArrowUp);
                 if (ImGui::MenuItem(options.labels.moveUp)) Emit(out,component.id,revision,editor::EditKind::Reorder,{},editor::Value{0,0,-1,component.owner});
+                glyph(IconId::ArrowDown);
                 if (ImGui::MenuItem(options.labels.moveDown)) Emit(out,component.id,revision,editor::EditKind::Reorder,{},editor::Value{0,0,1,component.owner});
+                glyph(IconId::Delete);
                 if (ImGui::MenuItem(options.labels.remove)) Emit(out,component.id,revision,editor::EditKind::Remove);
                 ImGui::EndDisabled();ImGui::EndPopup();
             }
@@ -1129,9 +1139,6 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
             }
             ImGui::EndCombo();
         }
-        ImGui::Checkbox(s.labels.checker,&s.checker);
-        ImGui::Checkbox(s.labels.texture,&s.showTexture);
-        ImGui::Checkbox(s.labels.grid,&s.grid);
         auto overlay=[&](const char *id,IconId icon,const char *label,bool &enabled) {
             if (!s.icons) {ImGui::Checkbox(label,&enabled);return;}
             const bool active=enabled;
@@ -1143,6 +1150,9 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
                 ImGui::GetWindowDrawList()->AddLine({a.x+3,b.y-2},{b.x-3,b.y-2},ImGui::GetColorU32(ImGuiCol_Text),2);
             }
         };
+        overlay("checker",IconId::Grid,s.labels.checker,s.checker);
+        overlay("texture",IconId::Image,s.labels.texture,s.showTexture);
+        overlay("grid",IconId::Grid,s.labels.grid,s.grid);
         overlay("seams",IconId::UVSeam,s.labels.seams,s.showSeams);
         overlay("overlap",IconId::UVOverlap,s.labels.overlap,s.showOverlap);
         bool tiles=s.coordinates==UVCoordinates::Tiles;
@@ -1171,8 +1181,15 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
         if (ImGui::Combo(s.labels.coordinates,&coordinates,s.labels.coordinateModes.data(),3))
             s.coordinates=static_cast<UVCoordinates>(coordinates);
         int tool=s.tool==TransformTool::Rotate?1:s.tool==TransformTool::Scale?2:0;
-        if (ImGui::Combo(s.labels.transform,&tool,s.labels.tools.data(),3))
-            s.tool=tool==1?TransformTool::Rotate:tool==2?TransformTool::Scale:TransformTool::Translate;
+        if (ImGui::BeginCombo(s.labels.transform,s.labels.tools[tool])) {
+            constexpr IconId icons[]{IconId::Move,IconId::Rotate,IconId::Scale};
+            for (int i=0;i<3;++i) {
+                if (s.icons) {Icon(*s.icons,icons[i],{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+                if (ImGui::Selectable(s.labels.tools[i],tool==i))
+                    s.tool=i==1?TransformTool::Rotate:i==2?TransformTool::Scale:TransformTool::Translate;
+            }
+            ImGui::EndCombo();
+        }
         double pivot[2]={s.pivot.x,s.pivot.y};
         if (ImGui::DragScalarN(s.labels.pivot,ImGuiDataType_Double,pivot,2,.01f)) s.pivot={pivot[0],pivot[1]};
         const double minimum=0,maximum=1;
