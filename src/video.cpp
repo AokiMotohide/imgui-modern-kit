@@ -1182,7 +1182,11 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                         action.Commit(p.revision,out);
                     }
                 }
-                TransitionPicker("types",clip,p.revision,out,track.locked,{s.icons,s.labels.transitions});
+                if(p.editing.fades) {
+                    if(const auto *fade=p.editing.fades(p.editing.user,clip.id))
+                        FadePicker("fades",clip,*fade,p.revision,out,track.locked);
+                } else if(!p.editing.cut)
+                    TransitionPicker("types",clip,p.revision,out,track.locked,{s.icons,s.labels.transitions});
                 ImGui::EndPopup();
             }
             ImGui::PopID();
