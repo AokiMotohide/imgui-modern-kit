@@ -8,3 +8,4 @@
 #include <imkit/accessibility.h>
 #include <imkit/locale.h>
 #include <imkit/patterns.h>
+#include <imkit/workflow.h>

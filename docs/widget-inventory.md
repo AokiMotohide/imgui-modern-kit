@@ -24,4 +24,32 @@ Legacy column helpers are available but tables are preferred. Context/frame life
 
 ## Editor extension inventory
 
+Generic workflow additions are listed in [workflow-components.md](workflow-components.md).
+汎用ワークフローの追加APIは上記一覧を参照してください。
+
 The custom editor API is inventoried separately in [editor-api.md](editor-api.md). Its compile/link fixture is `tests/editor_api_compile.cpp`, also compiled against an external host ImGui target. The generated 365-overload native inventory is unchanged.
+
+## Generic component audit / 汎用部品監査
+
+| Candidate / 候補 | Decision / 分類 | Reason / 理由 |
+|---|---|---|
+| Step Navigator, Navigation Rail, filter chip | Add / 追加 | Host state and request IDs / ホスト状態と要求ID |
+| Notification, progress, empty/error, toolbar | Extend / 拡張 | Existing patterns and tokens / 既存patternsとtoken |
+| Image viewport, overlays | Extend / 拡張 | Shared Canvas and selection coordinates / Canvas座標を共用 |
+| Preview tile/strip | Add / 追加 | Borrowed textures, existing Splitter / 借用textureとSplitter |
+| Card, collapsible section | Add / 追加 | Theme surface and explicit open state / Themeと明示状態 |
+| SettingRow, PropertyGrid, StatusBadge, Skeleton, divider, spacer | Reuse / 既存APIで充足 | Avoid aliases / 別名APIを増やさない |
+| Sort/filter table headers, row actions | Reuse / 既存APIで充足 | DataTable/TreeDataGrid, native table APIs |
+| Virtual list/grid | Reuse / 既存APIで充足 | VirtualList/AssetBrowser providers |
+| Tree/list reorder, generic drag feedback | Defer / 将来保留 | Native drag-drop available; move constraints belong to host / 移動契約はホスト次第 |
+| Multi-selection action bar | Add / 追加 | Selection count and command view / 件数と候補のみ |
+| Inspector/property groups | Reuse / 既存APIで充足 | PropertyGrid, SettingRow, SectionHeader |
+| Range, marquee/lasso feedback | Reuse / 既存APIで充足 | Selection, CanvasSelection |
+| Zoom toolbar | Add / 追加 | Shared image state / 画像状態を共用 |
+| Minimap/overview | Defer / 将来保留 | Separate overview-content contract not introduced / 別content契約を増やさない |
+| Undo/redo state, shortcut hints | Reuse / 既存APIで充足 | Command disabled state and shortcut; host owns history |
+| Help callout, validation summary | Add / 追加 | Borrowed explanations/issues, no validation engine |
+| Confirmation/destructive guard | Reuse / 既存APIで充足 | AlertDialog, Destructive ActionButton; host applies accepted request |
+| Recent/favorite/pin | Reuse / 既存APIで充足 | Existing icons, commands, AssetBrowser; host owns lists |
+| Two/three-pane workspace | Reuse / 既存APIで充足 | AdaptiveSplitLayout, Splitter, native tables |
+| Domain processing, device control, persistence | Exclude / 対象外 | Outside UI-library responsibility / UIライブラリの責務外 |

@@ -98,3 +98,9 @@ native GalleryのEditor Core／Video Editor／CG Editorを開きます。`--veri
 ## デザインシステム基盤
 
 [API移行・provider所有権・今回の実装範囲](design-system.md)を参照してください。
+
+## 汎用ワークフローと画像部品
+
+[API・所有権・座標系・Gallery](workflow-components.md)を参照してください。
+Generic Workspace、Feedback / States、Preview Tilesを使います。通知時刻・queue、
+texture、選択、resize寸法はホストの状態として保持してください。

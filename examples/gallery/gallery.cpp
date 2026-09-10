@@ -458,8 +458,8 @@ void Show(GalleryState &s) {
     SetNextWindowSize(ImGui::GetIO().DisplaySize);
     Begin("Precision Layers catalog", nullptr,
           ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
-    const char* pages[]={"Components: Basic","Numeric / Units","Input / Media","Hierarchy / Table","Overlay / Layout","Composites","Icons","Editor Core","Video","CG","Foundations","Components","Patterns","Accessibility","Responsive"};
-    SetNextItemWidth(std::min(260.f,GetContentRegionAvail().x*.5f)); Combo("##section",&s.page,pages,15);
+    const char* pages[]={"Components: Basic","Numeric / Units","Input / Media","Hierarchy / Table","Overlay / Layout","Composites","Icons","Editor Core","Video","CG","Foundations","Components","Patterns","Accessibility","Responsive","Generic Workspace","Feedback / States","Preview Tiles"};
+    SetNextItemWidth(std::min(260.f,GetContentRegionAvail().x*.5f)); Combo("##section",&s.page,pages,18);
     SameLine(); if(Button("Appearance")) OpenPopup("appearance");
     if(BeginPopup("appearance")) {
         if(Checkbox("Dark",&s.dark)) { auto fonts=s.theme.fonts; s.theme=MakeTheme(s.dark?ColorScheme::Dark:ColorScheme::Light,s.theme.contrast,s.theme.density); s.theme.fonts=fonts; }
@@ -475,6 +475,7 @@ void Show(GalleryState &s) {
                ImGuiChildFlags_Borders, s.page == 4 ? ImGuiWindowFlags_MenuBar : 0);
     PushItemWidth(420 * s.scale);
     switch (s.page) {
+    case 15: case 16: case 17: s.workflow.Show(s.page,s); break;
     case 10: case 11: case 12: case 13: case 14:
         s.design.Show(s.page,s.theme); break;
     case 0:

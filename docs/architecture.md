@@ -1,5 +1,12 @@
 # Architecture / 設計
 
+Generic workflow components extend patterns; image/preview components belong to
+Editor Core and reuse Canvas/Selection/Splitter. Base imkit does not depend on Editor
+Core. See [public contracts](workflow-components.md).
+
+汎用ワークフローはpatternsの拡張、画像・previewはEditor Coreに配置し、Canvas・Selection・
+Splitterを共用します。基本imkitからEditor Coreへの依存はありません。
+
 The cross-cutting design-system additions, explicit semantic frame, locale and provider contracts are documented in [design-system.md](design-system.md). Legacy palette/metrics are rendering projections of the new semantic tokens when using `MakeTheme`/`ResolveTheme`.
 
 横断デザインシステム、明示的な意味frame、locale、provider契約は[刷新文書](design-system.md)に記録します。`MakeTheme`/`ResolveTheme`では従来palette/metricsを新tokenの描画用導出値として扱います。

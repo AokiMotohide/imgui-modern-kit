@@ -35,7 +35,8 @@ bool SearchField(const char* id,char* text,std::size_t capacity,ComponentOptions
 StableId CommandPalette(const char* id,CommandPaletteState& s,std::span<const Command> commands,ComponentOptions o) {
     if(s.open && !ImGui::IsPopupOpen(id)) ImGui::OpenPopup(id);
     if(!s.open) return 0;
-    ImGui::SetNextWindowSize({std::min(560.f,ImGui::GetMainViewport()->WorkSize.x-24),0},ImGuiCond_Appearing);
+    ImGui::SetNextWindowSize({std::max(1.f,std::min(560.f,ImGui::GetMainViewport()->WorkSize.x-24)),0},ImGuiCond_Appearing);
+    ImGui::SetNextWindowSizeConstraints({1,1},{std::max(1.f,ImGui::GetMainViewport()->WorkSize.x),std::max(1.f,ImGui::GetMainViewport()->WorkSize.y)});
     StableId result=0;
     if(ImGui::BeginPopupModal(id,&s.open,ImGuiWindowFlags_AlwaysAutoResize)) {
         if(ImGui::IsWindowAppearing()) ImGui::SetKeyboardFocusHere();
@@ -49,6 +50,14 @@ StableId CommandPalette(const char* id,CommandPaletteState& s,std::span<const Co
             ImGui::PushID(static_cast<int>(c.id>>32)); ImGui::PushID(static_cast<int>(c.id));
             ImGui::BeginDisabled(c.disabled);
             bool hit=ImGui::Selectable(c.label,index==s.focused);
+            if(o.accessibility) {
+                accessibility::SemanticNode node;node.id=ImGui::GetItemID();node.parent=o.parent;node.name=c.label;
+                node.description=c.disabled?c.disabledReason:c.shortcut;node.role=accessibility::SemanticRole::MenuItem;
+                node.state.selected=index==s.focused;node.actions=accessibility::SemanticAction::Press|accessibility::SemanticAction::Focus;
+                accessibility::AnnotateLastItem(*o.accessibility,node);
+                if(o.accessibility->Take(node.id,accessibility::SemanticAction::Press)&&!c.disabled)hit=true;
+                if(o.accessibility->Take(node.id,accessibility::SemanticAction::Focus)&&!c.disabled){s.focused=index;ImGui::SetKeyboardFocusHere(-1);ImGui::SetNavCursorVisible(true);}
+            }
             if(!c.disabled && (hit || (index==s.focused && ImGui::IsKeyPressed(ImGuiKey_Enter)))) result=c.id;
             if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) || ImGui::IsItemFocused())
                 ImGui::SetTooltip("%s",c.disabled?c.disabledReason:c.shortcut);

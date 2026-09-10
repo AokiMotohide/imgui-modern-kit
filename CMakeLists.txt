@@ -41,7 +41,7 @@ if(NOT TARGET "${IMKIT_IMGUI_TARGET}")
         "Create the Dear ImGui target before adding imgui-modern-kit.")
 endif()
 
-add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/components.cpp src/icons.cpp src/accessibility.cpp src/patterns.cpp)
+add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/components.cpp src/icons.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp)
 add_library(imkit::imkit ALIAS imkit)
 
 target_compile_features(imkit PUBLIC cxx_std_20)
@@ -80,7 +80,7 @@ if(IMKIT_BUILD_ACCESSIBILITY_WIN32)
     target_compile_definitions(imkit_accessibility_win32 PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
     install(TARGETS imkit_accessibility_win32 EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
-add_library(imkit_editor_core STATIC src/editor_core.cpp)
+add_library(imkit_editor_core STATIC src/editor_core.cpp src/editor_canvas.cpp)
 add_library(imkit::editor_core ALIAS imkit_editor_core)
 set_target_properties(imkit_editor_core PROPERTIES EXPORT_NAME editor_core DEBUG_POSTFIX d)
 target_link_libraries(imkit_editor_core PUBLIC imkit::imkit)
@@ -154,6 +154,7 @@ if(IMKIT_BUILD_GALLERY)
         examples/gallery/main.cpp
         examples/gallery/gallery.cpp
         examples/gallery/design_pages.cpp
+        examples/gallery/workflow_pages.cpp
         examples/gallery/editor_workspaces.cpp
         examples/gallery/allocation_probe.cpp
         examples/gallery/gallery.h
@@ -198,6 +199,12 @@ endif()
 
 if(IMKIT_BUILD_TESTS)
     include(CTest)
+    add_executable(imkit_workflow_test tests/workflow.cpp examples/gallery/allocation_probe.cpp)
+    target_link_libraries(imkit_workflow_test PRIVATE imkit::editor_core)
+    add_test(NAME imkit.workflow COMMAND imkit_workflow_test)
+    add_executable(imkit_workflow_api_compile tests/workflow_api_compile.cpp)
+    target_link_libraries(imkit_workflow_api_compile PRIVATE imkit::editor_core)
+    add_test(NAME imkit.workflow_api_compile COMMAND imkit_workflow_api_compile)
     add_executable(imkit_design_system_test tests/design_system.cpp examples/gallery/allocation_probe.cpp)
     target_link_libraries(imkit_design_system_test PRIVATE imkit::imkit)
     add_test(NAME imkit.design_system COMMAND imkit_design_system_test)

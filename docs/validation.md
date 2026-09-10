@@ -1,5 +1,37 @@
 # Validation / 検証
 
+## Generic workflow extension / 汎用部品拡張（2026-09-11）
+
+- Debug workflow tests passed: notification replacement/expiry/priority/capacity,
+  Step mouse/keyboard/disabled IDs, dismissal, tile selection/resize/cancel and parent
+  disabled semantics, overflow commands, palette actions, modal Begin/End, empty
+  geometry, image fit/fill/clamp/zoom anchor, and two context lifetimes.
+- Warmed composed controls produced zero measured C++ and ImGui allocations.
+- Native API, design-system and Editor Core direct regressions passed. New API fixture
+  passed in Debug/Release; source and relocated SDK consumers compiled, linked and ran.
+- Debug/Release Gallery built. Public IO exercised filter click and cursor zoom.
+  `out/workflow-final/` contains 38 native GPU captures; representative workspace,
+  feedback, tile and narrow Japanese frames were visually inspected.
+- Debug/Release install includes both new headers. The optional Win32 accessibility
+  Release library was built because the existing install manifest requires it.
+
+Debugでは通知更新・期限・優先度・容量、Stepのclick／keyboard／disabled／ID分離、dismiss、
+Tile選択・resize・取消・親disabled、overflow command、Palette、modalのBegin/End、
+空geometry、fit／fill／clamp／zoom中心、2回のContext生成を検証しました。
+定常frameのC++／ImGui allocationは0でした。既存native API・design system・Editor Coreの
+直接回帰、新規APIのDebug／Release fixture、source／relocated SDK consumerのcompile・link・
+実行も合格しています。Debug／Release Galleryをbuildし、公開IOによるfilter click・cursor zoomと
+38枚のnative GPU captureを取得、代表的なworkspace・feedback・Tile・狭幅日本語を目視確認しました。
+Debug／Release installに新規headerを収録し、既存installが要求する任意Win32 accessibilityの
+Release libraryもbuildしました。
+
+These checks do not cover every state combination, native OS/IME input, real
+screen-reader operation, external application integration or release publication.
+No claim is made that pre-existing Editor Suite acceptance is complete.
+
+全状態組合せ、native OS/IME、実スクリーンリーダー、他アプリ統合、Release公開は未実施です。
+既存Editor Suiteの全受け入れ項目を今回の結果で完了扱いにはしません。
+
 Design-system foundation verification and remaining implementation: [design-system.md](design-system.md#recorded-verification--今回の検証). This is separate from the Editor Suite 2.0 record below.
 
 デザインシステム基盤の検証・残る実装は[刷新文書](design-system.md)を参照してください。以下のEditor Suite 2.0記録とは別の検証です。
