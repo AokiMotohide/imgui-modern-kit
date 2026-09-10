@@ -5,6 +5,14 @@
 #include <array>
 int main() {
     using namespace imkit;
+    double (*fadeEvaluator)(editor::Tick,editor::Tick,const video::FadeView &)=&video::EvaluateFade;
+    void (*transitionShelf)(const char *,const IconAtlas *)=&video::TransitionShelf;
+    void (*fadePicker)(const char *,const video::ClipView &,const video::FadeView &,std::uint64_t,editor::EventBuffer &,bool)=&video::FadePicker;
+    (void)fadePicker;
+    video::TimelineEditingProvider timelineEditing;
+    video::CutTransitionView cutView;
+    (void)transitionShelf;(void)timelineEditing;(void)cutView;
+    if(fadeEvaluator(25,100,{50,0})!=.5) return 3;
     cg::Transform affineTransform;affineTransform.shear={.1,.2,.3};
     const auto affineBasis=cg::LinearBasis(affineTransform),normalBasis=cg::NormalBasis(affineTransform);
     if (affineBasis.y.x!=.1 || normalBasis.x.x!=1) return 2;

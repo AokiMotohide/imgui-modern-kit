@@ -1,5 +1,9 @@
 # Editor Suite 2.0
 
+[Timeline editing / タイムライン編集](timeline-editing.md) documents independent fades,
+cut transitions, track management and selection/clipboard operations.
+独立したフェード、境界トランジション、トラック管理、選択・クリップボード操作は上記を参照してください。
+
 ImKit provides reusable C++20 editor controls on Dear ImGui 1.92.9b-docking.
 ImKitはDear ImGui 1.92.9b-docking上の再利用可能なC++20編集部品です。
 

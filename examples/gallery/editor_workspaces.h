@@ -62,6 +62,27 @@ struct EditorWorkspaces {
         uvSelectionStorage{};
     editor::Selection selection{selectionStorage}, objectSelection{objectSelectionStorage},
         keySelection{keySelectionStorage}, uvSelection{uvSelectionStorage};
+    std::array<editor::StableId,1024> trackSelectionStorage{};
+    editor::Selection trackSelection{trackSelectionStorage};
+    std::vector<editor::StableId> boxClipIds;
+    struct ClipboardClip {
+        video::ClipView clip;
+        int trackOffset=0;
+        video::TrackKind kind=video::TrackKind::Video;
+        std::vector<video::EnvelopePoint> envelope;
+        std::vector<editor::Keyframe> keys;
+        std::string label;
+        std::array<double,4> properties{1,1,0,1};
+        std::array<unsigned,4> flags{};
+        std::array<std::vector<editor::Keyframe>,4> propertyChannels;
+    };
+    std::vector<ClipboardClip> clipboard;
+    const video::ClipView *FindClip(editor::StableId id) const;
+    editor::StableId DestinationTrack(editor::StableId source,editor::StableId anchor,editor::StableId hovered) const;
+    bool CanMoveClips(std::span<const editor::StableId> ids,editor::Tick delta,editor::StableId anchor,editor::StableId hovered);
+    void ConfigureTimelineEditing(video::TimelineProvider &provider);
+    bool ApplyTimelineEdits();
+    void SliceTimelineClip(video::ClipView &clip,editor::Tick offset,editor::Tick originalDuration);
     std::array<editor::Event, 128> eventStorage{};
     std::array<double, 4> clipPropertyValues{1, 1, 0, 1};
     struct ClipProperties {std::array<editor::StableId,4> ids{};std::array<double,4> values{1,1,0,1};};
@@ -185,6 +206,8 @@ struct EditorWorkspaces {
         editor::StableId cameraObject;
         decltype(EditorWorkspaces::nextId) nextId;
         std::vector<editor::StableId> clipsSelected, objectsSelected, keysSelected, stripsSelected;
+        std::vector<editor::StableId> tracksSelected;
+        editor::StableId activeTrack=0;
         editor::StableId activeClip=0, activeObject=0, activeKey=0, activeStrip=0;
     };
     std::vector<std::unique_ptr<Snapshot>> history;

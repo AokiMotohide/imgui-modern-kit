@@ -766,8 +766,8 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
                     ImGui::SameLine();
                 }
                 if(s.icons) {
-                    constexpr IconId kinds[]{IconId::Cube,IconId::Folder,IconId::Mesh,IconId::Camera,IconId::Light,IconId::Layers,IconId::Modifier};
-                    Icon(*s.icons,row.kind==ObjectKind::Collection && row.expanded?IconId::FolderOpen:kinds[static_cast<int>(row.kind)],{16*ImGui::GetFontSize()/14});ImGui::SameLine();
+                    constexpr IconId kinds[]{IconId::Empty,IconId::Collection,IconId::Mesh,IconId::Camera3D,IconId::PointLight,IconId::Layers,IconId::Modifier};
+                    Icon(*s.icons,row.icon!=IconId::Count ? row.icon : kinds[static_cast<int>(row.kind)],{16*ImGui::GetFontSize()/14});ImGui::SameLine();
                 }
                 if (row.kind!=ObjectKind::Object) {
                     ImGui::TextDisabled("%s",s.labels.kinds[static_cast<int>(row.kind)+1]);ImGui::SameLine();

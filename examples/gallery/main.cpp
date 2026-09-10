@@ -610,6 +610,36 @@ void VerifyLinkedClips(Host &h,const std::filesystem::path &out) {
     h.Frame([](auto &io){io.AddMouseButtonEvent(1,true);});h.Frame([](auto &io){io.AddMouseButtonEvent(1,false);});
     h.Frame({},out/"clip-relations-menu-japanese.png");h.Key(ImGuiKey_Escape);
 }
+void VerifyTimelineUI(Host &h,const std::filesystem::path &out) {
+    using namespace imkit;
+    auto &s=h.s.editors;s.japanese=false;s.tracks={{710,"Video A"},{711,"Video B"},{712,"Video C"}};
+    s.clips.clear();s.selection.Clear();s.trackSelection.Clear();s.timeline.canvas.origin={0,0};s.timeline.canvas.scale={120,1};
+    for(int i=0;i<2;++i) {video::ClipView c;c.id=810+i;c.track=710;c.label="Editable clip";c.start=editor::FromSeconds(2*i);c.duration=editor::FromSeconds(2);c.sourceIn=editor::FromSeconds(10);s.clips.push_back(c);}
+    s.selection.Set(810);s.RebuildTrackLayout();s.RebuildClipIndex();s.RebuildKeyIndex();h.Page(8);
+    std::ofstream log(out/"timeline-ui.txt");
+    const auto require=[&](bool ok,const char *message){log<<(ok ? "PASS " : "FAIL ")<<message<<'\n';log.flush();if(!ok) throw std::runtime_error(message);};
+    const auto origin=s.timeline.view.min;
+    h.mouse={origin.x+s.timeline.headerWidth+5,origin.y+11};h.Settle();
+    h.Frame([](ImGuiIO &io){io.AddMouseButtonEvent(0,true);});
+    require(s.timeline.fadeDrag.active,"native Gallery captures zero-length fade handle");
+    h.mouse.x+=60;h.Frame();
+    require(s.FindClip(810)->fades.inDuration==0 && s.timeline.fadeDrag.draft.proposed.first>0,"native fade drag previews without host mutation");
+    h.Frame([](ImGuiIO &io){io.AddMouseButtonEvent(0,false);});h.Settle();
+    require(s.FindClip(810)->fades.inDuration>0 && s.FindClip(810)->duration==editor::FromSeconds(2),"native fade release updates host without trimming clip");
+    h.mouse={-100,-100};h.Frame({},out/"timeline-fade.png");
+    require(s.Undo() && s.FindClip(810)->fades.inDuration==0,"native gesture has one undo");h.Settle();
+    h.ClickAt({origin.x+55,origin.y+9});
+    h.Frame([](ImGuiIO &io){io.AddKeyEvent(ImGuiMod_Ctrl,true);});
+    h.ClickAt({origin.x+55,origin.y+75});h.Frame([](ImGuiIO &io){io.AddKeyEvent(ImGuiMod_Ctrl,false);});
+    require(s.trackSelection.count==2,"native track multi-selection is independent");
+    h.mouse={origin.x+55,origin.y+9};h.Settle();h.Frame([](ImGuiIO &io){io.AddMouseButtonEvent(0,true);});
+    h.mouse={origin.x+55,origin.y+static_cast<float>(s.trackOffsets[2])+15};h.Frame();h.Frame();h.Frame([](ImGuiIO &io){io.AddMouseButtonEvent(0,false);});h.Settle();
+    require(s.tracks[0].id==712 && s.tracks[1].id==710 && s.tracks[2].id==711,"native multi-track drag appends and preserves order");
+    h.mouse={-100,-100};h.Frame({},out/"timeline-track-reorder.png");
+    s.Dataset(true);h.Settle();
+    require(s.clips.size()>=100000 && s.queriedClips<1000 && s.queriedTracks<64,"100k fixture queries only visible timeline rows and clips");
+    log<<"Public ImGui IO with native OpenGL backbuffer; native OS/IME input is not tested.\n";
+}
 void VerifyTrackControls(Host &h,const std::filesystem::path &out) {
     using namespace imkit;
     auto &s=h.s.editors;s.japanese=false;s.timeline.headerWidth=340;
@@ -701,6 +731,59 @@ void VerifyColor(Host &h, const std::filesystem::path &out) {
     }
 }
 } // namespace
+int VerifyTimelineModel() {
+    using namespace imkit;
+    auto storage=std::make_unique<gallery::EditorWorkspaces>();auto &s=*storage;s.Initialize();
+    s.tracks={{71,"Video A"},{72,"Video B"},{73,"Video C"},{74,"Audio",video::TrackKind::Audio}};
+    s.clips.clear();
+    for(int i=0;i<2;++i) {video::ClipView c;c.id=81+i;c.track=71;c.label="Clip";c.start=editor::FromSeconds(1+2*i);c.duration=editor::FromSeconds(2);c.sourceIn=editor::FromSeconds(10);s.clips.push_back(c);}
+    s.selection.Set(81);s.trackSelection.Set(71);s.RebuildTrackLayout();s.RebuildClipIndex();
+    video::TimelineProvider p;s.ConfigureTimelineEditing(p);
+    int failures=0;auto check=[&](bool ok,const char *message){std::printf("%s %s\n",ok ? "PASS" : "FAIL",message);if(!ok) ++failures;};
+    const auto edit=[&](editor::StableId id,editor::EditKind kind,editor::Value value) {
+        s.events.Clear();s.events.Push({id,s.revision,editor::Phase::Begin,kind});
+        s.events.Push({id,s.revision,editor::Phase::Commit,kind,{},value});s.ApplyEvents();
+    };
+    edit(81,editor::EditKind::ClipFades,{editor::FromSeconds(.5),editor::FromSeconds(.25),0,0,1,2});
+    check(s.FindClip(81)->fades.inDuration==editor::FromSeconds(.5),"host applies independent fade");
+    check(s.Undo() && s.FindClip(81)->fades.inDuration==0,"fade undo restores model");
+    check(s.Undo(true) && s.FindClip(81)->fades.outCurve==video::FadeCurve::EaseOut,"fade redo restores curve");
+    s.tracks[0].locked=true;const auto rev=s.revision;edit(81,editor::EditKind::ClipFades,{});
+    check(s.revision==rev && s.FindClip(81)->fades.inDuration>0,"locked fade is rejected");s.tracks[0].locked=false;
+    auto cut=p.editing.cut(&s,81);check(cut.right==82 && cut.limit>0,"adjacent cut exposes media handles");
+    edit(81,editor::EditKind::CutTransition,{editor::FromSeconds(1),0,0,82,static_cast<double>(video::TransitionKind::Dissolve)});
+    check(s.FindClip(81)->outgoingTransition.right==82,"shared transition references both clips");
+    check(s.Undo() && s.FindClip(81)->outgoingTransition.duration==0,"shared transition undo");
+    check(s.CanMoveClips(s.selection.storage.first(1),0,71,72),"cross-track move accepted on compatible track");
+    check(!s.CanMoveClips(s.selection.storage.first(1),0,71,74),"cross-track move rejects incompatible track");
+    check(!s.CanMoveClips(s.selection.storage.first(1),editor::FromSeconds(2),71,71),"move rejects unselected collision");
+    s.selection.Set(82,true);check(s.CanMoveClips(s.selection.storage.first(2),0,71,72),"move excludes complete selected set from collisions");
+    const auto selected=p.editing.box(&s,{editor::FromSeconds(1.5),editor::FromSeconds(3.5)},0,60);
+    check(selected.size()==2,"rectangle intersects clips even without their centers");
+    s.trackSelection.Set(71);s.trackSelection.Set(72,true);
+    const auto oldTracks=s.tracks.size();
+    edit(0,editor::EditKind::TrackEdit,{0,0,static_cast<editor::Tick>(video::TrackAction::Add),0,static_cast<double>(video::TrackKind::Effect)});
+    check(s.tracks.size()==oldTracks+1,"host adds requested track kind");
+    check(s.Undo() && s.tracks.size()==oldTracks && s.trackSelection.count==2,"track undo restores independent selection");
+    s.events.Clear();
+    for(auto id:{71,72}) {editor::Event e{static_cast<editor::StableId>(id),s.revision,editor::Phase::Commit,editor::EditKind::TrackEdit};e.proposed.offset=static_cast<int>(video::TrackAction::Reorder);e.proposed.parent=74;e.operation=71;e.operationSize=2;s.events.Push(e);}
+    s.ApplyEvents();check(s.tracks[0].id==73 && s.tracks[1].id==71 && s.tracks[2].id==72,"multi-track reorder preserves relative order");
+    check(s.Undo() && s.tracks[0].id==71,"multi-track reorder has one undo");
+    s.events.Clear();editor::Event partial{71,s.revision,editor::Phase::Commit,editor::EditKind::TrackEdit};partial.proposed.offset=static_cast<int>(video::TrackAction::Remove);partial.operation=71;partial.operationSize=2;s.events.Push(partial);s.ApplyEvents();
+    check(s.tracks.size()==oldTracks && s.FindClip(81),"partial track batch is rejected");
+    s.selection.Set(81);s.selection.Set(82,true);
+    edit(81,editor::EditKind::Clipboard,{0,0,static_cast<int>(video::ClipboardAction::Copy)});
+    check(s.clipboard.size()==2,"copy captures selected clips");
+    const auto oldClips=s.clips.size();
+    edit(81,editor::EditKind::Clipboard,{editor::FromSeconds(8),0,static_cast<int>(video::ClipboardAction::Paste),72,static_cast<double>(video::PlacementMode::Insert)});
+    check(s.clips.size()==oldClips+2 && s.selection.count==2,"paste creates independently identified clips");
+    check(s.FindClip(s.selection.active)->track==72,"paste uses destination track");
+    check(s.Undo() && s.clips.size()==oldClips,"paste is one undo operation");
+    edit(71,editor::EditKind::TrackEdit,{0,0,static_cast<int>(video::TrackAction::Remove)});
+    check(s.clips.empty() && s.tracks.size()==oldTracks-1,"track removal includes its clips");
+    check(s.Undo() && s.FindClip(81) && s.tracks.size()==oldTracks,"track deletion undo restores clips");
+    return failures ? 1 : 0;
+}
 int VerifyInspectorModel() {
     using namespace imkit;
     auto storage=std::make_unique<gallery::EditorWorkspaces>();
@@ -1244,11 +1327,13 @@ int main(int argc, char **argv) {
     bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false, benchmarkEditors = false, verifyMonitors = false, verifyTrackControls = false, verifyLinkedClips = false, verifyNormals = false;
     int capturePage = -1, animationPage = -1, monitorIndex=-1, captureWidth=1920,captureHeight=1440;
     bool captureJapanese=false;
+    bool verifyTimelineUI=false;
     bool listMonitors=false;
     std::string iconSearch;
     std::filesystem::path out = "out/catalog";
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
+        if (a == "--verify-timeline-model") return VerifyTimelineModel();
         if (a == "--verify-inspector-model")
             return VerifyInspectorModel();
         if (a == "--capture")
@@ -1259,6 +1344,7 @@ int main(int argc, char **argv) {
         else if (a == "--verify-normals") verifyNormals=true;
         else if (a == "--verify-linked-clips") verifyLinkedClips=true;
         else if (a == "--verify-track-controls") verifyTrackControls=true;
+        else if (a == "--verify-timeline-ui") {verifyTimelineUI=true;verifyTrackControls=true;}
         else if (a == "--verify-monitors") verifyMonitors=true;
         else if (a == "--benchmark-editors") benchmarkEditors=true;
         else if (a == "--verify-editors")
@@ -1442,7 +1528,8 @@ int main(int argc, char **argv) {
             if (verify)
                 Verify(h, out);
             if (benchmarkEditors) BenchmarkEditors(h,out);
-            if (verifyTrackControls) VerifyTrackControls(h,out);
+            if(verifyTimelineUI) VerifyTimelineUI(h,out);
+            else if (verifyTrackControls) VerifyTrackControls(h,out);
             if (verifyLinkedClips) VerifyLinkedClips(h,out);
             if (verifyNormals) {
                 h.Page(9);h.s.editors.viewport.normals=true;h.s.editors.viewport.faceNormals=true;
@@ -1495,6 +1582,8 @@ int main(int argc, char **argv) {
                             h.s.iconSizeIndex = 0;
                             h.Settle();
                             h.Frame({}, out / (dark ? "icons-16-dark.png" : "icons-16-light.png"));
+                            h.s.iconSizeIndex=2;h.Settle();
+                            h.Frame({},out/(dark ? "icons-24-dark.png" : "icons-24-light.png"));
                             h.s.iconSizeIndex = 1;
                         }
                     }

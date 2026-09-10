@@ -3088,5 +3088,485 @@
       885,
       915
     ]
+  },
+  {
+    "name": "Empty",
+    "source": "assets/icons/originals/Empty.png",
+    "sha256": "ed9ba72a95a553cb4f025cd9068b6462f89c76e330c66ef008ab0436ef9a9c23",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      229,
+      249,
+      1025,
+      942
+    ]
+  },
+  {
+    "name": "Collection",
+    "source": "assets/icons/originals/Collection.png",
+    "sha256": "ba24f117c7ab2531f71b2182fcc75a25b53815e4cdc522b7626544c46486c081",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      265,
+      304,
+      992,
+      966
+    ]
+  },
+  {
+    "name": "Instance",
+    "source": "assets/icons/originals/Instance.png",
+    "sha256": "136dcc66586c03a39b624ca15ca766b6383a4d8367871b889dabd36d2cf6cf77",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      176,
+      446,
+      1078,
+      844
+    ]
+  },
+  {
+    "name": "PointCloud",
+    "source": "assets/icons/originals/PointCloud.png",
+    "sha256": "16787dc2c63c9d734f4dd4ad06423df85a42f255dd65fbefeeca93a3b1b6c955",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      349,
+      308,
+      905,
+      946
+    ]
+  },
+  {
+    "name": "Curve",
+    "source": "assets/icons/originals/Curve.png",
+    "sha256": "f06e15be47fff65cda9a132d65534ed25b09d3682a1fff656bede6bf931df49f",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      210,
+      351,
+      1046,
+      959
+    ]
+  },
+  {
+    "name": "Plane",
+    "source": "assets/icons/originals/Plane.png",
+    "sha256": "c2e95c0f79854b5db476103e7529c072a3312187d51ae2754f35e0ab9c2e3ada",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      145,
+      312,
+      1109,
+      942
+    ]
+  },
+  {
+    "name": "Sphere",
+    "source": "assets/icons/originals/Sphere.png",
+    "sha256": "b3e8e9a841776f21293a3ba2ef77a6f0639e451dd953be57aa20d4de643fdaa7",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      311,
+      313,
+      943,
+      941
+    ]
+  },
+  {
+    "name": "Cylinder",
+    "source": "assets/icons/originals/Cylinder.png",
+    "sha256": "8dca474ad9fbb4247e7b6ef8341543bf2886ef9850a83feb898fdfc36fbd302a",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      359,
+      310,
+      894,
+      966
+    ]
+  },
+  {
+    "name": "Cone",
+    "source": "assets/icons/originals/Cone.png",
+    "sha256": "0ebc7a0ea6535957d28fb6d6398e0f5f9b81529eb838bd887739cd0e368c203c",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      271,
+      274,
+      983,
+      1006
+    ]
+  },
+  {
+    "name": "Torus",
+    "source": "assets/icons/originals/Torus.png",
+    "sha256": "d13698ce374de70a2c4e86298314ee82e9f0ce0f6492e23e8162fec512c9defb",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      249,
+      321,
+      1027,
+      964
+    ]
+  },
+  {
+    "name": "Camera3D",
+    "source": "assets/icons/originals/Camera3D.png",
+    "sha256": "280343849087481ff731732d36f408c46030b11b5244781997395c734d4bc69e",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      285,
+      330,
+      969,
+      987
+    ]
+  },
+  {
+    "name": "Frustum",
+    "source": "assets/icons/originals/Frustum.png",
+    "sha256": "4120eb70b47dd91c679d65a6259350f44c87d4fb72b8239dfd743162366f58ea",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      304,
+      314,
+      1071,
+      958
+    ]
+  },
+  {
+    "name": "Perspective",
+    "source": "assets/icons/originals/Perspective.png",
+    "sha256": "99332e93e741784a016f675336419490d56c9a92f6528b1ef097ead145352f76",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      135,
+      373,
+      1120,
+      910
+    ]
+  },
+  {
+    "name": "Orthographic",
+    "source": "assets/icons/originals/Orthographic.png",
+    "sha256": "3f1a66b800d9ea7df55f9752f7793af192a6791be3622c7653e9980719909a99",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      228,
+      357,
+      1027,
+      908
+    ]
+  },
+  {
+    "name": "Projector3D",
+    "source": "assets/icons/originals/Projector3D.png",
+    "sha256": "c4995a70bd3530fbf0391be6b80f8d862dc5db3464402d2a49c16b66b3da3571",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      250,
+      435,
+      1004,
+      904
+    ]
+  },
+  {
+    "name": "ProjectionSurface",
+    "source": "assets/icons/originals/ProjectionSurface.png",
+    "sha256": "f35d42f28bed1043155732ac3fc7fa1262cb72e608ca826259a58f21fdd37f56",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      280,
+      305,
+      976,
+      995
+    ]
+  },
+  {
+    "name": "Lens",
+    "source": "assets/icons/originals/Lens.png",
+    "sha256": "0b17cd194910c5a06022203ccd8d6fb3d93295e5c1c3bbe0d37fe23bb855c0c4",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      234,
+      239,
+      1020,
+      1023
+    ]
+  },
+  {
+    "name": "ClippingPlane",
+    "source": "assets/icons/originals/ClippingPlane.png",
+    "sha256": "f85d3f564fd63ec9640cf7175c8a5c895df769724bfd1551d5e2927fdca33d77",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      318,
+      251,
+      968,
+      1049
+    ]
+  },
+  {
+    "name": "PointLight",
+    "source": "assets/icons/originals/PointLight.png",
+    "sha256": "7e74b0e7b377d7007616f1ce1bd858b672a97448c3caa70e7e81bba1bfd28749",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      399,
+      398,
+      855,
+      856
+    ]
+  },
+  {
+    "name": "SpotLight",
+    "source": "assets/icons/originals/SpotLight.png",
+    "sha256": "b652aa871854e829a8bf95a387cf3b832fd6eec84e61fdc02175ef5f1b6f24ea",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      327,
+      372,
+      944,
+      887
+    ]
+  },
+  {
+    "name": "DirectionalLight",
+    "source": "assets/icons/originals/DirectionalLight.png",
+    "sha256": "281eda582e6940f1de890c5b6cdba755eb257db12b1a8ba0d2548db50b4824ad",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      325,
+      323,
+      963,
+      980
+    ]
+  },
+  {
+    "name": "AreaLight",
+    "source": "assets/icons/originals/AreaLight.png",
+    "sha256": "d8f9b58c04ef45ab1abbe74f7f92d5c1f2b9f17024027120e53fc9e175557e1f",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      266,
+      365,
+      989,
+      936
+    ]
+  },
+  {
+    "name": "Environment",
+    "source": "assets/icons/originals/Environment.png",
+    "sha256": "8c6001df800b95b97b52d09d46b979395fd6d856fc96628fbefc9bbd6c28ff1a",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      220,
+      340,
+      1033,
+      907
+    ]
+  },
+  {
+    "name": "World",
+    "source": "assets/icons/originals/World.png",
+    "sha256": "56d3acff37e2114e959a043fbb65887506038a0c4af8482d5419068ae1411fb2",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      249,
+      252,
+      1004,
+      999
+    ]
+  },
+  {
+    "name": "LocalAxes",
+    "source": "assets/icons/originals/LocalAxes.png",
+    "sha256": "9a42e25d71e7ddd00a104e8bce0d30b963e8911868d725c0a0fcda9ac11d1a31",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      321,
+      342,
+      932,
+      902
+    ]
+  },
+  {
+    "name": "BoundingBox",
+    "source": "assets/icons/originals/BoundingBox.png",
+    "sha256": "9c519396a2095c0309af083e5e19ff90ec1a31a6d3f5bb7da62210e6fe8161e6",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      223,
+      259,
+      1031,
+      995
+    ]
+  },
+  {
+    "name": "ClippingBox",
+    "source": "assets/icons/originals/ClippingBox.png",
+    "sha256": "0510d6e71fe3c27e7d372b92c588d717bf303a83b9dc36691a5f7cc0acf7341c",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      206,
+      186,
+      1049,
+      1084
+    ]
+  },
+  {
+    "name": "TrackRemove",
+    "source": "assets/icons/originals/TrackRemove.png",
+    "sha256": "ddfc75e2a4236277ec957ba7c07953a9dd313ab21e2d844584aeabadce47008f",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      273,
+      359,
+      1017,
+      944
+    ]
+  },
+  {
+    "name": "TrackReorder",
+    "source": "assets/icons/originals/TrackReorder.png",
+    "sha256": "baf991f499694655a3b617720d0bbdc7ed47825cd468af2520a7cad0d53a1c79",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      272,
+      392,
+      984,
+      948
+    ]
+  },
+  {
+    "name": "FitSelection",
+    "source": "assets/icons/originals/FitSelection.png",
+    "sha256": "f37dd10a70903e1a3338f4ba3133e5d57d37b8ba56ae22448208272120a36021",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      306,
+      346,
+      948,
+      908
+    ]
+  },
+  {
+    "name": "ClipOpacity",
+    "source": "assets/icons/originals/ClipOpacity.png",
+    "sha256": "512cffddda32234d34042853f2f761afcc8973181ede8ea4fce1840be6470962",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      261,
+      297,
+      993,
+      970
+    ]
+  },
+  {
+    "name": "FadeCurve",
+    "source": "assets/icons/originals/FadeCurve.png",
+    "sha256": "e473654a8fa6ee70ba66e8fc9abb23c4aa4dba2f453586b2a160d007bb0076c6",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      286,
+      354,
+      968,
+      902
+    ]
   }
 ]

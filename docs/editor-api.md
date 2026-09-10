@@ -1,6 +1,16 @@
 # Editor API reference / Editor API reference
 
 These are custom APIs, separate from the generated native Dear ImGui overload inventory.
+Timeline additions: `FadeCurve`, `FadeView`, `EvaluateFade`, `FadePicker`, `CutTransitionView`,
+`TimelineEditingProvider`, `TrackAction`, `ClipboardAction`, and `TransitionShelf`.
+See [timeline editing contracts](timeline-editing.md) for fields, gestures and host ownership.
+追加したタイムラインAPIのフィールド・操作・ホスト所有権は上記契約を参照してください。
+`cg::ObjectView::icon` optionally overrides the Outliner kind icon; `IconId::Count`
+retains the default. `Event::operation/operationSize` describe complete terminal
+edit groups. `CopyClips/CutClips/PasteClips` are bindable commands.
+`ObjectView::icon`でOutlinerの種類別アイコンを指定でき、`Count`は既定の表示を使う。
+`Event::operation/operationSize`は一括確定・取消する編集集合を表す。
+コピー・切り取り・貼り付けのショートカットもホストが設定できる。
 These are the Editor Suite 2.0 APIs. Include only the modules used
 by the host. All module targets publish C++20 and retain the host's ImGui target.
 以下はDear ImGui標準overloadとは別の開発中APIです。必要なmoduleだけをinclude/linkします。

@@ -60,7 +60,7 @@ Releaseにはソースarchiveと、Debug/Release別ライブラリ、CMake設定
 ImKitのコードはMITです。Dear ImGui・GLFWにはそれぞれのライセンス、任意のInter・Noto Sans JPフォントにはSIL OFL 1.1が適用されます。[第三者通知](THIRD_PARTY_NOTICES.md)に原文、出典、固定hashを記載しています。Dear ImGuiやデザイン参照元との提携を示すものではありません。
 ## モダンアイコン
 
-206種類の生成アイコンを、テーマ色・任意色・サイズ指定で利用できます。
+238種類の生成アイコンを、テーマ色・任意色・サイズ指定で利用できます。
 アイコンのみのボタンと文字付きボタンに対応し、GPUリソースはホスト側で管理します。
 導入方法は [アイコン API](docs/icons.md)、実例は Gallery の **Icons** ページを参照してください。
 
@@ -68,7 +68,7 @@ ImKitのコードはMITです。Dear ImGui・GLFWにはそれぞれのライセ�
 
 `editor_core`・`video`・`cg`・`preview_opengl3`・`editor_suite`は、ホスト所有のデータと
 型付きイベントで再利用できる編集部品です。native GalleryでVideo/CG、RGB色補正カーブ、
-animation、UV編集と206アイコンを操作できます。
+animation、UV編集と238アイコンを操作できます。
 [部品契約](docs/editor-suite.md)、[API](docs/editor-api.md)、
 [検証・性能](docs/editor-validation.md)、[実装確認表](docs/editor-implementation-checklist.md)を参照してください。
 

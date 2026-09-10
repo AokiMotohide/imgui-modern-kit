@@ -76,7 +76,11 @@ enum class EditKind {
     TransitionType, // first=in kind, last=out kind; target=clip ID.
     AudioEnvelope, // first=local tick, x=gain, parent=clip ID; offset=0 edit/1 insert/2 remove; insert target=clip, otherwise point.
     RippleDelete, // target=removed clip; related clips are emitted as one reserved batch.
-    CaptionInsert // target=caption track, first=requested start; host chooses a free interval at or after it.
+    CaptionInsert, // target=caption track, first=requested start; host chooses a free interval at or after it.
+    ClipFades, // target=clip; first/last=durations, x/y=FadeCurve.
+    CutTransition, // target=left clip, parent=right clip; first=duration, x=kind; zero removes.
+    TrackEdit, // offset=TrackAction, parent=insertion-before track (zero appends), x=TrackKind.
+    Clipboard // offset=ClipboardAction, first=playhead, parent=target track, x=PlacementMode.
 };
 // Exact integer/time fields must never travel through floating point channels.
 struct Value {
@@ -95,6 +99,8 @@ struct Event {
     Value original{}, proposed{};
     Modifiers modifiers{};
     std::array<char, 256> originalText{}, proposedText{};
+    StableId operation=0; // Nonzero groups one complete multi-target gesture.
+    std::size_t operationSize=0; // Number of member events per phase; zero is legacy.
 };
 struct EventBuffer {
     std::span<Event> storage;
@@ -197,7 +203,8 @@ enum class Command {
     PlayForward,
     Pause,
     ToolSelect, ToolRazor, ToolRipple, ToolRoll, ToolSlip, ToolSlide, ToolHand,
-    GoToStart, GoToEnd, ClearInOut, InsertSource, OverwriteSource, AppendSource
+    GoToStart, GoToEnd, ClearInOut, InsertSource, OverwriteSource, AppendSource,
+    CopyClips, CutClips, PasteClips
 };
 enum class ShortcutPreset { CapCut, Premiere, Blender };
 struct Binding {

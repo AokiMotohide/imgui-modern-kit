@@ -398,7 +398,10 @@ std::size_t MakeBindings(ShortcutPreset preset, std::span<Binding> dst) {
                                 {Command::ToolHand, ImGuiKey_H},
                                 {Command::InsertSource, ImGuiKey_F9},
                                 {Command::OverwriteSource, ImGuiKey_F10},
-                                {Command::AppendSource, ImGuiMod_Shift | ImGuiKey_F9}};
+                                {Command::AppendSource, ImGuiMod_Shift | ImGuiKey_F9},
+                                {Command::CopyClips, ImGuiMod_Ctrl | ImGuiKey_C},
+                                {Command::CutClips, ImGuiMod_Ctrl | ImGuiKey_X},
+                                {Command::PasteClips, ImGuiMod_Ctrl | ImGuiKey_V}};
     auto n = (std::min)(dst.size(), std::size(defaults));
     std::copy_n(defaults, n, dst.begin());
     for (auto &b : dst.first(n)) {

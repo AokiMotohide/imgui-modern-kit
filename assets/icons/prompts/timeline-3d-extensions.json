@@ -1,0 +1,157 @@
+[
+  {
+    "name": "Collection",
+    "prompt": "Create ONE UI icon for Collection: three stacked offset open folders holding a small cube. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "Instance",
+    "prompt": "Create ONE UI icon for Instance: two isometric cubes joined by a small chain. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "PointCloud",
+    "prompt": "Create ONE UI icon for PointCloud: nine small dots forming a volumetric cube. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "Curve",
+    "prompt": "Create ONE UI icon for Curve: a smooth Bezier curve with two control points. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "Plane",
+    "prompt": "Create ONE UI icon for Plane: an isometric flat rectangular plane. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "Sphere",
+    "prompt": "Create ONE UI icon for Sphere: a sphere with equator and meridian. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "Cylinder",
+    "prompt": "Create ONE UI icon for Cylinder: a cylinder with elliptical top and bottom. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "Cone",
+    "prompt": "Create ONE UI icon for Cone: a geometric cone with elliptical base. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "Torus",
+    "prompt": "Create ONE UI icon for Torus: a tilted donut ring simple double ellipse. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "Camera3D",
+    "prompt": "Create ONE UI icon for Camera3D: an isometric box camera with circular lens and small viewfinder. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "Frustum",
+    "prompt": "Create ONE UI icon for Frustum: a wireframe truncated pyramid with small near plane and larger far plane. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "Perspective",
+    "prompt": "Create ONE UI icon for Perspective: perspective converging lines and a distant plane. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "Orthographic",
+    "prompt": "Create ONE UI icon for Orthographic: three parallel projection rays between two rectangles. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "Projector3D",
+    "prompt": "Create ONE UI icon for Projector3D: an isometric low rectangular projector with a large round lens and two ventilation slits. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "ProjectionSurface",
+    "prompt": "Create ONE UI icon for ProjectionSurface: a flat upright screen receiving two projection rays. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "Lens",
+    "prompt": "Create ONE UI icon for Lens: a camera lens formed by concentric rings. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "ClippingPlane",
+    "prompt": "Create ONE UI icon for ClippingPlane: a plane slicing diagonally through a wireframe cube. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "PointLight",
+    "prompt": "Create ONE UI icon for PointLight: a tiny central circle with eight short radial rays. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "SpotLight",
+    "prompt": "Create ONE UI icon for SpotLight: a small spotlight casting a conical beam. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "DirectionalLight",
+    "prompt": "Create ONE UI icon for DirectionalLight: three parallel arrows with a tiny sun. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "AreaLight",
+    "prompt": "Create ONE UI icon for AreaLight: a tilted rectangular light panel emitting three short rays. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "Environment",
+    "prompt": "Create ONE UI icon for Environment: a hemisphere dome over a horizon. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "World",
+    "prompt": "Create ONE UI icon for World: a globe with simple longitude and latitude lines. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "LocalAxes",
+    "prompt": "Create ONE UI icon for LocalAxes: a small isometric cube at the origin of three short axes. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "BoundingBox",
+    "prompt": "Create ONE UI icon for BoundingBox: eight separated corner brackets of an isometric cube. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "ClippingBox",
+    "prompt": "Create ONE UI icon for ClippingBox: a wireframe cube with a diagonal section plane. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "TrackRemove",
+    "prompt": "Create ONE UI icon for TrackRemove: three horizontal track rows and a minus symbol. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "TrackReorder",
+    "prompt": "Create ONE UI icon for TrackReorder: three horizontal track rows with an up down arrow at the side. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "FitSelection",
+    "prompt": "Create ONE UI icon for FitSelection: four corner brackets around a small dotted rectangle. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "ClipOpacity",
+    "prompt": "Create ONE UI icon for ClipOpacity: a clip rectangle containing a half filled circle. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  },
+  {
+    "name": "FadeCurve",
+    "prompt": "Create ONE UI icon for FadeCurve: a clip rectangle containing a rising ease curve. Minimal modern technical outline glyph, consistent thin white strokes, genuinely transparent alpha background. Square canvas, centered, ample padding. Simple geometry readable at 16 pixels. No text, no shadows, no gradients. Match a monochrome modern 3D editor toolbar icon library.",
+    "method": "built-in image_gen"
+  }
+]

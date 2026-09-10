@@ -91,7 +91,10 @@ void EndDrags(TimelineState &s, std::uint64_t revision, bool cancel, editor::Eve
         s.drag.draft.phase = cancel ? editor::Phase::Cancel : editor::Phase::Commit;
         return;
     }
+    const auto operationSize=ActiveDrags(s);
     auto finish = [&](editor::Transaction &tx) {
+        tx.draft.operation=s.original.id;
+        tx.draft.operationSize=operationSize;
         if (cancel) tx.Cancel(out);
         else tx.Commit(revision, out);
     };
@@ -312,9 +315,11 @@ editor::SnapResult ResolveTimelineSnap(const TimelineState &s, Tick delta,
         edge(s.original.start+s.original.duration);
     return best;
 }
+#include "video_editing.inl"
 void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, editor::Selection &selection,
               editor::EventBuffer &out, const Theme &theme, ImVec2 size) {
     ImGui::PushID(id);
+    EditingToolbar(p,s,selection,out);
     const float timelineWidth=size.x>0?size.x:ImGui::GetContentRegionAvail().x;
     constexpr editor::Command toolCommands[]={editor::Command::ToolSelect,editor::Command::ToolRazor,
         editor::Command::ToolRipple,editor::Command::ToolRoll,editor::Command::ToolSlip,editor::Command::ToolSlide,editor::Command::ToolHand};
@@ -380,7 +385,11 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     fit |= editor::CommandPressed(editor::Command::Fit,s.bindings,
         ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows));
     ImGui::SameLine();
-    const bool fitSelected=ImGui::SmallButton("Fit selection");
+    const bool fitSelected=s.icons ? IconButton("fit-selection",*s.icons,IconId::FitSelection,"Fit selection") : ImGui::SmallButton("Fit selection");
+    ImGui::SameLine();
+    if(ImGui::SmallButton("-##zoom")) editor::ZoomAt(s.canvas,{(timelineWidth-s.headerWidth)*.5,0},{1/1.25,1});
+    ImGui::SameLine();
+    if(ImGui::SmallButton("+##zoom")) editor::ZoomAt(s.canvas,{(timelineWidth-s.headerWidth)*.5,0},{1.25,1});
     auto fitRange=p.contentRange;
     if (fitSelected && p.selected && selection.count) {
         const auto selected=p.selected(p.user,selection.storage.first(selection.count));
@@ -447,8 +456,19 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     auto view = editor::BeginCanvas("tracks", passiveCanvas, size, theme);
     view.visible=editor::VisibleRange(s.canvas,{view.max.x-view.min.x,view.max.y-view.min.y});
     s.view = view;
+    if(s.trackSelection && !s.drag.active && !s.fadeDrag.active && !s.cutDrag.active) {
+        constexpr editor::Command commands[]{editor::Command::CopyClips,editor::Command::CutClips,editor::Command::PasteClips};
+        for(int i=0;i<3;++i) if(editor::CommandPressed(commands[i],s.bindings,ImGui::IsWindowFocused()) && (i==2 || selection.count)) {
+            editor::Value value;value.offset=i;value.first=s.time.playhead;value.parent=s.trackSelection->active;value.x=static_cast<int>(s.pasteMode);
+            EditingAction(out,selection.active,p.revision,editor::EditKind::Clipboard,{},value);
+        }
+    }
     auto *draw = ImGui::GetWindowDrawList();
     const auto &io = ImGui::GetIO();
+    detail::ResumeTerminal(s.fadeDrag,p.revision,out);
+    detail::ResumeTerminal(s.cutDrag,p.revision,out);
+    bool fadeSeen=false,cutSeen=false;
+    s.hoveredTrack=0;
     detail::ResumeTerminal(s.transitionDrag,p.revision,out);
     if (s.transitionDrag.active && (p.revision!=s.transitionDrag.draft.revision || ImGui::IsKeyPressed(ImGuiKey_Escape)))
         s.transitionDrag.Cancel(out);
@@ -494,7 +514,9 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         ImGui::SetCursorScreenPos(cursor);ImGui::Dummy({0,0});
     }
     // Track rows are indexed independently from time; no all-track query or clip scan.
-    if (view.hovered && io.MouseWheel && !io.KeyCtrl)
+    if(view.hovered && io.MouseWheel && io.KeyShift && !io.KeyCtrl)
+        s.canvas.origin.x-=io.MouseWheel*64/s.canvas.scale.x;
+    if (view.hovered && io.MouseWheel && !io.KeyCtrl && !io.KeyShift)
         s.verticalScroll = (std::max)(0., s.verticalScroll - io.MouseWheel * s.rowHeight);
     const double totalHeight = p.layout ? p.totalHeight : p.trackCount*s.rowHeight;
     if (totalHeight>0)
@@ -529,6 +551,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         const float rowHeight=p.layout ? TrackExtent(track) : s.rowHeight;
         float y = view.min.y + static_cast<float>(rowTop-s.verticalScroll);
         rowTop+=rowHeight;
+        if(io.MousePos.y>=y && io.MousePos.y<y+rowHeight && view.hovered) s.hoveredTrack=track.id;
         draw->AddRectFilled({view.min.x, y}, {view.max.x, y + rowHeight - 2},
                             ImGui::GetColorU32(theme.editor.trackHeader));
         ImGui::SetCursorScreenPos({view.min.x + 4, y + 3});
@@ -548,11 +571,44 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         }
         const auto nameMin=ImGui::GetCursorScreenPos();
         const float nameWidth=std::max(1.f,view.min.x+s.headerWidth-4-nameMin.x);
-        ImGui::InvisibleButton("track-name",{nameWidth,ImGui::GetFontSize()},ImGuiButtonFlags_MouseButtonRight);
+        ImGui::InvisibleButton("track-name",{nameWidth,ImGui::GetFontSize()},ImGuiButtonFlags_MouseButtonRight|ImGuiButtonFlags_MouseButtonLeft);
+        if(s.trackSelection) {
+            if(ImGui::IsItemClicked(0) && (!s.trackSelection->Contains(track.id) || io.KeyCtrl))
+                if(!s.trackSelection->Set(track.id,io.KeyShift || io.KeyCtrl,io.KeyCtrl)) out.overflow=true;
+            if(s.trackSelection->Contains(track.id)) draw->AddRectFilled({view.min.x,y},{view.min.x+3,y+rowHeight},ImGui::GetColorU32(theme.colors.accent));
+            if(!track.locked && ImGui::BeginDragDropSource()) {
+                if(s.icons) {Icon(*s.icons,IconId::TrackReorder,{16});ImGui::SameLine();}
+                ImGui::SetDragDropPayload("IMKIT_TRACKS",&p.revision,sizeof(p.revision));
+                ImGui::Text("Move %zu tracks",s.trackSelection->count);ImGui::EndDragDropSource();
+            }
+            if(ImGui::BeginDragDropTarget()) {
+                if(const auto *payload=ImGui::AcceptDragDropPayload("IMKIT_TRACKS")) {
+                    std::uint64_t revision=0;if(payload->DataSize==sizeof(revision)) std::memcpy(&revision,payload->Data,sizeof(revision));
+                    if(revision==p.revision && !track.locked && !s.trackSelection->Contains(track.id)) {
+                        const auto before=p.editing.trackAfter && io.MousePos.y>nameMin.y+ImGui::GetFontSize()*.5f ? p.editing.trackAfter(p.editing.user,track.id) : track.id;
+                        TrackActions(p,s,out,TrackAction::Reorder,before);
+                    }
+                }
+                ImGui::EndDragDropTarget();
+            }
+        }
         const ImVec4 nameClip{nameMin.x,y,view.min.x+s.headerWidth-4,y+rowHeight};
         draw->AddText(ImGui::GetFont(),ImGui::GetFontSize(),nameMin,ImGui::GetColorU32(theme.colors.text),track.label,nullptr,0,&nameClip);
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s",track.label);
         if (ImGui::BeginPopupContextItem("track layout")) {
+            if(s.trackSelection) {
+                if(s.renamingTrack!=track.id || s.renameRevision!=p.revision) {
+                    s.renamingTrack=track.id;s.renameRevision=p.revision;
+                    std::snprintf(s.trackName.data(),s.trackName.size(),"%s",track.label);
+                }
+                ImGui::BeginDisabled(track.locked);
+                if(ImGui::InputText("Name",s.trackName.data(),s.trackName.size(),ImGuiInputTextFlags_EnterReturnsTrue) && s.trackName[0] && ReserveEvents(out,2)) {
+                    editor::Event e{track.id,p.revision,editor::Phase::Begin,editor::EditKind::Rename};
+                    std::snprintf(e.originalText.data(),e.originalText.size(),"%s",track.label);e.proposedText=s.trackName;
+                    out.Push(e);e.phase=editor::Phase::Commit;out.Push(e);ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndDisabled();
+            }
             if(track.kind==TrackKind::Caption) {
                 if(s.icons) {Icon(*s.icons,IconId::CaptionAdd,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
                 if(ImGui::MenuItem(s.labels.addCaption,nullptr,false,!track.locked) && ReserveEvents(out,2)) {
@@ -636,6 +692,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 value = s.previousDrag.draft.proposed;
             if (s.nextDrag.active && s.nextOriginal.id == clip.id)
                 value = s.nextDrag.draft.proposed;
+            if(value.parent!=clip.track) continue; // Destination row draws the move preview.
             float x =
                 view.min.x + s.headerWidth +
                 static_cast<float>((editor::Seconds(value.first) - s.canvas.origin.x) * s.canvas.scale.x);
@@ -652,7 +709,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             draw->AddRectFilled(a, b, ImGui::GetColorU32(color), 4);
             draw->AddRect(a, b, ImGui::GetColorU32(selected ? theme.colors.focus : theme.colors.border), 4, 0,
                           selected ? 2.f : 1.f);
-            const float nameY=y+4+((clip.transitionIn || clip.transitionOut) ? ImGui::GetFontSize() : 3.f);
+            const bool editBand=clip.transitionIn || clip.transitionOut || p.editing.fades || p.editing.cut;
+            const float nameY=y+4+(editBand ? ImGui::GetFontSize()+3.f : 3.f);
             const ImVec4 textBounds{x+4,a.y+1,end-4,b.y-1};
             auto text=[&](ImVec2 position,ImU32 color,const char *label,float right) {
                 const ImVec4 bounds{textBounds.x,textBounds.y,std::min(textBounds.z,right),textBounds.w};
@@ -951,6 +1009,12 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 };
                 drawMoved(s.keyDrag);for (const auto &drag:s.keyCompanions.first(s.keyCompanionCount)) drawMoved(drag);
             }
+            const auto editCursor=ImGui::GetCursorScreenPos();
+            bool directHit=FadeControls(clip,track,p,s,a,b,out,theme);
+            directHit|=CutControl(clip,track,p,s,a,b,out,theme);
+            fadeSeen|=s.fadeDrag.active && s.fadeDrag.draft.target==clip.id;
+            cutSeen|=s.cutDrag.active && s.cutDrag.draft.target==clip.id;
+            ImGui::SetCursorScreenPos(editCursor);ImGui::Dummy({0,0});
             Tick transitionIn=clip.transitionIn,transitionOut=clip.transitionOut;
             const bool editingTransition=s.transitionDrag.active && s.transitionDrag.draft.target==clip.id;
             if (editingTransition) {
@@ -979,8 +1043,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     transitionOut=s.transitionDrag.draft.proposed.last;
                 }
             }
-            bool transitionHit=false;
-            for (int side=0;side<2;++side) {
+            bool transitionHit=directHit;
+            for (int side=0;side<2 && !p.editing.fades && !p.editing.cut;++side) {
                 const auto type=side ? clip.transitionOutKind : clip.transitionInKind;
                 const bool centered=p.transitionLimit && (type==TransitionKind::Dissolve || type==TransitionKind::Crossfade);
                 const double extent=centered ? .5 : 1.;
@@ -1136,9 +1200,9 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     }
                 }
             }
-            if (hit && s.tool!=Tool::Hand && !envelopeHit && !s.envelopeDrag.active && !keyHit && !s.keyDrag.active && !transitionHit && !s.transitionDrag.active && s.editingCaption != clip.id && ImGui::IsMouseClicked(0) && !track.locked &&
+            if (hit && s.tool!=Tool::Hand && !envelopeHit && !s.envelopeDrag.active && !keyHit && !s.keyDrag.active && !transitionHit && !s.fadeDrag.active && !s.cutDrag.active && !s.transitionDrag.active && s.editingCaption != clip.id && ImGui::IsMouseClicked(0) && !track.locked &&
                 !clip.locked && !s.drag.active) {
-                if ((!selection.Contains(clip.id) || io.KeyCtrl) && !selection.Set(clip.id,io.KeyCtrl,io.KeyCtrl)) {
+                if ((!selection.Contains(clip.id) || io.KeyCtrl) && !selection.Set(clip.id,io.KeyCtrl || io.KeyShift,io.KeyCtrl)) {
                     out.overflow=true;continue;
                 }
                 if (!selection.Contains(clip.id)) continue; // Toggle-off is selection only.
@@ -1240,6 +1304,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                         s.memberCount = 0;
                         s.original = clip;
                         s.mouseStart = {io.MousePos.x, io.MousePos.y};
+                        s.moveTrack=clip.track;s.moveRejected=false;
                         s.drag.Begin(clip.id, p.revision, kind, Value(clip), editor::CurrentModifiers(), out);
                         if (adjacent) {
                             s.nextOriginal = *neighbors.next;
@@ -1267,9 +1332,29 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 }
             }
         }
+        if(p.editing.cut) for(const auto &clip:clips) {
+            auto cut=p.editing.cut(p.editing.user,clip.id);
+            if(s.cutDrag.active && s.cutDrag.draft.target==clip.id) cut.duration=s.cutDrag.draft.proposed.first;
+            if(cut.duration<=0) continue;
+            const float center=view.min.x+s.headerWidth+float((editor::Seconds(clip.start+clip.duration)-s.canvas.origin.x)*s.canvas.scale.x);
+            const float half=std::max(7.f,float(editor::Seconds(cut.duration)*s.canvas.scale.x*.5));
+            draw->AddRectFilled({center-half,y+22},{center+half,y+36},ImGui::GetColorU32(theme.colors.selection),2);
+            draw->AddLine({center,y+22},{center,y+36},ImGui::GetColorU32(theme.colors.accent),2);
+        }
+        const auto previewMove=[&](const editor::Transaction &tx,const ClipView &original) {
+            if(!tx.active || tx.draft.proposed.parent!=track.id || original.track==track.id || tx.draft.phase==editor::Phase::Cancel) return;
+            const auto &v=tx.draft.proposed;
+            const float left=view.min.x+s.headerWidth+float((editor::Seconds(v.first)-s.canvas.origin.x)*s.canvas.scale.x);
+            const float right=left+float(editor::Seconds(v.last-v.first)*s.canvas.scale.x);
+            draw->AddRectFilled({left,y+4},{right,y+rowHeight-7},ImGui::GetColorU32(theme.editor.videoClip),3);
+            draw->AddRect({left,y+4},{right,y+rowHeight-7},ImGui::GetColorU32(theme.colors.accent),3);
+            draw->AddText({left+5,y+9},ImGui::GetColorU32(theme.colors.text),original.label);
+        };
+        previewMove(s.drag,s.original);
+        for(const auto &member:s.memberDrags.first(s.memberCount)) previewMove(member.transaction,member.original);
         // Overlay cut-spanning bounds after all visible clip bodies so either
         // side remains visible. This reuses the borrowed visible query only.
-        if (p.transitionLimit) for (const auto &clip:clips) {
+        if (p.transitionLimit && !p.editing.cut && !p.editing.fades) for (const auto &clip:clips) {
             for (int side=0;side<2;++side) {
                 const auto kind=side ? clip.transitionOutKind : clip.transitionInKind;
                 if (kind!=TransitionKind::Dissolve && kind!=TransitionKind::Crossfade) continue;
@@ -1289,6 +1374,35 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             }
         }
         draw->PopClipRect();
+    }
+    if(s.fadeDrag.active && !fadeSeen) s.fadeDrag.Cancel(out);
+    if(s.cutDrag.active && !cutSeen) s.cutDrag.Cancel(out);
+    bool boxPressed=false;
+    if(p.editing.box && s.tool==Tool::Select && view.max.x>view.min.x+s.headerWidth) {
+        const auto cursor=ImGui::GetCursorScreenPos();ImGui::SetCursorScreenPos({view.min.x+s.headerWidth,view.min.y});
+        ImGui::InvisibleButton("box-background",{view.max.x-view.min.x-s.headerWidth,view.max.y-view.min.y});
+        boxPressed=ImGui::IsItemClicked(0);ImGui::SetCursorScreenPos(cursor);ImGui::Dummy({0,0});
+    }
+    if(boxPressed && !s.drag.active && !s.fadeDrag.active && !s.cutDrag.active) {
+        s.boxSelecting=true;s.boxRevision=p.revision;
+        s.boxStart={s.canvas.origin.x+(io.MousePos.x-view.min.x-s.headerWidth)/s.canvas.scale.x,s.verticalScroll+io.MousePos.y-view.min.y};
+    }
+    if(s.boxSelecting) {
+        if(ImGui::IsKeyPressed(ImGuiKey_Escape) || s.boxRevision!=p.revision) s.boxSelecting=false;
+        else {
+            const editor::Point end{s.canvas.origin.x+(io.MousePos.x-view.min.x-s.headerWidth)/s.canvas.scale.x,s.verticalScroll+io.MousePos.y-view.min.y};
+            const double left=std::min(s.boxStart.x,end.x),right=std::max(s.boxStart.x,end.x),top=std::min(s.boxStart.y,end.y),bottom=std::max(s.boxStart.y,end.y);
+            draw->AddRect({view.min.x+s.headerWidth+float((left-s.canvas.origin.x)*s.canvas.scale.x),view.min.y+float(top-s.verticalScroll)},
+                {view.min.x+s.headerWidth+float((right-s.canvas.origin.x)*s.canvas.scale.x),view.min.y+float(bottom-s.verticalScroll)},ImGui::GetColorU32(theme.colors.accent));
+            if(ImGui::IsMouseReleased(0)) {
+                const auto ids=p.editing.box(p.editing.user,{editor::FromSeconds(left),editor::FromSeconds(right)},top,bottom);
+                std::size_t required=(io.KeyCtrl || io.KeyShift) ? selection.count : 0;
+                for(auto id:ids) {if(io.KeyCtrl && selection.Contains(id)) --required;else if(!io.KeyShift || !selection.Contains(id)) ++required;}
+                if(required>selection.storage.size()) out.overflow=true;
+                else {if(!io.KeyCtrl && !io.KeyShift) selection.Clear();for(auto id:ids) selection.Set(id,true,io.KeyCtrl);}
+                s.boxSelecting=false;
+            }
+        }
     }
     if (s.heightDrag.active && !heightEditorSeen && s.heightDrag.draft.phase!=editor::Phase::Commit &&
         s.heightDrag.draft.phase!=editor::Phase::Cancel) s.heightDrag.Cancel(out);
@@ -1359,6 +1473,12 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         }
         auto edit = EditClip(s.original, s.drag.draft.kind, delta, constraints);
         auto proposed = edit.valid ? Value(edit, s.original.track, s.original.speed) : s.drag.draft.original;
+        if(s.drag.draft.kind==editor::EditKind::Move && p.editing.destination && p.editing.canMove) {
+            if(s.hoveredTrack) s.moveTrack=s.hoveredTrack;
+            s.moveRejected=!p.editing.canMove(p.editing.user,selection.storage.first(selection.count),delta,s.original.track,s.moveTrack);
+            if(!s.moveRejected) proposed.parent=p.editing.destination(p.editing.user,s.original.track,s.original.track,s.moveTrack);
+            else {proposed=s.drag.draft.original;delta=0;ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);}
+        }
         if (s.drag.draft.kind == editor::EditKind::Roll && s.nextDrag.active) {
             auto pair =
                 RollClips(s.original, s.nextOriginal, delta, constraints,
@@ -1411,6 +1531,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             } else {
                 value.first += delta;
                 value.last += delta;
+                if(s.drag.draft.kind==editor::EditKind::Move && !s.moveRejected && p.editing.destination)
+                    value.parent=p.editing.destination(p.editing.user,member.original.track,s.original.track,s.moveTrack);
             }
             if (ImGui::IsMouseDown(0) && !(value == member.transaction.draft.proposed))
                 member.transaction.Update(p.revision, value, out);
@@ -1423,7 +1545,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         }
     }
     if (s.drag.active && !ImGui::IsMouseDown(0))
-        EndDrags(s, p.revision, s.drag.draft.phase == editor::Phase::Cancel, out);
+        EndDrags(s, p.revision, s.moveRejected || s.drag.draft.phase == editor::Phase::Cancel, out);
     float playhead =
         view.min.x + s.headerWidth +
         static_cast<float>((editor::Seconds(s.time.playhead) - s.canvas.origin.x) * s.canvas.scale.x);
@@ -1433,6 +1555,14 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         ImGui::Text("%+.3f s / %.3f s",editor::Seconds(s.drag.draft.proposed.first-s.drag.draft.original.first),
             editor::Seconds(s.drag.draft.proposed.last-s.drag.draft.proposed.first));
         ImGui::EndTooltip();
+    }
+    if((s.drag.active || s.boxSelecting || s.fadeDrag.active || s.cutDrag.active) && ImGui::IsMouseDragging(0) &&
+       (io.MousePos.x<view.min.x+s.headerWidth || io.MousePos.x>view.max.x || io.MousePos.y<view.min.y || io.MousePos.y>view.max.y)) {
+        const double step=ImGui::GetIO().DeltaTime*350;
+        if(io.MousePos.x<view.min.x+s.headerWidth+18) s.canvas.origin.x-=step/s.canvas.scale.x;
+        if(io.MousePos.x>view.max.x-18) s.canvas.origin.x+=step/s.canvas.scale.x;
+        if(io.MousePos.y<view.min.y+18) s.verticalScroll=std::max(0.,s.verticalScroll-step);
+        if(io.MousePos.y>view.max.y-18) s.verticalScroll+=step;
     }
     editor::EndCanvas();
     ImGui::PopID();

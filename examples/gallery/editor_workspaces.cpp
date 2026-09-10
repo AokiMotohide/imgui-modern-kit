@@ -242,6 +242,7 @@ void Options(EditorWorkspaces &s) {
 }
 } // namespace
 void EditorWorkspaces::Dataset(bool big) {
+    trackSelection.Clear();clipboard.clear();timeline.boxSelecting=false;
     history.clear();historyCursor=0;
     transitionHistory.clear();transitionHistoryCursor=0;
     clipEnvelopes.clear();clipProperties.clear();clipPropertyOwners.clear();clipPropertyRevision=0;
@@ -359,6 +360,21 @@ void EditorWorkspaces::RebuildClipIndex() {
     std::sort(clips.begin(),clips.end(),[](const auto &a,const auto &b) {
         return a.track!=b.track ? a.track<b.track : a.start<b.start;
     });
+    for(std::size_t i=0;i<clips.size();++i) {
+        auto &clip=clips[i];const auto duration=std::max(editor::Tick{0},clip.duration);
+        clip.fades.inDuration=std::clamp(clip.fades.inDuration,editor::Tick{0},duration);
+        clip.fades.outDuration=std::clamp(clip.fades.outDuration,editor::Tick{0},duration-clip.fades.inDuration);
+        auto &cut=clip.outgoingTransition;
+        if(cut.duration>0) {
+            if(i+1==clips.size() || clips[i+1].id!=cut.right) cut={};
+            else {
+                auto left=clip,right=clips[i+1];left.locked=right.locked=false;
+                const auto limit=video::CenteredTransitionLimit(left,right,{},{});
+                cut.duration=std::clamp(cut.duration,editor::Tick{0},limit);cut.left=clip.id;
+                if(!cut.duration) cut={};
+            }
+        }
+    }
     clipById.clear();clipById.reserve(clips.size());
     for (std::size_t i=0;i<clips.size();++i) clipById.emplace_back(clips[i].id,i);
     std::sort(clipById.begin(),clipById.end());
@@ -683,6 +699,8 @@ std::unique_ptr<EditorWorkspaces::Snapshot> EditorWorkspaces::CaptureModel() con
     model->audioStrips=audioStrips;
     model->mixerTrack=mixerTrack;
     model->clips=clips;
+    model->tracksSelected.assign(trackSelection.storage.begin(),trackSelection.storage.begin()+trackSelection.count);
+    model->activeTrack=trackSelection.active;
     model->clipEnvelopes=clipEnvelopes;
     model->keys=keys;
     model->objects=objects;
@@ -747,6 +765,7 @@ void EditorWorkspaces::SwapModel(Snapshot &model) {
         ids=std::move(old);std::swap(s.active,active);
     };
     swapSelection(selection,model.clipsSelected,model.activeClip);
+    swapSelection(trackSelection,model.tracksSelected,model.activeTrack);
     swapSelection(objectSelection,model.objectsSelected,model.activeObject);
     swapSelection(keySelection,model.keysSelected,model.activeKey);
     swapSelection(stripSelection,model.stripsSelected,model.activeStrip);
@@ -755,6 +774,7 @@ void EditorWorkspaces::SwapModel(Snapshot &model) {
         const auto e=clipEnvelopes.find(c.id);c.envelope=e==clipEnvelopes.end() ? std::span<const video::EnvelopePoint>{} : e->second;
         if (auto n=renamedLabels.find(c.id);n!=renamedLabels.end()) c.label=n->second.c_str();
     }
+    for (auto &t:tracks) if(auto n=renamedLabels.find(t.id);n!=renamedLabels.end()) t.label=n->second.c_str();
     for (auto &o:objects) if(auto n=renamedLabels.find(o.id);n!=renamedLabels.end()) o.label=n->second.c_str();
     for (auto &a:assets) if(auto n=renamedLabels.find(a.id);n!=renamedLabels.end()) a.label=n->second.c_str();
     for (auto &c:components) if(auto n=renamedLabels.find(c.view.id);n!=renamedLabels.end()) c.view.label=n->second.c_str();
@@ -854,8 +874,26 @@ bool EditorWorkspaces::PlaceSource(video::PlacementMode mode) {
     result.push_back(added);clips=std::move(result);selection.Set(added.id);Remember(std::move(before));
     ++revision;RebuildClipIndex();RebuildKeyIndex();SyncClipProperties();return true;
 }
+#include "timeline_editing.inl"
 void EditorWorkspaces::ApplyEvents() {
+    if(ApplyTimelineEdits()) return;
+    for(const auto &e:events.Events()) if(e.phase==editor::Phase::Commit && e.operationSize) {
+        const auto count=std::count_if(events.Events().begin(),events.Events().end(),[&](const auto &member){return member.phase==editor::Phase::Commit && member.operation==e.operation;});
+        if(static_cast<std::size_t>(count)!=e.operationSize) {editMessage="Incomplete edit group";events.Clear();return;}
+    }
     bool rejectFrame=false;
+    for(const auto &e:events.Events()) if(e.phase==editor::Phase::Commit && e.kind==editor::EditKind::Move && e.proposed.parent) {
+        const auto *source=FindClip(e.target);if(!source) continue;
+        const auto oldTrack=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==source->track;});
+        const auto destination=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==e.proposed.parent;});
+        rejectFrame|=source->locked || oldTrack==tracks.end() || destination==tracks.end() ||
+            (oldTrack!=tracks.end() && oldTrack->locked) || (destination!=tracks.end() && (destination->locked || destination->kind!=oldTrack->kind));
+        rejectFrame|=e.proposed.first<0 || e.proposed.last<=e.proposed.first;
+        if(destination!=tracks.end()) for(const auto &other:QueryClips(destination->id,{e.proposed.first,e.proposed.last})) {
+            const bool moves=std::any_of(events.Events().begin(),events.Events().end(),[&](const auto &m){return m.phase==editor::Phase::Commit && m.kind==editor::EditKind::Move && m.target==other.id;});
+            if(!moves) rejectFrame=true;
+        }
+    }
     for(const auto &e:events.Events()) if(e.phase==editor::Phase::Commit) {
         rejectFrame |= e.revision!=revision;
         if(e.kind==editor::EditKind::Translate || e.kind==editor::EditKind::Rotate || e.kind==editor::EditKind::Scale) {
@@ -1175,6 +1213,8 @@ void EditorWorkspaces::ApplyEvents() {
             renamedLabels[e.target] = e.proposedText.data();
         if (e.kind==editor::EditKind::Rename) for (auto &object:objects)
             if (object.id==e.target && !object.locked) {object.label=renamedLabels[e.target].c_str();changed=true;}
+        if (e.kind==editor::EditKind::Rename) for (auto &track:tracks)
+            if (track.id==e.target && !track.locked) {track.label=renamedLabels[e.target].c_str();changed=true;}
         if (clip != clips.end()) {
             if (e.kind==editor::EditKind::Link && e.proposed.offset>=0 && e.proposed.offset<=3) {
                 auto &relation=e.proposed.offset%2 ? clip->group : clip->linked;
@@ -1259,6 +1299,8 @@ void EditorWorkspaces::ApplyEvents() {
                     clip->duration = split.left.duration;
                     clip->transitionIn=std::min(clip->transitionIn,clip->duration);
                     clip->transitionOut=0;clip->transitionOutKind=video::TransitionKind::None;
+                    clip->fades.outDuration=0;clip->outgoingTransition={};
+                    right.fades.inDuration=0;
                     right.transitionIn=0;right.transitionInKind=video::TransitionKind::None;
                     right.transitionOut=std::min(right.transitionOut,right.duration);
                     clips.push_back(right);
@@ -1280,11 +1322,12 @@ void EditorWorkspaces::ApplyEvents() {
                        e.kind == editor::EditKind::Ripple || e.kind == editor::EditKind::Roll ||
                        e.kind == editor::EditKind::Slide) {
                 const auto oldEnd=clip->start+clip->duration;
-                if (clip->start==e.proposed.first && oldEnd==e.proposed.last && clip->sourceIn==e.proposed.offset)
+                if (clip->start==e.proposed.first && oldEnd==e.proposed.last && clip->sourceIn==e.proposed.offset && clip->track==e.proposed.parent)
                     continue;
                 clip->start = e.proposed.first;
                 clip->duration = e.proposed.last - e.proposed.first;
                 clip->sourceIn = e.proposed.offset;
+                clip->track = e.proposed.parent;
                 changed = true;
             }
         }
@@ -1654,7 +1697,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     }
     if(s.monitorClipIndex<s.clips.size()) {
         const auto &clip=s.clips[s.monitorClipIndex];
-        if(ImGui::CollapsingHeader(s.japanese ? "フェード" : "Fades")) video::TransitionPicker("inspector-transition",clip,s.revision,s.events,s.clipInspectorLocked,video::TransitionPickerOptions{s.icons});
+        if(ImGui::CollapsingHeader(s.japanese ? "フェード" : "Fades")) video::FadePicker("inspector-fades",clip,clip.fades,s.revision,s.events,s.clipInspectorLocked);
     }
     editor::PropertyView props[] = {{s.clipPropertyIds[0], "Opacity", "Video", 1, 1, editor::PropertyFlags::Animated},
                                     {s.clipPropertyIds[1], "Scale", "Transform", 1, 1},
@@ -1823,6 +1866,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     s.timelineOrigin = ImGui::GetCursorScreenPos();
     s.timeline.keySelection=&s.keySelection;
     s.timeline.keyCompanions=s.clipKeyCompanions;
+    s.ConfigureTimelineEditing(p);
     video::Timeline("Timeline", p, s.timeline, s.selection, s.events, theme, {0, timelineHeight});
     if (!s.showDetails && s.videoPanel<0) {s.ApplyEvents();return;}
     ImGui::BeginChild("Audio color", {0, 0}, ImGuiChildFlags_Borders);

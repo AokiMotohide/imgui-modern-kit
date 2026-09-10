@@ -384,6 +384,29 @@ int main() {
               "centered transition commits constrained duration");
     }
     provider.transitionLimit=nullptr;
+    // New fade provider suppresses legacy handles and starts from zero duration.
+    provider.editing.user=&transitionFixture;
+    provider.editing.fades=[](void *u,editor::StableId)->const video::FadeView * {
+        return &static_cast<TransitionFixture*>(u)->clip.fades;
+    };
+    for(int side=0;side<2;++side) {
+        frame(full);frame(full);
+        const float x=timeline.view.min.x+timeline.headerWidth+(side ? 295.f : 5.f);
+        const float y=timeline.view.min.y+11;
+        full.Clear();io.AddMousePosEvent(x,y);frame(full);frame(full);
+        io.AddMouseButtonEvent(0,true);frame(full);
+        check(timeline.fadeDrag.active && !timeline.drag.active && !timeline.transitionDrag.active,"zero fade handle owns pointer before trim");
+        full.Clear();io.AddMousePosEvent(x+(side ? -50 : 50),y);frame(full);
+        check((side ? timeline.fadeDrag.draft.proposed.last : timeline.fadeDrag.draft.proposed.first)==editor::FromSeconds(.5),"fade drag previews selected end");
+        full.Clear();io.AddMouseButtonEvent(0,false);frame(full);
+        check(!timeline.fadeDrag.active && full.count==1 && full.Events()[0].kind==editor::EditKind::ClipFades && full.Events()[0].phase==editor::Phase::Commit,"fade commits once without mutating provider");
+        check(transitionFixture.clip.fades.inDuration==0 && transitionFixture.clip.fades.outDuration==0,"fade data remains host-owned");
+    }
+    check(video::EvaluateFade(25,100,{50,0,video::FadeCurve::Linear})==.5,"linear fade evaluation");
+    check(video::EvaluateFade(25,100,{50,0,video::FadeCurve::EaseIn})==.25,"ease-in fade evaluation");
+    check(video::EvaluateFade(25,100,{50,0,video::FadeCurve::EaseOut})==.75,"ease-out fade evaluation");
+    check(video::EvaluateFade(100,100,{0,50})==0 && video::EvaluateFade(0,0,{})==0,"fade-out endpoint and empty clip");
+    provider.editing={};
     auto transitionEdit=video::EditTransition(transitionFixture.clip,false,editor::FromSeconds(100));
     check(transitionEdit.valid && transitionEdit.inDuration==editor::FromSeconds(2.5) &&
           transitionEdit.outDuration==editor::FromSeconds(.5),"transition clamp preserves opposite end");
@@ -867,6 +890,50 @@ int main() {
         toggle(4);check(options.showAnchor.has_value() && !*options.showAnchor,"Monitor anchor can be hidden independently");
         toggle(3);toggle(4);
         check(!options.transform && options.showAnchor.value_or(false),"Monitor anchor can remain visible without transform bounds");
+    }
+    {
+        struct EditingFixture {
+            std::array<video::TrackView,2> tracks{{{400,"Video A"},{401,"Video B"}}};
+            video::ClipView clip;
+            std::array<editor::StableId,1> boxIds{410};
+        } fixture;
+        fixture.clip.id=410;fixture.clip.track=400;fixture.clip.label="Editable";fixture.clip.duration=editor::FromSeconds(3);
+        video::TimelineProvider p;p.user=&fixture;p.revision=1;p.trackCount=2;
+        p.tracks=[](void *u,int,int){return std::span<const video::TrackView>(static_cast<EditingFixture*>(u)->tracks);};
+        p.clips=[](void *u,editor::StableId track,editor::Range){auto &f=*static_cast<EditingFixture*>(u);return track==400 ? std::span<const video::ClipView>(&f.clip,1) : std::span<const video::ClipView>{};};
+        p.editing.user=&fixture;
+        p.editing.box=[](void *u,editor::Range,double,double){return std::span<const editor::StableId>(static_cast<EditingFixture*>(u)->boxIds);};
+        p.editing.cut=[](void *,editor::StableId){return video::CutTransitionView{410,411,0,editor::FromSeconds(1),video::TransitionKind::Dissolve};};
+        std::array<editor::StableId,8> clipIds{},trackIds{};
+        editor::Selection clipsSelected{clipIds},tracksSelected{trackIds};video::TimelineState state;state.trackSelection=&tracksSelected;
+        std::array<editor::Event,16> eventData{};editor::EventBuffer output{eventData};
+        ImVec2 shelfOrigin{};
+        auto render=[&] {
+            ImGui::NewFrame();ImGui::SetNextWindowPos({10,10});ImGui::SetNextWindowSize({900,700});
+            ImGui::Begin("Extended timeline IO");shelfOrigin=ImGui::GetCursorScreenPos();video::TransitionShelf("external shelf");
+            video::Timeline("editing",p,state,clipsSelected,output,MakePrecisionTheme(),{700,300});
+            ImGui::End();ImGui::Render();
+        };
+        auto move=[&](float x,float y){io.AddMousePosEvent(x,y);render();render();};
+        render();render();
+        const auto origin=state.view.min;
+        move(origin.x+state.headerWidth+400,origin.y+50);io.AddMouseButtonEvent(0,true);render();
+        move(origin.x+state.headerWidth+100,origin.y+10);io.AddMouseButtonEvent(0,false);render();
+        check(clipsSelected.Contains(410) && !state.boxSelecting,"public IO box selects an intersecting clip");
+        check(state.view.min.x==origin.x && state.view.min.y==origin.y,"box drag does not move host window");
+        io.AddKeyEvent(ImGuiMod_Ctrl,true);render();
+        move(origin.x+state.headerWidth+400,origin.y+50);io.AddMouseButtonEvent(0,true);render();
+        move(origin.x+state.headerWidth+100,origin.y+10);io.AddMouseButtonEvent(0,false);render();
+        check(!clipsSelected.Contains(410),"Ctrl rectangle toggles existing selection");
+        io.AddKeyEvent(ImGuiMod_Ctrl,false);render();
+        move(origin.x+55,origin.y+9);io.AddMouseButtonEvent(0,true);render();io.AddMouseButtonEvent(0,false);render();
+        check(tracksSelected.Contains(400) && clipsSelected.count==0,"track selection is independent of clips");
+        output.Clear();move(origin.x+55,origin.y+9);io.AddMouseButtonEvent(0,true);render();
+        move(origin.x+55,origin.y+75);io.AddMouseButtonEvent(0,false);render();
+        check(std::any_of(output.Events().begin(),output.Events().end(),[](const auto &e){return e.phase==editor::Phase::Commit && e.kind==editor::EditKind::TrackEdit && e.proposed.offset==static_cast<int>(video::TrackAction::Reorder) && e.proposed.parent==401;}),"track drag emits reorder request");
+        output.Clear();move(shelfOrigin.x+25,shelfOrigin.y+10);io.AddMouseButtonEvent(0,true);render();
+        move(origin.x+state.headerWidth+300,origin.y+29);io.AddMouseButtonEvent(0,false);render();
+        check(std::any_of(output.Events().begin(),output.Events().end(),[](const auto &e){return e.phase==editor::Phase::Commit && e.kind==editor::EditKind::CutTransition && e.proposed.parent==411 && e.proposed.first==editor::TicksPerSecond;}),"shelf drag inserts shared transition at cut");
     }
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;

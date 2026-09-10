@@ -62,7 +62,7 @@ Documentation: [guide](docs/guide.md), [architecture](docs/architecture.md), [AP
 ImKit code is MIT. Dear ImGui and GLFW have their own licenses; optional Inter and Noto Sans JP catalog fonts use SIL OFL 1.1. Complete records and pinned hashes are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). No affiliation with Dear ImGui or the design references is implied.
 ## Modern icons
 
-206 generated outline icons support theme tint, custom color, size, icon buttons and
+238 generated outline icons support theme tint, custom color, size, icon buttons and
 label buttons. GPU textures remain host-owned. See [icon integration](docs/icons.md)
 and the **Icons** page in the native Gallery.
 
@@ -70,7 +70,7 @@ and the **Icons** page in the native Gallery.
 
 `editor_core`, `video`, `cg`, `preview_opengl3` and `editor_suite` provide reusable
 editing controls with host-owned data and typed events. The native Gallery connects
-Video/CG workspaces, RGB color curves, animation and UV tools, plus 206 icons.
+Video/CG workspaces, RGB color curves, animation and UV tools, plus 238 icons.
 See [module contracts](docs/editor-suite.md), [API reference](docs/editor-api.md),
 [validation and performance](docs/editor-validation.md) and [acceptance matrix](docs/editor-implementation-checklist.md).
 

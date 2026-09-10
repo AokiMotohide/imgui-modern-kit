@@ -822,5 +822,133 @@
   {
     "name": "ArrayProperty",
     "category": "Editor"
+  },
+  {
+    "name": "Empty",
+    "category": "3D Objects"
+  },
+  {
+    "name": "Collection",
+    "category": "3D Objects"
+  },
+  {
+    "name": "Instance",
+    "category": "3D Objects"
+  },
+  {
+    "name": "PointCloud",
+    "category": "3D Objects"
+  },
+  {
+    "name": "Curve",
+    "category": "3D Objects"
+  },
+  {
+    "name": "Plane",
+    "category": "3D Objects"
+  },
+  {
+    "name": "Sphere",
+    "category": "3D Objects"
+  },
+  {
+    "name": "Cylinder",
+    "category": "3D Objects"
+  },
+  {
+    "name": "Cone",
+    "category": "3D Objects"
+  },
+  {
+    "name": "Torus",
+    "category": "3D Objects"
+  },
+  {
+    "name": "Camera3D",
+    "category": "3D Projection"
+  },
+  {
+    "name": "Frustum",
+    "category": "3D Projection"
+  },
+  {
+    "name": "Perspective",
+    "category": "3D Projection"
+  },
+  {
+    "name": "Orthographic",
+    "category": "3D Projection"
+  },
+  {
+    "name": "Projector3D",
+    "category": "3D Projection"
+  },
+  {
+    "name": "ProjectionSurface",
+    "category": "3D Projection"
+  },
+  {
+    "name": "Lens",
+    "category": "3D Projection"
+  },
+  {
+    "name": "ClippingPlane",
+    "category": "3D Projection"
+  },
+  {
+    "name": "PointLight",
+    "category": "3D Lighting"
+  },
+  {
+    "name": "SpotLight",
+    "category": "3D Lighting"
+  },
+  {
+    "name": "DirectionalLight",
+    "category": "3D Lighting"
+  },
+  {
+    "name": "AreaLight",
+    "category": "3D Lighting"
+  },
+  {
+    "name": "Environment",
+    "category": "3D Lighting"
+  },
+  {
+    "name": "World",
+    "category": "3D Lighting"
+  },
+  {
+    "name": "LocalAxes",
+    "category": "3D Lighting"
+  },
+  {
+    "name": "BoundingBox",
+    "category": "3D Lighting"
+  },
+  {
+    "name": "ClippingBox",
+    "category": "3D Lighting"
+  },
+  {
+    "name": "TrackRemove",
+    "category": "Editor"
+  },
+  {
+    "name": "TrackReorder",
+    "category": "Editor"
+  },
+  {
+    "name": "FitSelection",
+    "category": "Editor"
+  },
+  {
+    "name": "ClipOpacity",
+    "category": "Editor"
+  },
+  {
+    "name": "FadeCurve",
+    "category": "Editor"
   }
 ]

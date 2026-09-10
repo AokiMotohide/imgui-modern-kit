@@ -55,6 +55,7 @@ struct ObjectView {
     bool expanded = true, hasChildren = false;
     StableId geometry=0; // Optional host-owned geometry data block; zero means none.
     ObjectKind kind=ObjectKind::Object;
+    IconId icon=IconId::Count; // Optional semantic icon; Count uses the kind default.
 };
 struct SceneProvider {
     void *user = nullptr;

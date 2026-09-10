@@ -38,6 +38,32 @@ struct TrackLayout {
     double top = 0; // Absolute pixel offset of the first returned track.
 };
 enum class TransitionKind { None, Dissolve, Fade, Crossfade };
+enum class FadeCurve { Linear, EaseIn, EaseOut };
+struct FadeView {
+    Tick inDuration=0, outDuration=0;
+    FadeCurve inCurve=FadeCurve::Linear, outCurve=FadeCurve::Linear;
+};
+double EvaluateFade(Tick localTick, Tick duration, const FadeView &fade);
+enum class TrackAction { Add, Duplicate, Remove, Reorder };
+enum class ClipboardAction { Copy, Cut, Paste };
+struct CutTransitionView {
+    StableId left=0, right=0;
+    Tick duration=0, limit=0;
+    TransitionKind kind=TransitionKind::Dissolve;
+    bool locked=false;
+    const char *rejection="No adjacent editable clip or insufficient media handles";
+};
+// Optional UI contracts. Providers and all returned views remain host owned.
+struct TimelineEditingProvider {
+    void *user=nullptr;
+    const FadeView *(*fades)(void *,StableId)=nullptr;
+    CutTransitionView (*cut)(void *,StableId)=nullptr;
+    std::span<const StableId> (*box)(void *,editor::Range,double top,double bottom)=nullptr;
+    StableId (*destination)(void *,StableId source,StableId anchor,StableId hovered)=nullptr;
+    bool (*canMove)(void *,std::span<const StableId>,Tick delta,StableId anchor,StableId hovered)=nullptr;
+    std::size_t (*trackClipCount)(void *,StableId)=nullptr;
+    StableId (*trackAfter)(void *,StableId)=nullptr; // Zero denotes the end of the track list.
+};
 struct EnvelopePoint {StableId id=0;Tick tick=0;double gain=1;bool locked=false;};
 // Sorted clip-local points; empty envelope evaluates to unity gain.
 double EvaluateEnvelope(std::span<const EnvelopePoint> points,Tick tick);
@@ -59,6 +85,8 @@ struct ClipView {
     std::span<const editor::Keyframe> keyEvaluation; // Optional full sorted channel for interpolation outside visible keys.
     StableId audioSource = 0;
     int audioChannels = 1;
+    FadeView fades;
+    CutTransitionView outgoingTransition;
 };
 struct TransitionEdit {
     Tick inDuration=0,outDuration=0;
@@ -142,6 +170,7 @@ struct TimelineProvider {
     // Enables centered Dissolve/Crossfade overlap bands and half-duration handles.
     Tick (*transitionLimit)(void *,StableId clip,bool outgoing)=nullptr;
     WaveformProvider waveform;
+    TimelineEditingProvider editing;
 };
 struct TrackLabels {
     // Borrowed UTF-8 strings. Array order follows Visible through Source in TrackControl.
@@ -217,7 +246,25 @@ struct TimelineState {
     TimelineLabels labels;
     WaveformOptions waveformOptions;
     int overviewDrag = 0; // 0 body, -1 left range edge, +1 right range edge.
+    editor::Selection *trackSelection=nullptr;
+    editor::Transaction fadeDrag, cutDrag;
+    bool fadeEnd=false;
+    double fadeMouseStart=0;
+    bool boxSelecting=false, moveRejected=false;
+    editor::Point boxStart{};
+    std::uint64_t boxRevision=0;
+    StableId hoveredTrack=0, moveTrack=0;
+    PlacementMode pasteMode=PlacementMode::Insert;
+    bool confirmTrackDelete=false;
+    std::size_t deletingClipCount=0;
+    StableId renamingTrack=0;
+    std::uint64_t renameRevision=0;
+    std::array<char,256> trackName{};
 };
+void FadePicker(const char *id,const ClipView &clip,const FadeView &fade,std::uint64_t revision,
+                editor::EventBuffer &events,bool trackLocked=false);
+// A shelf item emits an ImGui drag payload accepted by Timeline boundary bands.
+void TransitionShelf(const char *id, const IconAtlas *icons=nullptr);
 // Resolves both moving edges; ignores every selected clip and filters disabled kinds.
 editor::SnapResult ResolveTimelineSnap(const TimelineState &state, Tick delta,
     std::span<const editor::SnapCandidate> candidates, std::span<const StableId> movingIds);

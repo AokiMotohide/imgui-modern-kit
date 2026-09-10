@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Plane",
+    "prompt": "Create one minimalist white monochrome toolbar icon: one isometric rhombus outline representing a flat plane. Genuinely transparent background. Design on a 24x24 logical grid, glyph extent 18x18 units, outline stroke width 2.8 logical units (approximately 85 pixels on a 1024 canvas). Use thick solid clean strokes with rounded joins, no fine lines, no distressed texture. Readable at 16px. Centered square canvas, no text, no shadow, no gradients.",
+    "method": "built-in image_gen",
+    "reason": "Increase stroke weight to retain 16px visibility"
+  },
+  {
+    "name": "ClippingBox",
+    "prompt": "Create one minimalist white monochrome toolbar icon: one wireframe isometric cube with a bold diagonal cut plane, remove all minor details. Genuinely transparent background. Design on a 24x24 logical grid, glyph extent 18x18 units, outline stroke width 2.8 logical units (approximately 85 pixels on a 1024 canvas). Use thick solid clean strokes with rounded joins, no fine lines, no distressed texture. Readable at 16px. Centered square canvas, no text, no shadow, no gradients.",
+    "method": "built-in image_gen",
+    "reason": "Increase stroke weight to retain 16px visibility"
+  }
+]
