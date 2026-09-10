@@ -1,0 +1,4 @@
+One individual black outline technical editor icon, RippleDelete. A bold X centered above two plain horizontal rectangular video clip blocks. Below the blocks a single short inward pointing double arrow marks closing the gap. Three vertically balanced rows making a square optical footprint. Large simple shapes, no text. Uniform black rounded strokes equivalent to 2 units on a 24-unit grid, true transparent RGBA background, generous margin, readable at 16px, no shadows or other images.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/RippleDelete.png

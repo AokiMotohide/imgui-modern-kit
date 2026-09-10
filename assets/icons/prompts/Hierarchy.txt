@@ -1,0 +1,4 @@
+Create one monochrome outline software icon representing an organizational tree diagram: four small outlined square nodes connected by simple right-angle lines, one root node on top and three nodes on the lower row. Centered compact square symbol, clean black strokes, readable at 16 pixels, true transparent RGBA background. No text, no people, no other content. Save as an individual icon original for Hierarchy.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/Hierarchy.png
