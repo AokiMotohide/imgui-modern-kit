@@ -459,3 +459,11 @@ next-track glyphs with explicit labels; single-frame navigation keeps its distin
 work rangeの先頭／末尾、In／Outのwork rangeへのリセット、順／逆再生を操作できます。
 追加Commandもホストbindingへ割り当てられます。既存Fitとの競合を避け、presetは変更しません。
 境界移動と1フレーム移動は別のglyphで区別します。
+
+`PropertyState::labels` and `ComponentStackOptions::labels` borrow UTF-8 headings,
+status suffixes, context actions and keyframe tooltips. Gallery supplies Japanese
+labels for Video/CG property panels and the component stack.
+
+`PropertyState::labels`と`ComponentStackOptions::labels`は見出し、状態接尾辞、
+context操作、keyframe tooltipの非所有UTF-8文字列を受けます。GalleryのVideo／CG
+propertyとcomponent stackは日本語切替へ接続しています。

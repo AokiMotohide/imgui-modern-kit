@@ -5,6 +5,13 @@
 #include <limits>
 namespace imkit::gallery {
 namespace {
+void PropertyLanguage(editor::PropertyState &state,bool japanese) {
+    state.labels={};if (!japanese) return;
+    auto &l=state.labels;l.search="検索";l.property="項目";l.value="値";l.key="キー";
+    l.modifiedSuffix=" (変更済み)";l.overrideSuffix=" (上書き)";l.lockedSuffix=" [ロック]";
+    l.favorite="お気に入り";l.locked="ロック";l.overrideValue="上書き";l.reset="既定値へ戻す";
+    l.previousKey="前のキー";l.nextKey="次のキー";l.addKey="キーを追加";l.removeKey="キーを削除";
+}
 void TransportLanguage(editor::TimeState &time,bool japanese) {
     time.labels={};
     if (!japanese) return;
@@ -1147,6 +1154,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     editor::PropertyProvider properties{&visibleProperties,s.revision,static_cast<int>(visibleProperties.rows.size()),PropertyRows::Query};
     if (s.clipPropertyIds[0]) {
         ImGui::BeginDisabled(s.clipInspectorLocked);
+        PropertyLanguage(s.videoProperties,s.japanese);
         editor::PropertyGrid("clip",properties,s.videoProperties,s.events);
         ImGui::EndDisabled();
     } else ImGui::TextUnformatted(s.japanese ? "クリップを選択" : "Select a clip");
@@ -1531,6 +1539,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
             }
             PropertyRows visibleProperties{std::span(rows).first(FilterProperties(rows,s.objectProperties.search))};
             editor::PropertyProvider properties{&visibleProperties,s.revision,static_cast<int>(visibleProperties.rows.size()),PropertyRows::Query};
+            PropertyLanguage(s.objectProperties,s.japanese);
             editor::PropertyGrid("object", properties, s.objectProperties, s.events);
             ImGui::EndTabItem();
         }
@@ -1538,8 +1547,9 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
             s.inspectorComponents.clear();
             for (const auto &component:s.components) if (component.view.owner==object->id) s.inspectorComponents.push_back(component.view);
             const cg::ComponentTypeView componentTypes[]={{7801,"Mesh renderer"},{7802,"Wireframe override"}};
-            cg::ComponentStack("Components",s.inspectorComponents,s.revision,s.events,
-                {object->id,object->geometry ? std::span<const cg::ComponentTypeView>(componentTypes) : std::span<const cg::ComponentTypeView>{},object->locked});
+            cg::ComponentStackOptions options{object->id,object->geometry ? std::span<const cg::ComponentTypeView>(componentTypes) : std::span<const cg::ComponentTypeView>{},object->locked};
+            if (s.japanese) options.labels={"コンポーネント追加","有効","コンポーネント","操作","ロック","ロック解除","上へ","下へ","削除"};
+            cg::ComponentStack("Components",s.inspectorComponents,s.revision,s.events,options);
             ImGui::EndTabItem();
         }
         ImGui::EndTabBar();

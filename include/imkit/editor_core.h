@@ -313,12 +313,19 @@ struct PropertyProvider {
     // Host applies search/category filtering; the widget requests only clipped rows.
     std::span<const PropertyView> (*query)(void *, int first, int count, std::string_view search) = nullptr;
 };
+struct PropertyLabels {
+    const char *search="Search", *property="Property", *value="Value", *key="Key";
+    const char *modifiedSuffix=" (modified)", *overrideSuffix=" (override)", *lockedSuffix=" [locked]";
+    const char *favorite="Favorite", *locked="Locked", *overrideValue="Override", *reset="Reset";
+    const char *previousKey="Previous key", *nextKey="Next key", *addKey="Add keyframe", *removeKey="Remove keyframe";
+};
 struct PropertyState {
     char search[128]{};
     Transaction drag;
     double draft = 0;
     const IconAtlas *icons = nullptr; // Non-owning host atlas.
     Tick time = 0;
+    PropertyLabels labels{};
 };
 void PropertyGrid(const char *id, const PropertyProvider &provider, PropertyState &state,
                   EventBuffer &events);
