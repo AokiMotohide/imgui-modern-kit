@@ -870,7 +870,7 @@ void ComponentStack(const char *id,std::span<const ComponentView> components,
     ImGui::PushID(id);
     if (options.owner && !options.availableTypes.empty()) {
         ImGui::BeginDisabled(options.locked);
-        if (ImGui::Button("Add component")) ImGui::OpenPopup("add");
+        if (ImGui::Button(options.labels.add)) ImGui::OpenPopup("add");
         if (ImGui::BeginPopup("add")) {
             for (const auto &type:options.availableTypes) {
                 ImGui::PushID(reinterpret_cast<void*>(static_cast<std::uintptr_t>(type.id)));
@@ -882,9 +882,9 @@ void ComponentStack(const char *id,std::span<const ComponentView> components,
         ImGui::EndDisabled();
     }
     if (ImGui::BeginTable("components",3,ImGuiTableFlags_RowBg|ImGuiTableFlags_SizingStretchProp)) {
-        ImGui::TableSetupColumn("Enabled",ImGuiTableColumnFlags_WidthFixed,ImGui::GetFrameHeight());
-        ImGui::TableSetupColumn("Component",ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableSetupColumn("Actions",ImGuiTableColumnFlags_WidthFixed,ImGui::GetFrameHeight());
+        ImGui::TableSetupColumn(options.labels.enabled,ImGuiTableColumnFlags_WidthFixed,ImGui::GetFrameHeight());
+        ImGui::TableSetupColumn(options.labels.component,ImGuiTableColumnFlags_WidthStretch);
+        ImGui::TableSetupColumn(options.labels.actions,ImGuiTableColumnFlags_WidthFixed,ImGui::GetFrameHeight());
         for (const auto &component:components) {
             ImGui::PushID(reinterpret_cast<void*>(static_cast<std::uintptr_t>(component.id)));
             ImGui::TableNextRow();ImGui::TableNextColumn();
@@ -899,13 +899,13 @@ void ComponentStack(const char *id,std::span<const ComponentView> components,
             if (ImGui::Button("...")) ImGui::OpenPopup("actions");
             if (ImGui::BeginPopup("actions")) {
                 ImGui::BeginDisabled(options.locked);
-                if (ImGui::MenuItem(component.locked?"Unlock":"Lock"))
+                if (ImGui::MenuItem(component.locked?options.labels.unlock:options.labels.lock))
                     Emit(out,component.id,revision,editor::EditKind::Toggle,Value({2,component.locked?1.:0.,0}),Value({2,component.locked?0.:1.,0}));
                 ImGui::EndDisabled();
                 ImGui::BeginDisabled(component.locked || options.locked);
-                if (ImGui::MenuItem("Move up")) Emit(out,component.id,revision,editor::EditKind::Reorder,{},editor::Value{0,0,-1,component.owner});
-                if (ImGui::MenuItem("Move down")) Emit(out,component.id,revision,editor::EditKind::Reorder,{},editor::Value{0,0,1,component.owner});
-                if (ImGui::MenuItem("Remove")) Emit(out,component.id,revision,editor::EditKind::Remove);
+                if (ImGui::MenuItem(options.labels.moveUp)) Emit(out,component.id,revision,editor::EditKind::Reorder,{},editor::Value{0,0,-1,component.owner});
+                if (ImGui::MenuItem(options.labels.moveDown)) Emit(out,component.id,revision,editor::EditKind::Reorder,{},editor::Value{0,0,1,component.owner});
+                if (ImGui::MenuItem(options.labels.remove)) Emit(out,component.id,revision,editor::EditKind::Remove);
                 ImGui::EndDisabled();ImGui::EndPopup();
             }
             ImGui::PopID();

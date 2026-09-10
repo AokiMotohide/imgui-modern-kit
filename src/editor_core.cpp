@@ -905,14 +905,14 @@ void PropertyGrid(const char *id, const PropertyProvider &p, PropertyState &s, E
     detail::ResumeTerminal(s.drag, p.revision, out);
     ImGui::PushID(id);
     ImGui::SetNextItemWidth(-1);
-    ImGui::InputTextWithHint("##search", "Search", s.search, sizeof(s.search));
+    ImGui::InputTextWithHint("##search", s.labels.search, s.search, sizeof(s.search));
     if (s.drag.active && (p.revision != s.drag.draft.revision || ImGui::IsKeyPressed(ImGuiKey_Escape)))
         s.drag.Cancel(out);
     if (ImGui::BeginTable("properties", 3,
                           ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg)) {
-        ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthStretch, 1.2f);
-        ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch, 1.f);
-        ImGui::TableSetupColumn("Key", ImGuiTableColumnFlags_WidthFixed, ImGui::GetFrameHeight());
+        ImGui::TableSetupColumn(s.labels.property, ImGuiTableColumnFlags_WidthStretch, 1.2f);
+        ImGui::TableSetupColumn(s.labels.value, ImGuiTableColumnFlags_WidthStretch, 1.f);
+        ImGui::TableSetupColumn(s.labels.key, ImGuiTableColumnFlags_WidthFixed, ImGui::GetFrameHeight());
         ImGuiListClipper clipper;
         clipper.Begin(p.count, ImGui::GetFrameHeightWithSpacing());
         while (clipper.Step()) {
@@ -925,12 +925,12 @@ void PropertyGrid(const char *id, const PropertyProvider &p, PropertyState &s, E
                 ImGui::TableNextColumn();
                 const bool locked=Flag(row.flags,PropertyFlags::Locked);
                 ImGui::Text("%s%s%s%s%s", Flag(row.flags,PropertyFlags::Favorite)?"* ":"",
-                    row.label,Flag(row.flags,PropertyFlags::Modified)?" (modified)":"",
-                    Flag(row.flags,PropertyFlags::Override)?" (override)":"",locked?" [locked]":"");
+                    row.label,Flag(row.flags,PropertyFlags::Modified)?s.labels.modifiedSuffix:"",
+                    Flag(row.flags,PropertyFlags::Override)?s.labels.overrideSuffix:"",locked?s.labels.lockedSuffix:"");
                 if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", row.category);
                 if (ImGui::BeginPopupContextItem("property state")) {
                     for (auto flag:{PropertyFlags::Favorite,PropertyFlags::Locked,PropertyFlags::Override}) {
-                        const char *label=flag==PropertyFlags::Favorite?"Favorite":flag==PropertyFlags::Locked?"Locked":"Override";
+                        const char *label=flag==PropertyFlags::Favorite?s.labels.favorite:flag==PropertyFlags::Locked?s.labels.locked:s.labels.overrideValue;
                         bool enabled=Flag(row.flags,flag);
                         if (ImGui::MenuItem(label,nullptr,enabled))
                             Action(out,row.id,p.revision,EditKind::Toggle,
@@ -957,23 +957,23 @@ void PropertyGrid(const char *id, const PropertyProvider &p, PropertyState &s, E
                 if (ImGui::IsItemDeactivated() && s.drag.active && s.drag.draft.target == row.id)
                     s.drag.Commit(p.revision, out);
                 if (ImGui::BeginPopupContextItem("actions")) {
-                    if (ImGui::MenuItem("Reset"))
+                    if (ImGui::MenuItem(s.labels.reset))
                         Action(out, row.id, p.revision, EditKind::Reset, Value{0, 0, 0, 0, row.value},
                                Value{0, 0, 0, 0, row.defaultValue});
-                    if (ImGui::MenuItem("Favorite", nullptr, Flag(row.flags, PropertyFlags::Favorite)))
+                    if (ImGui::MenuItem(s.labels.favorite, nullptr, Flag(row.flags, PropertyFlags::Favorite)))
                         Action(out, row.id, p.revision, EditKind::Toggle, Value{0, 0, 0, 0, 8},
                                Value{0, 0, 0, 0, 8, Flag(row.flags, PropertyFlags::Favorite) ? 0. : 1.});
-                    if (ImGui::MenuItem("Previous key"))
+                    if (ImGui::MenuItem(s.labels.previousKey))
                         Action(out, row.id, p.revision, EditKind::PropertyKey, {},
                                Value{s.time,0,static_cast<Tick>(PropertyKeyAction::Previous),0,row.value});
-                    if (ImGui::MenuItem("Next key"))
+                    if (ImGui::MenuItem(s.labels.nextKey))
                         Action(out, row.id, p.revision, EditKind::PropertyKey, {},
                                Value{s.time,0,static_cast<Tick>(PropertyKeyAction::Next),0,row.value});
                     ImGui::EndPopup();
                 }
                 ImGui::TableNextColumn();
                 if (s.icons ? IconButton("keyframe",*s.icons,IconId::Keyframe,
-                        Flag(row.flags,PropertyFlags::Keyed)?"Remove keyframe":"Add keyframe",{ImGui::GetFontSize()})
+                        Flag(row.flags,PropertyFlags::Keyed)?s.labels.removeKey:s.labels.addKey,{ImGui::GetFontSize()})
                     : ImGui::SmallButton(Flag(row.flags, PropertyFlags::Keyed) ? "<>" : "+"))
                     Action(out, row.id, p.revision, EditKind::PropertyKey, {},
                         Value{s.time,0,static_cast<Tick>(Flag(row.flags,PropertyFlags::Keyed)?
