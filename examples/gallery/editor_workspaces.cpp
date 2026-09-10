@@ -171,6 +171,7 @@ void EditorWorkspaces::Dataset(bool big) {
         }
         for (int i = 0; i < clipsPerTrack; ++i) {
             video::ClipView clip;
+            clip.transitionInKind=clip.transitionOutKind=video::TransitionKind::Fade;
             clip.id = 1000 + t * clipsPerTrack + i;
             clip.track = track.id;
             constexpr const char *clipLabels[]={"Studio / Main take","Ambient / stereo","A quiet afternoon",
@@ -464,6 +465,21 @@ std::span<const preview::Mesh> EditorWorkspaces::BuildSceneMeshes() {
     }
     return sceneMeshes;
 }
+editor::Tick EditorWorkspaces::TransitionLimit(editor::StableId id,bool outgoing) const {
+    const auto found=std::lower_bound(clipById.begin(),clipById.end(),id,
+        [](const auto &entry,auto value){return entry.first<value;});
+    if (found==clipById.end() || found->first!=id) return 0;
+    const auto index=found->second;
+    const auto &clip=clips[index];
+    const auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==clip.track;});
+    if (clip.locked || track==tracks.end() || track->locked) return 0;
+    const auto kind=outgoing ? clip.transitionOutKind : clip.transitionInKind;
+    if (kind==video::TransitionKind::None) return 0;
+    if (kind==video::TransitionKind::Fade) return clip.duration;
+    if ((outgoing && index+1==clips.size()) || (!outgoing && index==0)) return 0;
+    return outgoing ? video::CenteredTransitionLimit(clip,clips[index+1],{},{}) :
+                      video::CenteredTransitionLimit(clips[index-1],clip,{},{});
+}
 bool EditorWorkspaces::UndoTransition(bool redo) {
     if (redo ? transitionHistoryCursor>=transitionHistory.size() : transitionHistoryCursor==0) return false;
     const auto &entry=transitionHistory[redo ? transitionHistoryCursor : transitionHistoryCursor-1];
@@ -748,8 +764,9 @@ void EditorWorkspaces::ApplyEvents() {
             if (e.kind==editor::EditKind::TransitionDuration && !clip->locked) {
                 const auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==clip->track;});
                 if (track!=tracks.end() && !track->locked) {
-                    clip->transitionIn=std::clamp(e.proposed.first,editor::Tick{0},clip->duration);
-                    clip->transitionOut=std::clamp(e.proposed.last,editor::Tick{0},clip->duration-clip->transitionIn);
+                    clip->transitionIn=std::clamp(e.proposed.first,editor::Tick{0},TransitionLimit(clip->id,false));
+                    clip->transitionOut=std::clamp(e.proposed.last,editor::Tick{0},
+                        std::min(TransitionLimit(clip->id,true),clip->duration-clip->transitionIn));
                     changed=true;
                 }
             }
@@ -1168,6 +1185,9 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     } else ImGui::TextUnformatted(s.japanese ? "クリップを選択" : "Select a clip");
     ImGui::EndChild();
     video::TimelineProvider p{&s, s.revision, static_cast<int>(s.tracks.size())};
+    p.transitionLimit=[](void *u,editor::StableId id,bool outgoing) {
+        return static_cast<EditorWorkspaces *>(u)->TransitionLimit(id,outgoing);
+    };
     p.tracks = [](void *u, int a, int n) {
         auto &s = *static_cast<EditorWorkspaces *>(u);
         ++s.queryCount;

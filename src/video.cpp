@@ -134,6 +134,17 @@ bool AddTick(Tick a,Tick b,Tick &out) {
 float TrackExtent(const TrackView &track) {
     return track.expanded ? (std::max)(64.f,std::isfinite(track.height) ? track.height : 64.f) : 32.f;
 }
+Tick CenteredTransitionLimit(const ClipView &left,const ClipView &right,
+                             ClipConstraints leftBounds,ClipConstraints rightBounds) {
+    if (left.track!=right.track || !EditClip(left,editor::EditKind::Move,0,leftBounds).valid ||
+        !EditClip(right,editor::EditKind::Move,0,rightBounds).valid ||
+        left.start+left.duration!=right.start) return 0;
+    const Tick post=AvailableTicks(static_cast<std::uint64_t>(leftBounds.mediaLast)-
+                                  static_cast<std::uint64_t>(left.sourceIn),left.speed)-left.duration;
+    const Tick pre=AvailableTicks(static_cast<std::uint64_t>(right.sourceIn)-
+                                 static_cast<std::uint64_t>(rightBounds.mediaFirst),right.speed);
+    return 2*std::min({post,pre,left.duration,right.duration,std::numeric_limits<Tick>::max()/2});
+}
 ClipEdit EditClip(const ClipView &c, editor::EditKind kind, Tick delta, ClipConstraints bounds) {
     ClipEdit result{c.start, c.duration, c.sourceIn, false};
     if (c.locked || bounds.minimumDuration<1 || c.duration < bounds.minimumDuration || c.speed <= 0 || !std::isfinite(c.speed) ||
@@ -847,7 +858,11 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     auto proposed=s.transitionDrag.draft.original;
                     const Tick delta=editor::FromSeconds((io.MousePos.x-s.transitionMouseStart)/s.canvas.scale.x);
                     auto original=clip;original.transitionIn=proposed.first;original.transitionOut=proposed.last;
-                    const auto edit=EditTransition(original,s.transitionEnd,s.transitionEnd ? -delta : delta);
+                    auto edit=EditTransition(original,s.transitionEnd,s.transitionEnd ? -delta : delta);
+                    if (edit.valid && p.transitionLimit) {
+                        auto &duration=s.transitionEnd ? edit.outDuration : edit.inDuration;
+                        duration=std::min(duration,std::max<Tick>(0,p.transitionLimit(p.user,clip.id,s.transitionEnd)));
+                    }
                     if (!edit.valid) s.transitionDrag.Cancel(out);
                     else {
                         proposed.first=edit.inDuration;proposed.last=edit.outDuration;

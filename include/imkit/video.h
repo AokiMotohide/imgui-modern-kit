@@ -59,6 +59,11 @@ struct ClipEdit {
     Tick rippleDelta = 0;
 };
 ClipEdit EditClip(const ClipView &clip, editor::EditKind kind, Tick delta, ClipConstraints constraints);
+// Maximum total duration of a transition centered on an adjacent cut. Each clip
+// supplies half of the overlap outside its trimmed source range. Zero rejects
+// gaps, different tracks, locked clips and invalid media ranges.
+Tick CenteredTransitionLimit(const ClipView &left, const ClipView &right,
+                             ClipConstraints leftBounds, ClipConstraints rightBounds);
 struct PairEdit {
     ClipEdit left, right;
     bool valid = false;
@@ -100,6 +105,9 @@ struct TimelineProvider {
     bool (*canBeginEdit)(void *,StableId clip,editor::EditKind kind)=nullptr;
     // Optional indexed existence/lock lookup for active clip-body transactions, including offscreen owners.
     bool (*isEditable)(void *,StableId clip)=nullptr;
+    // Optional total-duration limit, including neighboring media handles. Called
+    // during transition edits; the host must also validate committed edits.
+    Tick (*transitionLimit)(void *,StableId clip,bool outgoing)=nullptr;
 };
 struct TrackLabels {
     // Borrowed UTF-8 strings. Array order follows Visible through Source in TrackControl.

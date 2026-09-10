@@ -723,3 +723,7 @@ Galleryの頂点・面normal切替を公開DrawMeshNormalsへ接続しました�
 Gallery Bounds pivot uses selected mesh vertices transformed by the full affine basis, without expanding mesh bounds to include an unrelated object origin. Objects without geometry contribute their origin. Median remains the average of selected object origins, and Cursor uses the host cursor. Host-model regression verifies asymmetric sheared geometry and the distinct Median result.
 
 GalleryのBounds pivotは選択mesh頂点へ全アフィン基底を適用して求め、mesh外のobject原点で範囲を広げません。geometryのないobjectは原点を使います。Medianは選択object原点の平均、Cursorはホストのcursor位置です。非対称なshear付きgeometryと、Medianとの違いをホストモデル回帰で確認しました。
+
+CenteredTransitionLimit returns the maximum even total duration for a centered cut transition, using both clips' trimmed source handles and playback speeds. Invalid media, nonadjacent clips, different tracks and locked clips return zero. TimelineProvider::transitionLimit optionally constrains duration previews; Gallery also validates duration commits. Standalone sample clips use Fade. This constraint calculation does not decode or blend media.
+
+CenteredTransitionLimitはcutを中心とするtransitionの最大総時間を偶数Tickで返します。両clipの素材の余白と再生速度を使用し、素材範囲不正、非隣接、別track、lockでは0を返します。TimelineProvider::transitionLimitで長さのpreviewを制限でき、Galleryは長さのCommitも検証します。単独sample clipはFadeを使います。この制約計算は素材のdecodeや合成を行いません。
