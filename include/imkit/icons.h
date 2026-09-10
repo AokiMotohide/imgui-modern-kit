@@ -153,6 +153,10 @@ enum class IconId : std::uint16_t {
     RenderRegion,
     Passepartout,
     UnifiedTransform,
+    SelectVertex,
+    SelectEdge,
+    SelectFace,
+    SelectIsland,
     Count
 };
 struct IconInfo {

@@ -1802,39 +1802,43 @@
     },
     {
       "operation": "SelectVertex",
-      "widget": "UVEditor",
+      "widget": "UVEditor selection menu; Icon Gallery",
       "disposition": "new",
       "icon": "SelectVertex",
       "tooltip": "Select Vertex",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "native selected row, focus outline and text label",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/cg.cpp"
     },
     {
       "operation": "SelectEdge",
-      "widget": "UVEditor",
+      "widget": "UVEditor selection menu; Icon Gallery",
       "disposition": "new",
       "icon": "SelectEdge",
       "tooltip": "Select Edge",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "native selected row, focus outline and text label",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/cg.cpp"
     },
     {
       "operation": "SelectFace",
-      "widget": "UVEditor",
+      "widget": "UVEditor selection menu; Icon Gallery",
       "disposition": "new",
       "icon": "SelectFace",
       "tooltip": "Select Face",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "native selected row, focus outline and text label",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/cg.cpp"
     },
     {
       "operation": "SelectIsland",
-      "widget": "UVEditor",
+      "widget": "UVEditor selection menu; Icon Gallery",
       "disposition": "new",
       "icon": "SelectIsland",
       "tooltip": "Select Island",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "native selected row, focus outline and text label",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/cg.cpp"
     },
     {
       "operation": "UVSeam",

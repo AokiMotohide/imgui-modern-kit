@@ -574,5 +574,21 @@
   {
     "name": "UnifiedTransform",
     "category": "Editor"
+  },
+  {
+    "name": "SelectVertex",
+    "category": "Editor"
+  },
+  {
+    "name": "SelectEdge",
+    "category": "Editor"
+  },
+  {
+    "name": "SelectFace",
+    "category": "Editor"
+  },
+  {
+    "name": "SelectIsland",
+    "category": "Editor"
   }
 ]
