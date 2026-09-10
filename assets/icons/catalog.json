@@ -690,5 +690,137 @@
   {
     "name": "StripBlend",
     "category": "Editor"
+  },
+  {
+    "name": "TrimStart",
+    "category": "Editor"
+  },
+  {
+    "name": "TrimEnd",
+    "category": "Editor"
+  },
+  {
+    "name": "RippleDelete",
+    "category": "Editor"
+  },
+  {
+    "name": "SnapToFrame",
+    "category": "Editor"
+  },
+  {
+    "name": "Marker",
+    "category": "Editor"
+  },
+  {
+    "name": "SnapToClipEdge",
+    "category": "Editor"
+  },
+  {
+    "name": "SnapToSelection",
+    "category": "Editor"
+  },
+  {
+    "name": "TrackHeight",
+    "category": "Editor"
+  },
+  {
+    "name": "Rewind",
+    "category": "Editor"
+  },
+  {
+    "name": "FastForward",
+    "category": "Editor"
+  },
+  {
+    "name": "SetInPoint",
+    "category": "Editor"
+  },
+  {
+    "name": "SetOutPoint",
+    "category": "Editor"
+  },
+  {
+    "name": "WorkRange",
+    "category": "Editor"
+  },
+  {
+    "name": "Timecode",
+    "category": "Editor"
+  },
+  {
+    "name": "CaptionAdd",
+    "category": "Editor"
+  },
+  {
+    "name": "PlaybackSpeed",
+    "category": "Editor"
+  },
+  {
+    "name": "SpeedCurve",
+    "category": "Editor"
+  },
+  {
+    "name": "Waveform",
+    "category": "Editor"
+  },
+  {
+    "name": "VolumeEnvelope",
+    "category": "Editor"
+  },
+  {
+    "name": "Orbit",
+    "category": "Editor"
+  },
+  {
+    "name": "AxisAlignment",
+    "category": "Editor"
+  },
+  {
+    "name": "WireframeShading",
+    "category": "Editor"
+  },
+  {
+    "name": "SolidShading",
+    "category": "Editor"
+  },
+  {
+    "name": "TransformSnap",
+    "category": "Editor"
+  },
+  {
+    "name": "Hierarchy",
+    "category": "Editor"
+  },
+  {
+    "name": "Mesh",
+    "category": "Editor"
+  },
+  {
+    "name": "Light",
+    "category": "Editor"
+  },
+  {
+    "name": "Modifier",
+    "category": "Editor"
+  },
+  {
+    "name": "ModifierAdd",
+    "category": "Editor"
+  },
+  {
+    "name": "Reparent",
+    "category": "Editor"
+  },
+  {
+    "name": "LinkedDuplicate",
+    "category": "Editor"
+  },
+  {
+    "name": "Unselectable",
+    "category": "Editor"
+  },
+  {
+    "name": "ArrayProperty",
+    "category": "Editor"
   }
 ]

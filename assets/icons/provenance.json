@@ -2593,5 +2593,500 @@
       975,
       801
     ]
+  },
+  {
+    "name": "TrimStart",
+    "source": "assets/icons/originals/TrimStart.png",
+    "sha256": "40f56257a25f933c1251900b5ff54b604cc92c973a8925d985bcc16ab18838b1",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      322,
+      395,
+      933,
+      879
+    ]
+  },
+  {
+    "name": "TrimEnd",
+    "source": "assets/icons/originals/TrimEnd.png",
+    "sha256": "58f63de5864e5126150e403bff47656bf78d54259e14a77a554b7854e5375392",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      294,
+      411,
+      961,
+      845
+    ]
+  },
+  {
+    "name": "RippleDelete",
+    "source": "assets/icons/originals/RippleDelete.png",
+    "sha256": "8a7374cb48d3d4b302ef63772ff6b2fb19bb38390dbf6a5f203d44ccf48baac7",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      154,
+      236,
+      1100,
+      1048
+    ]
+  },
+  {
+    "name": "SnapToFrame",
+    "source": "assets/icons/originals/SnapToFrame.png",
+    "sha256": "7d79cc8d2d51ec015f1c067c5309d82d121f53e7cd284c19bfea7458b29afa34",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      375,
+      267,
+      879,
+      988
+    ]
+  },
+  {
+    "name": "Marker",
+    "source": "assets/icons/originals/Marker.png",
+    "sha256": "606f6d7c019790518a30483f929bd4d253eb10f22f37989a15c194b4faa8385e",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      299,
+      307,
+      955,
+      954
+    ]
+  },
+  {
+    "name": "SnapToClipEdge",
+    "source": "assets/icons/originals/SnapToClipEdge.png",
+    "sha256": "7bf1d71e21cf7c1e24f96fae2ce0cd09422748a42d5a4b07e2ffa7cdb28b1c67",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      198,
+      208,
+      939,
+      1123
+    ]
+  },
+  {
+    "name": "SnapToSelection",
+    "source": "assets/icons/originals/SnapToSelection.png",
+    "sha256": "9b4fbdb0b01e8f062586b027f45b88cc1b90dcc5c1fc604c4cd0079a0c3af989",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      339,
+      355,
+      915,
+      899
+    ]
+  },
+  {
+    "name": "TrackHeight",
+    "source": "assets/icons/originals/TrackHeight.png",
+    "sha256": "f5849fb246b6b45b9d1dc026b93073441afef78a91dfed962859a3e4fd6a1e8b",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      303,
+      383,
+      951,
+      871
+    ]
+  },
+  {
+    "name": "Rewind",
+    "source": "assets/icons/originals/Rewind.png",
+    "sha256": "e02d8e9e346bc034ccb672922b8535e084bf3ba049b6a1100b9efc3abad0448c",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      261,
+      415,
+      994,
+      841
+    ]
+  },
+  {
+    "name": "FastForward",
+    "source": "assets/icons/originals/FastForward.png",
+    "sha256": "6cc6d319fd7069ea7239e4bb62e886756609cc850e0b18ac84653915b01f0741",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      354,
+      452,
+      913,
+      798
+    ]
+  },
+  {
+    "name": "SetInPoint",
+    "source": "assets/icons/originals/SetInPoint.png",
+    "sha256": "c90e9f62eafeb6bccaffd4ed67d3033b5cca077533b882d9a245e848ba840b57",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      404,
+      364,
+      851,
+      888
+    ]
+  },
+  {
+    "name": "SetOutPoint",
+    "source": "assets/icons/originals/SetOutPoint.png",
+    "sha256": "003af5deca5f5b8dcd879d5a67ef074e45ea6f9bc385ff488e02bb062072e244",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      430,
+      374,
+      823,
+      878
+    ]
+  },
+  {
+    "name": "WorkRange",
+    "source": "assets/icons/originals/WorkRange.png",
+    "sha256": "7e95c0bcc47c4b436b5c6ea6326a3d4d4845f85d4003c15c9d257b2a7bab872a",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      306,
+      398,
+      948,
+      856
+    ]
+  },
+  {
+    "name": "Timecode",
+    "source": "assets/icons/originals/Timecode.png",
+    "sha256": "81aa23d2e06a4c09fb1443cb1c7dc4da9976e8926de2ed37d1301d80dfc00240",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      232,
+      462,
+      1022,
+      791
+    ]
+  },
+  {
+    "name": "CaptionAdd",
+    "source": "assets/icons/originals/CaptionAdd.png",
+    "sha256": "d60e3011b9a5a9b154ea6642f56dba320df036c620b75e353f9c4058006cccab",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      312,
+      448,
+      960,
+      866
+    ]
+  },
+  {
+    "name": "PlaybackSpeed",
+    "source": "assets/icons/originals/PlaybackSpeed.png",
+    "sha256": "b7bca32ab722e6dd3ef1f84a635c24eb93bb55dbd48be2e0f5f75586483fc6a9",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      228,
+      305,
+      1027,
+      971
+    ]
+  },
+  {
+    "name": "SpeedCurve",
+    "source": "assets/icons/originals/SpeedCurve.png",
+    "sha256": "d50731ed5dbcf2548dbab87d49c23d5da0bd1e6dd1ad9c9b8768bf42ff48a758",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      351,
+      374,
+      904,
+      891
+    ]
+  },
+  {
+    "name": "Waveform",
+    "source": "assets/icons/originals/Waveform.png",
+    "sha256": "0bfbdbb7332a2c9fce7980bc348f3c62df41e781cb177fb574fcbec5b61eadbb",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      268,
+      409,
+      987,
+      848
+    ]
+  },
+  {
+    "name": "VolumeEnvelope",
+    "source": "assets/icons/originals/VolumeEnvelope.png",
+    "sha256": "00c3206f8104869b552fe39126be23a67a176ff125c63ff37de916c3f5b49bdf",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      280,
+      333,
+      988,
+      966
+    ]
+  },
+  {
+    "name": "Orbit",
+    "source": "assets/icons/originals/Orbit.png",
+    "sha256": "bc1cf12df32d28f6be648881044ee830a4b2bcdd7e43e63169731216cd5e78b6",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      214,
+      335,
+      1041,
+      945
+    ]
+  },
+  {
+    "name": "AxisAlignment",
+    "source": "assets/icons/originals/AxisAlignment.png",
+    "sha256": "4b0ccbb49badd6006e63b9e371bce6c5f59522ab3b3631142220d742f357ae3f",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      227,
+      263,
+      1026,
+      979
+    ]
+  },
+  {
+    "name": "WireframeShading",
+    "source": "assets/icons/originals/WireframeShading.png",
+    "sha256": "f8b2b1a5beeb92d5324044fcef500781b7be432e25e1108bae21233fc709b1f4",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      278,
+      252,
+      977,
+      1044
+    ]
+  },
+  {
+    "name": "SolidShading",
+    "source": "assets/icons/originals/SolidShading.png",
+    "sha256": "3535ce47591bf31733f15f537c995cc1d6c4b3af1ffa84f184b8858ac23ef68a",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      280,
+      254,
+      974,
+      1023
+    ]
+  },
+  {
+    "name": "TransformSnap",
+    "source": "assets/icons/originals/TransformSnap.png",
+    "sha256": "cf499de3ccbc7cf12f20fef23e6d6246cb5108a2530722a8ea0ed568ddd02191",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      204,
+      253,
+      1050,
+      988
+    ]
+  },
+  {
+    "name": "Hierarchy",
+    "source": "assets/icons/originals/Hierarchy.png",
+    "sha256": "ebde488e968fd47f60b72ac76caa8f9b3a72a4cf17e8006820324fb2d896323c",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      289,
+      395,
+      965,
+      883
+    ]
+  },
+  {
+    "name": "Mesh",
+    "source": "assets/icons/originals/Mesh.png",
+    "sha256": "fee5c66e1a2626c04ea8082cd33ebe45571497bc031a0c591709690d1921bb0f",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      237,
+      288,
+      1017,
+      990
+    ]
+  },
+  {
+    "name": "Light",
+    "source": "assets/icons/originals/Light.png",
+    "sha256": "7bf23cdf018b203a2d694a73be250057279e1f783c07dd33c3815174ea49ba09",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      340,
+      295,
+      914,
+      948
+    ]
+  },
+  {
+    "name": "Modifier",
+    "source": "assets/icons/originals/Modifier.png",
+    "sha256": "2c1c65f88099f61dbbb2d39eb8986e370fec3619ca4bfc260578fb917298c7c0",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      313,
+      261,
+      985,
+      1003
+    ]
+  },
+  {
+    "name": "ModifierAdd",
+    "source": "assets/icons/originals/ModifierAdd.png",
+    "sha256": "6b9d7379bd09bafe8d37a8b5f5e3c0edf4798e21af5159a457efd0dfc59d7bb1",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      249,
+      234,
+      1043,
+      1032
+    ]
+  },
+  {
+    "name": "Reparent",
+    "source": "assets/icons/originals/Reparent.png",
+    "sha256": "3d5f22bfdd04ee3976dc1c0e249089f13acc4392b8aea382189ce9a30df499c2",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      286,
+      315,
+      968,
+      938
+    ]
+  },
+  {
+    "name": "LinkedDuplicate",
+    "source": "assets/icons/originals/LinkedDuplicate.png",
+    "sha256": "8702ed5e4fbaac1dd76a90325601a672b8afd31fbe01e29071ef82613ee3e257",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      284,
+      312,
+      972,
+      976
+    ]
+  },
+  {
+    "name": "Unselectable",
+    "source": "assets/icons/originals/Unselectable.png",
+    "sha256": "c0196aee50ac58d24ec5d43a3c267cc2e389fae6ad8da889a7118768dc225be2",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      316,
+      318,
+      937,
+      946
+    ]
+  },
+  {
+    "name": "ArrayProperty",
+    "source": "assets/icons/originals/ArrayProperty.png",
+    "sha256": "a48575382cccce249aedd9edc4de16fd3e268394c57424555c2746feed2e9294",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      369,
+      357,
+      885,
+      915
+    ]
   }
 ]

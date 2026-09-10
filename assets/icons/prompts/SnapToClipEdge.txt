@@ -1,0 +1,4 @@
+One individual black outline technical editor icon, SnapToClipEdge. Two plain wide rectangular video clip blocks on separate horizontal rows, their right edges aligned on a single bold vertical dashed guide line. No clipboard shapes, no tabs, no letters, no magnet. A compact square arrangement with large simple shapes. Uniform black rounded strokes equivalent to 2 units on a 24-unit grid, true transparent RGBA background, generous margin, readable at 16px, no shadows or other images.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/SnapToClipEdge.png

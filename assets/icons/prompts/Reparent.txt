@@ -1,0 +1,4 @@
+Use case: logo-brand. Generate ONE individual technical software icon named Reparent. Subject: two small parent squares at top and one child square below, with a bent arrow moving the child from left to right parent. Uniform clean black rounded outline strokes equivalent to 2 units on a 24-unit grid. Compact approximately square optical footprint readable at 16px, generous transparent margins. True transparent RGBA background. No lettering except the specified display slots, shadows, checkerboard drawing, paper, contact sheet or extra icons.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/Reparent.png
