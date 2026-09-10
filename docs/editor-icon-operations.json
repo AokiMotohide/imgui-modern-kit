@@ -389,30 +389,33 @@
     },
     {
       "operation": "GoToStart",
-      "widget": "Transport / TimeRuler",
-      "disposition": "new",
-      "icon": "GoToStart",
+      "widget": "Transport timecode context menu",
+      "disposition": "reuse",
+      "icon": "PreviousTrack",
       "tooltip": "Go To Start",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "integrated; native interaction capture pending",
+      "composition": "Existing direction or boundary glyph paired with explicit action label."
     },
     {
       "operation": "GoToEnd",
-      "widget": "Transport / TimeRuler",
-      "disposition": "new",
-      "icon": "GoToEnd",
+      "widget": "Transport timecode context menu",
+      "disposition": "reuse",
+      "icon": "NextTrack",
       "tooltip": "Go To End",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "integrated; native interaction capture pending",
+      "composition": "Existing direction or boundary glyph paired with explicit action label."
     },
     {
       "operation": "PlayReverse",
-      "widget": "Transport / TimeRuler",
-      "disposition": "new",
-      "icon": "PlayReverse",
+      "widget": "Transport timecode context menu",
+      "disposition": "reuse",
+      "icon": "ArrowLeft",
       "tooltip": "Play Reverse",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "integrated; native interaction capture pending",
+      "composition": "Existing direction or boundary glyph paired with explicit action label."
     },
     {
       "operation": "Rewind",
@@ -452,12 +455,13 @@
     },
     {
       "operation": "ClearInOut",
-      "widget": "Transport / TimeRuler",
-      "disposition": "new",
-      "icon": "ClearInOut",
+      "widget": "Transport timecode context menu",
+      "disposition": "reuse",
+      "icon": "Reset",
       "tooltip": "Clear In Out",
       "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "status": "integrated; native interaction capture pending",
+      "composition": "Existing direction or boundary glyph paired with explicit action label."
     },
     {
       "operation": "WorkRange",

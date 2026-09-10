@@ -5,6 +5,15 @@
 #include <limits>
 namespace imkit::gallery {
 namespace {
+void TransportLanguage(editor::TimeState &time,bool japanese) {
+    time.labels={};
+    if (!japanese) return;
+    auto &l=time.labels;l.play="再生";l.pause="一時停止";l.stop="停止";
+    l.previousFrame="前のフレーム";l.nextFrame="次のフレーム";
+    l.in="イン";l.out="アウト";l.loop="ループ";
+    l.goToStart="先頭へ";l.goToEnd="末尾へ";l.clearInOut="イン／アウトを解除";
+    l.reverse="逆再生";l.forward="順再生";
+}
 void ApplyGizmoPreview(preview::Mesh &mesh,const cg::ViewportState &viewport) {
     auto apply=[&](const editor::Transaction *transaction) {
         if (!transaction->active || transaction->draft.target!=mesh.id || transaction->draft.phase==editor::Phase::Cancel) return;
@@ -1110,6 +1119,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
                 s.monitorMetadata=static_cast<video::MonitorMetadataPreset>(i);
         ImGui::EndPopup();
     }
+    TransportLanguage(s.timeline.time,s.japanese);
     editor::Transport(s.timeline.time, std::span(s.bindings).first(s.bindingCount), s.icons);
     ImGui::EndChild();
     ImGui::SameLine();
@@ -1541,6 +1551,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     ImGui::EndChild();
     ImGui::SameLine();
     ImGui::BeginChild("Animation UV", {0, 0}, ImGuiChildFlags_Borders);
+    TransportLanguage(s.timeline.time,s.japanese);
     editor::Transport(s.timeline.time, std::span(s.bindings).first(s.bindingCount), s.icons);
     if (ImGui::BeginTabBar("Animation editors")) {
         if (ImGui::BeginTabItem("Graph Editor",nullptr,s.animationPage==0?ImGuiTabItemFlags_SetSelected:0)) {
@@ -1625,6 +1636,7 @@ void CoreWorkspace(EditorWorkspaces &s, const Theme &theme) {
     s.curve.icons=s.icons;
     s.uvState.icons=s.icons;
     s.Initialize();
+    TransportLanguage(s.timeline.time,s.japanese);
     editor::Transport(s.timeline.time, std::span(s.bindings).first(s.bindingCount), s.icons);
     editor::TimeRuler("ruler", s.timeline.time, s.curve.canvas, {}, s.revision, s.events, theme);
     editor::CurveEditor("core curve", Curves(s), s.curve, s.keySelection, s.events, theme, {0, 400});

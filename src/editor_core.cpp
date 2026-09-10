@@ -437,33 +437,49 @@ void Transport(TimeState &s, std::span<const Binding> bindings, const IconAtlas 
             s.playing = true;
         }
     }
-    if (button("play-pause", s.playing ? IconId::Pause : IconId::Play, s.playing ? "Pause" : "Play") || CommandPressed(Command::PlayPause, bindings, focused))
+    if (button("play-pause", s.playing ? IconId::Pause : IconId::Play, s.playing ? s.labels.pause : s.labels.play) || CommandPressed(Command::PlayPause, bindings, focused))
         s.playing = !s.playing;
     ImGui::SameLine();
-    if (button("stop", IconId::Stop, "Stop") || CommandPressed(Command::Stop, bindings, focused)) {
+    if (button("stop", IconId::Stop, s.labels.stop) || CommandPressed(Command::Stop, bindings, focused)) {
         s.playing = false;
         s.playhead = s.inOut.first;
     }
     ImGui::SameLine();
-    if (button("previous-frame", IconId::PreviousFrame, "Previous frame") || CommandPressed(Command::PreviousFrame, bindings, focused))
+    if (button("previous-frame", IconId::PreviousFrame, s.labels.previousFrame) || CommandPressed(Command::PreviousFrame, bindings, focused))
         s.playhead = FrameToTick(TickToFrame(s.playhead, s.rate) - 1, s.rate);
     ImGui::SameLine();
-    if (button("next-frame", IconId::NextFrame, "Next frame") || CommandPressed(Command::NextFrame, bindings, focused))
+    if (button("next-frame", IconId::NextFrame, s.labels.nextFrame) || CommandPressed(Command::NextFrame, bindings, focused))
         s.playhead = FrameToTick(TickToFrame(s.playhead, s.rate) + 1, s.rate);
     ImGui::SameLine();
-    if (ImGui::Button("In") || CommandPressed(Command::SetIn, bindings, focused))
+    if (ImGui::Button(s.labels.in) || CommandPressed(Command::SetIn, bindings, focused))
         s.inOut.first = (std::min)(s.playhead, s.inOut.last);
     ImGui::SameLine();
-    if (ImGui::Button("Out") || CommandPressed(Command::SetOut, bindings, focused))
+    if (ImGui::Button(s.labels.out) || CommandPressed(Command::SetOut, bindings, focused))
         s.inOut.last = (std::max)(s.playhead, s.inOut.first);
     ImGui::SameLine();
     if (CommandPressed(Command::Pause, bindings, focused)) s.playing = false;
     if (CommandPressed(Command::Loop, bindings, focused)) s.loop = !s.loop;
-    ImGui::Checkbox("Loop", &s.loop);
+    ImGui::Checkbox(s.labels.loop, &s.loop);
+    if (CommandPressed(Command::GoToStart,bindings,focused)) s.playhead=s.work.first;
+    if (CommandPressed(Command::GoToEnd,bindings,focused)) s.playhead=s.work.last;
+    if (CommandPressed(Command::ClearInOut,bindings,focused)) s.inOut=s.work;
     char text[32];
     FormatTimecode(s.playhead, s.rate, s.dropFrame, text);
     ImGui::SameLine();
     ImGui::TextUnformatted(text);
+    if (ImGui::BeginPopupContextItem("transport-actions")) {
+        const auto action=[&](const char *label,IconId glyph) {
+            if (icons) {Icon(*icons,glyph,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+            return ImGui::MenuItem(label);
+        };
+        if (action(s.labels.goToStart,IconId::PreviousTrack)) s.playhead=s.work.first;
+        if (action(s.labels.goToEnd,IconId::NextTrack)) s.playhead=s.work.last;
+        if (action(s.labels.clearInOut,IconId::Reset)) s.inOut=s.work;
+        ImGui::Separator();
+        if (action(s.labels.reverse,IconId::ArrowLeft)) {s.playbackRate=-1;s.playing=true;}
+        if (action(s.labels.forward,IconId::Play)) {s.playbackRate=1;s.playing=true;}
+        ImGui::EndPopup();
+    }
 }
 void TimeRuler(const char *id, TimeState &s, CanvasState &canvas, std::span<const Marker> markers,
                std::uint64_t rev, EventBuffer &out, const Theme &t, float height) {
