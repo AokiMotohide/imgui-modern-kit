@@ -26,14 +26,14 @@ void Multiply(const float *a, const float *b, float *out) {
         }
 }
 void Matrix(const cg::Camera &c, const cg::Transform &t, float aspect, float *result, float *normal) {
-    float cy = static_cast<float>(std::cos(c.yaw)), sy = static_cast<float>(std::sin(c.yaw)),
-          cp = static_cast<float>(std::cos(c.pitch)), sp = static_cast<float>(std::sin(c.pitch));
-    float view[16] = {cy, -sy * sp, sy * cp, 0, 0, cp, sp, 0, -sy, -cy * sp, cy * cp, 0, 0, 0, 0, 1};
-    view[12] = -static_cast<float>(c.target.x) * cy + static_cast<float>(c.target.z) * sy;
-    view[13] = static_cast<float>(c.target.x) * sy * sp - static_cast<float>(c.target.y) * cp +
-               static_cast<float>(c.target.z) * cy * sp;
-    view[14] =
-        -static_cast<float>(c.distance + c.target.x * sy * cp + c.target.y * sp + c.target.z * cy * cp);
+    const auto basis=cg::OrientationBasis(cg::Orientation::View,{},c);
+    const auto x=basis.x,y=basis.y,z=basis.z;
+    float view[16]={static_cast<float>(x.x),static_cast<float>(y.x),static_cast<float>(z.x),0,
+                    static_cast<float>(x.y),static_cast<float>(y.y),static_cast<float>(z.y),0,
+                    static_cast<float>(x.z),static_cast<float>(y.z),static_cast<float>(z.z),0,0,0,0,1};
+    view[12]=-static_cast<float>(c.target.x*x.x+c.target.y*x.y+c.target.z*x.z);
+    view[13]=-static_cast<float>(c.target.x*y.x+c.target.y*y.y+c.target.z*y.z);
+    view[14]=-static_cast<float>(c.distance+c.target.x*z.x+c.target.y*z.y+c.target.z*z.z);
     float projection[16]{};
     float near = .01f, far = 10000;
     if (c.projection == cg::Projection::Orthographic) {

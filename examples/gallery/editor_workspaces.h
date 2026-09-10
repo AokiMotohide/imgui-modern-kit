@@ -139,6 +139,8 @@ struct EditorWorkspaces {
     ImVec2 timelineOrigin{}, viewportOrigin{}, viewportSize{};
     void Initialize();
     void Dataset(bool largeData);
+    editor::StableId cameraObject=0;
+    void SyncSceneCamera();
     void RenderPreview();
     void ApplyEvents();
     void RebuildTrackLayout();
