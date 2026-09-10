@@ -743,3 +743,7 @@ CurveLabelsはキー操作・Fit・Ghost・snap・scale・選択・補間・接�
 The six-argument TransitionPicker overload accepts TransitionPickerOptions for a borrowed atlas and UTF-8 TransitionLabels; the existing five-argument overload is retained. TimelineLabels::transitions supplies the same labels to the clip context picker and duration tooltips. Gallery supplies Japanese strings.
 
 6引数のTransitionPicker overloadは非所有atlasとUTF-8 TransitionLabelsをTransitionPickerOptionsで受け取り、従来の5引数overloadも維持します。TimelineLabels::transitionsはclip contextの種類選択と長さtooltipへ同じラベルを渡します。Galleryは日本語文字列を設定します。
+
+RollClips and SlideClip validate positive durations, same-track adjacency and checked Tick addition before computing cut positions. Focused Video regression includes valid edits near Tick maximum, overflowing cuts, different tracks and negative durations.
+
+RollClips／SlideClipはcut位置の計算前に正のduration、同一trackの隣接関係、Tick加算のoverflowを検証します。Tick上限付近の正常な編集、cutのoverflow、異なるtrack、負のdurationをVideo回帰で確認しました。
