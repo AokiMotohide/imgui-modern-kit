@@ -345,6 +345,7 @@ struct PropertyLabels {
     const char *favorite="Favorite", *locked="Locked", *overrideValue="Override", *reset="Reset";
     const char *previousKey="Previous key", *nextKey="Next key", *addKey="Add keyframe", *removeKey="Remove keyframe";
     const char *mixed="Mixed",*moveUp="Move up",*moveDown="Move down";
+    const char *copy="Copy value",*paste="Paste value";
 };
 struct PropertyState {
     char search[128]{};

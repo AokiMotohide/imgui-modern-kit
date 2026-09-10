@@ -5,6 +5,8 @@
 #include <cstdio>
 #include <limits>
 #include <cstring>
+#include <cstdlib>
+#include <cctype>
 
 namespace imkit::editor {
 namespace {
@@ -575,11 +577,12 @@ void TimeRuler(const char *id, TimeState &s, CanvasState &canvas, std::span<cons
     if(hoveredMarker) {
         auto m=std::find_if(markers.begin(),markers.end(),[&](const auto &m){return m.id==hoveredMarker;});
         ImGui::BeginTooltip();
-        if(s.icons) {Icon(*s.icons,IconId::Marker,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+        if(s.icons) {Icon(*s.icons,IconId::Comment,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
         ImGui::TextUnformatted(m->label);ImGui::EndTooltip();
     }
     if(ImGui::BeginPopup("ruler-actions")) {
         if(s.icons) {Icon(*s.icons,IconId::Marker,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+        if(s.icons) {Icon(*s.icons,IconId::Add,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
         if(ImGui::MenuItem(s.rulerLabels.addMarker)) Action(out,0,rev,EditKind::Marker,{},Value{s.contextTime});
         if(s.contextMarker && ImGui::MenuItem(s.rulerLabels.removeMarker)) Action(out,s.contextMarker,rev,EditKind::Remove);
         for(int i=0;i<2;++i) {
@@ -1055,12 +1058,28 @@ void PropertyGrid(const char *id, const PropertyProvider &p, PropertyState &s, E
                 if (ImGui::IsItemDeactivated() && s.drag.active && s.drag.draft.target == row.id)
                     s.drag.Commit(p.revision, out);
                 if (ImGui::BeginPopupContextItem("actions")) {
+                    const auto glyph=[&](IconId icon){if(s.icons) {Icon(*s.icons,icon,{ImGui::GetFontSize()});ImGui::SameLine();}};
+                    glyph(IconId::Copy);
+                    if(ImGui::MenuItem(s.labels.copy)) {char text[64];std::snprintf(text,sizeof(text),"%.17g",row.value);ImGui::SetClipboardText(text);}
+                    glyph(IconId::Paste);
+                    if(ImGui::MenuItem(s.labels.paste)) {
+                        const char *text=ImGui::GetClipboardText();char *end=nullptr;
+                        if(text) {
+                            const double value=std::strtod(text,&end);
+                            const bool parsed=end!=text;
+                            while(end && std::isspace(static_cast<unsigned char>(*end))) ++end;
+                            if(parsed && end && !*end && std::isfinite(value)) Action(out,row.id,p.revision,EditKind::Property,Value{0,0,0,0,row.value},Value{0,0,0,0,value});
+                        }
+                    }
+                    glyph(IconId::Reset);
                     if (ImGui::MenuItem(s.labels.reset))
                         Action(out, row.id, p.revision, EditKind::Reset, Value{0, 0, 0, 0, row.value},
                                Value{0, 0, 0, 0, row.defaultValue});
+                    glyph(IconId::Star);
                     if (ImGui::MenuItem(s.labels.favorite, nullptr, Flag(row.flags, PropertyFlags::Favorite)))
                         Action(out, row.id, p.revision, EditKind::Toggle, Value{0, 0, 0, 0, 8},
                                Value{0, 0, 0, 0, 8, Flag(row.flags, PropertyFlags::Favorite) ? 0. : 1.});
+                    glyph(IconId::ArrowLeft);
                     if (ImGui::MenuItem(s.labels.previousKey))
                         Action(out, row.id, p.revision, EditKind::PropertyKey, {},
                                Value{s.time,0,static_cast<Tick>(PropertyKeyAction::Previous),0,row.value});

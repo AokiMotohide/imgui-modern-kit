@@ -783,7 +783,7 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
                 }
                 if(s.icons) {
                     constexpr IconId kinds[]{IconId::Cube,IconId::Folder,IconId::Mesh,IconId::Camera,IconId::Light,IconId::Layers,IconId::Modifier};
-                    Icon(*s.icons,kinds[static_cast<int>(row.kind)],{16*ImGui::GetFontSize()/14});ImGui::SameLine();
+                    Icon(*s.icons,row.kind==ObjectKind::Collection && row.expanded?IconId::FolderOpen:kinds[static_cast<int>(row.kind)],{16*ImGui::GetFontSize()/14});ImGui::SameLine();
                 }
                 if (row.kind!=ObjectKind::Object) {
                     ImGui::TextDisabled("%s",s.labels.kinds[static_cast<int>(row.kind)+1]);ImGui::SameLine();
@@ -1044,15 +1044,18 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
         }
         if (s.selection==UVSelection::Vertex && view.hovered && std::hypot(mouse.x - pos.x, mouse.y - pos.y) < 8) {
             d->AddCircle(pos,10,ImGui::GetColorU32(theme.colors.text));
+            ImGui::BeginTooltip();
+            if(s.icons) {Icon(*s.icons,vertex.pinned?IconId::Pin:IconId::PinOff,{ImGui::GetFontSize()});ImGui::SameLine();}
             if (s.coordinates==UVCoordinates::Pixel)
-                ImGui::SetTooltip("%s (%.2f, %.2f)%s%s",s.labels.coordinateModes[1],vertex.uv.x*s.imageSize.x,vertex.uv.y*s.imageSize.y,
+                ImGui::Text("%s (%.2f, %.2f)%s%s",s.labels.coordinateModes[1],vertex.uv.x*s.imageSize.x,vertex.uv.y*s.imageSize.y,
                     vertex.pinned?" - ":"",vertex.pinned?s.labels.pinned:"");
             else if (s.coordinates==UVCoordinates::Tiles) {
                 const double u=std::floor(vertex.uv.x),v=std::floor(vertex.uv.y);
                 if (u>=0 && u<10 && v>=0)
-                    ImGui::SetTooltip("UDIM %.0f - UV (%.3f, %.3f)",1001+u+10*v,vertex.uv.x-u,vertex.uv.y-v);
-                else ImGui::SetTooltip("Tile (%.0f, %.0f) - outside UDIM columns",u,v);
-            } else ImGui::SetTooltip("UV (%.3f, %.3f)%s%s",vertex.uv.x,vertex.uv.y,vertex.pinned?" - ":"",vertex.pinned?s.labels.pinned:"");
+                    ImGui::Text("UDIM %.0f - UV (%.3f, %.3f)",1001+u+10*v,vertex.uv.x-u,vertex.uv.y-v);
+                else ImGui::Text("Tile (%.0f, %.0f) - outside UDIM columns",u,v);
+            } else ImGui::Text("UV (%.3f, %.3f)%s%s",vertex.uv.x,vertex.uv.y,vertex.pinned?" - ":"",vertex.pinned?s.labels.pinned:"");
+            ImGui::EndTooltip();
             hit = vertex.id;
             original = vertex.uv;
         }
@@ -1150,6 +1153,8 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
     ImGui::PushID(id);
     if (view.hovered && ImGui::IsMouseReleased(1) && !s.drag.active) ImGui::OpenPopup("UV selection options");
     if (ImGui::BeginPopup("UV selection options")) {
+        if(s.icons) {Icon(*s.icons,IconId::Deselect,{ImGui::GetFontSize()});ImGui::SameLine();}
+        if(ImGui::MenuItem(s.labels.clearSelection,nullptr,false,selection.count!=0) && out.Push({0,p.revision,editor::Phase::Commit,editor::EditKind::Select})) selection.Clear();
         const int selectionMode=static_cast<int>(s.selection);
         if (ImGui::BeginCombo(s.labels.selection,s.labels.modes[selectionMode])) {
             constexpr IconId icons[]{IconId::SelectVertex,IconId::SelectEdge,IconId::SelectFace,IconId::SelectIsland};
