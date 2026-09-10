@@ -63,7 +63,7 @@ void Toggle(editor::EventBuffer &out, const TrackView &track, std::uint64_t revi
 std::size_t ActiveDrags(const TimelineState &s) {
     std::size_t count = s.drag.active + s.previousDrag.active + s.nextDrag.active;
     for (const auto &member : s.memberDrags.first(s.memberCount))
-        count += member.transaction.active;
+        count += member.transaction.active+member.previousTransaction.active+member.nextTransaction.active;
     return count;
 }
 bool ReserveEvents(editor::EventBuffer &out, std::size_t count) {
@@ -86,8 +86,9 @@ void EndDrags(TimelineState &s, std::uint64_t revision, bool cancel, editor::Eve
     finish(s.previousDrag);
     finish(s.drag);
     finish(s.nextDrag);
-    for (auto &member : s.memberDrags.first(s.memberCount))
-        finish(member.transaction);
+    for (auto &member : s.memberDrags.first(s.memberCount)) {
+        finish(member.previousTransaction);finish(member.transaction);finish(member.nextTransaction);
+    }
 }
 void SplitBatch(const TimelineProvider &p,std::span<const ClipView> clips,std::span<const StableId> ids,
                 Tick tick,editor::EventBuffer &out) {
@@ -420,7 +421,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         if (!cancel && p.isEditable) {
             const auto valid=[&](const editor::Transaction &tx){return !tx.active || p.isEditable(p.user,tx.draft.target);};
             cancel=!valid(s.drag) || !valid(s.previousDrag) || !valid(s.nextDrag);
-            for (const auto &member:s.memberDrags.first(s.memberCount)) cancel|=!valid(member.transaction);
+            for (const auto &member:s.memberDrags.first(s.memberCount)) cancel|=!valid(member.transaction) || !valid(member.previousTransaction) || !valid(member.nextTransaction);
         }
         if (cancel || s.drag.draft.phase == editor::Phase::Commit)
             EndDrags(s, p.revision, cancel, out);
@@ -520,9 +521,11 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             auto value = Value(clip);
             if (s.drag.active && s.drag.draft.target == clip.id)
                 value = s.drag.draft.proposed;
-            for (const auto &member : s.memberDrags.first(s.memberCount))
-                if (member.transaction.active && member.original.id == clip.id)
-                    value = member.transaction.draft.proposed;
+            for (const auto &member : s.memberDrags.first(s.memberCount)) {
+                if (member.transaction.active && member.original.id == clip.id) value=member.transaction.draft.proposed;
+                if (member.previousTransaction.active && member.previous.id==clip.id) value=member.previousTransaction.draft.proposed;
+                if (member.nextTransaction.active && member.next.id==clip.id) value=member.nextTransaction.draft.proposed;
+            }
             if (s.previousDrag.active && s.previousOriginal.id == clip.id)
                 value = s.previousDrag.draft.proposed;
             if (s.nextDrag.active && s.nextOriginal.id == clip.id)
@@ -1017,14 +1020,14 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                         available = available && neighbors.previous && !neighbors.previous->locked &&
                                     neighbors.previous->start + neighbors.previous->duration == clip.start;
                     auto members = (kind == editor::EditKind::Move || kind == editor::EditKind::Duplicate ||
-                                           kind == editor::EditKind::TrimStart || kind == editor::EditKind::TrimEnd || kind == editor::EditKind::Slip || kind == editor::EditKind::Ripple) &&
+                                           kind == editor::EditKind::TrimStart || kind == editor::EditKind::TrimEnd || kind == editor::EditKind::Slip || kind == editor::EditKind::Ripple || adjacent) &&
                                            p.selected
                                        ? p.selected(p.user, selection.storage.first(selection.count))
                                        : std::span<const ClipView>{};
                     // A selection query must resolve the complete edit set, even offscreen.
                     // Reject incomplete or ambiguous host scratch before publishing any Begin.
                     if (kind == editor::EditKind::Move || kind == editor::EditKind::Duplicate ||
-                                           kind == editor::EditKind::TrimStart || kind == editor::EditKind::TrimEnd || kind == editor::EditKind::Slip || kind == editor::EditKind::Ripple) {
+                                           kind == editor::EditKind::TrimStart || kind == editor::EditKind::TrimEnd || kind == editor::EditKind::Slip || kind == editor::EditKind::Ripple || adjacent) {
                         if (!p.selected && selection.count > 1) {
                             out.overflow = true;
                             available = false;
@@ -1054,8 +1057,32 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                         out.overflow = true;
                         available = false;
                     }
+                    std::size_t memberNeighbors=0;
+                    if (adjacent && available) {
+                        std::size_t index=0;
+                        for (const auto &member:members) if (member.id!=clip.id) {
+                            auto &entry=s.memberDrags[index];entry={};entry.original=member;
+                            const auto n=p.neighbors ? p.neighbors(p.user,member.id) : TimelineProvider::Neighbors{};
+                            if (!n.next || n.next->locked || member.start+member.duration!=n.next->start) {available=false;break;}
+                            entry.next=*n.next;++memberNeighbors;
+                            if (kind==editor::EditKind::Slide) {
+                                if (!n.previous || n.previous->locked || n.previous->start+n.previous->duration!=member.start) {available=false;break;}
+                                entry.previous=*n.previous;++memberNeighbors;
+                            }
+                            for (const auto id : {entry.original.id,entry.previous.id,entry.next.id}) if (id) {
+                                if ((p.isEditable && !p.isEditable(p.user,id)) || (p.canBeginEdit && !p.canBeginEdit(p.user,id,kind))) available=false;
+                                if (id==clip.id || (neighbors.next && id==neighbors.next->id) ||
+                                    (kind==editor::EditKind::Slide && neighbors.previous && id==neighbors.previous->id)) available=false;
+                                for (std::size_t j=0;j<index;++j) {
+                                    const auto &prior=s.memberDrags[j];
+                                    if (id==prior.original.id || id==prior.previous.id || id==prior.next.id) available=false;
+                                }
+                            }
+                            ++index;
+                        }
+                    }
                     const std::size_t required = 1 + (adjacent ? 1 : 0) +
-                                                 (kind == editor::EditKind::Slide ? 1 : 0) + memberCount;
+                                                 (kind == editor::EditKind::Slide ? 1 : 0) + memberCount+memberNeighbors;
                     if (available && ReserveEvents(out, required)) {
                         s.memberCount = 0;
                         s.original = clip;
@@ -1075,7 +1102,10 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                             for (const auto &member : members)
                                 if (member.id != clip.id) {
                                     auto &drag = s.memberDrags[s.memberCount++];
+                                    if (!adjacent) drag={};
                                     drag.original = member;
+                                    if (adjacent) drag.nextTransaction.Begin(drag.next.id,p.revision,kind,Value(drag.next),editor::CurrentModifiers(),out);
+                                    if (kind==editor::EditKind::Slide) drag.previousTransaction.Begin(drag.previous.id,p.revision,kind,Value(drag.previous),editor::CurrentModifiers(),out);
                                     drag.transaction.Begin(member.id, p.revision, kind, Value(member),
                                                            editor::CurrentModifiers(), out);
                                 }
@@ -1136,6 +1166,23 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             for (const auto &member:s.memberDrags.first(s.memberCount))
                 constrain(member.original,p.constraints ? p.constraints(p.user,member.original.id) : ClipConstraints{});
         }
+        const bool relatedAdjacent=s.drag.draft.kind==editor::EditKind::Roll || s.drag.draft.kind==editor::EditKind::Slide;
+        if (relatedAdjacent && s.memberCount) {
+            const auto limits=[&](StableId id){return p.constraints ? p.constraints(p.user,id) : ClipConstraints{};};
+            const auto constrain=[&](const ClipView &previous,const ClipView &current,const ClipView &next) {
+                Tick applied=0;
+                if (s.drag.draft.kind==editor::EditKind::Roll) {
+                    const auto pair=RollClips(current,next,delta,limits(current.id),limits(next.id));
+                    if (pair.valid) applied=pair.left.duration-current.duration;
+                } else {
+                    const auto triple=SlideClip(previous,current,next,delta,limits(previous.id),limits(current.id),limits(next.id));
+                    if (triple.valid) applied=triple.current.start-current.start;
+                }
+                delta=delta>=0 ? std::min(delta,applied) : std::max(delta,applied);
+            };
+            constrain(s.previousOriginal,s.original,s.nextOriginal);
+            for (const auto &member:s.memberDrags.first(s.memberCount)) constrain(member.previous,member.original,member.next);
+        }
         auto edit = EditClip(s.original, s.drag.draft.kind, delta, constraints);
         auto proposed = edit.valid ? Value(edit, s.original.track, s.original.speed) : s.drag.draft.original;
         if (s.drag.draft.kind == editor::EditKind::Roll && s.nextDrag.active) {
@@ -1170,7 +1217,20 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             s.drag.Update(p.revision, proposed, out);
         for (auto &member : s.memberDrags.first(s.memberCount)) {
             auto value = Value(member.original);
-            if (trimMembers) {
+            if (relatedAdjacent) {
+                const auto limits=[&](StableId id){return p.constraints ? p.constraints(p.user,id) : ClipConstraints{};};
+                auto update=[&](editor::Transaction &tx,const ClipEdit &edit,const ClipView &source) {
+                    const auto proposed=Value(edit,source.track,source.speed);
+                    if (ImGui::IsMouseDown(0) && !(proposed==tx.draft.proposed)) tx.Update(p.revision,proposed,out);
+                };
+                if (s.drag.draft.kind==editor::EditKind::Roll) {
+                    const auto pair=RollClips(member.original,member.next,delta,limits(member.original.id),limits(member.next.id));
+                    if (pair.valid) {value=Value(pair.left,member.original.track,member.original.speed);update(member.nextTransaction,pair.right,member.next);}
+                } else {
+                    const auto triple=SlideClip(member.previous,member.original,member.next,delta,limits(member.previous.id),limits(member.original.id),limits(member.next.id));
+                    if (triple.valid) {value=Value(triple.current,member.original.track,member.original.speed);update(member.previousTransaction,triple.previous,member.previous);update(member.nextTransaction,triple.next,member.next);}
+                }
+            } else if (trimMembers) {
                 const auto edit=EditClip(member.original,s.drag.draft.kind,delta,
                     p.constraints ? p.constraints(p.user,member.original.id) : ClipConstraints{});
                 if (edit.valid) value=Value(edit,member.original.track,member.original.speed);
