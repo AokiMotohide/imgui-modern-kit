@@ -201,119 +201,57 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
     ImGui::PushID(id);
     ImGui::BeginChild("viewport", size, ImGuiChildFlags_Borders,
                       ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-    const auto &tools = s.labels.tools;
-    for (int i = 0; i < 5; ++i) {
-        if (i)
-            ImGui::SameLine();
+    const auto toolbar=ImGui::GetCursorScreenPos();
+    const float rail=ImGui::GetFrameHeight()+12;
+    constexpr IconId toolIcons[]={IconId::SelectPointer,IconId::Move,IconId::Rotate,IconId::Scale,IconId::UnifiedTransform};
+    for (int i=0;i<5;++i) {
+        ImGui::PushID(i);
         const bool active=static_cast<int>(s.tool)==i;
-        bool clicked=false;
-        if (s.icons) {
-            constexpr IconId toolIcons[]={IconId::SelectPointer,IconId::Move,IconId::Rotate,IconId::Scale,IconId::UnifiedTransform};
-            ImGui::PushID(i);
-            if (active) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-            clicked=IconLabelButton("tool",*s.icons,toolIcons[i],tools[i],{16*ImGui::GetFontSize()/14});
-            if (active) {
-                const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
-                ImGui::GetWindowDrawList()->AddLine({a.x+3,b.y-2},{b.x-3,b.y-2},ImGui::GetColorU32(theme.colors.accent),2);
-                ImGui::PopStyleColor();
-            }
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s",tools[i]);
-            ImGui::PopID();
-        } else clicked=ImGui::Selectable(tools[i],active,0,{ImGui::CalcTextSize(tools[i]).x+ImGui::GetStyle().FramePadding.x*2,ImGui::GetFrameHeight()});
-        if (clicked) s.tool=static_cast<TransformTool>(i);
+        if (active) ImGui::PushStyleColor(ImGuiCol_Button,theme.colors.selection);
+        bool clicked=s.icons ? IconButton("tool",*s.icons,toolIcons[i],s.labels.tools[i]) : ImGui::Button(s.labels.tools[i],{rail,0});
+        if (active) ImGui::PopStyleColor();
+        if (clicked && !s.drag.active) s.tool=static_cast<TransformTool>(i);
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s",s.labels.tools[i]);
+        ImGui::PopID();
     }
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(ImGui::GetFontSize()*9);
-    const auto &projections=s.labels.projections;
-    if (ImGui::BeginCombo("##projection",projections[static_cast<int>(s.camera.projection)])) {
-        for (int i=0;i<3;++i) {
+    ImGui::SetCursorScreenPos({toolbar.x+rail,toolbar.y});
+    ImGui::BeginGroup();
+    const float start=ImGui::GetCursorPosX();
+    const float comboWidth=std::max(55.f,std::min(100.f*ImGui::GetFontSize()/14,(ImGui::GetContentRegionAvail().x-12)/3));
+    ImGui::BeginDisabled(s.drag.active);
+    int orientation=static_cast<int>(s.orientation),pivot=static_cast<int>(s.pivot),projection=static_cast<int>(s.camera.projection);
+    ImGui::SetNextItemWidth(comboWidth);
+    if(ImGui::Combo("##orientation",&orientation,s.labels.orientations.data(),5)) s.orientation=static_cast<Orientation>(orientation);
+    ImGui::SameLine();ImGui::SetNextItemWidth(comboWidth);
+    if(ImGui::Combo("##pivot",&pivot,s.labels.pivots.data(),4)) s.pivot=static_cast<Pivot>(pivot);
+    ImGui::SameLine();ImGui::SetNextItemWidth(comboWidth);
+    if(ImGui::BeginCombo("##projection",s.labels.projections[projection])) {
+        for(int i=0;i<3;++i) {
             ImGui::BeginDisabled(i==2 && !s.cameraView);
-            if (i==2 && s.icons) {Icon(*s.icons,IconId::Camera,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
-            if (ImGui::Selectable(projections[i],static_cast<int>(s.camera.projection)==i))
-                s.camera.projection=static_cast<Projection>(i);
+            if(ImGui::Selectable(s.labels.projections[i],i==projection)) s.camera.projection=static_cast<Projection>(i);
             ImGui::EndDisabled();
         }
         ImGui::EndCombo();
     }
-    if (s.camera.projection==Projection::Camera && s.cameraView) {
-        s.camera=*s.cameraView;
-        s.camera.projection=Projection::Camera;
-    }
-    ImGui::Checkbox(s.labels.grid, &s.grid);
-    ImGui::SameLine();
-    ImGui::Checkbox(s.labels.gizmo, &s.gizmo);
-    ImGui::SameLine();
-    if(s.icons) {Icon(*s.icons,IconId::TransformSnap,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
-    ImGui::Checkbox(s.labels.snap, &s.snap);
-    const auto normalToggle=[&](const char *id,IconId icon,const char *label,bool &enabled) {
-        ImGui::SameLine();
-        if (!s.icons) {ImGui::Checkbox(label,&enabled);return;}
-        const bool wasEnabled=enabled;
-        if (wasEnabled) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-        if (IconLabelButton(id,*s.icons,icon,label,{16*ImGui::GetFontSize()/14})) enabled=!enabled;
-        if (enabled) {
-            const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
-            ImGui::GetWindowDrawList()->AddLine({a.x+3,b.y-2},{b.x-3,b.y-2},ImGui::GetColorU32(theme.colors.accent),2);
-        }
-        if (wasEnabled) ImGui::PopStyleColor();
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s",label);
-    };
-    normalToggle("vertex-normals",IconId::VertexNormals,s.labels.vertexNormals,s.normals);
-    normalToggle("face-normals",IconId::FaceNormals,s.labels.faceNormals,s.faceNormals);
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(ImGui::GetFontSize()*8);
-    int orientation = static_cast<int>(s.orientation);
-    if (ImGui::Combo("##orientation", &orientation, s.labels.orientations.data(), 5))
-        s.orientation = static_cast<Orientation>(orientation);
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(ImGui::GetFontSize()*9);
-    int pivot = static_cast<int>(s.pivot);
-    if (ImGui::Combo("##pivot", &pivot, s.labels.pivots.data(), 4))
-        s.pivot = static_cast<Pivot>(pivot);
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(ImGui::GetFontSize()*7);
-    int shading=s.shading==Shading::Wireframe ? 0 : 1;
-    if(ImGui::BeginCombo("##shading",s.labels.shading[shading])) {
-        for(int i=0;i<2;++i) {
-            if(s.icons) {Icon(*s.icons,i?IconId::SolidShading:IconId::WireframeShading,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
-            if(ImGui::Selectable(s.labels.shading[i],shading==i)) s.shading=i?Shading::Solid:Shading::Wireframe;
-        }
-        ImGui::EndCombo();
-    }
-    ImGui::SameLine();
-    const bool overlayClicked=s.icons ? IconLabelButton("overlays",*s.icons,IconId::Layers,s.labels.overlays,{16*ImGui::GetFontSize()/14}) : ImGui::Button(s.labels.overlays);
-    if (overlayClicked) ImGui::OpenPopup("viewport-overlays");
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s",s.labels.overlays);
-    if (ImGui::BeginPopup("viewport-overlays")) {
-        ImGui::Checkbox(s.labels.axes,&s.axes);
-        if (s.icons) {Icon(*s.icons,IconId::ObjectOrigin,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
-        ImGui::Checkbox(s.labels.origins,&s.origins);
-        if (s.icons) {Icon(*s.icons,IconId::SelectionOutline,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+    ImGui::EndDisabled();
+    ImGui::SetCursorPosX(start);
+    ImGui::Checkbox(s.labels.snap,&s.snap);ImGui::SameLine();
+    if(ImGui::Button(s.labels.overlays)) ImGui::OpenPopup("viewport-overlays");
+    if(ImGui::BeginPopup("viewport-overlays")) {
+        ImGui::Checkbox(s.labels.grid,&s.grid);ImGui::Checkbox(s.labels.gizmo,&s.gizmo);
+        ImGui::Checkbox(s.labels.axes,&s.axes);ImGui::Checkbox(s.labels.origins,&s.origins);
         ImGui::Checkbox(s.labels.selectionOutline,&s.selectionOutline);
-        if (s.icons) {Icon(*s.icons,IconId::Camera,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
-        ImGui::Checkbox(s.labels.cameraFrame,&s.cameraFrame);
-        if (s.icons) {Icon(*s.icons,IconId::SafeArea,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
-        ImGui::Checkbox(s.labels.safeFrame,&s.safeFrame);
-        if (s.icons) {Icon(*s.icons,IconId::RenderRegion,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
-        ImGui::Checkbox(s.labels.renderRegion,&s.renderRegion);
-        if (s.icons) {Icon(*s.icons,IconId::Passepartout,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
-        ImGui::Checkbox(s.labels.passepartout,&s.passepartout);
-        if (s.icons) {Icon(*s.icons,IconId::Ruler,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
-        ImGui::Checkbox(s.labels.measurement,&s.measurement);
+        ImGui::Checkbox(s.labels.vertexNormals,&s.normals);ImGui::Checkbox(s.labels.faceNormals,&s.faceNormals);
+        ImGui::Checkbox(s.labels.cameraFrame,&s.cameraFrame);ImGui::Checkbox(s.labels.safeFrame,&s.safeFrame);
+        ImGui::Checkbox(s.labels.renderRegion,&s.renderRegion);ImGui::Checkbox(s.labels.passepartout,&s.passepartout);
+        ImGui::Checkbox(s.labels.measurement,&s.measurement);ImGui::Checkbox(s.labels.lassoSelect,&s.lassoSelection);
+        int shading=s.shading==Shading::Wireframe ? 0 : 1;
+        if(ImGui::Combo("##shading",&shading,s.labels.shading.data(),2)) s.shading=shading?Shading::Solid:Shading::Wireframe;
         ImGui::EndPopup();
     }
-    if (s.tool==TransformTool::Select) {
-        if (s.icons) {
-            for (int i=0;i<2;++i) {
-                if (i) ImGui::SameLine();
-                const bool active=s.lassoSelection==(i==1);
-                if (active) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-                if (IconLabelButton(i ? "lasso" : "box",*s.icons,i ? IconId::LassoSelect : IconId::BoxSelect,
-                                    i ? s.labels.lassoSelect : s.labels.boxSelect,{16*ImGui::GetFontSize()/14})) s.lassoSelection=i==1;
-                if (active) ImGui::PopStyleColor();
-            }
-        } else ImGui::Checkbox(s.labels.lassoSelect,&s.lassoSelection);
-    }
+    ImGui::EndGroup();
+    ImGui::SetCursorPosX(start);
+    if (s.camera.projection==Projection::Camera && s.cameraView) {s.camera=*s.cameraView;s.camera.projection=Projection::Camera;}
     ViewportView v{ImGui::GetCursorScreenPos(), ImGui::GetContentRegionAvail(), ImGui::IsWindowHovered()};
     auto *d = ImGui::GetWindowDrawList();
     d->PushClipRect(v.min, {v.min.x + v.size.x, v.min.y + v.size.y}, true);
@@ -439,7 +377,7 @@ void ViewportObjects(const ViewportView &v, std::span<const ObjectView> objects,
     auto mouse = ImGui::GetIO().MousePos;
     for (const auto &o : objects)
         if (o.visible) {
-            auto p = Project(o.transform.translation, s.camera, v.min, v.size);
+            auto p = Project(PreviewTransform(o,s).translation, s.camera, v.min, v.size);
             if (!p.visible)
                 continue;
             bool selected = selection.Contains(o.id);
@@ -479,8 +417,26 @@ void ViewportObjects(const ViewportView &v, std::span<const ObjectView> objects,
     }
 
 }
+Transform PreviewTransform(const ObjectView &object, const ViewportState &s) {
+    auto result=object.transform;
+    const auto apply=[&](const editor::Transaction &t) {
+        if (!t.active || t.draft.target!=object.id || t.draft.phase==editor::Phase::Cancel) return;
+        const auto &v=t.draft.proposed;
+        if (t.draft.kind==editor::EditKind::Translate) result.translation={v.x,v.y,v.z};
+        if (t.draft.kind==editor::EditKind::Rotate) result.rotation={v.x,v.y,v.z};
+        if (t.draft.kind==editor::EditKind::Scale) {
+            result.scale={v.x,v.y,v.z};
+            if (v.hasAffine) {result.rotation={v.affine[0],v.affine[1],v.affine[2]};result.shear={v.affine[3],v.affine[4],v.affine[5]};}
+        }
+    };
+    apply(s.drag);apply(s.pivotDrag);
+    for (std::size_t i=0;i<s.companionCount;++i) {apply(s.companions[i].transform);apply(s.companions[i].position);}
+    return result;
+}
 void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportState &s, std::uint64_t revision,
                     editor::EventBuffer &out, const Theme &theme) {
+    const float glyphScale=std::min(std::max(1.f,ImGui::GetFontSize()/14),std::max(.35f,std::min(v.size.x,v.size.y)/300));
+    const float axisLength=70*glyphScale;
     constexpr double Pi=3.14159265358979323846;
     auto finish=[&](bool cancel) {
         std::size_t count=1+(s.pivotDrag.active ? 1 : 0);
@@ -500,7 +456,8 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
         }
         s.companionCount=0;
     };
-    bool selectionChanged=false;
+    bool selectionChanged=s.drag.active && s.pivot!=Pivot::Individual &&
+        (s.pivotPosition.x!=s.gesturePivot.x || s.pivotPosition.y!=s.gesturePivot.y || s.pivotPosition.z!=s.gesturePivot.z);
     if (s.drag.active) for (std::size_t i=0;i<s.companionCount;++i) {
         const auto target=s.companions[i].transform.draft.target;
         auto found=std::find_if(s.selectedObjects.begin(),s.selectedObjects.end(),[&](const auto &o){return o.id==target;});
@@ -515,14 +472,15 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
     }
     if (!s.gizmo || s.tool == TransformTool::Select || object.locked || !object.visible)
         return;
-    auto pivot = s.pivot == Pivot::Individual ? object.transform.translation : s.pivotPosition;
+    auto pivot = s.drag.active ? s.gesturePivot : (s.pivot == Pivot::Individual ? object.transform.translation : s.pivotPosition);
     auto center = Project(pivot, s.camera, v.min, v.size);
     if (!center.visible) {
         if (s.drag.active) finish(true);
         return;
     }
-    auto basis = OrientationBasis(s.orientation, object.transform, s.camera, s.parentBasis, s.customBasis);
+    auto basis = s.drag.active ? s.gestureBasis : OrientationBasis(s.orientation, object.transform, s.camera, s.parentBasis, s.customBasis);
     auto *d = ImGui::GetWindowDrawList();
+    const int firstVertex=d->VtxBuffer.Size;
     const Vec3 axes[] = {basis.x, basis.y, basis.z};
     const ImU32 colors[] = {ImGui::GetColorU32(theme.editor.axisX), ImGui::GetColorU32(theme.editor.axisY),
                             ImGui::GetColorU32(theme.editor.axisZ)};
@@ -541,26 +499,31 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
             continue;
         projected[i] = {static_cast<float>(dx), static_cast<float>(dy)};
         if (s.tool == TransformTool::Rotate) continue;
-        ImVec2 tip{center.screen.x + static_cast<float>(dx / length * 70),
-                   center.screen.y + static_cast<float>(dy / length * 70)};
+        ImVec2 tip{center.screen.x + static_cast<float>(dx / length * axisLength),
+                   center.screen.y + static_cast<float>(dy / length * axisLength)};
         d->AddLine(center.screen, tip, colors[i], 3);
         if (s.tool == TransformTool::Scale)
             d->AddRectFilled({tip.x-6,tip.y-6},{tip.x+6,tip.y+6},colors[i]);
-        else d->AddCircleFilled(tip, 6, colors[i]);
+        else {
+            const ImVec2 u{float(dx/length),float(dy/length)};
+            d->AddTriangleFilled(tip,{tip.x-u.x*13-u.y*6,tip.y-u.y*13+u.x*6},
+                {tip.x-u.x*13+u.y*6,tip.y-u.y*13-u.x*6},colors[i]);
+        }
         const char *label = i == 0 ? "X" : i == 1 ? "Y" : "Z";
         d->AddText({tip.x + 8, tip.y}, colors[i], label);
-        if (std::hypot(mouse.x - tip.x, mouse.y - tip.y) < 12)
+        const double along=std::clamp(((mouse.x-center.screen.x)*dx+(mouse.y-center.screen.y)*dy)/length,14.*glyphScale,double(axisLength));
+        if (std::hypot(mouse.x-center.screen.x-dx/length*along,mouse.y-center.screen.y-dy/length*along)<9)
             {hit = static_cast<Axis>(i + 1);hitTool=unified ? TransformTool::Translate : s.tool;}
         if (unified) {
-            const ImVec2 scaleTip{float(center.screen.x+dx/length*110),float(center.screen.y+dy/length*110)};
+            const ImVec2 scaleTip{float(center.screen.x+dx/length*110*glyphScale),float(center.screen.y+dy/length*110*glyphScale)};
             d->AddRectFilled({scaleTip.x-5,scaleTip.y-5},{scaleTip.x+5,scaleTip.y+5},colors[i]);
             if (std::hypot(mouse.x-scaleTip.x,mouse.y-scaleTip.y)<9)
                 {hit=static_cast<Axis>(i+1);hitTool=TransformTool::Scale;}
         }
     }
     if (s.tool == TransformTool::Rotate || unified) {
-        const float screenRadius=unified ? 130.f : 88.f;
-        const float ringRadius=unified ? 88.f : 70.f;
+        const float screenRadius=(unified ? 130.f : 88.f)*glyphScale;
+        const float ringRadius=(unified ? 88.f : 70.f)*glyphScale;
         d->AddCircle(center.screen,screenRadius,ImGui::GetColorU32(theme.editor.gizmo),64,
                      s.drag.active && s.activeAxis==Axis::Screen ? 4.f : 2.f);
         if (std::abs(std::hypot(mouse.x-center.screen.x,mouse.y-center.screen.y)-screenRadius)<7)
@@ -638,6 +601,8 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
         s.activeAxis = hit;
         s.mouseStart = {mouse.x, mouse.y};
         s.original = object.transform;
+        s.gesturePivot=pivot;s.gestureBasis=basis;s.gestureCamera=s.camera;
+        s.gestureMin=v.min;s.gestureSize=v.size;
         s.rotationMouse = s.mouseStart;
         s.rotationAngle = 0;
         auto kind = operation == TransformTool::Rotate  ? editor::EditKind::Rotate
@@ -656,6 +621,14 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
         }
     }
     if (s.drag.active) {
+        // Input is measured against the immutable gesture projection, never the moving drawing.
+        const auto &camera=s.gestureCamera;
+        const auto inputCenter=Project(s.gesturePivot,camera,s.gestureMin,s.gestureSize);
+        for (int i=0;i<3;++i) {
+            const auto p=Project(Add(s.gesturePivot,axes[i]),camera,s.gestureMin,s.gestureSize);
+            projected[i]={p.screen.x-inputCenter.screen.x,p.screen.y-inputCenter.screen.y};
+        }
+        center=inputCenter;
         double delta = ((mouse.x - s.mouseStart.x) - (mouse.y - s.mouseStart.y)) * .01;
         Vec3 dv{delta, delta, delta};
         if (operation != TransformTool::Rotate) {
@@ -668,9 +641,9 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
             } else if (s.activeAxis == Axis::Screen && operation == TransformTool::Scale) {
                 dv={delta,delta,delta};
             } else if (s.activeAxis == Axis::Screen) {
-                basis = OrientationBasis(Orientation::View, s.original, s.camera, s.parentBasis, s.customBasis);
-                const auto px = Project(Add(pivot, basis.x), s.camera, v.min, v.size);
-                const auto py = Project(Add(pivot, basis.y), s.camera, v.min, v.size);
+                basis = OrientationBasis(Orientation::View, s.original, camera, s.parentBasis, s.customBasis);
+                const auto px = Project(Add(pivot, basis.x), camera, s.gestureMin, s.gestureSize);
+                const auto py = Project(Add(pivot, basis.y), camera, s.gestureMin, s.gestureSize);
                 const double xx = px.screen.x - center.screen.x, xy = px.screen.y - center.screen.y;
                 const double yx = py.screen.x - center.screen.x, yy = py.screen.y - center.screen.y;
                 const double det = xx * yy - xy * yx;
@@ -702,7 +675,7 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
             dv={axis==0 ? rotation : 0,axis==1 ? rotation : 0,axis==2 ? rotation : 0};
         }
         if (operation == TransformTool::Rotate && s.activeAxis == Axis::Screen) {
-            basis=OrientationBasis(Orientation::View,s.original,s.camera,s.parentBasis,s.customBasis);
+            basis=OrientationBasis(Orientation::View,s.original,camera,s.parentBasis,s.customBasis);
             const double start=std::atan2(-(s.rotationMouse.y-center.screen.y),s.rotationMouse.x-center.screen.x);
             const double end=std::atan2(-(mouse.y-center.screen.y),mouse.x-center.screen.x);
             s.rotationAngle += std::remainder(end-start,2*Pi);
@@ -736,6 +709,17 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
                         member.position.Update(revision,memberLocation,out);
                 }
             }
+        }
+        auto displayPivot=pivot;
+        if (operation==TransformTool::Translate) {
+            const auto t=PreviewTransform(object,s).translation;
+            displayPivot=Add(pivot,{t.x-s.original.translation.x,t.y-s.original.translation.y,t.z-s.original.translation.z});
+        }
+        const auto drawCenter=Project(displayPivot,s.camera,v.min,v.size);
+        const auto oldCenter=Project(pivot,s.camera,v.min,v.size);
+        if (drawCenter.visible) for (int i=firstVertex;i<d->VtxBuffer.Size;++i) {
+            d->VtxBuffer[i].pos.x+=drawCenter.screen.x-oldCenter.screen.x;
+            d->VtxBuffer[i].pos.y+=drawCenter.screen.y-oldCenter.screen.y;
         }
         if (ImGui::IsMouseReleased(0)) finish(false);
     }
@@ -1258,7 +1242,8 @@ void AnimationStrips(const char *id,std::span<const StripView> strips,std::uint6
     if (drag.active && (drag.draft.revision != revision || ImGui::IsKeyPressed(ImGuiKey_Escape)))
         drag.Cancel(out);
     for (const auto &strip : strips) {
-        float y = view.min.y + row++ * 30;
+        const float rowHeight=ImGui::GetFontSize()+18;
+        float y = view.min.y + row++ * rowHeight;
         auto range=strip.range;
         double repeat=strip.repeat,blend=strip.blend,scale=strip.scale;
         if (drag.active && drag.draft.target==strip.id && drag.draft.phase!=editor::Phase::Cancel) {
@@ -1271,11 +1256,11 @@ void AnimationStrips(const char *id,std::span<const StripView> strips,std::uint6
         float x = view.min.x +
                   static_cast<float>((editor::Seconds(range.first) - canvas.origin.x) * canvas.scale.x);
         float w = static_cast<float>((editor::Seconds(range.last)-editor::Seconds(range.first))*canvas.scale.x);
-        const auto fill=strip.muted?theme.colors.muted:theme.colors.accent;
+        const auto fill=strip.muted?theme.colors.muted:options.selection && options.selection->Contains(strip.id)?theme.colors.accent:theme.colors.selection;
         const auto textColor=ImGui::GetColorU32(fill.x*.2126f+fill.y*.7152f+fill.z*.0722f>.5f ?
             ImVec4{.06f,.06f,.08f,1}:ImVec4{.96f,.96f,.98f,1});
-        d->AddRectFilled({x, y}, {x + w, y + 26},ImGui::GetColorU32(fill),4);
-        d->PushClipRect({x,y},{x+(std::max)(1.f,w),y+26},true);
+        d->AddRectFilled({x, y}, {x + w, y + rowHeight-4},ImGui::GetColorU32(fill),4);
+        d->PushClipRect({x,y},{x+(std::max)(1.f,w),y+rowHeight-4},true);
         if (repeat>1 && std::isfinite(repeat)) {
             const int divisions=static_cast<int>((std::min)(repeat,128.));
             for (int i=1;i<=divisions;++i) {
@@ -1293,8 +1278,9 @@ void AnimationStrips(const char *id,std::span<const StripView> strips,std::uint6
         ImGui::SetCursorScreenPos({x, y});
         ImGui::PushID(reinterpret_cast<void *>(static_cast<std::uintptr_t>(strip.id)));
         ImGui::BeginDisabled(strip.locked);
-        ImGui::InvisibleButton("strip", {(std::max)(1.f, w), 26});
+        ImGui::InvisibleButton("strip", {(std::max)(1.f, w), rowHeight-4});
         if (ImGui::IsItemActivated()) {
+            if(options.selection) options.selection->Set(strip.id,ImGui::GetIO().KeyCtrl);
             const float mx=ImGui::GetIO().MousePos.x;
             auto kind=mx<x+6 ? editor::EditKind::TrimStart : mx>x+w-6 ? editor::EditKind::TrimEnd : editor::EditKind::Move;
             drag.Begin(strip.id, revision, kind, {strip.range.first, strip.range.last},editor::CurrentModifiers(), out);
@@ -1303,10 +1289,22 @@ void AnimationStrips(const char *id,std::span<const StripView> strips,std::uint6
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
         if (ImGui::IsItemActive() && drag.active) {
             auto value = drag.draft.proposed;
-            auto delta = editor::FromSeconds(ImGui::GetIO().MouseDelta.x / canvas.scale.x);
-            const auto edited=EditStripRange({value.first,value.last},drag.draft.kind,delta);
+            auto delta = editor::FromSeconds(ImGui::GetMouseDragDelta(0).x / canvas.scale.x);
+            if(options.snap && options.time) {
+                const auto origin=drag.draft.kind==editor::EditKind::TrimEnd ? drag.draft.original.last : drag.draft.original.first;
+                const auto wanted=origin+delta;
+                auto snapped=editor::FrameToTick(editor::TickToFrame(wanted,options.time->rate),options.time->rate);
+                double nearest=8/canvas.scale.x;
+                const auto candidate=[&](editor::Tick tick) {const double distance=std::abs(editor::Seconds(wanted)-editor::Seconds(tick));if(distance<nearest) {nearest=distance;snapped=tick;}};
+                candidate(options.time->playhead);
+                for(const auto &other:strips) if(other.id!=strip.id) {candidate(other.range.first);candidate(other.range.last);}
+                delta=snapped-origin;
+                const float x=view.min.x+float((editor::Seconds(snapped)-canvas.origin.x)*canvas.scale.x);
+                d->AddLine({x,view.min.y},{x,view.max.y},ImGui::GetColorU32(theme.editor.snapGuide));
+            }
+            const auto edited=EditStripRange({drag.draft.original.first,drag.draft.original.last},drag.draft.kind,delta);
             if (edited) {value.first=edited->first;value.last=edited->last;}
-            if (delta && edited)
+            if (edited && !(value==drag.draft.proposed))
                 drag.Update(revision, value, out);
         }
         if (ImGui::IsItemDeactivated() && drag.active)

@@ -143,6 +143,10 @@ int main() {
     std::array<preview::OutlineEdge,36> outline;
     preview::DrawMeshOutline(*ImGui::GetWindowDrawList(),mesh,{},{0,0},{100,100},outline,IM_COL32_WHITE);
     preview::DrawMeshNormals(*ImGui::GetWindowDrawList(),{&mesh,1},{},{0,0},{100,100},{true,true,.2});
+    (void)cg::PreviewTransform({},cg::ViewportState{});
+    (void)video::WaveformPixel({},{});
+    video::DrawWaveform({}, {}, {0,0}, {100,30}, {}, theme);
+    events.PushBatch({});
     ImGui::End();
     ImGui::Render();
     ImGui::DestroyContext(context);

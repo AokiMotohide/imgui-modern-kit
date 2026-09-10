@@ -127,11 +127,10 @@ bool OpenGL3Renderer::Resize(int width, int height) {
         return false;
     if (width == width_ && height == height_)
         return true;
-    unsigned old[] = {color_, depth_, picking_};
-    gl_.DeleteTextures(3, old);
-    color_ = depth_ = picking_ = 0;
-    unsigned textures[3]{};
-    gl_.GenTextures(3, textures);
+    // ImGui draw commands may already refer to the color texture this frame.
+    // Reallocate storage without invalidating the borrowed texture name.
+    unsigned textures[3]{color_, depth_, picking_};
+    if (!color_) gl_.GenTextures(3, textures);
     color_ = textures[0];
     depth_ = textures[1];
     picking_ = textures[2];

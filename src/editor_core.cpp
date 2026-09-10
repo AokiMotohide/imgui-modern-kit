@@ -109,6 +109,12 @@ Modifiers CurrentModifiers() {
     const auto &io = ImGui::GetIO();
     return {io.KeyShift, io.KeyCtrl, io.KeyAlt};
 }
+bool EventBuffer::PushBatch(std::span<const Event> batch) {
+    if (count>storage.size() || batch.size()>storage.size()-count) {overflow=true;return false;}
+    if (!batch.empty()) for (const auto &event:batch)
+        if (event.revision!=batch.front().revision || event.phase!=batch.front().phase) return false;
+    std::copy(batch.begin(),batch.end(),storage.begin()+count);count+=batch.size();return true;
+}
 bool EventBuffer::Push(const Event &e) {
     if (count >= storage.size()) {
         overflow = true;
@@ -389,7 +395,10 @@ std::size_t MakeBindings(ShortcutPreset preset, std::span<Binding> dst) {
                                 {Command::ToolRoll, ImGuiKey_N},
                                 {Command::ToolSlip, ImGuiKey_Y},
                                 {Command::ToolSlide, ImGuiKey_U},
-                                {Command::ToolHand, ImGuiKey_H}};
+                                {Command::ToolHand, ImGuiKey_H},
+                                {Command::InsertSource, ImGuiKey_F9},
+                                {Command::OverwriteSource, ImGuiKey_F10},
+                                {Command::AppendSource, ImGuiMod_Shift | ImGuiKey_F9}};
     auto n = (std::min)(dst.size(), std::size(defaults));
     std::copy_n(defaults, n, dst.begin());
     for (auto &b : dst.first(n)) {

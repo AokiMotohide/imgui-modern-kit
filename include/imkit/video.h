@@ -7,6 +7,23 @@ enum class TrackKind { Video, Audio, Caption, Effect, Adjustment, Group };
 enum class TrackControl { Visible, Mute, Solo, Locked, Record, Target, Source, Expanded, Height };
 enum class Tool { Select, Razor, Ripple, Roll, Slip, Slide, Hand };
 struct AudioBucket;
+enum class PlacementMode { Insert, Overwrite, Append };
+enum class WaveformStatus { Pending, Ready, Error };
+struct WaveformQuery {
+    StableId source = 0;
+    editor::Range range{}; // Source time, including trim and playback speed.
+    int channel = 0, pixels = 0;
+};
+struct WaveformView {
+    std::span<const AudioBucket> buckets;
+    editor::Range range{}; // Actual source interval covered uniformly by buckets.
+    WaveformStatus status = WaveformStatus::Pending;
+};
+struct WaveformProvider {
+    void *user = nullptr;
+    WaveformView (*query)(void *, const WaveformQuery &) = nullptr;
+};
+struct WaveformOptions { float gain = 1; bool stereo = true, zeroLine = true; };
 struct TrackView {
     StableId id = 0;
     const char *label = "";
@@ -40,6 +57,8 @@ struct ClipView {
     StableId keyChannel=0; // Explicit insertion channel, including when keys is empty.
     double keyDefaultValue=0;
     std::span<const editor::Keyframe> keyEvaluation; // Optional full sorted channel for interpolation outside visible keys.
+    StableId audioSource = 0;
+    int audioChannels = 1;
 };
 struct TransitionEdit {
     Tick inDuration=0,outDuration=0;
@@ -122,6 +141,7 @@ struct TimelineProvider {
     // during transition edits; the host must also validate committed edits.
     // Enables centered Dissolve/Crossfade overlap bands and half-duration handles.
     Tick (*transitionLimit)(void *,StableId clip,bool outgoing)=nullptr;
+    WaveformProvider waveform;
 };
 struct TrackLabels {
     // Borrowed UTF-8 strings. Array order follows Visible through Source in TrackControl.
@@ -195,6 +215,8 @@ struct TimelineState {
     editor::Selection *keySelection=nullptr; // Optional non-owning selection distinct from clips.
     TrackLabels trackLabels;
     TimelineLabels labels;
+    WaveformOptions waveformOptions;
+    int overviewDrag = 0; // 0 body, -1 left range edge, +1 right range edge.
 };
 // Resolves both moving edges; ignores every selected clip and filters disabled kinds.
 editor::SnapResult ResolveTimelineSnap(const TimelineState &state, Tick delta,
@@ -234,6 +256,10 @@ struct MeterState {
 void UpdateMeter(MeterState &state, std::span<const float> samples, float deltaSeconds,
                  float holdSeconds = 1.5f);
 void Waveform(const char *id, std::span<const AudioBucket> buckets, ImVec2 size, const Theme &theme);
+// Bounded pixel envelope; out-of-source pixels are silent. No allocation or cache ownership.
+AudioBucket WaveformPixel(const WaveformView &view, editor::Range sourceRange);
+void DrawWaveform(const WaveformView &view, editor::Range range, ImVec2 min, ImVec2 max,
+                  const WaveformOptions &options, const Theme &theme);
 void LevelMeter(const char *id, const MeterState &left, const MeterState &right, ImVec2 size,
                 const Theme &theme);
 struct AudioStripView {

@@ -458,6 +458,18 @@ void Show(GalleryState &s) {
     SetNextWindowSize(ImGui::GetIO().DisplaySize);
     Begin("Precision Layers catalog", nullptr,
           ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar);
+    if(s.page>=8) {
+        const char *pages[]={"Basic","Numeric","Input","Hierarchy","Overlay","Composites","Icons","Editor Core","Video Editor","3D Editor"};
+        SetNextItemWidth(180*s.scale);Combo("##workspace",&s.page,pages,10);
+        SameLine();TextDisabled("Precision Layers %s",IMKIT_VERSION);
+        SameLine();if(Button(s.editors.japanese ? "表示設定" : "Appearance")) OpenPopup("editor-appearance");
+        if(BeginPopup("editor-appearance")) {
+            if(Checkbox("Dark",&s.dark)) s.theme=MakePrecisionTheme(s.dark ? ColorScheme::Dark : ColorScheme::Light);
+            Checkbox("日本語",&s.editors.japanese);SetNextItemWidth(160);SliderFloat("Scale",&s.scale,1,1.5f,"%.2f");
+            EndPopup();
+        }
+        Separator();
+    } else {
     PushFont(s.fonts.emphasis, 30);
     TextUnformatted("Precision Layers");
     PopFont();
@@ -485,6 +497,7 @@ void Show(GalleryState &s) {
     SliderFloat("Scale", &s.scale, 1, 1.5f, "%.2f");
     TextDisabled("Precision Layers %s / live public imkit API / Inter + Japanese fallback", IMKIT_VERSION);
     Separator();
+    }
     BeginChild("Component panel", {s.page >= 6 ? GetContentRegionAvail().x
                                               : std::min(GetContentRegionAvail().x, 1120 * s.scale), 0},
                ImGuiChildFlags_Borders, s.page == 4 ? ImGuiWindowFlags_MenuBar : 0);

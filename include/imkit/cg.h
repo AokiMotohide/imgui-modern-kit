@@ -89,13 +89,18 @@ struct ViewportState {
     Orientation orientation = Orientation::World;
     Pivot pivot = Pivot::Median;
     Shading shading = Shading::Solid;
-    bool grid = true, axes = true, origins = true, gizmo = true, safeFrame = false, wireframe = false,
+    bool grid = true, axes = true, origins = false, gizmo = true, safeFrame = false, wireframe = false,
          normals = false, snap = false;
     bool faceNormals=false;
     editor::Transaction drag;
     Axis activeAxis = Axis::None;
     editor::Point mouseStart{};
     Transform original{};
+    Vec3 gesturePivot{};
+    Basis gestureBasis{};
+    Camera gestureCamera{};
+    ImVec2 gestureMin{}, gestureSize{};
+
     Basis customBasis{};
     Basis parentBasis{};
     Vec3 pivotPosition{}; // Host-computed median/bounds/cursor for non-individual pivots.
@@ -125,6 +130,8 @@ struct ViewportView {
     ImVec2 min{}, size{};
     bool hovered = false;
 };
+// Composes the current host model with the uncommitted gizmo proposal.
+Transform PreviewTransform(const ObjectView &object, const ViewportState &state);
 ViewportView BeginViewport(const char *id, ViewportState &state, ImTextureRef hostTexture, ImVec2 size,
                            const Theme &theme);
 void ViewportObjects(const ViewportView &view, std::span<const ObjectView> visible, ViewportState &state,
@@ -258,7 +265,13 @@ struct StripLabels {
     const char *scale="Scale",*repeat="Repeat",*blend="Blend",*mute="Mute",*lock="Lock";
     const char *moveUp="Move up",*moveDown="Move down",*repeats="repeats",*muted=" [Muted]",*locked=" [Locked]";
 };
-struct StripOptions {const IconAtlas *icons=nullptr;StripLabels labels;};
+struct StripOptions {
+    const IconAtlas *icons=nullptr;
+    StripLabels labels;
+    editor::Selection *selection=nullptr;
+    const editor::TimeState *time=nullptr;
+    bool snap=false;
+};
 void AnimationStrips(const char *id,std::span<const StripView> visible,std::uint64_t revision,
                      editor::CanvasState &canvas,editor::Transaction &drag,editor::EventBuffer &events,
                      const Theme &theme,ImVec2 size,const StripOptions &options);

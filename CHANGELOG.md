@@ -1,5 +1,14 @@
 # Changelog / 変更履歴
 
+## 2.0.0
+
+- Translate arrows, shared gizmo preview and immutable drag projection.
+- Source-time stereo waveform providers and pixel envelopes.
+- Editor workspace layout, timeline overview, source placement and host Undo/Redo.
+- Inspector property curves, batch reservation and consumer migration documentation.
+- 移動矢印・Gizmo追従・素材時間波形・編集画面・ホスト履歴を更新。利用側の再ビルドが必要。
+
+
 ## 1.0.0 — 2026-09-10
 
 - Complete Editor Core, Video, CG and optional OpenGL3 preview with host-owned data and typed edits.

@@ -64,10 +64,13 @@ ImKitのコードはMITです。Dear ImGui・GLFWにはそれぞれのライセ�
 アイコンのみのボタンと文字付きボタンに対応し、GPUリソースはホスト側で管理します。
 導入方法は [アイコン API](docs/icons.md)、実例は Gallery の **Icons** ページを参照してください。
 
-## Editor Suite 1.0
+## Editor Suite 2.0
 
 `editor_core`・`video`・`cg`・`preview_opengl3`・`editor_suite`は、ホスト所有のデータと
 型付きイベントで再利用できる編集部品です。native GalleryでVideo/CG、RGB色補正カーブ、
 animation、UV編集と206アイコンを操作できます。
 [部品契約](docs/editor-suite.md)、[API](docs/editor-api.md)、
 [検証・性能](docs/editor-validation.md)、[実装確認表](docs/editor-implementation-checklist.md)を参照してください。
+
+See [Editor 2.0 migration and interaction design](docs/editor-refresh.md).
+Editor 2.0の移行と操作設計は[こちら](docs/editor-refresh.md)を参照してください。

@@ -445,6 +445,12 @@ int main() {
     check(propertyEvents.overflow && propertyEvents.count==0 && curveSelection.count==1 &&
         curveSelection.Contains(6107),"short selection storage preserves the old curve selection atomically");
     {
+        std::array<Event,2> storage{};EventBuffer batch{storage};
+        std::array<Event,3> input{};
+        check(!batch.PushBatch(input) && batch.count==0 && batch.overflow,"batch capacity rejects without partial writes");
+        batch.Clear();check(batch.PushBatch(std::span(input).first(2)) && batch.count==2,"batch commits complete reservation");
+    }
+    {
         TimeState ruler;CanvasState canvas;canvas.scale={100,100};
         std::array<Marker,1> markers{{{7001,FromSeconds(1),"Marker"}}};
         std::array<Event,8> storage;EventBuffer events{storage};ImVec2 origin;

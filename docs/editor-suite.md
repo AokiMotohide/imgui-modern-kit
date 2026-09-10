@@ -1,4 +1,4 @@
-# Editor Suite 1.0
+# Editor Suite 2.0
 
 ImKit provides reusable C++20 editor controls on Dear ImGui 1.92.9b-docking.
 ImKitはDear ImGui 1.92.9b-docking上の再利用可能なC++20編集部品です。
@@ -136,3 +136,6 @@ from public ImGui IO or GPU tests. See [validation](editor-validation.md).
 本製品の対象は編集UIです。media decode/再生、resample、本格色管理、node editor、UV unwrap、
 IK/simulation/animation runtime、PBR/shadow、形式loaderは対象外です。native OS/IMEや実project統合を
 公開ImGui IO・GPUテストの合格から推定しません。[検証結果](editor-validation.md)を参照してください。
+
+See [Editor 2.0 migration and interaction design](editor-refresh.md).
+Editor 2.0の移行と操作設計は[こちら](editor-refresh.md)を参照してください。

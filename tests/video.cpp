@@ -20,6 +20,16 @@ int main() {
         }
     };
     {
+        std::array<video::AudioBucket,8> buckets{};buckets[3]={-.9f,.8f,.5f,.9f};
+        video::WaveformView view{buckets,{0,80},video::WaveformStatus::Ready};
+        check(video::WaveformPixel(view,{0,80}).minimum==-.9f,"downsample preserves transient");
+        check(video::WaveformPixel(view,{30,31}).maximum==.8f,"zoom repeats envelope without holes");
+        check(video::WaveformPixel(view,{40,80}).maximum==0,"trim maps to source interval");
+        check(video::WaveformPixel(view,{-80,0}).maximum==0,"out of source is silent");
+        view.status=video::WaveformStatus::Pending;
+        check(video::WaveformPixel(view,{0,80}).peak==0,"pending waveform does not use stale buckets");
+    }
+    {
         std::array<editor::Keyframe,2> inverted{{{1,10,0,1},{2,10,editor::FromSeconds(1),0}}};
         for(auto &key:inverted) key.interpolation=editor::Interpolation::Linear;
         auto identity=video::ApplyColorCurves({.25f,.5f,.75f,.3f},{});

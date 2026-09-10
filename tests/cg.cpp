@@ -1,6 +1,7 @@
 #include <imkit/cg.h>
 #include <imkit/preview.h>
 #include <cmath>
+#include <array>
 #include <cstdio>
 #include <limits>
 using namespace imkit::cg;
@@ -12,6 +13,17 @@ int main() {
             std::fprintf(stderr, "FAIL %s\n", s);
         }
     };
+    {
+        using namespace imkit;
+        ObjectView object;object.id=91;object.transform.translation={1,2,3};
+        ViewportState state;std::array<editor::Event,8> storage{};editor::EventBuffer events{storage};
+        state.drag.Begin(91,1,editor::EditKind::Translate,{0,0,0,0,1,2,3},{},events);
+        state.drag.Update(1,{0,0,0,0,4,5,6},events);
+        check(PreviewTransform(object,state).translation.x==4,"gizmo preview uses proposed translation");
+        check(object.transform.translation.x==1,"preview never mutates host transform");
+        state.drag.Cancel(events);
+        check(PreviewTransform(object,state).translation.x==1,"cancel restores host pose");
+    }
     {
         using imkit::editor::EditKind;using imkit::editor::Tick;
         const auto low=std::numeric_limits<Tick>::min(),high=std::numeric_limits<Tick>::max();

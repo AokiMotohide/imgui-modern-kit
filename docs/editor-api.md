@@ -1,16 +1,16 @@
 # Editor API reference / Editor API reference
 
 These are custom APIs, separate from the generated native Dear ImGui overload inventory.
-These are the Editor Suite 1.0 APIs. Include only the modules used
+These are the Editor Suite 2.0 APIs. Include only the modules used
 by the host. All module targets publish C++20 and retain the host's ImGui target.
 以下はDear ImGui標準overloadとは別の開発中APIです。必要なmoduleだけをinclude/linkします。
 すべてC++20とホストのImGui targetを継承します。
 
 | Target | Header / namespace | Main API |
 |---|---|---|
-| `imkit::editor_core` | `imkit/editor_core.h`, `imkit::editor` | `StableId`, `Tick`, `FrameRate`, `FrameToTick`, `TickToFrame`, `FormatTimecode`, `ParseTimecode`, `EventBuffer`, `Transaction`, `Selection`, `ResolveSnap`, `CanvasState`, `BeginCanvas`, `CanvasSelection`, `TimeRuler`, `Transport`, `CurveEditor`, `ResolveHandles`, `MoveHandle`, `Evaluate`, `PropertyGrid`, `AssetBrowser`, `Splitter`, `StatusBar` |
-| `imkit::video` | `imkit/video.h`, `imkit::video` | `TimelineProvider`, `TimelineState`, `Timeline`, `EditClip`, `RollClips`, `SlideClip`, `SplitClip`, `EditTransition`, `TransitionPicker`, `EvaluateEnvelope`, `Monitor`, `MonitorOptions`, `MonitorControls`, `MonitorLabels`, `BuildAudioBuckets`, `UpdateMeter`, `Waveform`, `LevelMeter`, `AudioStrip`, `BuildScopes`, `Histogram`, `ScopeImage`, `ColorControls` |
-| `imkit::cg` | `imkit/cg.h`, `imkit::cg` | `Project`, `TransformDelta`, `OrientationBasis`, `BeginViewport`, `ViewportObjects`, `TransformGizmo`, `Outliner`, `TransformUV`, `UVEditor`, `DopeSheet`, `AnimationStrips` |
+| `imkit::editor_core` | `imkit/editor_core.h`, `imkit::editor` | `StableId`, `Tick`, `FrameRate`, `FrameToTick`, `TickToFrame`, `FormatTimecode`, `ParseTimecode`, `EventBuffer::PushBatch`, `EventBuffer`, `Transaction`, `Selection`, `ResolveSnap`, `CanvasState`, `BeginCanvas`, `CanvasSelection`, `TimeRuler`, `Transport`, `CurveEditor`, `ResolveHandles`, `MoveHandle`, `Evaluate`, `PropertyGrid`, `AssetBrowser`, `Splitter`, `StatusBar` |
+| `imkit::video` | `imkit/video.h`, `imkit::video` | `TimelineProvider`, `TimelineState`, `Timeline`, `EditClip`, `RollClips`, `SlideClip`, `SplitClip`, `EditTransition`, `TransitionPicker`, `EvaluateEnvelope`, `Monitor`, `MonitorOptions`, `MonitorControls`, `MonitorLabels`, `BuildAudioBuckets`, `UpdateMeter`, `Waveform`, `WaveformProvider`, `WaveformQuery`, `WaveformView`, `WaveformPixel`, `DrawWaveform`, `PlacementMode`, `LevelMeter`, `AudioStrip`, `BuildScopes`, `Histogram`, `ScopeImage`, `ColorControls` |
+| `imkit::cg` | `imkit/cg.h`, `imkit::cg` | `Project`, `TransformDelta`, `OrientationBasis`, `BeginViewport`, `ViewportObjects`, `TransformGizmo`, `PreviewTransform`, `Outliner`, `TransformUV`, `UVEditor`, `DopeSheet`, `AnimationStrips` |
 | `imkit::cg` | `imkit/preview.h`, `imkit::preview` | `Vertex`, `Mesh`, `Triangle`, `Cube`, `Sphere`, `DrawListPreview` |
 | `imkit::preview_opengl3` | `imkit/preview.h`, `imkit::preview` | `GLFunctions`, `OpenGL3Renderer::Init/Resize/Render/Pick/Shutdown/Texture` |
 | `imkit::editor_suite` | Interface aggregate / interface集約 | `editor_core` + `video` + `cg`; excludes `preview_opengl3` |
@@ -550,3 +550,6 @@ and modifier rows/types with borrowed atlas glyphs. / 両iconフィールドに�
 行・追加候補をホスト指定glyphで区別できます。
 
 Property value context menus provide Copy/Paste through the host ImGui clipboard callbacks. Paste accepts one finite number and emits a typed Property event; invalid text leaves the model unchanged. / 値の右クリックメニューはホストのImGui clipboard callbackを使用し、有限な数値だけをPropertyイベントで貼り付けます。
+
+See [Editor 2.0 migration and interaction design](editor-refresh.md).
+Editor 2.0の移行と操作設計は[こちら](editor-refresh.md)を参照してください。

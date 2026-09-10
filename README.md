@@ -66,10 +66,13 @@ ImKit code is MIT. Dear ImGui and GLFW have their own licenses; optional Inter a
 label buttons. GPU textures remain host-owned. See [icon integration](docs/icons.md)
 and the **Icons** page in the native Gallery.
 
-## Editor Suite 1.0
+## Editor Suite 2.0
 
 `editor_core`, `video`, `cg`, `preview_opengl3` and `editor_suite` provide reusable
 editing controls with host-owned data and typed events. The native Gallery connects
 Video/CG workspaces, RGB color curves, animation and UV tools, plus 206 icons.
 See [module contracts](docs/editor-suite.md), [API reference](docs/editor-api.md),
 [validation and performance](docs/editor-validation.md) and [acceptance matrix](docs/editor-implementation-checklist.md).
+
+See [Editor 2.0 migration and interaction design](docs/editor-refresh.md).
+Editor 2.0の移行と操作設計は[こちら](docs/editor-refresh.md)を参照してください。

@@ -101,6 +101,8 @@ struct EventBuffer {
     std::size_t count = 0;
     bool overflow = false;
     bool Push(const Event &event);
+    // Reserves the entire batch before writing; all events share revision and phase.
+    bool PushBatch(std::span<const Event> events);
     void Clear();
     std::span<const Event> Events() const;
 };
@@ -195,7 +197,7 @@ enum class Command {
     PlayForward,
     Pause,
     ToolSelect, ToolRazor, ToolRipple, ToolRoll, ToolSlip, ToolSlide, ToolHand,
-    GoToStart, GoToEnd, ClearInOut
+    GoToStart, GoToEnd, ClearInOut, InsertSource, OverwriteSource, AppendSource
 };
 enum class ShortcutPreset { CapCut, Premiere, Blender };
 struct Binding {

@@ -33,7 +33,7 @@ void Save(const std::filesystem::path& path,UINT w,UINT h,const std::vector<unsi
 }
 }
 void SaveBackbuffer(const std::filesystem::path& path,int width,int height) {
-    if(width!=1920||height!=1440)throw std::runtime_error("Capture requires a 1920 x 1440 framebuffer");
+    if(width<=0||height<=0)throw std::runtime_error("Capture requires a positive framebuffer size");
     std::vector<unsigned char> pixels(static_cast<size_t>(width)*height*4),flipped(pixels.size());
     while(glGetError()!=GL_NO_ERROR) {}
     constexpr GLenum bgra=0x80E1;

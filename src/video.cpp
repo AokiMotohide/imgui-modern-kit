@@ -359,6 +359,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     ImGui::SameLine();
     if (ImGui::Button(s.labels.options)) ImGui::OpenPopup("snap-options");
     if (ImGui::BeginPopup("snap-options")) {
+        ImGui::Checkbox("Stereo waveforms",&s.waveformOptions.stereo);
+        ImGui::SliderFloat("Waveform display gain",&s.waveformOptions.gain,.25f,4.f);
         int follow=static_cast<int>(s.autoScroll);
         if (ImGui::Combo(s.labels.follow,&follow,s.labels.followModes.data(),static_cast<int>(s.labels.followModes.size())))
             s.autoScroll=static_cast<editor::AutoScroll>(follow);
@@ -377,10 +379,21 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     bool fit=s.icons ? IconButton("fit",*s.icons,IconId::FitView,s.labels.fitTooltip) : ImGui::Button(s.labels.fit);
     fit |= editor::CommandPressed(editor::Command::Fit,s.bindings,
         ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows));
-    if (fit && p.contentRange.last>p.contentRange.first) {
+    ImGui::SameLine();
+    const bool fitSelected=ImGui::SmallButton("Fit selection");
+    auto fitRange=p.contentRange;
+    if (fitSelected && p.selected && selection.count) {
+        const auto selected=p.selected(p.user,selection.storage.first(selection.count));
+        if(!selected.empty()) {
+            fitRange={selected.front().start,selected.front().start+selected.front().duration};
+            for(const auto &c:selected) {fitRange.first=std::min(fitRange.first,c.start);fitRange.last=std::max(fitRange.last,c.start+c.duration);}
+            fit=true;
+        }
+    }
+    if (fit && fitRange.last>fitRange.first) {
         const double width=timelineWidth-s.headerWidth;
         if (width>48) {
-            const double first=editor::Seconds(p.contentRange.first),last=editor::Seconds(p.contentRange.last);
+            const double first=editor::Seconds(fitRange.first),last=editor::Seconds(fitRange.last);
             s.canvas.scale.x=(width-48)/(last-first);
             s.canvas.origin.x=first-24/s.canvas.scale.x;
         }
@@ -389,12 +402,50 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         s.canvas.origin.x=editor::FollowPlayhead(s.canvas.origin.x,
             (timelineWidth-s.headerWidth)/s.canvas.scale.x,
             editor::Seconds(s.time.playhead),s.autoScroll);
+    const auto &input=ImGui::GetIO();
+    const bool overTracks=ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows) && input.MousePos.x>=s.view.min.x+s.headerWidth &&
+        input.MousePos.x<s.view.max.x && input.MousePos.y>=s.view.min.y && input.MousePos.y<s.view.max.y;
+    if(overTracks) {
+        if(ImGui::IsMouseDragging(ImGuiMouseButton_Middle)) {s.canvas.origin.x-=input.MouseDelta.x/s.canvas.scale.x;}
+        if(input.KeyCtrl && input.MouseWheel && !ImGui::IsAnyItemActive())
+            editor::ZoomAt(s.canvas,{input.MousePos.x-s.view.min.x-s.headerWidth,0},{std::pow(1.15,input.MouseWheel),1});
+        s.canvas.origin.x-=input.MouseWheelH*32/s.canvas.scale.x;
+    }
+    if (p.contentRange.last>p.contentRange.first) {
+        const auto a=ImGui::GetCursorScreenPos();
+        const float width=std::max(1.f,timelineWidth-s.headerWidth);
+        ImGui::SetCursorScreenPos({a.x+s.headerWidth,a.y});
+        ImGui::InvisibleButton("overview",{width,14*ImGui::GetFontSize()/14});
+        const double first=editor::Seconds(p.contentRange.first),length=editor::Seconds(p.contentRange.last-p.contentRange.first);
+        const double viewWidth=width/s.canvas.scale.x;
+        const float edgeLeft=a.x+s.headerWidth+float((s.canvas.origin.x-first)/length*width);
+        const float edgeRight=edgeLeft+float(viewWidth/length*width);
+        if(ImGui::IsItemActivated()) {
+            const float mx=input.MousePos.x;
+            s.overviewDrag=std::abs(mx-edgeLeft)<7 ? -1 : std::abs(mx-edgeRight)<7 ? 1 : 0;
+            if(!s.overviewDrag && (mx<edgeLeft || mx>edgeRight)) s.canvas.origin.x=first+std::clamp(double(mx-a.x-s.headerWidth)/width,0.,1.)*length-viewWidth*.5;
+        }
+        if(ImGui::IsItemActive()) {
+            const double delta=input.MouseDelta.x/width*length;
+            if(s.overviewDrag<0) {const double end=s.canvas.origin.x+viewWidth;s.canvas.origin.x=std::min(end-.001,s.canvas.origin.x+delta);s.canvas.scale.x=std::clamp(width/(end-s.canvas.origin.x),1e-9,1e9);}
+            else if(s.overviewDrag>0) s.canvas.scale.x=std::clamp(width/std::max(.001,viewWidth+delta),1e-9,1e9);
+            else s.canvas.origin.x+=delta;
+        }
+        if(ImGui::IsItemHovered()) ImGui::SetTooltip("Drag: navigate / Ctrl+wheel: zoom");
+        auto *d=ImGui::GetWindowDrawList();const auto lo=ImGui::GetItemRectMin(),hi=ImGui::GetItemRectMax();
+        d->AddRectFilled(lo,hi,ImGui::GetColorU32(theme.colors.input),3);
+        const float left=lo.x+float(std::clamp((s.canvas.origin.x-first)/length,0.,1.)*width);
+        const float right=lo.x+float(std::clamp((s.canvas.origin.x+width/s.canvas.scale.x-first)/length,0.,1.)*width);
+        d->AddRectFilled({left,lo.y+2},{std::max(left+3,right),hi.y-2},ImGui::GetColorU32(theme.colors.selection),2);
+    }
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + s.headerWidth);
     s.time.icons=s.icons;
     editor::TimeRuler("time", s.time, s.canvas, p.markers, p.revision, out, theme);
     s.canvas.wheelZoom = ImGui::GetIO().KeyCtrl;
     s.canvas.wheelZoomY = false;
-    auto view = editor::BeginCanvas("tracks", s.canvas, size, theme);
+    auto passiveCanvas=s.canvas;passiveCanvas.wheelZoom=false;
+    auto view = editor::BeginCanvas("tracks", passiveCanvas, size, theme);
+    view.visible=editor::VisibleRange(s.canvas,{view.max.x-view.min.x,view.max.y-view.min.y});
     s.view = view;
     auto *draw = ImGui::GetWindowDrawList();
     const auto &io = ImGui::GetIO();
@@ -664,19 +715,27 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             const float waveformTop=std::min(b.y-2,a.y+((clip.transitionIn || clip.transitionOut) ? 2.f : 1.f)*ImGui::GetFontSize()+7);
             const float waveformCenter=(waveformTop+b.y)*.5f;
             const float waveformAmplitude=std::max(0.f,(b.y-waveformTop)*.5f);
-            for (std::size_t j = 0; track.expanded && j < clip.waveform.size(); ++j) {
-                float wx = x + (end - x) * static_cast<float>(j) / clip.waveform.size(),
-                      amplitude = clip.waveform[j] * waveformAmplitude;
-                draw->AddLine({wx, waveformCenter - amplitude}, {wx, waveformCenter + amplitude},
-                              ImGui::GetColorU32(theme.colors.text));
-            }
-            for (std::size_t j = 0; track.expanded && j < clip.audioBuckets.size(); ++j) {
-                float wx = x + (end-x) * static_cast<float>(j) / clip.audioBuckets.size();
-                float centerY = waveformCenter;
-                float amplitude = waveformAmplitude;
-                draw->AddLine({wx,centerY-amplitude*clip.audioBuckets[j].maximum},
-                              {wx,centerY-amplitude*clip.audioBuckets[j].minimum},
-                              ImGui::GetColorU32(theme.colors.text));
+            if (track.expanded && p.waveform.query && clip.audioSource && std::isfinite(clip.speed) && clip.speed>0) {
+                const float left=std::max(a.x,view.min.x+s.headerWidth),right=std::min(b.x,view.max.x);
+                if (right>left && end>x) {
+                    const auto sourceAt=[&](float px) {return static_cast<Tick>(std::clamp(
+                        static_cast<long double>(clip.sourceIn)+(static_cast<long double>(px)-x)/(end-x)*clip.duration*clip.speed,
+                        static_cast<long double>(std::numeric_limits<Tick>::min()),static_cast<long double>(std::numeric_limits<Tick>::max())));};
+                    const editor::Range range{sourceAt(left),sourceAt(right)};
+                    const int channels=s.waveformOptions.stereo ? std::clamp(clip.audioChannels,1,2) : 1;
+                    for (int channel=0;channel<channels;++channel) {
+                        const auto data=p.waveform.query(p.waveform.user,{clip.audioSource,range,channel,static_cast<int>(std::ceil(right-left))});
+                        const float height=(b.y-waveformTop)/channels;
+                        DrawWaveform(data,range,{left,waveformTop+channel*height},{right,waveformTop+(channel+1)*height},s.waveformOptions,theme);
+                    }
+                }
+            } else if (track.expanded && !clip.audioBuckets.empty()) {
+                const editor::Range range{0,editor::TicksPerSecond};
+                DrawWaveform({clip.audioBuckets,range,WaveformStatus::Ready},range,{x,waveformTop},{end,b.y},s.waveformOptions,theme);
+            } else for (std::size_t j=0;track.expanded && j<clip.waveform.size();++j) {
+                const float wx=x+(end-x)*static_cast<float>(j)/clip.waveform.size();
+                const float amplitude=std::clamp(clip.waveform[j],0.f,1.f)*waveformAmplitude;
+                draw->AddLine({wx,waveformCenter-amplitude},{wx,waveformCenter+amplitude},ImGui::GetColorU32(theme.colors.text));
             }
             const bool keyOwner=selection.count==1 ? selected : s.keyDrag.draft.original.parent==clip.id;
             if (keyOwner && (addKey || previousKey || nextKey)) {
@@ -1369,6 +1428,12 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         view.min.x + s.headerWidth +
         static_cast<float>((editor::Seconds(s.time.playhead) - s.canvas.origin.x) * s.canvas.scale.x);
     draw->AddLine({playhead, view.min.y}, {playhead, view.max.y}, ImGui::GetColorU32(theme.colors.accent), 2);
+    if(s.drag.active && ImGui::IsMouseDown(0)) {
+        ImGui::BeginTooltip();
+        ImGui::Text("%+.3f s / %.3f s",editor::Seconds(s.drag.draft.proposed.first-s.drag.draft.original.first),
+            editor::Seconds(s.drag.draft.proposed.last-s.drag.draft.proposed.first));
+        ImGui::EndTooltip();
+    }
     editor::EndCanvas();
     ImGui::PopID();
 }
@@ -1536,16 +1601,55 @@ void UpdateMeter(MeterState &s, std::span<const float> samples, float dt, float 
     } else if (s.holdRemaining == 0)
         s.heldPeak = (std::max)(s.peak, s.heldPeak - dt * .5f);
 }
-void Waveform(const char *id, std::span<const AudioBucket> buckets, ImVec2 size, const Theme &theme) {
-    auto p = ImGui::GetCursorScreenPos();
-    ImGui::InvisibleButton(id, size);
-    auto *d = ImGui::GetWindowDrawList();
-    for (std::size_t i = 0; i < buckets.size(); ++i) {
-        float x = p.x + size.x * i / buckets.size();
-        d->AddLine({x, p.y + size.y * (.5f - .5f * buckets[i].maximum)},
-                   {x, p.y + size.y * (.5f - .5f * buckets[i].minimum)},
-                   ImGui::GetColorU32(theme.colors.success));
+AudioBucket WaveformPixel(const WaveformView &view, editor::Range range) {
+    AudioBucket result{};
+    if (view.status!=WaveformStatus::Ready || view.buckets.empty() || view.range.last<=view.range.first || range.last<=range.first) return result;
+    const long double extent=static_cast<long double>(view.range.last)-view.range.first;
+    const auto index=[&](Tick t) {return (static_cast<long double>(t)-view.range.first)*view.buckets.size()/extent;};
+    const auto first=static_cast<std::size_t>(std::clamp(std::floor(index(range.first)),0.L,static_cast<long double>(view.buckets.size())));
+    const auto last=static_cast<std::size_t>(std::clamp(std::ceil(index(range.last)),0.L,static_cast<long double>(view.buckets.size())));
+    for (auto i=first;i<last;++i) {
+        const auto &v=view.buckets[i];
+        if (std::isfinite(v.minimum)) result.minimum=std::min(result.minimum,v.minimum);
+        if (std::isfinite(v.maximum)) result.maximum=std::max(result.maximum,v.maximum);
+        if (std::isfinite(v.peak)) result.peak=std::max(result.peak,v.peak);
+        if (std::isfinite(v.rms)) result.rms=std::max(result.rms,v.rms);
     }
+    return result;
+}
+void DrawWaveform(const WaveformView &view, editor::Range range, ImVec2 min, ImVec2 max,
+                  const WaveformOptions &options, const Theme &theme) {
+    if (max.x<=min.x || max.y<=min.y) return;
+    auto *d=ImGui::GetWindowDrawList();
+    const float left=std::max(min.x,d->GetClipRectMin().x),right=std::min(max.x,d->GetClipRectMax().x);
+    if(right<=left) return;
+    const auto at=[&](float x) {return static_cast<Tick>(static_cast<long double>(range.first)+
+        (static_cast<long double>(range.last)-range.first)*(x-min.x)/(max.x-min.x));};
+    range={at(left),at(right)};min.x=left;max.x=right;
+    d->PushClipRect(min,max,true);
+    const float center=(min.y+max.y)*.5f, amplitude=(max.y-min.y)*.46f;
+    if (options.zeroLine) d->AddLine({min.x,center},{max.x,center},ImGui::GetColorU32(theme.colors.muted));
+    if (view.status!=WaveformStatus::Ready) {
+        d->AddText(min,ImGui::GetColorU32(view.status==WaveformStatus::Error ? theme.colors.destructive : theme.colors.muted),
+            view.status==WaveformStatus::Error ? "!" : "...");
+    } else {
+        const int pixels=std::max(1,static_cast<int>(std::ceil(max.x-min.x)));
+        const auto time=[&](int i) {return range.first+static_cast<Tick>((static_cast<long double>(range.last)-range.first)*i/pixels);};
+        const float gain=std::isfinite(options.gain) ? std::clamp(options.gain,0.f,64.f) : 1.f;
+        for (int i=0;i<pixels;++i) {
+            const auto v=WaveformPixel(view,{time(i),time(i+1)});
+            const float low=std::clamp(v.minimum*gain,-1.f,1.f), high=std::clamp(v.maximum*gain,-1.f,1.f);
+            if (low!=0 || high!=0) d->AddRectFilled({min.x+i,center-high*amplitude},
+                {min.x+i+1, std::max(center-low*amplitude,center-high*amplitude+1)},ImGui::GetColorU32(theme.colors.text));
+        }
+    }
+    d->PopClipRect();
+}
+void Waveform(const char *id, std::span<const AudioBucket> buckets, ImVec2 size, const Theme &theme) {
+    if (size.x<=0 || size.y<=0) return;
+    const auto p=ImGui::GetCursorScreenPos();ImGui::InvisibleButton(id,size);
+    const editor::Range range{0,static_cast<Tick>(buckets.size())*editor::TicksPerSecond};
+    DrawWaveform({buckets,range,WaveformStatus::Ready},range,p,{p.x+size.x,p.y+size.y},{},theme);
 }
 void LevelMeter(const char *id, const MeterState &left, const MeterState &right, ImVec2 size,
                 const Theme &t) {

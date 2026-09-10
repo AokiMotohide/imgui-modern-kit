@@ -33,7 +33,6 @@ struct Host {
     std::size_t imguiAllocations=0;
     ImVec2 mouse{-100, -100};
     void Frame(const std::function<void(ImGuiIO &)> &input = {}, const std::filesystem::path &shot = NoCapturePath()) {
-        s.editors.RenderPreview();
         glfwPollEvents();
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -47,6 +46,7 @@ struct Host {
             input(io);
         ImGui::NewFrame();
         imkit::gallery::Show(s);
+        s.editors.RenderPreview();
         ImGui::Render();
         int w, h;
         glfwGetFramebufferSize(window, &w, &h);
@@ -306,7 +306,9 @@ void VerifyEditors(Host &h, const std::filesystem::path &out, const imkit::previ
     check(renderer.Pick(renderer.Width()/2, renderer.Height()/2) == meshes[0].id,
           "GL depth test and full 64-bit picking, near object submitted first");
     check(renderer.Pick(0, 0) == 0, "GL background picking");
+    const auto resizeTexture=renderer.Texture();
     check(renderer.Resize(800, 450) && renderer.Render(meshes, camera), "GL FBO resize");
+    check(renderer.Texture()==resizeTexture,"GL resize preserves texture borrowed by current draw commands");
     check(renderer.Pick(400, 225) == meshes[0].id, "GL picking after resize");
     check(!renderer.Resize(0, 1) && renderer.Initialized(), "GL invalid resize preserves renderer");
     auto oldTexture=renderer.Texture(); renderer.Shutdown();
@@ -344,10 +346,18 @@ void VerifyEditors(Host &h, const std::filesystem::path &out, const imkit::previ
     check(std::abs(static_cast<int>(normalPixels[(240*640+320)*4])-expectedShear)<=2,
           "GL inverse transpose preserves sheared surface lighting");
     h.Page(8);
+    int dragCapture=0;
     auto drag = [&](ImVec2 from, ImVec2 to) {
         h.mouse = from; h.Frame();
         h.Frame([](auto &io) { io.AddMouseButtonEvent(0, true); });
         h.mouse = to; h.Frame();
+        h.Frame({},out/("drag-preview-"+std::to_string(dragCapture++)+".png"));
+        if (h.s.page==9 && s.viewport.drag.active) {
+            const auto pose=imkit::cg::PreviewTransform(s.objects[1],s.viewport);
+            const auto center=imkit::cg::Project(pose.translation,s.viewport.camera,{0,0},s.viewportSize);
+            check(center.visible && renderer.Pick(static_cast<int>(center.screen.x),static_cast<int>(center.screen.y))==s.objects[1].id,
+                  "CG preview center shares visible GL mesh, outline and gizmo during drag");
+        }
         h.Frame([](auto &io) { io.AddMouseButtonEvent(0, false); });
         h.Settle(2);
     };
@@ -362,7 +372,9 @@ void VerifyEditors(Host &h, const std::filesystem::path &out, const imkit::previ
         return *std::find_if(s.clips.begin(), s.clips.end(), [](auto &c) { return c.id == 1000; });
     };
     auto before = findClip().start;
+    h.Frame({},out/"timeline-before.png");
     auto pos = clipPosition(1000, 90); drag(pos, {pos.x + 40, pos.y});
+    h.Frame({},out/"timeline-after.png");
     check(findClip().start > before, "Timeline move via public IO");
     before = findClip().duration;
     pos = clipPosition(1000, static_cast<float>(imkit::editor::Seconds(before)*s.timeline.canvas.scale.x)-3);
@@ -382,6 +394,57 @@ void VerifyEditors(Host &h, const std::filesystem::path &out, const imkit::previ
     check(s.objects[1].transform.translation.x>oldX,"CG X gizmo preview and commit via public IO");
     check(s.objectSelection.active==s.objects[1].id,"CG shared selection stable ID");
     h.Frame({},out/"cg-edited.png");
+    // Exercise the shared preview contract with actual GPU output and public input.
+    const auto savedCamera=s.viewport.camera;
+    const auto savedRotation=s.objects[1].transform.rotation;
+    const auto nearVec=[](auto a,auto b) {return std::hypot(a.x-b.x,a.y-b.y,a.z-b.z)<1e-9;};
+    for (auto projection:{imkit::cg::Projection::Perspective,imkit::cg::Projection::Orthographic})
+        for (auto orientation:{imkit::cg::Orientation::World,imkit::cg::Orientation::Local})
+            for (bool multiple:{false,true}) {
+                s.viewport.camera.projection=projection;s.viewport.orientation=orientation;
+                s.objects[1].transform.rotation={.2,.3,.4};
+                s.objectSelection.Set(s.objects[1].id);
+                if (multiple) {s.objectSelection.Set(s.objects[2].id,true);s.objectSelection.active=s.objects[1].id;}
+                h.Settle(2);
+                const auto original=s.objects[1].transform.translation,companion=s.objects[2].transform.translation;
+                const auto historyCount=s.history.size();
+                auto startGesture=[&] {
+                    const auto pivot=s.SelectionPivot(s.viewport.pivot);
+                    const auto basis=imkit::cg::OrientationBasis(orientation,s.objects[1].transform,s.viewport.camera);
+                    const auto a=imkit::cg::Project(pivot,s.viewport.camera,s.viewportOrigin,s.viewportSize).screen;
+                    const auto b=imkit::cg::Project({pivot.x+basis.x.x,pivot.y+basis.x.y,pivot.z+basis.x.z},s.viewport.camera,s.viewportOrigin,s.viewportSize).screen;
+                    const float length=std::hypot(b.x-a.x,b.y-a.y),ux=(b.x-a.x)/length,uy=(b.y-a.y)/length;
+                    h.mouse={a.x+ux*70,a.y+uy*70};h.Frame();
+                    h.Frame([](auto &io){io.AddMouseButtonEvent(0,true);});
+                    h.mouse={a.x+ux*100,a.y+uy*100};h.Frame();
+                    check(s.viewport.drag.active,"CG matrix gesture begins on arrow");
+                    const auto proposed=imkit::cg::PreviewTransform(s.objects[1],s.viewport).translation;
+                    h.Frame();
+                    check(nearVec(proposed,imkit::cg::PreviewTransform(s.objects[1],s.viewport).translation),
+                          "CG stationary pointer does not accumulate preview movement");
+                    const auto center=imkit::cg::Project(proposed,s.viewport.camera,{0,0},s.viewportSize);
+                    check(renderer.Pick(static_cast<int>(center.screen.x),static_cast<int>(center.screen.y))==s.objects[1].id,
+                          "CG matrix GPU mesh follows projected preview");
+                    return proposed;
+                };
+                startGesture();h.Key(ImGuiKey_Escape);
+                h.Frame([](auto &io){io.AddMouseButtonEvent(0,false);});
+                check(nearVec(s.objects[1].transform.translation,original) && nearVec(s.objects[2].transform.translation,companion) && s.history.size()==historyCount,
+                      "CG matrix Escape restores all targets without history");
+                const auto proposed=startGesture();
+                h.Frame([](auto &io){io.AddMouseButtonEvent(0,false);});
+                check(nearVec(s.objects[1].transform.translation,proposed),"CG matrix release commits exact preview without jump");
+                if (multiple) {
+                    const auto moved=s.objects[2].transform.translation;
+                    check(nearVec(imkit::cg::Vec3{moved.x-companion.x,moved.y-companion.y,moved.z-companion.z},
+                                  imkit::cg::Vec3{proposed.x-original.x,proposed.y-original.y,proposed.z-original.z}),
+                          "CG matrix companion shares translation delta");
+                }
+                check(s.Undo() && nearVec(s.objects[1].transform.translation,original) && nearVec(s.objects[2].transform.translation,companion),
+                      "CG matrix Undo restores complete gesture");
+            }
+    s.viewport.camera=savedCamera;s.viewport.orientation=imkit::cg::Orientation::World;
+    s.objects[1].transform.rotation=savedRotation;s.objectSelection.Set(s.objects[1].id);
     h.Page(7);
     auto &key=s.keys[4]; const auto keyId=key.id; auto keyTick=key.tick;
     auto keyScreen=imkit::editor::ToScreen({imkit::editor::Seconds(key.tick),-key.value},s.curve.canvas,{s.curve.view.min.x,s.curve.view.min.y});
@@ -648,6 +711,28 @@ int VerifyInspectorModel() {
         std::printf("%s %s\n",ok?"PASS":"FAIL",name);
         if (!ok) ++failures;
     };
+    {
+        auto model=std::make_unique<imkit::gallery::EditorWorkspaces>();model->Initialize();
+        model->assetSelection.Set(model->assets[0].id);model->placementTrack=model->tracks[0].id;
+        model->timeline.time.playhead=imkit::editor::FromSeconds(1);
+        const auto oldSize=model->clips.size(),oldRevision=model->revision;
+        check(model->PlaceSource(imkit::video::PlacementMode::Insert),"source insert completes");
+        const auto inserted=model->selection.active;
+        check(model->clips.size()>oldSize && model->revision>oldRevision,"insert splits and creates material");
+        check(model->Undo() && model->clips.size()==oldSize,"general undo restores insertion");
+        check(model->Undo(true) && model->selection.active==inserted,"redo restores inserted selection");
+        model->tracks[0].locked=true;
+        const auto lockedSize=model->clips.size(),lockedRevision=model->revision;
+        check(!model->PlaceSource(imkit::video::PlacementMode::Overwrite) && model->clips.size()==lockedSize && model->revision==lockedRevision,"locked source placement is atomic");
+        model->tracks[0].locked=false;
+        model->timeline.time.playhead=imkit::editor::FromSeconds(120);
+        check(model->PlaceSource(imkit::video::PlacementMode::Append),"source append completes");
+        check(model->Undo(),"source append undo");
+        auto object=model->objects[1];
+        model->events.Push({object.id,model->revision,imkit::editor::Phase::Commit,imkit::editor::EditKind::Translate,{}, {0,0,0,0,3,4,5}});
+        model->ApplyEvents();check(model->objects[1].transform.translation.x==3,"transform host commit");
+        check(model->Undo() && model->objects[1].transform.translation.x==object.transform.translation.x,"general undo restores transform");
+    }
     {
         auto listStorage=std::make_unique<gallery::EditorWorkspaces>();auto &list=*listStorage;list.Initialize();
         const auto first=list.customProperties[0].id,second=list.customProperties[1].id;
@@ -1157,7 +1242,8 @@ int VerifyInspectorModel() {
 }
 int main(int argc, char **argv) {
     bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false, benchmarkEditors = false, verifyMonitors = false, verifyTrackControls = false, verifyLinkedClips = false, verifyNormals = false;
-    int capturePage = -1, animationPage = -1, monitorIndex=-1;
+    int capturePage = -1, animationPage = -1, monitorIndex=-1, captureWidth=1920,captureHeight=1440;
+    bool captureJapanese=false;
     bool listMonitors=false;
     std::string iconSearch;
     std::filesystem::path out = "out/catalog";
@@ -1183,6 +1269,9 @@ int main(int argc, char **argv) {
             verifyColor = true;
         else if(a=="--list-monitors") listMonitors=true;
         else if(a=="--monitor" && i+1<argc) monitorIndex=std::stoi(argv[++i]);
+        else if(a=="--width" && i+1<argc) captureWidth=std::clamp(std::stoi(argv[++i]),640,7680);
+        else if(a=="--height" && i+1<argc) captureHeight=std::clamp(std::stoi(argv[++i]),480,4320);
+        else if(a=="--japanese") captureJapanese=true;
         else if (a == "--output" && i + 1 < argc)
             out = argv[++i];
         else if (a == "--animation-page" && i + 1 < argc) {
@@ -1228,7 +1317,7 @@ int main(int argc, char **argv) {
     auto hostStorage=std::make_unique<Host>();
     auto &h=*hostStorage;
     h.automated = capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls || verifyLinkedClips || verifyNormals;
-    h.window = glfwCreateWindow(1920, 1440, "ImKit Precision Layers", nullptr, nullptr);
+    h.window = glfwCreateWindow(captureWidth, captureHeight, "ImKit Precision Layers", nullptr, nullptr);
     if (!h.window) {
         glfwTerminate();
         CoUninitialize();
@@ -1375,6 +1464,7 @@ int main(int argc, char **argv) {
             if (verifyIcons)
                 VerifyIcons(h, out);
             if (capture) {
+                h.s.editors.japanese=captureJapanese;
                 if (capturePage == -2) h.s.editors.Dataset(false);
                 for (int dark = 0; dark < 2; ++dark) {
                     h.s.dark = dark != 0;

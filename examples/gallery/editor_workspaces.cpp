@@ -24,20 +24,8 @@ void TransportLanguage(editor::TimeState &time,bool japanese) {
     time.rulerLabels={"作業範囲","イン／アウト","開始","終了","マーカーを追加","マーカーを削除","マーカー"};
 }
 void ApplyGizmoPreview(preview::Mesh &mesh,const cg::ViewportState &viewport) {
-    auto apply=[&](const editor::Transaction *transaction) {
-        if (!transaction->active || transaction->draft.target!=mesh.id || transaction->draft.phase==editor::Phase::Cancel) return;
-        const auto &v=transaction->draft.proposed;
-        if (transaction->draft.kind==editor::EditKind::Translate) mesh.transform.translation={v.x,v.y,v.z};
-        if (transaction->draft.kind==editor::EditKind::Rotate) mesh.transform.rotation={v.x,v.y,v.z};
-        if (transaction->draft.kind==editor::EditKind::Scale) {
-            mesh.transform.scale={v.x,v.y,v.z};
-            if (v.hasAffine) {mesh.transform.rotation={v.affine[0],v.affine[1],v.affine[2]};mesh.transform.shear={v.affine[3],v.affine[4],v.affine[5]};}
-        }
-    };
-    apply(&viewport.drag);apply(&viewport.pivotDrag);
-    for (std::size_t i=0;i<viewport.companionCount;++i) {
-        apply(&viewport.companions[i].transform);apply(&viewport.companions[i].position);
-    }
+    cg::ObjectView object;object.id=mesh.id;object.transform=mesh.transform;
+    mesh.transform=cg::PreviewTransform(object,viewport);
 }
 template<std::size_t N>
 int FilterProperties(editor::PropertyView (&rows)[N],const char *search) {
@@ -115,6 +103,39 @@ editor::CurveProvider Curves(EditorWorkspaces &s) {
     s.curve.bindings=std::span(s.bindings).first(s.bindingCount);
     s.curve.rate=s.timeline.time.rate;
     s.curve.time=s.timeline.time.playhead;
+    if(s.propertyCurveChannel) {
+        s.curve.activeChannel=s.propertyCurveChannel;
+        auto &channel=s.propertyKeys[s.propertyCurveChannel];
+        editor::Rect bounds{{0,-1},{1,0}};
+        if(!channel.empty()) {
+            bounds={{editor::Seconds(channel.front().tick),-channel.front().value},{editor::Seconds(channel.back().tick),-channel.front().value}};
+            for(const auto &key:channel) {bounds.min.y=std::min(bounds.min.y,-key.value);bounds.max.y=std::max(bounds.max.y,-key.value);}
+        }
+        return {&s,s.revision,[](void *u,editor::CurveQuery query) {
+            auto &s=*static_cast<EditorWorkspaces*>(u);const auto &keys=s.propertyKeys[s.propertyCurveChannel];
+            auto first=std::lower_bound(keys.begin(),keys.end(),query.time.first,[](const auto &k,auto t){return k.tick<t;});
+            if(first!=keys.begin()) --first;
+            auto last=std::upper_bound(first,keys.end(),query.time.last,[](auto t,const auto &k){return t<k.tick;});
+            if(last!=keys.end()) ++last;
+            return std::span<const editor::Keyframe>(first,last);
+        },[](void *u,editor::StableId id,editor::Tick tick,editor::Extrapolation mode) {
+            auto &s=*static_cast<EditorWorkspaces*>(u);return editor::Evaluate(s.propertyKeys[id],tick,mode);
+        },bounds,[](void *u,std::span<const editor::StableId> ids) {
+            auto &s=*static_cast<EditorWorkspaces*>(u);s.selectedCurveKeys.clear();
+            for(const auto &k:s.propertyKeys[s.propertyCurveChannel]) if(std::find(ids.begin(),ids.end(),k.id)!=ids.end()) s.selectedCurveKeys.push_back(k);
+            return std::span<const editor::Keyframe>(s.selectedCurveKeys);
+        },[](void *u,editor::StableId id,editor::Tick tick,bool next)->const editor::Keyframe* {
+            auto &s=*static_cast<EditorWorkspaces*>(u);auto &keys=s.propertyKeys[id];
+            auto key=std::lower_bound(keys.begin(),keys.end(),tick,[](const auto &k,auto t){return k.tick<t;});
+            if(next) {if(key!=keys.end() && key->tick==tick) ++key;return key==keys.end()?nullptr:&*key;}
+            return key==keys.begin()?nullptr:&*--key;
+        },[](void *u,editor::Rect bounds) {
+            auto &s=*static_cast<EditorWorkspaces*>(u);s.curveSelectionPoints.clear();
+            for(const auto &k:s.propertyKeys[s.propertyCurveChannel]) if(editor::Seconds(k.tick)>=bounds.min.x && editor::Seconds(k.tick)<=bounds.max.x)
+                s.curveSelectionPoints.push_back({k.id,{editor::Seconds(k.tick),-k.value},k.locked});
+            return std::span<const editor::SelectablePoint>(s.curveSelectionPoints);
+        }};
+    }
     return {&s, s.revision, [](void *u, editor::CurveQuery q) {
                 auto &s = *static_cast<EditorWorkspaces *>(u);
                 return s.QueryKeys(q);
@@ -180,28 +201,48 @@ editor::CurveProvider ColorCurves(EditorWorkspaces &s) {
         return nullptr;
     }};
 }
+struct CompactEditorScope {
+    bool compact=ImGui::GetIO().DisplaySize.y<900;
+    CompactEditorScope() {if(compact) {ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,{6,2});ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,{6,4});}}
+    ~CompactEditorScope() {if(compact) ImGui::PopStyleVar(2);}
+};
+void PaneDivider(const char *id,float &width,float height,float total) {
+    ImGui::SameLine(0,2);
+    ImGui::BeginChild(id,{6,height},ImGuiChildFlags_None,ImGuiWindowFlags_NoScrollbar);
+    editor::Splitter("split",width,total,true,140);
+    ImGui::EndChild();ImGui::SameLine(0,2);
+}
+void Divider(const char *id,float &ratio,float total) {
+    ImGui::InvisibleButton(id,{std::max(1.f,ImGui::GetContentRegionAvail().x),6});
+    if (ImGui::IsItemHovered() || ImGui::IsItemActive()) ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+    if (ImGui::IsItemActive() && total>0) ratio=std::clamp(ratio+ImGui::GetIO().MouseDelta.y/total,.25f,.72f);
+    const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
+    ImGui::GetWindowDrawList()->AddLine({a.x,(a.y+b.y)*.5f},{b.x,(a.y+b.y)*.5f},ImGui::GetColorU32(ImGui::IsItemActive()?ImGuiCol_SeparatorActive:ImGuiCol_Separator));
+}
 void Options(EditorWorkspaces &s) {
-    bool large = s.large;
-    if (ImGui::Checkbox("100k dataset", &large))
-        s.Dataset(large);
-    ImGui::SameLine();
-    ImGui::Checkbox("日本語", &s.japanese);
-    ImGui::SameLine();
-    ImGui::Checkbox("Narrow panes", &s.narrow);
-    ImGui::SameLine();
-    ImGui::Text("%zu visible queries / %zu clips / %zu commits", s.queryCount, s.queriedClips, s.commits);
-    if (ImGui::BeginPopupContextItem("transition history")) {
-        if(s.icons) {Icon(*s.icons,IconId::Undo,{ImGui::GetFontSize()});ImGui::SameLine();}
-        if (ImGui::MenuItem("Undo transition",nullptr,false,s.transitionHistoryCursor>0)) s.UndoTransition();
-        if(s.icons) {Icon(*s.icons,IconId::Redo,{ImGui::GetFontSize()});ImGui::SameLine();}
-        if (ImGui::MenuItem("Redo transition",nullptr,false,s.transitionHistoryCursor<s.transitionHistory.size())) s.UndoTransition(true);
+    if(ImGui::SmallButton(s.japanese ? "サンプル設定" : "Sample settings")) ImGui::OpenPopup("sample-settings");
+    if(ImGui::BeginPopup("sample-settings")) {
+        bool large=s.large;if(ImGui::Checkbox("100k dataset",&large)) s.Dataset(large);
+        ImGui::Checkbox("日本語",&s.japanese);ImGui::Checkbox("Narrow panes",&s.narrow);
+        ImGui::Text("%zu queries / %zu clips / %zu commits",s.queryCount,s.queriedClips,s.commits);
         ImGui::EndPopup();
     }
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Right-click for transition Undo / Redo");
+    const bool focused=ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+    const auto bindings=std::span(s.bindings).first(s.bindingCount);
+    ImGui::SameLine();
+    ImGui::BeginDisabled(s.historyCursor==0);
+    if (ImGui::SmallButton(s.japanese ? "元に戻す" : "Undo")) s.Undo();
+    ImGui::EndDisabled();ImGui::SameLine();
+    ImGui::BeginDisabled(s.historyCursor==s.history.size());
+    if (ImGui::SmallButton(s.japanese ? "やり直す" : "Redo")) s.Undo(true);
+    ImGui::EndDisabled();
+    if (editor::CommandPressed(editor::Command::Undo,bindings,focused)) s.Undo();
+    if (editor::CommandPressed(editor::Command::Redo,bindings,focused)) s.Undo(true);
     s.queryCount = s.queriedClips = s.queriedKeys = s.queriedTracks = 0;
 }
 } // namespace
 void EditorWorkspaces::Dataset(bool big) {
+    history.clear();historyCursor=0;
     transitionHistory.clear();transitionHistoryCursor=0;
     clipEnvelopes.clear();clipProperties.clear();clipPropertyOwners.clear();clipPropertyRevision=0;
     large = big;
@@ -249,7 +290,7 @@ void EditorWorkspaces::Dataset(bool big) {
                 clip.transitionOutKind=video::TransitionKind::Fade;
             }
             clip.proxy = i % 7 == 0;
-            if (track.kind == video::TrackKind::Audio) clip.audioBuckets=audio;
+            if (track.kind == video::TrackKind::Audio) {clip.audioSource=1+i%4;clip.audioChannels=2;clip.sourceIn=editor::FromSeconds(i%8);}
             if (t==1 && i==0) {
                 auto &points=clipEnvelopes[clip.id];
                 points={{nextId++,editor::FromSeconds(.5),.5},{nextId++,editor::FromSeconds(1.5),1},{nextId++,editor::FromSeconds(3),.7}};
@@ -475,7 +516,21 @@ void EditorWorkspaces::Initialize() {
           cg::UVVertex{900003, 1, {.9, .9}}, cg::UVVertex{900004, 1, {.1, .9}}};
     for (std::size_t i = 0; i < pcm.size(); ++i)
         pcm[i] = static_cast<float>(std::sin(i * .27) * (.4 + .3 * std::sin(i * .015)));
+    sourceTime.inOut={0,editor::FromSeconds(3)};
     video::BuildAudioBuckets(pcm, 1, 0, audio);
+    std::vector<float> fixturePCM(65536*2);
+    for(int source=0;source<4;++source) {
+        for(int i=0;i<65536;++i) for(int channel=0;channel<2;++channel) {
+            const double time=60.*i/65536;
+            const double envelope=source==0 ? 0 : source==1 ? (std::fmod(time,1.3)<.035 ? .95 : .008) :
+                source==2 ? .35+.12*std::sin(time*2) : .08+.7*std::abs(std::sin(time*3+channel));
+            fixturePCM[i*2+channel]=float(envelope*std::sin(i*.73+channel)*(channel==0?1:.55));
+        }
+        for(int channel=0;channel<2;++channel) {
+            sourceAudio[source][channel].resize(4096);
+            video::BuildAudioBuckets(fixturePCM,2,channel,sourceAudio[source][channel]);
+        }
+    }
     video::UpdateMeter(meter, pcm, 0);
     for(int c=0;c<3;++c) {
         colorCurveChannels[c]=nextId++;
@@ -525,6 +580,7 @@ void EditorWorkspaces::RenderPreview() {
 std::span<const preview::Mesh> EditorWorkspaces::BuildSceneMeshes() {
     sceneMeshes.clear();sceneMeshes.reserve(objects.size());
     for (std::size_t i=0;i<objects.size();++i) if (objects[i].geometry && objects[i].visible) {
+        if (!previewHelpers && (objects[i].kind==cg::ObjectKind::Camera || objects[i].kind==cg::ObjectKind::Light)) continue;
         const auto data=geometries.find(objects[i].geometry);
         if (data==geometries.end()) continue;
         preview::Mesh mesh{objects[i].id,data->second.vertices,data->second.indices,objects[i].transform};
@@ -534,7 +590,11 @@ std::span<const preview::Mesh> EditorWorkspaces::BuildSceneMeshes() {
             if (!component.wireOverride) {render=component.view.enabled;mesh.wire=viewport.shading==cg::Shading::Wireframe;}
             else if (component.view.enabled) mesh.wire=true;
         }
-        if (render) {ApplyGizmoPreview(mesh,viewport);sceneMeshes.push_back(mesh);}
+        // Camera/light helpers must not obscure the editable surface, including camera view.
+        if (objects[i].kind==cg::ObjectKind::Camera || objects[i].kind==cg::ObjectKind::Light) mesh.wire=true;
+        if (render && !(objects[i].id==cameraObject && viewport.camera.projection==cg::Projection::Camera)) {
+            ApplyGizmoPreview(mesh,viewport);sceneMeshes.push_back(mesh);
+        }
     }
     return sceneMeshes;
 }
@@ -617,7 +677,198 @@ void EditorWorkspaces::CopyClipEditingData(const video::ClipView &source,video::
         renamedLabels[copy.id]=label->second;copy.label=renamedLabels[copy.id].c_str();
     }
 }
+std::unique_ptr<EditorWorkspaces::Snapshot> EditorWorkspaces::CaptureModel() const {
+    auto model=std::make_unique<Snapshot>();
+    model->tracks=tracks;
+    model->audioStrips=audioStrips;
+    model->mixerTrack=mixerTrack;
+    model->clips=clips;
+    model->clipEnvelopes=clipEnvelopes;
+    model->keys=keys;
+    model->objects=objects;
+    model->geometries=geometries;
+    model->components=components;
+    model->objectOrder=objectOrder;
+    model->objectPropertyIds=objectPropertyIds;
+    model->uv=uv;
+    model->assets=assets;
+    model->clipProperties=clipProperties;
+    model->clipPropertyOwners=clipPropertyOwners;
+    model->markers=markers;
+    model->markerCount=markerCount;
+    model->renamedLabels=renamedLabels;
+    model->propertyFlags=propertyFlags;
+    model->propertyKeys=propertyKeys;
+    model->animationStrips=animationStrips;
+    model->customProperties=customProperties;
+    model->colors=colors;
+    model->colorCurveKeys=colorCurveKeys;
+    model->colorCurveChannels=colorCurveChannels;
+    model->cameraObject=cameraObject;
+    model->nextId=nextId;
+    model->clipsSelected.assign(selection.storage.begin(),selection.storage.begin()+selection.count);
+    model->objectsSelected.assign(objectSelection.storage.begin(),objectSelection.storage.begin()+objectSelection.count);
+    model->keysSelected.assign(keySelection.storage.begin(),keySelection.storage.begin()+keySelection.count);
+    model->stripsSelected.assign(stripSelection.storage.begin(),stripSelection.storage.begin()+stripSelection.count);model->activeStrip=stripSelection.active;
+    model->activeClip=selection.active;model->activeObject=objectSelection.active;model->activeKey=keySelection.active;
+    return model;
+}
+void EditorWorkspaces::SwapModel(Snapshot &model) {
+    std::swap(tracks,model.tracks);
+    std::swap(audioStrips,model.audioStrips);
+    std::swap(mixerTrack,model.mixerTrack);
+    std::swap(clips,model.clips);
+    std::swap(clipEnvelopes,model.clipEnvelopes);
+    std::swap(keys,model.keys);
+    std::swap(objects,model.objects);
+    std::swap(geometries,model.geometries);
+    std::swap(components,model.components);
+    std::swap(objectOrder,model.objectOrder);
+    std::swap(objectPropertyIds,model.objectPropertyIds);
+    std::swap(uv,model.uv);
+    std::swap(assets,model.assets);
+    std::swap(clipProperties,model.clipProperties);
+    std::swap(clipPropertyOwners,model.clipPropertyOwners);
+    std::swap(markers,model.markers);
+    std::swap(markerCount,model.markerCount);
+    std::swap(renamedLabels,model.renamedLabels);
+    std::swap(propertyFlags,model.propertyFlags);
+    std::swap(propertyKeys,model.propertyKeys);
+    std::swap(animationStrips,model.animationStrips);
+    std::swap(customProperties,model.customProperties);
+    std::swap(colors,model.colors);
+    std::swap(colorCurveKeys,model.colorCurveKeys);
+    std::swap(colorCurveChannels,model.colorCurveChannels);
+    std::swap(cameraObject,model.cameraObject);
+    std::swap(nextId,model.nextId);
+    const auto swapSelection=[](editor::Selection &s,std::vector<editor::StableId> &ids,editor::StableId &active) {
+        std::vector<editor::StableId> old(s.storage.begin(),s.storage.begin()+s.count);
+        s.count=std::min(ids.size(),s.storage.size());std::copy_n(ids.begin(),s.count,s.storage.begin());
+        ids=std::move(old);std::swap(s.active,active);
+    };
+    swapSelection(selection,model.clipsSelected,model.activeClip);
+    swapSelection(objectSelection,model.objectsSelected,model.activeObject);
+    swapSelection(keySelection,model.keysSelected,model.activeKey);
+    swapSelection(stripSelection,model.stripsSelected,model.activeStrip);
+    // All snapshot views borrow the restored model; never retain pointers into the history entry.
+    for (auto &c:clips) {
+        const auto e=clipEnvelopes.find(c.id);c.envelope=e==clipEnvelopes.end() ? std::span<const video::EnvelopePoint>{} : e->second;
+        if (auto n=renamedLabels.find(c.id);n!=renamedLabels.end()) c.label=n->second.c_str();
+    }
+    for (auto &o:objects) if(auto n=renamedLabels.find(o.id);n!=renamedLabels.end()) o.label=n->second.c_str();
+    for (auto &a:assets) if(auto n=renamedLabels.find(a.id);n!=renamedLabels.end()) a.label=n->second.c_str();
+    for (auto &c:components) if(auto n=renamedLabels.find(c.view.id);n!=renamedLabels.end()) c.view.label=n->second.c_str();
+    ++revision;RebuildTrackLayout();RebuildKeyIndex();RebuildClipIndex();RebuildColorScopes();
+    clipPropertyRevision=0;SyncClipProperties();events.Clear();
+}
+void EditorWorkspaces::Remember(std::unique_ptr<Snapshot> snapshot) {
+    history.resize(historyCursor);
+    if (history.size()==16) {history.erase(history.begin());--historyCursor;}
+    history.push_back(std::move(snapshot));historyCursor=history.size();
+}
+bool EditorWorkspaces::Undo(bool redo) {
+    if (viewport.drag.active || timeline.drag.active || timeline.transitionDrag.active || timeline.envelopeDrag.active || timeline.keyDrag.active ||
+        timeline.captionDrag.active || timeline.heightDrag.active || stripDrag.active || uvState.drag.active ||
+        curve.drag.active || colorCurve.drag.active || videoProperties.drag.active || objectProperties.drag.active || mixerState.drag.active) return false;
+    if (redo ? historyCursor==history.size() : historyCursor==0) return false;
+    if (!redo) --historyCursor;
+    SwapModel(*history[historyCursor]);
+    if (redo) ++historyCursor;
+    return true;
+}
+video::WaveformView EditorWorkspaces::QueryWaveform(const video::WaveformQuery &query) {
+    const editor::Range extent{0,editor::FromSeconds(60)};
+    if (query.source<1 || query.source>sourceAudio.size() || query.channel<0 || query.channel>1) return {{},extent,video::WaveformStatus::Error};
+    const video::WaveformView source{sourceAudio[query.source-1][query.channel],extent,video::WaveformStatus::Ready};
+    const int count=std::clamp(query.pixels,1,static_cast<int>(waveScratch.size()));
+    const auto tick=[&](int i) {return query.range.first+static_cast<editor::Tick>((static_cast<long double>(query.range.last)-query.range.first)*i/count);};
+    for (int i=0;i<count;++i) waveScratch[i]=video::WaveformPixel(source,{tick(i),tick(i+1)});
+    return {std::span<const video::AudioBucket>(waveScratch).first(count),query.range,video::WaveformStatus::Ready};
+}
+bool EditorWorkspaces::PlaceSource(video::PlacementMode mode) {
+    editMessage.clear();
+    const auto track=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==placementTrack;});
+    const auto asset=std::find_if(assets.begin(),assets.end(),[&](const auto &a){return a.id==assetSelection.active;});
+    const auto range=sourceTime.inOut;
+    if (track==tracks.end() || track->locked || asset==assets.end() || range.first<0 || range.last<=range.first || range.last>editor::FromSeconds(60)) {
+        editMessage=japanese ? "素材、対象トラック、In/Outを確認してください" : "Choose a source, unlocked track and valid In/Out";return false;
+    }
+    if (viewport.drag.active || timeline.drag.active || events.count) return false;
+    auto start=timeline.time.playhead;
+    if (mode==video::PlacementMode::Append) {
+        start=0;for(const auto &c:clips) if(c.track==placementTrack) start=std::max(start,c.start+c.duration);
+    }
+    const auto duration=range.last-range.first;
+    if (start<0 || start>std::numeric_limits<editor::Tick>::max()-duration) return false;
+    const auto end=start+duration;
+    // Reject the entire request if an affected linked/group member lies outside target tracks.
+    const auto targeted=[&](editor::StableId id) {auto t=std::find_if(tracks.begin(),tracks.end(),[&](const auto &v){return v.id==id;});return t!=tracks.end() && (id==placementTrack || t->target);};
+    for(const auto &c:clips) {
+        const bool affected=mode==video::PlacementMode::Insert ? targeted(c.track) && c.start+c.duration>start : c.track==placementTrack && c.start<end && c.start+c.duration>start;
+        if (!affected) continue;
+        auto owner=std::find_if(tracks.begin(),tracks.end(),[&](const auto &t){return t.id==c.track;});
+        bool reject=c.locked || owner==tracks.end() || owner->locked || c.start>std::numeric_limits<editor::Tick>::max()-duration;
+        for(const auto &member:clips) if((c.linked && member.linked==c.linked) || (c.group && member.group==c.group))
+            reject|=member.locked || (mode==video::PlacementMode::Insert ? !targeted(member.track) : member.track!=placementTrack);
+        if(reject) {editMessage=japanese ? "ロックまたはリンク対象のため変更できません" : "Locked or linked material prevents this edit";return false;}
+    }
+    auto before=CaptureModel();
+    std::vector<video::ClipView> result;result.reserve(clips.size()+8);
+    const auto rebase=[&](video::ClipView &clip,editor::Tick offset) {
+        const auto channel=clip.keyChannel;clip.keyChannel=nextId++;
+        std::vector<editor::Keyframe> copied;
+        for(const auto &key:keys) if(key.channel==channel) {auto k=key;k.id=nextId++;k.channel=clip.keyChannel;k.tick-=offset;copied.push_back(k);}
+        keys.insert(keys.end(),copied.begin(),copied.end());
+        if(auto found=clipEnvelopes.find(clip.id);found!=clipEnvelopes.end()) {
+            const double atStart=video::EvaluateEnvelope(found->second,offset);
+            const double atEnd=video::EvaluateEnvelope(found->second,offset+clip.duration);
+            auto &points=found->second;for(auto &point:points) point.tick-=offset;
+            std::erase_if(points,[&](const auto &point){return point.tick<=0 || point.tick>=clip.duration;});
+            points.insert(points.begin(),{nextId++,0,atStart});points.push_back({nextId++,clip.duration,atEnd});clip.envelope=points;
+        }
+        clip.transitionIn=0;clip.transitionOut=std::min(clip.transitionOut,clip.duration);
+    };
+    for(const auto &original:clips) {
+        auto c=original;const auto oldEnd=c.start+c.duration;
+        if(mode==video::PlacementMode::Insert && targeted(c.track)) {
+            if(c.start>=start) c.start+=duration;
+            else if(oldEnd>start) {
+                auto right=c;right.id=nextId++;right.start=end;right.duration=oldEnd-start;
+                right.sourceIn+=static_cast<editor::Tick>((start-c.start)*c.speed);
+                CopyClipEditingData(original,right);rebase(right,start-c.start);c.duration=start-c.start;c.transitionOut=0;result.push_back(right);
+            }
+        } else if(mode==video::PlacementMode::Overwrite && c.track==placementTrack && c.start<end && oldEnd>start) {
+            if(c.start>=start && oldEnd<=end) continue;
+            if(c.start<start && oldEnd>end) {
+                auto right=c;right.id=nextId++;right.start=end;right.duration=oldEnd-end;
+                right.sourceIn+=static_cast<editor::Tick>((end-c.start)*c.speed);
+                CopyClipEditingData(original,right);rebase(right,end-c.start);result.push_back(right);c.duration=start-c.start;c.transitionOut=0;
+            } else if(c.start<start) {c.duration=start-c.start;c.transitionOut=0;}
+            else {const auto offset=end-c.start;c.sourceIn+=static_cast<editor::Tick>(offset*c.speed);c.start=end;c.duration=oldEnd-end;rebase(c,offset);}
+        }
+        result.push_back(c);
+    }
+    video::ClipView added;added.id=nextId++;added.keyChannel=nextId++;added.track=placementTrack;
+    added.start=start;added.duration=duration;added.sourceIn=range.first;added.label=asset->label;
+    if(track->kind==video::TrackKind::Audio) {added.audioSource=1+(asset->id%4);added.audioChannels=2;}
+    result.push_back(added);clips=std::move(result);selection.Set(added.id);Remember(std::move(before));
+    ++revision;RebuildClipIndex();RebuildKeyIndex();SyncClipProperties();return true;
+}
 void EditorWorkspaces::ApplyEvents() {
+    bool rejectFrame=false;
+    for(const auto &e:events.Events()) if(e.phase==editor::Phase::Commit) {
+        rejectFrame |= e.revision!=revision;
+        if(e.kind==editor::EditKind::Translate || e.kind==editor::EditKind::Rotate || e.kind==editor::EditKind::Scale) {
+            auto object=std::find_if(objects.begin(),objects.end(),[&](const auto &o){return o.id==e.target;});
+            rejectFrame |= object!=objects.end() && (object->locked || !object->visible);
+        }
+        for(const auto &[id,channel]:propertyKeys) for(const auto &key:channel) if(key.id==e.target && e.kind!=editor::EditKind::Navigate)
+            rejectFrame |= key.locked || (propertyFlags[id]&16u)!=0;
+    }
+    if(rejectFrame) {events.Clear();return;}
+    const bool hasCommit=std::any_of(events.Events().begin(),events.Events().end(),[&](const auto &e) {return e.phase==editor::Phase::Commit && e.revision==revision && e.kind!=editor::EditKind::Select && e.kind!=editor::EditKind::Navigate &&
+        !((e.kind==editor::EditKind::Move || e.kind==editor::EditKind::TrimStart || e.kind==editor::EditKind::TrimEnd) && e.original==e.proposed);});
+    auto before=hasCommit ? CaptureModel() : nullptr;
     std::vector<video::ClipView> removedClips;
     std::vector<std::pair<editor::StableId,editor::Tick>> deletePositions;
     bool rejectDelete=false;
@@ -763,6 +1014,30 @@ void EditorWorkspaces::ApplyEvents() {
         }
         if(colorTarget) {if(colorEdited) {RebuildColorScopes();changed=true;}continue;}
 
+        bool propertyCurveTarget=false;
+        for(auto &[id,channel]:propertyKeys) {
+            const bool channelLocked=(propertyFlags[id]&16u)!=0;
+            if(e.kind==editor::EditKind::KeyInsert && e.target==id) {
+                propertyCurveTarget=true;
+                if(!channelLocked && std::none_of(channel.begin(),channel.end(),[&](const auto &k){return k.tick==e.proposed.first;})) {
+                    channel.push_back({nextId++,id,e.proposed.first,e.proposed.x});changed=true;
+                }
+            }
+            for(std::size_t i=0;i<channel.size();++i) if(channel[i].id==e.target) {
+                propertyCurveTarget=true;auto &key=channel[i];
+                if(e.kind==editor::EditKind::Navigate) timeline.time.playhead=key.tick;
+                if(key.locked || channelLocked) break;
+                if(e.kind==editor::EditKind::Remove) {channel.erase(channel.begin()+i);keySelection.Clear();changed=true;break;}
+                if(e.kind==editor::EditKind::Duplicate) {auto copy=key;copy.id=nextId++;copy.tick=e.proposed.first;channel.push_back(copy);changed=true;break;}
+                if(e.kind==editor::EditKind::Keyframe || e.kind==editor::EditKind::KeyScale) {key.tick=e.proposed.first;key.value=e.proposed.x;changed=true;}
+                if(e.kind==editor::EditKind::KeyInterpolation && e.proposed.x>=0 && e.proposed.x<3) {key.interpolation=static_cast<editor::Interpolation>(int(e.proposed.x));changed=true;}
+                if(e.kind==editor::EditKind::KeyHandleMode && e.proposed.x>=0 && e.proposed.x<5) {key.handles=static_cast<editor::HandleMode>(int(e.proposed.x));changed=true;}
+                if(e.kind==editor::EditKind::Handle) {key=editor::MoveHandle(editor::ResolveHandles(channel,i),e.original.offset<0,{e.proposed.x,e.proposed.y});changed=true;}
+                break;
+            }
+            if(propertyCurveTarget) {std::sort(channel.begin(),channel.end(),[](const auto &a,const auto &b){return a.tick<b.tick;});break;}
+        }
+        if(propertyCurveTarget) continue;
         if (e.kind==editor::EditKind::Reorder) {
             auto from=std::find_if(animationStrips.begin(),animationStrips.end(),[&](const auto &strip){return strip.id==e.target;});
             auto to=std::find_if(animationStrips.begin(),animationStrips.end(),[&](const auto &strip){return strip.id==e.proposed.parent;});
@@ -1258,6 +1533,7 @@ void EditorWorkspaces::ApplyEvents() {
         if (clip!=clips.end()) {clip->start=position;changed=true;}
     }
     if (changed) {
+        if (before) Remember(std::move(before));
         RebuildTrackLayout();
         ++revision;
         RebuildClipIndex();
@@ -1266,39 +1542,65 @@ void EditorWorkspaces::ApplyEvents() {
     events.Clear();SyncClipProperties();
 }
 void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) {
+    CompactEditorScope density;
+    s.previewHelpers=false;
     s.curve.icons=s.icons;
     s.uvState.icons=s.icons;
     s.Initialize();
     Options(s);s.SyncClipProperties();
     float available = ImGui::GetContentRegionAvail().x;
-    float side = (s.narrow ? 180 : 260) * ImGui::GetFontSize()/14;
-    float top = (std::max)(220.f, ImGui::GetContentRegionAvail().y * .4f);
+    float side = (s.narrow ? 180 : s.videoSide) * ImGui::GetFontSize()/14;
+    const bool compact=available<1000*ImGui::GetFontSize()/14;
+    if(compact) {ImGui::Checkbox(s.japanese?"素材":"Media",&s.showMedia);ImGui::SameLine();ImGui::Checkbox("Inspector",&s.showInspector);}
+    const bool mediaVisible=!compact || s.showMedia,inspectorVisible=!compact || s.showInspector;
+    const float workspaceHeight=ImGui::GetContentRegionAvail().y;
+    const float ratioScale=ImGui::GetIO().DisplaySize.y<900 ? .72f : 1.f;
+    float displayedRatio=s.videoTopRatio*ratioScale;
+    float top = std::max(150.f,workspaceHeight*displayedRatio);
+    side=std::min(side,available*.22f);
+    if(mediaVisible) {
     ImGui::BeginChild("Media bin", {side, top}, ImGuiChildFlags_Borders);
     ImGui::SeparatorText(s.japanese ? "素材" : "Media Bin");
     const char *assetPath[]={"All assets","Media"};
-    editor::AssetBrowser("media", Assets(s), s.assetState, s.selection, s.events, std::span(assetPath).first(s.assetPathDepth));
+    const auto previousAsset=s.assetSelection.active;
+    editor::AssetBrowser("media", Assets(s), s.assetState, s.assetSelection, s.events, std::span(assetPath).first(s.assetPathDepth));
+    if (previousAsset!=s.assetSelection.active) s.monitorMode=1;
     ImGui::EndChild();
-    ImGui::SameLine();
-    ImGui::BeginChild("Monitors", {(std::max)(100.f, available - side * 2 - 20), top},
+    PaneDivider("media-divider",side,top,available*.42f);
+    s.videoSide=side/(ImGui::GetFontSize()/14);
+    }
+    ImGui::BeginChild("Monitors", {(std::max)(100.f, available - (mediaVisible?side:0) - (inspectorVisible?side:0) - 20), top},
                       ImGuiChildFlags_Borders);
     float width = ImGui::GetContentRegionAvail().x;
-    float monitorHeight = (std::max)(100.f, top - 100);
+    const char *modesEN[]={"Program","Source","Compare"};
+    const char *modesJP[]={"プログラム","ソース","比較"};
+    ImGui::SetNextItemWidth(std::min(width,160.f));
+    ImGui::Combo("##monitors",&s.monitorMode,s.japanese?modesJP:modesEN,3);
+    float monitorHeight = std::max(40.f,top-2*ImGui::GetFrameHeightWithSpacing()-ImGui::GetFontSize()-32-(s.monitorMode==1 ? ImGui::GetFrameHeightWithSpacing():0));
     video::MonitorLabels monitorLabels;
     if (s.japanese) {
         monitorLabels.safeArea="セーフエリア";monitorLabels.guides="ガイド";monitorLabels.timecode="タイムコード";
         monitorLabels.bounds="変形枠";monitorLabels.anchor="アンカーポイント";monitorLabels.metadata="付加情報";
         monitorLabels.presets={"非表示","クリップ","詳細"};
     }
+    if (s.monitorMode!=0) {
     ImGui::BeginGroup();
     if (s.icons) {Icon(*s.icons,IconId::SourceMonitor,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
     ImGui::TextUnformatted(s.japanese ? "ソース" : "Source");
     s.sourceMonitorOptions.label=s.japanese ? "ソース / Studio" : "Source / Studio";
-    video::Monitor("Source",texture,{width*.48f,monitorHeight},s.timeline.time,s.sourceMonitorOptions,theme);
+    video::Monitor("Source",texture,{s.monitorMode==2?width*.48f:width,monitorHeight},s.timeline.time,s.sourceMonitorOptions,theme);
+    double sourceIn=editor::Seconds(s.sourceTime.inOut.first),sourceOut=editor::Seconds(s.sourceTime.inOut.last);
+    ImGui::SetNextItemWidth(70);
+    if(ImGui::DragScalar("In",ImGuiDataType_Double,&sourceIn,.05f)) s.sourceTime.inOut.first=editor::FromSeconds(std::clamp(sourceIn,0.,60.));
+    ImGui::SameLine();ImGui::SetNextItemWidth(70);
+    if(ImGui::DragScalar("Out",ImGuiDataType_Double,&sourceOut,.05f)) s.sourceTime.inOut.last=editor::FromSeconds(std::clamp(sourceOut,0.,60.));
     if (ImGui::BeginPopupContextItem("source display")) {
         video::MonitorControls("source",s.sourceMonitorOptions,s.icons,monitorLabels);ImGui::EndPopup();
     }
     ImGui::EndGroup();
-    ImGui::SameLine();
+    if(s.monitorMode==2) ImGui::SameLine();
+    }
+    if (s.monitorMode!=1) {
     ImGui::BeginGroup();
     if (s.icons) {Icon(*s.icons,IconId::ProgramMonitor,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
     ImGui::TextUnformatted(s.japanese ? "プログラム" : "Program");
@@ -1329,20 +1631,31 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
             program.markerComment=marker.label;break;
         }
     video::Monitor("Program", ImTextureRef(static_cast<ImTextureID>(s.previewRenderer.Texture())),
-                   {width*.48f,monitorHeight},s.timeline.time,program,theme);
+                   {s.monitorMode==2?width*.48f:width,monitorHeight},s.timeline.time,program,theme);
     s.programMonitorMin=ImGui::GetItemRectMin();s.programMonitorMax=ImGui::GetItemRectMax();
+    s.viewportSize={s.programMonitorMax.x-s.programMonitorMin.x,s.programMonitorMax.y-s.programMonitorMin.y};
     if (ImGui::BeginPopupContextItem("monitor metadata")) {
         video::MonitorControls("program",s.programMonitorOptions,s.icons,monitorLabels);
         s.monitorMetadata=s.programMonitorOptions.metadataPreset;
         ImGui::EndPopup();
     }
     ImGui::EndGroup();
+    }
     TransportLanguage(s.timeline.time,s.japanese);
     editor::Transport(s.timeline.time, std::span(s.bindings).first(s.bindingCount), s.icons);
     ImGui::EndChild();
+    if(inspectorVisible) {
     ImGui::SameLine();
     ImGui::BeginChild("Clip Inspector", {0, top}, ImGuiChildFlags_Borders);
     ImGui::SeparatorText("Clip Inspector");
+    if(s.clipPropertyIds[0] && ImGui::Button(s.japanese ? "キーフレームを編集" : "Edit keyframes")) {
+        s.propertyCurveChannel=s.clipPropertyIds[0];s.curve.activeChannel=s.propertyCurveChannel;
+        s.showDetails=true;s.videoPanel=2;s.curve.fitRequested=true;
+    }
+    if(s.monitorClipIndex<s.clips.size()) {
+        const auto &clip=s.clips[s.monitorClipIndex];
+        if(ImGui::CollapsingHeader(s.japanese ? "フェード" : "Fades")) video::TransitionPicker("inspector-transition",clip,s.revision,s.events,s.clipInspectorLocked,video::TransitionPickerOptions{s.icons});
+    }
     editor::PropertyView props[] = {{s.clipPropertyIds[0], "Opacity", "Video", 1, 1, editor::PropertyFlags::Animated},
                                     {s.clipPropertyIds[1], "Scale", "Transform", 1, 1},
                                     {s.clipPropertyIds[2], "Position X", "Transform", 0, 0},
@@ -1370,7 +1683,27 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         ImGui::EndDisabled();
     } else ImGui::TextUnformatted(s.japanese ? "クリップを選択" : "Select a clip");
     ImGui::EndChild();
+    }
+    Divider("video-divider",displayedRatio,workspaceHeight);
+    s.videoTopRatio=displayedRatio/ratioScale;
+    ImGui::Checkbox(s.japanese ? "詳細パネル" : "Details",&s.showDetails);
+    ImGui::SameLine();ImGui::SetNextItemWidth(120);
+    const auto selectedTrack=std::find_if(s.tracks.begin(),s.tracks.end(),[&](const auto &t){return t.id==s.placementTrack;});
+    if(ImGui::BeginCombo("##destination",selectedTrack==s.tracks.end()?"Track":selectedTrack->label)) {
+        for(const auto &t:s.tracks) if(t.kind==video::TrackKind::Audio || t.kind==video::TrackKind::Video) {
+            ImGui::BeginDisabled(t.locked);if(ImGui::Selectable(t.label,t.id==s.placementTrack)) s.placementTrack=t.id;ImGui::EndDisabled();
+        }
+        ImGui::EndCombo();
+    }
+    constexpr editor::Command placementCommands[]={editor::Command::InsertSource,editor::Command::OverwriteSource,editor::Command::AppendSource};
+    const char *placementNames[]= {s.japanese?"挿入":"Insert",s.japanese?"上書き":"Overwrite",s.japanese?"末尾追加":"Append"};
+    for(int i=0;i<3;++i) {
+        ImGui::SameLine();const bool pressed=ImGui::Button(placementNames[i]);
+        if(pressed || editor::CommandPressed(placementCommands[i],std::span(s.bindings).first(s.bindingCount),ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))) s.PlaceSource(static_cast<video::PlacementMode>(i));
+    }
+    if(!s.editMessage.empty()) ImGui::TextWrapped("%s",s.editMessage.c_str());
     video::TimelineProvider p{&s, s.revision, static_cast<int>(s.tracks.size())};
+    p.waveform={&s,[](void *user,const video::WaveformQuery &query) {return static_cast<EditorWorkspaces*>(user)->QueryWaveform(query);}};
     p.transitionLimit=[](void *u,editor::StableId id,bool outgoing) {
         return static_cast<EditorWorkspaces *>(u)->TransitionLimit(id,outgoing);
     };
@@ -1486,12 +1819,12 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         return std::span<const editor::SnapCandidate>(s.snapCandidates).first(n);
     };
     float remaining = ImGui::GetContentRegionAvail().y;
-    float timelineHeight = (std::max)(140.f, remaining - 2*ImGui::GetFrameHeightWithSpacing() -
-        (s.activeVideoPanel == 1 ? 380.f * ImGui::GetFontSize()/14 : 230.f));
+    float timelineHeight=std::max(60.f,remaining-(s.showDetails ? remaining*.42f : 0.f)-3*ImGui::GetFrameHeightWithSpacing()-28);
     s.timelineOrigin = ImGui::GetCursorScreenPos();
     s.timeline.keySelection=&s.keySelection;
     s.timeline.keyCompanions=s.clipKeyCompanions;
     video::Timeline("Timeline", p, s.timeline, s.selection, s.events, theme, {0, timelineHeight});
+    if (!s.showDetails && s.videoPanel<0) {s.ApplyEvents();return;}
     ImGui::BeginChild("Audio color", {0, 0}, ImGuiChildFlags_Borders);
     if (ImGui::BeginTabBar("audio color")) {
         if (ImGui::BeginTabItem("Audio")) {
@@ -1569,7 +1902,8 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
             editor::CurveEditor("color curve",ColorCurves(s),s.colorCurve,s.colorCurveSelection,s.events,theme,{0,180});
             ImGui::EndTabItem();
         }
-        if (ImGui::BeginTabItem("Keyframes / Curves")) {
+        if (ImGui::BeginTabItem("Keyframes / Curves",nullptr,s.videoPanel==2?ImGuiTabItemFlags_SetSelected:0)) {
+            s.videoPanel=-1;
             editor::CurveEditor("clip curve", Curves(s), s.curve, s.keySelection, s.events, theme, {0, 160});
             ImGui::EndTabItem();
         }
@@ -1645,6 +1979,7 @@ void EditorWorkspaces::RebuildOutlinerRows() {
             append(append,object,0);
 }
 void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) {
+    CompactEditorScope density;
     s.viewport.labels={};
     if (s.japanese) {
         auto &l=s.viewport.labels;
@@ -1666,11 +2001,17 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     s.uvState.icons=s.icons;
     s.Initialize();
     Options(s);
-    float width = ImGui::GetContentRegionAvail().x, side = (s.narrow ? 180 : 300)*ImGui::GetFontSize()/14,
-          top = ImGui::GetContentRegionAvail().y * .6f;
-    ImGui::BeginChild("View stack", {width - side - 10, top}, ImGuiChildFlags_Borders);
+    float width = ImGui::GetContentRegionAvail().x, side = (s.narrow ? 180 : s.cgSide)*ImGui::GetFontSize()/14,
+          top = ImGui::GetContentRegionAvail().y * s.cgTopRatio;
+    const bool compact=width<1000*ImGui::GetFontSize()/14;
+    if(compact) {ImGui::Checkbox("Inspector",&s.showInspector);top=ImGui::GetContentRegionAvail().y*s.cgTopRatio;}
+    const bool inspectorVisible=!compact || s.showInspector;
+    const float workspaceHeight=ImGui::GetContentRegionAvail().y;
+    side=std::min(side,width*.28f);
+    ImGui::BeginChild("View stack", {width - (inspectorVisible?side+10:0), top}, ImGuiChildFlags_Borders);
     s.viewport.icons=s.icons;
     if(s.icons) {Icon(*s.icons,IconId::Monitor,{ImGui::GetFontSize()});ImGui::SameLine();}
+    s.previewHelpers=true;
     ImGui::Checkbox("OpenGL preview", &s.useGL);
     if (s.viewport.pivot==cg::Pivot::Cursor) {
         double cursor[]={s.cursorPivot.x,s.cursorPivot.y,s.cursorPivot.z};
@@ -1687,19 +2028,6 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
         {0, 0}, theme);
     s.viewportOrigin = view.min;
     s.viewportSize = view.size;
-    if (!s.useGL) {
-        preview::DrawListPreview(*ImGui::GetWindowDrawList(),s.BuildSceneMeshes(),s.viewport.camera,
-                                 view.min,view.size,s.scratch);
-    }
-    if (s.viewport.selectionOutline) for (const auto &mesh:s.BuildSceneMeshes())
-        if (s.objectSelection.Contains(mesh.id)) {
-            if (s.outlineScratch.size()<mesh.indices.size()) s.outlineScratch.resize(mesh.indices.size());
-            preview::DrawMeshOutline(*ImGui::GetWindowDrawList(),mesh,s.viewport.camera,view.min,view.size,
-                s.outlineScratch,ImGui::GetColorU32(theme.colors.accent));
-        }
-    if (s.viewport.normals || s.viewport.faceNormals)
-        preview::DrawMeshNormals(*ImGui::GetWindowDrawList(),s.BuildSceneMeshes(),s.viewport.camera,view.min,view.size,
-            {s.viewport.normals,s.viewport.faceNormals,.2,ImGui::GetColorU32(theme.colors.accent)});
     s.viewportSelectionPoints.resize(s.objects.size());
     s.viewport.selectionPoints=s.viewportSelectionPoints;
     s.viewport.selectionCanvas.selectionPath=s.viewportSelectionPath;
@@ -1711,7 +2039,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
             else {s.viewport.measurementStart=object.transform.translation;break;}
         }
     }
-    cg::ViewportObjects(view, s.objects, s.viewport, s.objectSelection, s.revision, s.events, theme);
+
     if (!s.viewport.drag.active) s.viewport.pivotPosition=s.SelectionPivot(s.viewport.pivot);
     s.gizmoSelection.resize(s.objects.size());
     if (!s.viewport.drag.active) s.gizmoCompanions.resize(s.objects.size()-1);
@@ -1727,9 +2055,28 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
         }
     if (!hasActiveObject && s.viewport.drag.active)
         cg::TransformGizmo(view, {}, s.viewport, s.revision, s.events, theme);
+    // Apply terminal proposals before drawing overlays so the release frame uses the committed pose.
+    if (!s.viewport.drag.active && s.events.count) s.ApplyEvents();
+    if (!s.useGL) {
+        preview::DrawListPreview(*ImGui::GetWindowDrawList(),s.BuildSceneMeshes(),s.viewport.camera,
+                                 view.min,view.size,s.scratch);
+    }
+    if (s.viewport.selectionOutline) for (const auto &mesh:s.BuildSceneMeshes())
+        if (s.objectSelection.Contains(mesh.id)) {
+            if (s.outlineScratch.size()<mesh.indices.size()) s.outlineScratch.resize(mesh.indices.size());
+            preview::DrawMeshOutline(*ImGui::GetWindowDrawList(),mesh,s.viewport.camera,view.min,view.size,
+                s.outlineScratch,ImGui::GetColorU32(theme.colors.accent));
+        }
+    if (s.viewport.normals || s.viewport.faceNormals)
+        preview::DrawMeshNormals(*ImGui::GetWindowDrawList(),s.BuildSceneMeshes(),s.viewport.camera,view.min,view.size,
+            {s.viewport.normals,s.viewport.faceNormals,.2,ImGui::GetColorU32(theme.colors.accent)});
+    cg::ViewportObjects(view,s.objects,s.viewport,s.objectSelection,s.revision,s.events,theme);
     cg::EndViewport();
     ImGui::EndChild();
-    ImGui::SameLine();
+    if(inspectorVisible) {
+    float leftWidth=width-side-10;
+    PaneDivider("scene-divider",leftWidth,top,width-140);
+    s.cgSide=(width-leftWidth-10)/(ImGui::GetFontSize()/14);
     ImGui::BeginChild("Scene properties", {0, top}, ImGuiChildFlags_Borders);
     ImGui::BeginChild("Outliner", {0, top * .42f});
     s.outliner.icons=s.icons;s.outliner.labels={};
@@ -1760,23 +2107,35 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
                                [&](const auto &o) { return o.id == inspectorOwner; });
     if (object != s.objects.end() && ImGui::BeginTabBar("Inspector pages")) {
         if (ImGui::BeginTabItem("Transform")) {
+            ImGui::SetNextItemWidth(-1);
+            if(ImGui::BeginCombo("##curve-channel",s.japanese ? "アニメーション編集チャンネル" : "Animation channel")) {
+                const char *names[]={"Position X","Position Y","Position Z","Rotation X","Rotation Y","Rotation Z","Scale X","Scale Y","Scale Z"};
+                for(int i=0;i<9;++i) if(ImGui::Selectable(names[i],s.propertyCurveChannel==ObjectPropertyId(s,object->id,i))) {
+                    s.propertyCurveChannel=ObjectPropertyId(s,object->id,i);s.curve.activeChannel=s.propertyCurveChannel;
+                    s.curve.fitRequested=true;s.keySelection.Clear();s.animationPage=0;
+                }
+                if(ImGui::Selectable(s.japanese?"全体":"All channels",s.propertyCurveChannel==0)) s.propertyCurveChannel=0;
+                ImGui::EndCombo();
+            }
+            const auto displayTransform=cg::PreviewTransform(*object,s.viewport);
             editor::PropertyView rows[] = {
-                {ObjectPropertyId(s, object->id, 0), "Position X", "Transform", object->transform.translation.x, 0},
-                {ObjectPropertyId(s, object->id, 1), "Position Y", "Transform", object->transform.translation.y, 0},
-                {ObjectPropertyId(s, object->id, 2), "Position Z", "Transform", object->transform.translation.z, 0},
-                {ObjectPropertyId(s, object->id, 3), "Rotation X (rad)", "Rotation", object->transform.rotation.x, 0},
-                {ObjectPropertyId(s, object->id, 4), "Rotation Y (rad)", "Rotation", object->transform.rotation.y, 0},
-                {ObjectPropertyId(s, object->id, 5), "Rotation Z (rad)", "Rotation", object->transform.rotation.z, 0},
-                {ObjectPropertyId(s, object->id, 6), "Scale X", "Scale", object->transform.scale.x, 1},
-                {ObjectPropertyId(s, object->id, 7), "Scale Y", "Scale", object->transform.scale.y, 1},
-                {ObjectPropertyId(s, object->id, 8), "Scale Z", "Scale", object->transform.scale.z, 1}};
+                {ObjectPropertyId(s, object->id, 0), "Position X", "Transform", displayTransform.translation.x, 0},
+                {ObjectPropertyId(s, object->id, 1), "Position Y", "Transform", displayTransform.translation.y, 0},
+                {ObjectPropertyId(s, object->id, 2), "Position Z", "Transform", displayTransform.translation.z, 0},
+                {ObjectPropertyId(s, object->id, 3), "Rotation X (rad)", "Rotation", displayTransform.rotation.x, 0},
+                {ObjectPropertyId(s, object->id, 4), "Rotation Y (rad)", "Rotation", displayTransform.rotation.y, 0},
+                {ObjectPropertyId(s, object->id, 5), "Rotation Z (rad)", "Rotation", displayTransform.rotation.z, 0},
+                {ObjectPropertyId(s, object->id, 6), "Scale X", "Scale", displayTransform.scale.x, 1},
+                {ObjectPropertyId(s, object->id, 7), "Scale Y", "Scale", displayTransform.scale.y, 1},
+                {ObjectPropertyId(s, object->id, 8), "Scale Z", "Scale", displayTransform.scale.z, 1}};
             for (auto &row:rows)
                 row.flags=static_cast<editor::PropertyFlags>(s.propertyFlags[row.id]|
                     (row.value!=row.defaultValue?2u:0u)|(object->locked?16u:0u));
             for (int component=0;component<9;++component) {
                 unsigned flags=static_cast<unsigned>(rows[component].flags);
                 for (auto &target:s.objects) if (s.objectSelection.Contains(target.id)) {
-                    if (TransformComponent(target.transform,component)!=rows[component].value) flags|=1u;
+                    auto targetPreview=cg::PreviewTransform(target,s.viewport);
+                    if (TransformComponent(targetPreview,component)!=rows[component].value) flags|=1u;
                     if (target.locked || (s.propertyFlags[ObjectPropertyId(s,target.id,component)]&16u)) flags|=16u;
                 }
                 rows[component].flags=static_cast<editor::PropertyFlags>(flags);
@@ -1832,11 +2191,15 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
         ImGui::EndTabBar();
     }
     ImGui::EndChild();
+    }
+    Divider("cg-divider",s.cgTopRatio,workspaceHeight);
+    if(width>1000*ImGui::GetFontSize()/14) {
     ImGui::BeginChild("Assets", {side, 0}, ImGuiChildFlags_Borders);
     const char *assetPath[]={"All assets","Media"};
     editor::AssetBrowser("assets", Assets(s), s.assetState, s.selection, s.events, std::span(assetPath).first(s.assetPathDepth));
     ImGui::EndChild();
     ImGui::SameLine();
+    }
     ImGui::BeginChild("Animation UV", {0, 0}, ImGuiChildFlags_Borders);
     if (s.icons) {
         Icon(*s.icons,IconId::AnimationTimeline,{16*ImGui::GetFontSize()/14});
@@ -1846,6 +2209,24 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     TransportLanguage(s.timeline.time,s.japanese);
     editor::Transport(s.timeline.time, std::span(s.bindings).first(s.bindingCount), s.icons);
     if (ImGui::BeginTabBar("Animation editors")) {
+        if(ImGui::BeginTabItem("Timeline")) {
+            s.curve.time=s.timeline.time.playhead;
+            editor::TimeRuler("animation-time",s.timeline.time,s.curve.canvas,std::span(s.markers).first(s.markerCount),s.revision,s.events,theme);
+            const auto a=ImGui::GetCursorScreenPos();const auto size=ImGui::GetContentRegionAvail();
+            ImGui::InvisibleButton("animation-keys",{std::max(1.f,size.x),std::max(1.f,size.y)});
+            auto *draw=ImGui::GetWindowDrawList();
+            const auto keys=s.propertyCurveChannel ? std::span<const editor::Keyframe>(s.propertyKeys[s.propertyCurveChannel]) : std::span<const editor::Keyframe>(s.keys);
+            for(const auto &key:keys) {
+                const float x=a.x+float((editor::Seconds(key.tick)-s.curve.canvas.origin.x)*s.curve.canvas.scale.x);
+                if(x<a.x || x>a.x+size.x) continue;
+                const float y=a.y+std::min(12.f,size.y*.5f);
+                draw->AddQuadFilled({x,y-5},{x+5,y},{x,y+5},{x-5,y},ImGui::GetColorU32(s.keySelection.Contains(key.id)?theme.colors.accent:theme.colors.muted));
+                if(ImGui::IsItemHovered() && ImGui::IsMouseClicked(0) && std::abs(ImGui::GetIO().MousePos.x-x)<7) {
+                    s.keySelection.Set(key.id,ImGui::GetIO().KeyCtrl);s.timeline.time.playhead=key.tick;
+                }
+            }
+            ImGui::EndTabItem();
+        }
         if (ImGui::BeginTabItem("Graph Editor",nullptr,s.animationPage==0?ImGuiTabItemFlags_SetSelected:0)) {
             if (s.icons) {Icon(*s.icons,IconId::CurveEditor,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
             ImGui::TextUnformatted(s.japanese ? "カーブエディター" : "Curve Editor");
@@ -1862,6 +2243,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
             if (s.icons) {Icon(*s.icons,IconId::AnimationStrip,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
             ImGui::TextUnformatted(s.japanese ? "アニメーションストリップ" : "Animation strips");
             cg::StripOptions options{s.icons};
+            options.selection=&s.stripSelection;options.time=&s.timeline.time;options.snap=s.timeline.snapping;
             if (s.japanese) {
                 auto &labels=options.labels;
                 labels.scale="時間倍率";labels.repeat="繰り返し";labels.blend="混合率";labels.mute="ミュート";labels.lock="ロック";

@@ -6,6 +6,7 @@
 #include <array>
 #include <map>
 #include <string>
+#include <memory>
 namespace imkit::gallery {
 struct EditorWorkspaces {
     const IconAtlas *icons = nullptr; // Host-owned renderer resources.
@@ -79,16 +80,19 @@ struct EditorWorkspaces {
     std::map<editor::StableId, unsigned> propertyFlags;
     std::map<editor::StableId, std::vector<editor::Keyframe>> propertyKeys;
     editor::EventBuffer events{eventStorage};
-    std::array<editor::Binding, 32> bindings{};
+    std::array<editor::Binding, 48> bindings{};
     std::size_t bindingCount = 0;
     video::TimelineState timeline;
     std::array<video::TimelineState::MemberDrag, 32> clipDrags{};
     std::array<video::ClipView, 64> selectedClips{};
     std::span<const video::ClipView> QuerySelectedClips(std::span<const editor::StableId> ids);
     editor::CurveState curve;
+    editor::StableId propertyCurveChannel=0;
     std::array<cg::StripView,3> animationStrips{};
     editor::CanvasState stripCanvas;
     editor::Transaction stripDrag;
+    std::array<editor::StableId,64> stripSelectionStorage{};
+    editor::Selection stripSelection{stripSelectionStorage};
     std::vector<editor::Transaction> curveCompanions;
     std::array<editor::Transaction,64> clipKeyCompanions{};
     editor::PropertyState videoProperties, objectProperties,arrayProperties;
@@ -147,10 +151,60 @@ struct EditorWorkspaces {
     std::uint64_t revision = 1;
     std::size_t queryCount = 0, queriedClips = 0, queriedKeys = 0, queriedTracks = 0, commits = 0;
     bool initialized = false, large = false, japanese = false, narrow = false, useGL = true;
+    bool previewHelpers = true;
     int animationPage = -1;
     int clipsPerTrack = 12;
     editor::StableId nextId = 2000000;
     ImVec2 timelineOrigin{}, viewportOrigin{}, viewportSize{};
+    struct Snapshot {
+        decltype(EditorWorkspaces::tracks) tracks;
+        decltype(EditorWorkspaces::audioStrips) audioStrips;
+        decltype(EditorWorkspaces::mixerTrack) mixerTrack;
+        decltype(EditorWorkspaces::clips) clips;
+        decltype(EditorWorkspaces::clipEnvelopes) clipEnvelopes;
+        decltype(EditorWorkspaces::keys) keys;
+        decltype(EditorWorkspaces::objects) objects;
+        decltype(EditorWorkspaces::geometries) geometries;
+        decltype(EditorWorkspaces::components) components;
+        decltype(EditorWorkspaces::objectOrder) objectOrder;
+        decltype(EditorWorkspaces::objectPropertyIds) objectPropertyIds;
+        decltype(EditorWorkspaces::uv) uv;
+        decltype(EditorWorkspaces::assets) assets;
+        decltype(EditorWorkspaces::clipProperties) clipProperties;
+        decltype(EditorWorkspaces::clipPropertyOwners) clipPropertyOwners;
+        decltype(EditorWorkspaces::markers) markers;
+        decltype(EditorWorkspaces::markerCount) markerCount;
+        decltype(EditorWorkspaces::renamedLabels) renamedLabels;
+        decltype(EditorWorkspaces::propertyFlags) propertyFlags;
+        decltype(EditorWorkspaces::propertyKeys) propertyKeys;
+        decltype(EditorWorkspaces::animationStrips) animationStrips;
+        decltype(EditorWorkspaces::customProperties) customProperties;
+        decltype(EditorWorkspaces::colors) colors;
+        decltype(EditorWorkspaces::colorCurveKeys) colorCurveKeys;
+        decltype(EditorWorkspaces::colorCurveChannels) colorCurveChannels;
+        editor::StableId cameraObject;
+        decltype(EditorWorkspaces::nextId) nextId;
+        std::vector<editor::StableId> clipsSelected, objectsSelected, keysSelected, stripsSelected;
+        editor::StableId activeClip=0, activeObject=0, activeKey=0, activeStrip=0;
+    };
+    std::vector<std::unique_ptr<Snapshot>> history;
+    std::size_t historyCursor=0;
+    std::unique_ptr<Snapshot> CaptureModel() const;
+    void SwapModel(Snapshot &snapshot);
+    bool Undo(bool redo=false);
+    void Remember(std::unique_ptr<Snapshot> snapshot);
+    float videoTopRatio=.52f, cgTopRatio=.65f, videoSide=240, cgSide=300;
+    bool showDetails=false, showMedia=false, showInspector=false;
+    int monitorMode=0;
+    editor::TimeState sourceTime;
+    editor::StableId placementTrack=1;
+    bool PlaceSource(video::PlacementMode mode);
+    std::string editMessage;
+    std::array<editor::StableId,64> assetSelectionStorage{};
+    editor::Selection assetSelection{assetSelectionStorage};
+    std::array<std::array<std::vector<video::AudioBucket>,2>,4> sourceAudio;
+    std::array<video::AudioBucket,4096> waveScratch{};
+    video::WaveformView QueryWaveform(const video::WaveformQuery &query);
     void Initialize();
     void Dataset(bool largeData);
     editor::StableId cameraObject=0;
