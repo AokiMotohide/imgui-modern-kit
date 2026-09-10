@@ -1138,8 +1138,14 @@ int main(int argc, char **argv) {
             return 2;
     }
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-    if (FAILED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED)))
+    const auto comResult=CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+    if (FAILED(comResult)) {
+        std::fprintf(stderr,"Catalog: COM initialization failed (0x%08lx)\n",static_cast<unsigned long>(comResult));
         return 1;
+    }
+    glfwSetErrorCallback([](int code,const char *description) {
+        std::fprintf(stderr,"Catalog: GLFW error %d: %s\n",code,description ? description : "unknown");
+    });
     if (!glfwInit()) {
         CoUninitialize();
         return 1;
