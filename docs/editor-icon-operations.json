@@ -854,57 +854,63 @@
     },
     {
       "operation": "Transition",
-      "widget": "Monitor / AssetBrowser / Timeline",
+      "widget": "Timeline transition badge, handle tooltip and TransitionPicker",
       "disposition": "new",
       "icon": "Transition",
       "tooltip": "Transition",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "labelled native combo selection and disabled state; bitmap badge; geometric handle outline",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/video.cpp"
     },
     {
       "operation": "Dissolve",
-      "widget": "Monitor / AssetBrowser / Timeline",
+      "widget": "Timeline transition badge, handle tooltip and TransitionPicker",
       "disposition": "new",
       "icon": "Dissolve",
       "tooltip": "Dissolve",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "labelled native combo selection and disabled state; bitmap badge; geometric handle outline",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/video.cpp"
     },
     {
       "operation": "FadeIn",
-      "widget": "Monitor / AssetBrowser / Timeline",
+      "widget": "Timeline transition badge, handle tooltip and TransitionPicker",
       "disposition": "new",
       "icon": "FadeIn",
       "tooltip": "Fade In",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "labelled native combo selection and disabled state; bitmap badge; geometric handle outline",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/video.cpp"
     },
     {
       "operation": "FadeOut",
-      "widget": "Monitor / AssetBrowser / Timeline",
+      "widget": "Timeline transition badge, handle tooltip and TransitionPicker",
       "disposition": "new",
       "icon": "FadeOut",
       "tooltip": "Fade Out",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "labelled native combo selection and disabled state; bitmap badge; geometric handle outline",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/video.cpp"
     },
     {
       "operation": "Crossfade",
-      "widget": "Monitor / AssetBrowser / Timeline",
+      "widget": "Timeline transition badge, handle tooltip and TransitionPicker",
       "disposition": "new",
       "icon": "Crossfade",
       "tooltip": "Crossfade",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "labelled native combo selection and disabled state; bitmap badge; geometric handle outline",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/video.cpp"
     },
     {
       "operation": "TransitionDuration",
-      "widget": "Monitor / AssetBrowser / Timeline",
+      "widget": "Timeline transition badge, handle tooltip and TransitionPicker",
       "disposition": "new",
       "icon": "TransitionDuration",
       "tooltip": "Transition Duration",
-      "state": "button background, focus outline and disabled styling",
-      "status": "original and integration pending"
+      "state": "labelled native combo selection and disabled state; bitmap badge; geometric handle outline",
+      "status": "individual original generated and connected; native GPU inspection pending",
+      "evidence": "assets/icons/provenance.json; src/video.cpp"
     },
     {
       "operation": "Caption",

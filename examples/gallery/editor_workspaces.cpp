@@ -1266,6 +1266,10 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     s.timeline.trackLabels={};
     if (s.japanese) {
         s.timeline.labels.unlink="clipのリンクを解除";s.timeline.labels.ungroup="groupから外す";
+        s.timeline.labels.transitions.title="トランジション";
+        s.timeline.labels.transitions.in="開始側";s.timeline.labels.transitions.out="終了側";
+        s.timeline.labels.transitions.inDuration="開始側の長さ";s.timeline.labels.transitions.outDuration="終了側の長さ";
+        s.timeline.labels.transitions.kinds={"なし","ディゾルブ","フェード","クロスフェード"};
         s.timeline.labels.linkSelection="選択clipをリンク";s.timeline.labels.groupSelection="選択clipをgroup化";
         s.timeline.labels.tools={"選択","分割","リップル","ロール","スリップ","スライド","手のひら"};
         s.timeline.labels.tooltips={"clipを選択","カーソル位置で分割","trimして後続clipを移動","隣接clipの境界を移動",

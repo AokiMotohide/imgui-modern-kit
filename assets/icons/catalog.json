@@ -606,5 +606,29 @@
   {
     "name": "UDIMTiles",
     "category": "Editor"
+  },
+  {
+    "name": "Transition",
+    "category": "Editor"
+  },
+  {
+    "name": "Dissolve",
+    "category": "Editor"
+  },
+  {
+    "name": "FadeIn",
+    "category": "Editor"
+  },
+  {
+    "name": "FadeOut",
+    "category": "Editor"
+  },
+  {
+    "name": "Crossfade",
+    "category": "Editor"
+  },
+  {
+    "name": "TransitionDuration",
+    "category": "Editor"
   }
 ]

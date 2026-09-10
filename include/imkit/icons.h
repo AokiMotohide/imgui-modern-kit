@@ -161,6 +161,12 @@ enum class IconId : std::uint16_t {
     UVSeam,
     UVOverlap,
     UDIMTiles,
+    Transition,
+    Dissolve,
+    FadeIn,
+    FadeOut,
+    Crossfade,
+    TransitionDuration,
     Count
 };
 struct IconInfo {

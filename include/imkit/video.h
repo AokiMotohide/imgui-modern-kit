@@ -50,6 +50,14 @@ TransitionEdit EditTransition(const ClipView &clip, bool end, Tick durationDelta
 // Emits a complete Begin/Commit pair; clip/track ownership remains with the host.
 void TransitionPicker(const char *id, const ClipView &clip, std::uint64_t revision,
                       editor::EventBuffer &events, bool trackLocked=false);
+struct TransitionLabels {
+    const char *title="Transition",*in="Transition in",*out="Transition out";
+    const char *inDuration="Transition in duration",*outDuration="Transition out duration";
+    std::array<const char *,4> kinds{"None","Dissolve","Fade","Crossfade"};
+};
+struct TransitionPickerOptions {const IconAtlas *icons=nullptr;TransitionLabels labels;};
+void TransitionPicker(const char *id,const ClipView &clip,std::uint64_t revision,
+                      editor::EventBuffer &events,bool trackLocked,const TransitionPickerOptions &options);
 struct ClipConstraints {
     Tick mediaFirst = 0, mediaLast = editor::TicksPerSecond * 3600, minimumDuration = 1;
 };
@@ -129,6 +137,7 @@ struct TimelineLabels {
     const char *fit="Fit", *fitTooltip="Fit timeline";
     const char *unlink="Unlink clip",*ungroup="Remove from group";
     const char *linkSelection="Link selected clips",*groupSelection="Group selected clips";
+    TransitionLabels transitions;
 };
 struct TimelineState {
     struct MemberDrag {
