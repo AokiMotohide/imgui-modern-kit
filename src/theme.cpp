@@ -135,7 +135,7 @@ Theme MakePrecisionTheme(ColorScheme scheme) {
                 Hex(d ? 0x30343e : 0xffffff),
                 Hex(d ? 0xeff0f4 : 0x242833),
                 Hex(d ? 0xacb2bf : 0x505968),
-                Hex(d ? 0x8b95a5 : 0x727b89),
+                Hex(d ? 0x8b95a5 : 0x606a78),
                 Hex(d ? 0x85c5ff : 0x005ca8),
                 Hex(d ? 0x142031 : 0xffffff),
                 {},

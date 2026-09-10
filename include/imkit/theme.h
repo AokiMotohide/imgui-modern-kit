@@ -11,7 +11,7 @@ enum class Easing { Linear, EaseOut, EaseInOut };
 struct Typography {
     float caption=12, body=14, label=14, heading=18, title=26, monospace=13;
 };
-struct Spacing { std::array<float,8> steps{2,4,6,8,12,16,24,32}; };
+struct SpacingTokens { std::array<float,8> steps{2,4,6,8,12,16,24,32}; };
 struct Radius { float small=2, control=4, overlay=6; };
 struct Stroke { float border=1, focus=2; };
 struct Elevation { float surface=0, raised=2, overlay=5; };
@@ -54,7 +54,7 @@ struct Theme {
     Density density = Density::Comfortable;
     SemanticColors semantic{};
     Typography typography{};
-    Spacing spacing{};
+    SpacingTokens spacing{};
     Radius radius{};
     Stroke stroke{};
     Elevation elevation{};

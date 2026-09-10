@@ -7,3 +7,4 @@
 #include <imkit/icons.h>
 #include <imkit/accessibility.h>
 #include <imkit/locale.h>
+#include <imkit/patterns.h>
