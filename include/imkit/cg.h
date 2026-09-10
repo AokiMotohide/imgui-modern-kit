@@ -215,6 +215,7 @@ struct UVLabels {
     std::array<const char *,3> tools{"Move","Rotate","Scale"};
     const char *pivot="Pivot",*snap="Snap step";
     const char *seams="Seams",*overlap="Overlap",*tiles="UDIM tiles",*pinned="Pinned";
+    const char *clearSelection="Clear selection";
 };
 struct UVState {
     editor::CanvasState canvas{{-.1, -.1}, {300, 300}};

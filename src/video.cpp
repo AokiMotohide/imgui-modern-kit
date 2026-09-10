@@ -992,7 +992,10 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                         ImGui::TextUnformatted(s.labels.proxy);
                     }
                     if (clip.missing) ImGui::TextUnformatted(s.labels.missing);
-                    if (clip.offline) ImGui::TextUnformatted(s.labels.offline);
+                    if (clip.offline) {
+                        if(s.icons) {Icon(*s.icons,IconId::Disconnected,{ImGui::GetFontSize()});ImGui::SameLine();}
+                        ImGui::TextUnformatted(s.labels.offline);
+                    }
                     if (track.locked || clip.locked) ImGui::TextUnformatted(s.labels.locked);
                     ImGui::EndTooltip();
                 }
@@ -1603,6 +1606,7 @@ void AudioStrip(const AudioStripView &v, std::uint64_t revision, editor::Propert
     for (int i=0;i<3;++i) {
         bool value=flags[i];
         ImGui::PushID(i);
+        if(s.icons) {const IconId icons[]{IconId::Mute,IconId::Solo,IconId::Microphone};Icon(*s.icons,icons[i],{ImGui::GetFontSize()});ImGui::SameLine();}
         if (ImGui::Checkbox(labels[i],&value))
             out.Push({v.id,revision,editor::Phase::Commit,editor::EditKind::Toggle,
                       {0,0,0,0,static_cast<double>(controls[i]),flags[i] ? 1. : 0.},

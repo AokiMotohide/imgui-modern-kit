@@ -7,7 +7,7 @@ namespace imkit::gallery {
 namespace {
 void PropertyLanguage(editor::PropertyState &state,bool japanese) {
     state.labels={};if (!japanese) return;
-    state.labels.mixed="複数の値";state.labels.moveUp="上へ移動";state.labels.moveDown="下へ移動";
+    state.labels.copy="値をコピー";state.labels.paste="値を貼り付け";state.labels.mixed="複数の値";state.labels.moveUp="上へ移動";state.labels.moveDown="下へ移動";
     auto &l=state.labels;l.search="検索";l.property="項目";l.value="値";l.key="キー";
     l.modifiedSuffix=" (変更済み)";l.overrideSuffix=" (上書き)";l.lockedSuffix=" [ロック]";
     l.favorite="お気に入り";l.locked="ロック";l.overrideValue="上書き";l.reset="既定値へ戻す";
@@ -191,7 +191,9 @@ void Options(EditorWorkspaces &s) {
     ImGui::SameLine();
     ImGui::Text("%zu visible queries / %zu clips / %zu commits", s.queryCount, s.queriedClips, s.commits);
     if (ImGui::BeginPopupContextItem("transition history")) {
+        if(s.icons) {Icon(*s.icons,IconId::Undo,{ImGui::GetFontSize()});ImGui::SameLine();}
         if (ImGui::MenuItem("Undo transition",nullptr,false,s.transitionHistoryCursor>0)) s.UndoTransition();
+        if(s.icons) {Icon(*s.icons,IconId::Redo,{ImGui::GetFontSize()});ImGui::SameLine();}
         if (ImGui::MenuItem("Redo transition",nullptr,false,s.transitionHistoryCursor<s.transitionHistory.size())) s.UndoTransition(true);
         ImGui::EndPopup();
     }
@@ -1511,6 +1513,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
                 if (track!=s.tracks.end()) {
                     view.mute=track->mute; view.solo=track->solo; view.record=track->record; view.locked=track->locked;
                 }
+                s.mixerState.icons=s.icons;
                 video::AudioStrip(view,s.revision,s.mixerState,s.events);
                 bool anotherSolo=std::any_of(s.tracks.begin(),s.tracks.end(),
                                              [&](const auto &v){return v.solo && v.id!=view.id;});
@@ -1549,6 +1552,8 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
                 video::ScopeImage("RGB waveform", s.scopeRGB[channel],64,256,{scopeWidth,80},theme,tints[channel]);
                 ImGui::PopID();
             }
+            if(s.icons) {Icon(*s.icons,IconId::Palette,{ImGui::GetFontSize()});ImGui::SameLine();}
+            ImGui::TextUnformatted(s.japanese?"色補正":"Color grade");
             video::ColorLabels colorLabels;
             if(s.japanese) colorLabels={"リフト","ガンマ","ゲイン","色温度","色かぶり","露出","明るさ"};
             video::ColorControls("Grade",s.colors,s.colorIds,s.revision,s.colorState,s.events,colorLabels);
@@ -1665,6 +1670,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
           top = ImGui::GetContentRegionAvail().y * .6f;
     ImGui::BeginChild("View stack", {width - side - 10, top}, ImGuiChildFlags_Borders);
     s.viewport.icons=s.icons;
+    if(s.icons) {Icon(*s.icons,IconId::Monitor,{ImGui::GetFontSize()});ImGui::SameLine();}
     ImGui::Checkbox("OpenGL preview", &s.useGL);
     if (s.viewport.pivot==cg::Pivot::Cursor) {
         double cursor[]={s.cursorPivot.x,s.cursorPivot.y,s.cursorPivot.z};
@@ -1933,7 +1939,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
                 labels.box="矩形選択";labels.lasso="投げ縄選択";labels.coordinates="座標";
                 labels.coordinateModes={"正規化","ピクセル","UDIM"};labels.transform="変換";
                 labels.tools={"移動","回転","拡大縮小"};labels.pivot="ピボット";labels.snap="スナップ間隔";
-                labels.seams="シーム";labels.overlap="重なり";labels.tiles="UDIMタイル";labels.pinned="固定";
+                labels.seams="シーム";labels.overlap="重なり";labels.tiles="UDIMタイル";labels.pinned="固定";labels.clearSelection="選択を解除";
             }
             cg::UVEditor("uv", p, texture, s.uvState, s.uvSelection, s.events, theme, {0, 0});
             ImGui::EndTabItem();

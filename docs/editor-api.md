@@ -1,7 +1,7 @@
 # Editor API reference / Editor API reference
 
 These are custom APIs, separate from the generated native Dear ImGui overload inventory.
-They are development APIs; full 1.0 acceptance is pending. Include only the modules used
+These are the Editor Suite 1.0 APIs. Include only the modules used
 by the host. All module targets publish C++20 and retain the host's ImGui target.
 以下はDear ImGui標準overloadとは別の開発中APIです。必要なmoduleだけをinclude/linkします。
 すべてC++20とホストのImGui targetを継承します。
@@ -548,3 +548,5 @@ CaptionInsertを返し、Galleryは指定再生位置以降の最初の空きに
 `ComponentView::icon` and `ComponentTypeView::icon` let the host distinguish component
 and modifier rows/types with borrowed atlas glyphs. / 両iconフィールドによりcomponentとmodifierの
 行・追加候補をホスト指定glyphで区別できます。
+
+Property value context menus provide Copy/Paste through the host ImGui clipboard callbacks. Paste accepts one finite number and emits a typed Property event; invalid text leaves the model unchanged. / 値の右クリックメニューはホストのImGui clipboard callbackを使用し、有限な数値だけをPropertyイベントで貼り付けます。
