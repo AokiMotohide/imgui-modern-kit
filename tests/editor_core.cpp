@@ -211,7 +211,7 @@ int main() {
     check(toggles==1 && property.flags==PropertyFlags::None,"locked property can be unlocked from label menu");
     struct AssetFixture {
         AssetView item{48031,"Filtered asset","Media"};
-        bool prepared=false,valid=true;
+        bool prepared=false,valid=true,visible=true;
         int queries=0;
     } assetFixture;
     AssetState assetState;
@@ -230,7 +230,7 @@ int main() {
         },
         [](void *user,std::string_view) {
             static_cast<AssetFixture*>(user)->prepared=true;
-            return 1;
+            return static_cast<AssetFixture*>(user)->visible ? 1 : 0;
         }};
     int navigation=0;
     auto assetFrame=[&] {
@@ -251,6 +251,26 @@ int main() {
     io.AddMouseButtonEvent(0,false);assetFrame();
     check(navigation==1,"breadcrumb navigation public IO");
     check(assetFixture.valid && assetFixture.queries>0,"filtered count precedes bounded visible asset query");
+    assetState.renaming=assetFixture.item.id;assetFrame();
+    check(assetState.renameTransaction.active && propertyEvents.count==1 && propertyEvents.Events()[0].phase==Phase::Begin &&
+          std::string_view(propertyEvents.Events()[0].originalText.data())==assetFixture.item.label,
+          "asset rename begins with original UTF-8 label");
+    assetFrame();io.AddInputCharactersUTF8("Renamed asset");assetFrame();
+    check(propertyEvents.count==1 && propertyEvents.Events()[0].phase==Phase::Update &&
+          std::string_view(propertyEvents.Events()[0].proposedText.data())=="Renamed asset","asset rename emits text update");
+    propertyEvents.storage={};io.AddKeyEvent(ImGuiKey_Enter,true);assetFrame();
+    check(propertyEvents.overflow && assetState.renameTransaction.active && assetState.renameTransaction.draft.phase==Phase::Commit,
+          "asset rename retains Commit when event capacity is exhausted");
+    propertyEvents.storage=propertyStorage;io.AddKeyEvent(ImGuiKey_Enter,false);assetFrame();
+    check(propertyEvents.count==1 && propertyEvents.Events()[0].phase==Phase::Commit && !assetState.renameTransaction.active &&
+          assetState.renaming==0,"asset rename retries terminal event once");
+    assetState.renaming=assetFixture.item.id;assetFrame();++assetProvider.revision;assetFrame();
+    check(propertyEvents.count==1 && propertyEvents.Events()[0].phase==Phase::Cancel && !assetState.renameTransaction.active,
+          "asset rename cancels on host revision change");
+    assetState.renaming=assetFixture.item.id;assetFrame();assetFixture.visible=false;assetFrame();
+    check(propertyEvents.count==1 && propertyEvents.Events()[0].phase==Phase::Cancel && assetState.renaming==0,
+          "asset rename cancels when filtered target disappears");
+    assetFixture.visible=true;
     std::array<Keyframe,3> curveSource{Keyframe{6101,7,FromSeconds(1),.5},
         Keyframe{6103,7,FromSeconds(2),.7},Keyframe{6107,7,FromSeconds(3),.4}};
     std::array<Keyframe,3> curveScratch{};

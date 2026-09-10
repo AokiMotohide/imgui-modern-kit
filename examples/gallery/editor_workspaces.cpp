@@ -69,6 +69,13 @@ editor::StableId ObjectPropertyId(const EditorWorkspaces &state, editor::StableI
     return 0;
 }
 editor::AssetProvider Assets(EditorWorkspaces &s) {
+    s.assetState.icons=s.icons;s.assetState.labels={};
+    if (s.japanese) {
+        auto &labels=s.assetState.labels;
+        labels.search="検索";labels.grid="グリッド";labels.list="一覧";labels.tag="タグ";
+        labels.statuses={"すべての状態","準備完了","読み込み中","プロキシ","見つかりません","エラー"};
+        labels.rename="名前変更";labels.duplicate="複製";labels.remove="削除";
+    }
     s.assetState.breadcrumbIds=std::span(s.assetPathIds).first(s.assetPathDepth);
     return {&s,s.revision,static_cast<int>(s.assets.size()),
         [](void *u,int first,int count,std::string_view) {

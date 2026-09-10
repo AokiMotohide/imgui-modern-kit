@@ -92,12 +92,13 @@
     },
     {
       "operation": "Rename",
-      "widget": "CanvasSelection",
+      "widget": "AssetBrowser",
       "disposition": "reuse",
       "icon": "Edit",
       "tooltip": "Rename",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
+      "status": "connected in AssetBrowser; native GPU inspection pending",
+      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "Razor",
@@ -820,12 +821,13 @@
     },
     {
       "operation": "MissingMedia",
-      "widget": "Monitor / AssetBrowser / Timeline",
+      "widget": "AssetBrowser",
       "disposition": "reuse",
       "icon": "Warning",
       "tooltip": "Missing Media",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
+      "status": "connected in AssetBrowser; native GPU inspection pending",
+      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "OfflineMedia",
@@ -1910,12 +1912,13 @@
     },
     {
       "operation": "Delete",
-      "widget": "Shared editor controls",
+      "widget": "AssetBrowser",
       "disposition": "reuse",
       "icon": "Delete",
       "tooltip": "Delete",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
+      "status": "connected in AssetBrowser; native GPU inspection pending",
+      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "Edit",
@@ -1964,12 +1967,13 @@
     },
     {
       "operation": "Duplicate",
-      "widget": "Shared editor controls",
+      "widget": "AssetBrowser",
       "disposition": "reuse",
       "icon": "Duplicate",
       "tooltip": "Duplicate",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
+      "status": "connected in AssetBrowser; native GPU inspection pending",
+      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "SelectAll",
@@ -1991,30 +1995,33 @@
     },
     {
       "operation": "Search",
-      "widget": "Shared editor controls",
+      "widget": "AssetBrowser",
       "disposition": "reuse",
       "icon": "Search",
       "tooltip": "Search",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
+      "status": "connected in AssetBrowser; native GPU inspection pending",
+      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "Filter",
-      "widget": "Shared editor controls",
+      "widget": "AssetBrowser",
       "disposition": "reuse",
       "icon": "Filter",
       "tooltip": "Filter",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
+      "status": "connected in AssetBrowser; native GPU inspection pending",
+      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "Tag",
-      "widget": "Shared editor controls",
+      "widget": "AssetBrowser",
       "disposition": "reuse",
       "icon": "Tag",
       "tooltip": "Tag",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
+      "status": "connected in AssetBrowser; native GPU inspection pending",
+      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "Star",
@@ -2147,48 +2154,53 @@
     },
     {
       "operation": "Grid",
-      "widget": "Shared editor controls",
+      "widget": "AssetBrowser",
       "disposition": "reuse",
       "icon": "Grid",
       "tooltip": "Grid",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
+      "status": "connected in AssetBrowser; native GPU inspection pending",
+      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "List",
-      "widget": "Shared editor controls",
+      "widget": "AssetBrowser",
       "disposition": "reuse",
       "icon": "List",
       "tooltip": "List",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
+      "status": "connected in AssetBrowser; native GPU inspection pending",
+      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "Loading",
-      "widget": "Shared editor controls",
+      "widget": "AssetBrowser",
       "disposition": "reuse",
       "icon": "Loading",
       "tooltip": "Loading",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
+      "status": "connected in AssetBrowser; native GPU inspection pending",
+      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "Warning",
-      "widget": "Shared editor controls",
+      "widget": "AssetBrowser",
       "disposition": "reuse",
       "icon": "Warning",
       "tooltip": "Warning",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
+      "status": "connected in AssetBrowser; native GPU inspection pending",
+      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "Error",
-      "widget": "Shared editor controls",
+      "widget": "AssetBrowser",
       "disposition": "reuse",
       "icon": "Error",
       "tooltip": "Error",
-      "state": "button background, focus outline and disabled styling",
-      "status": "integration review pending"
+      "state": "UTF-8 label and native focus; grid/list active background and underline; labelled status indicator",
+      "status": "connected in AssetBrowser; native GPU inspection pending",
+      "evidence": "src/editor_core.cpp; examples/gallery/editor_workspaces.cpp"
     },
     {
       "operation": "Volume",

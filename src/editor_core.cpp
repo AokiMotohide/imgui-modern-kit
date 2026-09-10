@@ -988,7 +988,14 @@ void PropertyGrid(const char *id, const PropertyProvider &p, PropertyState &s, E
 }
 void AssetBrowser(const char *id, const AssetProvider &p, AssetState &s, Selection &selection,
                   EventBuffer &out, std::span<const char *const> path) {
+    const bool wasRenaming=s.renameTransaction.active;
+    detail::ResumeTerminal(s.renameTransaction,p.revision,out);
+    if (wasRenaming && !s.renameTransaction.active) s.renaming=0;
+    bool renameSeen=false;
     ImGui::PushID(id);
+    auto glyph=[&](IconId icon) {
+        if (s.icons) {Icon(*s.icons,icon,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+    };
     for (std::size_t i=0;i<path.size();++i) {
         ImGui::PushID(static_cast<int>(i));
         if (ImGui::SmallButton(path[i]))
@@ -1001,15 +1008,29 @@ void AssetBrowser(const char *id, const AssetProvider &p, AssetState &s, Selecti
     }
     if (!path.empty())
         ImGui::NewLine();
-    ImGui::SetNextItemWidth(-1);
-    ImGui::InputTextWithHint("##search", "Search", s.search, sizeof(s.search));
-    ImGui::Checkbox("Grid", &s.grid);
+    glyph(IconId::Search);ImGui::SetNextItemWidth(-1);
+    ImGui::InputTextWithHint("##search",s.labels.search,s.search,sizeof(s.search));
+    if (s.icons) {
+        for (int mode=0;mode<2;++mode) {
+            if (mode) ImGui::SameLine();
+            const bool active=s.grid==(mode==0);
+            if (active) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+            if (IconLabelButton(mode ? "list" : "grid",*s.icons,mode ? IconId::List : IconId::Grid,
+                                mode ? s.labels.list : s.labels.grid,{16*ImGui::GetFontSize()/14})) s.grid=mode==0;
+            if (active) {
+                ImGui::PopStyleColor();
+                const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
+                ImGui::GetWindowDrawList()->AddLine({a.x+3,b.y-2},{b.x-3,b.y-2},ImGui::GetColorU32(ImGuiCol_Text),2);
+            }
+        }
+    } else ImGui::Checkbox(s.labels.grid,&s.grid);
     if (p.filteredCount) {
-        ImGui::SameLine(); ImGui::SetNextItemWidth(100);
-        ImGui::InputTextWithHint("##tag","Tag",s.tag,sizeof(s.tag));
-        ImGui::SameLine(); ImGui::SetNextItemWidth(100);
+        if (ImGui::GetContentRegionAvail().x<250) ImGui::NewLine();else ImGui::SameLine();
+        glyph(IconId::Tag);ImGui::SetNextItemWidth(100);
+        ImGui::InputTextWithHint("##tag",s.labels.tag,s.tag,sizeof(s.tag));
+        ImGui::SameLine();glyph(IconId::Filter);ImGui::SetNextItemWidth(100);
         int status=s.status+1;
-        if (ImGui::Combo("##status",&status,"All statuses\0Ready\0Loading\0Proxy\0Missing\0Error\0")) s.status=status-1;
+        if (ImGui::Combo("##status",&status,s.labels.statuses.data(),6)) s.status=status-1;
     }
     const int count=p.filteredCount ? (std::max)(0,p.filteredCount(p.user,s.search)) : p.count;
     int columns = s.grid ? (std::max)(1, static_cast<int>(ImGui::GetContentRegionAvail().x / 120)) : 1;
@@ -1035,30 +1056,52 @@ void AssetBrowser(const char *id, const AssetProvider &p, AssetState &s, Selecti
                     ImGui::GetWindowDrawList()->AddRect(pos, {pos.x + 104, pos.y + 70},
                                                         ImGui::GetColorU32(ImGuiCol_Border));
                 }
-                if (s.renaming == a.id) {
-                    ImGui::SetNextItemWidth(s.grid ? 104.f : -1.f);
-                    if (ImGui::InputText("##rename", s.rename, sizeof(s.rename),
-                                         ImGuiInputTextFlags_EnterReturnsTrue)) {
-                        Event event{a.id, p.revision, Phase::Commit, EditKind::Rename};
-                        std::snprintf(event.originalText.data(), event.originalText.size(), "%s", a.label);
-                        std::snprintf(event.proposedText.data(), event.proposedText.size(), "%s", s.rename);
-                        if (out.Push(event))
-                            s.renaming = 0;
+                auto beginRename=[&] {
+                    if (s.renameTransaction.active) return;
+                    Event event{a.id,p.revision,Phase::Begin,EditKind::Rename};
+                    if (std::snprintf(event.originalText.data(),event.originalText.size(),"%s",a.label)>=static_cast<int>(event.originalText.size())) {
+                        out.overflow=true;return;
                     }
-                    if (ImGui::IsKeyPressed(ImGuiKey_Escape))
-                        s.renaming = 0;
+                    event.proposedText=event.originalText;
+                    if (!out.Push(event)) return;
+                    s.renameTransaction.draft=event;s.renameTransaction.active=true;
+                    std::snprintf(s.rename,sizeof(s.rename),"%s",a.label);s.renaming=a.id;s.renameFocus=true;
+                };
+                if (s.renaming == a.id) {
+                    renameSeen=true;
+                    if (!s.renameTransaction.active) beginRename();
+                    ImGui::SetNextItemWidth(s.grid ? 104.f : -1.f);
+                    auto &tx=s.renameTransaction;
+                    if (tx.active && tx.draft.phase!=Phase::Commit && tx.draft.phase!=Phase::Cancel) {
+                        if (s.renameFocus) {ImGui::SetKeyboardFocusHere();s.renameFocus=false;}
+                        const bool accept=ImGui::InputText("##rename",s.rename,sizeof(s.rename),
+                            ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_AutoSelectAll);
+                        if (std::string_view(tx.draft.proposedText.data())!=s.rename) {
+                            auto event=tx.draft;event.phase=Phase::Update;
+                            std::snprintf(event.proposedText.data(),event.proposedText.size(),"%s",s.rename);
+                            if (out.Push(event)) tx.draft=event;
+                        }
+                        if (ImGui::IsKeyPressed(ImGuiKey_Escape)) tx.Cancel(out);
+                        else if (accept) {
+                            std::snprintf(tx.draft.proposedText.data(),tx.draft.proposedText.size(),"%s",s.rename);
+                            tx.Commit(p.revision,out);
+                        }
+                        if (!tx.active) s.renaming=0;
+                    } else {
+                        ImGui::TextUnformatted(s.rename);
+                    }
                 } else if (ImGui::Selectable(a.label, selection.Contains(a.id), 0, {s.grid ? 104.f : 0, 0})) {
                     selection.Set(a.id, ImGui::GetIO().KeyCtrl, ImGui::GetIO().KeyCtrl);
                     Action(out, a.id, p.revision, EditKind::Select);
                 }
                 if (ImGui::BeginPopupContextItem("asset actions")) {
-                    if (ImGui::MenuItem("Rename")) {
-                        s.renaming = a.id;
-                        std::snprintf(s.rename, sizeof(s.rename), "%s", a.label);
-                    }
-                    if (ImGui::MenuItem("Duplicate"))
+                    glyph(IconId::Edit);
+                    if (ImGui::MenuItem(s.labels.rename)) {beginRename();renameSeen=true;}
+                    glyph(IconId::Duplicate);
+                    if (ImGui::MenuItem(s.labels.duplicate))
                         Action(out, a.id, p.revision, EditKind::Duplicate);
-                    if (ImGui::MenuItem("Remove"))
+                    glyph(IconId::Delete);
+                    if (ImGui::MenuItem(s.labels.remove))
                         Action(out, a.id, p.revision, EditKind::Remove);
                     ImGui::EndPopup();
                 }
@@ -1073,8 +1116,9 @@ void AssetBrowser(const char *id, const AssetProvider &p, AssetState &s, Selecti
                 }
                 if (a.status != AssetStatus::Ready) {
                     if (!s.grid) ImGui::SameLine();
-                    const char *labels[] = {"Ready", "Loading", "Proxy", "Missing", "Error"};
-                    ImGui::TextDisabled("%s", labels[static_cast<int>(a.status)]);
+                    constexpr IconId statusIcons[]{IconId::Success,IconId::Loading,IconId::Copy,IconId::Warning,IconId::Error};
+                    if (a.status!=AssetStatus::Proxy) glyph(statusIcons[static_cast<int>(a.status)]);
+                    ImGui::TextDisabled("%s",s.labels.statuses[static_cast<int>(a.status)+1]);
                 }
                 if (s.grid) {
                     ImGui::SetCursorScreenPos({assetTop.x,assetTop.y+144-ImGui::GetStyle().ItemSpacing.y});
@@ -1086,6 +1130,9 @@ void AssetBrowser(const char *id, const AssetProvider &p, AssetState &s, Selecti
         }
     }
     ImGui::EndChild();
+    if (s.renameTransaction.active && !renameSeen && s.renameTransaction.draft.phase!=Phase::Commit &&
+        s.renameTransaction.draft.phase!=Phase::Cancel) s.renameTransaction.Cancel(out);
+    if (!s.renameTransaction.active && (wasRenaming || renameSeen)) s.renaming=0;
     ImGui::PopID();
 }
 bool Splitter(const char *id, float &pane, float total, bool vertical, float minimum) {
