@@ -1170,5 +1170,7 @@ decltype(&reference::overload_392) volatile api_392 =
 decltype(&reference::overload_393) volatile api_393 =
     static_cast<decltype(&reference::overload_393)>(&imkit::SetClipboardText);
 int main() {
-    return 0;
+    const auto presets = imkit::ThemePresets();
+    const auto theme = imkit::MakeTheme(imkit::ThemePreset::Ocean);
+    return presets.size() == 12 && theme.scheme == imkit::ColorScheme::Dark ? 0 : 1;
 }

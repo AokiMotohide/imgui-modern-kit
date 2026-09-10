@@ -16,6 +16,7 @@ compile/link、公開IO操作、GPU外観、配布を区別します。署名確
 | Public API | 365 included overloads; independent function-pointer signature references compile and link against the pinned header; excluded functions are enumerated |
 | Debug / Release | Library and production catalog compile/link on Windows x64, MSVC 19.51.36256 / v145 |
 | Ownership | Two independent contexts; non-cumulative scale; nested ThemeScope style/font restoration; surrounding disabled alpha retained |
+| Theme presets | 12 stable unique IDs; complete finite palettes; Light/Dark metadata; legacy Precision values; normal/muted/semantic contrast thresholds |
 | Motion | Intermediate value, endpoint, disabled immediate result, pruning and generation reset |
 | External target | Separate consumer creates its own ImGui target; no core/backend sources in imkit; no GLFW/OpenGL target leakage |
 | Actions | Pointer/model edits, disabled action, switch, mixed-to-checked, radio, same-label IDs, programmatic focus, Space, Tab/Shift-Tab |
@@ -24,13 +25,17 @@ compile/link、公開IO操作、GPU外観、配布を区別します。署名確
 | Hierarchy | Tree expansion, table row selection, independent inline action, descending sort, scrolling with frozen headers, tab switch/reorder/close |
 | Overlay | Popup open/Escape, menu selection, modal blocking, nested combo, modal Escape/cancellation and launcher focus restoration |
 | Composites | Segmented selection, disabled search result, filtered result selection |
-| Visual | Six categories in light/dark, Japanese glyphs, representative 1.5 scale, modal; real 1920×1440 OpenGL backbuffer |
+| Visual | Product Home, searchable navigation, 12 presets, component categories and advanced examples; Japanese glyphs, representative 1.5 scale, modal; real OpenGL backbuffers |
 | Installed SDK | Debug and Release consumer compile/link/run from a relocated prefix; normalized archives contain no Windows absolute paths |
 | Distribution | Source/SDK manifests identify the source commit and ABI; release attachments and SHA256SUMS are the authoritative published artifacts |
 
 The public-IO integration log is `out/catalog/interaction.txt`; renderer details are in `out/catalog/capture-info.txt`. These are generated outputs. Representative images are checked into `docs/images/` for documentation. Full captures are available as release evidence.
 
+The README animation is generated from 120 native 960×540 backbuffer frames. `tools/build_readme_gif.py` enforces the frame count, dimensions and 8 MiB limit; it does not validate native OS input.
+
 公開IOログは`out/catalog/interaction.txt`、renderer情報は`out/catalog/capture-info.txt`に生成します。文書用の代表画像は`docs/images/`、全カテゴリ画像はReleaseの検証用archiveに収録します。
+
+README animationは960×540のnative backbuffer 120枚から生成します。`tools/build_readme_gif.py`はframe数、寸法、8MiB上限を確認しますが、native OS入力の検証ではありません。
 
 ## Limits / 制約
 
