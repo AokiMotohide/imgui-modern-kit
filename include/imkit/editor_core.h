@@ -192,7 +192,8 @@ enum class Command {
     PlayReverse,
     PlayForward,
     Pause,
-    ToolSelect, ToolRazor, ToolRipple, ToolRoll, ToolSlip, ToolSlide, ToolHand
+    ToolSelect, ToolRazor, ToolRipple, ToolRoll, ToolSlip, ToolSlide, ToolHand,
+    GoToStart, GoToEnd, ClearInOut
 };
 enum class ShortcutPreset { CapCut, Premiere, Blender };
 struct Binding {
@@ -209,12 +210,20 @@ struct Marker {
 enum class AutoScroll { Off, Smooth, Page };
 // Origin/width/head are seconds. Invalid or non-positive width leaves origin unchanged.
 double FollowPlayhead(double origin, double width, double head, AutoScroll mode);
+struct TransportLabels {
+    const char *play="Play", *pause="Pause", *stop="Stop";
+    const char *previousFrame="Previous frame", *nextFrame="Next frame";
+    const char *in="In", *out="Out", *loop="Loop";
+    const char *goToStart="Go to start", *goToEnd="Go to end", *clearInOut="Clear In/Out";
+    const char *reverse="Play reverse", *forward="Play forward";
+};
 struct TimeState {
     Tick playhead = 0;
     Range work{0, TicksPerSecond * 10}, inOut{0, TicksPerSecond * 10};
     FrameRate rate{};
     bool playing = false, loop = false, dropFrame = false;
     double playbackRate = 1;
+    TransportLabels labels{};
 };
 void TimeRuler(const char *id, TimeState &state, CanvasState &canvas, std::span<const Marker> markers,
                std::uint64_t revision, EventBuffer &events, const Theme &theme, float height = 32);

@@ -446,3 +446,16 @@ committed and gizmo-preview poses to Camera View; a missing camera disables that
 `CameraFromTransform`はローカル+Z前方・+Y上方の姿勢からカメラを求め、lens設定を保持します。
 scale／shearは視点へ適用しません。rollは投影・View orientation・両previewで共通です。
 GalleryはStableIdでカメラを保持し、確定値とgizmo previewをCamera Viewへ同期します。
+
+### Transport actions and labels / Transport操作と表示文字列
+
+`TimeState::labels` borrows UTF-8 transport strings. The timecode context menu offers
+work-range start/end navigation, In/Out reset to the work range, and forward/reverse
+playback. `GoToStart`, `GoToEnd` and `ClearInOut` also accept host bindings; no new
+preset shortcuts override existing Fit bindings. Boundary navigation reuses previous/
+next-track glyphs with explicit labels; single-frame navigation keeps its distinct frame glyphs.
+
+`TimeState::labels`でTransportのUTF-8表示文字列を指定できます。時刻表示の右クリックから
+work rangeの先頭／末尾、In／Outのwork rangeへのリセット、順／逆再生を操作できます。
+追加Commandもホストbindingへ割り当てられます。既存Fitとの競合を避け、presetは変更しません。
+境界移動と1フレーム移動は別のglyphで区別します。
