@@ -1,19 +1,23 @@
 # imgui-modern-kit
 
-[日本語](README.ja.md) · [User guide](docs/guide.md) · [API coverage](docs/api-coverage.md) · [CHANGELOG](CHANGELOG.md)
+[日本語](README.ja.md) · [Getting started](docs/getting-started.md) · [Themes](docs/themes.md) · [Components](docs/components.md) · [Gallery](docs/gallery.md)
 
-**Precision Layers** is a modern, compact design system for Dear ImGui: neutral layered surfaces, 28 px controls, 6 px spacing, 4 px corners, restrained borders, clear selection marks, and distinct action variants. Light and dark palettes are editable values.
+**A modern, native design layer for Dear ImGui.** ImKit gives C++ tools a coherent visual system, reusable controls, semantic themes, generated icons and advanced editor surfaces without taking ownership away from the host application.
 
-ImKit is a **C++20 static extension library**, not a runtime plugin or a replacement renderer. It exposes the current public GUI API through exact native overload sets and a small set of decorated wrappers. The theme styles native rendering; composite controls add switches, mixed selection, segments, searchable selection, unit inputs, settings rows, badges, notifications and toolbars. See the [overload-level inventory](docs/api-coverage.md) for implementation boundaries.
+![ImKit Gallery: themes, components and editor examples](docs/images/gallery-overview.gif)
 
-![Precision Layers dark](docs/images/precision-dark.png)
+## Why ImKit
 
-## Quick start
+- **Designed, not merely recolored.** Layered surfaces, clear hierarchy, compact metrics and semantic states work across standard controls and composed components.
+- **Native behavior stays native.** Dear ImGui still owns IDs, focus, navigation, callbacks, clipping and text editing. ImKit does not replace the renderer or frame lifecycle.
+- **Small controls scale into serious tools.** Start with buttons, settings rows and validation; compose them with icon, timeline, graph and 3D workspace APIs when needed.
 
-Supported baseline: **Dear ImGui v1.92.9b-docking**, commit `b48d1afbe8ee8b238e2961dc363a949dd7304e23`. Other revisions are rejected rather than silently treated as ABI compatible. Source integration is the recommended route.
+## 30-second start
+
+Supported baseline: **Dear ImGui v1.92.9b-docking**, commit `b48d1afbe8ee8b238e2961dc363a949dd7304e23`. Source integration is recommended.
 
 ```cmake
-# host_imgui already contains your matching Dear ImGui core sources.
+# host_imgui already contains the matching Dear ImGui core sources.
 set(IMKIT_IMGUI_TARGET host_imgui)
 add_subdirectory(external/imgui-modern-kit)
 target_link_libraries(your_app PRIVATE imkit::imkit)
@@ -22,54 +26,75 @@ target_link_libraries(your_app PRIVATE imkit::imkit)
 ```cpp
 #include <imkit/imkit.h>
 
-// Keep this value in the host; save/copy it as your application requires.
-auto theme = imkit::MakePrecisionTheme(imkit::ColorScheme::Dark);
-imkit::SetAccent(theme, ImVec4(0.53f, 0.79f, 0.73f, 1.0f));
+auto theme = imkit::MakeTheme(imkit::ThemePreset::Ocean);
+imkit::ApplyTheme(theme); // after context creation, before NewFrame
 
-// After the host creates its context; before NewFrame:
-imkit::ApplyTheme(theme);
-// Inside the host's frame:
-if (imkit::Begin("Settings")) {
+// Inside the host frame:
+if (imkit::Begin("Display")) {
     static bool enabled = true;
-    imkit::Checkbox("Enabled", &enabled);
+    imkit::Toggle("Enabled", &enabled, {&theme});
     imkit::ActionButton("Apply", imkit::ActionVariant::Primary, {}, {&theme});
 }
-imkit::End(); // Required even when Begin() returns false.
+imkit::End(); // required even when Begin returns false
 ```
 
-The host owns context, frame lifecycle, font atlas, renderer, IDs and edited values. ImKit does not create contexts, load fonts, search operating-system paths, persist settings or start threads. Library-only integration creates no GLFW/OpenGL/capture targets and downloads nothing.
+The host owns contexts, backends, fonts, renderer, frame lifecycle, IDs, edited data and persistence. ImKit creates none of them and starts no worker threads.
 
-## Catalog and build
+## Twelve complete themes
 
-On Windows with Visual Studio 2026 C++ and a CMake version supporting its generator:
+Use `PrecisionLight`, `PrecisionDark`, `Graphite`, `Midnight`, `Ocean`, `Forest`, `WarmSand`, `Rose`, `Violet`, `Solar`, `HighContrastLight` or `HighContrastDark`. Each preset initializes standard and editor semantic colors. `SetAccent` and direct `Theme` edits remain available for application-specific branding.
+
+```cpp
+for (const auto &preset : imkit::ThemePresets()) {
+    // preset.id is stable for host-side persistence.
+    ShowThemeChoice(preset.displayName, preset.id);
+}
+```
+
+See [themes and customization](docs/themes.md) for contrast guarantees, font ownership and preset persistence.
+
+## Components for native tools
+
+ImKit includes action variants, switches, mixed selection, segmented controls, searchable selection, units, setting rows, validation, badges, notifications, toolbars and a tintable icon catalog. Standard Dear ImGui overloads remain available under the same applied theme.
+
+The Editor Suite demonstrates how the same contracts can support timelines, curves and 3D workspaces. It is an evolving advanced example; use its dedicated [module contracts](docs/editor-suite.md), [API reference](docs/editor-api.md) and [validation record](docs/editor-validation.md) instead of treating this README as its specification.
+
+## Build the Gallery
 
 ```powershell
 cmake --preset windows-debug
-cmake --build build/windows-debug --config Debug --target imkit_gallery imkit_api_compile imkit_context_smoke
+cmake --build --preset windows-debug --target imkit_gallery --parallel
 ./build/windows-debug/catalog/Debug/imkit_gallery.exe
 ```
 
-The catalog uses shipped APIs in six categories and includes Japanese text, palette editing and scale. `--capture --output out/catalog` captures actual OpenGL frames; `--verify` runs representative public IO interactions. The optional `IMKIT_BUILD_DESIGN_GALLERY` target preserves earlier design comparisons; it is not the production catalog.
+The product-style Gallery starts with guided navigation, searchable use cases, live controls, copyable snippets, all theme presets and advanced editor examples. See [Gallery usage and capture](docs/gallery.md).
 
-## Installation and distribution
+## Integration choices
 
-The release provides a source archive and a Windows x64 SDK containing separate Debug/Release static libraries, CMake config, manifest and SHA256SUMS. The SDK requires the exact documented compiler/CRT/ImGui configuration. See [installed consumption](docs/guide.md#installed-sdk). Do not combine arbitrary ImGui binaries with it.
+- **Source:** preferred; provide the matching host ImGui target before `add_subdirectory`.
+- **Installed SDK:** Windows x64/MSVC v145 with matching compiler, CRT, ImGui ABI and `imconfig.h` settings.
+- **Library-only:** no GLFW, OpenGL, font or capture dependency is added to consumers.
 
-Documentation: [guide](docs/guide.md), [architecture](docs/architecture.md), [API coverage](docs/api-coverage.md), [validation and limitations](docs/validation.md), [changelog](CHANGELOG.md).
+Follow [Getting started](docs/getting-started.md) for both source and installed-package flows. Use [Troubleshooting](docs/troubleshooting.md) when configuration or ABI checks fail.
+
+## Documentation
+
+| Need | English | 日本語 |
+|---|---|---|
+| Install and first frame | [Getting started](docs/getting-started.md) | [導入ガイド](docs/getting-started.ja.md) |
+| Presets, accent, fonts, scale | [Themes](docs/themes.md) | [テーマ](docs/themes.ja.md) |
+| Components and recipes | [Components](docs/components.md) | [コンポーネント](docs/components.ja.md) |
+| Gallery and real captures | [Gallery](docs/gallery.md) | [Gallery](docs/gallery.ja.md) |
+| Common failures | [Troubleshooting](docs/troubleshooting.md) | [トラブルシューティング](docs/troubleshooting.ja.md) |
+| Architecture and boundaries | [Architecture](docs/architecture.md) | [Architecture](docs/architecture.md) |
+| Exact overload coverage | [API coverage](docs/api-coverage.md) | [API coverage](docs/api-coverage.md) |
+
+## Compatibility and status
+
+The verified baseline is Windows x64/MSVC with the pinned Dear ImGui docking revision. Other platforms and ImGui revisions are not silently claimed compatible. Native OS/IME behavior and integration into a particular application remain separate acceptance work. See [validation and limits](docs/validation.md).
+
+The stable core, themes and components are documented here. Advanced editor modules continue to evolve behind explicit host-owned data and typed-event contracts.
 
 ## License
 
-ImKit code is MIT. Dear ImGui and GLFW have their own licenses; optional Inter and Noto Sans JP catalog fonts use SIL OFL 1.1. Complete records and pinned hashes are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). No affiliation with Dear ImGui or the design references is implied.
-## Modern icons
-
-206 generated outline icons support theme tint, custom color, size, icon buttons and
-label buttons. GPU textures remain host-owned. See [icon integration](docs/icons.md)
-and the **Icons** page in the native Gallery.
-
-## Editor Suite 1.0
-
-`editor_core`, `video`, `cg`, `preview_opengl3` and `editor_suite` provide reusable
-editing controls with host-owned data and typed events. The native Gallery connects
-Video/CG workspaces, RGB color curves, animation and UV tools, plus 206 icons.
-See [module contracts](docs/editor-suite.md), [API reference](docs/editor-api.md),
-[validation and performance](docs/editor-validation.md) and [acceptance matrix](docs/editor-implementation-checklist.md).
+ImKit code is MIT. Dear ImGui and GLFW retain their own licenses; optional Inter and Noto Sans JP Gallery fonts use SIL OFL 1.1. Complete font and icon provenance, pinned hashes and notices are recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). No affiliation with Dear ImGui or the design references is implied.

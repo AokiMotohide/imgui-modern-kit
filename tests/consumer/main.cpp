@@ -10,7 +10,10 @@ int main() {
     unsigned char *pixels = nullptr;
     int width = 0, height = 0;
     io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-    imkit::ApplyTheme(imkit::MakePrecisionTheme());
+    const auto presets = imkit::ThemePresets();
+    if (presets.size() != 12)
+        return 1;
+    imkit::ApplyTheme(imkit::MakeTheme(imkit::ThemePreset::WarmSand));
 
     ImGui::NewFrame();
     ImGui::Begin("Consumer");

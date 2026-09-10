@@ -2,9 +2,31 @@
 #include <imkit/version.h>
 #include <array>
 #include <cstdint>
+#include <span>
+#include <string_view>
 
 namespace imkit {
 enum class ColorScheme { Light, Dark };
+enum class ThemePreset : std::uint8_t {
+    PrecisionLight,
+    PrecisionDark,
+    Graphite,
+    Midnight,
+    Ocean,
+    Forest,
+    WarmSand,
+    Rose,
+    Violet,
+    Solar,
+    HighContrastLight,
+    HighContrastDark
+};
+struct ThemePresetInfo {
+    ThemePreset preset;
+    std::string_view id;          // Stable persistence key.
+    std::string_view displayName; // English UI label.
+    ColorScheme scheme;
+};
 struct Palette {
     ImVec4 canvas, surface, input, raised, text, muted, border;
     ImVec4 accent, onAccent, selection, focus, destructive, onDestructive;
@@ -37,6 +59,8 @@ struct Theme {
     FontSet fonts{};
     EditorPalette editor{};
 };
+std::span<const ThemePresetInfo> ThemePresets() noexcept;
+Theme MakeTheme(ThemePreset preset);
 Theme MakePrecisionTheme(ColorScheme scheme = ColorScheme::Light);
 // Explicitly updates accent, onAccent, focus and selection only.
 void SetAccent(Theme &theme, ImVec4 accent);

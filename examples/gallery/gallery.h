@@ -15,12 +15,14 @@ struct Probe {
 };
 struct GalleryState {
     EditorWorkspaces editors;
-    Theme theme = MakePrecisionTheme();
+    Theme theme = MakeTheme(ThemePreset::PrecisionLight);
     FontSet fonts{};
     AnimationState animation;
-    int page = 0;
+    int page = -1;
+    int presetIndex = 0, presetFilter = 0, copyClicks = 0;
     float scale = 1;
     bool dark = false, palette = false;
+    char gallerySearch[96]{};
     bool focusApply = false, applyFocused = false;
     bool checked = true, toggle = false, selected = false;
     int radio = 0, combo = 1, segment = 0, clicks = 0;

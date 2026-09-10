@@ -99,6 +99,37 @@ struct Host {
         Settle();
     }
 };
+void CaptureReadme(Host &h,const std::filesystem::path &out) {
+    const auto frames=out/"readme-frames";
+    std::filesystem::create_directories(frames);
+    h.mouse={-100,-100};h.s.scale=1;h.s.editors.japanese=false;
+    auto preset=[&](int index) {
+        const auto info=imkit::ThemePresets()[index];
+        h.s.presetIndex=index;h.s.theme=imkit::MakeTheme(info.preset);
+        h.s.dark=info.scheme==imkit::ColorScheme::Dark;
+    };
+    for(int frame=0;frame<120;++frame) {
+        if(frame==0) {preset(0);h.s.page=-1;}
+        if(frame==20) preset(2);
+        if(frame==40) preset(4);
+        if(frame==60) {h.s.page=10;std::snprintf(h.s.gallerySearch,sizeof(h.s.gallerySearch),"theme");}
+        if(frame==80) {h.s.gallerySearch[0]=0;h.s.page=0;}
+        if(frame==90) h.s.checked=!h.s.checked;
+        if(frame==100) h.s.page=8;
+        char name[32];std::snprintf(name,sizeof(name),"frame-%03d.png",frame);
+        h.Frame({},frames/name);
+    }
+    h.s.gallerySearch[0]=0;h.s.page=0;
+    const auto presets=imkit::ThemePresets();
+    for(int index=0;index<static_cast<int>(presets.size());++index) {
+        preset(index);h.Settle(2);
+        h.Frame({},out/("preset-"+std::string(presets[index].id)+".png"));
+    }
+    std::ofstream manifest(out/"readme-capture.txt");
+    manifest<<"120 native OpenGL backbuffer frames, 960x540, intended playback 10 fps.\n";
+    manifest<<"Home: Precision Light, Graphite, Ocean; theme search; live components; Video Editor.\n";
+    manifest<<"Twelve additional component captures validate every named preset.\n";
+}
 void Verify(Host &h, const std::filesystem::path &out) {
     std::ofstream log(out / "interaction.txt");
     auto check = [&](bool ok, const char *name) {
@@ -107,6 +138,24 @@ void Verify(Host &h, const std::filesystem::path &out) {
         if (!ok)
             throw std::runtime_error(name);
     };
+    h.Page(-1);
+    check(h.s.probes.contains("home-components") && h.s.probes.contains("home-themes"), "Home entry points");
+    h.Click("home-themes");
+    check(h.s.page == 10, "Home opens theme presets");
+    h.Click("preset-ocean");
+    check(h.s.presetIndex == 4 && h.s.theme.scheme == imkit::ColorScheme::Dark, "Named preset switch");
+    h.Click("copy-code");
+    check(h.s.copyClicks == 1, "Code copy action");
+    h.Page(-1);
+    h.Replace("gallery-search", "theme");
+    h.Click("nav-themes");
+    check(h.s.page == 10, "Search finds theme page");
+    h.s.gallerySearch[0] = 0;
+    glfwSetWindowSize(h.window, 800, 600);
+    h.Settle();
+    check(h.s.probes.contains("compact-navigation"), "Compact navigation below desktop width");
+    glfwSetWindowSize(h.window, 1920, 1440);
+    h.Settle();
     h.Page(0);
     h.Click("apply");
     check(h.s.clicks == 1, "Action activation");
@@ -1156,8 +1205,10 @@ int VerifyInspectorModel() {
     return failures?1:0;
 }
 int main(int argc, char **argv) {
-    bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false, benchmarkEditors = false, verifyMonitors = false, verifyTrackControls = false, verifyLinkedClips = false, verifyNormals = false;
-    int capturePage = -1, animationPage = -1, monitorIndex=-1;
+    bool capture = false, captureReadme = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false, benchmarkEditors = false, verifyMonitors = false, verifyTrackControls = false, verifyLinkedClips = false, verifyNormals = false;
+    int capturePage = -1, animationPage = -1, monitorIndex=-1, captureWidth=1920,captureHeight=1440;
+    bool captureJapanese=false;
+    bool verifyTimelineUI=false;
     bool listMonitors=false;
     std::string iconSearch;
     std::filesystem::path out = "out/catalog";
@@ -1167,6 +1218,7 @@ int main(int argc, char **argv) {
             return VerifyInspectorModel();
         if (a == "--capture")
             capture = true;
+        else if (a == "--capture-readme") captureReadme=true;
         else if (a == "--verify")
             verify = true;
         else if (a == "--capture-editors") { capture = true; capturePage = -2; }
@@ -1223,12 +1275,13 @@ int main(int argc, char **argv) {
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_VISIBLE, capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls || verifyLinkedClips || verifyNormals ? GLFW_FALSE : GLFW_TRUE);
+    if(captureReadme) {captureWidth=960;captureHeight=540;}
+    glfwWindowHint(GLFW_VISIBLE, capture || captureReadme || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls || verifyLinkedClips || verifyNormals ? GLFW_FALSE : GLFW_TRUE);
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
     auto hostStorage=std::make_unique<Host>();
     auto &h=*hostStorage;
-    h.automated = capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls || verifyLinkedClips || verifyNormals;
-    h.window = glfwCreateWindow(1920, 1440, "ImKit Precision Layers", nullptr, nullptr);
+    h.automated = capture || captureReadme || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls || verifyLinkedClips || verifyNormals;
+    h.window = glfwCreateWindow(captureWidth, captureHeight, "ImKit Precision Layers", nullptr, nullptr);
     if (!h.window) {
         glfwTerminate();
         CoUninitialize();
@@ -1374,6 +1427,8 @@ int main(int argc, char **argv) {
                 VerifyColor(h, out);
             if (verifyIcons)
                 VerifyIcons(h, out);
+            if (captureReadme)
+                CaptureReadme(h,out);
             if (capture) {
                 if (capturePage == -2) h.s.editors.Dataset(false);
                 for (int dark = 0; dark < 2; ++dark) {

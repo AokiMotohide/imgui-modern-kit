@@ -6,6 +6,7 @@
 
 | Family / 部品群 | Method / 実装 | Catalog |
 |---|---|---|
+| Named themes / 名前付きTheme | 12 discoverable host-owned presets; stable IDs; no global selection or persistence | Theme presets |
 | Text, links, buttons, checkbox/radio, combo/list, progress | Shared semantic style; native behavior | Basic / Selection |
 | Drag, slider, scalar input; all types, vector lengths, ranges | Shared input/selection/focus tokens; native precision/parsing | Numeric / Units |
 | Text input, hint, multiline, callbacks | Native input and IME contract; optional validation decoration | Input / Media |
@@ -15,7 +16,7 @@
 | Window, child, layout, scrolling, docking | Theme style and host-owned layout | Overlay / Layout |
 | ID, focus, keyboard, item status, clipping, drag/drop | Transparent public helpers; contextual visual effects | Shared |
 | Switch, mixed checkbox, segments, searchable combo | Native input composition; explicit host-owned values | Composites / Basic |
-| Unit scalar/vector, setting row, badge, notification, toolbar | Small compositions with theme/font-derived dimensions | Composites / Numeric / Overlay |
+| Unit scalar/vector, setting row, badge, notification, toolbar | Small compositions with theme/font-derived dimensions | Composite controls / Numeric / Overlay |
 
 Legacy column helpers are available but tables are preferred. Context/frame lifecycle, renderer/platform functions, debug/demo windows, allocation, logging and ini persistence remain host responsibilities. Obsolete declarations and private implementation APIs are not wrapped. The base design still applies when native widgets are mixed into an ImKit-themed window.
 
