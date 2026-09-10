@@ -10,10 +10,11 @@ import itertools
 import json
 import re
 from PIL import Image
+from design_icons import DRAWINGS, render
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / 'assets/icons'
-SIZES = (16, 20, 24, 32, 48, 64)
+SIZES = (12, 16, 20, 24, 32, 48, 64)
 
 
 def load_catalog():
@@ -37,13 +38,13 @@ def layout(catalog):
 def build():
     catalog = load_catalog()
     columns, rows = layout(catalog)
-    missing = [x['name'] for x in catalog if not (ASSETS / 'originals' / (x['name'] + '.png')).exists()]
+    missing = [x['name'] for x in catalog if x['name'] not in DRAWINGS and not (ASSETS / 'originals' / (x['name'] + '.png')).exists()]
     if missing:
         raise RuntimeError('Missing generated originals: ' + ', '.join(missing))
     sources, provenance = [], []
     for item in catalog:
-        path = ASSETS / 'originals' / (item['name'] + '.png')
-        source = Image.open(path).convert('RGBA')
+        path = ROOT / 'tools/design_icons.py' if item['name'] in DRAWINGS else ASSETS / 'originals' / (item['name'] + '.png')
+        source = render(item['name']) if item['name'] in DRAWINGS else Image.open(path).convert('RGBA')
         alpha = source.getchannel('A')
         assert alpha.getextrema() == (0, 255), f'{path}: real transparency required'
         # Keep the generated alpha. Only normalize canvas, extent, and RGB for tinting.
@@ -70,6 +71,9 @@ def build():
                                   Image.Resampling.LANCZOS)
             alpha = Image.new('L', (size, size))
             alpha.paste(shape, ((size-shape.width)//2, (size-shape.height)//2))
+            if size == 12 and 0 < alpha.getextrema()[1] < 160:
+                peak = alpha.getextrema()[1]
+                alpha = alpha.point(lambda value: min(255, round(value * 160 / peak)))
             icon = Image.new('RGBA', (size, size), (255, 255, 255, 0))
             icon.putalpha(alpha)
             icon.save(folder / (item['name'] + '.png'))
@@ -97,7 +101,7 @@ def build():
                     columns=columns, rows=rows, sizes=SIZES, padding=2,
                     originals=len(sources), variants=len(sources)*len(SIZES), atlases=len(SIZES))
     (ASSETS / 'metadata.json').write_text(json.dumps(metadata, indent=2) + '\n', encoding='utf-8')
-    print(f'Built {len(catalog)} originals, {len(catalog)*len(SIZES)} PNG variants, six atlases; {len(encoded)} embedded RLE bytes')
+    print(f'Built {len(catalog)} sources, {len(catalog)*len(SIZES)} PNG variants, {len(SIZES)} atlases; {len(encoded)} embedded RLE bytes')
 
 
 def check():

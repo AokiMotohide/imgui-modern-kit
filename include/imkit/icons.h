@@ -247,6 +247,48 @@ enum class IconId : std::uint16_t {
     FitSelection,
     ClipOpacity,
     FadeCurve,
+    CommandPalette,
+    Keyboard,
+    Mouse,
+    Touch,
+    Accessibility,
+    ScreenReader,
+    HighContrast,
+    ReduceMotion,
+    TextSize,
+    RTL,
+    ChevronUp,
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    Dock,
+    Undock,
+    WindowMinimize,
+    WindowMaximize,
+    WindowRestore,
+    Columns,
+    Rows,
+    ExpandAll,
+    CollapseAll,
+    Ungroup,
+    SortNeutral,
+    FilterClear,
+    DragHandle,
+    Archive,
+    ArchiveRestore,
+    FolderAdd,
+    FolderMove,
+    Replace,
+    KeyCommand,
+    KeyEnter,
+    KeyEscape,
+    KeyTab,
+    PanelLeftOpen,
+    PanelLeftClose,
+    PanelRightOpen,
+    PanelRightClose,
+    PanelBottomOpen,
+    PanelBottomClose,
     Count
 };
 struct IconInfo {
@@ -254,7 +296,7 @@ struct IconInfo {
     const char *name;
     const char *category;
 };
-inline constexpr std::array<int, 6> IconPixelSizes{16, 20, 24, 32, 48, 64};
+inline constexpr std::array<int, 7> IconPixelSizes{12, 16, 20, 24, 32, 48, 64};
 std::span<const IconInfo> GetIconCatalog();
 const IconInfo *GetIconInfo(IconId id); // nullptr for invalid IDs.
 struct IconAtlasPixels {
@@ -269,9 +311,9 @@ struct IconRegion {
 IconRegion GetIconRegion(IconId id, int iconPixels);
 
 // Host-owned, one instance per renderer/resource lifetime. No global texture binding.
-// Upload all six atlases as RGBA8, linear filtering, clamp-to-edge, no mipmaps.
+// Upload all seven atlases as RGBA8, linear filtering, clamp-to-edge, no mipmaps.
 struct IconAtlas {
-    std::array<ImTextureRef, 6> textures{};
+    std::array<ImTextureRef, 7> textures{};
     bool SetTexture(int iconPixels, ImTextureRef texture);
     void Clear();
 };

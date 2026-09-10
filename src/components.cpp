@@ -76,6 +76,13 @@ bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, 
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
     const auto id = ImGui::GetID(label);
     bool pressed = ImGui::Button(label, size);
+    if(ImGui::IsItemFocused()) ImGui::SetNavCursorVisible(true);
+    if((ImGui::GetItemFlags()&ImGuiItemFlags_Disabled)!=0) {
+        const auto p=ImGui::GetItemRectMax();
+        ImGui::GetWindowDrawList()->AddLine({p.x-7,p.y-3},{p.x-3,p.y-7},ImGui::GetColorU32(ImGuiCol_Text),1.f);
+        if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+            ImGui::SetTooltip("%s",options.disabledReason?options.disabledReason:"Unavailable");
+    }
     pressed = SemanticItem(options,label,accessibility::SemanticRole::Button,accessibility::SemanticAction::Press) || pressed;
     if (options.animation) {
         const auto motion = t ? t->motion : Motion{};

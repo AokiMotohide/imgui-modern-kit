@@ -80,8 +80,8 @@ IconAtlasPixels GetIconAtlasPixels(int iconPixels) {
         return {};
     // Thread-safe initialization; independent of any ImGui context or GPU.
     static const auto decoded = [] {
-        std::array<std::vector<unsigned char>, 6> result;
-        for (int i = 0; i < 6; ++i) {
+        std::array<std::vector<unsigned char>, 7> result;
+        for (int i = 0; i < 7; ++i) {
             auto &rgba = result[i];
             const int cell = IconPixelSizes[i] + 4;
             rgba.reserve(cell * cell * kAtlasColumns * kAtlasRows * 4);

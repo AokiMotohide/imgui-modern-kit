@@ -153,6 +153,7 @@ if(IMKIT_BUILD_GALLERY)
     add_executable(imkit_gallery
         examples/gallery/main.cpp
         examples/gallery/gallery.cpp
+        examples/gallery/design_pages.cpp
         examples/gallery/editor_workspaces.cpp
         examples/gallery/allocation_probe.cpp
         examples/gallery/gallery.h
@@ -197,7 +198,7 @@ endif()
 
 if(IMKIT_BUILD_TESTS)
     include(CTest)
-    add_executable(imkit_design_system_test tests/design_system.cpp)
+    add_executable(imkit_design_system_test tests/design_system.cpp examples/gallery/allocation_probe.cpp)
     target_link_libraries(imkit_design_system_test PRIVATE imkit::imkit)
     add_test(NAME imkit.design_system COMMAND imkit_design_system_test)
     if(IMKIT_BUILD_ACCESSIBILITY_WIN32)

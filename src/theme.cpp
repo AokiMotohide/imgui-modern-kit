@@ -64,8 +64,8 @@ ImGuiStyle Style(const Theme &t, float scale) {
     c[ImGuiCol_Border] = p.border;
     c[ImGuiCol_BorderShadow] = {0, 0, 0, 0};
     c[ImGuiCol_FrameBg] = p.input;
-    c[ImGuiCol_FrameBgHovered] = Mix(p.input, p.accent, .10f);
-    c[ImGuiCol_FrameBgActive] = Mix(p.input, p.accent, .17f);
+    c[ImGuiCol_FrameBgHovered] = t.semantic.control.hover;
+    c[ImGuiCol_FrameBgActive] = t.semantic.control.pressed;
     c[ImGuiCol_TitleBg] = p.surface;
     c[ImGuiCol_TitleBgActive] = p.raised;
     c[ImGuiCol_TitleBgCollapsed] = p.surface;

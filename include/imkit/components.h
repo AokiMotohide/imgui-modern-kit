@@ -15,6 +15,7 @@ struct ComponentOptions {
     accessibility::AccessibilityFrame* accessibility = nullptr;
     accessibility::StableId parent = 0;
     const LocaleContext* locale = nullptr;
+    const char* disabledReason = nullptr;
 };
 bool ActionButton(const char *label, ActionVariant variant = ActionVariant::Primary,
                   const ImVec2 &size = ImVec2(0, 0), ComponentOptions options = {});

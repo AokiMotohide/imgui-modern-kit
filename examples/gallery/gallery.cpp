@@ -13,7 +13,7 @@ void Heading(GalleryState &s, const char *text) {
     PushFont(s.fonts.emphasis, s.theme.metrics.headingSize);
     TextUnformatted(text);
     PopFont();
-    Separator();
+    Spacing();
 }
 void Icons(GalleryState &s) {
     Heading(s, "Icons / Generated outline glyphs");
@@ -31,9 +31,9 @@ void Icons(GalleryState &s) {
     SetNextItemWidth(140);
     Combo("Category", &s.iconCategory, categories.data(), static_cast<int>(categories.size()));
     SameLine();
-    const char *sizes[] = {"16", "20", "24", "32", "48", "64"};
+    const char *sizes[] = {"12", "16", "20", "24", "32", "48", "64"};
     SetNextItemWidth(CalcTextSize("64").x+GetFrameHeight()+GetStyle().FramePadding.x*2);
-    Combo("Size", &s.iconSizeIndex, sizes, 6);
+    Combo("Size", &s.iconSizeIndex, sizes, 7);
     Checkbox("Custom icon color", &s.iconCustomColor);
     SameLine();
     SetNextItemWidth(230);
@@ -457,52 +457,26 @@ void Show(GalleryState &s) {
     SetNextWindowPos({0, 0});
     SetNextWindowSize(ImGui::GetIO().DisplaySize);
     Begin("Precision Layers catalog", nullptr,
-          ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar);
-    if(s.page>=8) {
-        const char *pages[]={"Basic","Numeric","Input","Hierarchy","Overlay","Composites","Icons","Editor Core","Video Editor","3D Editor"};
-        SetNextItemWidth(180*s.scale);Combo("##workspace",&s.page,pages,10);
-        SameLine();TextDisabled("Precision Layers %s",IMKIT_VERSION);
-        SameLine();if(Button(s.editors.japanese ? "表示設定" : "Appearance")) OpenPopup("editor-appearance");
-        if(BeginPopup("editor-appearance")) {
-            if(Checkbox("Dark",&s.dark)) s.theme=MakePrecisionTheme(s.dark ? ColorScheme::Dark : ColorScheme::Light);
-            Checkbox("日本語",&s.editors.japanese);SetNextItemWidth(160);SliderFloat("Scale",&s.scale,1,1.5f,"%.2f");
-            EndPopup();
-        }
-        Separator();
-    } else {
-    PushFont(s.fonts.emphasis, 30);
-    TextUnformatted("Precision Layers");
-    PopFont();
-    TextDisabled("A modern component system for Dear ImGui / public API catalog");
+          ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
+    const char* pages[]={"Components: Basic","Numeric / Units","Input / Media","Hierarchy / Table","Overlay / Layout","Composites","Icons","Editor Core","Video","CG","Foundations","Components","Patterns","Accessibility","Responsive"};
+    SetNextItemWidth(std::min(260.f,GetContentRegionAvail().x*.5f)); Combo("##section",&s.page,pages,15);
+    SameLine(); if(Button("Appearance")) OpenPopup("appearance");
+    if(BeginPopup("appearance")) {
+        if(Checkbox("Dark",&s.dark)) { auto fonts=s.theme.fonts; s.theme=MakeTheme(s.dark?ColorScheme::Dark:ColorScheme::Light,s.theme.contrast,s.theme.density); s.theme.fonts=fonts; }
+        const char* densities[]={"Compact","Comfortable","Touch"};
+        if(Combo("Density",&s.design.density,densities,3)) SetDensity(s.theme,static_cast<Density>(s.design.density));
+        const char* contrasts[]={"Standard","High contrast"};
+        if(Combo("Contrast",&s.design.contrast,contrasts,2)) { auto fonts=s.theme.fonts; s.theme=MakeTheme(s.theme.scheme,static_cast<ContrastMode>(s.design.contrast),s.theme.density); s.theme.fonts=fonts; }
+        Checkbox("Reduced motion",&s.theme.motion.reducedMotion); SliderFloat("Scale",&s.scale,1,2,"%.2f"); EndPopup();
+    }
     Spacing();
-    const char *pages[] = {"Basic / Selection", "Numeric / Units",  "Input / Media",
-                           "Hierarchy / Table", "Overlay / Layout", "Composites / 日本語", "Icons", "Editor Core", "Video Editor", "CG Editor"};
-    for (int i = 0; i < 10; ++i) {
-        if (i)
-            SameLine();
-        PushID(i);
-        if (Button(pages[i]))
-            s.page = i;
-        PopID();
-    }
-    Separator();
-    if (Checkbox("Dark", &s.dark))
-        s.theme = MakePrecisionTheme(s.dark ? ColorScheme::Dark : ColorScheme::Light);
-    SameLine();
-    Checkbox("Palette", &s.palette);
-    SameLine();
-    Checkbox("Animation", &s.theme.motion.enabled);
-    SameLine();
-    SetNextItemWidth(160);
-    SliderFloat("Scale", &s.scale, 1, 1.5f, "%.2f");
-    TextDisabled("Precision Layers %s / live public imkit API / Inter + Japanese fallback", IMKIT_VERSION);
-    Separator();
-    }
     BeginChild("Component panel", {s.page >= 6 ? GetContentRegionAvail().x
                                               : std::min(GetContentRegionAvail().x, 1120 * s.scale), 0},
                ImGuiChildFlags_Borders, s.page == 4 ? ImGuiWindowFlags_MenuBar : 0);
     PushItemWidth(420 * s.scale);
     switch (s.page) {
+    case 10: case 11: case 12: case 13: case 14:
+        s.design.Show(s.page,s.theme); break;
     case 0:
         Basic(s);
         break;

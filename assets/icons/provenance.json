@@ -3568,5 +3568,635 @@
       968,
       902
     ]
+  },
+  {
+    "name": "CommandPalette",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      22,
+      38,
+      171,
+      155
+    ]
+  },
+  {
+    "name": "Keyboard",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      22,
+      46,
+      171,
+      147
+    ]
+  },
+  {
+    "name": "Mouse",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      48,
+      16,
+      145,
+      171
+    ]
+  },
+  {
+    "name": "Touch",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      40,
+      22,
+      161,
+      177
+    ]
+  },
+  {
+    "name": "Accessibility",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      24,
+      22,
+      169,
+      177
+    ]
+  },
+  {
+    "name": "ScreenReader",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      22,
+      30,
+      177,
+      169
+    ]
+  },
+  {
+    "name": "HighContrast",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      22,
+      16,
+      171,
+      177
+    ]
+  },
+  {
+    "name": "ReduceMotion",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      16,
+      48,
+      161,
+      145
+    ]
+  },
+  {
+    "name": "TextSize",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      16,
+      32,
+      177,
+      169
+    ]
+  },
+  {
+    "name": "RTL",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      24,
+      32,
+      169,
+      169
+    ]
+  },
+  {
+    "name": "ChevronUp",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      32,
+      56,
+      161,
+      129
+    ]
+  },
+  {
+    "name": "ChevronDown",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      32,
+      64,
+      161,
+      137
+    ]
+  },
+  {
+    "name": "ChevronLeft",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      56,
+      32,
+      129,
+      161
+    ]
+  },
+  {
+    "name": "ChevronRight",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      64,
+      32,
+      137,
+      161
+    ]
+  },
+  {
+    "name": "Dock",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      16,
+      22,
+      177,
+      171
+    ]
+  },
+  {
+    "name": "Undock",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      22,
+      16,
+      177,
+      171
+    ]
+  },
+  {
+    "name": "WindowMinimize",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      24,
+      136,
+      169,
+      153
+    ]
+  },
+  {
+    "name": "WindowMaximize",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      30,
+      30,
+      163,
+      163
+    ]
+  },
+  {
+    "name": "WindowRestore",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      22,
+      16,
+      177,
+      171
+    ]
+  },
+  {
+    "name": "Columns",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      22,
+      24,
+      171,
+      169
+    ]
+  },
+  {
+    "name": "Rows",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      16,
+      30,
+      177,
+      163
+    ]
+  },
+  {
+    "name": "ExpandAll",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      32,
+      16,
+      161,
+      177
+    ]
+  },
+  {
+    "name": "CollapseAll",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      32,
+      16,
+      161,
+      177
+    ]
+  },
+  {
+    "name": "Ungroup",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      16,
+      8,
+      177,
+      177
+    ]
+  },
+  {
+    "name": "SortNeutral",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      16,
+      16,
+      177,
+      177
+    ]
+  },
+  {
+    "name": "FilterClear",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      16,
+      24,
+      177,
+      169
+    ]
+  },
+  {
+    "name": "DragHandle",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      54,
+      30,
+      139,
+      163
+    ]
+  },
+  {
+    "name": "Archive",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      22,
+      22,
+      171,
+      171
+    ]
+  },
+  {
+    "name": "ArchiveRestore",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      22,
+      22,
+      171,
+      177
+    ]
+  },
+  {
+    "name": "FolderAdd",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      16,
+      32,
+      177,
+      169
+    ]
+  },
+  {
+    "name": "FolderMove",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      16,
+      32,
+      177,
+      169
+    ]
+  },
+  {
+    "name": "Replace",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      16,
+      16,
+      177,
+      177
+    ]
+  },
+  {
+    "name": "KeyCommand",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      22,
+      22,
+      171,
+      171
+    ]
+  },
+  {
+    "name": "KeyEnter",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      24,
+      32,
+      169,
+      169
+    ]
+  },
+  {
+    "name": "KeyEscape",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      22,
+      38,
+      171,
+      155
+    ]
+  },
+  {
+    "name": "KeyTab",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      16,
+      16,
+      177,
+      177
+    ]
+  },
+  {
+    "name": "PanelLeftOpen",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      22,
+      16,
+      171,
+      177
+    ]
+  },
+  {
+    "name": "PanelLeftClose",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      22,
+      16,
+      171,
+      177
+    ]
+  },
+  {
+    "name": "PanelRightOpen",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      22,
+      16,
+      171,
+      177
+    ]
+  },
+  {
+    "name": "PanelRightClose",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      22,
+      16,
+      171,
+      177
+    ]
+  },
+  {
+    "name": "PanelBottomOpen",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      16,
+      22,
+      177,
+      171
+    ]
+  },
+  {
+    "name": "PanelBottomClose",
+    "source": "tools/design_icons.py",
+    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      16,
+      22,
+      177,
+      171
+    ]
   }
 ]

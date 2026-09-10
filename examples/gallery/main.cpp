@@ -1342,6 +1342,7 @@ int VerifyInspectorModel() {
     return failures?1:0;
 }
 int main(int argc, char **argv) {
+    bool captureDesign=false;
     bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false, benchmarkEditors = false, verifyMonitors = false, verifyTrackControls = false, verifyLinkedClips = false, verifyNormals = false;
     int capturePage = -1, animationPage = -1, monitorIndex=-1, captureWidth=1920,captureHeight=1440;
     bool captureJapanese=false;
@@ -1351,6 +1352,7 @@ int main(int argc, char **argv) {
     std::filesystem::path out = "out/catalog";
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
+        if(a=="--capture-design-system") {captureDesign=true; capture=true; continue;}
         if (a == "--verify-timeline-model") return VerifyTimelineModel();
         if (a == "--verify-inspector-model")
             return VerifyInspectorModel();
@@ -1441,7 +1443,7 @@ int main(int argc, char **argv) {
          renderer = backend && ImGui_ImplOpenGL3_Init("#version 130");
     int result = 0;
     GLuint texture = 0;
-    std::array<GLuint, 6> iconTextures{};
+    std::array<GLuint, 7> iconTextures{};
     try {
         if (!renderer)
             throw std::runtime_error("Backend initialization failed");
@@ -1474,8 +1476,8 @@ int main(int argc, char **argv) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2, 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
         h.s.texture = ImTextureRef(static_cast<ImTextureID>(texture));
-        glGenTextures(6, iconTextures.data());
-        for (int i = 0; i < 6; ++i) {
+        glGenTextures(7, iconTextures.data());
+        for (int i = 0; i < 7; ++i) {
             const auto atlas = imkit::GetIconAtlasPixels(imkit::IconPixelSizes[i]);
             glBindTexture(GL_TEXTURE_2D, iconTextures[i]);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -1568,7 +1570,19 @@ int main(int argc, char **argv) {
                 VerifyColor(h, out);
             if (verifyIcons)
                 VerifyIcons(h, out);
-            if (capture) {
+            if(captureDesign) {
+                for(int dark=0;dark<2;++dark) for(int contrast=0;contrast<2;++contrast) for(int density=0;density<3;++density) {
+                    h.s.dark=dark!=0;
+                    h.s.theme=imkit::MakeTheme(static_cast<imkit::ColorScheme>(dark),static_cast<imkit::ContrastMode>(contrast),static_cast<imkit::Density>(density));
+                    h.s.design.density=density; h.s.design.contrast=contrast;
+                    for(int page:{10,12,13,14}) {
+                        h.Page(page);
+                        h.Frame({},out/("design-"+std::to_string(page)+"-"+std::to_string(dark)+"-"+std::to_string(contrast)+"-"+std::to_string(density)+".png"));
+                    }
+                }
+                h.s.design.language=1; h.s.scale=1.5f; h.Page(12); h.Frame({},out/"japanese-150.png");
+                h.s.design.language=2; h.s.scale=2; h.Page(14); h.Frame({},out/"rtl-200.png");
+            } else if (capture) {
                 h.s.editors.japanese=captureJapanese;
                 if (capturePage == -2) h.s.editors.Dataset(false);
                 for (int dark = 0; dark < 2; ++dark) {
@@ -1635,7 +1649,7 @@ int main(int argc, char **argv) {
     if (texture)
         glDeleteTextures(1, &texture);
     h.s.icons.Clear();
-    glDeleteTextures(6, iconTextures.data());
+    glDeleteTextures(7, iconTextures.data());
     if (renderer)
         ImGui_ImplOpenGL3_Shutdown();
     if (backend)

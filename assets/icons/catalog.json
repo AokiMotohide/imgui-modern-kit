@@ -950,5 +950,173 @@
   {
     "name": "FadeCurve",
     "category": "Editor"
+  },
+  {
+    "name": "CommandPalette",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "Keyboard",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "Mouse",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "Touch",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "Accessibility",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "ScreenReader",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "HighContrast",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "ReduceMotion",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "TextSize",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "RTL",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "ChevronUp",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "ChevronDown",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "ChevronLeft",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "ChevronRight",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "Dock",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "Undock",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "WindowMinimize",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "WindowMaximize",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "WindowRestore",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "Columns",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "Rows",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "ExpandAll",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "CollapseAll",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "Ungroup",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "SortNeutral",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "FilterClear",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "DragHandle",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "Archive",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "ArchiveRestore",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "FolderAdd",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "FolderMove",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "Replace",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "KeyCommand",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "KeyEnter",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "KeyEscape",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "KeyTab",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "PanelLeftOpen",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "PanelLeftClose",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "PanelRightOpen",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "PanelRightClose",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "PanelBottomOpen",
+    "category": "DesignSystem"
+  },
+  {
+    "name": "PanelBottomClose",
+    "category": "DesignSystem"
   }
 ]

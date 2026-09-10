@@ -12,7 +12,7 @@ struct Typography {
     float caption=12, body=14, label=14, heading=18, title=26, monospace=13;
 };
 struct SpacingTokens { std::array<float,8> steps{2,4,6,8,12,16,24,32}; };
-struct Radius { float small=2, control=4, overlay=6; };
+struct Radius { float subtle=2, control=4, overlay=6; };
 struct Stroke { float border=1, focus=2; };
 struct Elevation { float surface=0, raised=2, overlay=5; };
 struct Opacity { float disabled=1, scrim=.5f; };

@@ -110,7 +110,11 @@ freely, subject to the following restrictions:
 
 ## Generated icon assets
 
-The 206 icons under `assets/icons` were individually generated with the built-in
+The original 238 icons under `assets/icons` were individually generated with the built-in
 OpenAI image generation tool for this project. They are not copied from the design
 reference projects mentioned above. Their prompts and source hashes accompany the
 assets. These project assets are distributed under the repository MIT license.
+
+The 42 additional design-system icons are original deterministic code drawings in
+`tools/design_icons.py`, distributed under the repository MIT license. No third-party
+icon shapes were imported. Seven raster levels (12–64px) are generated from the recorded sources.
