@@ -727,3 +727,7 @@ GalleryのBounds pivotは選択mesh頂点へ全アフィン基底を適用して
 CenteredTransitionLimit returns the maximum even total duration for a centered cut transition, using both clips' trimmed source handles and playback speeds. Invalid media, nonadjacent clips, different tracks and locked clips return zero. TimelineProvider::transitionLimit optionally constrains duration previews; Gallery also validates duration commits. Standalone sample clips use Fade. This constraint calculation does not decode or blend media.
 
 CenteredTransitionLimitはcutを中心とするtransitionの最大総時間を偶数Tickで返します。両clipの素材の余白と再生速度を使用し、素材範囲不正、非隣接、別track、lockでは0を返します。TimelineProvider::transitionLimitで長さのpreviewを制限でき、Galleryは長さのCommitも検証します。単独sample clipはFadeを使います。この制約計算は素材のdecodeや合成を行いません。
+
+With transitionLimit supplied, Dissolve/Crossfade handles represent half of the total centered duration. The Timeline draws the overlap across the cut after visible clip bodies. Public ImGui IO verifies handle hit testing, media-limit clamping and Commit. Gallery clamps durations when changing transition type and preserves Undo/Redo.
+
+transitionLimitを指定したDissolve／Crossfadeでは、handleの距離がcutを中心とする総時間の半分になります。Timelineは可視clip本体の後にcutをまたぐ重なり範囲を描画します。公開ImGui IOでhandleのhit test、素材制約によるclamp、Commitが合格しました。Galleryは種類変更時にも長さを制限し、Undo／Redoを保持します。

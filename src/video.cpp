@@ -856,7 +856,9 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 else if (s.transitionDrag.draft.phase!=editor::Phase::Cancel &&
                          s.transitionDrag.draft.phase!=editor::Phase::Commit) {
                     auto proposed=s.transitionDrag.draft.original;
-                    const Tick delta=editor::FromSeconds((io.MousePos.x-s.transitionMouseStart)/s.canvas.scale.x);
+                    const auto kind=s.transitionEnd ? clip.transitionOutKind : clip.transitionInKind;
+                    const bool centered=p.transitionLimit && (kind==TransitionKind::Dissolve || kind==TransitionKind::Crossfade);
+                    const Tick delta=editor::FromSeconds((io.MousePos.x-s.transitionMouseStart)/s.canvas.scale.x*(centered ? 2. : 1.));
                     auto original=clip;original.transitionIn=proposed.first;original.transitionOut=proposed.last;
                     auto edit=EditTransition(original,s.transitionEnd,s.transitionEnd ? -delta : delta);
                     if (edit.valid && p.transitionLimit) {
@@ -876,12 +878,14 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             }
             bool transitionHit=false;
             for (int side=0;side<2;++side) {
-                const float handleX=side ? end-float(editor::Seconds(transitionOut)*s.canvas.scale.x) :
-                                          x+float(editor::Seconds(transitionIn)*s.canvas.scale.x);
+                const auto type=side ? clip.transitionOutKind : clip.transitionInKind;
+                const bool centered=p.transitionLimit && (type==TransitionKind::Dissolve || type==TransitionKind::Crossfade);
+                const double extent=centered ? .5 : 1.;
+                const float handleX=side ? end-float(editor::Seconds(transitionOut)*s.canvas.scale.x*extent) :
+                                          x+float(editor::Seconds(transitionIn)*s.canvas.scale.x*extent);
                 const float handleScale=ImGui::GetFontSize()/14.f;
                 const float radius=4*handleScale;
                 const ImVec2 handle{handleX,a.y+6*handleScale};
-                const auto type=side ? clip.transitionOutKind : clip.transitionInKind;
                 const char *badge=type==TransitionKind::None ? "-" : type==TransitionKind::Dissolve ? "D" :
                                   type==TransitionKind::Fade ? "F" : "X";
                 if ((side ? transitionOut : transitionIn)>0)
@@ -1127,6 +1131,27 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                         }
                     }
                 }
+            }
+        }
+        // Overlay cut-spanning bounds after all visible clip bodies so either
+        // side remains visible. This reuses the borrowed visible query only.
+        if (p.transitionLimit) for (const auto &clip:clips) {
+            for (int side=0;side<2;++side) {
+                const auto kind=side ? clip.transitionOutKind : clip.transitionInKind;
+                if (kind!=TransitionKind::Dissolve && kind!=TransitionKind::Crossfade) continue;
+                Tick duration=side ? clip.transitionOut : clip.transitionIn;
+                if (s.transitionDrag.active && s.transitionDrag.draft.target==clip.id &&
+                    s.transitionDrag.draft.phase!=editor::Phase::Cancel)
+                    duration=side ? s.transitionDrag.draft.proposed.last : s.transitionDrag.draft.proposed.first;
+                if (duration<=0) continue;
+                const double cut=editor::Seconds(clip.start)+(side ? editor::Seconds(clip.duration) : 0.);
+                const float center=view.min.x+s.headerWidth+float((cut-s.canvas.origin.x)*s.canvas.scale.x);
+                const float half=float(editor::Seconds(duration)*s.canvas.scale.x*.5);
+                const float bottom=y+rowHeight-8,top=bottom-10;
+                const auto color=ImGui::GetColorU32(theme.editor.marker);
+                draw->AddRect({center-half,top},{center+half,bottom},color);
+                draw->AddLine({center-half,bottom},{center+half,top},color);
+                draw->AddLine({center-half,top},{center+half,bottom},color);
             }
         }
         draw->PopClipRect();

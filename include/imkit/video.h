@@ -107,6 +107,7 @@ struct TimelineProvider {
     bool (*isEditable)(void *,StableId clip)=nullptr;
     // Optional total-duration limit, including neighboring media handles. Called
     // during transition edits; the host must also validate committed edits.
+    // Enables centered Dissolve/Crossfade overlap bands and half-duration handles.
     Tick (*transitionLimit)(void *,StableId clip,bool outgoing)=nullptr;
 };
 struct TrackLabels {
