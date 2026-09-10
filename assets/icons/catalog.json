@@ -630,5 +630,37 @@
   {
     "name": "TransitionDuration",
     "category": "Editor"
+  },
+  {
+    "name": "SourceMonitor",
+    "category": "Editor"
+  },
+  {
+    "name": "ProgramMonitor",
+    "category": "Editor"
+  },
+  {
+    "name": "SafeArea",
+    "category": "Editor"
+  },
+  {
+    "name": "Guides",
+    "category": "Editor"
+  },
+  {
+    "name": "MetadataOverlay",
+    "category": "Editor"
+  },
+  {
+    "name": "TransformBounds",
+    "category": "Editor"
+  },
+  {
+    "name": "AnchorPoint",
+    "category": "Editor"
+  },
+  {
+    "name": "ProxyMedia",
+    "category": "Editor"
   }
 ]

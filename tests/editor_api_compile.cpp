@@ -70,6 +70,7 @@ int main() {
     (void)video::EvaluateEnvelope({},0);
     const char *monitorLines[]={"1920 x 1080","Proxy"};
     video::MonitorOptions monitorOptions;monitorOptions.metadataPreset=video::MonitorMetadataPreset::Details;
+    video::MonitorControls("monitor display",monitorOptions);
     monitorOptions.clipName="Clip";monitorOptions.markerComment="Marker comment";monitorOptions.metadata=monitorLines;
     monitorOptions.transform=true;monitorOptions.transformBounds={{.1,.25},{.9,.75}};
     video::Monitor("metadata monitor",{},ImVec2{200,120},time,monitorOptions,theme);

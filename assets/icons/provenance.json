@@ -2368,5 +2368,125 @@
       972,
       823
     ]
+  },
+  {
+    "name": "SourceMonitor",
+    "source": "assets/icons/originals/SourceMonitor.png",
+    "sha256": "0b6fc5f8e114c7c0be71f24e6fbefda7d613f3091daf3cff3b3128f660a69251",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      398,
+      431,
+      855,
+      846
+    ]
+  },
+  {
+    "name": "ProgramMonitor",
+    "source": "assets/icons/originals/ProgramMonitor.png",
+    "sha256": "ba2689b25619947108bee3b7355e28a621524aa82a248a63e2b90a852a5968b7",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      378,
+      409,
+      876,
+      869
+    ]
+  },
+  {
+    "name": "SafeArea",
+    "source": "assets/icons/originals/SafeArea.png",
+    "sha256": "cfe7147528f8c74cd5f716712bcb12df9b734bb3677760b502f31ad4140c2ea8",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      316,
+      329,
+      938,
+      925
+    ]
+  },
+  {
+    "name": "Guides",
+    "source": "assets/icons/originals/Guides.png",
+    "sha256": "37a9be02c77f06cda82e94f2f8de5f8fc93881e8330db80e7f08112041aaa356",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      355,
+      357,
+      900,
+      896
+    ]
+  },
+  {
+    "name": "MetadataOverlay",
+    "source": "assets/icons/originals/MetadataOverlay.png",
+    "sha256": "ac6f21292e14a823264ddd56388407d689d8b44232885b20ae60fe1efbca81e1",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      393,
+      418,
+      868,
+      852
+    ]
+  },
+  {
+    "name": "TransformBounds",
+    "source": "assets/icons/originals/TransformBounds.png",
+    "sha256": "8af5cfe237e8f083b222b2648d532e74f215e4b77a60519610df37f33adc989e",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      391,
+      385,
+      867,
+      869
+    ]
+  },
+  {
+    "name": "AnchorPoint",
+    "source": "assets/icons/originals/AnchorPoint.png",
+    "sha256": "00814369afcb004148d0fd6410b67534897c3bdd9c05e5ca8b91a37c3d9505c7",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      438,
+      437,
+      815,
+      817
+    ]
+  },
+  {
+    "name": "ProxyMedia",
+    "source": "assets/icons/originals/ProxyMedia.png",
+    "sha256": "69ada9289e8e49f02e15eb0fc08a4cde03d49fe8f8a8448151d35f93704eb212",
+    "originalSize": [
+      1254,
+      1254
+    ],
+    "contentBounds": [
+      261,
+      376,
+      978,
+      891
+    ]
   }
 ]

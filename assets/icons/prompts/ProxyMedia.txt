@@ -1,0 +1,4 @@
+Use case: logo-brand. Generate ONE individual technical software icon named ProxyMedia. Subject: two offset outlined rectangular video frames, with a small solid play triangle in the front frame and a smaller outlined square in its lower right corner indicating a reduced-resolution copy. Uniform clean black rounded outline strokes equivalent to 2 units on a 24-unit grid. Compact approximately square optical footprint readable at 16px, generous transparent margins. True transparent RGBA background. No lettering, shadows, checkerboard drawing, paper, contact sheet or extra icons.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/ProxyMedia.png

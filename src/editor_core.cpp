@@ -1128,8 +1128,8 @@ void AssetBrowser(const char *id, const AssetProvider &p, AssetState &s, Selecti
                 }
                 if (a.status != AssetStatus::Ready) {
                     if (!s.grid) ImGui::SameLine();
-                    constexpr IconId statusIcons[]{IconId::Success,IconId::Loading,IconId::Copy,IconId::Warning,IconId::Error};
-                    if (a.status!=AssetStatus::Proxy) glyph(statusIcons[static_cast<int>(a.status)]);
+                    constexpr IconId statusIcons[]{IconId::Success,IconId::Loading,IconId::ProxyMedia,IconId::Warning,IconId::Error};
+                    glyph(statusIcons[static_cast<int>(a.status)]);
                     ImGui::TextDisabled("%s",s.labels.statuses[static_cast<int>(a.status)+1]);
                 }
                 if (s.grid) {

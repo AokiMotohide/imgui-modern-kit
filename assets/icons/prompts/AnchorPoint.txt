@@ -1,0 +1,4 @@
+Use case: logo-brand. Generate ONE individual technical software icon named AnchorPoint. A small outlined circle at the center of four short crosshair arms, with a tiny solid dot centered in the circle. Uniform clean black rounded outline strokes equivalent to 2 units on a 24-unit grid. Compact square optical footprint readable at 16px, generous transparent margins. True transparent RGBA background. No lettering, shadows, checkerboard drawing, paper, contact sheet or extra icons.
+
+Tool: built-in image_gen
+Original: assets/icons/originals/AnchorPoint.png

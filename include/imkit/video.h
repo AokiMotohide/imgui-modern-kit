@@ -204,7 +204,15 @@ struct MonitorOptions {
     const char *clipName="", *markerComment=""; // Borrowed host UTF-8 strings.
     std::span<const char *const> metadata; // Extra lines for Details, borrowed for this call.
     editor::Rect transformBounds{{.2,.2},{.8,.8}}; // Normalized display coordinates; texture flip does not flip overlays.
+    std::optional<bool> showAnchor; // Unset preserves the legacy transform/anchor coupling.
 };
+struct MonitorLabels {
+    const char *safeArea="Safe area",*guides="Guides",*timecode="Timecode",*bounds="Transform bounds",*anchor="Anchor point";
+    const char *metadata="Metadata";
+    std::array<const char *,3> presets{"Off","Clip","Details"};
+};
+// Edits host-owned display options only, with no media or renderer ownership.
+void MonitorControls(const char *id,MonitorOptions &options,const IconAtlas *icons=nullptr,const MonitorLabels &labels={});
 void Monitor(const char *id, ImTextureRef texture, ImVec2 size, const editor::TimeState &time,
              const MonitorOptions &options, const Theme &theme);
 struct AudioBucket {
