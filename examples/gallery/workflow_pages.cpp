@@ -13,6 +13,10 @@ void WorkflowPages::Show(int page,GalleryState& host) {
     auto apply=[&](StableId action){if(!action)return;++actions;if(action==1){notice=true;expiresAt=ImGui::GetTime()+15;}if(action==2)palette.open=true;};
     ImGui::BeginDisabled(disabled);
     if(page==15) {
+        AppBarView app{"ImKit",japanese?"サンプルプロジェクト":"Sample project",japanese?"編集ワークフロー":"Edit workflow",japanese?"準備完了":"Ready",true,FeedbackKind::Success,commands};
+        apply(AppBar("app",app,toolbar,o));
+        WorkspaceHeaderView header{"WORKFLOW",japanese?"作業スペース":"Workspace",japanese?"状態と操作はホストが所有します":"The host owns state and actions",japanese?"接続済み":"Connected",FeedbackKind::Success,commands};
+        apply(WorkspaceHeader("header",header,toolbar,o));
         StepNavigatorOptions layout;layout.size={0,ImGui::GetFrameHeight()*2.6f};
         if(auto id=StepNavigator("workflow",items,selected,steps,layout,o))selected=id;
         Record(host,"workflow-steps");
@@ -39,9 +43,17 @@ void WorkflowPages::Show(int page,GalleryState& host) {
             std::array<editor::Event,16> storage{};editor::EventBuffer events{storage};
             if(!disabled)editor::CanvasSelection(view,image.canvas,provider,selection,events,theme,lasso);
             editor::EndImageViewport();
-            editor::StatusBar(japanese?"準備完了":"Ready",selection);ImGui::EndTable();
+            editor::StatusBar(japanese?"準備完了":"Ready",selection);
+            if(InspectorSection("inspector",japanese?"インスペクター":"Inspector",japanese?"選択中の項目":"Selected item",open,o))
+                ImGui::TextUnformatted(japanese?"ホスト所有の設定":"Host-owned properties");
+            if(AdvancedSection("advanced",japanese?"詳細設定":"Advanced",advanced,o))
+                ImGui::TextDisabled("Low-frequency settings");
+            ImGui::EndTable();
         }
         if(auto id=MultiSelectionBar("selection",selection.count,commands,toolbar,o))apply(id);
+        apply(BottomActionBar("bottom",BottomActionBarView{japanese?"変更なし":"No pending changes",FeedbackKind::Info,commands},toolbar,o));
+        auto preset=static_cast<ThemePreset>(host.presetIndex);
+        if(ThemePicker("theme",&preset,themePicker,o)){host.presetIndex=static_cast<int>(preset);host.theme=MakeTheme(preset);}
     } else if(page==16) {
         ImGui::SliderFloat("Progress",&fraction,-1,1);ImGui::SameLine();if(ActionButton("Modal progress",ActionVariant::Secondary,{},o))progressDialog.open=true;
         Record(host,"workflow-modal");
@@ -60,6 +72,11 @@ void WorkflowPages::Show(int page,GalleryState& host) {
         }EndCard();
         HelpCallout("help",StateView{"Help","Use keyboard focus to inspect and activate actions"},o);
         if(ValidationSummary("validation",std::span(items).subspan(1,2),o))++actions;
+        if(ActionButton("Diagnostics",ActionVariant::Secondary,{},o)){diagnostics.open=true;diagnostics.focusPending=true;}
+        if(BeginDiagnosticsDrawer("drawer",japanese?"診断":"Diagnostics",diagnostics,{0,120},o)){
+            ImGui::TextUnformatted(japanese?"問題はありません":"No issues");
+            EndDiagnosticsDrawer();
+        }
     } else {
         editor::PreviewTileView tiles[4];
         const char* names[]={"Preview A","Preview B with a long title / 長い名前","Offline","Error"};

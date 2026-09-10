@@ -23,9 +23,13 @@ auto volatile normalized=&imkit::editor::PixelToNormalized;auto volatile pixel=&
 auto volatile viewport=&imkit::editor::BeginImageViewport;auto volatile endViewport=&imkit::editor::EndImageViewport;
 auto volatile zoom=&imkit::editor::ZoomToolbar;auto volatile overlay=&imkit::editor::DrawOverlay;
 auto volatile tile=&imkit::editor::PreviewTile;auto volatile strip=&imkit::editor::ResizableTileStrip;
+auto volatile appBar=&imkit::AppBar;auto volatile workspaceHeader=&imkit::WorkspaceHeader;
+auto volatile inspectorSection=&imkit::InspectorSection;auto volatile advancedSection=&imkit::AdvancedSection;
+auto volatile bottomActionBar=&imkit::BottomActionBar;auto volatile beginDiagnostics=&imkit::BeginDiagnosticsDrawer;
+auto volatile endDiagnostics=&imkit::EndDiagnosticsDrawer;auto volatile themePicker=&imkit::ThemePicker;
 }
 int main() {
     imkit::StableId ids[1];imkit::RequestBuffer requests{ids};
     imkit::editor::TileEvent events[1];imkit::editor::TileEventBuffer out{events};
-    return !(step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&card&&endCard&&section&&multi&&help&&validation&&toolbar&&valid&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&requests.Push(1)&&out.Push({}));
+    return !(step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&card&&endCard&&section&&multi&&help&&validation&&toolbar&&valid&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&appBar&&workspaceHeader&&inspectorSection&&advancedSection&&bottomActionBar&&beginDiagnostics&&endDiagnostics&&themePicker&&requests.Push(1)&&out.Push({}));
 }

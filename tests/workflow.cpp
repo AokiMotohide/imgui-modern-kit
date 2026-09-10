@@ -1,4 +1,5 @@
 #include <imkit/editor_canvas.h>
+#include <imkit/shell.h>
 #include <array>
 #include <cmath>
 #include <cstdio>
@@ -121,6 +122,14 @@ int main(){
             ResponsiveToolbar("toolbar",toolbar,commands,ToolbarOptions{},options);
             SectionHeader("section","Section",open,options);MultiSelectionBar("selected",2,commands,toolbar,options);
             HelpCallout("help",StateView{"Help","Description"},options);ValidationSummary("issues",steps,options);
+            AppBarView appView{"ImKit","Project","Workflow","Ready",true,FeedbackKind::Success,commands};
+            AppBar("app",appView,toolbar,options);
+            WorkspaceHeader("workspace",WorkspaceHeaderView{"PHASE","Workspace","Description","Ready",FeedbackKind::Success,commands},toolbar,options);
+            InspectorSection("inspector","Inspector","Selected item",open,options);
+            AdvancedSection("advanced","Advanced",open,options);
+            BottomActionBar("bottom",BottomActionBarView{"Ready",FeedbackKind::Success,commands},toolbar,options);
+            ThemePickerState picker;ThemePreset preset=ThemePreset::PrecisionDark;ThemePicker("theme",&preset,picker,options);
+            DiagnosticsDrawerState diagnostics{true};if(BeginDiagnosticsDrawer("diagnostics","Diagnostics",diagnostics,{0,80},options)){ImGui::TextUnformatted("No issues");EndDiagnosticsDrawer();}
         };
         for(int i=0;i<8;++i)frame(composed);
         measuring=true;gallery::CountAllocations(true);for(int i=0;i<8;++i)frame(composed);gallery::CountAllocations(false);measuring=false;

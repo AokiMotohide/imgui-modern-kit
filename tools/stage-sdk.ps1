@@ -26,13 +26,16 @@ foreach ($config in @("Debug", "Release")) {
     $library = Join-Path $stage "lib/$name"
     $copyDir = Join-Path $out "objects/$config"
     New-Item -ItemType Directory -Force $copyDir | Out-Null
-    foreach ($object in @("widgets.obj", "theme.obj", "components.obj")) {
-        & python (Join-Path $PSScriptRoot "normalize-coff.py") (Join-Path $objectDir $object) (Join-Path $copyDir $object)
+    $objects = @(Get-ChildItem -LiteralPath $objectDir -Filter *.obj -File | Sort-Object Name)
+    if ($objects.Count -eq 0) { throw "No ImKit objects found: $objectDir" }
+    foreach ($object in $objects) {
+        & python (Join-Path $PSScriptRoot "normalize-coff.py") $object.FullName (Join-Path $copyDir $object.Name)
         if ($LASTEXITCODE -ne 0) { throw "Object normalization failed." }
     }
     Push-Location $copyDir
     try {
-        & $librarian /NOLOGO /Brepro "/OUT:$library" widgets.obj theme.obj components.obj
+        $normalized = @($objects | ForEach-Object { $_.Name })
+        & $librarian /NOLOGO /Brepro "/OUT:$library" @normalized
         if ($LASTEXITCODE -ne 0) { throw "Library repack failed." }
     } finally { Pop-Location }
 }

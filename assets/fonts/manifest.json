@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "ownership": "host-loaded; ImKit does not create or own a font atlas",
+  "fonts": [
+    {
+      "family": "Inter",
+      "version": "4.1",
+      "role": "primary Latin",
+      "files": {
+        "regular": "Inter-Regular.ttf",
+        "emphasis": "Inter-SemiBold.ttf"
+      },
+      "license": "Inter-OFL.txt",
+      "source": "https://github.com/rsms/inter/releases/tag/v4.1",
+      "sha256": {
+        "Inter-Regular.ttf": "40d692fce188e4471e2b3cba937be967878f631ad3ebbbdcd587687c7ebe0c82",
+        "Inter-SemiBold.ttf": "78a843fade9d4612a5567302fb595b56976eb5fcebf4fea5a5912d638bafcde3"
+      }
+    },
+    {
+      "family": "Noto Sans JP",
+      "version": "2.004",
+      "role": "Japanese fallback",
+      "files": {
+        "regular": "NotoSansJP-Regular.otf"
+      },
+      "license": "NotoSansJP-OFL.txt",
+      "source": "https://github.com/notofonts/noto-cjk/tree/Sans2.004",
+      "sourceCommit": "523d033d6cb47f4a80c58a35753646f5c3608a78",
+      "sha256": {
+        "NotoSansJP-Regular.otf": "dff723ba59d57d136764a04b9b2d03205544f7cd785a711442d6d2d085ac5073"
+      }
+    }
+  ]
+}

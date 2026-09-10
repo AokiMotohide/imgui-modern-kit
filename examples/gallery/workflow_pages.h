@@ -1,5 +1,6 @@
 #pragma once
 #include <imkit/editor_canvas.h>
+#include <imkit/shell.h>
 #include <array>
 namespace imkit::gallery {
 struct GalleryState;
@@ -9,6 +10,8 @@ struct WorkflowPages {
     ToolbarState toolbar;
     CommandPaletteState palette;
     DialogState progressDialog;
+    DiagnosticsDrawerState diagnostics;
+    ThemePickerState themePicker;
     editor::ImageViewportState image;
     editor::TileStripState strip;
     std::array<editor::TileSize,4> sizes{{{1,260},{2,260},{3,260},{4,260}}};
@@ -17,7 +20,7 @@ struct WorkflowPages {
     std::array<editor::Point,256> lassoScratch{};
     std::array<accessibility::SemanticNode,512> nodes{};
     accessibility::AccessibilityFrame semantics{nodes};
-    bool notice=true,open=true,chip=false,vertical=false,japanese=false,disabled=false,lasso=false;
+    bool notice=true,open=true,advanced=false,chip=false,vertical=false,japanese=false,disabled=false,lasso=false;
     int actions=0,toastPriority=1;
     float fraction=.4f;
     double expiresAt=0;

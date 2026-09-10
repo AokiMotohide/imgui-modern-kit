@@ -1,35 +1,35 @@
 # Third-party notices
 
-## Inter 4.1 (optional catalogs only)
+## Inter 4.1 (optional host-loaded font asset)
 
 - Official source: https://github.com/rsms/inter/releases/tag/v4.1
 - Release archive: https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip
 - Unmodified files: `extras/ttf/Inter-Regular.ttf`, `extras/ttf/Inter-SemiBold.ttf`
 - Copyright (c) 2016 The Inter Project Authors (https://github.com/rsms/inter)
-- License: SIL Open Font License 1.1. Complete original text: [OFL.txt](examples/design_gallery/assets/OFL.txt).
-- Font files and the complete license are copied to `design-assets` beside the development executable.
-- These fonts are development assets, not a library runtime dependency. The repository code license does not replace the font license.
+- License: SIL Open Font License 1.1. Complete original text: [Inter-OFL.txt](assets/fonts/Inter-OFL.txt).
+- Font files, manifest and complete license are installed to `share/imkit/fonts` and may be copied beside a host executable with `imkit_copy_font_assets`.
+- These are optional assets. The library never loads them or owns the host font atlas. The repository code license does not replace the font license.
 
 | File | SHA256 |
 |---|---|
 | Inter-Regular.ttf | 40d692fce188e4471e2b3cba937be967878f631ad3ebbbdcd587687c7ebe0c82 |
 | Inter-SemiBold.ttf | 78a843fade9d4612a5567302fb595b56976eb5fcebf4fea5a5912d638bafcde3 |
-| OFL.txt | 262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a |
+| Inter-OFL.txt | b3195af0fb14368d1b3b10fb9d3fe503b7163ea083859d2ee553bc74da07c320 |
 
-## Noto Sans JP 2.004 (optional catalogs only)
+## Noto Sans JP 2.004 (optional host-loaded font asset)
 
 - Official source: https://github.com/notofonts/noto-cjk/tree/Sans2.004
 - Pinned commit: `523d033d6cb47f4a80c58a35753646f5c3608a78`.
 - Unmodified Japanese subset font: `Sans/SubsetOTF/JP/NotoSansJP-Regular.otf`.
 - Embedded font copyright: © 2014-2021 Adobe (http://www.adobe.com/).
-- Original license: repository-root `LICENSE`, saved as [NotoSansJP-OFL.txt](examples/design_gallery/assets/NotoSansJP-OFL.txt); SIL Open Font License 1.1.
-- Font and full license are copied to `design-assets` only for optional catalog targets. They are not embedded in `imkit` or loaded by the library.
+- Original license: repository-root `LICENSE`, saved as [NotoSansJP-OFL.txt](assets/fonts/NotoSansJP-OFL.txt); SIL Open Font License 1.1.
+- Font, manifest and full license are installed as optional host assets. They are not embedded in `imkit` or loaded by the library.
 - Inter remains the primary Latin source. Noto Sans JP Regular supplies missing Japanese glyphs for both body and headings; Japanese headings are not synthesized bold.
 
 | File | SHA256 |
 |---|---|
 | NotoSansJP-Regular.otf | dff723ba59d57d136764a04b9b2d03205544f7cd785a711442d6d2d085ac5073 |
-| NotoSansJP-OFL.txt | 6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2 |
+| NotoSansJP-OFL.txt | 88f117575237307bdd86a17ef15e21790fc9a662fe4dfb103ca1ca077f0d9982 |
 
 ## Design benchmarks (reference only; no incorporated software or assets)
 

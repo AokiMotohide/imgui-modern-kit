@@ -4,6 +4,8 @@
 
 **Dear ImGuiに、モダンで一貫したネイティブデザインを追加します。** ImKitは、ホストアプリケーションの所有権を奪わず、C++ツールへ統一された外観、再利用可能な操作部品、意味別テーマ、生成アイコン、高度なEditor UIを提供します。
 
+MITライセンス · C++20 · 静的ライブラリ · Dear ImGui固定基準
+
 ![ImKit Gallery：テーマ、コンポーネント、Editor実例](docs/images/gallery-overview.gif)
 
 ## ImKitを選ぶ理由
@@ -40,9 +42,23 @@ imkit::End(); // Beginがfalseでも必要
 
 Context、backend、font、renderer、frame lifecycle、ID、編集値、永続化はホストが所有します。ImKitはこれらを作成せず、worker threadも開始しません。
 
-## 完全な12テーマ
+## 導入前に確認すること
 
-`PrecisionLight`、`PrecisionDark`、`Graphite`、`Midnight`、`Ocean`、`Forest`、`WarmSand`、`Rose`、`Violet`、`Solar`、`HighContrastLight`、`HighContrastDark`を利用できます。各presetは標準部品とEditor用の意味別色を初期化します。アプリ固有の配色には`SetAccent`または`Theme`の直接編集を使えます。
+ImKitは**静的C++20 UIライブラリ**であり、アプリケーションframeworkやDear ImGuiのforkではありません。ホストが作成したDear ImGui Contextへ、Themeとネイティブ部品、必要に応じてEditor向けmoduleを追加します。renderer、backend、データmodel、Undo/history、永続化、font、frame loopは引き続き利用側の責務です。
+
+| 確認項目 | 現在の回答 |
+|---|---|
+| 対応基準 | Dear ImGui `v1.92.9b-docking`、`b48d1afbe8ee8b238e2961dc363a949dd7304e23`。検証済み環境はWindows x64/MSVCです。 |
+| core依存 | 利用側が互換Dear ImGui targetを渡します。基本targetの`imkit`はGLFW、OpenGL、rendererを持ち込みません。 |
+| 開発時だけの依存 | GLFWとOpenGL3はnative Galleryのbuildだけに使用し、通常のconsumerへlinkされません。 |
+| 所有権とデータ | 現在Themeのglobal registry、保存済み設定、worker、アプリケーションデータを保持しません。`Theme`、font、編集値はホスト所有です。 |
+| 互換を主張しない範囲 | 別Dear ImGui版・別OS、native OS/IME、支援技術、個別ホストアプリの受け入れは暗黙に検証済みとしません。 |
+
+既存ツールへ予測可能に組み込めるよう、この境界を明示しています。Editor moduleを使う前に[設計と所有権](docs/architecture.md)を確認してください。
+
+## 12種類の列挙可能なテーマ
+
+`PrecisionLight`、`PrecisionDark`、`Graphite`、`Midnight`、`Ocean`、`Forest`、`WarmSand`、`Rose`、`Violet`、`Solar`、`HighContrastLight`、`HighContrastDark`を利用できます。安定したpreset IDはホスト側の保存に利用できます。アプリ固有の配色には`SetAccent`または`Theme`の直接編集を使えます。
 
 ```cpp
 for (const auto &preset : imkit::ThemePresets()) {
@@ -56,6 +72,8 @@ for (const auto &preset : imkit::ThemePresets()) {
 ## ネイティブツール向けコンポーネント
 
 重要度別action、switch、混在選択、segmented control、検索付き選択、単位入力、設定行、validation、badge、notification、toolbar、色変更可能なicon catalogを提供します。Theme適用中もDear ImGuiの標準overloadを利用できます。
+
+常設アプリShellと、ホストが読み込む任意のInter／Noto Sans JP資産は[アプリケーションShell部品](docs/shell-components.ja.md)を参照してください。
 
 Editor Suiteは同じ契約をTimeline、Curve、3D workspaceへ拡張する発展例です。更新中の詳細仕様をREADMEへ固定せず、[部品契約](docs/editor-suite.md)、[API](docs/editor-api.md)、[検証記録](docs/editor-validation.md)を正本とします。
 
@@ -77,6 +95,29 @@ cmake --build --preset windows-debug --target imkit_gallery --parallel
 
 詳細は[導入ガイド](docs/getting-started.ja.md)、構成・ABIエラーは[トラブルシューティング](docs/troubleshooting.ja.md)を参照してください。
 
+## 必要なmoduleだけを選ぶ
+
+| Target | 用途 | 依存先 |
+|---|---|---|
+| `imkit::imkit` | Theme、native wrapper、component、icon、accessibility metadata、workflow pattern | 利用側のDear ImGui target |
+| `imkit::editor_core` | Canvas、選択、splitter、Editorのデータ表示契約 | `imkit::imkit` |
+| `imkit::video`、`imkit::cg`、`imkit::editor_suite` | 任意のVideo/CG Editor実例と型付きホストevent | `imkit::editor_core` |
+| `imkit::preview_opengl3` | 明示的に構築するOpenGL3 preview helper | `imkit::cg`、ホストが渡すContextとGL関数表 |
+
+高度なmoduleは実用的な参照実装ですが、scene、media、選択、Undo、GPU Contextを所有しません。正確な制約は[Editor契約](docs/editor-suite.md)を参照してください。
+
+## 取得した内容を確認する
+
+READMEのGallery画像は手描きmockupではなく、native backbufferから生成しています。生成script、依存版、asset hashはリポジトリに記録しています。検証済みWindows基準でDebugライブラリと公開契約の主要checkを再現する手順は次のとおりです。
+
+```powershell
+cmake --preset windows-debug
+cmake --build --preset windows-debug --target imkit_theme_test imkit_workflow_test --parallel
+ctest --test-dir build/windows-debug -C Debug -R "imkit.(theme|workflow)" --output-on-failure
+```
+
+確認内容と明示的な対象外は[検証記録](docs/validation.md)を正本とします。buildやtestが成功しても、記載した互換範囲が自動的に広がるわけではありません。
+
 ## ドキュメント
 
 | 目的 | 日本語 | English |
@@ -84,6 +125,7 @@ cmake --build --preset windows-debug --target imkit_gallery --parallel
 | 導入と最初のframe | [導入ガイド](docs/getting-started.ja.md) | [Getting started](docs/getting-started.md) |
 | preset、accent、font、倍率 | [テーマ](docs/themes.ja.md) | [Themes](docs/themes.md) |
 | 部品と実装recipe | [コンポーネント](docs/components.ja.md) | [Components](docs/components.md) |
+| アプリShellとfont資産 | [Shell部品](docs/shell-components.ja.md) | [Shell components](docs/shell-components.md) |
 | Galleryと実capture | [Gallery](docs/gallery.ja.md) | [Gallery](docs/gallery.md) |
 | よくある問題 | [トラブルシューティング](docs/troubleshooting.ja.md) | [Troubleshooting](docs/troubleshooting.md) |
 | 設計と責務 | [Architecture](docs/architecture.md) | [Architecture](docs/architecture.md) |
@@ -97,4 +139,4 @@ cmake --build --preset windows-debug --target imkit_gallery --parallel
 
 ## ライセンス
 
-ImKitのコードはMITです。Dear ImGuiとGallery専用依存には個別のライセンスがあります。任意fontとiconの出典は[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)に記録しています。
+ImKitのコードは[MIT](LICENSE)です。Dear ImGuiとGallery専用依存には個別のライセンスがあります。任意fontの出典、生成iconのprovenance、固定revision、file hashは[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)に記録しています。参照したdesign projectとの提携・推奨関係は主張しません。
