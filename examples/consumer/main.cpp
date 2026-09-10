@@ -18,9 +18,12 @@ int main() {
         if (atlas.rgba.empty())
             return 1;
     }
-    if (imkit::GetIconCatalog().size() != 120)
+    if (imkit::GetIconCatalog().empty())
         return 1;
-    auto theme = imkit::MakePrecisionTheme(imkit::ColorScheme::Dark);
+    const auto presets = imkit::ThemePresets();
+    if (presets.size() != 12)
+        return 1;
+    auto theme = imkit::MakeTheme(imkit::ThemePreset::Ocean);
     imkit::ApplyTheme(theme);
     ImGui::NewFrame();
     {

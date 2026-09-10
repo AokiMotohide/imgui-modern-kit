@@ -125,6 +125,34 @@ ImGuiStyle Style(const Theme &t, float scale) {
     return s;
 }
 } // namespace
+std::span<const ThemePresetInfo> ThemePresets() noexcept {
+    static constexpr std::array presets = {
+        ThemePresetInfo{ThemePreset::PrecisionLight, "precision-light", "Precision Light", ColorScheme::Light},
+        ThemePresetInfo{ThemePreset::PrecisionDark, "precision-dark", "Precision Dark", ColorScheme::Dark},
+        ThemePresetInfo{ThemePreset::Graphite, "graphite", "Graphite", ColorScheme::Dark},
+        ThemePresetInfo{ThemePreset::Midnight, "midnight", "Midnight", ColorScheme::Dark},
+        ThemePresetInfo{ThemePreset::Ocean, "ocean", "Ocean", ColorScheme::Dark},
+        ThemePresetInfo{ThemePreset::Forest, "forest", "Forest", ColorScheme::Dark},
+        ThemePresetInfo{ThemePreset::WarmSand, "warm-sand", "Warm Sand", ColorScheme::Light},
+        ThemePresetInfo{ThemePreset::Rose, "rose", "Rose", ColorScheme::Light},
+        ThemePresetInfo{ThemePreset::Violet, "violet", "Violet", ColorScheme::Dark},
+        ThemePresetInfo{ThemePreset::Solar, "solar", "Solar", ColorScheme::Light},
+        ThemePresetInfo{ThemePreset::HighContrastLight, "high-contrast-light", "High Contrast Light", ColorScheme::Light},
+        ThemePresetInfo{ThemePreset::HighContrastDark, "high-contrast-dark", "High Contrast Dark", ColorScheme::Dark},
+    };
+    return presets;
+}
+Theme MakeTheme(ThemePreset preset) {
+    const auto info = ThemePresets()[static_cast<std::size_t>(preset)];
+    if (preset == ThemePreset::HighContrastLight || preset == ThemePreset::HighContrastDark)
+        return MakeTheme(info.scheme, ContrastMode::HighContrast);
+    auto theme = MakePrecisionTheme(info.scheme);
+    constexpr std::array accents = {0x005ca8u, 0x85c5ffu, 0x78d6c6u, 0x8eafffu,
+                                    0x56d3e5u, 0x83d69cu, 0x9b5c2eu, 0xa9466bu,
+                                    0xc19af5u, 0x856500u};
+    SetAccent(theme, Hex(accents[static_cast<std::size_t>(preset)]));
+    return theme;
+}
 Theme MakePrecisionTheme(ColorScheme scheme) {
     Theme t;
     t.scheme = scheme;

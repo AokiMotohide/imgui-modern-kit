@@ -2,10 +2,14 @@
 
 ## 2.0.0
 
+- Add twelve discoverable named themes with stable IDs, complete editor palettes and checked contrast thresholds.
+- Redesign the native Gallery around guided onboarding, searchable navigation, live examples and copyable code.
+- Refresh the English/Japanese onboarding documentation and add a reproducible native README animation.
 - Translate arrows, shared gizmo preview and immutable drag projection.
 - Source-time stereo waveform providers and pixel envelopes.
 - Editor workspace layout, timeline overview, source placement and host Undo/Redo.
 - Inspector property curves, batch reservation and consumer migration documentation.
+- 12種類の名前付きTheme、製品型Gallery、英日導入文書、実backbufferから再生成できるREADME GIFを追加。
 - 移動矢印・Gizmo追従・素材時間波形・編集画面・ホスト履歴を更新。利用側の再ビルドが必要。
 
 

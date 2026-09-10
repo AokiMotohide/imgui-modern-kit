@@ -236,6 +236,10 @@ if(IMKIT_BUILD_TESTS)
     target_link_libraries(imkit_api_compile PRIVATE imkit::imkit)
     add_test(NAME imkit.api_compile COMMAND imkit_api_compile)
 
+    add_executable(imkit_theme_test tests/theme.cpp)
+    target_link_libraries(imkit_theme_test PRIVATE imkit::imkit)
+    add_test(NAME imkit.theme COMMAND imkit_theme_test)
+
     add_executable(imkit_context_smoke tests/context_smoke.cpp)
     target_compile_features(imkit_context_smoke PRIVATE cxx_std_20)
     target_link_libraries(imkit_context_smoke PRIVATE imkit::imkit)
