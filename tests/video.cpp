@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <vector>
 #include <imkit/video.h>
 #include <array>
@@ -281,7 +282,7 @@ int main() {
     timeline.bindings={};timeline.canvas.origin.x=7;
     io.AddKeyEvent(ImGuiKey_F8,true);frame(full);io.AddKeyEvent(ImGuiKey_F8,false);frame(full);
     check(timeline.canvas.origin.x==7,"empty bindings disable Fit shortcut");
-    struct TransitionFixture {video::TrackView track;video::ClipView clip;std::array<video::ClipView,2> related;} transitionFixture;
+    struct TransitionFixture {video::TrackView track;video::ClipView clip;std::array<video::ClipView,2> related;std::array<video::ClipView,4> neighbors;} transitionFixture;
     transitionFixture.track.id=900;transitionFixture.track.label="Video";
     transitionFixture.clip.id=901;transitionFixture.clip.track=900;transitionFixture.clip.label="Transition";
     transitionFixture.clip.duration=editor::FromSeconds(3);
@@ -546,6 +547,33 @@ int main() {
           !timeline.drag.active && !trimMembers[0].transaction.active,
           "indexed offscreen owner invalidation cancels the complete clip edit batch");
     io.AddMouseButtonEvent(0,false);frame(full);provider.isEditable=nullptr;
+    transitionFixture.related[1].sourceIn=0;transitionFixture.related[1].track=904;
+    for (int i=0;i<4;++i) {
+        auto &n=transitionFixture.neighbors[i];n=transitionFixture.clip;n.id=910+i;
+        n.track=i<2 ? 900 : 904;n.duration=editor::FromSeconds(i==3 ? .3 : 3);
+        n.start=i%2==0 ? -n.duration : (i==1 ? transitionFixture.clip.duration : transitionFixture.related[1].duration);
+        n.transitionIn=n.transitionOut=0;
+    }
+    provider.neighbors=[](void *u,editor::StableId id) {
+        auto &f=*static_cast<TransitionFixture*>(u);const int base=id==f.clip.id ? 0 : 2;
+        return video::TimelineProvider::Neighbors{&f.neighbors[base],&f.neighbors[base+1]};
+    };
+    for (auto tool : {video::Tool::Roll,video::Tool::Slide}) {
+        timeline.tool=tool;full.Clear();
+        io.AddMousePosEvent(clipOrigin.x+timeline.headerWidth+100,clipOrigin.y+25);frame(full);
+        io.AddMouseButtonEvent(0,true);frame(full);
+        check(timeline.drag.active && trimMembers[0].nextTransaction.active &&
+              (tool!=video::Tool::Slide || trimMembers[0].previousTransaction.active),"related adjacent tool begins neighbor transactions");
+        full.Clear();
+        io.AddMousePosEvent(clipOrigin.x+timeline.headerWidth+150,clipOrigin.y+25);frame(full);
+        check(trimMembers[0].nextTransaction.draft.proposed.first==transitionFixture.neighbors[3].start+editor::FromSeconds(.2),
+              "related adjacent tool uses tightest neighbor duration");
+        full.Clear();io.AddMouseButtonEvent(0,false);frame(full);
+        check(full.count==(tool==video::Tool::Roll ? 4 : 6) &&
+              std::all_of(full.Events().begin(),full.Events().end(),[](const auto &e){return e.phase==editor::Phase::Commit;}),
+              "related Roll or Slide commits all participating clips together");
+    }
+    provider.neighbors=nullptr;
     timeline.tool=video::Tool::Select;
     provider.selected=nullptr;provider.constraints=nullptr;timeline.memberCount=0;timeline.memberDrags={};selection.Clear();
     io.AddMousePosEvent(clipOrigin.x+timeline.headerWidth+160,clipOrigin.y+25);frame(full);

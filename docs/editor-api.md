@@ -423,3 +423,15 @@ Rippleも`selected`が返す選択・linked・group全対象を一括編集し�
 `canBeginEdit`をBegin前に確認し、media handleが許す共通deltaで編集します。
 Galleryは編集前の位置から後続clipの移動量を合算して一度だけ適用し、後の選択clipの
 Commitが先行Rippleの移動を上書きしないようにしています。
+
+### Related Roll/Slide / 関連Roll・Slide
+
+MemberDrag stores neighboring originals and transactions for related Roll/Slide.
+The complete batch reserves Begin/terminal capacity, checks every adjacent owner,
+and constrains a common delta across all pairs/triples. Neighbor previews use the
+same values that commit. Conflicting sets that write the same clip twice are rejected
+before Begin; hosts should expose disjoint linked edit neighborhoods.
+
+関連Roll／Slideでは`MemberDrag`に隣接clipの元値とtransactionも保持します。
+全対象のBegin／終了容量と編集可否を確認し、すべてのpair／tripleへ共通deltaを適用します。
+隣接clipのpreview値もCommitと一致します。同じclipを二重に編集する競合はBegin前に拒否します。

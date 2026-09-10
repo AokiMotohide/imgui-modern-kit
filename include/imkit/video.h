@@ -125,6 +125,8 @@ struct TimelineState {
     struct MemberDrag {
         ClipView original{};
         editor::Transaction transaction;
+        ClipView previous{},next{};
+        editor::Transaction previousTransaction,nextTransaction;
     };
     editor::CanvasState canvas{{0, 0}, {100, 1}};
     editor::Transaction drag;
