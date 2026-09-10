@@ -96,10 +96,10 @@ editor::AssetProvider Assets(EditorWorkspaces &s) {
             return static_cast<int>(s.filteredAssetCount);
         }};
 }
-editor::CurveProvider Curves(EditorWorkspaces &s) {
-    s.curve.labels={};
-    if (s.japanese) {
-        auto &labels=s.curve.labels;
+void CurveLanguage(editor::CurveState &state,bool japanese) {
+    state.labels={};
+    if (japanese) {
+        auto &labels=state.labels;
         labels.add="再生位置にキーを追加";labels.previous="前のキー";labels.next="次のキー";labels.remove="選択キーを削除";
         labels.fit="全チャンネルを表示";labels.ghost="他チャンネルを薄く表示";labels.snap="フレームへ吸着";
         labels.scale="キーの時間を拡大縮小";labels.box="矩形選択";labels.lasso="投げ縄選択";
@@ -107,6 +107,9 @@ editor::CurveProvider Curves(EditorWorkspaces &s) {
         labels.extrapolations={"一定","直線","繰り返し"};labels.interpolations={"一定","直線","ベジェ"};
         labels.handleModes={"自動","自動・制限付き","ベクトル","整列","自由"};
     }
+}
+editor::CurveProvider Curves(EditorWorkspaces &s) {
+    CurveLanguage(s.curve,s.japanese);
     s.curve.bindings=std::span(s.bindings).first(s.bindingCount);
     s.curve.rate=s.timeline.time.rate;
     s.curve.time=s.timeline.time.playhead;
@@ -139,6 +142,41 @@ editor::CurveProvider Curves(EditorWorkspaces &s) {
                 for (const auto &key:keys) s.curveSelectionPoints.push_back({key.id,{editor::Seconds(key.tick),-key.value},key.locked});
                 return std::span<const editor::SelectablePoint>(s.curveSelectionPoints);
             }};
+}
+editor::CurveProvider ColorCurves(EditorWorkspaces &s) {
+    CurveLanguage(s.colorCurve,s.japanese);
+    s.colorCurve.labels.add=s.japanese?"入力位置にキーを追加":"Add key at input";
+    s.colorCurve.icons=s.icons;
+    s.colorCurve.bindings=std::span(s.bindings).first(s.bindingCount);
+    return {&s,s.revision,[](void *u,editor::CurveQuery q) {
+        auto &s=*static_cast<EditorWorkspaces*>(u);
+        auto &keys=s.colorCurveKeys[s.colorCurveChannel];
+        auto first=std::lower_bound(keys.begin(),keys.end(),q.time.first,[](const auto &k,auto t){return k.tick<t;});
+        auto last=std::upper_bound(first,keys.end(),q.time.last,[](auto t,const auto &k){return t<k.tick;});
+        for(int i=0;i<2 && first!=keys.begin();++i) --first;
+        for(int i=0;i<2 && last!=keys.end();++i) ++last;
+        s.colorCurvePreview.resize(static_cast<std::size_t>(last-first));
+        s.colorCurve.previewKeys=s.colorCurvePreview;
+        return std::span<const editor::Keyframe>(first,last);
+    },[](void *u,editor::StableId id,editor::Tick tick,editor::Extrapolation mode) {
+        auto &s=*static_cast<EditorWorkspaces*>(u);
+        for(int c=0;c<3;++c) if(s.colorCurveChannels[c]==id) return editor::Evaluate(s.colorCurveKeys[c],tick,mode);
+        return 0.;
+    },editor::Rect{{0,-1},{1,0}},[](void *u,std::span<const editor::StableId> ids) {
+        auto &s=*static_cast<EditorWorkspaces*>(u);s.colorCurveSelected.clear();
+        for(const auto &k:s.colorCurveKeys[s.colorCurveChannel])
+            if(std::find(ids.begin(),ids.end(),k.id)!=ids.end()) s.colorCurveSelected.push_back(k);
+        return std::span<const editor::Keyframe>(s.colorCurveSelected);
+    },[](void *u,editor::StableId id,editor::Tick tick,bool next)->const editor::Keyframe* {
+        auto &s=*static_cast<EditorWorkspaces*>(u);
+        for(int c=0;c<3;++c) if(s.colorCurveChannels[c]==id) {
+            const auto &keys=s.colorCurveKeys[c];
+            auto k=std::lower_bound(keys.begin(),keys.end(),tick,[](const auto &k,auto t){return k.tick<t;});
+            if(next) {if(k!=keys.end() && k->tick==tick) ++k;return k==keys.end()?nullptr:&*k;}
+            return k==keys.begin()?nullptr:&*--k;
+        }
+        return nullptr;
+    }};
 }
 void Options(EditorWorkspaces &s) {
     bool large = s.large;
@@ -435,12 +473,25 @@ void EditorWorkspaces::Initialize() {
         pcm[i] = static_cast<float>(std::sin(i * .27) * (.4 + .3 * std::sin(i * .015)));
     video::BuildAudioBuckets(pcm, 1, 0, audio);
     video::UpdateMeter(meter, pcm, 0);
-    for (int y = 0; y < 64; ++y)
-        for (int x = 0; x < 64; ++x)
-            pixels[y * 64 + x] = {x / 63.f, y / 63.f, (x + y) / 126.f, 1};
-    video::BuildScopes(pixels, 64, 64, {red, green, blue, luma, scopeWave, scopeVector,
-                                      scopeRGB[0], scopeRGB[1], scopeRGB[2]});
+    for(int c=0;c<3;++c) {
+        colorCurveChannels[c]=nextId++;
+        for(int i=0;i<3;++i) {
+            editor::Keyframe key{nextId++,colorCurveChannels[c],editor::FromSeconds(i*.5),i*.5};
+            key.interpolation=editor::Interpolation::Linear;colorCurveKeys[c].push_back(key);
+        }
+    }
+    colorCurve.companionDrags=colorCurveCompanions;
+    colorCurve.activeChannel=colorCurveChannels[0];colorCurve.fitRequested=true;
+    colorCurve.time=editor::FromSeconds(.5);
+    RebuildColorScopes();
 }
+void EditorWorkspaces::RebuildColorScopes() {
+    const video::ColorCurveSet curves{colorCurveKeys[0],colorCurveKeys[1],colorCurveKeys[2]};
+    for(int y=0;y<64;++y) for(int x=0;x<64;++x)
+        pixels[y*64+x]=video::ApplyColorCurves({x/63.f,y/63.f,(x+y)/126.f,1},curves);
+    video::BuildScopes(pixels,64,64,{red,green,blue,luma,scopeWave,scopeVector,scopeRGB[0],scopeRGB[1],scopeRGB[2]});
+}
+
 void EditorWorkspaces::SyncSceneCamera() {
     const auto object=std::find_if(objects.begin(),objects.end(),[&](const auto &o){return o.id==cameraObject;});
     if (object==objects.end()) {viewport.cameraView=nullptr;return;}
@@ -622,6 +673,31 @@ void EditorWorkspaces::ApplyEvents() {
         if (e.phase != editor::Phase::Commit || e.revision != revision)
             continue;
         ++commits;
+        bool colorTarget=false,colorEdited=false;
+        for(int c=0;c<3;++c) {
+            auto &channel=colorCurveKeys[c];
+            if(e.target==colorCurveChannels[c]) {
+                colorTarget=true;
+                if(e.kind==editor::EditKind::KeyInsert && std::none_of(channel.begin(),channel.end(),[&](const auto &k){return k.tick==e.proposed.first;})) {
+                    channel.push_back({nextId++,e.target,e.proposed.first,e.proposed.x});colorEdited=true;
+                }
+            }
+            for(std::size_t i=0;i<channel.size();++i) if(channel[i].id==e.target) {
+                colorTarget=true;auto &key=channel[i];
+                if(e.kind==editor::EditKind::Navigate) {colorCurve.time=key.tick;colorCurveSelection.Set(key.id);}
+                if(key.locked) break;
+                if(e.kind==editor::EditKind::Remove) {channel.erase(channel.begin()+i);colorCurveSelection.Clear();colorEdited=true;break;}
+                if(e.kind==editor::EditKind::Duplicate) {auto copy=key;copy.id=nextId++;copy.tick=e.proposed.first;copy.value=e.proposed.x;channel.push_back(copy);colorEdited=true;break;}
+                if(e.kind==editor::EditKind::Keyframe || e.kind==editor::EditKind::KeyScale) {key.tick=e.proposed.first;key.value=e.proposed.x;colorEdited=true;}
+                if(e.kind==editor::EditKind::KeyInterpolation && e.proposed.x>=0 && e.proposed.x<3) {key.interpolation=static_cast<editor::Interpolation>(int(e.proposed.x));colorEdited=true;}
+                if(e.kind==editor::EditKind::KeyHandleMode && e.proposed.x>=0 && e.proposed.x<5) {key.handles=static_cast<editor::HandleMode>(int(e.proposed.x));colorEdited=true;}
+                if(e.kind==editor::EditKind::Handle) {key=editor::MoveHandle(editor::ResolveHandles(channel,i),e.original.offset<0,{e.proposed.x,e.proposed.y});colorEdited=true;}
+                break;
+            }
+            if(colorEdited) std::sort(channel.begin(),channel.end(),[](const auto &a,const auto &b){return a.tick!=b.tick?a.tick<b.tick:a.id<b.id;});
+        }
+        if(colorTarget) {if(colorEdited) {RebuildColorScopes();changed=true;}continue;}
+
         if (e.kind==editor::EditKind::Reorder) {
             auto from=std::find_if(animationStrips.begin(),animationStrips.end(),[&](const auto &strip){return strip.id==e.target;});
             auto to=std::find_if(animationStrips.begin(),animationStrips.end(),[&](const auto &strip){return strip.id==e.proposed.parent;});
@@ -1398,6 +1474,16 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
                 ImGui::PopID();
             }
             video::ColorControls("Grade",s.colors,s.colorIds,s.revision,s.colorState,s.events);
+            if(s.icons) {Icon(*s.icons,IconId::CurveEditor,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
+            ImGui::BeginDisabled(s.colorCurve.drag.active);
+            const char *channelsEn[]={"Red","Green","Blue"},*channelsJa[]={"赤","緑","青"};
+            if(ImGui::Combo(s.japanese?"色補正カーブ":"Color curves",&s.colorCurveChannel,s.japanese?channelsJa:channelsEn,3)) {
+                s.colorCurveSelection.Clear();s.colorCurve.activeChannel=s.colorCurveChannels[s.colorCurveChannel];s.colorCurve.fitRequested=true;
+            }
+            float input=static_cast<float>(editor::Seconds(s.colorCurve.time));
+            if(ImGui::SliderFloat(s.japanese?"入力値":"Input",&input,0,1)) s.colorCurve.time=editor::FromSeconds(input);
+            ImGui::EndDisabled();
+            editor::CurveEditor("color curve",ColorCurves(s),s.colorCurve,s.colorCurveSelection,s.events,theme,{0,180});
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Keyframes / Curves")) {

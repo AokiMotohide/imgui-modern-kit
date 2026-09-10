@@ -1758,6 +1758,14 @@ bool ColorPanel(const char *id, ColorValues &draft, const ColorValues &original,
     return changed;
 }
 }
+Rgba ApplyColorCurves(Rgba input,const ColorCurveSet &curves) {
+    auto evaluate=[](float value,std::span<const editor::Keyframe> keys) {
+        const double normalized=std::isfinite(value) ? std::clamp(double(value),0.,1.) : 0.;
+        const double result=keys.empty() ? normalized : editor::Evaluate(keys,editor::FromSeconds(normalized));
+        return std::isfinite(result) ? float(std::clamp(result,0.,1.)) : 0.f;
+    };
+    return {evaluate(input.r,curves.red),evaluate(input.g,curves.green),evaluate(input.b,curves.blue),input.a};
+}
 bool ColorControls(const char *id, ColorValues &draft) {
     const ColorValues original = draft;
     return ColorPanel(id,draft,original,{},0,nullptr,nullptr,{});

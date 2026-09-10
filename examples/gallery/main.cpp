@@ -647,6 +647,18 @@ int VerifyInspectorModel() {
         if (!ok) ++failures;
     };
     {
+        auto colorStorage=std::make_unique<gallery::EditorWorkspaces>();auto &color=*colorStorage;color.Initialize();
+        const auto id=color.colorCurveKeys[0][1].id;
+        const float before=color.pixels[32].r;
+        editor::Value value;value.first=editor::FromSeconds(.5);value.x=.8;
+        color.events.Push({id,color.revision,editor::Phase::Cancel,editor::EditKind::Keyframe,{},value});
+        color.ApplyEvents();check(color.pixels[32].r==before,"color curve Cancel preserves synthetic pixels");
+        color.events.Push({id,color.revision,editor::Phase::Commit,editor::EditKind::Keyframe,{},value});
+        color.ApplyEvents();check(color.colorCurveKeys[0][1].value==.8 && color.pixels[32].r>before+.2f,
+            "color curve Commit updates host keys and synthetic scope source");
+        check(color.pixels[32].g==0 && color.pixels[32].a==1,"red curve preserves other channels and alpha");
+    }
+    {
         auto affineStorage=std::make_unique<gallery::EditorWorkspaces>();auto &affine=*affineStorage;affine.Initialize();
         editor::Value value;value.x=2;value.y=3;value.z=4;value.affine={.2,.3,.4,.5,.6,.7};value.hasAffine=true;
         affine.events.Push({affine.objects[0].id,affine.revision,editor::Phase::Commit,editor::EditKind::Scale,{},value});

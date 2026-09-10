@@ -73,6 +73,7 @@ Color API inventory / 色操作API一覧:
 |---|---|
 | `ScopeBuffers::redWaveform/greenWaveform/blueWaveform` | Optional three `width * 256` spans; all-or-none / RGB binは3本一括指定 |
 | `ScopeImage(..., const Theme&, ImVec4 tint)` | Tinted CPU scope drawing, no texture ownership / 指定色でbin描画 |
+| `Rgba ApplyColorCurves(Rgba, const ColorCurveSet&)` | Sorted non-owning RGB key spans; normalized input maps to 0..TicksPerSecond, empty channel is identity, output clamped, alpha preserved / 時刻順の非所有RGBキー、正規化入力、空channelは恒等、出力制限、alpha保持 |
 | `bool ColorControls(const char*, ColorValues&)` | Host draft editing; compatible existing signature / 既存draft編集 |
 | `void ColorControls(const char*, const ColorValues&, const ColorPropertyIds&, uint64_t, ColorState&, EventBuffer&, const ColorLabels& = {})` | Immutable source and typed RGB/scalar transactions; six independent IDs / 不変sourceと明示IDのtransaction |
 
@@ -81,6 +82,14 @@ sliders. ColorState records current wheel centers/radius for host overlays and
 public-IO automation. Neither overload provides a color management pipeline.
 両overloadはthree-way wheelとlevel sliderを描画します。ColorStateの中心座標・半径はホストのoverlay・
 公開IO自動操作に使えます。色管理pipelineは含みません。
+
+Gallery Color uses the common CurveEditor with independent host-owned RGB keys,
+including interpolation and handles. Commit regenerates the synthetic ramp and
+scope bins; Cancel preserves them. This demonstrates curve evaluation on synthetic
+pixels, without a media decode or color management engine.
+GalleryのColorは共通CurveEditorでホスト所有のRGBキーを補間・handle付きで編集します。
+Commit時に合成ramp画像とscope binを再計算し、Cancelでは保持します。
+実メディアdecodeや色管理engineではなく、合成画素へのcurve適用例です。
 
 Audio API inventory / 音声操作API一覧:
 

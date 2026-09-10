@@ -124,6 +124,15 @@ struct EditorWorkspaces {
     std::array<video::Rgba, 4096> pixels{};
     video::ColorValues colors{};
     video::ColorState colorState;
+    std::array<std::vector<editor::Keyframe>,3> colorCurveKeys;
+    std::array<editor::StableId,3> colorCurveChannels{};
+    int colorCurveChannel=0;
+    editor::CurveState colorCurve;
+    std::array<editor::Transaction,64> colorCurveCompanions;
+    std::array<editor::StableId,64> colorCurveIds{};
+    editor::Selection colorCurveSelection{colorCurveIds};
+    std::vector<editor::Keyframe> colorCurvePreview,colorCurveSelected;
+    void RebuildColorScopes();
     video::ColorPropertyIds colorIds{910011, 910029, 910047, 910063, 910081, 910097};
     int videoPanel = -1, activeVideoPanel = 0;
     video::MonitorMetadataPreset monitorMetadata=video::MonitorMetadataPreset::Clip;
