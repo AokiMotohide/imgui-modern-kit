@@ -756,14 +756,14 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(point.id)));
                     ImGui::InvisibleButton("envelope",{10,10});const bool hovered=ImGui::IsItemHovered();
                     if (ImGui::BeginPopupContextItem("envelope-actions")) {
-                        if (ImGui::MenuItem("Remove envelope point",nullptr,false,!point.locked && !clip.locked && !track.locked && !s.envelopeDrag.active))
+                        if (ImGui::MenuItem(s.labels.removeEnvelope,nullptr,false,!point.locked && !clip.locked && !track.locked && !s.envelopeDrag.active))
                             EnvelopeAction(out,clip,p.revision,point.id,point.tick,point.gain,2);
                         ImGui::EndPopup();
                     }
                     ImGui::PopID();ImGui::PopID();ImGui::SetCursorScreenPos(cursor);ImGui::Dummy({0,0});
                     envelopeHit |= hovered;
                     if (hovered) {
-                        ImGui::SetTooltip("Volume envelope: %.2f",proposedPoint(point).gain);
+                        ImGui::SetTooltip("%s: %.2f",s.labels.envelope,proposedPoint(point).gain);
                         if (ImGui::IsMouseClicked(0) && !clip.locked && !track.locked && !point.locked &&
                             !s.drag.active && !s.keyDrag.active && !s.transitionDrag.active && !s.envelopeDrag.active) {
                             editor::Value original;original.first=point.tick;original.x=point.gain;original.parent=clip.id;
@@ -831,7 +831,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 }
                 keyHit |= hovered;
                 if (hovered) {
-                    ImGui::SetTooltip("Drag keyframe time");
+                    ImGui::SetTooltip("%s",s.labels.dragKey);
                     if (ImGui::IsMouseClicked(0) && !key.locked && !clip.locked && !track.locked &&
                         !s.keyDrag.active && !s.drag.active && !s.transitionDrag.active && !s.captionDrag.active) {
                         bool selected=true;
@@ -951,16 +951,16 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 s.hovered = clip.id;
                 if (!io.MouseDown[0]) {
                     ImGui::BeginTooltip();ImGui::TextUnformatted(clip.label);
-                    ImGui::Text("Duration: %s   Speed: %.3gx",duration,value.x);
-                    if (clip.linked) ImGui::Text("Linked: %llu",static_cast<unsigned long long>(clip.linked));
-                    if (clip.group) ImGui::Text("Group: %llu",static_cast<unsigned long long>(clip.group));
+                    ImGui::Text("%s: %s   %s: %.3gx",s.labels.duration,duration,s.labels.speed,value.x);
+                    if (clip.linked) ImGui::Text("%s: %llu",s.labels.linked,static_cast<unsigned long long>(clip.linked));
+                    if (clip.group) ImGui::Text("%s: %llu",s.labels.group,static_cast<unsigned long long>(clip.group));
                     if (clip.proxy) {
                         if (s.icons) {Icon(*s.icons,IconId::ProxyMedia,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
-                        ImGui::TextUnformatted("Proxy");
+                        ImGui::TextUnformatted(s.labels.proxy);
                     }
-                    if (clip.missing) ImGui::TextUnformatted("Missing media");
-                    if (clip.offline) ImGui::TextUnformatted("Offline media");
-                    if (track.locked || clip.locked) ImGui::TextUnformatted("Locked");
+                    if (clip.missing) ImGui::TextUnformatted(s.labels.missing);
+                    if (clip.offline) ImGui::TextUnformatted(s.labels.offline);
+                    if (track.locked || clip.locked) ImGui::TextUnformatted(s.labels.locked);
                     ImGui::EndTooltip();
                 }
             }
@@ -970,7 +970,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 ImGui::OpenPopup("transition-picker");
             }
             if (ImGui::BeginPopup("transition-picker")) {
-                if (track.kind==TrackKind::Audio && ImGui::MenuItem("Add envelope point",nullptr,false,!clip.locked && !track.locked && !s.envelopeDrag.active))
+                if (track.kind==TrackKind::Audio && ImGui::MenuItem(s.labels.addEnvelope,nullptr,false,!clip.locked && !track.locked && !s.envelopeDrag.active))
                     EnvelopeAction(out,clip,p.revision,clip.id,s.envelopeContextTick,EvaluateEnvelope(clip.envelope,s.envelopeContextTick),1);
                 const auto relationItem=[&](const char *label,int relation,bool enabled) {
                     if (s.icons) {

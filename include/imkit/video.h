@@ -140,6 +140,10 @@ struct TimelineLabels {
     const char *unlink="Unlink clip",*ungroup="Remove from group";
     const char *linkSelection="Link selected clips",*groupSelection="Group selected clips";
     TransitionLabels transitions;
+    const char *duration="Duration",*speed="Speed",*linked="Linked",*group="Group";
+    const char *proxy="Proxy",*missing="Missing media",*offline="Offline media",*locked="Locked";
+    const char *addEnvelope="Add envelope point",*removeEnvelope="Remove envelope point";
+    const char *envelope="Volume envelope",*dragKey="Drag keyframe time";
 };
 struct TimelineState {
     struct MemberDrag {

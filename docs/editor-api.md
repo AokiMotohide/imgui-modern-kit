@@ -485,3 +485,7 @@ component選択では所有objectのInspectorを表示し、表示制限は有�
 `MonitorControls(id, options, atlas, labels)` edits host-owned display options for safe area, guides, timecode, transform bounds, anchor and metadata preset. Atlas and UTF-8 labels are borrowed. `MonitorOptions::showAnchor` is optional: unset preserves the existing coupling to `transform`; an explicit bool controls anchor visibility independently. Gallery keeps separate Source/Program options and exposes controls in each monitor's context menu. No media state, texture or renderer is owned by this widget.
 
 MonitorControlsはホスト所有のセーフエリア・ガイド・timecode・変形枠・anchor・metadata設定を変更します。atlasとUTF-8ラベルは非所有です。MonitorOptions::showAnchorは未指定なら従来のtransform連動を維持し、bool指定時は独立して表示を制御します。GalleryはSource／Program別の設定を保持し、各Monitorのcontext menuへ公開部品を接続します。media状態・texture・rendererは所有しません。
+
+TimelineLabels also supplies borrowed UTF-8 clip metadata/status, envelope actions and key-drag tooltip labels. Host strings are passed as text arguments rather than printf formats. Gallery supplies Japanese translations.
+
+TimelineLabelsはclip情報・素材状態・envelope操作・keyドラッグのtooltipも非所有UTF-8で受け取ります。ホスト文字列はprintf形式ではなく文字列引数として扱い、Galleryは日本語訳を渡します。
