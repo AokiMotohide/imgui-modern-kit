@@ -114,6 +114,14 @@ int main() {
           outlineDraw->VtxBuffer.Size>beforeOutline,"transformed boundary outline is drawn");
     ImGui::End();
     ImGui::Render();
+    Transform cameraPose;cameraPose.translation={3,2,4};cameraPose.rotation={.2,.6,.8};
+    const auto posedCamera=CameraFromTransform(cameraPose);
+    const auto posedBasis=OrientationBasis(Orientation::View,{},posedCamera);
+    const auto localCameraBasis=OrientationBasis(Orientation::Local,cameraPose,{});
+    check(std::abs(posedBasis.y.x-localCameraBasis.y.x)<1e-9 && std::abs(posedBasis.y.y-localCameraBasis.y.y)<1e-9 &&
+          std::abs(posedBasis.y.z-localCameraBasis.y.z)<1e-9,"camera transform preserves rolled up vector");
+    const auto poseCenter=Project(posedCamera.target,posedCamera,{0,0},{800,600});
+    check(poseCenter.visible && poseCenter.screen.x==400 && poseCenter.screen.y==300,"camera pose looks through its world target");
     ViewportState navigation;
     navigation.camera.yaw=navigation.camera.pitch=0;
     navigation.camera.projection=Projection::Orthographic;

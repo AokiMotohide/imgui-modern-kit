@@ -435,3 +435,14 @@ before Begin; hosts should expose disjoint linked edit neighborhoods.
 関連Roll／Slideでは`MemberDrag`に隣接clipの元値とtransactionも保持します。
 全対象のBegin／終了容量と編集可否を確認し、すべてのpair／tripleへ共通deltaを適用します。
 隣接clipのpreview値もCommitと一致します。同じclipを二重に編集する競合はBegin前に拒否します。
+
+### Camera object pose / カメラオブジェクトの姿勢
+
+`CameraFromTransform` derives a camera from local +Z forward/+Y up, preserving lens
+settings and ignoring scale/shear. `Camera::roll` is shared by projection, view-oriented
+gizmos and both preview renderers. Gallery tracks its camera by StableId and applies
+committed and gizmo-preview poses to Camera View; a missing camera disables that choice.
+
+`CameraFromTransform`はローカル+Z前方・+Y上方の姿勢からカメラを求め、lens設定を保持します。
+scale／shearは視点へ適用しません。rollは投影・View orientation・両previewで共通です。
+GalleryはStableIdでカメラを保持し、確定値とgizmo previewをCamera Viewへ同期します。

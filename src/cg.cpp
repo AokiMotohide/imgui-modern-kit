@@ -64,10 +64,20 @@ Basis NormalBasis(const Transform &t) {
     if (determinant==0 || !std::isfinite(determinant)) return {{0,0,0},{0,0,0},{0,0,0}};
     return {Mul(x,1/determinant),Mul(y,1/determinant),Mul(z,1/determinant)};
 }
+Camera CameraFromTransform(const Transform &transform,Camera lens) {
+    const auto local=OrientationBasis(Orientation::Local,transform,{});
+    const auto back=Mul(local.z,-1);
+    lens.distance=std::max(.001,lens.distance);
+    lens.target=Add(transform.translation,Mul(local.z,lens.distance));
+    lens.yaw=std::atan2(back.x,back.z);lens.pitch=std::asin(std::clamp(back.y,-1.,1.));lens.roll=0;
+    const auto base=OrientationBasis(Orientation::View,{},lens);
+    const auto right=Mul(local.x,-1);
+    lens.roll=std::atan2(Dot(right,base.y),Dot(right,base.x));
+    return lens;
+}
 ProjectionResult Project(Vec3 world, const Camera &c, ImVec2 origin, ImVec2 size) {
-    Vec3 right{std::cos(c.yaw), 0, -std::sin(c.yaw)},
-        up{-std::sin(c.yaw) * std::sin(c.pitch), std::cos(c.pitch), -std::cos(c.yaw) * std::sin(c.pitch)};
-    Vec3 forward{std::sin(c.yaw) * std::cos(c.pitch), std::sin(c.pitch), std::cos(c.yaw) * std::cos(c.pitch)};
+    const auto basis=OrientationBasis(Orientation::View,{},c);
+    const auto right=basis.x,up=basis.y,forward=basis.z;
     Vec3 relative = Add(world, Mul(c.target, -1));
     double z = c.distance - Dot(relative, forward);
     if (size.x <= 0 || size.y <= 0 || z <= .001)
@@ -163,12 +173,13 @@ Basis OrientationBasis(Orientation orientation, const Transform &object, const C
         return parent;
     if (orientation == Orientation::Custom)
         return custom;
-    if (orientation == Orientation::View)
-        return {{std::cos(camera.yaw), 0, -std::sin(camera.yaw)},
-                {-std::sin(camera.yaw) * std::sin(camera.pitch), std::cos(camera.pitch),
-                 -std::cos(camera.yaw) * std::sin(camera.pitch)},
-                {std::sin(camera.yaw) * std::cos(camera.pitch), std::sin(camera.pitch),
-                 std::cos(camera.yaw) * std::cos(camera.pitch)}};
+    if (orientation == Orientation::View) {
+        const Vec3 right{std::cos(camera.yaw),0,-std::sin(camera.yaw)};
+        const Vec3 up{-std::sin(camera.yaw)*std::sin(camera.pitch),std::cos(camera.pitch),-std::cos(camera.yaw)*std::sin(camera.pitch)};
+        return {Add(Mul(right,std::cos(camera.roll)),Mul(up,std::sin(camera.roll))),
+                Add(Mul(up,std::cos(camera.roll)),Mul(right,-std::sin(camera.roll))),
+                {std::sin(camera.yaw)*std::cos(camera.pitch),std::sin(camera.pitch),std::cos(camera.yaw)*std::cos(camera.pitch)}};
+    }
     if (orientation == Orientation::World)
         return {};
     auto rotate = [&](Vec3 p) {

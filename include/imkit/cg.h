@@ -24,7 +24,9 @@ struct Camera {
     Vec3 target{};
     double yaw = .65, pitch = .4, distance = 6, verticalFov = .8, orthographicHeight = 5;
     Projection projection = Projection::Perspective;
+    double roll=0;
 };
+Camera CameraFromTransform(const Transform &transform,Camera lens={}); // Local +Z forward, +Y up; ignores scale/shear.
 Basis OrientationBasis(Orientation orientation, const Transform &object, const Camera &camera,
                        const Basis &parent = {}, const Basis &custom = {});
 struct ProjectionResult {

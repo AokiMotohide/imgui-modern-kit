@@ -382,6 +382,8 @@ void EditorWorkspaces::Initialize() {
         else preview::CameraPrimitive(geometry.vertices,geometry.indices);
         components.push_back({{nextId++,objects[i].id,"Helper renderer","Host-owned camera/light preview mesh.",true},false});
     }
+    cameraObject=objects[3].id;
+    objects[3].transform.translation={3,2,4};objects[3].transform.rotation={std::atan2(2.,5.),std::atan2(-3.,-4.),0};
     objects[1].transform.scale = {.7, .7, .7};
     objectSelection.Set(objects[1].id);
     const char *assetNames[] = {"Studio take", "Ambience",     "Title",      "Surface",
@@ -404,7 +406,15 @@ void EditorWorkspaces::Initialize() {
     video::BuildScopes(pixels, 64, 64, {red, green, blue, luma, scopeWave, scopeVector,
                                       scopeRGB[0], scopeRGB[1], scopeRGB[2]});
 }
+void EditorWorkspaces::SyncSceneCamera() {
+    const auto object=std::find_if(objects.begin(),objects.end(),[&](const auto &o){return o.id==cameraObject;});
+    if (object==objects.end()) {viewport.cameraView=nullptr;return;}
+    preview::Mesh pose;pose.id=object->id;pose.transform=object->transform;ApplyGizmoPreview(pose,viewport);
+    sceneCamera=cg::CameraFromTransform(pose.transform,sceneCamera);viewport.cameraView=&sceneCamera;
+    if (viewport.camera.projection==cg::Projection::Camera) {viewport.camera=sceneCamera;viewport.camera.projection=cg::Projection::Camera;}
+}
 void EditorWorkspaces::RenderPreview() {
+    if (initialized) SyncSceneCamera();
     if (!initialized || !previewRenderer.Initialized())
         return;
     if (timeline.time.playing) {
@@ -1403,6 +1413,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
             s.cursorPivot={cursor[0],cursor[1],cursor[2]};
         ImGui::EndDisabled();
     }
+    s.SyncSceneCamera();
     auto view = cg::BeginViewport(
         "Scene", s.viewport,
         s.useGL ? ImTextureRef(static_cast<ImTextureID>(s.previewRenderer.Texture())) : ImTextureRef{},
