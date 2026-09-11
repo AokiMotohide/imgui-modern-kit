@@ -149,7 +149,7 @@ WindowFrameResult DrawWindowFrame(const WindowFrameStyle& style, const WindowFra
                                   const WindowFrameLayout& layout, const WindowFrameState& state) {
     WindowFrameResult result{layout, state.pendingEvent};
     if (layout.titleBar.Height() <= 0) return result;
-    ImDrawList* draw = ImGui::GetForegroundDrawList();
+    ImDrawList* draw = ImGui::GetForegroundDrawList(ImGui::GetMainViewport());
     draw->AddRectFilled(layout.titleBar.min, layout.titleBar.max,
                         Color(state.active ? style.activeBackground : style.inactiveBackground));
     const float border = std::max(0.f, style.metrics.borderWidth * layout.scale);
