@@ -31,3 +31,5 @@ Fonts in `FontSet` are non-owning. Load glyphs into the host atlas before the fr
 ## Scale and scope
 
 `ApplyTheme(theme, scale)` derives a fresh style from unscaled metrics, so repeated calls do not compound dimensions. `ThemeScope` restores the previous style and font on destruction and supports nesting on the same live context.
+
+The shared application-scale contract is 50% through 250%, with 125% as the default. `ThemeScaleMinimum`, `ThemeScaleDefault`, and `ThemeScaleMaximum` expose those values to hosts. Omitting the scale argument from `ApplyTheme` or `ThemeScope` uses the 125% default; monitor DPI adaptation remains host-owned.

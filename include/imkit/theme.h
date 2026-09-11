@@ -20,6 +20,9 @@ struct ThemePresetInfo {
 enum class ContrastMode { Standard, HighContrast };
 enum class Density { Compact, Comfortable, Touch };
 enum class Easing { Linear, EaseOut, EaseInOut };
+inline constexpr float ThemeScaleDefault = 1.25f;
+inline constexpr float ThemeScaleMinimum = 0.50f;
+inline constexpr float ThemeScaleMaximum = 2.50f;
 struct Typography {
     float caption=12, body=14, label=14, heading=18, title=26, monospace=13;
 };
@@ -90,12 +93,12 @@ bool ValidateContrast(const Theme& theme);
 // Explicitly updates accent, onAccent, focus and selection only.
 void SetAccent(Theme &theme, ImVec4 accent);
 // Call outside Begin/End windows, before NewFrame. Does not load or own fonts.
-void ApplyTheme(const Theme &theme, float scale = 1.0f);
+void ApplyTheme(const Theme &theme, float scale = ThemeScaleDefault);
 // Use within a frame, before Begin or around a group of widgets. Restore on the
 // same live context; scopes must be destroyed before the host destroys it.
 class ThemeScope {
   public:
-    explicit ThemeScope(const Theme &theme, float scale = 1.0f);
+    explicit ThemeScope(const Theme &theme, float scale = ThemeScaleDefault);
     ~ThemeScope();
     ThemeScope(const ThemeScope &) = delete;
     ThemeScope &operator=(const ThemeScope &) = delete;

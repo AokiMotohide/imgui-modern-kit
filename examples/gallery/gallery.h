@@ -24,7 +24,7 @@ struct GalleryState {
     AnimationState animation;
     int page = -1;
     int presetIndex = 0, presetFilter = 0, copyClicks = 0;
-    float scale = 1;
+    float scale = ThemeScaleDefault;
     float windowFrameHeight = 0;
     WindowFramePreset framePreset = WindowFramePreset::Studio;
     std::array<WindowFrameStyle, 4> framePresetStyles{

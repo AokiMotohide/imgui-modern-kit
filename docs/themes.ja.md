@@ -31,3 +31,5 @@ auto theme = imkit::MakeTheme(imkit::ThemePreset::Forest);
 ## 倍率とscope
 
 `ApplyTheme(theme, scale)`は未拡大metricsから毎回styleを作るため、繰り返し適用しても寸法は累積しません。`ThemeScope`は同じ生存中Context上で入れ子にでき、破棄時にstyleとfontを復元します。
+
+共通のアプリ倍率は50%～250%、既定値は125%です。ホストは`ThemeScaleMinimum`、`ThemeScaleDefault`、`ThemeScaleMaximum`で同じ値を参照できます。`ApplyTheme`または`ThemeScope`で倍率を省略すると125%を使い、monitor DPIへの追従は引き続きホストが担います。
