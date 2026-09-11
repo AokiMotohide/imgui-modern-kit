@@ -10,7 +10,7 @@
 
 ## Theme・フォント・倍率
 
-`MakePrecisionTheme(Light/Dark)`が採用デザインを生成します。`ApplyTheme(theme, scale)`はNewFrame前に適用し、未拡大tokenからstyleを作るため倍率が累積しません。`io.FontDefault`は変更しません。フレーム内の一時適用は`ThemeScope`を使い、入れ子終了時にstyle/fontを復元します。Beginより前、または対象widgetより前に作成し、同じ生存中Contextで破棄してください。
+`MakePrecisionTheme(Light/Dark)`が採用デザインを生成します。`ApplyTheme(theme, scale)`はNewFrame前に適用し、未拡大tokenからstyleを作るため倍率が累積しません。既定倍率は125%、ホストが編集できる共通範囲は50%～250%です。`io.FontDefault`は変更しません。フレーム内の一時適用は`ThemeScope`を使い、入れ子終了時にstyle/fontを復元します。Beginより前、または対象widgetより前に作成し、同じ生存中Contextで破棄してください。
 
 ```cpp
 auto theme = imkit::MakePrecisionTheme(imkit::ColorScheme::Light);

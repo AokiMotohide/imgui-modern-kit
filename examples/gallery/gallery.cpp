@@ -558,7 +558,9 @@ void Show(GalleryState &s) {
         if(Combo("Density",&s.design.density,densities,3)) SetDensity(s.theme,static_cast<Density>(s.design.density));
         const char* contrasts[]={"Standard","High contrast"};
         if(Combo("Contrast",&s.design.contrast,contrasts,2)) { auto fonts=s.theme.fonts; s.theme=MakeTheme(s.theme.scheme,static_cast<ContrastMode>(s.design.contrast),s.theme.density); s.theme.fonts=fonts; }
-        Checkbox("Reduced motion",&s.theme.motion.reducedMotion); SliderFloat("Scale",&s.scale,1,2,"%.2f"); EndPopup();
+        Checkbox("Reduced motion",&s.theme.motion.reducedMotion);
+        SliderFloat("Scale",&s.scale,ThemeScaleMinimum,ThemeScaleMaximum,"%.2f",ImGuiSliderFlags_AlwaysClamp);
+        EndPopup();
     }
     Spacing();
     BeginChild("Component panel", {s.page >= 6 ? GetContentRegionAvail().x

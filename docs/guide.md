@@ -10,7 +10,7 @@ The extension layers are `theme.h` (copyable semantic values), `native.h` (exact
 
 ## Theme, fonts and scale
 
-`MakePrecisionTheme(Light/Dark)` supplies the selected design. `ApplyTheme(theme, scale)` replaces style from unscaled tokens before NewFrame; applying twice does not multiply sizes. It does not change `io.FontDefault`. `ThemeScope` is for a frame-local region, restores style and font on destruction, and supports nesting. Create it before Begin or before the widgets that need the theme. Destroy it on the same live context, before context destruction.
+`MakePrecisionTheme(Light/Dark)` supplies the selected design. `ApplyTheme(theme, scale)` replaces style from unscaled tokens before NewFrame; applying twice does not multiply sizes. The default scale is 125%, and the supported host control range is 50% through 250%. It does not change `io.FontDefault`. `ThemeScope` is for a frame-local region, restores style and font on destruction, and supports nesting. Create it before Begin or before the widgets that need the theme. Destroy it on the same live context, before context destruction.
 
 ```cpp
 auto theme = imkit::MakePrecisionTheme(imkit::ColorScheme::Light);

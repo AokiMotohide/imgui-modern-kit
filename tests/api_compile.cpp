@@ -1172,5 +1172,10 @@ decltype(&reference::overload_393) volatile api_393 =
 int main() {
     const auto presets = imkit::ThemePresets();
     const auto theme = imkit::MakeTheme(imkit::ThemePreset::Ocean);
-    return presets.size() == 12 && theme.scheme == imkit::ColorScheme::Dark ? 0 : 1;
+    return presets.size() == 12 && theme.scheme == imkit::ColorScheme::Dark &&
+                   imkit::ThemeScaleMinimum == .5f &&
+                   imkit::ThemeScaleDefault == 1.25f &&
+                   imkit::ThemeScaleMaximum == 2.5f
+               ? 0
+               : 1;
 }
