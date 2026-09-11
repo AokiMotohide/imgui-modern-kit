@@ -20,6 +20,13 @@ ImVec4 Color(FeedbackKind kind,ComponentOptions o) {
     }
     return ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
 }
+ImVec4 Mix(ImVec4 a,ImVec4 b,float t) {
+    return {a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,a.z+(b.z-a.z)*t,a.w+(b.w-a.w)*t};
+}
+ImVec4 Accent(const StepGroup& group,ComponentOptions o) {
+    if(group.accent.w>0) return group.accent;
+    return o.theme?o.theme->semantic.accent:ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
+}
 bool Annotate(const char* label,const char* description,accessibility::SemanticRole role,
               accessibility::SemanticAction action,bool selected,ComponentOptions o,bool mixed=false) {
     if(!o.accessibility) return false;
@@ -84,18 +91,59 @@ StableId GroupedStepNavigator(const char* id, std::span<const StepGroup> groups,
         bool active=false;
         for(auto i=group.first;i<end;++i) active|=items[i].id==current;
         const auto& first=items[group.first];
+        const auto accent=Accent(group,o);
+        const auto base=o.theme?o.theme->semantic.control.rest:ImGui::GetStyleColorVec4(ImGuiCol_Button);
+        const auto fill=Mix(base,accent,active?.34f:.13f);
         ImGui::SetCursorPos({x+cell*group.first,y});Push(group.id);
         ImGui::BeginDisabled(!first.id || first.disabled || !first.available);
+        ImGui::PushStyleColor(ImGuiCol_Button,fill);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered,Mix(fill,accent,.24f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,Mix(fill,accent,.38f));
+        ImGui::PushStyleColor(ImGuiCol_CheckMark,accent);
         if(LabeledButton(group.label,"",{std::max(1.f,cell*(end-group.first)-gap),h},active,o,accessibility::SemanticRole::Tab) && !active)
             result=first.id;
+        const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
+        if(active) ImGui::GetWindowDrawList()->AddLine({a.x,b.y-1.f},{b.x,b.y-1.f},ImGui::GetColorU32(accent),3.f);
+        ImGui::PopStyleColor(4);
         ImGui::EndDisabled();Pop();
     }
     ImGui::PopID();ImGui::PushID("items");
+    ImVec2 previousMax{};
     for(std::size_t i=0;i<items.size();++i) {
         const auto& item=items[i];Push(item.id);
+        ImVec4 accent=o.theme?o.theme->semantic.accent:ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
+        for(const auto& group:groups) if(i>=group.first && i<group.first+group.count) {accent=Accent(group,o);break;}
+        const bool currentStep=item.id==current;
+        const auto base=o.theme?o.theme->semantic.control.rest:ImGui::GetStyleColorVec4(ImGuiCol_Button);
+        const auto fill=currentStep?Mix(base,accent,.32f):base;
         ImGui::SetCursorPos({x+cell*i,y+h+ImGui::GetStyle().ItemSpacing.y});
         ImGui::BeginDisabled(!item.id || item.disabled || !item.available);
-        if(LabeledButton(item.label,item.description,{std::max(1.f,cell-gap),h},item.id==current,o,accessibility::SemanticRole::Tab)) result=item.id;
+        ImGui::PushStyleColor(ImGuiCol_Button,fill);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered,Mix(fill,accent,.18f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,Mix(fill,accent,.30f));
+        ImGui::PushStyleColor(ImGuiCol_CheckMark,accent);
+        if(LabeledButton(item.label,item.description,{std::max(1.f,cell-gap),h},currentStep,o,accessibility::SemanticRole::Tab)) result=item.id;
+        ImGui::PopStyleColor(4);
+        const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
+        auto* draw=ImGui::GetWindowDrawList();
+        if(i>0) {
+            const auto lineColor=items[i-1].completed?accent:(o.theme?o.theme->semantic.border:ImGui::GetStyleColorVec4(ImGuiCol_Border));
+            draw->AddLine({previousMax.x,(a.y+b.y)*.5f},{a.x,(a.y+b.y)*.5f},ImGui::GetColorU32(lineColor),items[i-1].completed?3.f:1.f);
+        }
+        const float marker=std::max(4.f,ImGui::GetFontSize()*.28f);
+        const ImVec2 center{b.x-marker-3.f,a.y+marker+3.f};
+        if(item.completed) {
+            draw->AddCircleFilled(center,marker,ImGui::GetColorU32(accent));
+            const auto check=o.theme?o.theme->semantic.onAccent:ImVec4(1,1,1,1);
+            draw->AddLine({center.x-marker*.55f,center.y},{center.x-marker*.10f,center.y+marker*.45f},ImGui::GetColorU32(check),1.5f);
+            draw->AddLine({center.x-marker*.10f,center.y+marker*.45f},{center.x+marker*.65f,center.y-marker*.45f},ImGui::GetColorU32(check),1.5f);
+        } else if(item.status==FeedbackKind::Warning || item.status==FeedbackKind::Error) {
+            const auto warning=Color(item.status,o);
+            const ImVec2 p0{center.x,center.y-marker},p1{center.x-marker,center.y+marker},p2{center.x+marker,center.y+marker};
+            draw->AddTriangleFilled(p0,p1,p2,ImGui::GetColorU32(warning));
+            draw->AddLine({center.x,center.y-marker*.35f},{center.x,center.y+marker*.25f},ImGui::GetColorU32(ImGuiCol_Text),1.f);
+        }
+        previousMax=b;
         ImGui::EndDisabled();Pop();
     }
     ImGui::PopID();
@@ -105,15 +153,34 @@ StableId GroupedStepNavigator(const char* id, std::span<const StepGroup> groups,
 }
 StableId IconToolbar(const char* id,const IconAtlas& atlas,
     std::span<const IconToolbarItem> items,ComponentOptions o) {
+    return IconToolbar(id,atlas,items,IconToolbarOptions{},o);
+}
+StableId IconToolbar(const char* id,const IconAtlas& atlas,
+    std::span<const IconToolbarItem> items,IconToolbarOptions layout,ComponentOptions o) {
     ImGui::PushID(id);StableId result=0;
     const float start=ImGui::GetCursorPosX(), right=start+ImGui::GetContentRegionAvail().x;
     const float size=std::max(12.f,ImGui::GetFontSize());
-    const float button=size+2*ImGui::GetStyle().FramePadding.x;
     bool first=true;
     for(const auto& item:items) {
-        if(!first && ImGui::GetItemRectMax().x-ImGui::GetWindowPos().x+ImGui::GetScrollX()+ImGui::GetStyle().ItemSpacing.x+button<=right) ImGui::SameLine();
+        const auto text=std::string_view(Safe(item.label));
+        const auto visible=text.substr(0,text.find("##"));
+        const float labelWidth=layout.showLabels && !visible.empty()?ImGui::CalcTextSize(visible.data(),visible.data()+visible.size()).x+ImGui::GetStyle().ItemInnerSpacing.x:0.f;
+        const float button=size+labelWidth+2*ImGui::GetStyle().FramePadding.x;
+        const float nextX=ImGui::GetItemRectMax().x-ImGui::GetWindowPos().x+ImGui::GetScrollX()+ImGui::GetStyle().ItemSpacing.x+button;
+        if(!first && (!layout.wrap || nextX<=right)) ImGui::SameLine();
         first=false;Push(item.id);ImGui::BeginDisabled(item.disabled || !item.id);
-        const bool pressed=IconButton("action",atlas,item.icon,Safe(item.label),{size});
+        if(item.selected) {
+            const auto accent=o.theme?o.theme->semantic.accent:ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
+            const auto base=o.theme?o.theme->semantic.control.rest:ImGui::GetStyleColorVec4(ImGuiCol_Button);
+            const auto fill=Mix(base,accent,.32f);
+            ImGui::PushStyleColor(ImGuiCol_Button,fill);
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered,Mix(fill,accent,.18f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive,Mix(fill,accent,.30f));
+        }
+        const bool pressed=layout.showLabels
+            ?IconLabelButton("action",atlas,item.icon,Safe(item.label),{size})
+            :IconButton("action",atlas,item.icon,Safe(item.label),{size});
+        if(item.selected) ImGui::PopStyleColor(3);
         if(Annotate(item.label,item.description,accessibility::SemanticRole::Button,accessibility::SemanticAction::Press,item.selected,o,item.mixed) || pressed) result=item.id;
         auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
         auto* draw=ImGui::GetWindowDrawList();

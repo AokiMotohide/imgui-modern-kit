@@ -37,6 +37,7 @@ theme = saved; // ホストが保持・復元。自動永続化は行わない
 | API | 契約 |
 |---|---|
 | `ActionButton` | primary/secondary/ghost/destructive。配色とmotionは`ComponentOptions{&theme, &animation}`で明示 |
+| `IconActionButton` | 単独操作向けのアイコン＋短いラベル。説明、無効理由、操作種別を指定 |
 | `IconButton` | 標準arrow buttonの操作と説明tooltip |
 | `Toggle` / `Switch` | checkboxの入力・keyboard契約を維持し、switch trackを描画 |
 | `IndeterminateCheckbox` | Mixedから操作するとCheckedへ。その後は通常の切替 |

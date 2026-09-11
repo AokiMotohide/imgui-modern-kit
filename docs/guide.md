@@ -38,6 +38,7 @@ The catalog uses Inter 4.1 first, then Noto Sans JP 2.004 Regular in merge mode 
 | API | Contract |
 |---|---|
 | `ActionButton` | Primary/secondary/ghost/destructive; pass `ComponentOptions{&theme, &animation}` for explicit palette/motion |
+| `IconActionButton` | A single icon plus short label, description/disabled reason and action variant |
 | `IconButton` | Native arrow-button semantics with a tooltip label |
 | `Toggle` / `Switch` | Native checkbox hit testing, editing and keyboard operation; drawn switch track |
 | `IndeterminateCheckbox` | Mixed activates to checked; checked/unchecked toggle normally |

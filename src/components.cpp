@@ -1,9 +1,13 @@
 #include <imkit/components.h>
 #include <imkit/widgets.h>
 #include <algorithm>
+#include <array>
 #include <cctype>
+#include <cmath>
+#include <cstdio>
 #include <cstring>
 #include <string>
+#include <string_view>
 
 namespace imkit {
 namespace {
@@ -94,6 +98,80 @@ bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, 
             ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
                                                 ImGui::GetColorU32(color), style.FrameRounding, 0,
                                                 t ? t->metrics.focusWidth : 1.5f);
+    }
+    if (variant == ActionVariant::Ghost)
+        ImGui::PopStyleVar();
+    ImGui::PopStyleColor(4);
+    return pressed;
+}
+void DrawAtlasIcon(const IconAtlas& atlas,IconId icon,ImVec2 position,float size) {
+    const auto scale=ImGui::GetIO().DisplayFramebufferScale;
+    const float pixels=size*std::max({1.f,scale.x,scale.y});
+    int level=5;
+    for(int i=0;i<5;++i) if(IconPixelSizes[i]>=pixels) {level=i;break;}
+    const auto texture=atlas.textures[static_cast<std::size_t>(level)];
+    if(!GetIconInfo(icon) || texture.GetTexID()==ImTextureID{}) return;
+    const auto region=GetIconRegion(icon,IconPixelSizes[static_cast<std::size_t>(level)]);
+    ImGui::GetWindowDrawList()->AddImage(texture,position,{position.x+size,position.y+size},
+                                         region.uv0,region.uv1,ImGui::GetColorU32(ImGuiCol_Text));
+}
+bool IconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
+                      const char *label, const char *description, ActionVariant variant,
+                      ComponentOptions options) {
+    const auto *t = options.theme;
+    auto &style = ImGui::GetStyle();
+    ImVec4 fill = style.Colors[ImGuiCol_Button], text = style.Colors[ImGuiCol_Text];
+    if (variant == ActionVariant::Primary) {
+        fill = Accent(t);
+        text = t ? t->colors.onAccent : ImVec4(1, 1, 1, 1);
+    }
+    if (variant == ActionVariant::Destructive) {
+        fill = t ? t->colors.destructive : ImVec4(.68f, .20f, .25f, 1);
+        text = t ? t->colors.onDestructive : ImVec4(1, 1, 1, 1);
+    }
+    if (variant == ActionVariant::Ghost)
+        fill.w = 0;
+    ImGui::PushStyleColor(ImGuiCol_Button, fill);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Mix(fill, Accent(t), .18f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, Mix(fill, Accent(t), .32f));
+    ImGui::PushStyleColor(ImGuiCol_Text, text);
+    if (variant == ActionVariant::Ghost)
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
+    const float iconSize = std::max(12.f, ImGui::GetFontSize());
+    const std::string_view fullLabel=label?label:"";
+    const auto visibleLabel=fullLabel.substr(0,fullLabel.find("##"));
+    const auto labelSize=ImGui::CalcTextSize(visibleLabel.data(),visibleLabel.data()+visibleLabel.size());
+    const float gap=visibleLabel.empty()?0.f:style.ItemInnerSpacing.x;
+    const ImVec2 extent{iconSize+gap+labelSize.x+2*style.FramePadding.x,
+                        std::max(iconSize,labelSize.y)+2*style.FramePadding.y};
+    std::array<char,1024> widgetLabel{};
+    std::snprintf(widgetLabel.data(),widgetLabel.size(),"%.*s##%s",
+                  static_cast<int>(std::min<std::size_t>(visibleLabel.size(),900)),
+                  visibleLabel.data(),id?id:"");
+    ImGui::PushStyleColor(ImGuiCol_Text,ImVec4(0,0,0,0));
+    const bool pressedByWidget=ImGui::Button(widgetLabel.data(),extent);
+    ImGui::PopStyleColor();
+    if(ImGui::IsItemFocused()) ImGui::SetNavCursorVisible(true);
+    const auto minimum=ImGui::GetItemRectMin();
+    DrawAtlasIcon(atlas,icon,{minimum.x+style.FramePadding.x,
+                             minimum.y+(extent.y-iconSize)*.5f},iconSize);
+    ImGui::GetWindowDrawList()->AddText(
+        {minimum.x+style.FramePadding.x+iconSize+gap,
+         minimum.y+(extent.y-labelSize.y)*.5f},ImGui::GetColorU32(ImGuiCol_Text),
+        visibleLabel.data(),visibleLabel.data()+visibleLabel.size());
+    bool pressed = SemanticItem(options, label, accessibility::SemanticRole::Button,
+                                accessibility::SemanticAction::Press) || pressedByWidget;
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) || ImGui::IsItemFocused()) {
+        ImGui::BeginTooltip();
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 32.f);
+        ImGui::TextUnformatted(label ? label : "");
+        const bool disabled = (ImGui::GetItemFlags() & ImGuiItemFlags_Disabled) != 0;
+        if (disabled && options.disabledReason && *options.disabledReason)
+            ImGui::TextDisabled("%s", options.disabledReason);
+        else if (description && *description)
+            ImGui::TextUnformatted(description);
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
     }
     if (variant == ActionVariant::Ghost)
         ImGui::PopStyleVar();

@@ -27,7 +27,13 @@ StableId StepNavigator(const char* id, std::span<const StepItem> items, StableId
 StableId NavigationRail(const char* id, std::span<const StepItem> items, StableId current,
                         StepNavigatorState& state, ImVec2 size={}, ComponentOptions options={});
 // Groups reference contiguous item ranges; selecting the current group retains current.
-struct StepGroup { StableId id=0; const char* label=""; std::size_t first=0, count=0; };
+struct StepGroup {
+    StableId id=0;
+    const char* label="";
+    std::size_t first=0, count=0;
+    // Alpha <= 0 uses the active theme accent.
+    ImVec4 accent{};
+};
 StableId GroupedStepNavigator(const char* id, std::span<const StepGroup> groups,
     std::span<const StepItem> items, StableId current, ComponentOptions options={});
 struct IconToolbarItem {
@@ -37,9 +43,16 @@ struct IconToolbarItem {
     const char* description="";
     bool selected=false, mixed=false, disabled=false;
 };
+struct IconToolbarOptions {
+    bool showLabels=false;
+    bool wrap=true;
+};
 // Wrapping is based on actual available width. The host owns textures and state.
 StableId IconToolbar(const char* id, const IconAtlas& atlas,
     std::span<const IconToolbarItem> items, ComponentOptions options={});
+StableId IconToolbar(const char* id, const IconAtlas& atlas,
+    std::span<const IconToolbarItem> items, IconToolbarOptions layout,
+    ComponentOptions options={});
 bool FilterChip(const char* id, const char* label, bool selected, ComponentOptions options={});
 
 struct FeedbackView {

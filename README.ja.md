@@ -141,4 +141,4 @@ ctest --test-dir build/windows-debug -C Debug -R "imkit.(theme|workflow)" --outp
 
 ImKitのコードは[MIT](LICENSE)です。Dear ImGuiとGallery専用依存には個別のライセンスがあります。任意fontの出典、生成iconのprovenance、固定revision、file hashは[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)に記録しています。参照したdesign projectとの提携・推奨関係は主張しません。
 
-GroupedStepNavigatorは選択可能な大分類と全工程を上下に表示します。IconToolbarは幅に合わせて折り返し、選択・混在・無効状態とホバー／フォーカス時の説明を表示します。いずれも状態とテクスチャを借用し、操作要求を返します。
+GroupedStepNavigatorは選択可能な大分類と全工程を上下に表示し、任意の分類アクセントと現在・完了・警告を別の形で示します。IconToolbarは既定のアイコンのみ表示に加え、短いラベルを残した折り返し表示を選べます。IconActionButtonは単独操作をアイコン、短いラベル、操作種別、説明で表示します。いずれも状態とテクスチャを借用し、操作要求を返します。
