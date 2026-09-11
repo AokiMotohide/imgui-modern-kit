@@ -6,6 +6,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include "gallery.h"
+#include "window_frame_win32.h"
 #include "../design_gallery/capture.h"
 #include <filesystem>
 #include <fstream>
@@ -25,6 +26,8 @@ const std::filesystem::path &NoCapturePath() {
 struct Host {
     GLFWwindow *window = nullptr;
     imkit::gallery::GalleryState s;
+    imkit::gallery::Win32WindowFrame windowFrame;
+    std::string windowTitle="ImKit Precision Layers";
     bool automated = false;
     ImGuiMemAllocFunc originalAlloc=nullptr;
     ImGuiMemFreeFunc originalFree=nullptr;
@@ -45,7 +48,13 @@ struct Host {
         if (input)
             input(io);
         ImGui::NewFrame();
+        if(windowFrame.Enabled()) s.windowFrameHeight=windowFrame.Layout().title.max.y;
         imkit::gallery::Show(s);
+        imkit::gallery::FrameAction frameAction=imkit::gallery::FrameAction::None;
+        if(windowFrame.Enabled()) {
+            const auto frame=imkit::gallery::DrawWindowFrame(s.theme,windowTitle,windowFrame.Layout(),windowFrame.State());
+            frameAction=frame.action;
+        }
         s.editors.RenderPreview();
         ImGui::Render();
         int w, h;
@@ -57,6 +66,7 @@ struct Host {
         if (!shot.empty())
             imkit::design::SaveBackbuffer(shot, w, h);
         glfwSwapBuffers(window);
+        windowFrame.Execute(frameAction);
     }
     void Settle(int n = 5) {
         while (n--)
@@ -1341,7 +1351,75 @@ int VerifyInspectorModel() {
     std::puts("Evidence: host model/event application; no native OS or GUI input.");
     return failures?1:0;
 }
+namespace {
+void VerifyWindowFrame(Host& h,const std::filesystem::path& out) {
+    using namespace imkit::gallery;
+    auto require=[](bool ok,const char* message) { if(!ok) throw std::runtime_error(message); };
+    require(h.windowFrame.Enabled(),"Modern frame did not attach");
+    h.Settle(2);
+    auto* font=h.s.fonts.regular;
+    require(font!=nullptr,"Frame font missing");
+    for(float scale:{1.f,1.5f,2.f}) {
+        const auto layout=LayoutWindowFrame(640*scale,scale);
+        require(layout.title.max.y==32*scale,"Frame height must follow DPI");
+        require(layout.buttons[0].min.x>layout.icon.max.x,"Frame regions overlap");
+        for(int i=0;i<2;++i) require(layout.buttons[i].max.x==layout.buttons[i+1].min.x,"Button gap");
+        const auto title=ElideWindowTitle("ModernKIT / 長い日本語タイトル / a very long project title",100*scale,font,13*scale);
+        require(title.ends_with("..."),"Long title must be elided");
+        require(font->CalcTextSizeA(13*scale,FLT_MAX,0,title.c_str()).x<=100*scale,"Title escaped available width");
+        require(ElideWindowTitle("Title",0,font,13*scale).empty(),"No space must produce no title");
+    }
+    HWND window=glfwGetWin32Window(h.window);
+    auto hit=[&](int x,int y) {
+        POINT p{x,y}; ClientToScreen(window,&p);
+        return SendMessageW(window,WM_NCHITTEST,0,MAKELPARAM(p.x,p.y));
+    };
+    auto layout=h.windowFrame.Layout();
+    require(hit(100,int(layout.title.max.y/2))==HTCAPTION,"Drag region hit test");
+    for(int i=0;i<3;++i) {
+        const auto& r=layout.buttons[i];
+        require(hit(int((r.min.x+r.max.x)/2),int((r.min.y+r.max.y)/2))==
+                (i==0?HTMINBUTTON:i==1?HTMAXBUTTON:HTCLOSE),"Caption button hit test");
+    }
+    require(hit(0,0)==HTTOPLEFT,"Resize corner hit test");
+    require(hit(100,int(layout.title.max.y)+30)==HTCLIENT,"Content must receive client input");
+    h.windowFrame.Execute(FrameAction::MaximizeRestore); h.Settle(2);
+    require(IsZoomed(window),"Maximize failed");
+    RECT client{};GetClientRect(window,&client);
+    POINT origin{};ClientToScreen(window,&origin);
+    MONITORINFO monitor{sizeof(MONITORINFO)};
+    GetMonitorInfoW(MonitorFromWindow(window,MONITOR_DEFAULTTONEAREST),&monitor);
+    require(origin.x>=monitor.rcWork.left && origin.y>=monitor.rcWork.top &&
+            origin.x+client.right<=monitor.rcWork.right && origin.y+client.bottom<=monitor.rcWork.bottom,
+            "Maximized content exceeds monitor work area");
+    h.windowFrame.Execute(FrameAction::MaximizeRestore);h.Settle(2);
+    require(!IsZoomed(window),"Restore failed");
+    h.windowFrame.Execute(FrameAction::Minimize);
+    require(IsIconic(window),"Minimize failed");
+    SendMessageW(window,WM_SYSCOMMAND,SC_RESTORE,0);h.Settle(2);
+    for(const auto& preset:imkit::ThemePresets()) {
+        h.s.theme=imkit::MakeTheme(preset.preset);
+        h.s.dark=preset.scheme==imkit::ColorScheme::Dark;
+        h.s.presetIndex=static_cast<int>(preset.preset);
+        h.Settle(2);
+        h.Frame({},out/("frame-"+std::string(preset.id)+".png"));
+    }
+    h.windowTitle="ModernKIT / 長い日本語タイトル / Very long project title for testing safe truncation without hiding window controls";
+    glfwSetWindowSize(h.window,640,480);h.Settle(2);
+    h.Frame({},out/"frame-long-title.png");
+    h.windowFrame.Execute(FrameAction::Close);
+    require(glfwWindowShouldClose(h.window),"Close must reach GLFW should-close path");
+    std::ofstream report(out/"window-frame-verification.txt");
+    report<<"PASS: DPI layout and UTF-8 elision at 100/150/200 percent; native hit tests; maximize/work area/restore/minimize; GLFW close; 12 theme backbuffers.\n"
+          <<"Actual window DPI: "<<GetDpiForWindow(window)<<"\n"
+          <<"Synthetic Win32 messages are not physical pointer/keyboard or cross-monitor DPI acceptance.\n";
+    std::puts("Window frame verification passed");
+}
+}
 int main(int argc, char **argv) {
+    int frameMode=-1;
+    bool verifyWindowFrame=false;
+    std::string windowTitle="ImKit Precision Layers";
     bool verifyWorkflow=false;
     bool captureDesign=false;
     bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false, benchmarkEditors = false, verifyMonitors = false, verifyTrackControls = false, verifyLinkedClips = false, verifyNormals = false;
@@ -1353,6 +1431,13 @@ int main(int argc, char **argv) {
     std::filesystem::path out = "out/catalog";
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
+        if(a=="--window-frame" && i+1<argc) {
+            const std::string mode=argv[++i];
+            if(mode!="modern" && mode!="native") return 2;
+            frameMode=mode=="modern"?1:0; continue;
+        }
+        if(a=="--window-title" && i+1<argc) {windowTitle=argv[++i];continue;}
+        if(a=="--verify-window-frame") {verifyWindowFrame=true;frameMode=1;continue;}
         if(a=="--verify-workflow") {verifyWorkflow=true;capture=true;continue;}
         if(a=="--capture-design-system") {captureDesign=true; capture=true; continue;}
         if (a == "--verify-timeline-model") return VerifyTimelineModel();
@@ -1420,12 +1505,14 @@ int main(int argc, char **argv) {
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_VISIBLE, capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls || verifyLinkedClips || verifyNormals ? GLFW_FALSE : GLFW_TRUE);
+    // Show only after the custom frame and first rendered frame are ready.
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
     auto hostStorage=std::make_unique<Host>();
     auto &h=*hostStorage;
     h.automated = capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls || verifyLinkedClips || verifyNormals;
-    h.window = glfwCreateWindow(captureWidth, captureHeight, "ImKit Precision Layers", nullptr, nullptr);
+    h.windowTitle=windowTitle;
+    h.window = glfwCreateWindow(captureWidth, captureHeight,windowTitle.c_str(), nullptr, nullptr);
     if (!h.window) {
         glfwTerminate();
         CoUninitialize();
@@ -1443,6 +1530,13 @@ int main(int argc, char **argv) {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable;
     bool backend = ImGui_ImplGlfw_InitForOpenGL(h.window, true),
          renderer = backend && ImGui_ImplOpenGL3_Init("#version 130");
+    if((frameMode==1 || (frameMode<0 && !h.automated)) &&
+       !h.windowFrame.Attach(glfwGetWin32Window(h.window)))
+        std::fprintf(stderr,"Catalog: Modern frame attachment failed; using native frame.\n");
+    if(!h.automated) {
+        h.s.theme=imkit::MakeTheme(imkit::ThemePreset::Graphite);
+        h.s.presetIndex=2; h.s.dark=true;
+    }
     int result = 0;
     GLuint texture = 0;
     std::array<GLuint, 7> iconTextures{};
@@ -1545,7 +1639,11 @@ int main(int argc, char **argv) {
         if (capturePage >= 0)
             h.s.page = capturePage;
         h.Settle();
-        if (h.automated) {
+        if(!h.automated) glfwShowWindow(h.window);
+        if(verifyWindowFrame) {
+            std::filesystem::create_directories(out);
+            VerifyWindowFrame(h,out);
+        } else if (h.automated) {
             std::filesystem::create_directories(out);
             if (verify)
                 Verify(h, out);
@@ -1674,6 +1772,7 @@ int main(int argc, char **argv) {
     glDeleteTextures(7, iconTextures.data());
     if (renderer)
         ImGui_ImplOpenGL3_Shutdown();
+    h.windowFrame.Detach();
     if (backend)
         ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();

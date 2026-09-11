@@ -25,6 +25,7 @@ struct GalleryState {
     int page = 0;
     int presetIndex = 0, presetFilter = 0, copyClicks = 0;
     float scale = 1;
+    float windowFrameHeight = 0;
     bool dark = false, palette = false;
     char gallerySearch[96]{};
     bool focusApply = false, applyFocused = false;
