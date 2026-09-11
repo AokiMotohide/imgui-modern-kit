@@ -28,6 +28,10 @@ Precision Layers separates semantic design, native behavior and host state.
 
 There is no global theme registry. `ThemePresets()` is immutable discovery metadata and `MakeTheme()` returns a copyable host-owned value; neither stores a current selection. `FontSet` contains non-owning references, and `AnimationState` is fixed-capacity storage whose lifecycle is explicitly controlled by the host. A scope must end before its context is destroyed. The static SDK binds to the consumer's already-created ImGui target through an imported interface adapter.
 
+`window_frame.h` follows the same boundary: style, metrics, features, content and state are explicit values. Content strings/spans are borrowed for one draw call. The core computes layout, draws through the current Dear ImGui context and returns a typed request; it owns no native window or platform input. `window_frame_win32` and `window_frame_macos` are separately built and exported adapters that borrow an `HWND` or Cocoa window. They are installed only on their matching platform and do not add Windows/Cocoa dependencies to `imkit::imkit`.
+
+`window_frame.h`も同じ境界を守り、Style、寸法、feature、content、stateを明示値で渡します。文字列／spanは1回の描画中だけ借用します。coreは配置計算、current Dear ImGui Contextへの描画、型付きrequest返却だけを行い、native windowやplatform入力を所有しません。`window_frame_win32`と`window_frame_macos`は`HWND`またはCocoa windowを借用する別targetで、該当platformだけでbuild・export・installされ、`imkit::imkit`へWindows／Cocoa依存を追加しません。
+
 グローバルなTheme registryはありません。`ThemePresets()`は不変の列挙metadata、`MakeTheme()`はホスト所有の値を返し、現在選択を保持しません。Themeの保存はホスト、FontSetは非所有参照、AnimationStateはホストが寿命を管理する固定容量状態です。scopeより先にContextを破棄しないでください。SDKは利用者が先に作成したImGui targetへ依存adapterで接続します。
 
 ## Extension policy / 拡張方針

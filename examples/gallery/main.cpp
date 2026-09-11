@@ -6,7 +6,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include "gallery.h"
-#include "window_frame_win32.h"
+#include <imkit/window_frame_win32.h>
 #include "../design_gallery/capture.h"
 #include <filesystem>
 #include <fstream>
@@ -26,7 +26,7 @@ const std::filesystem::path &NoCapturePath() {
 struct Host {
     GLFWwindow *window = nullptr;
     imkit::gallery::GalleryState s;
-    imkit::gallery::Win32WindowFrame windowFrame;
+    imkit::WindowFrameWin32Adapter windowFrame;
     std::string windowTitle="ImKit Precision Layers";
     bool automated = false;
     ImGuiMemAllocFunc originalAlloc=nullptr;
@@ -37,6 +37,9 @@ struct Host {
     ImVec2 mouse{-100, -100};
     void Frame(const std::function<void(ImGuiIO &)> &input = {}, const std::filesystem::path &shot = NoCapturePath()) {
         glfwPollEvents();
+        const bool wantsCustomFrame=s.framePreset!=imkit::WindowFramePreset::Native;
+        if(wantsCustomFrame && !windowFrame.Attached()) windowFrame.Attach(glfwGetWin32Window(window));
+        if(!wantsCustomFrame && windowFrame.Attached()) windowFrame.Detach();
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         auto &io = ImGui::GetIO();
@@ -48,12 +51,22 @@ struct Host {
         if (input)
             input(io);
         ImGui::NewFrame();
-        if(windowFrame.Enabled()) s.windowFrameHeight=windowFrame.Layout().title.max.y;
+        imkit::WindowFrameState frameState{};
+        imkit::WindowFrameLayout frameLayout{};
+        if(windowFrame.Attached()) {
+            RECT client{};GetClientRect(glfwGetWin32Window(window),&client);
+            frameState=windowFrame.State();
+            frameLayout=imkit::LayoutWindowFrame(static_cast<float>(client.right),s.frameStyle,frameState);
+            windowFrame.SetLayout(frameLayout);
+            s.windowFrameHeight=frameLayout.titleBar.max.y;
+        } else s.windowFrameHeight=0;
         imkit::gallery::Show(s);
-        imkit::gallery::FrameAction frameAction=imkit::gallery::FrameAction::None;
-        if(windowFrame.Enabled()) {
-            const auto frame=imkit::gallery::DrawWindowFrame(s.theme,windowTitle,windowFrame.Layout(),windowFrame.State());
-            frameAction=frame.action;
+        imkit::WindowFrameEvent frameEvent{};
+        if(windowFrame.Attached()) {
+            const imkit::WindowFrameContent content{"ImKit",windowTitle,s.frameUnsaved,s.frameWorkspaces,s.frameWorkspace};
+            const auto frame=imkit::DrawWindowFrame(s.frameStyle,content,frameLayout,frameState);
+            frameEvent=frame.event;
+            if(frameEvent.type==imkit::WindowFrameEventType::WorkspaceSelected) s.frameWorkspace=frameEvent.workspace;
         }
         s.editors.RenderPreview();
         ImGui::Render();
@@ -66,7 +79,7 @@ struct Host {
         if (!shot.empty())
             imkit::design::SaveBackbuffer(shot, w, h);
         glfwSwapBuffers(window);
-        windowFrame.Execute(frameAction);
+        if(frameEvent.type==imkit::WindowFrameEventType::Operation) windowFrame.Execute(frameEvent.operation);
     }
     void Settle(int n = 5) {
         while (n--)
@@ -1353,37 +1366,41 @@ int VerifyInspectorModel() {
 }
 namespace {
 void VerifyWindowFrame(Host& h,const std::filesystem::path& out) {
-    using namespace imkit::gallery;
     auto require=[](bool ok,const char* message) { if(!ok) throw std::runtime_error(message); };
-    require(h.windowFrame.Enabled(),"Modern frame did not attach");
+    require(h.windowFrame.Attached(),"Modern frame did not attach");
     h.Settle(2);
     auto* font=h.s.fonts.regular;
     require(font!=nullptr,"Frame font missing");
     for(float scale:{1.f,1.5f,2.f}) {
-        const auto layout=LayoutWindowFrame(640*scale,scale);
-        require(layout.title.max.y==32*scale,"Frame height must follow DPI");
-        require(layout.buttons[0].min.x>layout.icon.max.x,"Frame regions overlap");
-        for(int i=0;i<2;++i) require(layout.buttons[i].max.x==layout.buttons[i+1].min.x,"Button gap");
-        const auto title=ElideWindowTitle("ModernKIT / 長い日本語タイトル / a very long project title",100*scale,font,13*scale);
+        imkit::WindowFrameState state;state.dpiScale=scale;
+        const auto layout=imkit::LayoutWindowFrame(640*scale,h.s.frameStyle,state);
+        require(layout.titleBar.max.y==h.s.frameStyle.metrics.height*scale,"Frame height must follow DPI");
+        require(layout.minimize.min.x>layout.icon.max.x,"Frame regions overlap");
+        require(layout.minimize.max.x==layout.maximizeRestore.min.x && layout.maximizeRestore.max.x==layout.close.min.x,"Button gap");
+        const auto title=imkit::ElideWindowFrameTitle("ModernKIT / 長い日本語タイトル / a very long project title",100*scale,font,13*scale);
         require(title.ends_with("..."),"Long title must be elided");
         require(font->CalcTextSizeA(13*scale,FLT_MAX,0,title.c_str()).x<=100*scale,"Title escaped available width");
-        require(ElideWindowTitle("Title",0,font,13*scale).empty(),"No space must produce no title");
+        require(imkit::ElideWindowFrameTitle("Title",0,font,13*scale).empty(),"No space must produce no title");
     }
     HWND window=glfwGetWin32Window(h.window);
     auto hit=[&](int x,int y) {
         POINT p{x,y}; ClientToScreen(window,&p);
         return SendMessageW(window,WM_NCHITTEST,0,MAKELPARAM(p.x,p.y));
     };
-    auto layout=h.windowFrame.Layout();
-    require(hit(100,int(layout.title.max.y/2))==HTCAPTION,"Drag region hit test");
+    RECT layoutClient{};GetClientRect(window,&layoutClient);
+    auto frameState=h.windowFrame.State();
+    auto layout=imkit::LayoutWindowFrame(static_cast<float>(layoutClient.right),h.s.frameStyle,frameState);
+    h.windowFrame.SetLayout(layout);
+    require(hit(100,int(layout.titleBar.max.y/2))==HTCAPTION,"Drag region hit test");
+    const std::array<imkit::WindowFrameRect,3> buttons{layout.minimize,layout.maximizeRestore,layout.close};
     for(int i=0;i<3;++i) {
-        const auto& r=layout.buttons[i];
+        const auto& r=buttons[i];
         require(hit(int((r.min.x+r.max.x)/2),int((r.min.y+r.max.y)/2))==
                 (i==0?HTMINBUTTON:i==1?HTMAXBUTTON:HTCLOSE),"Caption button hit test");
     }
     require(hit(0,0)==HTTOPLEFT,"Resize corner hit test");
-    require(hit(100,int(layout.title.max.y)+30)==HTCLIENT,"Content must receive client input");
-    h.windowFrame.Execute(FrameAction::MaximizeRestore); h.Settle(2);
+    require(hit(100,int(layout.titleBar.max.y)+30)==HTCLIENT,"Content must receive client input");
+    h.windowFrame.Execute(imkit::WindowFrameOperation::MaximizeRestore); h.Settle(2);
     require(IsZoomed(window),"Maximize failed");
     RECT client{};GetClientRect(window,&client);
     POINT origin{};ClientToScreen(window,&origin);
@@ -1392,13 +1409,14 @@ void VerifyWindowFrame(Host& h,const std::filesystem::path& out) {
     require(origin.x>=monitor.rcWork.left && origin.y>=monitor.rcWork.top &&
             origin.x+client.right<=monitor.rcWork.right && origin.y+client.bottom<=monitor.rcWork.bottom,
             "Maximized content exceeds monitor work area");
-    h.windowFrame.Execute(FrameAction::MaximizeRestore);h.Settle(2);
+    h.windowFrame.Execute(imkit::WindowFrameOperation::MaximizeRestore);h.Settle(2);
     require(!IsZoomed(window),"Restore failed");
-    h.windowFrame.Execute(FrameAction::Minimize);
+    h.windowFrame.Execute(imkit::WindowFrameOperation::Minimize);
     require(IsIconic(window),"Minimize failed");
     SendMessageW(window,WM_SYSCOMMAND,SC_RESTORE,0);h.Settle(2);
     for(const auto& preset:imkit::ThemePresets()) {
         h.s.theme=imkit::MakeTheme(preset.preset);
+        h.s.frameStyle=imkit::MakeWindowFrameStyle(h.s.framePreset,h.s.theme);
         h.s.dark=preset.scheme==imkit::ColorScheme::Dark;
         h.s.presetIndex=static_cast<int>(preset.preset);
         h.Settle(2);
@@ -1407,10 +1425,59 @@ void VerifyWindowFrame(Host& h,const std::filesystem::path& out) {
     h.windowTitle="ModernKIT / 長い日本語タイトル / Very long project title for testing safe truncation without hiding window controls";
     glfwSetWindowSize(h.window,640,480);h.Settle(2);
     h.Frame({},out/"frame-long-title.png");
-    h.windowFrame.Execute(FrameAction::Close);
+    const std::array framePresets{imkit::WindowFramePreset::Native,imkit::WindowFramePreset::Studio,
+                                  imkit::WindowFramePreset::Workspace,imkit::WindowFramePreset::Tool};
+    for(auto preset:framePresets) {
+        imkit::gallery::SelectFramePreset(h.s,preset);
+        const auto style=h.s.frameStyle;
+        const auto contrast=imkit::ValidateWindowFrameContrast(style);
+        require(preset==imkit::WindowFramePreset::Native || style.metrics.height>0,"Preset metrics missing");
+        require(contrast.activeTitle>0,"Preset contrast missing");
+    }
+    imkit::gallery::SelectFramePreset(h.s,imkit::WindowFramePreset::Workspace);
+    h.s.frameStyle.metrics={57,27,9,11,39,2};
+    h.s.frameStyle.features={true,true,true,true,true,true,true,true};
+    std::array<ImVec4*,11> editedColors{&h.s.frameStyle.activeBackground,&h.s.frameStyle.inactiveBackground,
+        &h.s.frameStyle.border,&h.s.frameStyle.titleText,&h.s.frameStyle.auxiliaryText,&h.s.frameStyle.icon,
+        &h.s.frameStyle.buttonText,&h.s.frameStyle.buttonHover,&h.s.frameStyle.buttonPressed,
+        &h.s.frameStyle.closeButtonHover,&h.s.frameStyle.closeButtonPressed};
+    for(std::size_t i=0;i<editedColors.size();++i) *editedColors[i]={.01f*float(i+1),.02f*float(i+1),.03f*float(i+1),1};
+    const auto customLayout=imkit::LayoutWindowFrame(1200,h.s.frameStyle,{2});
+    require(customLayout.titleBar.Height()==114 && customLayout.icon.Width()==54,"Height/icon metrics did not affect layout");
+    require(customLayout.applicationName.min.x==customLayout.icon.max.x+18,"Left padding did not affect layout");
+    require(customLayout.close.Width()==78 && customLayout.maximizeRestore.Width()==78 && customLayout.minimize.Width()==78,
+            "Button width did not affect layout");
+    require(customLayout.applicationName.Width()>0 && customLayout.projectName.Width()>0 &&
+            customLayout.unsavedIndicator.Width()>0 && customLayout.workspaceSwitcher.Width()>0,
+            "Enabled content features did not affect layout");
+    require(h.s.frameStyle.metrics.titlePaddingRight==11 && h.s.frameStyle.metrics.borderWidth==2,
+            "Right padding/border metrics were not retained");
+    const auto generated=imkit::MakeWindowFrameStyle(h.s.framePreset,h.s.theme);
+    imkit::gallery::RegenerateFrameColors(h.s);
+    require(h.s.frameStyle.metrics.height==57,"Theme regeneration must preserve edited metrics");
+    const std::array<const ImVec4*,11> regeneratedColors{&h.s.frameStyle.activeBackground,&h.s.frameStyle.inactiveBackground,
+        &h.s.frameStyle.border,&h.s.frameStyle.titleText,&h.s.frameStyle.auxiliaryText,&h.s.frameStyle.icon,
+        &h.s.frameStyle.buttonText,&h.s.frameStyle.buttonHover,&h.s.frameStyle.buttonPressed,
+        &h.s.frameStyle.closeButtonHover,&h.s.frameStyle.closeButtonPressed};
+    const std::array<const ImVec4*,11> expectedColors{&generated.activeBackground,&generated.inactiveBackground,
+        &generated.border,&generated.titleText,&generated.auxiliaryText,&generated.icon,&generated.buttonText,
+        &generated.buttonHover,&generated.buttonPressed,&generated.closeButtonHover,&generated.closeButtonPressed};
+    for(std::size_t i=0;i<regeneratedColors.size();++i)
+        require(regeneratedColors[i]->x==expectedColors[i]->x && regeneratedColors[i]->y==expectedColors[i]->y &&
+                regeneratedColors[i]->z==expectedColors[i]->z && regeneratedColors[i]->w==expectedColors[i]->w,
+                "Theme regeneration did not refresh every color");
+    h.s.frameStyle.features={false,false,false,false,false,false,false,false};
+    const auto disabledLayout=imkit::LayoutWindowFrame(900,h.s.frameStyle);
+    require(disabledLayout.icon.Width()==0 && disabledLayout.close.Width()==0 && disabledLayout.workspaceSwitcher.Width()==0,
+            "Feature flags did not affect layout");
+    imkit::gallery::ResetFramePreset(h.s);
+    require(h.s.frameStyle.metrics.height==generated.metrics.height && h.s.frameStyle.features.workspaceSwitcher,
+            "Preset reset did not restore complete values");
+    imkit::gallery::SelectFramePreset(h.s,imkit::WindowFramePreset::Studio);
+    h.windowFrame.Execute(imkit::WindowFrameOperation::Close);
     require(glfwWindowShouldClose(h.window),"Close must reach GLFW should-close path");
     std::ofstream report(out/"window-frame-verification.txt");
-    report<<"PASS: DPI layout and UTF-8 elision at 100/150/200 percent; native hit tests; maximize/work area/restore/minimize; GLFW close; 12 theme backbuffers.\n"
+    report<<"PASS: four presets; all colors/metrics/features; Theme color regeneration and complete preset reset; DPI layout and UTF-8 elision at 100/150/200 percent; native hit tests; maximize/work area/restore/minimize; GLFW close; 12 theme backbuffers.\n"
           <<"Actual window DPI: "<<GetDpiForWindow(window)<<"\n"
           <<"Synthetic Win32 messages are not physical pointer/keyboard or cross-monitor DPI acceptance.\n";
     std::puts("Window frame verification passed");
@@ -1530,13 +1597,16 @@ int main(int argc, char **argv) {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable;
     bool backend = ImGui_ImplGlfw_InitForOpenGL(h.window, true),
          renderer = backend && ImGui_ImplOpenGL3_Init("#version 130");
-    if((frameMode==1 || (frameMode<0 && !h.automated)) &&
-       !h.windowFrame.Attach(glfwGetWin32Window(h.window)))
-        std::fprintf(stderr,"Catalog: Modern frame attachment failed; using native frame.\n");
     if(!h.automated) {
         h.s.theme=imkit::MakeTheme(imkit::ThemePreset::Graphite);
         h.s.presetIndex=2; h.s.dark=true;
     }
+    h.s.framePreset=(frameMode==0 || (frameMode<0 && h.automated))?imkit::WindowFramePreset::Native:imkit::WindowFramePreset::Studio;
+    h.s.framePresetStyles={imkit::MakeWindowFrameStyle(imkit::WindowFramePreset::Native,h.s.theme),
+                           imkit::MakeWindowFrameStyle(imkit::WindowFramePreset::Studio,h.s.theme),
+                           imkit::MakeWindowFrameStyle(imkit::WindowFramePreset::Workspace,h.s.theme),
+                           imkit::MakeWindowFrameStyle(imkit::WindowFramePreset::Tool,h.s.theme)};
+    h.s.frameStyle=imkit::MakeWindowFrameStyle(h.s.framePreset,h.s.theme);
     int result = 0;
     GLuint texture = 0;
     std::array<GLuint, 7> iconTextures{};

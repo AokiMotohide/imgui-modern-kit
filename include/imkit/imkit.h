@@ -10,3 +10,4 @@
 #include <imkit/patterns.h>
 #include <imkit/workflow.h>
 #include <imkit/shell.h>
+#include <imkit/window_frame.h>

@@ -1,93 +1,79 @@
-# Gallery window frame prototype / Galleryのウィンドウ枠試作
+# Public window frame / 公開ウィンドウ枠
 
-The interactive Windows Gallery starts with a Modern frame and the Graphite theme.
-Use **Appearance > Theme** to change all 12 presets, including the title bar.
-The title bar has a geometric icon, an elided UTF-8 title, and minimize,
-maximize/restore and close buttons. Its 32-DIP height follows the window's DPI,
-independently of Gallery's content zoom. Inactive titles use secondary text color.
+`imkit/window_frame.h` is a cross-platform, value-based drawing and layout API. The host owns the Dear ImGui context, backend, renderer, fonts, theme, window, selected preset, edited style and persistence. `MakeWindowFrameStyle(preset, theme)` returns a complete copy; changing the Theme never mutates an existing frame style. Applications may edit every returned color, metric and feature directly.
 
-Windows版Galleryの通常起動はModern枠とGraphiteテーマを使います。
-**Appearance > Theme**で12テーマを選択すると、タイトルバーも連動します。
-タイトルバーは幾何学アイコン、長さに応じて省略するUTF-8タイトル、最小化・
-最大化／復元・閉じるボタンで構成します。高さ32 DIPはウィンドウのDPIに追従し、
-Gallery内の表示倍率からは独立します。非アクティブ時は文字の強調を落とします。
+`imkit/window_frame.h`はOS非依存の値型描画・配置APIです。Dear ImGui Context、backend、renderer、font、Theme、アプリウィンドウ、選択中preset、編集済みStyle、永続化はホストが所有します。`MakeWindowFrameStyle(preset, theme)`は完全なコピーを返し、Theme変更が既存Styleを暗黙に変更することはありません。生成後は全色・寸法・featureを直接編集できます。
 
-```powershell
-# Default / 通常起動
-.\build\windows-debug\catalog\Debug\imkit_gallery.exe
-# Compare the native frame / 標準枠との比較
-.\build\windows-debug\catalog\Debug\imkit_gallery.exe --window-frame native
-# Explicit Modern frame and a custom title / Modern枠とタイトル指定
-.\build\windows-debug\catalog\Debug\imkit_gallery.exe --window-frame modern --window-title "My application"
-# Focused verification (opens a window and closes it on completion)
-# 専用検証（ウィンドウを表示し、完了時に閉じる）
-.\build\windows-debug\catalog\Debug\imkit_gallery.exe --verify-window-frame --width 1100 --height 760 --output out/window-frame
+| Preset | Default / 既定 |
+|---|---|
+| `Native` | Zero-height layout; no custom non-client drawing / 高さ0、独自非クライアント描画なし |
+| `Studio` | Compact production-tool title, icon and three caption operations / 制作ツール向け簡潔タイトル |
+| `Workspace` | Application, project, unsaved state and workspace selector / アプリ・project・未保存・workspace切替 |
+| `Tool` | Short utility-window title and close operation / 小窓向けタイトルと閉じる操作 |
+
+```cpp
+auto style = imkit::MakeWindowFrameStyle(imkit::WindowFramePreset::Workspace, theme);
+style.metrics.height = 38.0f;
+style.features.workspaceSwitcher = true;
+const std::string_view workspaces[] = {"Edit", "Color", "Deliver"};
+imkit::WindowFrameContent content{"My App", "Project A", true, workspaces, selectedWorkspace};
+auto state = platformAdapter.State();
+auto layout = imkit::LayoutWindowFrame(windowWidthPixels, style, state);
+platformAdapter.SetLayout(layout);
+auto result = imkit::DrawWindowFrame(style, content, layout, state);
 ```
 
-Existing automated captures/verifiers retain the native frame unless explicitly
-passed `--window-frame modern`. Their content coordinate origin stays unchanged.
-Explicitly adding a Modern frame shifts content by the title bar height; existing
-coordinate-based verifiers are not guaranteed in that combination.
+`WindowFrameContent` uses non-owning `string_view` and `span` values. Keep their storage valid through the draw call. `WindowFrameResult` reports an operation or workspace selection; the host applies it. The library does not retain content, style, selection or a current Theme. Contrast validation reports ratios and warnings but never rejects a color.
 
-既存の自動capture・検証は、`--window-frame modern`を明示しない限り標準枠と
-既存のコンテンツ座標原点を維持します。Modern枠を明示した場合はタイトルバーの高さ分
-コンテンツが移動するため、既存の座標固定検証との組合せは保証しません。
+`WindowFrameContent`の`string_view`と`span`は非所有です。描画呼出しの終了まで参照先を保持してください。`WindowFrameResult`が操作またはworkspace選択eventを返し、適用するのはホストです。ライブラリはcontent、Style、選択、current Themeを保持しません。コントラスト検証は比率と警告を返しますが、色入力を拒否しません。
 
-## Ownership and behavior / 所有権と動作
+## API inventory / API一覧
 
-This is Gallery-only code, not an installed public API. `window_frame` draws from
-theme and window state and returns the layout and queued action. `window_frame_win32`
-borrows the GLFW HWND through an explicitly detached Win32 subclass. It retains
-the original window styles and chains messages to the existing backend. Close
-reaches GLFW's close request instead of destroying the window directly. The host
-continues to own the window, context, renderer, font and theme. No public Theme
-fields, library dependencies or SDK packaging change.
+| API | Contract / 契約 |
+|---|---|
+| `MakeWindowFrameStyle` | Complete Theme-derived host-owned value / Theme由来の完全なホスト所有値 |
+| `LayoutWindowFrame` | DIP metrics to pixel rectangles; reserves platform leading area / DIPからpixel領域を計算しOS領域を予約 |
+| `DrawWindowFrame` | Draws through the current context and returns one typed event / current Contextへ描画し型付きeventを返す |
+| `ElideWindowFrameTitle` | UTF-8 boundary-safe ellipsis / UTF-8境界を壊さない省略 |
+| `ValidateWindowFrameContrast` | Informational ratios; no input rejection / 警告用比率、入力拒否なし |
+| `WindowFrameWin32Adapter` | Borrowed `HWND`, explicit Attach/Detach, subclass-based operations / 借用`HWND`と明示Attach/Detach |
+| `WindowFrameMacOSAdapter` | Borrowed `NSWindow` as `void*`, transparent full-size title content / 借用`NSWindow`と透明full-size title content |
 
-Gallery内だけの試作であり、installされる公開APIではありません。描画部品はテーマと
-ウィンドウ状態から描画し、領域と操作要求を返します。Windows連携部品はGLFWのHWNDを
-借用し、明示的に解除するsubclassで既存backendのメッセージ処理を維持します。
-元のウィンドウstyleを残し、閉じる操作は直接破棄せずGLFWの終了要求へ渡します。
-ウィンドウ・Context・renderer・font・themeはホスト所有のままです。
-公開Theme型、ライブラリ本体の依存、SDK配布構成は変更しません。
+## Windows Gallery Frame Lab
 
-The minimum track size is 320 x 200 DIP to keep caption controls accessible.
-Drag/double-click, edge/corner resizing, the system menu and Alt+F4 use Windows
-behavior. Alt+Space is explicitly forwarded around GLFW's default menu suppression.
-The maximize region returns `HTMAXBUTTON` and non-client mouse movement is forwarded
-to DWM for Windows 11 Snap Layouts. OS shadow/corner appearance remains OS-dependent.
+Build and start the Windows Gallery, then choose **Frame Lab**. The four presets switch at runtime. Selecting `Native` detaches `imkit::window_frame_win32`; other presets attach it and use the public drawing API. Each preset keeps its own edited copy. Theme color regeneration preserves edited metrics/features, while preset reset restores the complete preset. The page edits every color, metric and feature, displays contrast warnings, and copies a reproducing C++ snippet. Clipboard access is Gallery-only.
 
-操作ボタンの領域を確保するため、最小サイズは320×200 DIPです。移動・ダブルクリック、
-四辺／四隅のリサイズ、システムメニュー、Alt+F4はWindowsの動作を使います。
-Alt+SpaceはGLFWの既定のメニュー抑止を回避してOSへ渡します。最大化領域は
-`HTMAXBUTTON`を返し、非クライアント領域のマウス移動をDWMへ渡します。
-影や角の外観はOSに依存します。
+Windows Galleryを起動して**Frame Lab**を選びます。4 presetを実行中に切り替え、`Native`では`imkit::window_frame_win32`を解除し、それ以外ではAttachして公開描画APIを使います。presetごとに編集値を保持します。Themeからの色再生成は寸法・featureを保持し、preset resetは完全な既定値へ戻します。全色・寸法・feature、コントラスト警告、再現用C++ snippetのコピーを提供し、ClipboardはGalleryだけが扱います。
 
-## Verification record / 検証記録
+```powershell
+cmake -S . -B build/window-frame-public-debug
+cmake --build build/window-frame-public-debug --config Debug --target imkit_gallery --parallel
+.\build\window-frame-public-debug\catalog\Debug\imkit_gallery.exe
+.\build\window-frame-public-debug\catalog\Debug\imkit_gallery.exe --verify-window-frame --width 1100 --height 760 --output out/window-frame-public
+```
 
-The focused Debug verifier checks layout and UTF-8 title elision at 100/150/200%,
-caption/client/resize hit tests, maximize work-area containment, restore, minimize,
-the GLFW close path and backbuffer captures for all 12 themes. Output is under
-`out/window-frame/`; generated evidence is not committed.
+Existing automated capture and coordinate verification keeps `Native` by default. Normal interactive startup uses `Studio`. The Win32 adapter uses `SetWindowSubclass`; it preserves resize edges/corners, caption drag and double-click, system menu, Alt+Space, Alt+F4 and standard minimize/maximize/restore/close routing. Its maximize hit region returns `HTMAXBUTTON` for Windows 11 Snap Layouts. Close sends the standard close request and never destroys the window directly.
 
-Debug専用検証は100／150／200％の領域計算とUTF-8タイトル省略、タイトル・ボタン・
-リサイズ・コンテンツのヒットテスト、最大化時の作業領域、復元、最小化、GLFW終了経路、
-12テーマのbackbuffer captureを確認します。生成物は`out/window-frame/`に置き、
-コミットしません。
+既存の自動capture・座標検証は`Native`を既定に維持し、通常の対話起動は`Studio`です。Win32 adapterは`SetWindowSubclass`を使い、四辺・四隅resize、caption drag／double-click、system menu、Alt+Space、Alt+F4、標準の最小化・最大化／復元・終了経路を維持します。最大化領域はWindows 11 Snap Layoutsのため`HTMAXBUTTON`を返します。Closeは標準終了要求を送り、直接windowを破棄しません。
 
-On 2026-09-11, the isolated Debug Gallery build and focused verifier passed at
-actual DPI 144 (150%). Computer Use confirmed maximize by button, restore by
-title-bar double-click, title-bar drag, bottom-right resize, minimize/restore,
-Alt+Space, Alt+F4, the close button, the Snap Layout hover menu and live switching to a light theme.
-The `--window-frame native` comparison launch and existing `--verify` public-IO
-regression also passed. These observations do not
-certify physical 100/200% DPI, mixed-DPI monitor transitions, all resize edges,
-Snap Layout placement, screen readers, detached viewports, other application
-integration or Release/distribution acceptance.
+## macOS demo / macOSデモ
 
-2026-09-11、専用ビルド先のDebug Galleryと専用検証が実DPI 144（150％）で成功しました。
-Computer Useでボタン最大化、タイトルバーダブルクリック復元、タイトルバー移動、右下
-リサイズ、最小化／復元、Alt+Space、Alt+F4、閉じるボタン、スナップのhoverメニュー、
-ライトテーマへの即時切り替えを確認しました。`--window-frame native`での比較起動と
-既存`--verify`の公開IO回帰検証も成功しました。
-実DPI 100／200％、異なるDPIのモニター間移動、全リサイズ辺、スナップ先への配置、
-スクリーンリーダー、切り離し窓、他アプリ統合、Release／配布の合格を意味しません。
+The Windows-only Gallery is not ported. On Apple only, build the lightweight GLFW/OpenGL/Dear ImGui demo.
+Windows専用Galleryは移植しません。Apple上だけで軽量なGLFW/OpenGL/Dear ImGuiデモを構成します。
+
+```bash
+cmake -S . -B build/macos-window-frame \
+  -DIMKIT_BUILD_GALLERY=OFF \
+  -DIMKIT_BUILD_WINDOW_FRAME_MACOS=ON \
+  -DIMKIT_BUILD_WINDOW_FRAME_DEMO_MACOS=ON
+cmake --build build/macos-window-frame --target imkit_window_frame_demo_macos
+./build/macos-window-frame/imkit_window_frame_demo_macos
+```
+
+`imkit::window_frame_macos` borrows the Cocoa window. For custom presets it requests a transparent title bar and full-size content view, reserves the traffic-light area, and leaves traffic-light buttons, dragging, full screen, minimize and zoom to Cocoa. It does not draw duplicate close/maximize buttons. Native restores the original title configuration. This implementation has not been built or operated on a real Mac in this work; traffic-light, drag/full-screen and macOS input behavior remain unverified.
+
+`imkit::window_frame_macos`はCocoa windowを借用します。custom presetでは透明title barとfull-size content viewを要求し、traffic-light領域を予約します。traffic-light button、drag、full screen、最小化、拡大はCocoaへ委譲し、閉じる／最大化buttonを重複描画しません。Nativeで元のtitle設定へ戻します。今回は実Macでbuild・操作しておらず、traffic-light、drag/full-screen、macOS入力は未検証です。
+
+Physical 100%/200% DPI, mixed-DPI monitor movement, screen readers, Release and distribution acceptance are also outside the current verification. Synthetic hit tests and Debug builds do not establish those categories.
+
+物理DPI 100%／200%、異なるDPI monitor間移動、screen reader、Release、配布受け入れも今回の検証外です。合成hit testとDebug buildを、それらの合格とは扱いません。

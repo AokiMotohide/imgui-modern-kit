@@ -103,8 +103,11 @@ cmake --build --preset windows-debug --target imkit_gallery --parallel
 | `imkit::editor_core` | Canvas、選択、splitter、Editorのデータ表示契約 | `imkit::imkit` |
 | `imkit::video`、`imkit::cg`、`imkit::editor_suite` | 任意のVideo/CG Editor実例と型付きホストevent | `imkit::editor_core` |
 | `imkit::preview_opengl3` | 明示的に構築するOpenGL3 preview helper | `imkit::cg`、ホストが渡すContextとGL関数表 |
+| `imkit::window_frame_win32` / `imkit::window_frame_macos` | 任意の借用native window adapter | `imkit::imkit`、該当platformのOS libraryだけ |
 
 高度なmoduleは実用的な参照実装ですが、scene、media、選択、Undo、GPU Contextを所有しません。正確な制約は[Editor契約](docs/editor-suite.md)を参照してください。
+
+OS非依存のframe値型、Frame Lab、platform adapter境界は[公開ウィンドウ枠](docs/gallery-window-frame.md)に記載しています。presetと編集済みStyleはホスト所有で、基本ライブラリにWindows／Cocoa依存は入りません。
 
 ## 取得した内容を確認する
 

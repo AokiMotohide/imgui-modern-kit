@@ -1,5 +1,15 @@
 # Validation / 検証
 
+## Public window frame / 公開ウィンドウ枠（2026-09-11）
+
+The isolated `build/window-frame-public-debug` tree passed the Debug public API unit test and compile fixture, the independent source consumer build, the minimal Gallery build, and `--verify-window-frame`. The verifier covered all four presets, Theme-derived color regeneration versus complete preset reset, metric and feature layout effects, UTF-8 elision, Win32 caption/client/edge hit tests including `HTMAXBUTTON`, maximize/work-area containment, restore, minimize and the GLFW close-request path. Generated captures and reports under `out/window-frame-public/` are not committed.
+
+隔離した`build/window-frame-public-debug`で、Debug公開API unit test／compile fixture、独立source consumer build、最小Gallery build、`--verify-window-frame`が成功しました。枠検証は4 preset、Theme由来の色再生成と完全preset resetの区別、寸法・featureのlayout反映、UTF-8省略、`HTMAXBUTTON`を含むWin32 caption／client／edge hit test、最大化時のwork area、復元、最小化、GLFW終了要求経路を対象にしました。`out/window-frame-public/`の生成capture・reportはcommitしません。
+
+No real Mac was available. macOS compilation, launch, traffic-light controls, drag/full-screen/minimize/zoom and native input are unverified. Physical 100%/200% DPI, mixed-DPI monitor movement, screen readers, Release, installed-package and distribution acceptance were also not run. Debug compilation and synthetic Win32 messages do not establish those categories.
+
+実Macは使用していません。macOS build・起動、traffic-light、drag／full-screen／最小化／拡大、native入力は未検証です。物理DPI 100%／200%、異なるDPI monitor間移動、screen reader、Release、installed package、配布受け入れも未実施です。Debug compileと合成Win32 messageを、それらの合格とは扱いません。
+
 ## Generic workflow extension / 汎用部品拡張（2026-09-11）
 
 - Debug workflow tests passed: notification replacement/expiry/priority/capacity,

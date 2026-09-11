@@ -1,0 +1,37 @@
+{
+  "header": "imkit/window_frame.h",
+  "types": [
+    "WindowFramePreset",
+    "WindowFrameStyle",
+    "WindowFrameMetrics",
+    "WindowFrameFeatures",
+    "WindowFrameContent",
+    "WindowFrameState",
+    "WindowFrameLayout",
+    "WindowFrameResult",
+    "WindowFrameOperation",
+    "WindowFrameEventType",
+    "WindowFrameEvent",
+    "WindowFrameRect",
+    "WindowFrameContrast"
+  ],
+  "functions": [
+    "MakeWindowFrameStyle",
+    "LayoutWindowFrame",
+    "DrawWindowFrame",
+    "ElideWindowFrameTitle",
+    "ValidateWindowFrameContrast"
+  ],
+  "optional_targets": {
+    "Windows": {
+      "target": "imkit::window_frame_win32",
+      "header": "imkit/window_frame_win32.h",
+      "type": "WindowFrameWin32Adapter"
+    },
+    "macOS": {
+      "target": "imkit::window_frame_macos",
+      "header": "imkit/window_frame_macos.h",
+      "type": "WindowFrameMacOSAdapter"
+    }
+  }
+}
