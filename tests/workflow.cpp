@@ -65,6 +65,7 @@ int main(){
             if(semantics.Tree().nodes.size()<3) return 1;
             Check(semantics.Tree().nodes[2].minimum.y>semantics.Tree().nodes[0].minimum.y,"narrow toolbar wraps");
             Check(semantics.Tree().nodes[0].state.selected,"icon selection exposed");
+            Check(semantics.Tree().nodes[1].state.mixed,"mixed icon state exposed");
             queue.Push({semantics.Tree().nodes[1].id,accessibility::SemanticAction::Press});frame(toolbar);Check(!request,"disabled icon rejected");
         }
         StepNavigatorState nav;StableId selected=0;

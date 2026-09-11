@@ -21,7 +21,7 @@ ImVec4 Color(FeedbackKind kind,ComponentOptions o) {
     return ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
 }
 bool Annotate(const char* label,const char* description,accessibility::SemanticRole role,
-              accessibility::SemanticAction action,bool selected,ComponentOptions o) {
+              accessibility::SemanticAction action,bool selected,ComponentOptions o,bool mixed=false) {
     if(!o.accessibility) return false;
     const auto id=ImGui::GetItemID();
     const bool disabled=(ImGui::GetItemFlags()&ImGuiItemFlags_Disabled)!=0;
@@ -29,7 +29,7 @@ bool Annotate(const char* label,const char* description,accessibility::SemanticR
     if(focus && !disabled) ImGui::SetKeyboardFocusHere(-1);
     bool requested=o.accessibility->Take(id,action);
     accessibility::SemanticNode n; n.id=id;n.parent=o.parent;n.name=Safe(label);n.description=Safe(description);
-    n.role=role;n.actions=action|accessibility::SemanticAction::Focus;n.state.selected=selected;
+    n.role=role;n.actions=action|accessibility::SemanticAction::Focus;n.state.selected=selected;n.state.mixed=mixed;
     if(auto suffix=n.name.find("##");suffix!=std::string_view::npos)n.name=n.name.substr(0,suffix);
     accessibility::AnnotateLastItem(*o.accessibility,n);
     return requested && !disabled;
@@ -114,7 +114,7 @@ StableId IconToolbar(const char* id,const IconAtlas& atlas,
         if(!first && ImGui::GetItemRectMax().x-ImGui::GetWindowPos().x+ImGui::GetScrollX()+ImGui::GetStyle().ItemSpacing.x+button<=right) ImGui::SameLine();
         first=false;Push(item.id);ImGui::BeginDisabled(item.disabled || !item.id);
         const bool pressed=IconButton("action",atlas,item.icon,Safe(item.label),{size});
-        if(Annotate(item.label,item.description,accessibility::SemanticRole::Button,accessibility::SemanticAction::Press,item.selected,o) || pressed) result=item.id;
+        if(Annotate(item.label,item.description,accessibility::SemanticRole::Button,accessibility::SemanticAction::Press,item.selected,o,item.mixed) || pressed) result=item.id;
         auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
         auto* draw=ImGui::GetWindowDrawList();
         if(item.selected) draw->AddRect(a,b,ImGui::GetColorU32(ImGuiCol_CheckMark),ImGui::GetStyle().FrameRounding,0,2.f);
