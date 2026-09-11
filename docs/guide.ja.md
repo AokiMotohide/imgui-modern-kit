@@ -94,7 +94,7 @@ target_link_libraries(your_app PRIVATE imkit::imkit)
 
 ## Editor Suite 2.0 workspace
 
-native GalleryのEditor Core／Video Editor／CG Editorを開きます。`--verify-editors --capture-editors --output out/editors`で公開IO検証と150%を含む実backbuffer画像を取得できます。中ボタンでpan/orbit、TimelineはCtrl+wheelでzoom、clip端でtrim、Razorでsplit、gizmo軸端でdragします。UV/Graphタブの点も編集できます。[Editor Suite 2.0の検証結果と範囲](editor-refresh.md)を参照してください。
+native GalleryのEditor Core／Video Editor／CG Editorを開きます。`--verify-editors --capture-editors --output out/editors`で公開IO検証と150%を含む実backbuffer画像を取得できます。Timeline右下にはFit・縮小・対数zoom・拡大があり、中ボタンでpan/orbit、Ctrl+wheelでポインタ位置を固定してzoom、clip端でtrim、Razorでsplit、gizmo軸端でdragします。UV/Graphタブの点も編集できます。[Editor Suite 2.0の検証結果と範囲](editor-refresh.md)を参照してください。
 
 ## デザインシステム基盤
 

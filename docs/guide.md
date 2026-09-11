@@ -97,7 +97,7 @@ See [validation](validation.md) for exact evidence and limits. Native OS/IME inp
 
 ## Editor Suite 2.0 workspaces
 
-Open **Editor Core**, **Video Editor**, or **CG Editor** in the native Gallery. Use `--verify-editors --capture-editors --output out/editors` for public-IO checks and real backbuffer images, including 150% scale. Middle mouse pans/orbits, Ctrl+wheel zooms Timeline, clip edges trim, Razor splits, and selected gizmo axis tips drag. UV and Graph tabs expose editable points. See [Editor Suite 2.0 verification and boundaries](editor-refresh.md).
+Open **Editor Core**, **Video Editor**, or **CG Editor** in the native Gallery. Use `--verify-editors --capture-editors --output out/editors` for public-IO checks and real backbuffer images, including 150% scale. Timeline has lower-right Fit/minus/log-zoom/plus controls; middle mouse pans/orbits, Ctrl+wheel zooms around the pointer, clip edges trim, Razor splits, and selected gizmo axis tips drag. UV and Graph tabs expose editable points. See [Editor Suite 2.0 verification and boundaries](editor-refresh.md).
 
 ## Design system foundations
 
