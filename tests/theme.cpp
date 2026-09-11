@@ -28,6 +28,9 @@ bool Valid(ImVec4 color) {
 }
 
 int main() {
+    if (imkit::ThemeScaleDefault != 1.25f || imkit::ThemeScaleMinimum != .5f ||
+        imkit::ThemeScaleMaximum != 2.5f)
+        return 11;
     const auto presets = imkit::ThemePresets();
     if (presets.size() != 12)
         return 1;
@@ -67,6 +70,23 @@ int main() {
     if (light.colors.canvas.x != legacyLight.colors.canvas.x || dark.colors.canvas.x != legacyDark.colors.canvas.x ||
         light.colors.accent.x != legacyLight.colors.accent.x || dark.colors.accent.x != legacyDark.colors.accent.x)
         return 10;
-    std::puts("12 theme presets, stable IDs and legacy factories validated");
+
+    ImGui::CreateContext();
+    imkit::ApplyTheme(dark);
+    if (ImGui::GetStyle().FontScaleMain != imkit::ThemeScaleDefault) {
+        ImGui::DestroyContext();
+        return 12;
+    }
+    for (const float scale : {imkit::ThemeScaleMinimum, imkit::ThemeScaleDefault,
+                              imkit::ThemeScaleMaximum}) {
+        imkit::ApplyTheme(dark, scale);
+        if (ImGui::GetStyle().FontScaleMain != scale ||
+            ImGui::GetStyle().FramePadding.x <= 0.0f) {
+            ImGui::DestroyContext();
+            return 13;
+        }
+    }
+    ImGui::DestroyContext();
+    std::puts("12 theme presets, stable IDs, scale bounds and legacy factories validated");
     return 0;
 }
