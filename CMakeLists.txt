@@ -158,6 +158,8 @@ endif()
 if(IMKIT_BUILD_GALLERY)
     add_executable(imkit_gallery
         examples/gallery/main.cpp
+        examples/gallery/window_frame.cpp
+        examples/gallery/window_frame_win32.cpp
         examples/gallery/gallery.cpp
         examples/gallery/design_pages.cpp
         examples/gallery/workflow_pages.cpp
@@ -177,7 +179,7 @@ if(IMKIT_BUILD_GALLERY)
             imkit::editor_suite
             imkit::preview_opengl3
             "${IMKIT_GALLERY_BACKEND_TARGET}"
-            windowscodecs ole32
+            windowscodecs ole32 comctl32 dwmapi
     )
     imkit_copy_font_assets(imkit_gallery "design-assets")
 endif()

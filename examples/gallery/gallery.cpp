@@ -454,14 +454,28 @@ void Show(GalleryState &s) {
     s.theme.fonts = s.fonts;
     s.animation.Prune(GetFrameCount());
     ThemeScope scope(s.theme, s.scale);
-    SetNextWindowPos({0, 0});
-    SetNextWindowSize(ImGui::GetIO().DisplaySize);
+    SetNextWindowPos({0, s.windowFrameHeight});
+    SetNextWindowSize({ImGui::GetIO().DisplaySize.x,
+                      std::max(1.f,ImGui::GetIO().DisplaySize.y-s.windowFrameHeight)});
     Begin("Precision Layers catalog", nullptr,
           ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
     const char* pages[]={"Components: Basic","Numeric / Units","Input / Media","Hierarchy / Table","Overlay / Layout","Composites","Icons","Editor Core","Video","CG","Foundations","Components","Patterns","Accessibility","Responsive","Generic Workspace","Feedback / States","Preview Tiles"};
     SetNextItemWidth(std::min(260.f,GetContentRegionAvail().x*.5f)); Combo("##section",&s.page,pages,18);
     SameLine(); if(Button("Appearance")) OpenPopup("appearance");
     if(BeginPopup("appearance")) {
+        if(BeginCombo("Theme",ThemePresets()[s.presetIndex].displayName.data())) {
+            for(int i=0;i<static_cast<int>(ThemePresets().size());++i) {
+                if(Selectable(ThemePresets()[i].displayName.data(),s.presetIndex==i)) {
+                    s.presetIndex=i;
+                    s.theme=MakeTheme(ThemePresets()[i].preset);
+                    s.theme.fonts=s.fonts;
+                    s.dark=s.theme.scheme==ColorScheme::Dark;
+                    s.design.contrast=static_cast<int>(s.theme.contrast);
+                    s.design.density=static_cast<int>(s.theme.density);
+                }
+            }
+            EndCombo();
+        }
         if(Checkbox("Dark",&s.dark)) { auto fonts=s.theme.fonts; s.theme=MakeTheme(s.dark?ColorScheme::Dark:ColorScheme::Light,s.theme.contrast,s.theme.density); s.theme.fonts=fonts; }
         const char* densities[]={"Compact","Comfortable","Touch"};
         if(Combo("Density",&s.design.density,densities,3)) SetDensity(s.theme,static_cast<Density>(s.design.density));
