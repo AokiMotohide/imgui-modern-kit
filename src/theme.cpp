@@ -142,6 +142,13 @@ std::span<const ThemePresetInfo> ThemePresets() noexcept {
     };
     return presets;
 }
+std::optional<ThemePreset> ThemePresetFromId(std::string_view id) noexcept {
+    const auto presets = ThemePresets();
+    const auto it = std::find_if(presets.begin(), presets.end(), [id](const ThemePresetInfo& info) {
+        return info.id == id;
+    });
+    return it == presets.end() ? std::nullopt : std::optional<ThemePreset>(it->preset);
+}
 Theme MakeTheme(ThemePreset preset) {
     const auto info = ThemePresets()[static_cast<std::size_t>(preset)];
     if (preset == ThemePreset::HighContrastLight || preset == ThemePreset::HighContrastDark)

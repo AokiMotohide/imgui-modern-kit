@@ -92,8 +92,8 @@ bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, 
         color.w *= a;
         if (a > 0)
             ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
-                                                ImGui::GetColorU32(color), style.FrameRounding, 0,
-                                                t ? t->metrics.focusWidth : 1.5f);
+                                                ImGui::GetColorU32(color), style.FrameRounding,
+                                                t ? t->metrics.focusWidth : 1.5f, ImDrawFlags_None);
     }
     if (variant == ActionVariant::Ghost)
         ImGui::PopStyleVar();
@@ -139,7 +139,7 @@ bool Toggle(const char *label, bool *value, ComponentOptions options) {
                        ImGui::GetColorU32(style.Colors[ImGuiCol_Text]));
     if (ImGui::IsItemFocused())
         d->AddRect(min, {min.x + h, min.y + h}, ImGui::GetColorU32(ImGuiCol_NavCursor), style.FrameRounding,
-                   0, 1.5f);
+                   1.5f, ImDrawFlags_None);
     return changed;
 }
 bool IndeterminateCheckbox(const char *label, CheckState *value) {
@@ -313,8 +313,8 @@ void ValidationMessage(const char *message, bool invalid, const Theme *t) {
         return;
     auto p = ImGui::GetItemRectMin(), q = ImGui::GetItemRectMax();
     auto color = t ? t->colors.destructive : ImVec4(.8f, .2f, .25f, 1);
-    ImGui::GetWindowDrawList()->AddRect(p, q, ImGui::GetColorU32(color), ImGui::GetStyle().FrameRounding, 0,
-                                        1.5f);
+    ImGui::GetWindowDrawList()->AddRect(p, q, ImGui::GetColorU32(color), ImGui::GetStyle().FrameRounding,
+                                        1.5f, ImDrawFlags_None);
     if (ImGui::IsItemHovered() || ImGui::IsItemFocused())
         ImGui::SetTooltip("%s", message);
 }

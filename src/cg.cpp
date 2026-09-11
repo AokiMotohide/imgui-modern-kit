@@ -539,8 +539,9 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
                 ring[k]={float(center.screen.x+ringRadius/extent*(u.x*std::cos(angle)+w.x*std::sin(angle))),
                          float(center.screen.y+ringRadius/extent*(u.y*std::cos(angle)+w.y*std::sin(angle)))};
             }
-            d->AddPolyline(ring,64,colors[axis],ImDrawFlags_Closed,
-                           s.drag.active && s.activeAxis==static_cast<Axis>(axis+1) ? 4.f : 2.f);
+            d->AddPolyline(ring,64,colors[axis],
+                           s.drag.active && s.activeAxis==static_cast<Axis>(axis+1) ? 4.f : 2.f,
+                           ImDrawFlags_Closed);
             for (int k=0;k<64;++k) {
                 const auto x=ring[k], y=ring[(k+1)%64];
                 const double dx=y.x-x.x,dy=y.y-x.y,length=dx*dx+dy*dy;
@@ -568,16 +569,18 @@ void TransformGizmo(const ViewportView &v, const ObjectView &object, ViewportSta
             auto fill = ImGui::ColorConvertU32ToFloat4(colors[plane]);
             fill.w *= 65.f / 255.f;
             d->AddConvexPolyFilled(corners, 4, ImGui::ColorConvertFloat4ToU32(fill));
-            d->AddPolyline(corners, 4, colors[plane], ImDrawFlags_Closed,
-                           s.drag.active && s.activeAxis == axis ? 3.f : 1.f);
+            d->AddPolyline(corners, 4, colors[plane],
+                           s.drag.active && s.activeAxis == axis ? 3.f : 1.f,
+                           ImDrawFlags_Closed);
             const double mx = mouse.x - center.screen.x, my = mouse.y - center.screen.y;
             const double first = (mx * y.y - my * y.x) / determinant;
             const double second = (x.x * my - x.y * mx) / determinant;
             if (first >= 18 && first <= 34 && second >= 18 && second <= 34) {hit = axis;hitTool=unified ? TransformTool::Translate : s.tool;}
         }
         const ImVec2 low{center.screen.x - 7, center.screen.y - 7}, high{center.screen.x + 7, center.screen.y + 7};
-        d->AddRect(low, high, ImGui::GetColorU32(theme.editor.gizmo), 0, 0,
-                   s.drag.active && s.activeAxis == Axis::Screen ? 3.f : 2.f);
+        d->AddRect(low, high, ImGui::GetColorU32(theme.editor.gizmo), 0,
+                   s.drag.active && s.activeAxis == Axis::Screen ? 3.f : 2.f,
+                   ImDrawFlags_None);
         if (mouse.x >= low.x && mouse.x <= high.x && mouse.y >= low.y && mouse.y <= high.y)
             {hit = Axis::Screen;hitTool=unified ? TransformTool::Translate : s.tool;}
     }
