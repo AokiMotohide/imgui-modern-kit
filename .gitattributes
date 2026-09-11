@@ -1,0 +1,4 @@
+# Preserve the audited license bytes on every checkout.
+/LICENSE text eol=lf
+/assets/fonts/Inter-OFL.txt text eol=crlf
+/assets/fonts/NotoSansJP-OFL.txt text eol=crlf
