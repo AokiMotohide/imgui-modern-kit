@@ -46,6 +46,36 @@ int main(){
         ComponentOptions options{&theme,nullptr,&semantics};
         auto frame=[&](auto draw){io.AddFocusEvent(true);ImGui::NewFrame();semantics.Begin(generation);ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({900,740});ImGui::Begin("fixture",nullptr,ImGuiWindowFlags_NoSavedSettings);draw();ImGui::End();ImGui::Render();Check(semantics.Tree().Validate(),"valid semantic tree");};
         std::array<StepItem,4> steps{{{1,"Same","Ready"},{2,"Same","Blocked",false,true,true},{3,"Long label without collisions","Description",true,true,false,FeedbackKind::Warning},{4,"Error","Description",false,true,false,FeedbackKind::Error}}};
+        {
+            std::array<StepGroup,2> groups{{{10,"First",0,2,{.25f,.60f,.95f,1.f}},{11,"Second",2,2,{.85f,.45f,.70f,1.f}}}};
+            StableId request=0;
+            auto draw=[&]{request=GroupedStepNavigator("grouped",groups,steps,4,options);};
+            frame(draw);frame(draw);
+            auto first=semantics.Tree().nodes[0], active=semantics.Tree().nodes[1];
+            Check(semantics.Tree().nodes.size()==6 && active.state.selected,"groups and all steps visible");
+            queue.Push({active.id,accessibility::SemanticAction::Press});frame(draw);Check(!request,"active group retains current step");
+            queue.Push({first.id,accessibility::SemanticAction::Press});frame(draw);Check(request==1,"group selects first step");
+            auto blocked=semantics.Tree().nodes[3];
+            queue.Push({blocked.id,accessibility::SemanticAction::Press});frame(draw);Check(!request,"grouped disabled step rejected");
+            IconAtlas atlas;for(int size:IconPixelSizes)atlas.SetTexture(size,ImTextureRef((ImTextureID)1));
+            std::array<IconToolbarItem,3> actions{{{1,IconId::Play,"Play","",true},{2,IconId::Stop,"Stop","",false,true,true},{3,IconId::Reset,"Reset"}}};
+            auto toolbar=[&]{ImGui::BeginChild("narrow",{50,200});request=IconToolbar("icons",atlas,actions,options);ImGui::EndChild();};
+            frame(toolbar);frame(toolbar);
+            Check(semantics.Tree().nodes.size()==3,"icon toolbar semantics");
+            if(semantics.Tree().nodes.size()<3) return 1;
+            Check(semantics.Tree().nodes[2].minimum.y>semantics.Tree().nodes[0].minimum.y,"narrow toolbar wraps");
+            Check(semantics.Tree().nodes[0].state.selected,"icon selection exposed");
+            Check(semantics.Tree().nodes[1].state.mixed,"mixed icon state exposed");
+            queue.Push({semantics.Tree().nodes[1].id,accessibility::SemanticAction::Press});frame(toolbar);Check(!request,"disabled icon rejected");
+            auto labeledToolbar=[&]{ImGui::BeginChild("labeled-narrow",{120,200});request=IconToolbar("labeled-icons",atlas,actions,{true,true},options);ImGui::EndChild();};
+            frame(labeledToolbar);frame(labeledToolbar);
+            Check(semantics.Tree().nodes.size()==3,"labeled icon toolbar semantics");
+            Check(semantics.Tree().nodes[1].minimum.y>semantics.Tree().nodes[0].minimum.y,"labeled toolbar wraps without hiding labels");
+            bool actionPressed=false;
+            auto iconAction=[&]{actionPressed=IconActionButton("single-action",atlas,IconId::Play,"Play","Start playback",ActionVariant::Primary,options);};
+            frame(iconAction);auto actionNode=semantics.Tree().nodes.front();
+            queue.Push({actionNode.id,accessibility::SemanticAction::Press});frame(iconAction);Check(actionPressed,"icon action semantic request");
+        }
         StepNavigatorState nav;StableId selected=0;
         auto drawSteps=[&]{if(auto request=StepNavigator("steps",steps,selected,nav,{},options))selected=request;};
         for(int i=0;i<3;++i)frame(drawSteps);

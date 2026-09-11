@@ -53,3 +53,7 @@ The custom editor API is inventoried separately in [editor-api.md](editor-api.md
 | Recent/favorite/pin | Reuse / 既存APIで充足 | Existing icons, commands, AssetBrowser; host owns lists |
 | Two/three-pane workspace | Reuse / 既存APIで充足 | AdaptiveSplitLayout, Splitter, native tables |
 | Domain processing, device control, persistence | Exclude / 対象外 | Outside UI-library responsibility / UIライブラリの責務外 |
+
+- `GroupedStepNavigator`: grouped two-row navigation with optional group accents and stable selection requests.
+- `IconToolbar`: icon-only or labeled wrapping actions with selected, mixed and disabled presentation.
+- `IconActionButton`: icon, short label, description, disabled reason and action variant for one explicit action.

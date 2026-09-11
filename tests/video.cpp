@@ -324,6 +324,12 @@ int main() {
     full.Clear();frame(full);
     check(!timeline.heightDrag.active && full.count==1 && full.Events()[0].phase==editor::Phase::Cancel,
           "track height retries its pending Cancel once capacity returns");
+    timeline.options.minimumPixelsPerSecond=20;timeline.options.maximumPixelsPerSecond=40;
+    timeline.canvas.scale.x=1;frame(full);
+    check(timeline.canvas.scale.x==20,"timeline zoom clamps to the configured minimum");
+    timeline.canvas.scale.x=100;frame(full);
+    check(timeline.canvas.scale.x==40,"timeline zoom clamps to the configured maximum");
+    timeline.options.minimumPixelsPerSecond=8;timeline.options.maximumPixelsPerSecond=640;
     timeline.headerWidth=180;
     provider.contentRange={editor::FromSeconds(-10),editor::FromSeconds(10)};
     provider.clips=[](void *u,editor::StableId,editor::Range range) {
@@ -548,6 +554,12 @@ int main() {
     }
     timeline.bindings={};io.AddKeyEvent(ImGuiKey_C,true);frame(full);io.AddKeyEvent(ImGuiKey_C,false);frame(full);
     check(timeline.tool==video::Tool::Hand,"unbound default tool key does not bypass host binding map");
+    timeline.options.visibleTools=video::TimelineToolBit(video::Tool::Select)|video::TimelineToolBit(video::Tool::Hand);
+    timeline.tool=video::Tool::Ripple;frame(full);
+    check(timeline.tool==video::Tool::Select,"hidden active tool falls back to the first visible safe tool");
+    timeline.bindings=toolBindings;io.AddKeyEvent(ImGuiKey_F3,true);frame(full);io.AddKeyEvent(ImGuiKey_F3,false);frame(full);
+    check(timeline.tool==video::Tool::Select,"hidden tool ignores remapped keyboard command");
+    timeline.options.visibleTools=0x7f;timeline.bindings={};
     timeline.tool=video::Tool::Select;
     timeline.canvas.origin.x=0;full.Clear();frame(full);
     const auto clipOrigin=timeline.view.min;
@@ -924,6 +936,9 @@ int main() {
             std::array<video::TrackView,2> tracks{{{400,"Video A"},{401,"Video B"}}};
             video::ClipView clip;
             std::array<editor::StableId,1> boxIds{410};
+            int overlayCalls=0,dropPreviews=0,dropDeliveries=0,dropValue=0;
+            editor::StableId dropTrack=0;
+            editor::Tick dropTick=0;
         } fixture;
         fixture.clip.id=410;fixture.clip.track=400;fixture.clip.label="Editable";fixture.clip.duration=editor::FromSeconds(3);
         video::TimelineProvider p;p.user=&fixture;p.revision=1;p.trackCount=2;
@@ -932,19 +947,31 @@ int main() {
         p.editing.user=&fixture;
         p.editing.box=[](void *u,editor::Range,double,double){return std::span<const editor::StableId>(static_cast<EditingFixture*>(u)->boxIds);};
         p.editing.cut=[](void *,editor::StableId){return video::CutTransitionView{410,411,0,editor::FromSeconds(1),video::TransitionKind::Dissolve};};
+        p.drawClipOverlay=[](void *u,editor::StableId,const editor::Value&,ImVec2,ImVec2){++static_cast<EditingFixture*>(u)->overlayCalls;};
+        std::array routes{video::TimelineExternalDropRoute{
+            "IMKIT_TEST_ASSET",&fixture,
+            [](void *,editor::StableId,editor::Tick,const void *data,std::size_t size){return size==sizeof(int) && *static_cast<const int*>(data)==42;},
+            [](void *u,editor::StableId track,editor::Tick at,const void *data,std::size_t,bool delivery){
+                auto &f=*static_cast<EditingFixture*>(u);++f.dropPreviews;f.dropTrack=track;f.dropTick=at;f.dropValue=*static_cast<const int*>(data);
+                if(delivery)++f.dropDeliveries;
+            }}};
+        p.externalDrops=routes;
         std::array<editor::StableId,8> clipIds{},trackIds{};
         editor::Selection clipsSelected{clipIds},tracksSelected{trackIds};video::TimelineState state;state.trackSelection=&tracksSelected;
         std::array<editor::Event,16> eventData{};editor::EventBuffer output{eventData};
-        ImVec2 shelfOrigin{};
+        ImVec2 shelfOrigin{},assetOrigin{};
         auto render=[&] {
             ImGui::NewFrame();ImGui::SetNextWindowPos({10,10});ImGui::SetNextWindowSize({900,700});
             ImGui::Begin("Extended timeline IO");shelfOrigin=ImGui::GetCursorScreenPos();video::TransitionShelf("external shelf");
+            assetOrigin=ImGui::GetCursorScreenPos();ImGui::Button("Asset",{80,24});
+            if(ImGui::BeginDragDropSource()) {const int value=42;ImGui::SetDragDropPayload("IMKIT_TEST_ASSET",&value,sizeof(value));ImGui::TextUnformatted("Asset");ImGui::EndDragDropSource();}
             video::Timeline("editing",p,state,clipsSelected,output,MakePrecisionTheme(),{700,300});
             ImGui::End();ImGui::Render();
         };
         auto move=[&](float x,float y){io.AddMousePosEvent(x,y);render();render();};
         render();render();
         const auto origin=state.view.min;
+        check(fixture.overlayCalls>0,"host clip overlay is invoked without replacing timeline interaction");
         std::array allBindings{editor::Binding{editor::Command::SelectAll,ImGuiKey_F8}};
         state.bindings=allBindings;
         move(origin.x+state.headerWidth+450,origin.y+140);
@@ -970,6 +997,11 @@ int main() {
         output.Clear();move(shelfOrigin.x+25,shelfOrigin.y+10);io.AddMouseButtonEvent(0,true);render();
         move(origin.x+state.headerWidth+300,origin.y+29);io.AddMouseButtonEvent(0,false);render();
         check(std::any_of(output.Events().begin(),output.Events().end(),[](const auto &e){return e.phase==editor::Phase::Commit && e.kind==editor::EditKind::CutTransition && e.proposed.parent==411 && e.proposed.first==editor::TicksPerSecond;}),"shelf drag inserts shared transition at cut");
+        move(assetOrigin.x+20,assetOrigin.y+10);io.AddMouseButtonEvent(0,true);render();
+        move(origin.x+state.headerWidth+350,origin.y+state.rowHeight+20);render();
+        io.AddMouseButtonEvent(0,false);render();
+        check(fixture.dropPreviews>0 && fixture.dropDeliveries==1 && fixture.dropTrack==401 && fixture.dropValue==42,
+              "external host payload previews and delivers once on the hovered track");
     }
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;

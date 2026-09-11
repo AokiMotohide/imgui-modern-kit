@@ -6,6 +6,10 @@ round caps, common 3..21 optical bounds. Rasterization supersamples at 8x.
 from PIL import Image, ImageDraw
 
 DRAWINGS = {
+    'TestPattern': [('box',3,3,21,21), ('circle',6,6,18,18), ('line',12,3,12,21), ('line',3,12,21,12)],
+    'SolidColor': [('box',3,3,21,21), ('line',5,17,17,5), ('line',8,19,19,8), ('line',4,12,12,4)],
+    'WhiteOutput': [('circle',7,7,17,17), ('line',12,2,12,5), ('line',12,19,12,22), ('line',2,12,5,12), ('line',19,12,22,12)],
+    'Blackout': [('box',3,3,21,21), ('line',4,20,20,4), ('line',4,4,20,20)],
     'CommandPalette': [('box',3,5,21,19), ('line',6,9,8,11,6,13), ('line',11,14,17,14)],
     'Keyboard': [('box',3,6,21,18), ('line',6,10,7,10), ('line',10,10,11,10), ('line',14,10,15,10), ('line',18,10,18,10), ('line',7,14,17,14)],
     'Mouse': [('box',7,3,17,21), ('line',7,10,17,10), ('line',12,3,12,8)],

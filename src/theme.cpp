@@ -154,7 +154,7 @@ Theme MakeTheme(ThemePreset preset) {
     if (preset == ThemePreset::HighContrastLight || preset == ThemePreset::HighContrastDark)
         return MakeTheme(info.scheme, ContrastMode::HighContrast);
     auto theme = MakePrecisionTheme(info.scheme);
-    constexpr std::array accents = {0x005ca8u, 0x85c5ffu, 0x78d6c6u, 0x8eafffu,
+    constexpr std::array accents = {0x005ca8u, 0x8ab4f8u, 0x78d6c6u, 0x8eafffu,
                                     0x56d3e5u, 0x83d69cu, 0x9b5c2eu, 0xa9466bu,
                                     0xc19af5u, 0x856500u};
     SetAccent(theme, Hex(accents[static_cast<std::size_t>(preset)]));
@@ -164,14 +164,14 @@ Theme MakePrecisionTheme(ColorScheme scheme) {
     Theme t;
     t.scheme = scheme;
     bool d = scheme == ColorScheme::Dark;
-    t.colors = {Hex(d ? 0x14161b : 0xedeef1),
-                Hex(d ? 0x20232a : 0xf8f9fb),
-                Hex(d ? 0x171a20 : 0xeff1f5),
-                Hex(d ? 0x30343e : 0xffffff),
+    t.colors = {Hex(d ? 0x18191c : 0xedeef1),
+                Hex(d ? 0x222428 : 0xf8f9fb),
+                Hex(d ? 0x1d1f23 : 0xeff1f5),
+                Hex(d ? 0x393c42 : 0xffffff),
                 Hex(d ? 0xeff0f4 : 0x242833),
                 Hex(d ? 0xacb2bf : 0x505968),
                 Hex(d ? 0x8b95a5 : 0x606a78),
-                Hex(d ? 0x85c5ff : 0x005ca8),
+                Hex(d ? 0x8ab4f8 : 0x005ca8),
                 Hex(d ? 0x142031 : 0xffffff),
                 {},
                 {},

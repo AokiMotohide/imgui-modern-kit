@@ -95,6 +95,24 @@ reorder, numeric copy/paste, and filtered/renamable asset grid/list views.
 Coreはcanvas移動・拡大・fit、矩形/投げ縄、時間軸・範囲・marker編集、transport、複数keyと
 Bezier handle、property状態・配列並べ替え・数値copy/paste、素材の検索・一覧・名前変更を提供します。
 
+Timeline places Fit, zoom-out, a logarithmic zoom bar and zoom-in at the lower right.
+Ctrl+wheel zooms around the pointer, middle drag or Hand pans, and the overview range
+moves or resizes the visible interval. Hosts can restrict the visible tool set and
+zoom bounds through `TimelineState::options` while retaining existing defaults.
+
+Timelineは右下にFit・縮小・対数ズームバー・拡大を配置します。Ctrl+wheelはポインタ位置を
+固定してズームし、中ドラッグまたはHandでpanし、全体範囲バーは表示区間の移動と両端zoomを
+行います。ホストは既定動作を維持したまま`TimelineState::options`で表示toolとzoom範囲を制限できます。
+
+`TimelineProvider::externalDrops` accepts multiple host-defined ImGui payload types.
+Payload memory is borrowed only for the callback, and the delivery flag distinguishes
+preview from the single accepted drop. `drawClipOverlay` adds application decoration
+inside clip bounds; it does not transfer hit testing or edit ownership from Timeline.
+
+`TimelineProvider::externalDrops`は複数のホスト定義ImGui payload型を受け取ります。payload
+memoryはcallback中だけの非所有参照で、delivery flagによりpreviewと1回の確定dropを区別します。
+`drawClipOverlay`はclip内へアプリ固有表示を追加しますが、hit testと編集所有権はTimelineに残ります。
+
 Video supplies variable-height role tracks, restrictions/source/target controls,
 related clip moves and trims, split/ripple/roll/slip/slide/ripple-delete, snap targets,
 transition overlap/type/duration, captions and property keys. Monitor overlays use
