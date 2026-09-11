@@ -103,8 +103,11 @@ Follow [Getting started](docs/getting-started.md) for both source and installed-
 | `imkit::editor_core` | Canvas, selection, splitters and editor data-view contracts | `imkit::imkit` |
 | `imkit::video`, `imkit::cg`, `imkit::editor_suite` | Optional Video/CG editor examples and typed host events | `imkit::editor_core` |
 | `imkit::preview_opengl3` | Explicitly constructed OpenGL3 preview helper | `imkit::cg`; host-provided context and GL function table |
+| `imkit::window_frame_win32` / `imkit::window_frame_macos` | Optional borrowed native-window adapters | `imkit::imkit`; matching platform libraries only |
 
 The advanced modules are useful reference implementations, but they do not own scenes, media, selection, undo or GPU context. Their precise limits are in the [Editor contracts](docs/editor-suite.md).
+
+Cross-platform frame values, Frame Lab and platform adapter boundaries are documented in [Public window frame](docs/gallery-window-frame.md). Presets and edited styles remain host-owned; the base library has no Windows or Cocoa dependency.
 
 ## Verify what you cloned
 
