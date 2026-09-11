@@ -14,6 +14,14 @@
 auto theme = imkit::MakeTheme(imkit::ThemePreset::Forest);
 ```
 
+enum順ではなく安定IDを保存し、`ThemePresetFromId()`で復元します。未知IDや大文字小文字が異なるIDは`std::nullopt`となるため、移行とfallbackはホスト側で明示できます。
+
+```cpp
+const auto preset = imkit::ThemePresetFromId(savedPresetId)
+    .value_or(imkit::ThemePreset::Graphite);
+auto theme = imkit::MakeTheme(preset);
+```
+
 `MakePrecisionTheme(Light/Dark)`は互換維持され、従来と同じPrecision Light/Dark値を生成します。
 
 ## 配色変更
@@ -25,6 +33,8 @@ auto theme = imkit::MakeTheme(imkit::ThemePreset::Forest);
 ## 所有と保存
 
 `Theme`はコピー可能なホスト所有値です。ImKitはcurrent-theme registryを持たず、ファイルへ保存しません。ホストの設定modelへpreset IDまたはカスタマイズ済み値を保存し、明示的に復元・再適用します。
+
+固定Git submoduleを通常利用しつつホストとImKitを並行開発する場合は、ホスト所有のCMake cache pathで`add_subdirectory`の入力だけを明示的に差し替えます。この絶対pathをproject fileや配布manifestへ保存せず、どちらの経路でもImKit追加前に`IMKIT_IMGUI_TARGET`を設定してください。
 
 `FontSet`は非所有参照です。frame開始前にホストのatlasへglyphを読み込んでください。OS font探索やIME callbackは提供しません。
 

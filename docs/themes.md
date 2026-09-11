@@ -14,6 +14,14 @@
 auto theme = imkit::MakeTheme(imkit::ThemePreset::Forest);
 ```
 
+Persist the stable ID and resolve it without relying on enum order. Unknown and differently-cased IDs return `std::nullopt`, so the host can apply its own migration or fallback policy.
+
+```cpp
+const auto preset = imkit::ThemePresetFromId(savedPresetId)
+    .value_or(imkit::ThemePreset::Graphite);
+auto theme = imkit::MakeTheme(preset);
+```
+
 `MakePrecisionTheme(Light/Dark)` remains source-compatible and produces the same Precision Light/Dark values.
 
 ## Customization
@@ -25,6 +33,8 @@ Shipped presets validate normal text at 4.5:1 or better against canvas, surface,
 ## Ownership and persistence
 
 `Theme` is a copyable host-owned value. ImKit has no current-theme registry and writes no files. Store a preset ID or a complete customized value in the host's own settings model, then reconstruct or reapply it explicitly.
+
+For applications that consume a pinned Git submodule but also develop ImKit beside the host, expose a host-owned CMake cache path and pass either the submodule or that explicit path to `add_subdirectory`. Keep the override out of project files and release manifests; both routes must still set `IMKIT_IMGUI_TARGET` before adding ImKit.
 
 Fonts in `FontSet` are non-owning. Load glyphs into the host atlas before the frame. ImKit does not discover OS fonts or provide IME callbacks.
 

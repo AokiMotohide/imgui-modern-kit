@@ -93,7 +93,7 @@ void DrawOverlay(const CanvasView& v,const CanvasState& s,const OverlayView& o,c
     case OverlayShape::Polyline:
         for(std::size_t i=1;i<o.points.size();++i)d->AddLine(ScreenPoint(o.points[i-1],s,v),ScreenPoint(o.points[i],s,v),color,stroke);
         if(o.closed && o.points.size()>2)d->AddLine(ScreenPoint(o.points.back(),s,v),p,color,stroke);break;
-    case OverlayShape::Rectangle:if(o.points.size()>1){auto q=ScreenPoint(o.points[1],s,v);d->AddRect({std::min(p.x,q.x),std::min(p.y,q.y)},{std::max(p.x,q.x),std::max(p.y,q.y)},color,0,0,stroke);}break;
+    case OverlayShape::Rectangle:if(o.points.size()>1){auto q=ScreenPoint(o.points[1],s,v);d->AddRect({std::min(p.x,q.x),std::min(p.y,q.y)},{std::max(p.x,q.x),std::max(p.y,q.y)},color,0,stroke,ImDrawFlags_None);}break;
     case OverlayShape::Circle:if(Positive(o.radius))d->AddEllipse(p,{static_cast<float>(o.radius*s.scale.x),static_cast<float>(o.radius*s.scale.y)},color,0,0,stroke);break;
     case OverlayShape::Label:d->AddText(p,color,Safe(o.label));break;
     }d->PopClipRect();

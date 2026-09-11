@@ -144,4 +144,4 @@ The stable core, themes and components are documented here. Advanced editor modu
 
 ImKit code is [MIT](LICENSE). Dear ImGui and Gallery-only dependencies retain their own licenses. Optional font sources, generated icon provenance, pinned revisions and file hashes are recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The project does not imply endorsement or affiliation with the referenced design projects.
 
-GroupedStepNavigator displays selectable groups above every step. IconToolbar wraps icon actions and presents selection, mixed state, disabled state and hover/focus descriptions. Both return requests and borrow host state and textures.
+GroupedStepNavigator displays selectable groups above every step, with optional group accents and distinct current, completed and warning cues. IconToolbar can keep the default icon-only presentation or show short labels while wrapping; IconActionButton provides a labeled single action with a variant and explanatory tooltip. These components return requests and borrow host state and textures.

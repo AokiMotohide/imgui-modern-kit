@@ -37,6 +37,7 @@ theme = saved; // ホストが保持・復元。自動永続化は行わない
 | API | 契約 |
 |---|---|
 | `ActionButton` | primary/secondary/ghost/destructive。配色とmotionは`ComponentOptions{&theme, &animation}`で明示 |
+| `IconActionButton` | 単独操作向けのアイコン＋短いラベル。説明、無効理由、操作種別を指定 |
 | `IconButton` | 標準arrow buttonの操作と説明tooltip |
 | `Toggle` / `Switch` | checkboxの入力・keyboard契約を維持し、switch trackを描画 |
 | `IndeterminateCheckbox` | Mixedから操作するとCheckedへ。その後は通常の切替 |
@@ -93,7 +94,7 @@ target_link_libraries(your_app PRIVATE imkit::imkit)
 
 ## Editor Suite 2.0 workspace
 
-native GalleryのEditor Core／Video Editor／CG Editorを開きます。`--verify-editors --capture-editors --output out/editors`で公開IO検証と150%を含む実backbuffer画像を取得できます。中ボタンでpan/orbit、TimelineはCtrl+wheelでzoom、clip端でtrim、Razorでsplit、gizmo軸端でdragします。UV/Graphタブの点も編集できます。[Editor Suite 2.0の検証結果と範囲](editor-refresh.md)を参照してください。
+native GalleryのEditor Core／Video Editor／CG Editorを開きます。`--verify-editors --capture-editors --output out/editors`で公開IO検証と150%を含む実backbuffer画像を取得できます。Timeline右下にはFit・縮小・対数zoom・拡大があり、中ボタンでpan/orbit、Ctrl+wheelでポインタ位置を固定してzoom、clip端でtrim、Razorでsplit、gizmo軸端でdragします。UV/Graphタブの点も編集できます。[Editor Suite 2.0の検証結果と範囲](editor-refresh.md)を参照してください。
 
 ## デザインシステム基盤
 

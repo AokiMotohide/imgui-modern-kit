@@ -181,6 +181,15 @@ Timeline Fit uses `TimelineProvider.contentRange`, with 24 logical pixels of hor
 
 TimelineのFitは `TimelineProvider.contentRange` に左右24論理pixelの余白を付け、縦scale/scrollを維持します。ホストは `TimelineState.bindings` でFitキーを渡し、アイコンボタンも同じ処理を使います。Galleryは編集データ更新時に全体範囲を保持し、可視query中には全件走査しません。
 
+`TimelineState::options` controls the visible tool mask, minimum/maximum pixels per second,
+the overview range and the lower-right Fit/zoom controls. The zoom bar maps logarithmically
+between the configured bounds. Ctrl+wheel preserves the time under the pointer; middle drag
+and Hand pan the same retained canvas.
+
+`TimelineState::options`は表示tool mask、最小／最大pixels-per-second、全体範囲バー、右下の
+Fit／zoom操作を制御します。zoom barは設定範囲を対数変換し、Ctrl+wheelはポインタ直下の時刻を
+固定します。中ドラッグとHandは同じ保持canvasをpanします。
+
 Gallery curve queries use a channel/time index and return channel-contiguous visible keys plus two neighbors at each boundary for automatic tangents. The index is rebuilt on data changes; queries use binary search per channel and reusable host scratch storage. The sample includes three channels.
 
 Galleryのcurve queryはchannel/time indexを使い、channelごとに連続した可視keyと、自動接線用に各境界の隣接2keyを返します。indexはデータ変更時に更新し、queryはchannelごとの二分探索とホストの再利用bufferを使います。sampleは3channelを含みます。
@@ -326,6 +335,17 @@ Timelineの`AddKey`はtarget=channel、parent=clip、first=clip内tick、x=値�
 `TimelineState::labels` borrows `TimelineLabels` strings for seven tools/tooltips, Snap, Magnet, the options popup, follow modes, snap kinds and Fit. Keep UTF-8 strings valid during the call; defaults are English. Binding behavior and popup IDs are unchanged.
 
 `TimelineState::labels`の`TimelineLabels`は7種類のtool名・tooltip、Snap、Magnet、設定popup、追従mode、snap対象、FitのUTF-8文字列を非所有参照します。呼出し中の寿命をホストで保証し、未指定時は英語を使用します。bindingの挙動とpopup IDは維持します。
+
+`TimelineProvider::externalDrops` is a borrowed span of payload routes. Each route may
+preflight a track/tick and receives preview calls followed by one delivery call from Dear
+ImGui. Payload bytes are valid only during that callback. `drawClipOverlay` is a borrowed
+draw hook invoked within the clipped clip rectangle; the host must not use it to replace
+Timeline hit testing. Source data, commands, undo and persistence remain host-owned.
+
+`TimelineProvider::externalDrops`はpayload routeの非所有spanです。各routeはtrack／tickを
+事前判定し、Dear ImGuiからpreviewと1回のdeliveryを受けます。payload byteはcallback中だけ有効です。
+`drawClipOverlay`はclip矩形内の描画hookで、Timelineのhit testを置換しません。元データ、command、
+Undo、保存は引き続きホスト所有です。
 
 ToolSelect/ToolRazor/ToolRipple/ToolRoll/ToolSlip/ToolSlide/ToolHand are appended Command IDs. Timeline consumes them only with canvas focus and no active edit. MakeBindings supplies V/C/B/N/Y/U/H respectively across the built-in presets; the host may replace or remove these bindings. Tooltips show the first active host binding. These are ImKit preset defaults, not a claim of exact third-party shortcut parity.
 

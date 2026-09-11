@@ -12,19 +12,6 @@ ImVec4 Mix(ImVec4 a, ImVec4 b, float amount) {
             a.z + (b.z - a.z) * amount, a.w + (b.w - a.w) * amount};
 }
 ImU32 Color(ImVec4 value) { return ImGui::ColorConvertFloat4ToU32(value); }
-float FrameContrastRatio(ImVec4 foreground, ImVec4 background) {
-    const auto luminance = [](ImVec4 color) {
-        const auto linear = [](float value) {
-            value = std::clamp(value, 0.f, 1.f);
-            return value <= .04045f ? value / 12.92f : std::pow((value + .055f) / 1.055f, 2.4f);
-        };
-        return .2126f * linear(color.x) + .7152f * linear(color.y) + .0722f * linear(color.z);
-    };
-    foreground = Mix(background, foreground, std::clamp(foreground.w, 0.f, 1.f));
-    const float a = luminance(foreground);
-    const float b = luminance(background);
-    return (std::max(a, b) + .05f) / (std::min(a, b) + .05f);
-}
 WindowFrameRect TakeRight(float& right, float width, float height, bool visible) {
     if (!visible) return {};
     width = std::clamp(width, 0.f, std::max(0.f, right));
@@ -232,14 +219,14 @@ WindowFrameResult DrawWindowFrame(const WindowFrameStyle& style, const WindowFra
 
 WindowFrameContrast ValidateWindowFrameContrast(const WindowFrameStyle& style) {
     WindowFrameContrast result;
-    result.activeTitle = FrameContrastRatio(style.titleText, style.activeBackground);
-    result.inactiveTitle = FrameContrastRatio(style.auxiliaryText, style.inactiveBackground);
-    result.auxiliary = FrameContrastRatio(style.auxiliaryText, style.activeBackground);
-    result.icon = FrameContrastRatio(style.icon, style.activeBackground);
-    result.button = std::min(FrameContrastRatio(style.buttonText, style.buttonHover),
-                             FrameContrastRatio(style.buttonText, style.buttonPressed));
-    result.closeButton = std::min(FrameContrastRatio(style.buttonText, style.closeButtonHover),
-                                  FrameContrastRatio(style.buttonText, style.closeButtonPressed));
+    result.activeTitle = ContrastRatio(style.titleText, style.activeBackground);
+    result.inactiveTitle = ContrastRatio(style.auxiliaryText, style.inactiveBackground);
+    result.auxiliary = ContrastRatio(style.auxiliaryText, style.activeBackground);
+    result.icon = ContrastRatio(style.icon, style.activeBackground);
+    result.button = std::min(ContrastRatio(style.buttonText, style.buttonHover),
+                             ContrastRatio(style.buttonText, style.buttonPressed));
+    result.closeButton = std::min(ContrastRatio(style.buttonText, style.closeButtonHover),
+                                  ContrastRatio(style.buttonText, style.closeButtonPressed));
     result.valid = result.activeTitle >= 4.5f && result.inactiveTitle >= 4.5f &&
                    result.auxiliary >= 4.5f && result.icon >= 3.f &&
                    result.button >= 3.f && result.closeButton >= 3.f;

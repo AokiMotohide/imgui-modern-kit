@@ -53,8 +53,14 @@ bool ButtonImpl(const char *id, const IconAtlas &atlas, IconId icon, const char 
     const ImVec2 extent{size + gap + textSize.x + 2 * style.FramePadding.x,
                         std::max(size, textSize.y) + 2 * style.FramePadding.y};
     ImGui::PushID(id);
-    ImGui::BeginDisabled(!Ready(atlas, icon, level));
-    bool pressed = ImGui::Button("##icon", extent);
+    // A visible label remains a complete fallback when the optional texture is
+    // unavailable. Icon-only controls stay disabled because their meaning vanishes.
+    ImGui::BeginDisabled(!showLabel && !Ready(atlas, icon, level));
+    if (showLabel)
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0, 0, 0, 0));
+    bool pressed = ImGui::Button(showLabel ? text : "##icon", extent);
+    if (showLabel)
+        ImGui::PopStyleColor();
     if(options.accessibility) {
         using namespace accessibility;
         SemanticNode n; n.id=ImGui::GetItemID(); n.parent=options.parent; n.role=SemanticRole::Button;

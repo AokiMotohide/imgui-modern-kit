@@ -2,6 +2,7 @@
 #include <imkit/version.h>
 #include <array>
 #include <cstdint>
+#include <optional>
 #include <span>
 #include <string_view>
 
@@ -82,6 +83,7 @@ struct Theme {
 };
 Theme MakePrecisionTheme(ColorScheme scheme = ColorScheme::Light);
 std::span<const ThemePresetInfo> ThemePresets() noexcept;
+std::optional<ThemePreset> ThemePresetFromId(std::string_view id) noexcept;
 Theme MakeTheme(ThemePreset preset);
 Theme MakeTheme(ColorScheme scheme=ColorScheme::Light, ContrastMode contrast=ContrastMode::Standard,
                 Density density=Density::Comfortable);

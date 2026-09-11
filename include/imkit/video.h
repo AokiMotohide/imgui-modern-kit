@@ -6,6 +6,16 @@ using editor::Tick;
 enum class TrackKind { Video, Audio, Caption, Effect, Adjustment, Group };
 enum class TrackControl { Visible, Mute, Solo, Locked, Record, Target, Source, Expanded, Height };
 enum class Tool { Select, Razor, Ripple, Roll, Slip, Slide, Hand };
+constexpr std::uint32_t TimelineToolBit(Tool tool) {
+    return 1u << static_cast<unsigned>(tool);
+}
+struct TimelineOptions {
+    std::uint32_t visibleTools = 0x7fu;
+    double minimumPixelsPerSecond = 8.0;
+    double maximumPixelsPerSecond = 640.0;
+    bool showOverview = true;
+    bool showBottomZoom = true;
+};
 struct AudioBucket;
 enum class PlacementMode { Insert, Overwrite, Append };
 enum class WaveformStatus { Pending, Ready, Error };
@@ -63,6 +73,12 @@ struct TimelineEditingProvider {
     bool (*canMove)(void *,std::span<const StableId>,Tick delta,StableId anchor,StableId hovered)=nullptr;
     std::size_t (*trackClipCount)(void *,StableId)=nullptr;
     StableId (*trackAfter)(void *,StableId)=nullptr; // Zero denotes the end of the track list.
+};
+struct TimelineExternalDropRoute {
+    const char *payloadType = "";
+    void *user = nullptr;
+    bool (*canDrop)(void *,StableId track,Tick at,const void *data,std::size_t size)=nullptr;
+    void (*drop)(void *,StableId track,Tick at,const void *data,std::size_t size,bool delivery)=nullptr;
 };
 struct EnvelopePoint {StableId id=0;Tick tick=0;double gain=1;bool locked=false;};
 // Sorted clip-local points; empty envelope evaluates to unity gain.
@@ -171,6 +187,10 @@ struct TimelineProvider {
     Tick (*transitionLimit)(void *,StableId clip,bool outgoing)=nullptr;
     WaveformProvider waveform;
     TimelineEditingProvider editing;
+    // Optional host-owned payload routes. Data is borrowed for this call only.
+    std::span<const TimelineExternalDropRoute> externalDrops;
+    // Draw application-specific decoration without taking over clip interaction.
+    void (*drawClipOverlay)(void *,StableId,const editor::Value &,ImVec2,ImVec2)=nullptr;
 };
 struct TrackLabels {
     // Borrowed UTF-8 strings. Array order follows Visible through Source in TrackControl.
@@ -197,6 +217,7 @@ struct TimelineLabels {
     const char *addEnvelope="Add envelope point",*removeEnvelope="Remove envelope point";
     const char *envelope="Volume envelope",*dragKey="Drag keyframe time";
     const char *rippleDelete="Ripple delete selected clips",*trimStart="Trim start",*trimEnd="Trim end",*addCaption="Add caption at or after playhead";
+    const char *zoom="Timeline zoom",*zoomOut="Zoom out",*zoomIn="Zoom in";
 };
 struct TimelineState {
     struct MemberDrag {
@@ -260,6 +281,7 @@ struct TimelineState {
     StableId renamingTrack=0;
     std::uint64_t renameRevision=0;
     std::array<char,256> trackName{};
+    TimelineOptions options;
 };
 void FadePicker(const char *id,const ClipView &clip,const FadeView &fade,std::uint64_t revision,
                 editor::EventBuffer &events,bool trackLocked=false);

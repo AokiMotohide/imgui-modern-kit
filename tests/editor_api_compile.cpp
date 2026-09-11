@@ -39,12 +39,18 @@ int main() {
     editor::AssetState asset;
     editor::TimeState time;
     video::TimelineState timeline;
+    timeline.options.visibleTools=video::TimelineToolBit(video::Tool::Select)|video::TimelineToolBit(video::Tool::Hand);
+    timeline.options.minimumPixelsPerSecond=12;timeline.options.maximumPixelsPerSecond=480;
     cg::ViewportState viewport;
     cg::OutlinerState outliner;
     cg::UVState uv;
     video::ClipView evaluationClip;evaluationClip.keyEvaluation={};
     video::TimelineLabels relationLabels;relationLabels.unlink="Unlink";relationLabels.ungroup="Detach";relationLabels.linkSelection="Link selected";relationLabels.groupSelection="Group selected";
+    video::TimelineExternalDropRoute dropRoute{"IMKIT_ASSET",nullptr,nullptr,
+        [](void *,editor::StableId,editor::Tick,const void *,std::size_t,bool){}};
     video::TimelineProvider gate;gate.isEditable=[](void *,editor::StableId){return true;};gate.canBeginEdit=[](void *,editor::StableId,editor::EditKind){return true;};
+    gate.externalDrops=std::span(&dropRoute,1);
+    gate.drawClipOverlay=[](void *,editor::StableId,const editor::Value &,ImVec2,ImVec2){};
     timeline.labels.fit="Frame all clips";timeline.labels.followModes[0]="Disabled";
     timeline.trackLabels.controls="Track actions";timeline.trackLabels.names[0]="Visibility";
     curve.icons=&icons;uv.icons=&icons;viewport.icons=&icons;timeline.icons=&icons;

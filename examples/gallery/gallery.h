@@ -22,7 +22,7 @@ struct GalleryState {
     Theme theme = MakeTheme(ThemePreset::PrecisionLight);
     FontSet fonts{};
     AnimationState animation;
-    int page = -1;
+    int page = 0;
     int presetIndex = 0, presetFilter = 0, copyClicks = 0;
     float scale = ThemeScaleDefault;
     float windowFrameHeight = 0;
