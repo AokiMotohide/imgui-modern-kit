@@ -290,6 +290,10 @@ enum class IconId : std::uint16_t {
     PanelRightClose,
     PanelBottomOpen,
     PanelBottomClose,
+    TestPattern,
+    SolidColor,
+    WhiteOutput,
+    Blackout,
     Count
 };
 struct IconInfo {

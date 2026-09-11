@@ -1860,6 +1860,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         s.timeline.labels.followModes={"なし","滑らか","ページ"};
         s.timeline.labels.snapKinds={"フレーム","再生位置","marker","clip端","keyframe","in／out","選択範囲端"};
         s.timeline.labels.fit="全体表示";s.timeline.labels.fitTooltip="Timeline全体を表示";
+        s.timeline.labels.zoom="Timelineの拡大率";s.timeline.labels.zoomOut="縮小";s.timeline.labels.zoomIn="拡大";
         s.timeline.trackLabels.buttons={"表示","消音","ソロ","固定","録音","対象","素材"};
         s.timeline.trackLabels.names={"表示","ミュート","ソロ","ロック","録音待機","編集対象track","素材patch"};
         s.timeline.trackLabels.controls="track操作";s.timeline.trackLabels.height="track高さ";

@@ -1,6 +1,7 @@
 #pragma once
 #include <imkit/theme.h>
 #include <imkit/accessibility.h>
+#include <imkit/icons.h>
 #include <imkit/locale.h>
 #include <span>
 #include <cstddef>
@@ -19,6 +20,12 @@ struct ComponentOptions {
 };
 bool ActionButton(const char *label, ActionVariant variant = ActionVariant::Primary,
                   const ImVec2 &size = ImVec2(0, 0), ComponentOptions options = {});
+// A single explicit action with a visible short label. Description and disabled
+// reason are shown on hover/focus; atlas and state remain host-owned.
+bool IconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
+                      const char *label, const char *description = "",
+                      ActionVariant variant = ActionVariant::Secondary,
+                      ComponentOptions options = {});
 bool IconButton(const char *id, ImGuiDir direction, const char *accessibleLabel, ComponentOptions options = {});
 bool Toggle(const char *label, bool *value, ComponentOptions options = {});
 inline bool Switch(const char *label, bool *value, ComponentOptions options = {}) {

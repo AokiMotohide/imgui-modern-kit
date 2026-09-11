@@ -3572,7 +3572,7 @@
   {
     "name": "CommandPalette",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3587,7 +3587,7 @@
   {
     "name": "Keyboard",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3602,7 +3602,7 @@
   {
     "name": "Mouse",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3617,7 +3617,7 @@
   {
     "name": "Touch",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3632,7 +3632,7 @@
   {
     "name": "Accessibility",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3647,7 +3647,7 @@
   {
     "name": "ScreenReader",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3662,7 +3662,7 @@
   {
     "name": "HighContrast",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3677,7 +3677,7 @@
   {
     "name": "ReduceMotion",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3692,7 +3692,7 @@
   {
     "name": "TextSize",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3707,7 +3707,7 @@
   {
     "name": "RTL",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3722,7 +3722,7 @@
   {
     "name": "ChevronUp",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3737,7 +3737,7 @@
   {
     "name": "ChevronDown",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3752,7 +3752,7 @@
   {
     "name": "ChevronLeft",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3767,7 +3767,7 @@
   {
     "name": "ChevronRight",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3782,7 +3782,7 @@
   {
     "name": "Dock",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3797,7 +3797,7 @@
   {
     "name": "Undock",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3812,7 +3812,7 @@
   {
     "name": "WindowMinimize",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3827,7 +3827,7 @@
   {
     "name": "WindowMaximize",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3842,7 +3842,7 @@
   {
     "name": "WindowRestore",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3857,7 +3857,7 @@
   {
     "name": "Columns",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3872,7 +3872,7 @@
   {
     "name": "Rows",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3887,7 +3887,7 @@
   {
     "name": "ExpandAll",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3902,7 +3902,7 @@
   {
     "name": "CollapseAll",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3917,7 +3917,7 @@
   {
     "name": "Ungroup",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3932,7 +3932,7 @@
   {
     "name": "SortNeutral",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3947,7 +3947,7 @@
   {
     "name": "FilterClear",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3962,7 +3962,7 @@
   {
     "name": "DragHandle",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3977,7 +3977,7 @@
   {
     "name": "Archive",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -3992,7 +3992,7 @@
   {
     "name": "ArchiveRestore",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -4007,7 +4007,7 @@
   {
     "name": "FolderAdd",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -4022,7 +4022,7 @@
   {
     "name": "FolderMove",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -4037,7 +4037,7 @@
   {
     "name": "Replace",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -4052,7 +4052,7 @@
   {
     "name": "KeyCommand",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -4067,7 +4067,7 @@
   {
     "name": "KeyEnter",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -4082,7 +4082,7 @@
   {
     "name": "KeyEscape",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -4097,7 +4097,7 @@
   {
     "name": "KeyTab",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -4112,7 +4112,7 @@
   {
     "name": "PanelLeftOpen",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -4127,7 +4127,7 @@
   {
     "name": "PanelLeftClose",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -4142,7 +4142,7 @@
   {
     "name": "PanelRightOpen",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -4157,7 +4157,7 @@
   {
     "name": "PanelRightClose",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -4172,7 +4172,7 @@
   {
     "name": "PanelBottomOpen",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -4187,7 +4187,7 @@
   {
     "name": "PanelBottomClose",
     "source": "tools/design_icons.py",
-    "sha256": "dbdb775e24dca2956a0a451bfc2ceb298e08679ddcf20812703f81e3743903eb",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
     "originalSize": [
       192,
       192
@@ -4196,6 +4196,66 @@
       16,
       22,
       177,
+      171
+    ]
+  },
+  {
+    "name": "TestPattern",
+    "source": "tools/design_icons.py",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      16,
+      16,
+      177,
+      177
+    ]
+  },
+  {
+    "name": "SolidColor",
+    "source": "tools/design_icons.py",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      22,
+      22,
+      171,
+      171
+    ]
+  },
+  {
+    "name": "WhiteOutput",
+    "source": "tools/design_icons.py",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      8,
+      8,
+      185,
+      185
+    ]
+  },
+  {
+    "name": "Blackout",
+    "source": "tools/design_icons.py",
+    "sha256": "8aebc623e32aef581f613443e60bcb7d4fc2c04ff587668cbdca8ddb7de6a721",
+    "originalSize": [
+      192,
+      192
+    ],
+    "contentBounds": [
+      22,
+      22,
+      171,
       171
     ]
   }
