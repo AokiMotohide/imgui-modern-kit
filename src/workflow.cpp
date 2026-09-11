@@ -60,8 +60,8 @@ bool LabeledButton(const char* label,const char* description,ImVec2 size,bool se
     if((ImGui::GetItemFlags()&ImGuiItemFlags_Disabled)!=0)d->AddLine({b.x-pad.x,b.y-pad.y},{b.x-pad.x-ImGui::GetFontSize()*.4f,b.y-pad.y-ImGui::GetFontSize()*.4f},ImGui::GetColorU32(ImGuiCol_TextDisabled));
     if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)||ImGui::IsItemFocused()) {
         if(!ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))ImGui::SetNextWindowPos({a.x,b.y});
-        ImGui::BeginTooltip();ImGui::TextUnformatted(Safe(label));
-        if(*Safe(description)) ImGui::TextWrapped("%s",description);ImGui::EndTooltip();
+        ImGui::BeginTooltip();ImGui::PushTextWrapPos(ImGui::GetFontSize()*32.f);ImGui::TextUnformatted(Safe(label));
+        if(*Safe(description)) ImGui::TextUnformatted(description);ImGui::PopTextWrapPos();ImGui::EndTooltip();
     }
     return Annotate(label,description,role,accessibility::SemanticAction::Press,selected,o)||pressed;
 }
@@ -120,10 +120,10 @@ StableId IconToolbar(const char* id,const IconAtlas& atlas,
         if(item.selected) draw->AddRect(a,b,ImGui::GetColorU32(ImGuiCol_CheckMark),ImGui::GetStyle().FrameRounding,0,2.f);
         if(item.mixed) draw->AddLine({a.x+4,b.y-3},{b.x-4,b.y-3},ImGui::GetColorU32(ImGuiCol_TextDisabled),2.f);
         if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)||ImGui::IsItemFocused()) {
-            ImGui::BeginTooltip();ImGui::TextUnformatted(Safe(item.label));
+            ImGui::BeginTooltip();ImGui::PushTextWrapPos(ImGui::GetFontSize()*32.f);ImGui::TextUnformatted(Safe(item.label));
             if(*Safe(item.description)) ImGui::TextUnformatted(item.description);
             if(item.mixed) ImGui::TextUnformatted(Text(o,"mixed","Mixed"));
-            ImGui::EndTooltip();
+            ImGui::PopTextWrapPos();ImGui::EndTooltip();
         }
         ImGui::EndDisabled();Pop();
     }
