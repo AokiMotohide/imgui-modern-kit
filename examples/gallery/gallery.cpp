@@ -3,10 +3,35 @@
 #include <cstdio>
 #include <cctype>
 #include <string_view>
+#include <sstream>
+#include <iomanip>
 #include <vector>
 namespace imkit::gallery {
 void Record(GalleryState &s, const char *name) {
     s.probes[name] = {GetItemRectMin(), GetItemRectMax()};
+}
+void SelectFramePreset(GalleryState& s, WindowFramePreset preset) {
+    s.framePresetStyles[static_cast<std::size_t>(s.framePreset)]=s.frameStyle;
+    s.framePreset=preset;
+    s.frameStyle=s.framePresetStyles[static_cast<std::size_t>(preset)];
+}
+void RegenerateFrameColors(GalleryState& s) {
+    const auto generated=MakeWindowFrameStyle(s.framePreset,s.theme);
+    s.frameStyle.activeBackground=generated.activeBackground;
+    s.frameStyle.inactiveBackground=generated.inactiveBackground;
+    s.frameStyle.border=generated.border;
+    s.frameStyle.titleText=generated.titleText;
+    s.frameStyle.auxiliaryText=generated.auxiliaryText;
+    s.frameStyle.icon=generated.icon;
+    s.frameStyle.buttonText=generated.buttonText;
+    s.frameStyle.buttonHover=generated.buttonHover;
+    s.frameStyle.buttonPressed=generated.buttonPressed;
+    s.frameStyle.closeButtonHover=generated.closeButtonHover;
+    s.frameStyle.closeButtonPressed=generated.closeButtonPressed;
+}
+void ResetFramePreset(GalleryState& s) {
+    s.frameStyle=MakeWindowFrameStyle(s.framePreset,s.theme);
+    s.framePresetStyles[static_cast<std::size_t>(s.framePreset)]=s.frameStyle;
 }
 namespace {
 void Heading(GalleryState &s, const char *text) {
@@ -448,20 +473,86 @@ void Composites(GalleryState &s) {
     TextWrapped("Values and notifications belong to the host. Font files are optional catalog assets. No "
                 "operating-system font discovery or hidden context is used.");
 }
+void FrameLab(GalleryState& s) {
+    Heading(s,"Frame Lab / Public window frame");
+    const char* presets[]={"Native","Studio","Workspace","Tool"};
+    int preset=static_cast<int>(s.framePreset);
+    if(Combo("Preset",&preset,presets,4)) SelectFramePreset(s,static_cast<WindowFramePreset>(preset));
+    TextWrapped("Preset selection does not overwrite edited values. Native detaches the OS adapter; other presets use the public drawing API.");
+    if(Button("Regenerate colors from selected Theme")) RegenerateFrameColors(s);
+    SameLine();
+    if(Button("Reset selected preset")) ResetFramePreset(s);
+    SeparatorText("Colors");
+    struct ColorEntry { const char* name; const char* field; ImVec4* value; };
+    ColorEntry colors[]={{"Active background","activeBackground",&s.frameStyle.activeBackground},
+        {"Inactive background","inactiveBackground",&s.frameStyle.inactiveBackground},{"Border","border",&s.frameStyle.border},
+        {"Title text","titleText",&s.frameStyle.titleText},{"Auxiliary text","auxiliaryText",&s.frameStyle.auxiliaryText},
+        {"Icon","icon",&s.frameStyle.icon},{"Button text","buttonText",&s.frameStyle.buttonText},
+        {"Button hover","buttonHover",&s.frameStyle.buttonHover},{"Button pressed","buttonPressed",&s.frameStyle.buttonPressed},
+        {"Close hover","closeButtonHover",&s.frameStyle.closeButtonHover},{"Close pressed","closeButtonPressed",&s.frameStyle.closeButtonPressed}};
+    for(auto& entry:colors) ColorEdit4(entry.name,&entry.value->x);
+    SeparatorText("Metrics / DIP");
+    auto& m=s.frameStyle.metrics;
+    DragFloat("Height",&m.height,.25f,0,96,"%.2f");
+    DragFloat("Icon area width",&m.iconAreaWidth,.25f,0,160,"%.2f");
+    DragFloat("Title left padding",&m.titlePaddingLeft,.25f,0,80,"%.2f");
+    DragFloat("Title right padding",&m.titlePaddingRight,.25f,0,80,"%.2f");
+    DragFloat("Button width",&m.buttonWidth,.25f,0,160,"%.2f");
+    DragFloat("Border width",&m.borderWidth,.1f,0,8,"%.2f");
+    SeparatorText("Features");
+    auto& f=s.frameStyle.features;
+    Checkbox("Icon",&f.icon);Checkbox("Application name",&f.applicationName);
+    Checkbox("Project name",&f.projectName);Checkbox("Unsaved indicator",&f.unsavedIndicator);
+    Checkbox("Workspace switcher",&f.workspaceSwitcher);Checkbox("Minimize",&f.minimize);
+    Checkbox("Maximize / restore",&f.maximizeRestore);Checkbox("Close",&f.close);
+    Checkbox("Unsaved state",&s.frameUnsaved);
+    const auto contrast=ValidateWindowFrameContrast(s.frameStyle);
+    SeparatorText("Contrast validation");
+    TextColored(contrast.valid?ImVec4{.2f,.75f,.35f,1}:ImVec4{1.f,.45f,.25f,1},
+                "%s (title %.2f, inactive %.2f, auxiliary %.2f, icon %.2f, buttons %.2f, close %.2f)",
+                contrast.valid?"PASS":"WARNING: one or more colors are below the threshold",
+                contrast.activeTitle,contrast.inactiveTitle,contrast.auxiliary,contrast.icon,contrast.button,contrast.closeButton);
+    std::ostringstream code;
+    code<<std::fixed<<std::setprecision(3);
+    code<<"auto style = imkit::MakeWindowFrameStyle(imkit::WindowFramePreset::"<<presets[preset]<<", theme);\n";
+    for(const auto& entry:colors) code<<"style."<<entry.field<<" = {"<<entry.value->x<<"f, "<<entry.value->y<<"f, "<<entry.value->z<<"f, "<<entry.value->w<<"f};\n";
+    code<<"style.metrics = {"<<m.height<<"f, "<<m.iconAreaWidth<<"f, "<<m.titlePaddingLeft<<"f, "
+        <<m.titlePaddingRight<<"f, "<<m.buttonWidth<<"f, "<<m.borderWidth<<"f};\n";
+    code<<"style.features = {"<<f.icon<<", "<<f.applicationName<<", "<<f.projectName<<", "
+        <<f.unsavedIndicator<<", "<<f.workspaceSwitcher<<", "<<f.minimize<<", "
+        <<f.maximizeRestore<<", "<<f.close<<"};\n";
+    const auto snippet=code.str();
+    BeginChild("##frame-snippet",{0,150},ImGuiChildFlags_Borders);TextUnformatted(snippet.c_str());EndChild();
+    if(Button("Copy C++ snippet")) SetClipboardText(snippet.c_str());
+}
 } // namespace
 void Show(GalleryState &s) {
     s.probes.clear();
     s.theme.fonts = s.fonts;
     s.animation.Prune(GetFrameCount());
     ThemeScope scope(s.theme, s.scale);
-    SetNextWindowPos({0, 0});
-    SetNextWindowSize(ImGui::GetIO().DisplaySize);
+    SetNextWindowPos({0, s.windowFrameHeight});
+    SetNextWindowSize({ImGui::GetIO().DisplaySize.x,
+                      std::max(1.f,ImGui::GetIO().DisplaySize.y-s.windowFrameHeight)});
     Begin("Precision Layers catalog", nullptr,
           ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
-    const char* pages[]={"Components: Basic","Numeric / Units","Input / Media","Hierarchy / Table","Overlay / Layout","Composites","Icons","Editor Core","Video","CG","Foundations","Components","Patterns","Accessibility","Responsive","Generic Workspace","Feedback / States","Preview Tiles"};
-    SetNextItemWidth(std::min(260.f,GetContentRegionAvail().x*.5f)); Combo("##section",&s.page,pages,18);
+    const char* pages[]={"Components: Basic","Numeric / Units","Input / Media","Hierarchy / Table","Overlay / Layout","Composites","Icons","Editor Core","Video","CG","Foundations","Components","Patterns","Accessibility","Responsive","Generic Workspace","Feedback / States","Preview Tiles","Frame Lab"};
+    SetNextItemWidth(std::min(260.f,GetContentRegionAvail().x*.5f)); Combo("##section",&s.page,pages,19);
     SameLine(); if(Button("Appearance")) OpenPopup("appearance");
     if(BeginPopup("appearance")) {
+        if(BeginCombo("Theme",ThemePresets()[s.presetIndex].displayName.data())) {
+            for(int i=0;i<static_cast<int>(ThemePresets().size());++i) {
+                if(Selectable(ThemePresets()[i].displayName.data(),s.presetIndex==i)) {
+                    s.presetIndex=i;
+                    s.theme=MakeTheme(ThemePresets()[i].preset);
+                    s.theme.fonts=s.fonts;
+                    s.dark=s.theme.scheme==ColorScheme::Dark;
+                    s.design.contrast=static_cast<int>(s.theme.contrast);
+                    s.design.density=static_cast<int>(s.theme.density);
+                }
+            }
+            EndCombo();
+        }
         if(Checkbox("Dark",&s.dark)) { auto fonts=s.theme.fonts; s.theme=MakeTheme(s.dark?ColorScheme::Dark:ColorScheme::Light,s.theme.contrast,s.theme.density); s.theme.fonts=fonts; }
         const char* densities[]={"Compact","Comfortable","Touch"};
         if(Combo("Density",&s.design.density,densities,3)) SetDensity(s.theme,static_cast<Density>(s.design.density));
@@ -475,6 +566,7 @@ void Show(GalleryState &s) {
                ImGuiChildFlags_Borders, s.page == 4 ? ImGuiWindowFlags_MenuBar : 0);
     PushItemWidth(420 * s.scale);
     switch (s.page) {
+    case 18: FrameLab(s); break;
     case 15: case 16: case 17: s.workflow.Show(s.page,s); break;
     case 10: case 11: case 12: case 13: case 14:
         s.design.Show(s.page,s.theme); break;

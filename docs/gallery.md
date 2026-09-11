@@ -39,3 +39,5 @@ python tools/build_readme_gif.py out/readme/readme-frames docs/images/gallery-ov
 ```
 
 The deterministic sequence captures 120 native 960×540 frames and encodes twelve seconds at 10 fps. Pillow is a documentation-tool dependency only; it is not linked, installed or exposed to consumers. The checked-in GIF must stay below 8 MiB.
+
+The Windows Gallery also includes **Frame Lab** for the public cross-platform window-frame values and optional Win32 adapter. See [Public window frame](gallery-window-frame.md). Existing automated captures retain the native OS frame unless frame verification is explicitly requested.

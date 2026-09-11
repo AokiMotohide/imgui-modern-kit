@@ -25,6 +25,15 @@ struct GalleryState {
     int page = 0;
     int presetIndex = 0, presetFilter = 0, copyClicks = 0;
     float scale = 1;
+    float windowFrameHeight = 0;
+    WindowFramePreset framePreset = WindowFramePreset::Studio;
+    std::array<WindowFrameStyle, 4> framePresetStyles{
+        MakeWindowFrameStyle(WindowFramePreset::Native, theme), MakeWindowFrameStyle(WindowFramePreset::Studio, theme),
+        MakeWindowFrameStyle(WindowFramePreset::Workspace, theme), MakeWindowFrameStyle(WindowFramePreset::Tool, theme)};
+    WindowFrameStyle frameStyle = MakeWindowFrameStyle(WindowFramePreset::Studio, theme);
+    std::array<std::string_view, 4> frameWorkspaces{"Edit", "Color", "Audio", "Deliver"};
+    std::size_t frameWorkspace = 0;
+    bool frameUnsaved = true;
     bool dark = false, palette = false;
     char gallerySearch[96]{};
     bool focusApply = false, applyFocused = false;
@@ -55,4 +64,7 @@ struct GalleryState {
 };
 void Show(GalleryState &s);
 void Record(GalleryState &s, const char *name);
+void SelectFramePreset(GalleryState& s, WindowFramePreset preset);
+void RegenerateFrameColors(GalleryState& s);
+void ResetFramePreset(GalleryState& s);
 } // namespace imkit::gallery

@@ -39,3 +39,5 @@ python tools/build_readme_gif.py out/readme/readme-frames docs/images/gallery-ov
 ```
 
 決定的なsequenceで960×540のnative frameを120枚取得し、10fps・12秒へ変換します。Pillowは文書生成だけに使い、consumerへlink・install・公開しません。commitするGIFは8MiB未満とします。
+
+Windows Galleryには、OS非依存の公開window frame値型と任意Win32 adapterを編集する**Frame Lab**もあります。[公開ウィンドウ枠](gallery-window-frame.md)を参照してください。既存の自動captureは、枠専用検証を明示しない限りnative OS frameを維持します。
