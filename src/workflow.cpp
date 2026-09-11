@@ -66,6 +66,69 @@ bool LabeledButton(const char* label,const char* description,ImVec2 size,bool se
     return Annotate(label,description,role,accessibility::SemanticAction::Press,selected,o)||pressed;
 }
 }
+StableId GroupedStepNavigator(const char* id, std::span<const StepGroup> groups,
+    std::span<const StepItem> items, StableId current, ComponentOptions o) {
+    if(items.empty()) return 0;
+    ImGui::PushID(id);
+    const float width=std::max(1.f,ImGui::GetContentRegionAvail().x);
+    const float gap=std::min(ImGui::GetStyle().ItemSpacing.x,width/items.size()*.1f);
+    const float cell=width/items.size();
+    const float x=ImGui::GetCursorPosX();
+    const float y=ImGui::GetCursorPosY();
+    const float h=ImGui::GetFrameHeight();
+    StableId result=0;
+    ImGui::PushID("groups");
+    for(const auto& group:groups) {
+        if(!group.count || group.first>=items.size()) continue;
+        const auto end=std::min(items.size(),group.first+std::min(group.count,items.size()-group.first));
+        bool active=false;
+        for(auto i=group.first;i<end;++i) active|=items[i].id==current;
+        const auto& first=items[group.first];
+        ImGui::SetCursorPos({x+cell*group.first,y});Push(group.id);
+        ImGui::BeginDisabled(!first.id || first.disabled || !first.available);
+        if(LabeledButton(group.label,"",{std::max(1.f,cell*(end-group.first)-gap),h},active,o,accessibility::SemanticRole::Tab) && !active)
+            result=first.id;
+        ImGui::EndDisabled();Pop();
+    }
+    ImGui::PopID();ImGui::PushID("items");
+    for(std::size_t i=0;i<items.size();++i) {
+        const auto& item=items[i];Push(item.id);
+        ImGui::SetCursorPos({x+cell*i,y+h+ImGui::GetStyle().ItemSpacing.y});
+        ImGui::BeginDisabled(!item.id || item.disabled || !item.available);
+        if(LabeledButton(item.label,item.description,{std::max(1.f,cell-gap),h},item.id==current,o,accessibility::SemanticRole::Tab)) result=item.id;
+        ImGui::EndDisabled();Pop();
+    }
+    ImGui::PopID();
+    ImGui::SetCursorPos({x,y+2*(h+ImGui::GetStyle().ItemSpacing.y)});
+    ImGui::Dummy({width,0});
+    ImGui::PopID();return result;
+}
+StableId IconToolbar(const char* id,const IconAtlas& atlas,
+    std::span<const IconToolbarItem> items,ComponentOptions o) {
+    ImGui::PushID(id);StableId result=0;
+    const float start=ImGui::GetCursorPosX(), right=start+ImGui::GetContentRegionAvail().x;
+    const float size=std::max(12.f,ImGui::GetFontSize());
+    const float button=size+2*ImGui::GetStyle().FramePadding.x;
+    bool first=true;
+    for(const auto& item:items) {
+        if(!first && ImGui::GetItemRectMax().x-ImGui::GetWindowPos().x+ImGui::GetScrollX()+ImGui::GetStyle().ItemSpacing.x+button<=right) ImGui::SameLine();
+        first=false;Push(item.id);ImGui::BeginDisabled(item.disabled || !item.id);
+        const bool pressed=IconButton("action",atlas,item.icon,Safe(item.label),{size});
+        if(Annotate(item.label,item.description,accessibility::SemanticRole::Button,accessibility::SemanticAction::Press,item.selected,o) || pressed) result=item.id;
+        auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
+        auto* draw=ImGui::GetWindowDrawList();
+        if(item.selected) draw->AddRect(a,b,ImGui::GetColorU32(ImGuiCol_CheckMark),ImGui::GetStyle().FrameRounding,0,2.f);
+        if(item.mixed) draw->AddLine({a.x+4,b.y-3},{b.x-4,b.y-3},ImGui::GetColorU32(ImGuiCol_TextDisabled),2.f);
+        if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)||ImGui::IsItemFocused()) {
+            ImGui::BeginTooltip();ImGui::TextUnformatted(Safe(item.label));
+            if(*Safe(item.description)) ImGui::TextUnformatted(item.description);
+            if(item.mixed) ImGui::TextUnformatted(Text(o,"mixed","Mixed"));
+            ImGui::EndTooltip();
+        }
+        ImGui::EndDisabled();Pop();
+    }
+    ImGui::PopID();return result;
+}
 StableId StepNavigator(const char* id,std::span<const StepItem> items,StableId current,
                       StepNavigatorState& state,StepNavigatorOptions layout,ComponentOptions o) {
     ImGui::PushID(id);

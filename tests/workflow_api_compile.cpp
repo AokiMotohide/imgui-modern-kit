@@ -1,6 +1,8 @@
 #include <imkit/imkit.h>
 #include <imkit/editor_canvas.h>
 namespace {
+auto volatile grouped=&imkit::GroupedStepNavigator;
+auto volatile iconToolbar=&imkit::IconToolbar;
 auto volatile step=&imkit::StepNavigator;
 auto volatile rail=&imkit::NavigationRail;
 auto volatile filter=&imkit::FilterChip;
@@ -31,5 +33,5 @@ auto volatile endDiagnostics=&imkit::EndDiagnosticsDrawer;auto volatile themePic
 int main() {
     imkit::StableId ids[1];imkit::RequestBuffer requests{ids};
     imkit::editor::TileEvent events[1];imkit::editor::TileEventBuffer out{events};
-    return !(step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&card&&endCard&&section&&multi&&help&&validation&&toolbar&&valid&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&appBar&&workspaceHeader&&inspectorSection&&advancedSection&&bottomActionBar&&beginDiagnostics&&endDiagnostics&&themePicker&&requests.Push(1)&&out.Push({}));
+    return !(grouped&&iconToolbar&&step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&card&&endCard&&section&&multi&&help&&validation&&toolbar&&valid&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&appBar&&workspaceHeader&&inspectorSection&&advancedSection&&bottomActionBar&&beginDiagnostics&&endDiagnostics&&themePicker&&requests.Push(1)&&out.Push({}));
 }

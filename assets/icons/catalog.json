@@ -1118,5 +1118,21 @@
   {
     "name": "PanelBottomClose",
     "category": "DesignSystem"
+  },
+  {
+    "name": "TestPattern",
+    "category": "Display"
+  },
+  {
+    "name": "SolidColor",
+    "category": "Display"
+  },
+  {
+    "name": "WhiteOutput",
+    "category": "Display"
+  },
+  {
+    "name": "Blackout",
+    "category": "Display"
   }
 ]

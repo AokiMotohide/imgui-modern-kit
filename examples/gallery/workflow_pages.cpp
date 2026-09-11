@@ -17,6 +17,10 @@ void WorkflowPages::Show(int page,GalleryState& host) {
         apply(AppBar("app",app,toolbar,o));
         WorkspaceHeaderView header{"WORKFLOW",japanese?"作業スペース":"Workspace",japanese?"状態と操作はホストが所有します":"The host owns state and actions",japanese?"接続済み":"Connected",FeedbackKind::Success,commands};
         apply(WorkspaceHeader("header",header,toolbar,o));
+        const std::array<StepGroup,2> groups{{{101,"Prepare",0,2},{102,"Deliver",2,2}}};
+        if(auto request=GroupedStepNavigator("grouped",groups,items,selected,o))selected=request;
+        const std::array<IconToolbarItem,3> iconActions{{{1,IconId::Play,"Play","Start playback",true},{2,IconId::Pause,"Pause","Mixed state",false,true},{3,IconId::Stop,"Stop","Unavailable",false,false,true}}};
+        IconToolbar("wrapping-icons",host.icons,iconActions,o);
         StepNavigatorOptions layout;layout.size={0,ImGui::GetFrameHeight()*2.6f};
         if(auto id=StepNavigator("workflow",items,selected,steps,layout,o))selected=id;
         Record(host,"workflow-steps");
