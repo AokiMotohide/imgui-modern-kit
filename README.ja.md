@@ -107,6 +107,11 @@ ctest --test-dir build/windows-debug -C Debug -R "imkit.(theme|workflow)" --outp
 | 設計とホスト所有権 | [Architecture](docs/architecture.md) | [Architecture](docs/architecture.md) |
 | APIと問題解決 | [API coverage](docs/api-coverage.md) · [トラブルシューティング](docs/troubleshooting.ja.md) | [API coverage](docs/api-coverage.md) · [Troubleshooting](docs/troubleshooting.md) |
 
+## ノードエディター開発版
+
+ノードエディター開発版：[APIとホスト連携](docs/node-editor.ja.md)。整列・等間隔配置・接続に沿った
+自動配置・グループ化・ノードごとのプレビューを `imkit::node_editor` で提供します。
+
 ## ライセンスと出典
 
 ImKitは[MITライセンス](LICENSE)です。Dear ImGui、GLFW、任意font assetにはそれぞれのライセンスが適用されます。版、hash、fontの出典、配布noticeは[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)に記録しています。Gallery比較とGIFには、第三者の画像・icon・font・コードassetを追加していません。

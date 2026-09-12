@@ -197,12 +197,15 @@ DisplayLinkなど複数adapter環境で使用でき、OSの画面設定は変更
 
 ## Scope / 対象範囲
 
+The independent development node module is documented in [Node editor](node-editor.md).
+独立したノード編集の開発版は[ノードエディター](node-editor.ja.md)を参照してください。
+
 This is an editor UI suite, not a media decoder/player, resampler, color-management
-engine, node editor, UV unwrapper, IK/simulation/animation runtime, PBR/shadow renderer
+engine, UV unwrapper, IK/simulation/animation runtime, PBR/shadow renderer
 or file-format loader. Native OS/IME and real-project integration are not inferred
 from public ImGui IO or GPU tests. See [validation](editor-validation.md).
 
-本製品の対象は編集UIです。media decode/再生、resample、本格色管理、node editor、UV unwrap、
+本製品の対象は編集UIです。media decode/再生、resample、本格色管理、UV unwrap、
 IK/simulation/animation runtime、PBR/shadow、形式loaderは対象外です。native OS/IMEや実project統合を
 公開ImGui IO・GPUテストの合格から推定しません。[検証結果](editor-validation.md)を参照してください。
 
