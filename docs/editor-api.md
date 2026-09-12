@@ -19,7 +19,7 @@ by the host. All module targets publish C++20 and retain the host's ImGui target
 | Target | Header / namespace | Main API |
 |---|---|---|
 | `imkit::editor_core` | `imkit/editor_core.h`, `imkit::editor` | `StableId`, `Tick`, `FrameRate`, `FrameToTick`, `TickToFrame`, `FormatTimecode`, `ParseTimecode`, `EventBuffer::PushBatch`, `EventBuffer`, `Transaction`, `Selection`, `ResolveSnap`, `CanvasState`, `BeginCanvas`, `CanvasSelection`, `TimeRuler`, `Transport`, `CurveEditor`, `ResolveHandles`, `MoveHandle`, `Evaluate`, `PropertyGrid`, `AssetBrowser`, `Splitter`, `StatusBar` |
-| `imkit::video` | `imkit/video.h`, `imkit::video` | `TimelineProvider`, `TimelineState`, `Timeline`, `EditClip`, `RollClips`, `SlideClip`, `SplitClip`, `EditTransition`, `TransitionPicker`, `EvaluateEnvelope`, `Monitor`, `MonitorOptions`, `MonitorControls`, `MonitorLabels`, `BuildAudioBuckets`, `UpdateMeter`, `Waveform`, `WaveformProvider`, `WaveformQuery`, `WaveformView`, `WaveformPixel`, `DrawWaveform`, `PlacementMode`, `LevelMeter`, `AudioStrip`, `BuildScopes`, `Histogram`, `ScopeImage`, `ColorControls` |
+| `imkit::video` | `imkit/video.h`, `imkit::video` | `TimelineProvider`, `TimelineState`, `Timeline`, `EditClip`, `RollClips`, `SlideClip`, `SplitClip`, `EditTransition`, `TransitionPicker`, `EvaluateEnvelope`, `Monitor`, `MonitorView`, `MonitorOptions`, `MonitorControls`, `MonitorLabels`, `BuildAudioBuckets`, `UpdateMeter`, `Waveform`, `WaveformProvider`, `WaveformQuery`, `WaveformView`, `WaveformPixel`, `DrawWaveform`, `PlacementMode`, `LevelMeter`, `AudioStrip`, `BuildScopes`, `Histogram`, `ScopeImage`, `ColorControls` |
 | `imkit::cg` | `imkit/cg.h`, `imkit::cg` | `Project`, `TransformDelta`, `OrientationBasis`, `BeginViewport`, `ViewportObjects`, `TransformGizmo`, `PreviewTransform`, `Outliner`, `TransformUV`, `UVEditor`, `DopeSheet`, `AnimationStrips` |
 | `imkit::cg` | `imkit/preview.h`, `imkit::preview` | `Vertex`, `Mesh`, `Triangle`, `Cube`, `Sphere`, `DrawListPreview` |
 | `imkit::preview_opengl3` | `imkit/preview.h`, `imkit::preview` | `GLFunctions`, `OpenGL3Renderer::Init/Resize/Render/Pick/Shutdown/Texture` |
@@ -524,6 +524,33 @@ component選択では所有objectのInspectorを表示し、表示制限は有�
 `MonitorControls(id, options, atlas, labels)` edits host-owned display options for safe area, guides, timecode, transform bounds, anchor and metadata preset. Atlas and UTF-8 labels are borrowed. `MonitorOptions::showAnchor` is optional: unset preserves the existing coupling to `transform`; an explicit bool controls anchor visibility independently. Gallery keeps separate Source/Program options and exposes controls in each monitor's context menu. No media state, texture or renderer is owned by this widget.
 
 MonitorControlsはホスト所有のセーフエリア・ガイド・timecode・変形枠・anchor・metadata設定を変更します。atlasとUTF-8ラベルは非所有です。MonitorOptions::showAnchorは未指定なら従来のtransform連動を維持し、bool指定時は独立して表示を制御します。GalleryはSource／Program別の設定を保持し、各Monitorのcontext menuへ公開部品を接続します。media状態・texture・rendererは所有しません。
+
+The additive `Monitor(id, MonitorView, ...)` overload displays a host-updated
+`ImageView` and `PreviewState`. Its default Fit mode preserves source aspect;
+Fill uses centered UV cropping and Stretch is the only anisotropic mode. Safe areas,
+guides, normalized transform bounds and anchors map through the visible crop and clip
+to the resolved image region. `flipY` changes texture UVs only. Loading composes the
+existing Spinner/Skeleton, while Empty, Offline and Error reuse the existing state
+views; the bool return is an action request. The legacy texture overload remains a
+direct stretch and retains its signature and drawing behavior.
+
+追加の`Monitor(id, MonitorView, ...)` overloadは、ホストが更新する`ImageView`と
+`PreviewState`を表示します。既定のFitはsource aspectを維持し、Fillは中央UV crop、
+Stretchだけが異方性拡大を許可します。safe area・guide・正規化transform bounds・anchorは
+可視cropを通して座標変換し、解決済み画像領域へclipします。`flipY`はtexture UVだけへ適用します。
+Loadingは既存Spinner／Skeleton、Empty・Offline・Errorは既存状態viewを再利用し、bool戻り値は
+action要求です。従来のtexture overloadは直接stretchと既存署名・描画挙動を維持します。
+
+For image, video and CG previews, ModernKIT owns layout, DrawList composition,
+overlays, input UI and typed requests. The host owns textures, decoding, capture,
+renderers, frame updates, devices, windows, workers and persistence. A CG host renderer
+must render at the aspect returned by `ViewportView::size`; the library neither resizes
+its FBO nor infers its camera projection.
+
+画像・動画・CG previewでは、ModernKITがlayout・DrawList描画・overlay・入力UI・型付きrequestを
+担当します。texture・decode・capture・renderer・frame更新・device・window・worker・保存は
+ホスト責務です。CGのホストrendererは`ViewportView::size`と同じaspectで描画し、ライブラリは
+FBO resizeもcamera projectionの推測も行いません。
 
 TimelineLabels also supplies borrowed UTF-8 clip metadata/status, envelope actions and key-drag tooltip labels. Host strings are passed as text arguments rather than printf formats. Gallery supplies Japanese translations.
 

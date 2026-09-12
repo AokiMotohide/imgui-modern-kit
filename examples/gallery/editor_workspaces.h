@@ -166,10 +166,12 @@ struct EditorWorkspaces {
     video::MonitorMetadataPreset monitorMetadata=video::MonitorMetadataPreset::Clip;
     video::MonitorOptions sourceMonitorOptions{true,false,true,false};
     video::MonitorOptions programMonitorOptions{true,true,true,true};
+    int monitorContractSource=0,monitorContractAspect=0,monitorContractStatus=0;
+    char monitorContractSearch[64]{};
     std::uint64_t monitorRevision=0;
     editor::StableId monitorClipId=0;
     std::size_t monitorClipIndex=0;
-    ImVec2 programMonitorMin{},programMonitorMax{};
+    ImVec2 programMonitorMin{},programMonitorMax{},programMonitorMetadataMin{},programMonitorMetadataMax{};
     std::uint64_t revision = 1;
     std::size_t queryCount = 0, queriedClips = 0, queriedKeys = 0, queriedTracks = 0, commits = 0;
     bool initialized = false, large = false, japanese = false, narrow = false, useGL = true;
@@ -219,7 +221,7 @@ struct EditorWorkspaces {
     void Remember(std::unique_ptr<Snapshot> snapshot);
     float videoTopRatio=.52f, cgTopRatio=.65f, videoSide=240, cgSide=300;
     bool showDetails=false, showMedia=false, showInspector=false;
-    int monitorMode=0;
+    int monitorMode=0,cgPreviewAspect=1;
     editor::TimeState sourceTime;
     editor::StableId placementTrack=1;
     bool PlaceSource(video::PlacementMode mode);

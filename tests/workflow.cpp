@@ -30,6 +30,32 @@ int main(){
     auto n=PixelToNormalized({200,50},{400,200});auto px=NormalizedToPixel(n,{400,200});Check(Near(n.x,.5)&&Near(n.y,.25)&&Near(px.x,200),"normalized roundtrip");
     FitImage(canvas,{0,0},{0,0},ImageScaleMode::Fit);Check(canvas.scale.x==1&&!ImageGeometryValid({1,1},{0,0}),"zero geometry");
     Check(!ImageGeometryValid({std::numeric_limits<double>::quiet_NaN(),2},{2,2}),"nonfinite geometry");
+    auto placement=ResolveImagePlacement({1920,1080},{400,300},ImagePlacementMode::Fit);
+    Check(placement.valid&&Near(placement.display.min.x,0)&&Near(placement.display.min.y,37.5)&&
+          Near(placement.display.max.x,400)&&Near(placement.display.max.y,262.5)&&
+          Near(placement.uv0.x,0)&&Near(placement.uv1.x,1),"16:9 to 4:3 fit letterbox");
+    placement=ResolveImagePlacement({1920,1080},{400,300},ImagePlacementMode::Fill);
+    Check(placement.valid&&Near(placement.display.max.x,400)&&Near(placement.display.max.y,300)&&
+          Near(placement.uv0.x,.125)&&Near(placement.uv1.x,.875)&&Near(placement.uv0.y,0),"16:9 to 4:3 fill crop");
+    placement=ResolveImagePlacement({400,300},{1600,900},ImagePlacementMode::Fit);
+    Check(placement.valid&&Near(placement.display.min.x,200)&&Near(placement.display.max.x,1400)&&
+          Near(placement.display.min.y,0)&&Near(placement.display.max.y,900),"4:3 to 16:9 fit letterbox");
+    placement=ResolveImagePlacement({400,300},{1600,900},ImagePlacementMode::Fill);
+    Check(placement.valid&&Near(placement.uv0.y,.125)&&Near(placement.uv1.y,.875),"4:3 to 16:9 fill crop");
+    placement=ResolveImagePlacement({100,100},{300,200},ImagePlacementMode::Fit);
+    Check(placement.valid&&Near(placement.display.min.x,50)&&Near(placement.display.max.x,250),"square fit");
+    placement=ResolveImagePlacement({1080,1920},{300,200},ImagePlacementMode::Fit);
+    Check(placement.valid&&Near(placement.display.max.x-placement.display.min.x,112.5)&&Near(placement.display.max.y,200),"portrait fit");
+    placement=ResolveImagePlacement({1920,1080},{400,300},ImagePlacementMode::Stretch);
+    Check(placement.valid&&Near(placement.display.min.x,0)&&Near(placement.display.max.x,400)&&
+          Near(placement.display.max.y,300)&&Near(placement.uv1.y,1),"stretch uses full region");
+    for(Point invalid:std::array<Point,5>{{{0,1},{-1,1},{std::numeric_limits<double>::quiet_NaN(),1},
+                                          {std::numeric_limits<double>::infinity(),1},{1,std::numeric_limits<double>::infinity()}}})
+        Check(!ResolveImagePlacement(invalid,{100,100},ImagePlacementMode::Fit).valid,"invalid placement rejected");
+    Check(!ResolveImagePlacement({std::numeric_limits<double>::max(),std::numeric_limits<double>::min()},
+                                 {100,100},ImagePlacementMode::Fill).valid,"extreme aspect rejected safely");
+    Check(!ResolveImagePlacement({1e8,1},{100,100},ImagePlacementMode::Fit).valid,
+          "sub-pixel extreme that collapses in ImGui coordinates is rejected");
     std::array<FeedbackView,5> notices{{{1,"old","",FeedbackKind::Info,0,0},{2,"expired","",FeedbackKind::Error,4,9},{1,"new","",FeedbackKind::Success,0,1},{3,"priority","",FeedbackKind::Warning,0,3},{4,"equal","",FeedbackKind::Info,0,1}}};
     std::array<std::size_t,4> order{};
     auto count=SelectNotifications(notices,5,order,3);Check(count==3&&order[0]==3&&order[1]==2&&order[2]==4,"update expiry priority stable order");
@@ -119,9 +145,17 @@ int main(){
         Check(tileEventCount==1&&eventStorage[0].action==TileAction::Select,"tile select request");
         queue.Push({titleNode.id,accessibility::SemanticAction::Select});
         frame([&]{ImGui::BeginDisabled();drawTiles();ImGui::EndDisabled();});Check(tileEventCount==0,"parent-disabled tile semantic request rejected");
-        ImageViewportState imageState;ImageView image;image.pixels={640,360};
-        auto imageFrame=[&]{ZoomToolbar("zoom",imageState,options);auto view=BeginImageViewport("image",image,imageState,{300,220},theme);Point points[]={{0,0},{640,360}};DrawOverlay(view,imageState.canvas,{OverlayShape::Rectangle,points},theme);EndImageViewport();};
+        ImageViewportState imageState;ImageView image;image.pixels={640,360};ImVec2 imageSize{300,220};
+        auto imageFrame=[&]{ZoomToolbar("zoom",imageState,options);auto view=BeginImageViewport("image",image,imageState,imageSize,theme);Point points[]={{0,0},{640,360}};DrawOverlay(view,imageState.canvas,{OverlayShape::Rectangle,points},theme);EndImageViewport();};
         frame(imageFrame);Check(imageState.canvas.scale.x>0&&imageState.canvas.scale.x==imageState.canvas.scale.y,"viewport uniform fit missing texture");
+        const auto fitScale=imageState.canvas.scale.x;imageSize={420,220};frame(imageFrame);
+        Check(imageState.mode==ImageScaleMode::Fit&&imageState.canvas.scale.x!=fitScale&&imageState.canvas.scale.x==imageState.canvas.scale.y,"fit recomputes on geometry change");
+        imageState.mode=ImageScaleMode::Fill;imageState.reset=true;frame(imageFrame);
+        Check(imageState.canvas.scale.x==imageState.canvas.scale.y&&imageState.canvas.scale.x>=420./640,"fill stays uniform");
+        imageState.mode=ImageScaleMode::ActualSize;imageState.reset=true;frame(imageFrame);
+        Check(Near(imageState.canvas.scale.x,1)&&Near(imageState.canvas.scale.y,1),"actual size remains one to one");
+        imageState.mode=ImageScaleMode::Manual;imageState.canvas.scale={2,2};imageState.canvas.origin={10,20};imageSize={360,180};frame(imageFrame);
+        Check(Near(imageState.canvas.scale.x,2)&&Near(imageState.canvas.scale.y,2)&&Near(imageState.canvas.origin.x,10)&&Near(imageState.canvas.origin.y,20),"manual zoom and pan survive geometry change");
         DialogState progressState;ToolbarState toolbar;std::array<imkit::Command,2> commands{{{1,"First"},{2,"Second"}}};bool open=true;
         progressState.open=true;
         auto modal=[&]{imkit::Progress("modal",ProgressView{.5f,"Stage","Working",true},ProgressPresentation::Modal,progressState,{},options);};

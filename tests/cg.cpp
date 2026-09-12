@@ -38,6 +38,17 @@ int main() {
     }
     auto center = Project({}, Camera{}, {0, 0}, {800, 600});
     check(center.visible && center.screen.x == 400 && center.screen.y == 300, "camera center");
+    for(auto projection:{Projection::Perspective,Projection::Orthographic}) {
+        Camera aspectCamera;aspectCamera.projection=projection;aspectCamera.yaw=aspectCamera.pitch=0;
+        for(ImVec2 size:std::array<ImVec2,4>{{{800,600},{1600,900},{600,600},{450,800}}}) {
+            const auto origin=Project({},aspectCamera,{0,0},size);
+            const auto x=Project({1,0,0},aspectCamera,{0,0},size);
+            const auto y=Project({0,1,0},aspectCamera,{0,0},size);
+            const double dx=std::hypot(x.screen.x-origin.screen.x,x.screen.y-origin.screen.y);
+            const double dy=std::hypot(y.screen.x-origin.screen.x,y.screen.y-origin.screen.y);
+            check(origin.visible&&x.visible&&y.visible&&std::abs(dx-dy)<1e-4,"CG projection preserves unit aspect across viewport shapes");
+        }
+    }
     Camera c;
     c.projection = Projection::Orthographic;
     c.yaw = 0;

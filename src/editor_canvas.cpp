@@ -1,6 +1,7 @@
 #include <imkit/editor_canvas.h>
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 namespace imkit::editor {
 namespace {
@@ -12,6 +13,43 @@ void Pop() {ImGui::PopID();ImGui::PopID();}
 const char* Safe(const char* s) {return s?s:"";}
 }
 bool ImageGeometryValid(Point pixels,Point viewport) {return Positive(pixels.x)&&Positive(pixels.y)&&Positive(viewport.x)&&Positive(viewport.y);}
+ImagePlacement ResolveImagePlacement(Point source,Point available,ImagePlacementMode mode) {
+    ImagePlacement result;
+    if(!ImageGeometryValid(source,available) || available.x>std::numeric_limits<float>::max() ||
+       available.y>std::numeric_limits<float>::max()) return result;
+    const long double sw=source.x,sh=source.y,aw=available.x,ah=available.y;
+    const long double sourceAspect=sw/sh,availableAspect=aw/ah;
+    if(!std::isfinite(sourceAspect) || !std::isfinite(availableAspect) ||
+       sourceAspect<=0 || availableAspect<=0) return result;
+    long double x0=0,y0=0,x1=aw,y1=ah,u0=0,v0=0,u1=1,v1=1;
+    if(mode==ImagePlacementMode::Fit) {
+        long double width=aw,height=ah;
+        if(sourceAspect>availableAspect) height=aw/sourceAspect;
+        else width=ah*sourceAspect;
+        x0=(aw-width)*.5L;y0=(ah-height)*.5L;x1=x0+width;y1=y0+height;
+    } else if(mode==ImagePlacementMode::Fill) {
+        if(sourceAspect>availableAspect) {
+            const long double span=availableAspect/sourceAspect;
+            u0=(1-span)*.5L;u1=u0+span;
+        } else {
+            const long double span=sourceAspect/availableAspect;
+            v0=(1-span)*.5L;v1=v0+span;
+        }
+    }
+    const auto finite=[](long double value) {return std::isfinite(value);};
+    if(!finite(x0)||!finite(y0)||!finite(x1)||!finite(y1)||!finite(u0)||!finite(v0)||!finite(u1)||!finite(v1) ||
+       x1<=x0 || y1<=y0 || u1<=u0 || v1<=v0) return {};
+    const ImVec2 first{static_cast<float>(x0),static_cast<float>(y0)};
+    const ImVec2 last{static_cast<float>(x1),static_cast<float>(y1)};
+    const ImVec2 firstUv{static_cast<float>(u0),static_cast<float>(v0)};
+    const ImVec2 lastUv{static_cast<float>(u1),static_cast<float>(v1)};
+    if(!std::isfinite(first.x)||!std::isfinite(first.y)||!std::isfinite(last.x)||!std::isfinite(last.y) ||
+       !std::isfinite(firstUv.x)||!std::isfinite(firstUv.y)||!std::isfinite(lastUv.x)||!std::isfinite(lastUv.y) ||
+       last.x<=first.x || last.y<=first.y || lastUv.x<=firstUv.x || lastUv.y<=firstUv.y) return {};
+    result.display={{first.x,first.y},{last.x,last.y}};
+    result.uv0=firstUv;result.uv1=lastUv;result.valid=true;
+    return result;
+}
 void FitImage(CanvasState& s,Point pixels,Point viewport,ImageScaleMode mode) {
     if(!ImageGeometryValid(pixels,viewport)) {s.origin={};s.scale={1,1};return;}
     double scale=1;

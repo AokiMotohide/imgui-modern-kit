@@ -31,6 +31,15 @@ Context・backend・font・texture・元データ・provider・UI状態・選択
 非ゼロのuint64_t、時間は毎秒705600000のint64_t Tickと有理数FrameRateを使います。
 負のpre-roll、29.97/59.94 drop-frameに対応し、時フィールドの解析は2桁です。
 
+Preview components own layout, overlays, input UI and requests only. Image/video
+textures, media decode/capture, CG rendering and FBO resize, frame clocks, devices,
+native windows, workers and persistence remain host-owned. Video Monitor displays the
+texture and state supplied for the current frame; it does not play or seek media.
+
+Preview部品が所有するのはlayout・overlay・入力UI・requestだけです。画像／動画texture、mediaの
+decode／capture、CG描画とFBO resize、frame clock、device、native window、worker、保存は
+ホスト所有です。Video Monitorは現在frameで渡されたtextureと状態を表示するだけで、再生・seekは行いません。
+
 Continuous model edits emit Begin/Update/Commit/Cancel with revision, original and
 proposed values. Apply preview separately, increment revision on accepted commits
 or external changes, and cancel stale gestures. A full event or scratch buffer sets

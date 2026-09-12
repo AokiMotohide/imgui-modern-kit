@@ -4,6 +4,12 @@
 
 namespace imkit::editor {
 enum class ImageScaleMode { Fit, Fill, ActualSize, Manual };
+enum class ImagePlacementMode { Fit, Fill, Stretch };
+struct ImagePlacement {
+    Rect display{};
+    ImVec2 uv0{0,0},uv1{1,1};
+    bool valid=false;
+};
 struct ImageView { ImTextureRef texture{}; Point pixels{}; ImVec2 uv0{0,0},uv1{1,1}; };
 struct ImageViewportState {
     CanvasState canvas;
@@ -17,6 +23,8 @@ struct ImageViewportOptions {
     double minimumZoom=.01, maximumZoom=256;
 };
 bool ImageGeometryValid(Point pixels,Point viewport);
+// Pure local-space layout. Invalid or non-drawable geometry returns valid=false.
+ImagePlacement ResolveImagePlacement(Point sourcePixels,Point available,ImagePlacementMode mode);
 void FitImage(CanvasState& state,Point pixels,Point viewport,ImageScaleMode mode);
 void ClampImage(CanvasState& state,Point pixels,Point viewport);
 Point PixelToNormalized(Point pixel,Point pixels);

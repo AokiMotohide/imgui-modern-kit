@@ -721,7 +721,10 @@ void VerifyMonitors(Host &h,const std::filesystem::path &out) {
                  (s.programMonitorMin.y+s.programMonitorMax.y)*.5f};h.Frame();
         h.Frame([](auto &io){io.AddMouseButtonEvent(1,true);});
         h.Frame([](auto &io){io.AddMouseButtonEvent(1,false);});
-        h.mouse={-100,-100};h.Frame();h.Key(ImGuiKey_Home);
+        h.mouse={-100,-100};h.Frame();
+        h.ClickAt({(s.programMonitorMetadataMin.x+s.programMonitorMetadataMax.x)*.5f,
+                   (s.programMonitorMetadataMin.y+s.programMonitorMetadataMax.y)*.5f});
+        h.Key(ImGuiKey_Home);
         for (int i=0;i<preset;++i) h.Key(ImGuiKey_DownArrow);
         h.Key(ImGuiKey_Enter);
         const bool ok=static_cast<int>(s.monitorMetadata)==preset;
@@ -741,6 +744,33 @@ void VerifyMonitors(Host &h,const std::filesystem::path &out) {
     const bool transformed=s.clipPropertyValues[1]==1.2 && s.clipPropertyValues[2]==.1;
     log<<(transformed ? "PASS " : "FAIL ")<<"host Inspector events change Monitor bounds parameters\n";
     if (!transformed) throw std::runtime_error("Monitor bounds host apply failed");
+    s.monitorMode=3;
+    const char *aspectNames[]={"4x3","16x9","1x1","9x16"};
+    const char *stateNames[]={"ready","loading","empty","offline","error"};
+    for(int aspect=0;aspect<4;++aspect) {
+        s.monitorContractAspect=aspect;
+        for(int state=0;state<5;++state) {
+            s.monitorContractStatus=state;h.Settle(2);
+            h.Frame({},out/(std::string("monitor-contract-")+aspectNames[aspect]+"-"+stateNames[state]+".png"));
+            log<<"PASS Preview Monitor "<<aspectNames[aspect]<<' '<<stateNames[state]<<" Fit/Fill/Stretch capture\n";
+        }
+    }
+    h.Page(9);
+    const auto savedCamera=s.viewport.camera;
+    s.viewport.camera.yaw=s.viewport.camera.pitch=s.viewport.camera.roll=0;s.viewport.camera.target={};
+    for(int aspect=0;aspect<4;++aspect) {
+        s.cgPreviewAspect=aspect;h.Settle(2);
+        h.Frame({},out/(std::string("cg-aspect-")+aspectNames[aspect]+".png"));
+        const auto center=cg::Project({},s.viewport.camera,s.viewportOrigin,s.viewportSize);
+        const auto x=cg::Project({1,0,0},s.viewport.camera,s.viewportOrigin,s.viewportSize);
+        const auto y=cg::Project({0,1,0},s.viewport.camera,s.viewportOrigin,s.viewportSize);
+        const bool uniform=center.visible&&x.visible&&y.visible&&
+            std::abs(std::hypot(x.screen.x-center.screen.x,x.screen.y-center.screen.y)-
+                     std::hypot(y.screen.x-center.screen.x,y.screen.y-center.screen.y))<1e-3;
+        log<<(uniform?"PASS ":"FAIL ")<<"CG viewport "<<aspectNames[aspect]<<" uniform projected units\n";log.flush();
+        if(!uniform) throw std::runtime_error("CG viewport aspect verification failed");
+    }
+    s.viewport.camera=savedCamera;
     log<<"Public ImGui IO and native GL capture; native OS/IME input not tested.\n";
 }
 
@@ -1774,6 +1804,8 @@ int main(int argc, char **argv) {
                 h.s.workflow.japanese=true;h.s.workflow.vertical=true;h.s.workflow.disabled=true;
                 glfwSetWindowSize(h.window,640,800);h.Page(17);h.Frame({},out/"workflow-narrow-disabled.png");
                 h.s.workflow.disabled=false;h.Page(15);h.Frame({},out/"workflow-japanese.png");
+                h.mouse={620,700};h.Frame([](auto& io){io.AddMouseWheelEvent(0,-20);});h.Settle(2);
+                h.Frame({},out/"workflow-image-aspects.png");
                 check(true,"Light/Dark, contrast, density, reduced motion, Japanese, narrow, disabled GPU captures");
                 log<<"Public ImGui IO and native GPU backbuffer; native OS/IME and external applications are not tested.\n";
             } else if(captureDesign) {

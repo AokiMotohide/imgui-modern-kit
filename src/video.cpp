@@ -1833,6 +1833,117 @@ void Monitor(const char *id, ImTextureRef texture, ImVec2 size, const editor::Ti
     d->PopClipRect();
     ImGui::PopID();
 }
+bool Monitor(const char *id,const MonitorView &monitor,ImVec2 size,const editor::TimeState &time,
+             const MonitorOptions &o,const Theme &theme,ComponentOptions components) {
+    const auto extent=[](float value) {return std::isfinite(value)&&value>0 ? value : 0.f;};
+    size={extent(size.x),extent(size.y)};
+    ImGui::PushID(id);
+    if(size.x<=0 || size.y<=0) {
+        ImGui::Dummy(size);ImGui::PopID();return false;
+    }
+    if(!components.theme) components.theme=&theme;
+    const ImVec2 widgetMin=ImGui::GetCursorScreenPos(),widgetMax{widgetMin.x+size.x,widgetMin.y+size.y};
+    ImGui::InvisibleButton("##monitor",size);
+    const ImVec2 after=ImGui::GetCursorScreenPos();
+    auto *draw=ImGui::GetWindowDrawList();
+    draw->PushClipRect(widgetMin,widgetMax,true);
+    draw->AddRectFilled(widgetMin,widgetMax,ImGui::GetColorU32(theme.colors.canvas));
+    const auto layout=editor::ResolveImagePlacement(monitor.image.pixels,{size.x,size.y},monitor.placement);
+    const bool ready=monitor.status==editor::PreviewState::Ready && layout.valid && monitor.image.texture.GetTexID()!=ImTextureID{};
+    bool action=false;
+    if(ready) {
+        const ImVec2 imageMin{widgetMin.x+static_cast<float>(layout.display.min.x),
+                              widgetMin.y+static_cast<float>(layout.display.min.y)};
+        const ImVec2 imageMax{widgetMin.x+static_cast<float>(layout.display.max.x),
+                              widgetMin.y+static_cast<float>(layout.display.max.y)};
+        const auto textureUv=[&](ImVec2 uv) {
+            return ImVec2{monitor.image.uv0.x+(monitor.image.uv1.x-monitor.image.uv0.x)*uv.x,
+                          monitor.image.uv0.y+(monitor.image.uv1.y-monitor.image.uv0.y)*uv.y};
+        };
+        ImVec2 uv0=textureUv(layout.uv0),uv1=textureUv(layout.uv1);
+        if(o.flipY) std::swap(uv0.y,uv1.y);
+        draw->AddImage(monitor.image.texture,imageMin,imageMax,uv0,uv1);
+        draw->PushClipRect(imageMin,imageMax,true);
+        const ImVec2 visibleUv{layout.uv1.x-layout.uv0.x,layout.uv1.y-layout.uv0.y};
+        const auto point=[&](ImVec2 normalized) {
+            return ImVec2{imageMin.x+(normalized.x-layout.uv0.x)/visibleUv.x*(imageMax.x-imageMin.x),
+                          imageMin.y+(normalized.y-layout.uv0.y)/visibleUv.y*(imageMax.y-imageMin.y)};
+        };
+        const auto color=ImGui::GetColorU32(theme.colors.muted);
+        if(o.safeArea)
+            for(float inset:{.05f,.1f}) draw->AddRect(point({inset,inset}),point({1-inset,1-inset}),color);
+        if(o.guides)
+            for(int i=1;i<3;++i) {
+                const float at=static_cast<float>(i)/3;
+                draw->AddLine(point({at,0}),point({at,1}),color);
+                draw->AddLine(point({0,at}),point({1,at}),color);
+            }
+        if(o.transform) {
+            const ImVec2 minimum=point({static_cast<float>(o.transformBounds.min.x),static_cast<float>(o.transformBounds.min.y)});
+            const ImVec2 maximum=point({static_cast<float>(o.transformBounds.max.x),static_cast<float>(o.transformBounds.max.y)});
+            if(std::isfinite(minimum.x)&&std::isfinite(minimum.y)&&std::isfinite(maximum.x)&&std::isfinite(maximum.y) &&
+               minimum.x<maximum.x&&minimum.y<maximum.y)
+                draw->AddRect(minimum,maximum,ImGui::GetColorU32(theme.colors.accent),0.f,2.f,ImDrawFlags_None);
+        }
+        if(o.showAnchor.value_or(o.transform)) {
+            const ImVec2 anchor=point(o.anchor);
+            if(std::isfinite(anchor.x)&&std::isfinite(anchor.y)) draw->AddCircle(anchor,5,color);
+        }
+        const float padding=std::max(3.f,ImGui::GetFontSize()*.25f);
+        const float lineHeight=ImGui::GetFontSize()+2*padding;
+        const auto overlayText=[&](float top,const char *label) {
+            if(!label||!*label||imageMax.x-imageMin.x<=4*padding||imageMax.y-imageMin.y<lineHeight+2*padding) return;
+            const ImVec2 minimum{imageMin.x+padding,top};
+            const ImVec2 maximum{std::min(imageMax.x-padding,minimum.x+ImGui::CalcTextSize(label).x+2*padding),top+lineHeight};
+            auto background=theme.colors.surface;background.w=1;
+            draw->AddRectFilled(minimum,maximum,ImGui::GetColorU32(background),theme.metrics.radius);
+            const ImVec4 bounds{minimum.x+padding,minimum.y+padding,maximum.x-padding,maximum.y-padding};
+            draw->AddText(ImGui::GetFont(),ImGui::GetFontSize(),{bounds.x,bounds.y},ImGui::GetColorU32(theme.colors.text),label,nullptr,0,&bounds);
+        };
+        overlayText(imageMin.y+padding,o.label);
+        if(o.metadataPreset!=MonitorMetadataPreset::Off) {
+            float top=imageMin.y+padding+((o.label&&*o.label)?lineHeight+padding:0);
+            const float bottom=imageMax.y-padding-(o.showTimecode?lineHeight+padding:0);
+            const auto line=[&](const char *label) {
+                if(label&&*label&&top+lineHeight<=bottom) {overlayText(top,label);top+=lineHeight+padding;}
+            };
+            line(o.clipName);line(o.markerComment);
+            if(o.metadataPreset==MonitorMetadataPreset::Details)
+                for(const char *label:o.metadata) {if(top+lineHeight>bottom) break;line(label);}
+        }
+        if(o.showTimecode&&(!o.label||!*o.label||imageMax.y-imageMin.y>=2*lineHeight+3*padding)) {
+            char label[32]{};editor::FormatTimecode(time.playhead,time.rate,time.dropFrame,label);
+            overlayText(imageMax.y-lineHeight-padding,label);
+        }
+        draw->PopClipRect();
+    } else if(monitor.status!=editor::PreviewState::Ready) {
+        StateView state=monitor.stateView;
+        const char *key="preview_empty",*fallback="Empty";
+        switch(monitor.status) {
+        case editor::PreviewState::Loading:key="preview_loading";fallback="Loading";break;
+        case editor::PreviewState::Offline:key="preview_offline";fallback="Offline";break;
+        case editor::PreviewState::Error:key="preview_error";fallback="Error";state.kind=FeedbackKind::Error;break;
+        default:break;
+        }
+        if(!state.heading||!*state.heading) state.heading=components.locale?components.locale->Text(key,fallback):fallback;
+        const float padding=std::max(4.f,ImGui::GetStyle().FramePadding.x);
+        const ImVec2 contentMin{widgetMin.x+padding,widgetMin.y+padding};
+        const ImVec2 contentSize{std::max(1.f,size.x-2*padding),std::max(1.f,size.y-2*padding)};
+        if(monitor.status==editor::PreviewState::Loading) {
+            ImGui::SetCursorScreenPos(contentMin);Skeleton("loading-skeleton",contentSize,components);
+            ImGui::SetCursorScreenPos(contentMin);Spinner("loading-spinner",components);ImGui::SameLine();
+            auto loading=state;loading.action="";EmptyState("loading-state",loading,components);
+        } else {
+            ImGui::SetCursorScreenPos(contentMin);
+            if(monitor.status==editor::PreviewState::Empty) action=EmptyState("empty-state",state,components);
+            else if(monitor.status==editor::PreviewState::Offline) action=UnavailableState("offline-state",state,components);
+            else action=RetryState("error-state",state,components);
+        }
+        ImGui::SetCursorScreenPos(after);ImGui::Dummy({0,0});
+    }
+    draw->PopClipRect();
+    ImGui::PopID();return action;
+}
 void BuildAudioBuckets(std::span<const float> pcm, int channels, int channel, std::span<AudioBucket> out) {
     std::fill(out.begin(), out.end(), AudioBucket{});
     if (channels <= 0 || channel < 0 || channel >= channels || out.empty())
