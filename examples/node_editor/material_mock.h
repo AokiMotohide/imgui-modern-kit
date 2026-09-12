@@ -4,6 +4,7 @@
 #include <cmath>
 #include <string>
 #include <vector>
+#include "toolbar.h"
 
 // Entirely host-owned GUI mock. No physical BRDF or shader compilation.
 namespace material_mock {
@@ -518,40 +519,61 @@ struct Page {
             }
         return false;
     }
-    void Draw(const imkit::Theme &theme) {
+    void Draw(const imkit::Theme &theme, const imkit::IconAtlas &icons, bool snap = false, bool lasso = false,
+              ne::LinkStyle wire = ne::LinkStyle::Bezier) {
         auto g = model.View();
         ne::RequestBuffer out{storage};
         auto style = ne::MakeNodeStyle(theme);
+        style.linkStyle = wire;
+        for (auto &view : model.nodes) {
+            auto count = std::count_if(g.pins.begin(), g.pins.end(),
+                                       [&](auto &pin) { return pin.node == view.id && !pin.hidden; });
+            view.size.y = std::max(
+                view.size.y, double(count * ImGui::GetFrameHeightWithSpacing() + style.headerHeight + 220));
+        }
         ne::EditorFrame controls;
         controls.graph = g;
         controls.state = &state;
         controls.requests = &out;
         controls.style = style;
-        if (ImGui::SmallButton("+ Add node")) {
+        if (node_gallery::Action("add", icons, imkit::IconId::Add, "Add node (Tab)")) {
             state.palette = true;
             state.press = {state.origin.x + 100, state.origin.y + 80};
         }
         ImGui::SameLine();
-        if (ImGui::SmallButton("Undo"))
+        if (node_gallery::Action("undo", icons, imkit::IconId::Undo, "Undo"))
             ne::QueueCommand(controls, ne::EditKind::Undo);
         ImGui::SameLine();
-        if (ImGui::SmallButton("Redo"))
+        if (node_gallery::Action("redo", icons, imkit::IconId::Redo, "Redo"))
             ne::QueueCommand(controls, ne::EditKind::Redo);
         ImGui::SameLine();
-        if (ImGui::SmallButton("Frame all"))
+        if (node_gallery::Action("frame", icons, imkit::IconId::FitView, "Frame all"))
             ne::FrameNodes(state, g, {},
                            {ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y});
         ImGui::SameLine();
-        ImGui::SetNextItemWidth(200);
         ne::LayoutToolbar(controls);
-        ImGui::TextDisabled("GUI mock / CPU preview | Drag sockets to connect | Right-click a row to edit | "
-                            "Middle drag to pan");
+        ImGui::SameLine();
+        if (node_gallery::Action("help", icons, imkit::IconId::Help, "Editing help"))
+            ImGui::OpenPopup("Editing help");
+        if (ImGui::BeginPopup("Editing help")) {
+            ImGui::TextUnformatted("GUI mock with host CPU previews.\nDrag sockets to connect; drag rows to "
+                                   "reorder.\nRight-click a row to edit. Middle drag pans.\nSelect a wire "
+                                   "and a node, then use Insert into selected wire.");
+            ImGui::EndPopup();
+        }
+        ImGui::SameLine();
+        ImGui::BeginDisabled(!state.active || !state.selectedLink);
+        if (ImGui::SmallButton("Insert into wire"))
+            ne::InsertNode(controls, state.active, state.selectedLink);
+        ImGui::EndDisabled();
         if (!model.message.empty())
             ImGui::TextWrapped("%s", model.message.c_str());
         auto size = ImGui::GetContentRegionAvail();
-        size.x = std::max(200.f, size.x - 300);
+        size.x = std::max(160.f, size.x - std::min(300.f, size.x * .36f));
         ne::EditorOptions options;
         options.size = size;
+        options.snap = snap;
+        options.lasso = lasso;
         auto f = ne::BeginEditor("material", g, state, out, style, options);
         ne::DrawLinks(f);
         for (auto &n : model.data.nodes)
@@ -583,6 +605,8 @@ struct Page {
         ne::EndEditor(f);
         ImGui::SameLine();
         ImGui::BeginChild("Material inspector", {0, size.y}, ImGuiChildFlags_Borders);
+        ne::NodeSearch(f);
+        ImGui::Separator();
         ne::NodeInspector(f, state.active);
         ImGui::EndChild();
         for (auto &n : model.data.nodes) {

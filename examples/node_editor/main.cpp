@@ -13,6 +13,7 @@
 #include <memory>
 #include "../design_gallery/capture.h"
 #include "material_mock.h"
+#include "toolbar.h"
 
 namespace ne = imkit::node_editor;
 namespace {
@@ -80,11 +81,13 @@ struct Model {
             in.id = {next++};
             in.node = id;
             in.label = "Input";
+            in.manualPosition = false;
             data.pins.push_back(in);
             ne::PinView out;
             out.id = {next++};
             out.node = id;
             out.label = "Output";
+            out.manualPosition = false;
             out.kind = ne::PinKind::Output;
             out.side = ne::Side::Right;
             out.multiple = true;
@@ -545,7 +548,22 @@ struct Demo {
     int wire = 0, density = 1;
     bool highContrast = false;
     GLuint texture = 0;
+    imkit::IconAtlas icons;
+    std::array<GLuint, 7> iconTextures{};
+    bool reducedMotion = false;
     void Init() {
+        glGenTextures(int(iconTextures.size()), iconTextures.data());
+        for (std::size_t i = 0; i < iconTextures.size(); ++i) {
+            auto pixels = imkit::GetIconAtlasPixels(imkit::IconPixelSizes[i]);
+            glBindTexture(GL_TEXTURE_2D, iconTextures[i]);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 0x812F /* GL_CLAMP_TO_EDGE */);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 0x812F /* GL_CLAMP_TO_EDGE */);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pixels.width, pixels.height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                         pixels.rgba.data());
+            icons.SetTexture(imkit::IconPixelSizes[i], ImTextureRef(ImTextureID(iconTextures[i])));
+        }
         model.Init();
         state.Reserve(1024);
         state.origin = {-25, -20};
@@ -582,34 +600,45 @@ struct Demo {
             imkit::MakeTheme(dark ? imkit::ColorScheme::Dark : imkit::ColorScheme::Light,
                              highContrast ? imkit::ContrastMode::HighContrast : imkit::ContrastMode::Standard,
                              static_cast<imkit::Density>(density));
+        theme.motion.reducedMotion = reducedMotion;
         imkit::ThemeScope scope(theme);
         ImGui::SetNextWindowPos({0, 0});
         ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
         ImGui::Begin("ModernKIT Node Studio", nullptr,
                      ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
         ImGui::TextUnformatted("ModernKIT / Node Studio");
+        if (ImGui::GetContentRegionAvail().x > 520)
+            ImGui::SameLine();
+        ImGui::SetNextItemWidth(std::min(300.f, std::max(100.f, ImGui::GetContentRegionAvail().x - 70.f)));
+        int page = materialPage ? 0 : 1;
+        if (ImGui::Combo("##page", &page, "Material Graph Mock\0Node Studio\0"))
+            materialPage = page == 0;
         ImGui::SameLine();
-        ImGui::Checkbox("Dark", &dark);
-        ImGui::SameLine();
-        ImGui::Checkbox("Material Graph Mock", &materialPage);
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(135);
-        ImGui::Combo("Density", &density, "Compact\0Comfortable\0Touch\0");
-        ImGui::SameLine();
-        ImGui::Checkbox("High contrast", &highContrast);
+        if (node_gallery::Action("settings", icons, imkit::IconId::Settings,
+                                 "Appearance and canvas settings"))
+            ImGui::OpenPopup("Settings");
+        if (ImGui::BeginPopup("Settings")) {
+            ImGui::Checkbox("Dark", &dark);
+            ImGui::SetNextItemWidth(160);
+            ImGui::Combo("Density", &density, "Compact\0Comfortable\0Touch\0");
+            ImGui::Checkbox("High contrast", &highContrast);
+            ImGui::Checkbox("Reduced motion", &reducedMotion);
+            ImGui::Separator();
+            ImGui::Checkbox("Grid snap", &snap);
+            ImGui::Checkbox("Lasso", &lasso);
+            ImGui::SetNextItemWidth(160);
+            ImGui::Combo("Wires", &wire, "Bezier\0Straight\0Orthogonal\0");
+            ImGui::EndPopup();
+        }
         if (materialPage) {
-            material.Draw(theme);
+            material.Draw(theme, icons, snap, lasso, static_cast<ne::LinkStyle>(wire));
             ImGui::End();
             return;
         }
-        ImGui::SameLine();
-        ImGui::Checkbox("Grid snap", &snap);
-        ImGui::SameLine();
-        ImGui::Checkbox("Lasso", &lasso);
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(125);
-        ImGui::Combo("Wires", &wire, "Bezier\0Straight\0Orthogonal\0");
         auto graph = model.View();
+        for (auto &view : model.views)
+            if (view.kind == ne::NodeKind::Node)
+                view.size.y = std::max(view.size.y, double(6 * ImGui::GetFrameHeightWithSpacing() + 240));
         ne::RequestBuffer out{requests};
         auto style = ne::MakeNodeStyle(theme);
         style.linkStyle = static_cast<ne::LinkStyle>(wire);
@@ -620,37 +649,47 @@ struct Demo {
         controls.style = style;
         controls.min = {0, 0};
         controls.max = ImGui::GetIO().DisplaySize;
-        if (ImGui::Button("Add")) {
+        if (node_gallery::Action("add", icons, imkit::IconId::Add, "Add node (Tab)")) {
             state.press = {state.origin.x + 100, state.origin.y + 100};
             state.palette = true;
         }
         ImGui::SameLine();
-        if (ImGui::Button("Undo"))
+        ImGui::BeginDisabled(model.undo.empty());
+        if (node_gallery::Action("undo", icons, imkit::IconId::Undo, "Undo"))
             ne::QueueCommand(controls, ne::EditKind::Undo);
+        ImGui::EndDisabled();
         ImGui::SameLine();
-        if (ImGui::Button("Redo"))
+        ImGui::BeginDisabled(model.redo.empty());
+        if (node_gallery::Action("redo", icons, imkit::IconId::Redo, "Redo"))
             ne::QueueCommand(controls, ne::EditKind::Redo);
+        ImGui::EndDisabled();
         ImGui::SameLine();
-        if (ImGui::Button("Frame"))
+        if (node_gallery::Action("frame", icons, imkit::IconId::FitView, "Frame selection / all (F)"))
             ne::FrameNodes(state, graph, state.selection,
-                           {ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y - 120});
+                           {ImGui::GetIO().DisplaySize.x - 310, ImGui::GetIO().DisplaySize.y - 140});
         ImGui::SameLine();
-        if (ImGui::Button("Group"))
-            ne::QueueCommand(controls, ne::EditKind::Group);
-        ImGui::SameLine();
-        if (ImGui::Button("Subgraph"))
-            ne::QueueCommand(controls, ne::EditKind::MakeSubgraph);
-        ImGui::SameLine();
-        if (ImGui::Button("Unpack"))
-            ne::QueueCommand(controls, ne::EditKind::Ungroup);
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(220);
         ne::LayoutToolbar(controls);
+        ImGui::SameLine();
+        if (node_gallery::Action("more", icons, imkit::IconId::More, "Graph actions and help"))
+            ImGui::OpenPopup("Graph actions");
+        if (ImGui::BeginPopup("Graph actions")) {
+            ImGui::BeginDisabled(state.selection.empty());
+            if (ImGui::MenuItem("Group"))
+                ne::QueueCommand(controls, ne::EditKind::Group);
+            if (ImGui::MenuItem("Make subgraph"))
+                ne::QueueCommand(controls, ne::EditKind::MakeSubgraph);
+            if (ImGui::MenuItem("Unpack"))
+                ne::QueueCommand(controls, ne::EditKind::Ungroup);
+            ImGui::EndDisabled();
+            ImGui::Separator();
+            ImGui::TextUnformatted(
+                "Drag headers to move. Middle drag pans.\nWheel zooms. Drag an occupied input to "
+                "reconnect.\nAlt-drag cuts links. Tab adds nodes. F frames selection.");
+            ImGui::EndPopup();
+        }
         ne::Breadcrumbs(controls, model.path);
-        ImGui::TextDisabled("Drag headers | middle drag: pan | wheel: zoom | Tab: add | F: frame | Alt-drag: "
-                            "cut | Alt-input: reconnect");
         auto canvasSize = ImGui::GetContentRegionAvail();
-        canvasSize.x -= 310;
+        canvasSize.x = std::max(160.f, canvasSize.x - std::min(310.f, canvasSize.x * .36f));
         ne::EditorOptions options;
         options.snap = snap;
         options.lasso = lasso;
@@ -670,11 +709,12 @@ struct Demo {
                     ImGui::TextWrapped("This note belongs to the host. Group nodes to move them together.");
                     return;
                 }
-                ImGui::SliderFloat("Value", &n->value, 0, 1);
-                if (auto id = self.model.Socket(node.id, true); id) {
-                    ne::BeginPin(frame, id);
-                    ne::EndPin(frame);
-                }
+                ImGui::SliderFloat("##value", &n->value, 0, 1);
+                if (ImGui::IsItemHovered())
+                    ImGui::SetTooltip("Value");
+                for (auto &pin : frame.graph.pins)
+                    if (pin.node == node.id)
+                        ne::PinRow(frame, pin.id);
                 auto outputs = self.Outputs(*n);
                 ne::Preview(frame, outputs);
             },
@@ -785,7 +825,14 @@ int main(int argc, char **argv) {
     if (!glfwInit())
         return 2;
     glfwWindowHint(GLFW_VISIBLE, smoke ? GLFW_FALSE : GLFW_TRUE);
-    auto *window = glfwCreateWindow(1400, 900, "ModernKIT Node Studio", nullptr, nullptr);
+    auto has = [&](std::string_view option) {
+        for (int i = 1; i < argc; ++i)
+            if (argv[i] == option)
+                return true;
+        return false;
+    };
+    auto *window =
+        glfwCreateWindow(has("--narrow") ? 780 : 1400, 900, "ModernKIT Node Studio", nullptr, nullptr);
     if (!window) {
         glfwTerminate();
         return 3;
@@ -796,13 +843,25 @@ int main(int argc, char **argv) {
     ImGui::GetIO().IniFilename = nullptr;
     ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     // Host-owned system font: used locally, never bundled with the library.
-    if (std::filesystem::exists("C:/Windows/Fonts/segoeui.ttf"))
-        ImGui::GetIO().FontDefault =
-            ImGui::GetIO().Fonts->AddFontFromFileTTF("C:/Windows/Fonts/segoeui.ttf", 18);
+    for (const char *font :
+         {"C:/Windows/Fonts/YuGothR.ttc", "C:/Windows/Fonts/meiryo.ttc", "C:/Windows/Fonts/segoeui.ttf"})
+        if (std::filesystem::exists(font)) {
+            ImGui::GetIO().FontDefault = ImGui::GetIO().Fonts->AddFontFromFileTTF(font, 18);
+            break;
+        }
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130");
     auto demo = std::make_unique<Demo>();
     demo->Init();
+    demo->materialPage = !has("--studio");
+    demo->density = has("--touch") ? 2 : has("--compact") ? 0 : 1;
+    demo->highContrast = has("--contrast");
+    if (has("--narrow"))
+        demo->material.state.zoom = .7;
+    if (has("--japanese")) {
+        demo->material.model.data.nodes[1].name = "長い名前のマテリアル・プレビュー設定";
+        demo->material.model.data.pins[2].name = "未接続入力の長い日本語ラベル";
+    }
     int frames = 0;
     while (!glfwWindowShouldClose(window) && (!smoke || frames < 5)) {
         glfwPollEvents();
@@ -823,6 +882,7 @@ int main(int argc, char **argv) {
         glfwSwapBuffers(window);
     }
     glDeleteTextures(1, &demo->texture);
+    glDeleteTextures(int(demo->iconTextures.size()), demo->iconTextures.data());
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();

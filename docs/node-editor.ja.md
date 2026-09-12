@@ -216,3 +216,13 @@ GUI例であり、shader engineや物理的なMaterial評価ではありませ�
 pinの明示形状を使います。独自値callbackはBegin／Update／Commit／Cancelを明示します。
 graphの一括配線はDrawLinksを呼んだ場合だけ予約し、低レベルLinkとの重複描画を避けます。
 検証と残作業は[P0／P1レビュー](node-editor-review.md)を参照してください。
+
+
+## 周辺操作と外観
+
+両Galleryページで追加・Undo／Redo・全体表示のicon操作を共通化した。
+ページ選択でMaterial Graph MockとNode Studioを切り替え、設定menuで密度、contrast、
+reduced motionとcanvas設定を変更する。補助操作とhelpをmenuへ整理し、Materialにも
+選択配線への挿入操作を配置した。検索結果は固定高でスクロールし、パンくずは折り返す。
+minimapクリックは背後のwidgetを操作せずviewportを移動する。既存icon atlasのuploadと
+日本語system fontの選択・寿命管理はホストが行う。

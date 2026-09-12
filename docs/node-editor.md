@@ -279,3 +279,14 @@ explicit pin shape instead of type metadata. Custom value callbacks return
 Begin/Update/Commit/Cancel explicitly. Graph links are scheduled only when
 `DrawLinks` is called, so explicit low-level `Link` rendering is not duplicated.
 See the [P0/P1 review](node-editor-review.md) for validation and remaining work.
+
+
+## Navigation and appearance
+
+Both Gallery pages share icon actions for add, Undo/Redo and framing. The page
+selector switches Material Graph Mock and Node Studio. Settings contains density,
+contrast, reduced motion and canvas controls. Secondary actions and help live in
+menus; Material also exposes insertion into a selected wire. Search results scroll
+within a bounded panel, breadcrumbs wrap, and minimap clicks navigate without
+activating underlying widgets. The host uploads the existing icon atlas and
+prefers an installed Japanese font. It owns both resource lifetimes.

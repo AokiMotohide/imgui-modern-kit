@@ -1048,9 +1048,17 @@ void PinRow(EditorFrame &f, PinId id, PinRowOptions options) {
         case ValueKind::Float:
             changed = ImGui::SliderFloat("##value", value.number.data(), options.minimum, options.maximum);
             break;
-        case ValueKind::Vector:
-            changed = ImGui::DragFloat3("##value", value.number.data(), .01f);
+        case ValueKind::Vector: {
+            auto padding = ImGui::GetStyle().FramePadding;
+            padding.x = std::min(padding.x, 2.f * float(s.zoom));
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, padding);
+            changed = ImGui::DragFloat3("##value", value.number.data(), .01f, 0, 0, "%.2g");
+            ImGui::PopStyleVar();
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("X: %.6g  Y: %.6g  Z: %.6g", value.number[0], value.number[1],
+                                  value.number[2]);
             break;
+        }
         case ValueKind::Integer:
             changed = ImGui::InputInt("##value", &value.integer);
             break;
@@ -1241,7 +1249,9 @@ bool InsertNode(EditorFrame &f, NodeId node, LinkId id) {
 }
 void LayoutToolbar(EditorFrame &f) {
     ImGui::BeginDisabled(f.options.readOnly || f.state->selection.empty());
-    if (ImGui::BeginCombo("Layout", "Align / distribute / arrange")) {
+    if (ImGui::Button("Arrange"))
+        ImGui::OpenPopup("Layout actions");
+    if (ImGui::BeginPopup("Layout actions")) {
         const char *labels[] = {"Align left",
                                 "Align center X",
                                 "Align right",
@@ -1255,7 +1265,7 @@ void LayoutToolbar(EditorFrame &f) {
         for (int i = 0; i < 10; ++i)
             if (ImGui::Selectable(labels[i]))
                 ApplyLayout(f, i);
-        ImGui::EndCombo();
+        ImGui::EndPopup();
     }
     ImGui::EndDisabled();
 }
@@ -1274,42 +1284,61 @@ void Annotation(EditorFrame &f, std::span<const Point> points, ImVec4 color, flo
 }
 void NodeSearch(EditorFrame &f) {
     auto &s = *f.state;
+    float button = ImGui::GetFrameHeight();
+    ImGui::SetNextItemWidth(
+        std::max(1.f, ImGui::GetContentRegionAvail().x - button - ImGui::GetStyle().ItemSpacing.x));
     ImGui::InputTextWithHint("##node-search", "Find in graph", s.search.data(), s.search.size());
-    if (s.search[0])
-        for (auto &n : f.graph.nodes) {
-            auto query = std::string_view(s.search.data());
-            auto match = [&](std::string_view text) {
-                return std::search(text.begin(), text.end(), query.begin(), query.end(),
-                                   [](unsigned char a, unsigned char b) {
-                                       return std::tolower(a) == std::tolower(b);
-                                   }) != text.end();
-            };
-            if (!match(n.title) && !match(n.description))
-                continue;
-            auto label = std::string(n.title) + "##search-" + std::to_string(n.id.value);
-            if (ImGui::Selectable(label.c_str(), IsSelected(s, n.id))) {
-                Select(s, n.id);
-                FrameNodes(s, f.graph, {&n.id, 1}, {f.max.x - f.min.x, f.max.y - f.min.y});
-            }
-        }
-    if (ImGui::SmallButton("Back"))
-        NavigateHistory(s, -1);
     ImGui::SameLine();
-    if (ImGui::SmallButton("Forward"))
-        NavigateHistory(s, 1);
-    if (s.active) {
-        auto trace = [&](bool upstream) {
-            std::vector<NodeId> nodes(f.graph.nodes.size());
-            auto result = TraceNodes(f.graph, s.active, upstream, nodes);
-            if (result)
-                s.selection.assign(nodes.begin(), nodes.begin() + result.count);
-        };
-        if (ImGui::SmallButton("Select upstream"))
-            trace(true);
-        ImGui::SameLine();
-        if (ImGui::SmallButton("Select downstream"))
-            trace(false);
+    if (ImGui::Button("...##navigation", {button, button}))
+        ImGui::OpenPopup("Navigation");
+    if (ImGui::BeginPopup("Navigation")) {
+        if (ImGui::MenuItem("Back", "", false, s.historyIndex > 0))
+            NavigateHistory(s, -1);
+        if (ImGui::MenuItem("Forward", "", false, s.historyIndex + 1 < s.history.size()))
+            NavigateHistory(s, 1);
+        ImGui::Separator();
+        for (bool upstream : {true, false})
+            if (ImGui::MenuItem(upstream ? "Select upstream" : "Select downstream", nullptr, false,
+                                bool(s.active))) {
+                std::vector<NodeId> nodes(f.graph.nodes.size());
+                auto result = TraceNodes(f.graph, s.active, upstream, nodes);
+                if (result)
+                    s.selection.assign(nodes.begin(), nodes.begin() + result.count);
+            }
+        if (ImGui::MenuItem("Clear search", nullptr, false, s.search[0] != 0))
+            s.search.fill(0);
+        ImGui::EndPopup();
     }
+    if (!s.search[0])
+        return;
+    ImGui::BeginChild("##search-results", {0, ImGui::GetTextLineHeightWithSpacing() * 6},
+                      ImGuiChildFlags_Borders);
+    bool found = false;
+    auto query = std::string_view(s.search.data());
+    for (auto &n : f.graph.nodes) {
+        auto match = [&](std::string_view text) {
+            return std::search(text.begin(), text.end(), query.begin(), query.end(),
+                               [](unsigned char a, unsigned char b) {
+                                   return std::tolower(a) == std::tolower(b);
+                               }) != text.end();
+        };
+        if (!match(n.title) && !match(n.description))
+            continue;
+        found = true;
+        ImGui::PushID(std::to_string(n.id.value).c_str());
+        if (ImGui::Selectable(std::string(n.title).c_str(), IsSelected(s, n.id))) {
+            RememberView(s);
+            Select(s, n.id);
+            FrameNodes(s, f.graph, {&n.id, 1}, {f.max.x - f.min.x, f.max.y - f.min.y});
+            RememberView(s);
+        }
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("%.*s", int(n.title.size()), n.title.data());
+        ImGui::PopID();
+    }
+    if (!found)
+        ImGui::TextDisabled("No matching nodes");
+    ImGui::EndChild();
 }
 void NodeInspector(EditorFrame &f, NodeId id) {
     auto *n = Find(f, id);
@@ -1517,8 +1546,28 @@ void NodePalette(EditorFrame &f, std::span<const PaletteEntry> entries) {
 void MiniMap(EditorFrame &f, ImVec2 size) {
     if (f.graph.nodes.empty() || size.x <= 0 || size.y <= 0)
         return;
-    auto a = ImVec2{f.max.x - size.x - 12, f.max.y - size.y - 12}, b = Add(a, size);
-    auto *dl = ImGui::GetForegroundDrawList();
+    const float margin = f.style.padding;
+    size.x = std::min(size.x, f.max.x - f.min.x - 2 * margin);
+    size.y = std::min(size.y, f.max.y - f.min.y - 2 * margin);
+    if (size.x < 24 || size.y < 24)
+        return;
+    auto a = ImVec2{f.max.x - size.x - margin, f.max.y - size.y - margin}, b = Add(a, size);
+    auto cursor = ImGui::GetCursorScreenPos();
+    ImGui::SetCursorScreenPos(a);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+    bool visible = ImGui::BeginChild("##minimap", size, ImGuiChildFlags_None,
+                                     ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse |
+                                         ImGuiWindowFlags_NoBackground);
+    ImGui::PopStyleVar();
+    if (!visible) {
+        ImGui::EndChild();
+        ImGui::SetCursorScreenPos(cursor);
+        ImGui::Dummy({0, 0});
+        return;
+    }
+    ImGui::InvisibleButton("##navigate", size);
+    bool hovered = ImGui::IsItemHovered(), active = ImGui::IsItemActive();
+    auto *dl = ImGui::GetWindowDrawList();
     Rect bounds{f.graph.nodes.front().position, f.graph.nodes.front().position};
     for (auto &n : f.graph.nodes) {
         bounds.min = {std::min(bounds.min.x, n.position.x), std::min(bounds.min.y, n.position.y)};
@@ -1541,15 +1590,18 @@ void MiniMap(EditorFrame &f, ImVec2 size) {
                      f.state->origin.y + (f.max.y - f.min.y) / f.state->zoom}),
                 Color(f.style.accent));
     dl->PopClipRect();
-    if (Inside(ImGui::GetIO().MousePos, a, b) && f.hovered && !ImGui::IsAnyItemActive()) {
+    if (hovered || active) {
         f.blocked = true;
-        if (ImGui::IsMouseDown(0)) {
+        if (active && ImGui::IsMouseDown(0)) {
             auto p = ImGui::GetIO().MousePos;
             f.state->origin = {
                 bounds.min.x + (p.x - a.x - 6) / scale - (f.max.x - f.min.x) / f.state->zoom / 2,
                 bounds.min.y + (p.y - a.y - 6) / scale - (f.max.y - f.min.y) / f.state->zoom / 2};
         }
     }
+    ImGui::EndChild();
+    ImGui::SetCursorScreenPos(cursor);
+    ImGui::Dummy({0, 0});
 }
 void Diagnostics(EditorFrame &f) {
     for (auto &n : f.graph.nodes)
@@ -1564,15 +1616,32 @@ void Diagnostics(EditorFrame &f) {
         }
 }
 void Breadcrumbs(EditorFrame &f, std::span<const PathEntry> path) {
+    const float available = ImGui::GetContentRegionAvail().x;
     for (std::size_t i = 0; i < path.size(); ++i) {
-        if (i)
-            ImGui::SameLine();
-        auto label = std::string(path[i].title) + "##path" + std::to_string(i);
-        if (ImGui::SmallButton(label.c_str())) {
+        if (i) {
+            if (ImGui::GetContentRegionAvail().x < ImGui::GetFrameHeight() * 3)
+                ImGui::NewLine();
+            else {
+                ImGui::SameLine();
+                ImGui::TextDisabled("/");
+                ImGui::SameLine();
+            }
+        }
+        ImGui::PushID(int(i));
+        float width =
+            std::min(std::max(1.f, available), ImGui::CalcTextSize(std::string(path[i].title).c_str()).x +
+                                                   2 * ImGui::GetStyle().FramePadding.x);
+        if (ImGui::GetContentRegionAvail().x < width)
+            ImGui::NewLine();
+        if (ImGui::Button(std::string(path[i].title).c_str(),
+                          {std::min(width, std::max(1.f, ImGui::GetContentRegionAvail().x)), 0})) {
             auto r = Request(f, EditKind::EnterGraph, path[i].node);
             r.type = path[i].graph.value;
             f.requests->Push(r);
         }
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("%.*s", int(path[i].title.size()), path[i].title.data());
+        ImGui::PopID();
     }
 }
 void Preview(EditorFrame &f, std::span<const PreviewOutput> outputs,
@@ -1597,7 +1666,7 @@ void Preview(EditorFrame &f, std::span<const PreviewOutput> outputs,
         return;
     p.output = std::clamp(p.output, 0, int(outputs.size()) - 1);
     if (outputs.size() > 1) {
-        if (ImGui::BeginCombo("Output", std::string(outputs[p.output].title).c_str())) {
+        if (ImGui::BeginCombo("##preview-output", std::string(outputs[p.output].title).c_str())) {
             for (int i = 0; i < int(outputs.size()); ++i)
                 if (ImGui::Selectable(std::string(outputs[i].title).c_str(), i == p.output))
                     p.output = i;

@@ -179,3 +179,19 @@ findings, focused regressions and remaining boundaries. No capture is committed.
 Native captureを目視し、previewの切れとminimapの重なりを修正した。
 P0／P1、直接回帰、未実施境界は上記レビューに記録した。captureはcommitしない。
 実機OS／IME・DPI、支援技術、性能、外部ホスト統合、Release・配布検証は未実施。
+
+## Node navigation completion / ノード周辺操作の完了（2026-09-12）
+
+The focused Debug node test and native Gallery build passed. The new public-IO
+regression verifies that minimap clicks navigate without editing underlying nodes.
+Native captures cover both pages, Comfortable/Touch/Compact density, narrow width,
+Japanese labels and High Contrast. Touch preview clipping was corrected by sizing
+host views from control metrics; narrow vector controls retain precise tooltips.
+The initial minimap cursor-restoration assertion was fixed before the final pass.
+
+対象Debug testとnative Gallery buildが合格した。追加した公開IO回帰ではminimapのクリックが
+背後のノードを編集せずviewportを移動することを確認した。両ページ、Comfortable／Touch／Compact、
+狭幅、日本語ラベル、High Contrastをnative captureで目視した。Touchのpreview切れを
+control寸法に基づくホストView高さで修正し、狭いVector欄は正確な値をtooltipでも表示する。
+初回に検出したminimapカーソル復元assertは最終合格前に修正済み。
+実機IME・DPI、性能、外部ホスト統合の受入検証とは区別する。

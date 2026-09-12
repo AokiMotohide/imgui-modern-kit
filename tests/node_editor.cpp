@@ -241,7 +241,7 @@ void InputTests() {
     ImVec2 canvasMin{};
     char text[32] = "safe";
     int demands = 0;
-    bool disabled = false, standard = false, rowText = false;
+    bool disabled = false, standard = false, rowText = false, minimap = false;
     ImVec2 rowTextPos{};
     ImVec2 expectedPin{};
     int valueDraws = 0;
@@ -252,7 +252,7 @@ void InputTests() {
         ImGui::SetNextWindowSize({1000, 700});
         ImGui::Begin("test", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
         ImGui::BeginDisabled(disabled);
-        auto f = BeginEditor("graph", graph, state, out, style, {{960, 640}, true, false, false});
+        auto f = BeginEditor("graph", graph, state, out, style, {{960, 640}, true, false, minimap});
         canvasMin = f.min;
         DrawLinks(f);
         for (auto &n : nodes)
@@ -506,6 +506,22 @@ void InputTests() {
     Check(!state.valueEditing && !state.valueTerminalPending && out.count == 1 &&
               out.Requests()[0].phase == Phase::Commit,
           "value terminal retry after drain");
+    out.Clear();
+    rowText = false;
+    standard = false;
+    minimap = true;
+    nodes[1].position = {740, 480};
+    state.origin = {};
+    frame();
+    frame();
+    io.AddMousePosEvent(canvasMin.x + 810, canvasMin.y + 545);
+    frame();
+    io.AddMouseButtonEvent(0, true);
+    frame();
+    io.AddMouseButtonEvent(0, false);
+    frame();
+    Check(out.count == 0 && state.gesture.empty(), "minimap consumes pointer without node edits");
+    Check(!Near(state.origin.x, 0) || !Near(state.origin.y, 0), "minimap click navigates viewport");
     ImGui::DestroyContext();
 }
 } // namespace

@@ -18,7 +18,7 @@ Paletteには接続元pinが渡ったが、適合callback未指定の候補も�
 | P0 | Binary compatibility and fragile reconnection / 二値判定・付け替え | Three verdicts, reasons, semantic feedback, filtered palette and host atomic creation / 三段階判定・理由・候補絞込み |
 | P0 | Inspector cannot edit input/output schema / 入出力編集不足 | Separate sections, capabilities, drag ordering, linked-edit confirmation / 方向別編集・能力・並べ替え・影響確認 |
 | P0 | No material graph integration example / 汎用APIの使用例不足 | Independent host mock with 12 templates, dynamic/variadic pins, snapshots and CPU previews / 独立ホストMock |
-| P1 | Secondary navigation and toolbar density / 周辺操作の密度 | Compact Material toolbar and preview overflow; corrected minimap overlap. A full redesign of the legacy studio navigation remains outside this P0 pass / Material toolbar・preview menu・重なりを改善。従来Studioの周辺navigation全面刷新は未実施 |
+| P1 | Secondary navigation and toolbar density / 周辺操作の密度 | Completed shared icon toolbar, overflow settings/help, bounded search, wrapping breadcrumbs and input-owning minimap in both pages / 両ページのicon toolbar・設定とhelp menu・検索領域・折返しパンくず・入力を保持するminimapを実装 |
 
 The mock deliberately refuses connected pin deletion and type changes. The
 library emits advisory affected-link counts and never mutates those links.
@@ -57,3 +57,31 @@ Native OS/IME, physical DPI, assistive technologies, performance, external-host
 integration, Release and distribution acceptance are not established by these checks.
 
 実機OS／IME、実機DPI、支援技術、性能、外部ホスト統合、Release・配布受入は未実施。
+
+
+## Navigation completion / 周辺操作の完了
+
+Both pages use the existing ModernKIT icon atlas uploaded and released by the
+Gallery host. Appearance/canvas settings and secondary actions use overflow
+menus. Search results occupy a bounded scrolling panel and expose navigation
+history and graph traversal in their menu. Breadcrumbs wrap and retain full-name
+tooltips. The minimap is a native child with its own pointer target, so it cannot
+activate controls beneath it and does not draw above unrelated popups. The old
+Studio also submits measured standard pin rows. The host prefers an installed
+Japanese system font without distributing it.
+
+両ページで既存ModernKIT icon atlasを使い、GPU textureの作成・破棄はGalleryホストが行う。
+外観・canvas設定と補助操作をmenuへ整理し、検索は固定高のスクロール領域と履歴・経路選択menuを
+備える。パンくずは折り返し、tooltipには全名を残す。minimapはnative childの入力対象を持ち、
+背後のcontrolへ入力を漏らさず、他popupより前面にも描かない。従来Studioも実測の標準pin行を使う。
+ホストはインストール済み日本語system fontを優先するが、font自体は配布しない。
+
+The navigation completion passed its focused Debug/public-IO regression and
+native captures of both pages, all three densities, narrow Japanese labels and
+High Contrast. Touch preview clipping was fixed with host view minimum heights
+based on actual control metrics. The minimap cursor-restoration assertion found
+by the new test was fixed before the final passing run.
+
+周辺操作の対象Debug・公開IO回帰が合格し、両ページ・3密度・狭幅日本語・High Contrastの
+native captureを確認した。Touchのpreview切れは実control寸法からホストViewの最小高さを
+確保して修正した。追加testで検出したminimapカーソル復元assertも最終合格前に修正した。
