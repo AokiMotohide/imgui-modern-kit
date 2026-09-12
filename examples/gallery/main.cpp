@@ -61,6 +61,21 @@ struct Host {
             s.windowFrameHeight=frameLayout.titleBar.max.y;
         } else s.windowFrameHeight=0;
         imkit::gallery::Show(s);
+        if(s.floatingComparison && s.showDearImGuiDemo) {
+            ImGui::ShowDemoWindow(&s.showDearImGuiDemo);
+            if(!s.demoWindowPositioned) {
+                constexpr float margin=24.f;
+                const auto display=ImGui::GetIO().DisplaySize;
+                ImVec2 position{s.floatingCatalogPosition.x+48.f,
+                                s.floatingCatalogPosition.y+48.f};
+                if(display.x>=1200.f)
+                    position={s.floatingCatalogPosition.x+s.floatingCatalogSize.x+margin,
+                              s.windowFrameHeight+margin};
+                ImGui::SetWindowPos("Dear ImGui Demo",position,ImGuiCond_Always);
+                ImGui::SetWindowFocus("Dear ImGui Demo");
+                s.demoWindowPositioned=true;
+            }
+        }
         imkit::WindowFrameEvent frameEvent{};
         if(windowFrame.Attached()) {
             const imkit::WindowFrameContent content{"ImKit",windowTitle,s.frameUnsaved,s.frameWorkspaces,s.frameWorkspace};
@@ -1578,6 +1593,7 @@ int main(int argc, char **argv) {
     auto hostStorage=std::make_unique<Host>();
     auto &h=*hostStorage;
     h.automated = capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls || verifyLinkedClips || verifyNormals;
+    h.s.floatingComparison=!h.automated && !verifyWindowFrame;
     h.windowTitle=windowTitle;
     h.window = glfwCreateWindow(captureWidth, captureHeight,windowTitle.c_str(), nullptr, nullptr);
     if (!h.window) {

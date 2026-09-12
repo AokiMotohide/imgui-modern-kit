@@ -22,6 +22,12 @@ cmake --build --preset windows-debug --target imkit_gallery --parallel
 ./build/windows-debug/catalog/Debug/imkit_gallery.exe
 ```
 
+A normal launch opens the ImKit Gallery and the official Dear ImGui Demo Window as two movable,
+resizable windows on the same canvas. They start side by side on a wide display and retain normal
+Dear ImGui docking behavior. The Gallery uses the selected ImKit theme; the official demo keeps the
+unmodified Dear ImGui style for direct comparison. Close or reopen the demo with the
+**Dear ImGui Demo** checkbox in the Gallery header.
+
 ## Verification and captures
 
 ```powershell
@@ -30,6 +36,8 @@ cmake --build --preset windows-debug --target imkit_gallery --parallel
 ```
 
 These use public Dear ImGui IO and real OpenGL backbuffers. They are not native OS/IME automation.
+Capture and verification modes retain the deterministic full-canvas Gallery layout and do not open
+the Dear ImGui Demo Window.
 
 ## Rebuild the README GIF
 
