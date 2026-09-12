@@ -8,7 +8,7 @@ Precision Layersは固定版の公開GUI API、12種類の名前付きsemantic t
 - [Validation / 検証](validation.md): Debug/Release, ownership, public IO interactions, actual GPU captures and relocated SDK consumer.
 - [Getting started / English](getting-started.md) / [導入ガイド / 日本語](getting-started.ja.md): source integration and installed SDK.
 - [Themes / English](themes.md) / [テーマ / 日本語](themes.ja.md): presets, font/DPI and lifetime contracts.
-- [Release v0.2.0](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v0.2.0): source, Windows x64 Debug/Release SDK, manifest, checksums and capture evidence.
+- [Release v2.2.0](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v2.2.0): source, Windows x64 SDK, Gallery archive, manifest, checksums and capture evidence.
 
 Supported baseline is Dear ImGui 1.92.9b docking on Windows x64/MSVC v145. Native OS/IME acceptance, other platforms, older forks and integration into another application are not verified. Earlier design-comparison documents are historical experiments; the twelve presets documented in [Themes](themes.md) are the supported set.
 

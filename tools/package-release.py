@@ -61,7 +61,7 @@ manifest = {
     "gallery": {"platform": "Windows x64", "archive": f"imkit-{version}-gallery-windows-x64.zip",
                 "runtime": "Microsoft Visual C++ Redistributable x64 may be required and is not bundled",
                 "contents": ["imkit_gallery.exe", "design-assets", "LICENSE", "THIRD_PARTY_NOTICES.md", "DEPENDENCIES.txt", "RUN-GALLERY.md"],
-                "provenance": "native Gallery executable and checked-in project assets; no v2.1 third-party media or UI asset added"},
+                "provenance": "native Gallery executable and checked-in project assets; no release-specific third-party media or UI asset added"},
     "integration": "Source build against the pinned host ImGui is the recommended route. Match all ABI/CRT settings before using the SDK."
 }
 manifest_bytes = (json.dumps(manifest, ensure_ascii=False, indent=2) + "\n").encode("utf-8")

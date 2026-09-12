@@ -59,4 +59,4 @@ encoderはframe数・寸法の不一致、8MiBを超えるGIFを拒否します�
 
 ## 出典と配布境界
 
-commitした`docs/images/gallery-*.gif`はGalleryから生成します。v2.1の比較とGIFに、stock image、第三者icon・font・UI実装・media assetを追加していません。Dear ImGui、GLFW、任意fontには既存のlicenseが適用され、noticeは[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)にあります。証拠と対象外は[検証記録](validation.md)、Frame Labのplatform adapter境界は[公開window frame](gallery-window-frame.md)を参照してください。
+commitした`docs/images/gallery-*.gif`はGalleryから生成します。v2.2の比較とGIFに、stock image、第三者icon・font・UI実装・media assetを追加していません。Dear ImGui、GLFW、任意fontには既存のlicenseが適用され、noticeは[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)にあります。証拠と対象外は[検証記録](validation.md)、Frame Labのplatform adapter境界は[公開window frame](gallery-window-frame.md)を参照してください。

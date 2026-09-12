@@ -4,11 +4,11 @@
 
 ## ✨ 作る道具にも、仕事と同じ意図を宿す
 
-**ImKit v2.1.0** はDear ImGui向けのC++20デザインレイヤーです。一貫した外観、再利用可能な操作部品、意味別テーマ、生成icon、任意のEditor surfaceを追加しながら、Context、renderer、データ、workflowの所有権はホストへ残します。
+**ImKit v2.2.0** はDear ImGui向けのC++20デザインレイヤーです。一貫した外観、再利用可能な操作部品、意味別テーマ、生成icon、任意のEditor surfaceを追加しながら、Context、renderer、データ、workflowの所有権はホストへ残します。
 
 MITライセンス · 静的ライブラリ · Windows x64/MSVCで検証済み · Dear ImGui `v1.92.9b-docking` 基準
 
-> 🪟 **まずGalleryを試してください。** [Windows x64 Gallery](https://github.com/AokiMotohide/imgui-modern-kit/releases/download/v2.1.0/imkit-2.1.0-gallery-windows-x64.zip)をdownloadし、展開後に`imkit_gallery.exe`を実行します。installerもアプリコードも不要です。
+> 🪟 **まずGalleryを試してください。** [Windows x64 Gallery](https://github.com/AokiMotohide/imgui-modern-kit/releases/download/v2.2.0/imkit-2.2.0-gallery-windows-x64.zip)をdownloadし、展開後に`imkit_gallery.exe`を実行します。installerもアプリコードも不要です。
 
 ## 🎞 native Galleryを動きで見る
 
@@ -106,14 +106,6 @@ ctest --test-dir build/windows-debug -C Debug -R "imkit.(theme|workflow)" --outp
 | 部品と実装recipe | [コンポーネント](docs/components.ja.md) | [Components](docs/components.md) |
 | 設計とホスト所有権 | [Architecture](docs/architecture.md) | [Architecture](docs/architecture.md) |
 | APIと問題解決 | [API coverage](docs/api-coverage.md) · [トラブルシューティング](docs/troubleshooting.ja.md) | [API coverage](docs/api-coverage.md) · [Troubleshooting](docs/troubleshooting.md) |
-
-## ライセンスと出典
-
-## 対応範囲と開発状況
-
-検証済み基準はWindows x64/MSVCと固定Dear ImGui docking版です。その他のOSやDear ImGui版を暗黙に互換とは扱いません。native OS/IMEと個別アプリへの組み込みは別の受け入れ確認です。[検証と制約](docs/validation.md)を参照してください。
-
-安定したcore、theme、componentはこのREADME群で説明します。高度なEditor moduleは、ホスト所有データと型付きeventの契約を維持しながら更新を継続します。
 
 ## ライセンスと出典
 

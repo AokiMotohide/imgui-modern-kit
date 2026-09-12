@@ -60,4 +60,4 @@ The encoder rejects wrong frame counts or dimensions and GIFs over 8 MiB. Pillow
 
 ## Provenance and distribution boundary
 
-Checked-in `docs/images/gallery-*.gif` files are generated from the Gallery. No stock image, third-party icon, font, UI implementation or media asset was added for the v2.1 comparison and GIFs. Dear ImGui, GLFW and optional fonts retain their existing licenses and notices in [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md). See [validation](validation.md) for exact evidence and exclusions, and [public window frame](gallery-window-frame.md) for Frame Lab's platform-adapter boundary.
+Checked-in `docs/images/gallery-*.gif` files are generated from the Gallery. No stock image, third-party icon, font, UI implementation or media asset was added for the v2.2 comparison and GIFs. Dear ImGui, GLFW and optional fonts retain their existing licenses and notices in [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md). See [validation](validation.md) for exact evidence and exclusions, and [public window frame](gallery-window-frame.md) for Frame Lab's platform-adapter boundary.

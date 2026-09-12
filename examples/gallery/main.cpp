@@ -725,11 +725,11 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
     std::filesystem::create_directories(dir);
     int frame=0;
     if(demo=="overview") {
-        h.s.page=19;h.s.comparison.open=true;h.Settle();
-        CaptureFrames(h,dir,frame,40);
-        h.Click("start-components");
-        CaptureFrames(h,dir,frame,40);
         h.s.page=19;h.s.comparison.open=false;h.Settle();
+        CaptureFrames(h,dir,frame,30);
+        h.s.comparison.open=true;h.Settle();
+        CaptureFrames(h,dir,frame,50);
+        h.Click("start-components");h.s.comparison.open=false;
         CaptureFrames(h,dir,frame,40);
     } else if(demo=="comparison") {
         h.s.page=19;h.s.comparison.open=true;h.Settle();

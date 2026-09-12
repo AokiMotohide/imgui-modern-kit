@@ -1,5 +1,14 @@
 # Changelog / 変更履歴
 
+## 2.2.0 — 2026-09-12
+
+- Integrate the guided Gallery comparison, responsive workflow controls, Timeline interaction and Preview placement/Monitor contracts into one release line.
+- Add Fit/Fill/Stretch preview placement, cropped and flipped Monitor presentation, five preview states and Gallery coverage for representative source and viewport aspects.
+- Refresh the English/Japanese release entry points and native Gallery GIFs; the overview now introduces the route before showing the live comparison.
+- 案内付きGallery比較、responsive workflow操作、Timeline操作、Preview配置／Monitor契約を1つのリリース系列へ統合。
+- Fit／Fill／Stretch配置、crop／flip対応Monitor、5つのpreview状態、代表的な素材／viewport aspectのGallery確認を追加。
+- 英日READMEとnative Gallery GIFを更新し、概要GIFは最初に利用導線を示してからライブ比較へ進む構成に変更。
+
 ## 2.1.0 — 2026-09-12
 
 - Add a guided Gallery Start screen and a movable, resizable live comparison between direct Default Dear ImGui and ImKit controls. The two columns share host-owned state and the comparison preserves the surrounding ImGui style after each frame.

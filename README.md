@@ -4,11 +4,11 @@
 
 ## ✨ Make the tool feel as intentional as the work
 
-**ImKit v2.1.0** is a C++20 design layer for Dear ImGui. It adds a coherent visual system, reusable controls, semantic themes, generated icons and optional editor surfaces—while the host keeps its context, renderer, data and workflow.
+**ImKit v2.2.0** is a C++20 design layer for Dear ImGui. It adds a coherent visual system, reusable controls, semantic themes, generated icons and optional editor surfaces—while the host keeps its context, renderer, data and workflow.
 
 MIT licensed · static library · Windows x64/MSVC verified · Dear ImGui `v1.92.9b-docking` baseline
 
-> 🪟 **Try the Gallery first.** Download the [Windows x64 Gallery](https://github.com/AokiMotohide/imgui-modern-kit/releases/download/v2.1.0/imkit-2.1.0-gallery-windows-x64.zip), unzip it, then run `imkit_gallery.exe`. No installer, no application code required.
+> 🪟 **Try the Gallery first.** Download the [Windows x64 Gallery](https://github.com/AokiMotohide/imgui-modern-kit/releases/download/v2.2.0/imkit-2.2.0-gallery-windows-x64.zip), unzip it, then run `imkit_gallery.exe`. No installer, no application code required.
 
 ## 🎞 Explore the native Gallery
 
@@ -106,14 +106,6 @@ Read the full [validation record and limits](docs/validation.md) before expandin
 | Components and recipes | [Components](docs/components.md) | [コンポーネント](docs/components.ja.md) |
 | Architecture and host ownership | [Architecture](docs/architecture.md) | [Architecture](docs/architecture.md) |
 | API and troubleshooting | [API coverage](docs/api-coverage.md) · [Troubleshooting](docs/troubleshooting.md) | [API coverage](docs/api-coverage.md) · [トラブルシューティング](docs/troubleshooting.ja.md) |
-
-## License and provenance
-
-## Compatibility and status
-
-The verified baseline is Windows x64/MSVC with the pinned Dear ImGui docking revision. Other platforms and ImGui revisions are not silently claimed compatible. Native OS/IME behavior and integration into a particular application remain separate acceptance work. See [validation and limits](docs/validation.md).
-
-The stable core, themes and components are documented here. Advanced editor modules continue to evolve behind explicit host-owned data and typed-event contracts.
 
 ## License and provenance
 
