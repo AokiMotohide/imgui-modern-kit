@@ -600,7 +600,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         const float rowHeight=p.layout ? TrackExtent(track) : s.rowHeight;
         float y = view.min.y + static_cast<float>(rowTop-s.verticalScroll);
         rowTop+=rowHeight;
-        if(io.MousePos.y>=y && io.MousePos.y<y+rowHeight && view.hovered) s.hoveredTrack=track.id;
+        if(io.MousePos.x>=view.min.x && io.MousePos.x<view.max.x &&
+           io.MousePos.y>=y && io.MousePos.y<y+rowHeight) s.hoveredTrack=track.id;
         draw->AddRectFilled({view.min.x, y}, {view.max.x, y + rowHeight - 2},
                             ImGui::GetColorU32(theme.editor.trackHeader));
         ImGui::SetCursorScreenPos({view.min.x + 4, y + 3});
