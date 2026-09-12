@@ -1,18 +1,17 @@
-# 製品Gallery
+# Gallery ガイド
 
-[English](gallery.md)
+[English](gallery.md) · [README](../README.ja.md)
 
-native Galleryは初見向け案内と公開APIの実例を兼ねます。installed libraryから使えない代替部品をGallery内だけに実装しません。
+Windows native Galleryは、初見向けの案内アプリと公開APIの実例を兼ねます。consumerがlinkするImKitと同じlibraryを使い、demoだけに存在する代替widgetを隠しません。
 
-## Navigation
+## 初回訪問のための導線
 
-- **Start**：デザイン概要、30秒導入、主要機能への入口。
-- **Components**：action、数値、input/media、合成部品。
-- **Patterns**：階層・データ、overlay・layoutの実例。
-- **Themes & Icons**：完全な12preset、palette編集、検索可能なicon。
-- **Editor Examples**：更新中のEditor Core、Video、3D workspace。
+1. **Start** でホスト所有権の境界を説明し、目的別の画面へ直接案内します。
+2. **Compare** で、移動・resize可能なDefault Dear ImGui / ImKit windowを開きます。両列は同じホスト所有値を更新するため、片方の操作がもう片方にも反映されます。
+3. **Components、themes、icons** で、検索可能なnative specimen、palette編集、生成iconを確認できます。
+4. **Workflow、timeline、Frame Lab** では、任意の合成部品とEditor向けsurfaceを扱います。ただしホストのscene、Undo、rendererをImKitが所有するとは主張しません。
 
-header検索はcomponent名、API名、用途keywordを対象にします。安定componentの各pageにはライブ操作、最小コードのCopy、所有権の注意を表示します。desktop幅未満ではsidebarをcompact selectorへ切り替えます。
+比較のbaselineは公開Dear ImGui APIだけです（`StyleColorsDark`と直接widget）。視覚と操作契約の実例であり、性能、OS入力、accessibilityを比較するものではありません。ImKit列はホスト所有の`Theme`、scale、状態、animationを借用します。global registryやGallery専用の第三者assetは導入していません。
 
 ## Buildと実行
 
@@ -22,22 +21,34 @@ cmake --build --preset windows-debug --target imkit_gallery --parallel
 ./build/windows-debug/catalog/Debug/imkit_gallery.exe
 ```
 
-## 検証とcapture
+公開するWindows archiveには`imkit_gallery.exe`、必要な`design-assets` directory、本プロジェクトのlicense、第三者noticeを含めます。serviceをinstallせず、ユーザー設定も作成せず、ImKit consumerへruntime依存を追加しません。
+
+## 検証と再生成可能なcapture
+
+Gallery runnerは公開Dear ImGui IOと実OpenGL backbufferを使用します。決定的なwidget契約と文書用の外観確認には使えますが、native OS/IME、screen reader、実機DPIのautomationでは**ありません**。
 
 ```powershell
-./build/windows-debug/catalog/Debug/imkit_gallery.exe --verify --output out/catalog
-./build/windows-debug/catalog/Debug/imkit_gallery.exe --capture --output out/catalog
+$gallery = './build/windows-debug/catalog/Debug/imkit_gallery.exe'
+& $gallery --verify-comparison --output out/comparison
+& $gallery --capture-readme --width 960 --height 540 --output out/readme
+foreach ($demo in 'comparison', 'themes', 'workflow', 'timeline') {
+    & $gallery --capture-demo $demo --width 960 --height 540 --output out/gifs
+}
 ```
 
-公開Dear ImGui IOと実OpenGL backbufferを使用します。native OS/IME automationではありません。
+`--verify-comparison`は、DefaultとImKitのcontrolが共有ホスト所有状態を更新すること、一時styleがframe後に復元されること、close/reopen時にcontrolが消え、再表示されることを確認します。
 
-## README GIFの再生成
+`--capture-readme`は120 frameを出力します。各`--capture-demo`は80 frameを出力します。Start／比較／Components、共有値の編集、paletteとpreset遷移、workflow feedback、timeline操作を扱います。すべてnative `960×540` backbufferです。
 
 ```powershell
-./build/windows-debug/catalog/Debug/imkit_gallery.exe --capture-readme --output out/readme
 python tools/build_readme_gif.py out/readme/readme-frames docs/images/gallery-overview.gif
+foreach ($demo in 'comparison', 'themes', 'workflow', 'timeline') {
+    python tools/build_readme_gif.py (Join-Path out/gifs $demo) (Join-Path docs/images ("gallery-$demo.gif")) --expected-frames 80
+}
 ```
 
-決定的なsequenceで960×540のnative frameを120枚取得し、10fps・12秒へ変換します。Pillowは文書生成だけに使い、consumerへlink・install・公開しません。commitするGIFは8MiB未満とします。
+encoderはframe数・寸法の不一致、8MiBを超えるGIFを拒否します。Pillowは文書生成専用であり、ImKitからlink・installしません。
 
-Windows Galleryには、OS非依存の公開window frame値型と任意Win32 adapterを編集する**Frame Lab**もあります。[公開ウィンドウ枠](gallery-window-frame.md)を参照してください。既存の自動captureは、枠専用検証を明示しない限りnative OS frameを維持します。
+## 出典と配布境界
+
+commitした`docs/images/gallery-*.gif`はGalleryから生成します。v2.1の比較とGIFに、stock image、第三者icon・font・UI実装・media assetを追加していません。Dear ImGui、GLFW、任意fontには既存のlicenseが適用され、noticeは[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)にあります。証拠と対象外は[検証記録](validation.md)、Frame Labのplatform adapter境界は[公開window frame](gallery-window-frame.md)を参照してください。

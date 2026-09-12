@@ -61,6 +61,7 @@ struct Host {
             s.windowFrameHeight=frameLayout.titleBar.max.y;
         } else s.windowFrameHeight=0;
         imkit::gallery::Show(s);
+        imkit::gallery::ShowComparison(s);
         imkit::WindowFrameEvent frameEvent{};
         if(windowFrame.Attached()) {
             const imkit::WindowFrameContent content{"ImKit",windowTitle,s.frameUnsaved,s.frameWorkspaces,s.frameWorkspace};
@@ -98,7 +99,16 @@ struct Host {
         Settle(2);
     }
     void Click(const char *name) {
-        ClickAt(s.probes.at(name).Center());
+        const auto it=s.probes.find(name);
+        if(it==s.probes.end()) {
+            std::string available;
+            for(const auto &[key, _] : s.probes) {
+                if(!available.empty()) available+=", ";
+                available+=key;
+            }
+            throw std::runtime_error(std::string("missing Gallery probe: ")+name+"; available: "+available);
+        }
+        ClickAt(it->second.Center());
     }
     void Key(ImGuiKey key) {
         Frame([&](auto &io) { io.AddKeyEvent(key, true); });
@@ -662,6 +672,104 @@ void VerifyTimelineUI(Host &h,const std::filesystem::path &out) {
     s.Dataset(true);h.Settle();
     require(s.clips.size()>=100000 && s.queriedClips<1000 && s.queriedTracks<64,"100k fixture queries only visible timeline rows and clips");
     log<<"Public ImGui IO with native OpenGL backbuffer; native OS/IME input is not tested.\n";
+}
+void VerifyComparison(Host &h,const std::filesystem::path &out) {
+    auto require=[](bool ok,const char *message) { if(!ok) throw std::runtime_error(message); };
+    h.s.page=19;h.s.comparison.open=true;h.Settle();
+    const ImGuiStyle before=ImGui::GetStyle();
+    h.Frame();
+    require(std::memcmp(&before,&ImGui::GetStyle(),sizeof(ImGuiStyle))==0,
+            "comparison styles did not restore after a frame");
+    const int applied=h.s.comparison.applyCount;
+    h.Click("comparison-default-apply");
+    require(h.s.comparison.applyCount==applied+1,"default comparison action did not update shared state");
+    h.Click("comparison-imkit-apply");
+    require(h.s.comparison.applyCount==applied+2,"ImKit comparison action did not update shared state");
+    const bool enabled=h.s.comparison.enabled;
+    h.Click("comparison-default-enabled");
+    require(h.s.comparison.enabled!=enabled,"default comparison toggle did not update shared state");
+    h.Click("comparison-imkit-enabled");
+    require(h.s.comparison.enabled==enabled,"ImKit comparison toggle did not share the same state");
+    h.s.comparison.open=false;h.Frame();
+    require(h.s.probes.find("comparison-default-apply")==h.s.probes.end(),"closed comparison still submitted controls");
+    h.s.comparison.open=true;h.Settle();
+    require(h.s.probes.contains("comparison-default-apply") && h.s.probes.contains("comparison-imkit-apply"),
+            "comparison did not restore controls after reopening");
+    std::ofstream log(out/"comparison-verification.txt");
+    log<<"PASS: default and ImKit columns share host-owned state; scopes restore ImGuiStyle; close/reopen removes and restores controls.\n"
+       <<"The comparison uses public Dear ImGui IO and styles only. It is not native OS/IME, performance or accessibility validation.\n";
+}
+void CaptureFrames(Host &h,const std::filesystem::path &dir,int &index,int count) {
+    for(int i=0;i<count;++i) {
+        char name[32];std::snprintf(name,sizeof(name),"frame-%03d.png",index++);
+        h.Frame({},dir/name);
+    }
+}
+void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &demo,bool legacyReadme) {
+    const auto dir=out/(legacyReadme ? "readme-frames" : demo);
+    std::filesystem::create_directories(dir);
+    int frame=0;
+    if(demo=="overview") {
+        h.s.page=19;h.s.comparison.open=true;h.Settle();
+        CaptureFrames(h,dir,frame,40);
+        h.Click("start-components");
+        CaptureFrames(h,dir,frame,40);
+        h.s.page=19;h.s.comparison.open=false;h.Settle();
+        CaptureFrames(h,dir,frame,40);
+    } else if(demo=="comparison") {
+        h.s.page=19;h.s.comparison.open=true;h.Settle();
+        CaptureFrames(h,dir,frame,20);
+        h.Click("comparison-default-apply");
+        CaptureFrames(h,dir,frame,20);
+        h.Replace("comparison-default-name","Projection Console");
+        CaptureFrames(h,dir,frame,20);
+        h.Click("comparison-imkit-enabled");
+        CaptureFrames(h,dir,frame,20);
+    } else if(demo=="themes") {
+        auto applyPreset=[&](int index) {
+            h.s.presetIndex=index;
+            h.s.theme=imkit::MakeTheme(imkit::ThemePresets()[index].preset);
+            h.s.theme.fonts=h.s.fonts;
+            h.s.dark=h.s.theme.scheme==imkit::ColorScheme::Dark;
+            h.s.design.contrast=static_cast<int>(h.s.theme.contrast);
+            h.s.design.density=static_cast<int>(h.s.theme.density);
+            h.Settle();
+        };
+        h.s.page=6;h.s.comparison.open=false;h.s.palette=true;h.Settle();
+        CaptureFrames(h,dir,frame,20);
+        applyPreset(4);
+        CaptureFrames(h,dir,frame,20);
+        applyPreset(8);
+        CaptureFrames(h,dir,frame,20);
+        h.s.palette=false;h.Settle();
+        CaptureFrames(h,dir,frame,20);
+    } else if(demo=="workflow") {
+        h.s.page=15;h.s.comparison.open=false;h.Settle();
+        CaptureFrames(h,dir,frame,20);
+        h.Click("workflow-chip");
+        CaptureFrames(h,dir,frame,20);
+        h.Click("workflow-notify");
+        CaptureFrames(h,dir,frame,20);
+        h.Click("workflow-steps");
+        CaptureFrames(h,dir,frame,20);
+    } else if(demo=="timeline") {
+        auto &s=h.s.editors;s.Dataset(false);h.s.page=8;h.s.comparison.open=false;h.Settle();
+        CaptureFrames(h,dir,frame,20);
+        const auto origin=s.timeline.view.min;
+        h.mouse={origin.x+s.timeline.headerWidth+5,origin.y+11};h.Settle();
+        h.Frame([](ImGuiIO &io){io.AddMouseButtonEvent(0,true);});
+        h.mouse.x+=60;h.Frame();
+        CaptureFrames(h,dir,frame,20);
+        h.Frame([](ImGuiIO &io){io.AddMouseButtonEvent(0,false);});h.Settle();
+        CaptureFrames(h,dir,frame,20);
+        s.Undo();h.Settle();
+        CaptureFrames(h,dir,frame,20);
+    } else {
+        throw std::runtime_error("unknown capture demo");
+    }
+    std::ofstream metadata(dir/"capture.txt");
+    metadata<<"scenario="<<demo<<"\nframes="<<frame<<"\nsize="<<ImGui::GetIO().DisplaySize.x<<"x"<<ImGui::GetIO().DisplaySize.y
+            <<"\nsource=native OpenGL backbuffer; public Dear ImGui IO; not native OS/IME automation\n";
 }
 void VerifyTrackControls(Host &h,const std::filesystem::path &out) {
     using namespace imkit;
@@ -1490,11 +1598,12 @@ int main(int argc, char **argv) {
     bool verifyWorkflow=false;
     bool captureDesign=false;
     bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false, benchmarkEditors = false, verifyMonitors = false, verifyTrackControls = false, verifyLinkedClips = false, verifyNormals = false;
+    bool verifyComparison=false, captureReadme=false;
     int capturePage = -1, animationPage = -1, monitorIndex=-1, captureWidth=1920,captureHeight=1440;
     bool captureJapanese=false;
     bool verifyTimelineUI=false;
     bool listMonitors=false;
-    std::string iconSearch;
+    std::string iconSearch, captureDemo;
     std::filesystem::path out = "out/catalog";
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
@@ -1507,6 +1616,14 @@ int main(int argc, char **argv) {
         if(a=="--verify-window-frame") {verifyWindowFrame=true;frameMode=1;continue;}
         if(a=="--verify-workflow") {verifyWorkflow=true;capture=true;continue;}
         if(a=="--capture-design-system") {captureDesign=true; capture=true; continue;}
+        if(a=="--verify-comparison") {verifyComparison=true;continue;}
+        if(a=="--capture-readme") {captureDemo="overview";captureReadme=true;continue;}
+        if(a=="--capture-demo" && i+1<argc) {
+            captureDemo=argv[++i];
+            if(captureDemo!="overview" && captureDemo!="comparison" && captureDemo!="themes" &&
+               captureDemo!="workflow" && captureDemo!="timeline") return 2;
+            continue;
+        }
         if (a == "--verify-timeline-model") return VerifyTimelineModel();
         if (a == "--verify-inspector-model")
             return VerifyInspectorModel();
@@ -1577,7 +1694,7 @@ int main(int argc, char **argv) {
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
     auto hostStorage=std::make_unique<Host>();
     auto &h=*hostStorage;
-    h.automated = capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls || verifyLinkedClips || verifyNormals;
+    h.automated = capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls || verifyLinkedClips || verifyNormals || verifyComparison || !captureDemo.empty();
     h.windowTitle=windowTitle;
     h.window = glfwCreateWindow(captureWidth, captureHeight,windowTitle.c_str(), nullptr, nullptr);
     if (!h.window) {
@@ -1717,6 +1834,8 @@ int main(int argc, char **argv) {
             std::filesystem::create_directories(out);
             if (verify)
                 Verify(h, out);
+            if (verifyComparison)
+                VerifyComparison(h,out);
             if (benchmarkEditors) BenchmarkEditors(h,out);
             if(verifyTimelineUI) VerifyTimelineUI(h,out);
             else if (verifyTrackControls) VerifyTrackControls(h,out);
@@ -1760,6 +1879,8 @@ int main(int argc, char **argv) {
                 h.s.workflow.disabled=false;h.Page(15);h.Frame({},out/"workflow-japanese.png");
                 check(true,"Light/Dark, contrast, density, reduced motion, Japanese, narrow, disabled GPU captures");
                 log<<"Public ImGui IO and native GPU backbuffer; native OS/IME and external applications are not tested.\n";
+            } else if(!captureDemo.empty()) {
+                CaptureDemo(h,out,captureDemo,captureReadme);
             } else if(captureDesign) {
                 for(int dark=0;dark<2;++dark) for(int contrast=0;contrast<2;++contrast) for(int density=0;density<3;++density) {
                     h.s.dark=dark!=0;

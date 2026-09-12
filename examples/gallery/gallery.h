@@ -15,6 +15,17 @@ struct Probe {
         return {(min.x + max.x) / 2, (min.y + max.y) / 2};
     }
 };
+// Gallery-only state for the floating comparison. Both columns borrow this
+// value, so the difference remains visual rather than a comparison of two
+// independent application models.
+struct ComparisonState {
+    bool open = true;
+    bool enabled = true;
+    float level = .64f;
+    int quality = 1;
+    int applyCount = 0;
+    char name[96] = "Display Console";
+};
 struct GalleryState {
     DesignPages design;
     WorkflowPages workflow;
@@ -22,7 +33,9 @@ struct GalleryState {
     Theme theme = MakeTheme(ThemePreset::PrecisionLight);
     FontSet fonts{};
     AnimationState animation;
-    int page = 0;
+    // Keep existing numeric pages stable for capture flags. Page 19 is the
+    // Gallery-only onboarding start page.
+    int page = 19;
     int presetIndex = 0, presetFilter = 0, copyClicks = 0;
     float scale = ThemeScaleDefault;
     float windowFrameHeight = 0;
@@ -60,9 +73,11 @@ struct GalleryState {
     int iconCategory = 0, iconSizeIndex = 1, selectedIcon = 0, iconClicks = 0;
     bool iconCustomColor = false, iconFocus = false, iconFocused = false;
     ImVec4 iconColor{.25f, .5f, .85f, 1};
+    ComparisonState comparison;
     std::map<std::string, Probe> probes;
 };
 void Show(GalleryState &s);
+void ShowComparison(GalleryState &s);
 void Record(GalleryState &s, const char *name);
 void SelectFramePreset(GalleryState& s, WindowFramePreset preset);
 void RegenerateFrameColors(GalleryState& s);

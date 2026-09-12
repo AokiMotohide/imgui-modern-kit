@@ -40,6 +40,106 @@ void Heading(GalleryState &s, const char *text) {
     PopFont();
     Spacing();
 }
+void StartCard(GalleryState &s, int page, const char *eyebrow, const char *title,
+               const char *description, const char *action) {
+    PushID(page);
+    if (BeginChild("route", {0, 142}, ImGuiChildFlags_Borders)) {
+        TextDisabled("%s", eyebrow);
+        PushFont(s.fonts.emphasis, s.theme.metrics.headingSize);
+        TextUnformatted(title);
+        PopFont();
+        TextWrapped("%s", description);
+        if (ActionButton(action, ActionVariant::Secondary, {}, {&s.theme, &s.animation}))
+            s.page = page;
+        Record(s, (std::string("start-") + action).c_str());
+    }
+    EndChild();
+    PopID();
+}
+void Start(GalleryState &s) {
+    Heading(s, "Build native tools people enjoy using");
+    TextWrapped("Explore the same Dear ImGui interaction model as a focused production interface. "
+                "Start with a live comparison, then follow a concrete workflow into the Gallery.");
+    if (ActionButton("Open live comparison", ActionVariant::Primary, {}, {&s.theme, &s.animation}))
+        s.comparison.open = true;
+    Record(s, "start-comparison");
+    SameLine();
+    if (Button("Explore components"))
+        s.page = 0;
+    Record(s, "start-components");
+    SeparatorText("Choose a route");
+    if (BeginTable("start-routes", 2, ImGuiTableFlags_SizingStretchSame)) {
+        TableNextRow();
+        TableNextColumn();
+        StartCard(s, 0, "01 / FOUNDATION", "Keep the interaction contract", "Start with familiar inputs, IDs, focus and keyboard navigation.", "Open components");
+        TableNextColumn();
+        StartCard(s, 6, "02 / VISUAL SYSTEM", "Make states easier to read", "Inspect generated icons, semantic color and the active theme together.", "Open themes and icons");
+        TableNextRow();
+        TableNextColumn();
+        StartCard(s, 15, "03 / WORKFLOW", "Guide a real task", "Try host-owned requests, responsive navigation and an image workspace.", "Open workflow");
+        TableNextColumn();
+        StartCard(s, 8, "04 / EDITING", "Scale into timelines", "Explore the advanced Video workspace as a Gallery specimen, not an application runtime.", "Open timeline");
+        EndTable();
+    }
+    SeparatorText("What remains yours");
+    TextWrapped("Your Dear ImGui context, renderer, font atlas, data, undo history and persistence stay in the host. "
+                "ImKit supplies visual structure and reusable controls without taking those responsibilities.");
+    if (ActionButton("Open Frame Lab", ActionVariant::Ghost, {}, {&s.theme, &s.animation}))
+        s.page = 18;
+    Record(s, "start-frame-lab");
+}
+class DefaultStyleScope {
+  public:
+    DefaultStyleScope() : previous_(ImGui::GetStyle()) {
+        ImGui::StyleColorsDark(&ImGui::GetStyle());
+    }
+    ~DefaultStyleScope() { ImGui::GetStyle() = previous_; }
+    DefaultStyleScope(const DefaultStyleScope &) = delete;
+    DefaultStyleScope &operator=(const DefaultStyleScope &) = delete;
+
+  private:
+    ImGuiStyle previous_;
+};
+void DefaultComparisonSpecimen(GalleryState &s) {
+    TextUnformatted("Default Dear ImGui");
+    TextDisabled("StyleColorsDark + direct widgets");
+    Separator();
+    if (ImGui::Button("Apply"))
+        ++s.comparison.applyCount;
+    Record(s, "comparison-default-apply");
+    ImGui::SameLine();
+    ImGui::Text("Applied: %d", s.comparison.applyCount);
+    ImGui::Checkbox("Enabled", &s.comparison.enabled);
+    Record(s, "comparison-default-enabled");
+    ImGui::SetNextItemWidth(-1);
+    ImGui::SliderFloat("Level", &s.comparison.level, 0, 1, "%.0f%%");
+    Record(s, "comparison-default-level");
+    ImGui::InputText("Name", s.comparison.name, sizeof(s.comparison.name));
+    Record(s, "comparison-default-name");
+    const char *quality[] = {"Draft", "Balanced", "Final"};
+    ImGui::Combo("Quality", &s.comparison.quality, quality, 3);
+    Record(s, "comparison-default-quality");
+}
+void ImKitComparisonSpecimen(GalleryState &s) {
+    TextUnformatted("ImKit");
+    TextDisabled("Same state + theme-aware components");
+    Separator();
+    if (ActionButton("Apply", ActionVariant::Primary, {}, {&s.theme, &s.animation}))
+        ++s.comparison.applyCount;
+    Record(s, "comparison-imkit-apply");
+    SameLine();
+    Text("Applied: %d", s.comparison.applyCount);
+    Toggle("Enabled", &s.comparison.enabled, {&s.theme, &s.animation});
+    Record(s, "comparison-imkit-enabled");
+    SetNextItemWidth(-1);
+    SliderFloat("Level", &s.comparison.level, 0, 1, "%.0f%%");
+    Record(s, "comparison-imkit-level");
+    InputText("Name", s.comparison.name, sizeof(s.comparison.name));
+    Record(s, "comparison-imkit-name");
+    const char *quality[] = {"Draft", "Balanced", "Final"};
+    Combo("Quality", &s.comparison.quality, quality, 3);
+    Record(s, "comparison-imkit-quality");
+}
 void Icons(GalleryState &s) {
     Heading(s, "Icons / Generated outline glyphs");
     SetNextItemWidth(210);
@@ -536,11 +636,20 @@ void Show(GalleryState &s) {
                       std::max(1.f,ImGui::GetIO().DisplaySize.y-s.windowFrameHeight)});
     Begin("Precision Layers catalog", nullptr,
           ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
-    const char* pages[]={"Components: Basic","Numeric / Units","Input / Media","Hierarchy / Table","Overlay / Layout","Composites","Icons","Editor Core","Video","CG","Foundations","Components","Patterns","Accessibility","Responsive","Generic Workspace","Feedback / States","Preview Tiles","Frame Lab"};
-    SetNextItemWidth(std::min(260.f,GetContentRegionAvail().x*.5f)); Combo("##section",&s.page,pages,19);
+    static constexpr int pageIds[]={19,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18};
+    const char* pages[]={"Start","Components: Basic","Numeric / Units","Input / Media","Hierarchy / Table","Overlay / Layout","Composites","Icons","Editor Core","Video","CG","Foundations","Components","Patterns","Accessibility","Responsive","Generic Workspace","Feedback / States","Preview Tiles","Frame Lab"};
+    int pageIndex=0;
+    for(int i=0;i<static_cast<int>(std::size(pageIds));++i) if(pageIds[i]==s.page) {pageIndex=i;break;}
+    SetNextItemWidth(std::min(260.f,GetContentRegionAvail().x*.5f));
+    if(Combo("##section",&pageIndex,pages,static_cast<int>(std::size(pages)))) s.page=pageIds[pageIndex];
     SameLine(); if(Button("Appearance")) OpenPopup("appearance");
+    Record(s,"appearance");
+    SameLine(); if(Button("Compare")) s.comparison.open=true;
+    Record(s,"comparison-open");
     if(BeginPopup("appearance")) {
-        if(BeginCombo("Theme",ThemePresets()[s.presetIndex].displayName.data())) {
+        const bool themePicker=BeginCombo("Theme",ThemePresets()[s.presetIndex].displayName.data());
+        Record(s,"appearance-theme-picker");
+        if(themePicker) {
             for(int i=0;i<static_cast<int>(ThemePresets().size());++i) {
                 if(Selectable(ThemePresets()[i].displayName.data(),s.presetIndex==i)) {
                     s.presetIndex=i;
@@ -550,6 +659,7 @@ void Show(GalleryState &s) {
                     s.design.contrast=static_cast<int>(s.theme.contrast);
                     s.design.density=static_cast<int>(s.theme.density);
                 }
+                Record(s,(std::string("appearance-theme-")+std::to_string(i)).c_str());
             }
             EndCombo();
         }
@@ -568,6 +678,7 @@ void Show(GalleryState &s) {
                ImGuiChildFlags_Borders, s.page == 4 ? ImGuiWindowFlags_MenuBar : 0);
     PushItemWidth(420 * s.scale);
     switch (s.page) {
+    case 19: Start(s); break;
     case 18: FrameLab(s); break;
     case 15: case 16: case 17: s.workflow.Show(s.page,s); break;
     case 10: case 11: case 12: case 13: case 14:
@@ -641,5 +752,38 @@ void Show(GalleryState &s) {
         }
         End();
     }
+}
+void ShowComparison(GalleryState &s) {
+    if(!s.comparison.open) return;
+    const auto display=ImGui::GetIO().DisplaySize;
+    const float width=std::min(860.f,std::max(560.f,display.x-48.f));
+    const float height=std::min(520.f,std::max(360.f,display.y-s.windowFrameHeight-64.f));
+    const float initialX=display.x>=1180.f ? display.x-width-24.f : 24.f;
+    SetNextWindowPos({initialX,s.windowFrameHeight+24.f},ImGuiCond_FirstUseEver);
+    SetNextWindowSize({width,height},ImGuiCond_FirstUseEver);
+    if(Begin("Compare: Default Dear ImGui vs ImKit###live-comparison",&s.comparison.open,
+             ImGuiWindowFlags_NoCollapse)) {
+        TextWrapped("The columns share one host-owned value. This is a visual and interaction-contract comparison, not a performance, OS-input or accessibility benchmark.");
+        const bool vertical=GetContentRegionAvail().x<720.f;
+        if(vertical) {
+            PushID("comparison-default");
+            { DefaultStyleScope defaultStyle; if(BeginChild("default",{0,205},ImGuiChildFlags_Borders)) DefaultComparisonSpecimen(s); EndChild(); }
+            PopID();
+            PushID("comparison-imkit");
+            { ThemeScope themeScope(s.theme,s.scale); if(BeginChild("imkit",{0,205},ImGuiChildFlags_Borders)) ImKitComparisonSpecimen(s); EndChild(); }
+            PopID();
+        } else if(BeginTable("comparison-columns",2,ImGuiTableFlags_SizingStretchSame)) {
+            TableNextColumn();
+            PushID("comparison-default");
+            { DefaultStyleScope defaultStyle; if(BeginChild("default",{0,0},ImGuiChildFlags_Borders)) DefaultComparisonSpecimen(s); EndChild(); }
+            PopID();
+            TableNextColumn();
+            PushID("comparison-imkit");
+            { ThemeScope themeScope(s.theme,s.scale); if(BeginChild("imkit",{0,0},ImGuiChildFlags_Borders)) ImKitComparisonSpecimen(s); EndChild(); }
+            PopID();
+            EndTable();
+        }
+    }
+    End();
 }
 } // namespace imkit::gallery

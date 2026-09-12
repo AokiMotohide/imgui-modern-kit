@@ -63,7 +63,7 @@ ImGui::Render();
 ```cmake
 set(IMKIT_IMGUI_TARGET host_imgui)
 set(IMKIT_SDK_ABI_CONFIRMED ON)
-find_package(imkit 2.0 CONFIG REQUIRED)
+find_package(imkit 2.1 CONFIG REQUIRED)
 target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
 

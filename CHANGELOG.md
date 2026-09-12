@@ -1,5 +1,16 @@
 # Changelog / 変更履歴
 
+## 2.1.0 — 2026-09-12
+
+- Add a guided Gallery Start screen and a movable, resizable live comparison between direct Default Dear ImGui and ImKit controls. The two columns share host-owned state and the comparison preserves the surrounding ImGui style after each frame.
+- Add reproducible native GIF routes for the overview, comparison, theme palettes, workflow feedback and timeline editing. The encoder verifies frame count, dimensions and size limits.
+- Publish a Windows x64 Gallery archive with its required design assets, runtime dependency inventory, license and third-party notices.
+- Refresh English and Japanese README/Gallery guidance around trying the native demo first, host ownership, compatibility limits and asset provenance.
+- GalleryのStart画面と、直接Dear ImGui／ImKitを並べる移動・resize可能な比較windowを追加。両列はホスト所有状態を共有し、比較後も周囲のImGui styleを復元します。
+- 概要、比較、Theme palette、workflow feedback、timeline操作のnative GIFを再生成可能にしました。encoderはframe数、寸法、容量上限を検証します。
+- 必要なdesign asset、runtime dependency一覧、license、第三者noticeを含むWindows x64 Gallery archiveを公開します。
+- native demoを最初に試す導線、ホスト所有権、互換範囲、asset出典を中心に英日README／Gallery文書を更新しました。
+
 ## 2.0.0
 
 - Add host-owned application shell components: AppBar, WorkspaceHeader, InspectorSection, BottomActionBar, AdvancedSection, DiagnosticsDrawer and ThemePicker.
