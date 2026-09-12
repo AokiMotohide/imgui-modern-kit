@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdio>
 #include <limits>
+#include "../examples/node_editor/material_mock.h"
 using namespace imkit::node_editor;
 namespace {
 int failures = 0;
@@ -92,6 +93,130 @@ void LayoutTests() {
     Check(!QueueLayout(g, std::span(out).first(1), buffer, 34) && buffer.count == 0,
           "stale positions rejected atomically");
 }
+void SocketTests() {
+    material_mock::Model m;
+    auto n = m.Add(7, {});
+    auto g = m.View();
+    EditRequest edits[5]{};
+    const auto pin = m.data.pins[0].view.id;
+    edits[0].kind = EditKind::RenamePin;
+    edits[0].from = pin;
+    edits[0].text[0] = 'X';
+    edits[1].kind = EditKind::ChangePinType;
+    edits[1].from = pin;
+    edits[1].type = 2;
+    edits[2].kind = EditKind::ReorderPin;
+    edits[2].from = pin;
+    edits[2].index = 2;
+    edits[3].kind = EditKind::CreatePin;
+    edits[3].pinKind = PinKind::Input;
+    edits[3].index = 5;
+    edits[3].type = 1;
+    edits[3].text[0] = 'I';
+    edits[4].kind = EditKind::CreatePin;
+    edits[4].pinKind = PinKind::Output;
+    edits[4].index = 1;
+    edits[4].type = 6;
+    edits[4].text[0] = 'O';
+    for (auto &r : edits)
+        r.node = n;
+    EditRequest storage[8]{};
+    RequestBuffer out{storage};
+    RequestBuffer tiny{std::span(storage).first(2)};
+    Check(!QueuePinEdits(g, edits, tiny, 55) && tiny.count == 0 && tiny.overflow,
+          "socket batch capacity writes nothing");
+    Check(QueuePinEdits(g, edits, out, 55), "typed socket batch queued");
+    for (auto &r : out.Requests())
+        Check(r.operation == 55 && r.revision == g.revision && r.operationSize == 5,
+              "socket batch operation/revision");
+    Check(m.Apply(out.Requests()) && m.undo.size() == 1, "socket changes are one host undo unit");
+    Check(m.Find(pin)->name == "X" && m.Find(pin)->view.type == 2 && m.data.pins.size() == 8,
+          "rename type and dynamic input/output apply");
+    auto command = [&](EditKind kind) {
+        EditRequest r;
+        r.kind = kind;
+        r.graph = {77};
+        r.revision = m.revision;
+        r.operation = 90;
+        return r;
+    };
+    auto undo = command(EditKind::Undo);
+    m.Apply({&undo, 1});
+    Check(m.data.pins.size() == 6, "dynamic batch undo");
+    auto redo = command(EditKind::Redo);
+    m.Apply({&redo, 1});
+    Check(m.data.pins.size() == 8, "dynamic batch redo");
+    auto source = m.Add(2, {400, 0});
+    auto output = m.Socket(source, PinKind::Output);
+    Check(m.Connect(output, pin), "mock exact connection");
+    auto links = m.data.links.size();
+    auto reject = command(EditKind::DeletePin);
+    reject.node = n;
+    reject.from = pin;
+    Check(!m.Apply({&reject, 1}) && m.data.links.size() == links && m.Find(pin),
+          "connected deletion refusal preserves links");
+    reject = command(EditKind::ChangePinType);
+    reject.node = n;
+    reject.from = pin;
+    reject.type = 1;
+    Check(!m.Apply({&reject, 1}) && m.Find(pin)->view.type == 2 && m.data.links.size() == links,
+          "connected type refusal preserves model");
+    auto in = m.Add(1, {700, 0});
+    g = m.View();
+    Check(CanConnect(g, output, m.Socket(in, PinKind::Input)).match == ConnectionMatch::Convertible,
+          "convertible verdict");
+    auto closure = m.Socket(n, PinKind::Output);
+    g = m.View();
+    Check(CanConnect(g, closure, m.Socket(in, PinKind::Input)).match == ConnectionMatch::Rejected,
+          "rejected verdict");
+    auto mix = m.Add(8, {});
+    g = m.View();
+    EditRequest add;
+    add.kind = EditKind::CreatePin;
+    add.node = mix;
+    add.pinKind = PinKind::Input;
+    add.group = 1;
+    add.type = 6;
+    add.index = 2;
+    add.text[0] = 'C';
+    out.Clear();
+    Check(QueuePinEdits(g, {&add, 1}, out, 91) && m.Apply(out.Requests()), "variadic append");
+    auto added = m.data.pins.back().view.id;
+    for (auto &p : m.data.pins)
+        if (p.name == "C")
+            added = p.view.id;
+    auto move = command(EditKind::ReorderPin);
+    move.node = mix;
+    move.from = added;
+    move.index = 0;
+    Check(m.Apply({&move, 1}), "variadic reorder");
+    auto remove = command(EditKind::DeletePin);
+    remove.node = mix;
+    remove.from = added;
+    Check(m.Apply({&remove, 1}) && !m.Find(added), "variadic remove");
+    remove = command(EditKind::DeletePin);
+    remove.node = mix;
+    remove.from = m.Socket(mix, PinKind::Input, 6);
+    Check(!m.Apply({&remove, 1}), "variadic minimum enforced");
+    auto before = m.Find(in)->preview;
+    m.Find(pin)->value.number[0] = .95f;
+    m.Evaluate();
+    auto create = command(EditKind::CreateNode);
+    create.type = 11;
+    create.from = closure;
+    create.after = {900, 0};
+    Check(m.Apply({&create, 1}) && m.data.links.size() == links + 1,
+          "palette create and automatic connect atomic");
+    auto target = m.data.nodes.back().view.id;
+    auto oldColor = m.Find(target)->preview;
+    m.Find(pin)->value.number[0] = .1f;
+    m.Find(output)->value.number[0] = .1f;
+    for (auto &p : m.data.pins)
+        if (p.view.node == source)
+            p.value.number = {.1f, .1f, .1f, 1};
+    m.Evaluate();
+    Check(!Near(oldColor.x, m.Find(target)->preview.x), "host CPU preview changes after upstream input");
+}
 void InputTests() {
     ImGui::CreateContext();
     auto &io = ImGui::GetIO();
@@ -116,7 +241,11 @@ void InputTests() {
     ImVec2 canvasMin{};
     char text[32] = "safe";
     int demands = 0;
-    bool disabled = false;
+    bool disabled = false, standard = false, rowText = false;
+    ImVec2 rowTextPos{};
+    ImVec2 expectedPin{};
+    int valueDraws = 0;
+
     auto frame = [&]() {
         ImGui::NewFrame();
         ImGui::SetNextWindowPos({0, 0});
@@ -128,6 +257,35 @@ void InputTests() {
         DrawLinks(f);
         for (auto &n : nodes)
             if (BeginNode(f, n.id)) {
+                if (standard) {
+                    auto id = n.id == NodeId{1} ? PinId{1} : PinId{2};
+                    auto start = ImGui::GetCursorScreenPos();
+                    float height =
+                        std::max(ImGui::GetFrameHeight(), style.headerHeight * float(state.zoom) * .7f);
+                    PinRowOptions opt;
+                    opt.value.kind = ValueKind::Custom;
+                    opt.user = &valueDraws;
+                    opt.draw = [](void *user, PinValue &, Phase &) {
+                        ++*static_cast<int *>(user);
+                        ImGui::Button("Value");
+                        return false;
+                    };
+                    if (rowText) {
+                        opt.value.kind = ValueKind::Text;
+                        opt.value.text[0] = 'A';
+                    }
+                    PinRow(f, id, opt);
+                    if (n.id == NodeId{2})
+                        rowTextPos = {start.x +
+                                          float(n.size.x * state.zoom - 2 * style.padding * state.zoom) * .7f,
+                                      start.y + height * .5f};
+                    ImVec2 actual;
+                    GetPinPosition(f, id, actual);
+                    Check(Near(actual.y, start.y + height * .5f),
+                          "row center equals socket/link endpoint after scale changes");
+                    if (n.id == NodeId{2})
+                        expectedPin = actual;
+                }
                 ImGui::InputText("##text", text, sizeof(text));
                 if (n.id == NodeId{1})
                     inputPos = ImGui::GetItemRectMin();
@@ -252,11 +410,108 @@ void InputTests() {
     other.graph = {9};
     other.origin = {99, 77};
     Check(state.graph != other.graph, "independent editors");
+    standard = true;
+    pins[0].manualPosition = pins[1].manualPosition = false;
+    for (float zoom : {.4f, .8f, 1.5f}) {
+        state.zoom = zoom;
+        for (float scale : {1.f, 1.5f}) {
+            style.headerHeight = 32 * scale;
+            style.padding = 10 * scale;
+            frame();
+        }
+    }
+    state.zoom = 1;
+    valueDraws = 0;
+    frame();
+    Check(valueDraws == 1, "unconnected input draws default editor");
+    LinkView connected{{9}, {1}, {2}};
+    graph.links = {&connected, 1};
+    valueDraws = 0;
+    frame();
+    Check(valueDraws == 0, "connected input omits default editor");
+    graph.links = {};
+    rowText = true;
+    style.headerHeight = 32;
+    style.padding = 10;
+    out.Clear();
+    frame();
+    io.AddMousePosEvent(rowTextPos.x, rowTextPos.y);
+    frame();
+    io.AddMouseButtonEvent(0, true);
+    frame();
+    io.AddMouseButtonEvent(0, false);
+    frame();
+    io.AddInputCharactersUTF8("Z");
+    frame();
+    io.AddKeyEvent(ImGuiKey_Delete, true);
+    frame();
+    io.AddKeyEvent(ImGuiKey_Delete, false);
+    frame();
+    bool began = false, updated = false;
+    for (auto &e : out.Requests()) {
+        Check(e.kind == EditKind::SetPinValue, "socket text shortcuts do not escape to graph");
+        began |= e.phase == Phase::Begin;
+        updated |= e.phase == Phase::Update;
+    }
+    Check(began && updated, "default text emits Begin and Update");
+    out.Clear();
+    io.AddKeyEvent(ImGuiKey_Escape, true);
+    frame();
+    io.AddKeyEvent(ImGuiKey_Escape, false);
+    frame();
+    bool cancelled = false;
+    for (auto &e : out.Requests())
+        cancelled |= e.phase == Phase::Cancel;
+    Check(cancelled && !state.valueEditing, "default text Escape cancels transaction");
+    out.Clear();
+    io.AddMousePosEvent(rowTextPos.x, rowTextPos.y);
+    frame();
+    io.AddMouseButtonEvent(0, true);
+    frame();
+    io.AddMouseButtonEvent(0, false);
+    frame();
+    io.AddInputCharactersUTF8("Q");
+    frame();
+    io.AddMousePosEvent(canvasMin.x + 800, canvasMin.y + 500);
+    io.AddMouseButtonEvent(0, true);
+    frame();
+    io.AddMouseButtonEvent(0, false);
+    frame();
+    bool committed = false;
+    std::uint64_t operation = 0;
+    for (auto &e : out.Requests())
+        if (e.kind == EditKind::SetPinValue) {
+            if (!operation)
+                operation = e.operation;
+            Check(e.operation == operation && e.revision == graph.revision,
+                  "value phases share operation/revision");
+            committed |= e.phase == Phase::Commit;
+        }
+    Check(committed && !state.valueEditing, "default text blur commits transaction");
+    out.Clear();
+    state.valueEdit = {};
+    state.valueEdit.kind = EditKind::SetPinValue;
+    state.valueEdit.graph = graph.id;
+    state.valueEdit.revision = graph.revision;
+    state.valueEdit.node = {2};
+    state.valueEdit.from = {2};
+    state.valueEdit.operation = 501;
+    state.valueEdit.phase = Phase::Commit;
+    state.valueEditing = state.valueTerminalPending = true;
+    out.count = out.storage.size();
+    frame();
+    Check(state.valueTerminalPending, "value terminal retained on capacity failure");
+    out.Clear();
+    frame();
+    Check(!state.valueEditing && !state.valueTerminalPending && out.count == 1 &&
+              out.Requests()[0].phase == Phase::Commit,
+          "value terminal retry after drain");
     ImGui::DestroyContext();
 }
 } // namespace
 int main() {
     LayoutTests();
+    SocketTests();
     InputTests();
     std::printf("node_editor: %d failure(s)\n", failures);
     return failures ? 1 : 0;

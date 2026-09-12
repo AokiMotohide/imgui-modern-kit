@@ -25,7 +25,8 @@ auto style = ne::MakeNodeStyle(theme);
 auto frame = ne::BeginEditor("graph", graph, editor, requests, style);
 ne::DrawLinks(frame);
 for (const auto& node : graph.nodes) {
-    if (ne::BeginNode(frame, node.id)) {
+    ne::DrawLinks(frame); // schedule links after row layout
+if (ne::BeginNode(frame, node.id)) {
         // Ordinary native ImGui controls, using the available content width.
         // Supply body/Preview only when !node.collapsed and
         // editor.zoom >= style.detailZoom (DrawNodes does this for you).
@@ -162,3 +163,119 @@ This remains a design-stage API: no fixed performance acceptance threshold or
 claim of exhaustive product parity. Native OS/IME, physical DPI, assistive technology,
 Release performance and installed-SDK distribution are not established by these
 development checks. [日本語](node-editor.ja.md)
+
+
+## Dynamic sockets and standard rows
+
+The development API now exposes `CreatePin`, `DeletePin`, `RenamePin`,
+`ChangePinType`, `ReorderPin`, `SetPinMultiplicity`, `SetPinLimits` and
+`SetPinValue` requests. The host allocates stable IDs, retains graph data and
+applies complete operations against the supplied revision. `QueuePinEdits`
+assigns one operation ID and size to a batch; insufficient buffer capacity writes
+nothing. The host must validate the resulting group counts and every affected
+link, then accept the complete operation or reject it without changes. In
+particular, deletion/type changes do not implicitly delete links. `affectedLinks`
+is advisory; the host examines its current model. One accepted operation becomes
+one Undo record. Begin/Update values are temporary UI drafts; apply only Commit
+and discard Cancel, or maintain a separate host preview transaction.
+
+```cpp
+namespace ne = imkit::node_editor;
+ne::SocketTypeView types[] = {
+    {1, "Scalar", "Value", {.6f, .7f, .8f, 1}, ne::PinShape::Circle},
+    {2, "Color", "Value", {.9f, .7f, .2f, 1}, ne::PinShape::Square}
+};
+graph.socketTypes = types; // borrowed through EndEditor / inspector calls
+graph.typeCompatibility = [](void*, uint64_t out, uint64_t in) {
+    return out == in ? ne::ConnectionVerdict{} :
+        ne::ConnectionVerdict{ne::ConnectionMatch::Convertible, "Host conversion"};
+};
+node.inputs.add = true; // enable only capabilities supported by the host
+pin.capabilities = {true, true, true, true, true, true};
+pin.manualPosition = false;
+ne::EditRequest create;
+create.kind = ne::EditKind::CreatePin;
+create.node = node.id;
+create.pinKind = ne::PinKind::Input;
+create.index = 0;
+create.type = 1;
+create.text[0] = 'X';
+ne::QueuePinEdits(graph, {&create, 1}, requests, operationId);
+```
+
+`SocketTypeView` has numeric stable type ID, display name, semantic category,
+color and shape. The library defines no material or geometry type enum.
+`typeCompatibility` receives normalized output/input type IDs. `canConnect`, when
+provided, takes precedence and can also enforce cycles or application semantics.
+`Exact`, `Convertible` and `Rejected` include a borrowed reason. Structural
+availability, duplicate wiring and multiplicity are checked before callbacks.
+`canEditPin` optionally supplies a host preflight reason; final validation is
+always the host's responsibility.
+
+```cpp
+ne::DrawLinks(frame); // schedule links after row layout
+if (ne::BeginNode(frame, node.id)) {
+    ne::PinRowOptions row;
+    row.value.kind = ne::ValueKind::Float;
+    row.value.number[0] = hostValue;
+    row.minimum = 0; row.maximum = 1;
+    ne::PinRow(frame, pin.id, row);
+    ne::PinAddRow(frame, node.id, ne::PinKind::Input);
+    ne::EndNode(frame);
+}
+ne::EndEditor(frame); // draws links using this frame's measured row positions
+```
+
+Standard rows align labels, values and sockets, with inputs on the left and
+outputs on the right. `PinRowOptions` supports Color, Float, Integer, Boolean,
+Vector, Enum, Text and a custom native-widget callback. Values are owned copies
+in requests, never pointers into host storage. Unconnected inputs alone are
+editable. Connected values are hidden by default, or disabled with
+`hideConnectedValue=false`. Low zoom hides fine value editors but retains rows and
+socket structure. Submit rows even at low zoom. `GetPinPosition` exposes the same
+screen position used for socket drawing and links after row submission.
+
+Use `BeginPin`/`EndPin` with manual edge/offset for specialized content. Use
+`PinRow` with `manualPosition=false` for regular editing. `DrawLinks` is now a
+compatibility scheduling call; `EndEditor` draws graph links once after row
+submission. Explicit `Link` calls remain immediate and should follow the relevant
+rows. Views, labels, type metadata and callback storage must remain alive until
+all editor and Inspector calls finish.
+
+For variadic inputs, set a nonzero `capabilities.group`, minimum and maximum,
+and corresponding node input capabilities. Submit `PinAddRow` with that group.
+Rows support drag reordering within the same graph/node/direction/group and a
+context menu for deletion and metadata editing. Inspector splits Inputs/Outputs,
+provides creation, naming, type, visibility, multiplicity, exposure and group
+limits. `confirmPinImpact` controls the short linked-socket confirmation. The
+host can still reject confirmed edits.
+
+Dragging an occupied input rewires its existing link. Rejected connections leave
+the original link untouched. Compatible targets receive semantic feedback rings;
+convertible targets have an extra mark. Palette entries need a `compatible`
+callback to appear during connection-drop filtering. A CreateNode request includes
+its source pin and replacement link; the host creates and auto-connects atomically.
+`InsertNode` identifies the candidate input/output and existing link for atomic
+host application.
+
+## Material Graph Mock
+
+The independent Gallery defaults to Material Graph Mock. Its host implementation
+is `examples/node_editor/material_mock.h`; the previous studio page remains
+available through the page checkbox. Twelve node templates include image/color/
+scalar/normal sources, three BRDF examples, Principled, Mix/Add Closure, Emission
+and Material Output. All nodes are present in the graph; pan or Frame all to see
+the extended workspace. Principled inputs are editable, Mix has a variadic group,
+and the palette filters types before atomic creation/autoconnection.
+
+The mock owns IDs, snapshots, Undo/Redo and bounded CPU color propagation. Each
+node supplies a simple sphere-like color preview through `PreviewOutput::draw`.
+This is a GUI example, **not a shader engine or physical material evaluation**.
+Connected socket deletion/type changes are deliberately rejected by this host
+until disconnected, demonstrating the unchanged-link contract.
+
+Shape/color overrides remain available; set `inheritTypeStyle=false` to use an
+explicit pin shape instead of type metadata. Custom value callbacks return
+Begin/Update/Commit/Cancel explicitly. Graph links are scheduled only when
+`DrawLinks` is called, so explicit low-level `Link` rendering is not duplicated.
+See the [P0/P1 review](node-editor-review.md) for validation and remaining work.

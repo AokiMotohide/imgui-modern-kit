@@ -118,3 +118,101 @@ readOnlyではグラフ編集だけを抑止します。実行・debug操作は�
 デザイン段階のAPIとして、固定の性能合格条件や製品間の網羅的互換保証は設定していません。
 native OS/IME、実機DPI、支援技術、Release性能、install済みSDKの配布確認は、これらの
 開発用テストで確認したことにはなりません。[English](node-editor.md)
+
+## 動的ソケットと標準行
+
+開発中APIにCreatePin／DeletePin／RenamePin／ChangePinType／ReorderPin／
+SetPinMultiplicity／SetPinLimits／SetPinValue要求を追加しました。
+Stable ID発行、モデル、revisionに対する一括適用はホストの責務です。
+QueuePinEditsは一式へ同じ操作IDと件数を設定し、バッファ不足なら何も書きません。
+ホストは適用後のgroup個数と関連リンクを検証して全体を受理するか無変更で拒否します。
+削除・型変更は暗黙にリンクを削除しません。affectedLinksは参考件数であり、最終判断には
+現在のモデルを使います。受理した一操作を一つのUndo履歴にします。
+値のBegin／UpdateはUIの一時値です。Commitだけを適用しCancelを破棄するか、
+ホストで独立したpreview transactionを管理してください。
+
+```cpp
+namespace ne = imkit::node_editor;
+ne::SocketTypeView types[] = {
+    {1, "Scalar", "Value", {.6f, .7f, .8f, 1}, ne::PinShape::Circle},
+    {2, "Color", "Value", {.9f, .7f, .2f, 1}, ne::PinShape::Square}
+};
+graph.socketTypes = types;
+graph.typeCompatibility = [](void*, uint64_t out, uint64_t in) {
+    return out == in ? ne::ConnectionVerdict{} :
+        ne::ConnectionVerdict{ne::ConnectionMatch::Convertible, "Host conversion"};
+};
+node.inputs.add = true;
+pin.capabilities = {true, true, true, true, true, true};
+pin.manualPosition = false;
+ne::EditRequest create;
+create.kind = ne::EditKind::CreatePin;
+create.node = node.id;
+create.pinKind = ne::PinKind::Input;
+create.index = 0;
+create.type = 1;
+create.text[0] = 'X';
+ne::QueuePinEdits(graph, {&create, 1}, requests, operationId);
+```
+
+SocketTypeViewは数値型ID、表示名、意味カテゴリ、色、形状を借用します。
+MaterialやGeometry固有enumはありません。typeCompatibilityには出力／入力の順で型IDを
+渡します。canConnectを指定するとそちらが優先され、循環や製品固有の意味も判定できます。
+結果はExact／Convertible／Rejectedと借用理由文です。利用可否、重複配線、接続数はcallbackより
+先に確認します。canEditPinはホスト制約の事前判定に使えますが、最終適用時にも検証が必要です。
+
+```cpp
+ne::DrawLinks(frame); // schedule links after row layout
+if (ne::BeginNode(frame, node.id)) {
+    ne::PinRowOptions row;
+    row.value.kind = ne::ValueKind::Float;
+    row.value.number[0] = hostValue;
+    row.minimum = 0; row.maximum = 1;
+    ne::PinRow(frame, pin.id, row);
+    ne::PinAddRow(frame, node.id, ne::PinKind::Input);
+    ne::EndNode(frame);
+}
+ne::EndEditor(frame);
+```
+
+標準行はラベル、値、接続点を揃え、入力を左、出力を右へ置きます。
+Color／Float／Integer／Boolean／Vector／Enum／Textと独自型のnative widget callbackを使えます。
+要求の値は所有コピーです。未接続入力だけが編集可能で、接続済みの値は標準で省略します。
+hideConnectedValue=falseなら無効表示します。低倍率でも行を提出してください。
+細かな値編集だけを省略して構造を残します。行提出後のGetPinPositionは描画ソケットと
+リンク端点に使う画面位置を返します。
+
+特殊な本文はBeginPin／EndPinと手動edge／offset、通常はmanualPosition=falseのPinRowを
+使います。DrawLinksは互換用呼出しとなり、EndEditorが全行配置後にgraphのリンクを一度描きます。
+明示的なLinkは即時描画なので対象行の後に呼びます。View、ラベル、型metadata、callback参照先は
+Inspectorを含む全描画呼出しが終わるまで保持してください。
+
+可変長入力には非ゼロのcapabilities.group、最小・最大個数とノード入力能力を設定し、
+同じgroupでPinAddRowを呼びます。行ドラッグは同じgraph／node／方向／group内の並べ替え、
+context menuは削除とmetadata編集を要求します。InspectorはInputs／Outputsを分け、
+追加、名称、型、表示、複数接続、外部公開、group個数を編集します。
+confirmPinImpactで接続済みソケットの短い確認表示を切り替えます。確認後もホストは拒否できます。
+
+接続済み入力からドラッグすると既存リンクを付け替えます。拒否時は元のリンクを維持します。
+候補は意味色のリングと変換マーク、ドラッグ線は実線／破線／点線で区別します。
+接続ドロップ中のPalette候補にはcompatible callbackが必要です。CreateNode要求は接続元pinと
+付け替えlinkを含み、ホストが追加と自動接続を一括適用します。InsertNodeは既存リンクと挿入ノードの
+入力／出力を返し、同様に一括適用します。
+
+## Material Graph Mock
+
+独立Galleryの初期ページをMaterial Graph Mockにしました。
+ホスト実装はexamples/node_editor/material_mock.hです。従来Studioもページcheckboxで選べます。
+Image／Color／Float／Normal、3種類のBRDF例、Principled、Mix／Add Closure、Emission、
+Material Outputの12テンプレートがgraphにあり、パンまたはFrame allで全体を確認できます。
+Principled入力は動的編集可能、Mixは可変長groupを持ち、Paletteは型で絞り込んで追加・自動接続を
+一括処理します。全ノードはPreviewOutput::drawで単純な球状の色previewを供給します。
+
+MockがID、snapshot、Undo／Redo、回数を限定したCPU色伝播を所有します。
+GUI例であり、shader engineや物理的なMaterial評価ではありません。
+接続済みソケットの削除・型変更は切断するまで拒否し、リンク保持契約を示します。
+
+形状・色のoverrideは維持しており、inheritTypeStyle=falseで型metadataではなく
+pinの明示形状を使います。独自値callbackはBegin／Update／Commit／Cancelを明示します。
+graphの一括配線はDrawLinksを呼んだ場合だけ予約し、低レベルLinkとの重複描画を避けます。
+検証と残作業は[P0／P1レビュー](node-editor-review.md)を参照してください。

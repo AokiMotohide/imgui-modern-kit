@@ -394,6 +394,15 @@ ConnectionVerdict CanConnect(GraphView g, PinId a, PinId b, LinkId replacing) {
     auto *ny = Find(g, y->node);
     if (!nx || !ny || nx->locked || ny->locked || x->hidden || y->hidden)
         return {false, "Socket is unavailable"};
+    for (auto *node : {nx, ny}) {
+        auto parent = node->parent;
+        for (std::size_t depth = 0; parent; ++depth) {
+            auto *ancestor = Find(g, parent);
+            if (!ancestor || ancestor->locked || depth >= g.nodes.size())
+                return {false, "Parent is unavailable"};
+            parent = ancestor->parent;
+        }
+    }
     for (auto &link : g.links)
         if (link.id != replacing) {
             if (link.from == x->id && link.to == y->id)
@@ -403,6 +412,8 @@ ConnectionVerdict CanConnect(GraphView g, PinId a, PinId b, LinkId replacing) {
         }
     if (g.canConnect)
         return g.canConnect(g.user, x->id, y->id);
+    if (g.typeCompatibility)
+        return g.typeCompatibility(g.user, x->type, y->type);
     if (x->type && y->type && x->type != y->type)
         return {false, "Different socket types"};
     return {}; // Cycles and same-node connections are host policy, not a UI restriction.
@@ -423,5 +434,98 @@ LayoutResult TraceNodes(GraphView g, NodeId start, bool upstream, std::span<Node
         return {LayoutError::Capacity, 0};
     std::copy(ids.begin(), ids.end(), out.begin());
     return {LayoutError::None, ids.size()};
+}
+bool IsPinConnected(GraphView g, PinId pin) {
+    return std::any_of(g.links.begin(), g.links.end(), [&](auto &l) { return l.from == pin || l.to == pin; });
+}
+ConnectionVerdict ValidatePinEdit(GraphView g, const EditRequest &r) {
+    auto *n = Find(g, r.node);
+    if (!n || n->locked)
+        return {false, "Node is unavailable"};
+    auto parent = n->parent;
+    for (std::size_t depth = 0; parent; ++depth) {
+        if (depth >= g.nodes.size())
+            return {false, "Invalid containment"};
+        auto *ancestor = Find(g, parent);
+        if (!ancestor || ancestor->locked)
+            return {false, "Parent is unavailable"};
+        parent = ancestor->parent;
+        if (parent == n->id)
+            return {false, "Invalid containment"};
+    }
+    auto *p = Pin(g, r.from);
+    auto kind = p ? p->kind : r.pinKind;
+    auto caps = p ? p->capabilities : (kind == PinKind::Input ? n->inputs : n->outputs);
+    int count = 0;
+    for (auto &pin : g.pins)
+        if (pin.node == r.node && pin.kind == kind && pin.capabilities.group == (p ? caps.group : r.group))
+            ++count;
+    if (r.kind != EditKind::CreatePin && (!p || p->node != r.node))
+        return {false, "Missing socket"};
+    bool allowed = false;
+    switch (r.kind) {
+    case EditKind::CreatePin:
+        allowed = caps.add && r.index >= 0 && r.index <= count && count < caps.maximum;
+        break;
+    case EditKind::DeletePin:
+        allowed = caps.remove && !caps.required && count > caps.minimum;
+        break;
+    case EditKind::RenamePin:
+        allowed = caps.rename && r.text[0];
+        break;
+    case EditKind::ChangePinType:
+        allowed = caps.changeType;
+        break;
+    case EditKind::ReorderPin:
+        allowed = caps.reorder && r.index >= 0 && r.index < count;
+        break;
+    case EditKind::SetPinMultiplicity:
+        allowed = caps.changeMultiplicity;
+        break;
+    case EditKind::SetPinLimits:
+        allowed = caps.group && caps.add && r.minimum >= 0 && r.maximum >= r.minimum && count >= r.minimum &&
+                  count <= r.maximum;
+        break;
+    case EditKind::HidePin:
+    case EditKind::ExposePin:
+        allowed = true;
+        break;
+    case EditKind::SetPinValue:
+        allowed = p->kind == PinKind::Input && !IsPinConnected(g, p->id);
+        break;
+    default:
+        return {false, "Not a socket edit"};
+    }
+    if (!allowed)
+        return {false, caps.reason.empty() ? "Socket capability or count limit" : caps.reason};
+    if (r.kind == EditKind::CreatePin || r.kind == EditKind::ChangePinType) {
+        if (!g.socketTypes.empty() &&
+            std::none_of(g.socketTypes.begin(), g.socketTypes.end(), [&](auto &t) { return t.id == r.type; }))
+            return {false, "Unknown socket type"};
+    }
+    if (g.canEditPin)
+        return g.canEditPin(g.user, r);
+    return {};
+}
+bool QueuePinEdits(GraphView g, std::span<const EditRequest> edits, RequestBuffer &out,
+                   std::uint64_t operation) {
+    if (!operation || edits.empty())
+        return false;
+    std::vector<EditRequest> batch;
+    batch.reserve(edits.size());
+    for (auto r : edits) {
+        if (!ValidatePinEdit(g, r).allowed)
+            return false;
+        r.graph = g.id;
+        r.revision = g.revision;
+        r.operation = operation;
+        r.operationSize = edits.size();
+        r.affectedLinks = std::count_if(g.links.begin(), g.links.end(),
+                                        [&](auto &l) { return l.from == r.from || l.to == r.from; });
+        batch.push_back(r);
+    }
+    // The host validates the resulting model as one unit, including group counts,
+    // dependent links and its own constraints. No model mutation takes place here.
+    return out.PushBatch(batch);
 }
 } // namespace imkit::node_editor

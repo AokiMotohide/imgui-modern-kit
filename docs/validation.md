@@ -164,3 +164,18 @@ consumers, native GPU, captures and the six-operation Release performance result
 EditorのCPU・公開IO・source/SDK consumer・実GPU・capture・6操作のRelease性能は上記を参照してください。
 Native OS/IME and real-project integration remain separate, unperformed categories.
 native OS/IMEと実project統合は別区分で、未実施です。
+
+## Dynamic node sockets / 動的ノードソケット（2026-09-12）
+
+The dedicated Debug node-editor library, API fixture and independent Gallery built
+successfully. `imkit.node_editor` and `imkit.node_editor_api_compile` passed. The
+same public fixture built and ran against a separate consumer-owned ImGui target.
+Native Gallery capture was visually checked; clipped preview and minimap overlap
+were corrected. [Review and exact scope](node-editor-review.md) records the P0/P1
+findings, focused regressions and remaining boundaries. No capture is committed.
+
+専用Debugのノードライブラリ・公開API fixture・独立Galleryがbuildに成功した。
+直接テスト2件が合格し、独自ImGui targetを持つ独立consumerもbuild・実行に成功した。
+Native captureを目視し、previewの切れとminimapの重なりを修正した。
+P0／P1、直接回帰、未実施境界は上記レビューに記録した。captureはcommitしない。
+実機OS／IME・DPI、支援技術、性能、外部ホスト統合、Release・配布検証は未実施。

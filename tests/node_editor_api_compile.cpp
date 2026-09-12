@@ -11,6 +11,10 @@ ne::EditorFrame (*volatile begin)(const char *, ne::GraphView, ne::EditorState &
                                   const ne::NodeStyle &, ne::EditorOptions) = &ne::BeginEditor;
 void (*volatile preview)(ne::EditorFrame &, std::span<const ne::PreviewOutput>,
                          void (*)(void *, const ne::PreviewDemand &), void *) = &ne::Preview;
+bool (*volatile pinEdits)(ne::GraphView, std::span<const ne::EditRequest>, ne::RequestBuffer &,
+                          std::uint64_t) = &ne::QueuePinEdits;
+void (*volatile pinRow)(ne::EditorFrame &, ne::PinId, ne::PinRowOptions) = &ne::PinRow;
+ne::ConnectionVerdict (*volatile validate)(ne::GraphView, const ne::EditRequest &) = &ne::ValidatePinEdit;
 int main() {
     ne::EditorState state;
     state.Reserve(16);

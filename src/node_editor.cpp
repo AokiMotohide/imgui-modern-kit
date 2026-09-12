@@ -128,6 +128,11 @@ ImVec2 PinPosition(const EditorFrame &f, const PinView &pin) {
         parent = p->parent;
     }
     auto p = Position(f, *shown), size = Size(f, *shown);
+    if (!pin.manualPosition && shown == n && !n->collapsed) {
+        for (auto &row : f.state->rowPositions)
+            if (row.pin == pin.id)
+                return Screen(f, {p.x + (pin.kind == PinKind::Output ? size.x : 0), p.y + row.local.y});
+    }
     const double offset = shown->collapsed ? Style(f, *shown).headerHeight / 2 : pin.offset;
     switch (pin.side) {
     case Side::Left:
@@ -170,7 +175,14 @@ std::array<ImVec2, 25> Curve(const EditorFrame &f, const PinView &a, const PinVi
     const auto style = overrideStyle ? *overrideStyle : f.style.linkStyle;
     auto p = PinPosition(f, a), q = PinPosition(f, b);
     float strength = std::max(40.f, float(std::abs(q.x - p.x) + std::abs(q.y - p.y)) * .4f);
-    auto c = Add(p, Mul(Direction(a.side), strength)), d = Add(q, Mul(Direction(b.side), strength));
+    auto c = Add(p, Mul(Direction(a.manualPosition           ? a.side
+                                  : a.kind == PinKind::Input ? Side::Left
+                                                             : Side::Right),
+                        strength)),
+         d = Add(q, Mul(Direction(b.manualPosition           ? b.side
+                                  : b.kind == PinKind::Input ? Side::Left
+                                                             : Side::Right),
+                        strength));
     std::array<ImVec2, 25> points{};
     for (int i = 0; i < 25; ++i) {
         float t = float(i) / 24, u = 1 - t;
@@ -338,6 +350,7 @@ void EditorState::Reserve(std::size_t nodes, std::size_t previewCount) {
     gesture.reserve(nodes);
     nodeIndex.reserve(nodes);
     pinIndex.reserve(nodes * 4);
+    rowPositions.reserve(nodes * 4);
     lasso.reserve(512);
     previews.reserve(previewCount);
     history.reserve(64);
@@ -450,6 +463,28 @@ EditorFrame BeginEditor(const char *id, GraphView graph, EditorState &s, Request
     f.context = ImGui::GetCurrentContext();
     f.fontSize = ImGui::GetStyle().FontSizeBase;
     f.editorId = ImGui::GetID(id);
+    if (s.graph != graph.id)
+        s.rowPositions.clear();
+    std::erase_if(s.rowPositions, [&](auto &row) { return !FindPin(graph, row.pin); });
+    if (s.valueEditing &&
+        (s.valueEdit.graph != graph.id || s.valueEdit.revision != graph.revision || options.readOnly ||
+         IsPinConnected(graph, s.valueEdit.from) || !FindPin(graph, s.valueEdit.from))) {
+        s.valueEdit.phase = Phase::Cancel;
+        s.valueTerminalPending = true;
+    }
+    if (s.valueEditing) {
+        auto *pin = FindPin(graph, s.valueEdit.from);
+        auto *node = pin ? Find(graph, pin->node) : nullptr;
+        if (!node || node->collapsed || (pin && pin->hidden) || (node && node->locked) ||
+            s.zoom < style.detailZoom) {
+            s.valueEdit.phase = Phase::Cancel;
+            s.valueTerminalPending = true;
+        }
+    }
+    if (s.valueTerminalPending && out.Push(s.valueEdit)) {
+        s.valueTerminalPending = false;
+        s.valueEditing = false;
+    }
     s.nodeIndex.clear();
     s.pinIndex.clear();
     for (std::size_t i = 0; i < graph.nodes.size(); ++i)
@@ -530,6 +565,13 @@ EditorFrame BeginEditor(const char *id, GraphView graph, EditorState &s, Request
     if ((ImGui::GetItemFlags() & ImGuiItemFlags_Disabled) != 0) {
         f.options.readOnly = true;
         f.blocked = true;
+        if (s.valueEditing) {
+            s.valueEdit.phase = Phase::Cancel;
+            if (out.Push(s.valueEdit))
+                s.valueEditing = false;
+            else
+                s.valueTerminalPending = true;
+        }
         Cancel(f);
     }
     ImGui::SetCursorScreenPos(f.min);
@@ -750,6 +792,345 @@ void EndPin(EditorFrame &f) {
     ImGui::PopID();
     f.pinOpen = false;
 }
+bool GetPinPosition(const EditorFrame &f, PinId id, ImVec2 &out) {
+    auto *pin = FindPin(f, id);
+    if (!pin || !Find(f, pin->node))
+        return false;
+    out = PinPosition(f, *pin);
+    return true;
+}
+namespace {
+bool EmitPin(EditorFrame &f, EditRequest r) {
+    if (f.options.readOnly)
+        return false;
+    auto verdict = ValidatePinEdit(f.graph, r);
+    bool queued = verdict.allowed && QueuePinEdits(f.graph, {&r, 1}, *f.requests, f.state->nextOperation++);
+    f.state->pinEditReason.fill(0);
+    if (!queued) {
+        auto reason =
+            verdict.allowed ? std::string_view("Request buffer full; retry the edit") : verdict.reason;
+        std::copy_n(reason.data(), std::min(reason.size(), f.state->pinEditReason.size() - 1),
+                    f.state->pinEditReason.begin());
+    }
+    return queued;
+}
+void ReorderTarget(EditorFrame &f, const PinView &pin, int index) {
+    struct Payload {
+        GraphId graph;
+        NodeId node;
+        PinId pin;
+        PinKind kind;
+        std::uint64_t group;
+    };
+    if (pin.capabilities.reorder && ImGui::BeginDragDropSource()) {
+        Payload payload{f.graph.id, pin.node, pin.id, pin.kind, pin.capabilities.group};
+        ImGui::SetDragDropPayload("IMKIT_SOCKET", &payload, sizeof(payload));
+        Text(pin.label);
+        ImGui::EndDragDropSource();
+    }
+    if (pin.capabilities.reorder && ImGui::BeginDragDropTarget()) {
+        if (auto *payload = ImGui::AcceptDragDropPayload("IMKIT_SOCKET")) {
+            if (payload->DataSize == sizeof(Payload)) {
+                auto value = *static_cast<const Payload *>(payload->Data);
+                if (value.graph == f.graph.id && value.node == pin.node && value.kind == pin.kind &&
+                    value.group == pin.capabilities.group) {
+                    EditRequest r;
+                    r.kind = EditKind::ReorderPin;
+                    r.node = pin.node;
+                    r.from = value.pin;
+                    r.index = index;
+                    EmitPin(f, r);
+                }
+            }
+        }
+        ImGui::EndDragDropTarget();
+    }
+}
+void PinActions(EditorFrame &f, const PinView &pin) {
+    auto emit = [&](EditRequest r) {
+        r.node = pin.node;
+        r.from = pin.id;
+        return EmitPin(f, r);
+    };
+    char name[128]{};
+    std::copy_n(pin.label.data(), std::min(pin.label.size(), sizeof(name) - 1), name);
+    ImGui::BeginDisabled(!pin.capabilities.rename);
+    if (ImGui::InputText("Name", name, sizeof(name), ImGuiInputTextFlags_EnterReturnsTrue)) {
+        EditRequest r;
+        r.kind = EditKind::RenamePin;
+        std::copy_n(name, sizeof(name), r.text.begin());
+        emit(r);
+    }
+    ImGui::EndDisabled();
+    const SocketTypeView *current = nullptr;
+    for (auto &t : f.graph.socketTypes)
+        if (t.id == pin.type)
+            current = &t;
+    ImGui::BeginDisabled(!pin.capabilities.changeType);
+    if (ImGui::BeginCombo("Type", current ? std::string(current->name).c_str() : "Custom")) {
+        for (auto &t : f.graph.socketTypes) {
+            ImGui::PushID(std::to_string(t.id).c_str());
+            if (ImGui::Selectable(std::string(t.name).c_str(), t.id == pin.type)) {
+                EditRequest r;
+                r.kind = EditKind::ChangePinType;
+                r.type = t.id;
+                if (f.options.confirmPinImpact && IsPinConnected(f.graph, pin.id)) {
+                    f.state->pendingPinEdit = r;
+                    f.state->pendingPinEdit.node = pin.node;
+                    f.state->pendingPinEdit.from = pin.id;
+                } else
+                    emit(r);
+            }
+            ImGui::PopID();
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::EndDisabled();
+    bool shown = !pin.hidden;
+    if (ImGui::Checkbox("Visible", &shown)) {
+        EditRequest r;
+        r.kind = EditKind::HidePin;
+        r.index = !shown;
+        emit(r);
+    }
+    bool multiple = pin.multiple;
+    ImGui::BeginDisabled(!pin.capabilities.changeMultiplicity);
+    if (ImGui::Checkbox("Multiple connections", &multiple)) {
+        EditRequest r;
+        r.kind = EditKind::SetPinMultiplicity;
+        r.index = multiple;
+        emit(r);
+    }
+    ImGui::EndDisabled();
+    if (ImGui::SmallButton("Expose")) {
+        EditRequest r;
+        r.kind = EditKind::ExposePin;
+        emit(r);
+    }
+    if (pin.capabilities.group) {
+        int limits[]{pin.capabilities.minimum, pin.capabilities.maximum};
+        if (ImGui::InputInt2("Min / Max", limits, ImGuiInputTextFlags_EnterReturnsTrue)) {
+            EditRequest r;
+            r.kind = EditKind::SetPinLimits;
+            r.minimum = limits[0];
+            r.maximum = limits[1];
+            emit(r);
+        }
+    }
+    EditRequest remove;
+    remove.kind = EditKind::DeletePin;
+    remove.node = pin.node;
+    remove.from = pin.id;
+    auto verdict = ValidatePinEdit(f.graph, remove);
+    ImGui::BeginDisabled(!verdict.allowed);
+    if (ImGui::SmallButton("Delete socket")) {
+        if (f.options.confirmPinImpact && IsPinConnected(f.graph, pin.id))
+            f.state->pendingPinEdit = remove;
+        else
+            emit(remove);
+    }
+    ImGui::EndDisabled();
+    if (!verdict.allowed)
+        ImGui::TextWrapped("%.*s", int(verdict.reason.size()), verdict.reason.data());
+    if (f.state->pendingPinEdit.from == pin.id) {
+        auto count = std::count_if(f.graph.links.begin(), f.graph.links.end(),
+                                   [&](auto &l) { return l.from == pin.id || l.to == pin.id; });
+        ImGui::TextWrapped("Affects %d link(s). The host may reject this change.", int(count));
+        if (ImGui::SmallButton("Confirm")) {
+            emit(f.state->pendingPinEdit);
+            f.state->pendingPinEdit = {};
+        }
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Cancel"))
+            f.state->pendingPinEdit = {};
+    }
+    if (!pin.capabilities.reason.empty())
+        ImGui::TextWrapped("%.*s", int(pin.capabilities.reason.size()), pin.capabilities.reason.data());
+}
+} // namespace
+void PinAddRow(EditorFrame &f, NodeId node, PinKind kind, std::uint64_t group) {
+    auto *n = Find(f, node);
+    if (!n)
+        return;
+    auto caps = kind == PinKind::Input ? n->inputs : n->outputs;
+    if (!caps.add)
+        return;
+    int count = 0;
+    for (auto &p : f.graph.pins)
+        if (p.node == node && p.kind == kind && p.capabilities.group == group)
+            ++count;
+    ImGui::PushID(std::to_string(node.value).c_str());
+    ImGui::PushID(int(kind));
+    ImGui::PushID(std::to_string(group).c_str());
+    ImGui::BeginDisabled(f.options.readOnly || count >= caps.maximum || n->locked);
+    if (ImGui::SmallButton(kind == PinKind::Input ? "+ Input" : "+ Output"))
+        ImGui::OpenPopup("Socket type");
+    if (ImGui::BeginPopup("Socket type")) {
+        for (auto &type : f.graph.socketTypes) {
+            ImGui::PushID(std::to_string(type.id).c_str());
+            if (ImGui::Selectable(std::string(type.name).c_str())) {
+                EditRequest r;
+                r.kind = EditKind::CreatePin;
+                r.node = node;
+                r.pinKind = kind;
+                r.index = count;
+                r.type = type.id;
+                r.group = group;
+                std::copy_n(type.name.data(), std::min(type.name.size(), r.text.size() - 1), r.text.begin());
+                EmitPin(f, r);
+            }
+            ImGui::PopID();
+        }
+        ImGui::EndPopup();
+    }
+    ImGui::EndDisabled();
+    ImGui::PopID();
+    ImGui::PopID();
+    ImGui::PopID();
+}
+void PinRow(EditorFrame &f, PinId id, PinRowOptions options) {
+    IM_ASSERT(f.nodeOpen && !f.pinOpen);
+    auto *pin = FindPin(f, id);
+    if (!pin || pin->node != f.node->id || pin->hidden)
+        return;
+    auto &s = *f.state;
+    ImGui::PushID(std::to_string(id.value).c_str());
+    ImGui::BeginGroup();
+    auto start = ImGui::GetCursorScreenPos();
+    float rowHeight = std::max(ImGui::GetFrameHeight(), f.style.headerHeight * float(s.zoom) * .7f);
+    const bool detail = s.zoom >= Style(f, *f.node).detailZoom;
+    bool connected = IsPinConnected(f.graph, id);
+    bool showValue = detail && pin->kind == PinKind::Input && options.value.kind != ValueKind::None &&
+                     (!connected || !options.hideConnectedValue);
+    float width = std::max(1.f, ImGui::GetContentRegionAvail().x);
+    float labelWidth = showValue ? width * .43f : width;
+    ImGui::Selectable("##label", false, ImGuiSelectableFlags_None, {labelWidth, rowHeight});
+    auto *dl = ImGui::GetWindowDrawList();
+    dl->PushClipRect(start, {start.x + labelWidth, start.y + rowHeight}, true);
+    auto label = std::string(pin->label);
+    if (pin->capabilities.required)
+        label += " *";
+    float x = pin->kind == PinKind::Output
+                  ? std::max(start.x, start.x + labelWidth - ImGui::CalcTextSize(label.c_str()).x)
+                  : start.x;
+    dl->AddText({x, start.y + (rowHeight - ImGui::GetFontSize()) * .5f}, Color(f.style.text), label.c_str());
+    dl->PopClipRect();
+    if (ImGui::IsItemHovered()) {
+        for (auto &type : f.graph.socketTypes)
+            if (type.id == pin->type)
+                ImGui::SetTooltip("%.*s (%.*s)", int(pin->label.size()), pin->label.data(),
+                                  int(type.name.size()), type.name.data());
+    }
+    int index = 0;
+    for (auto &p : f.graph.pins) {
+        if (p.id == id)
+            break;
+        if (p.node == pin->node && p.kind == pin->kind && p.capabilities.group == pin->capabilities.group)
+            ++index;
+    }
+    ReorderTarget(f, *pin, index);
+    if (ImGui::BeginPopupContextItem("Socket")) {
+        PinActions(f, *pin);
+        ImGui::EndPopup();
+    }
+    if (showValue) {
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(std::max(1.f, ImGui::GetContentRegionAvail().x));
+        bool editable = !connected && !f.options.readOnly && !Locked(f, *f.node) && !s.valueTerminalPending;
+        ImGui::BeginDisabled(!editable);
+        auto value = s.valueEditing && s.valueEdit.from == id ? s.valueEdit.value : options.value;
+        bool changed = false;
+        Phase customPhase = Phase::Update;
+        switch (value.kind) {
+        case ValueKind::Color:
+            changed = ImGui::ColorEdit4("##value", value.number.data(), ImGuiColorEditFlags_NoInputs);
+            break;
+        case ValueKind::Float:
+            changed = ImGui::SliderFloat("##value", value.number.data(), options.minimum, options.maximum);
+            break;
+        case ValueKind::Vector:
+            changed = ImGui::DragFloat3("##value", value.number.data(), .01f);
+            break;
+        case ValueKind::Integer:
+            changed = ImGui::InputInt("##value", &value.integer);
+            break;
+        case ValueKind::Boolean:
+            changed = ImGui::Checkbox("##value", &value.boolean);
+            break;
+        case ValueKind::Text:
+            changed = ImGui::InputText("##value", value.text.data(), value.text.size());
+            break;
+        case ValueKind::Enum:
+            if (ImGui::BeginCombo("##value", value.integer >= 0 && value.integer < int(options.choices.size())
+                                                 ? std::string(options.choices[value.integer]).c_str()
+                                                 : "Choose")) {
+                for (int i = 0; i < int(options.choices.size()); ++i)
+                    if (ImGui::Selectable(std::string(options.choices[i]).c_str(), value.integer == i)) {
+                        value.integer = i;
+                        changed = true;
+                        customPhase = Phase::Commit;
+                    }
+                ImGui::EndCombo();
+            }
+            break;
+        case ValueKind::Custom:
+            if (options.draw)
+                changed = options.draw(options.user, value, customPhase);
+            break;
+        default:
+            break;
+        }
+        bool activated = ImGui::IsItemActivated(), active = ImGui::IsItemActive(),
+             deactivated = ImGui::IsItemDeactivated();
+        ImGui::EndDisabled();
+        if (editable && !s.valueEditing &&
+            (activated || changed || (value.kind == ValueKind::Custom && customPhase == Phase::Begin))) {
+            EditRequest r;
+            r.kind = EditKind::SetPinValue;
+            r.node = pin->node;
+            r.from = id;
+            r.value = options.value;
+            r.previousValue = options.value;
+            r.graph = f.graph.id;
+            r.revision = f.graph.revision;
+            r.operation = s.nextOperation++;
+            r.phase = Phase::Begin;
+            if (f.requests->Push(r)) {
+                s.valueEditing = true;
+                s.valueEdit = r;
+            }
+        }
+        if (s.valueEditing && s.valueEdit.from == id && !s.valueTerminalPending) {
+            if (changed) {
+                auto r = s.valueEdit;
+                r.value = value;
+                r.phase = Phase::Update;
+                f.requests->Push(r);
+                s.valueEdit = r;
+            }
+            bool cancel = ImGui::IsKeyPressed(ImGuiKey_Escape, false) || customPhase == Phase::Cancel;
+            if (cancel || (value.kind == ValueKind::Custom
+                               ? customPhase == Phase::Commit
+                               : deactivated || (changed && (!active || customPhase == Phase::Commit)))) {
+                s.valueEdit.phase = cancel ? Phase::Cancel : Phase::Commit;
+                if (f.requests->Push(s.valueEdit))
+                    s.valueEditing = false;
+                else
+                    s.valueTerminalPending = true;
+            }
+        }
+    }
+    ImGui::EndGroup();
+    auto local = World(f, {start.x, start.y + rowHeight * .5f});
+    auto origin = Position(f, *f.node);
+    auto row =
+        std::find_if(s.rowPositions.begin(), s.rowPositions.end(), [&](auto &r) { return r.pin == id; });
+    if (row == s.rowPositions.end())
+        s.rowPositions.push_back({id, {local.x - origin.x, local.y - origin.y}});
+    else
+        row->local = {local.x - origin.x, local.y - origin.y};
+    ImGui::PopID();
+}
 void Link(EditorFrame &f, const LinkView &link) {
     if (!f.visible)
         return;
@@ -786,13 +1167,12 @@ void Link(EditorFrame &f, const LinkView &link) {
     }
 }
 void DrawLinks(EditorFrame &f) {
-    for (auto &link : f.graph.links)
-        Link(f, link);
+    f.linksQueued = true; // EndEditor draws after standard row positions are known.
 }
 void DrawNodes(EditorFrame &f, void (*body)(void *, EditorFrame &, const NodeView &), void *user) {
     for (auto &n : f.graph.nodes)
         if (BeginNode(f, n.id)) {
-            if (!n.collapsed && f.state->zoom >= Style(f, n).detailZoom) {
+            if (!n.collapsed) {
                 if (body)
                     body(user, f, n);
                 else if (n.kind == NodeKind::Note)
@@ -933,8 +1313,13 @@ void NodeSearch(EditorFrame &f) {
 }
 void NodeInspector(EditorFrame &f, NodeId id) {
     auto *n = Find(f, id);
-    if (!n)
+    if (!n) {
+        ImGui::TextWrapped(
+            "Select a node to edit its inputs and outputs. Use Tab on the canvas to add a node.");
         return;
+    }
+    if (f.state->pinEditReason[0])
+        ImGui::TextWrapped("%s", f.state->pinEditReason.data());
     char title[128]{};
     std::copy_n(n->title.data(), std::min(n->title.size(), sizeof(title) - 1), title);
     ImGui::BeginDisabled(f.options.readOnly || Locked(f, *n));
@@ -970,47 +1355,36 @@ void NodeInspector(EditorFrame &f, NodeId id) {
             }
         }
     }
-    int index = 0;
-    for (auto &pin : f.graph.pins)
-        if (pin.node == id) {
-            char key[40];
-            std::snprintf(key, sizeof(key), "socket-%llu", static_cast<unsigned long long>(pin.id.value));
-            ImGui::PushID(key);
-            bool shown = !pin.hidden;
-            if (ImGui::Checkbox("##visible", &shown)) {
-                auto r = Request(f, EditKind::HidePin, id);
-                r.from = pin.id;
-                r.index = shown ? 0 : 1;
-                f.requests->Push(r);
+    ImGui::BeginDisabled(Locked(f, *n));
+    for (auto kind : {PinKind::Input, PinKind::Output}) {
+        ImGui::SeparatorText(kind == PinKind::Input ? "Inputs" : "Outputs");
+        PinAddRow(f, id, kind, (kind == PinKind::Input ? n->inputs : n->outputs).group);
+        int index = 0;
+        for (auto &pin : f.graph.pins)
+            if (pin.node == id && pin.kind == kind) {
+                ImGui::PushID(std::to_string(pin.id.value).c_str());
+                bool open = ImGui::TreeNodeEx("socket", ImGuiTreeNodeFlags_None, "%.*s",
+                                              int(pin.label.size()), pin.label.data());
+                int groupIndex = 0;
+                for (auto &previous : f.graph.pins) {
+                    if (previous.id == pin.id)
+                        break;
+                    if (previous.node == id && previous.kind == kind &&
+                        previous.capabilities.group == pin.capabilities.group)
+                        ++groupIndex;
+                }
+                ReorderTarget(f, pin, groupIndex);
+                ++index;
+                if (open) {
+                    PinActions(f, pin);
+                    ImGui::TreePop();
+                }
+                ImGui::PopID();
             }
-            ImGui::SameLine();
-            Text(pin.label);
-            auto reorder = [&](int destination) {
-                auto r = Request(f, EditKind::ReorderPin, id);
-                r.from = pin.id;
-                r.index = destination;
-                f.requests->Push(r);
-            };
-            ImGui::SameLine();
-            ImGui::BeginDisabled(index == 0);
-            if (ImGui::SmallButton("Up"))
-                reorder(index - 1);
-            ImGui::EndDisabled();
-            ImGui::SameLine();
-            if (ImGui::SmallButton("Down"))
-                reorder(index + 1);
-            ImGui::SameLine();
-            if (ImGui::SmallButton("Expose")) {
-                auto r = Request(f, EditKind::ExposePin, id);
-                r.from = pin.id;
-                f.requests->Push(r);
-            }
-            if (pin.internal)
-                ImGui::TextDisabled("Internal socket: %llu",
-                                    static_cast<unsigned long long>(pin.internal.value));
-            ImGui::PopID();
-            ++index;
-        }
+        if (!index)
+            ImGui::TextDisabled("No sockets. Add one above if allowed by the host.");
+    }
+    ImGui::EndDisabled();
     if (f.options.canDebug) {
         if (ImGui::SmallButton(n->breakpoint ? "Remove breakpoint" : "Add breakpoint"))
             QueueCommand(f, EditKind::Breakpoint, id);
@@ -1068,6 +1442,7 @@ void NodePalette(EditorFrame &f, std::span<const PaletteEntry> entries) {
         f.state->palette = false;
     }
     if (ImGui::BeginPopup("Add node")) {
+        f.state->paletteWasOpen = true;
         f.blocked = true;
         ImGui::SetNextItemWidth(280);
         ImGui::InputTextWithHint("##search", "Search nodes", f.state->search.data(), f.state->search.size());
@@ -1096,7 +1471,8 @@ void NodePalette(EditorFrame &f, std::span<const PaletteEntry> entries) {
             };
             if (!matches(entry.title) && !matches(entry.category))
                 continue;
-            if (f.state->connecting && entry.compatible && !entry.compatible(entry.user, f.state->connecting))
+            if (f.state->connecting &&
+                (!entry.compatible || !entry.compatible(entry.user, f.state->connecting)))
                 continue;
             char key[40];
             std::snprintf(key, sizeof(key), "type-%llu", static_cast<unsigned long long>(entry.type));
@@ -1117,6 +1493,7 @@ void NodePalette(EditorFrame &f, std::span<const PaletteEntry> entries) {
                 r.type = entry.type;
                 r.after = f.state->press;
                 r.from = f.state->connecting;
+                r.link = f.state->reconnecting;
                 if (f.requests->Push(r)) {
                     std::erase(f.state->recent, entry.type);
                     f.state->recent.insert(f.state->recent.begin(), entry.type);
@@ -1131,13 +1508,17 @@ void NodePalette(EditorFrame &f, std::span<const PaletteEntry> entries) {
             ImGui::PopID();
         }
         ImGui::EndPopup();
+    } else if (f.state->paletteWasOpen) {
+        f.state->paletteWasOpen = false;
+        f.state->connecting = {};
+        f.state->reconnecting = {};
     }
 }
 void MiniMap(EditorFrame &f, ImVec2 size) {
     if (f.graph.nodes.empty() || size.x <= 0 || size.y <= 0)
         return;
     auto a = ImVec2{f.max.x - size.x - 12, f.max.y - size.y - 12}, b = Add(a, size);
-    auto *dl = ImGui::GetWindowDrawList();
+    auto *dl = ImGui::GetForegroundDrawList();
     Rect bounds{f.graph.nodes.front().position, f.graph.nodes.front().position};
     for (auto &n : f.graph.nodes) {
         bounds.min = {std::min(bounds.min.x, n.position.x), std::min(bounds.min.y, n.position.y)};
@@ -1203,11 +1584,15 @@ void Preview(EditorFrame &f, std::span<const PreviewOutput> outputs,
     if (ImGui::SmallButton(p.collapsed ? "> Preview" : "v Preview"))
         p.collapsed = !p.collapsed;
     ImGui::SameLine();
-    if (ImGui::SmallButton("Open"))
-        p.expanded = true;
-    ImGui::SameLine();
-    if (ImGui::SmallButton(p.pinned ? "Unpin" : "Pin"))
-        p.pinned = !p.pinned;
+    if (ImGui::SmallButton("...##preview-actions"))
+        ImGui::OpenPopup("Preview actions");
+    if (ImGui::BeginPopup("Preview actions")) {
+        if (ImGui::MenuItem("Open"))
+            p.expanded = true;
+        ImGui::MenuItem("Pin", nullptr, &p.pinned);
+        ImGui::MenuItem("Interact", nullptr, &p.interactive);
+        ImGui::EndPopup();
+    }
     if (p.collapsed || outputs.empty())
         return;
     p.output = std::clamp(p.output, 0, int(outputs.size()) - 1);
@@ -1234,7 +1619,6 @@ void Preview(EditorFrame &f, std::span<const PreviewOutput> outputs,
     ImGui::InvisibleButton("##preview-size", {size.x, 6});
     if (ImGui::IsItemActive())
         p.height = std::clamp(p.height + ImGui::GetIO().MouseDelta.y / z, 24.f, 800.f);
-    ImGui::Checkbox("Interact", &p.interactive);
 }
 void DrawDetachedPreviews(EditorFrame &f, NodeId node, std::span<const PreviewOutput> outputs,
                           void (*demand)(void *, const PreviewDemand &), void *user) {
@@ -1293,6 +1677,9 @@ void EndEditor(EditorFrame &f) {
     auto &s = *f.state;
     auto &io = ImGui::GetIO();
     if (f.visible) {
+        if (f.linksQueued)
+            for (auto &link : f.graph.links)
+                Link(f, link);
         auto *dl = ImGui::GetWindowDrawList();
         const PinView *hoveredPin = nullptr;
         for (auto &pin : f.graph.pins) {
@@ -1300,13 +1687,35 @@ void EndEditor(EditorFrame &f) {
             if (!n || pin.hidden || !Visible(f, *n))
                 continue;
             auto p = PinPosition(f, pin);
-            float r = f.style.pinRadius * std::clamp(float(s.zoom), .8f, 2.f);
-            auto c = Color(pin.color.w ? pin.color : f.style.accent);
-            if (pin.shape == PinShape::Square)
+            float r = Style(f, *n).pinRadius * std::clamp(float(s.zoom), .8f, 2.f);
+            auto c = Color(pin.color.w ? pin.color : Style(f, *n).accent);
+            auto shape = pin.shape;
+            for (auto &type : f.graph.socketTypes)
+                if (type.id == pin.type) {
+                    if (!pin.color.w)
+                        c = Color(type.color);
+                    if (pin.inheritTypeStyle)
+                        shape = type.shape;
+                }
+            if (s.connecting && s.connecting != pin.id) {
+                auto verdict = CanConnect(f.graph, s.connecting, pin.id, s.reconnecting);
+                auto feedback =
+                    verdict.allowed
+                        ? (verdict.match == ConnectionMatch::Convertible ? f.style.warning : f.style.success)
+                        : f.style.error;
+                dl->AddCircle(p, r + 4, Color(feedback), 0, verdict.allowed ? 2.f : 1.f);
+                if (verdict.match == ConnectionMatch::Convertible)
+                    dl->AddLine(Add(p, {-r, r + 7}), Add(p, {r, r + 7}), Color(feedback));
+            }
+            if (pin.multiple)
+                dl->AddCircle(p, r + 2, c);
+            if (pin.capabilities.group)
+                dl->AddLine(Add(p, {-r, -r - 4}), Add(p, {r, -r - 4}), c, 2);
+            if (shape == PinShape::Square)
                 dl->AddRectFilled(Sub(p, {r, r}), Add(p, {r, r}), c, 1);
-            else if (pin.shape == PinShape::Diamond)
+            else if (shape == PinShape::Diamond)
                 dl->AddQuadFilled(Add(p, {-r, 0}), Add(p, {0, -r}), Add(p, {r, 0}), Add(p, {0, r}), c);
-            else if (pin.shape == PinShape::Triangle)
+            else if (shape == PinShape::Triangle)
                 dl->AddTriangleFilled(Add(p, {-r, -r}), Add(p, {r, 0}), Add(p, {-r, r}), c);
             else
                 dl->AddCircleFilled(p, r, c);
@@ -1324,7 +1733,7 @@ void EndEditor(EditorFrame &f) {
             if (ImGui::IsMouseClicked(0) && !f.options.readOnly) {
                 s.connecting = hoveredPin->id;
                 s.reconnecting = {};
-                if (io.KeyAlt)
+                if (hoveredPin->kind == PinKind::Input)
                     for (auto &link : f.graph.links)
                         if (link.to == hoveredPin->id) {
                             s.connecting = link.from;
@@ -1335,12 +1744,29 @@ void EndEditor(EditorFrame &f) {
         }
         if (s.connecting) {
             auto *from = FindPin(f, s.connecting);
-            if (from)
-                dl->AddLine(PinPosition(f, *from), io.MousePos, Color(f.style.accent), f.style.linkWidth);
+            if (from) {
+                auto verdict = hoveredPin ? CanConnect(f.graph, s.connecting, hoveredPin->id, s.reconnecting)
+                                          : ConnectionVerdict{};
+                auto color = !hoveredPin                                     ? f.style.accent
+                             : !verdict.allowed                              ? f.style.error
+                             : verdict.match == ConnectionMatch::Convertible ? f.style.warning
+                                                                             : f.style.success;
+                auto a = PinPosition(f, *from), delta = Sub(io.MousePos, a);
+                int segments = !verdict.allowed ? 40 : verdict.match == ConnectionMatch::Convertible ? 20 : 1;
+                for (int i = 0; i < segments; ++i)
+                    if (segments == 1 || i % 2 == 0)
+                        dl->AddLine(Add(a, Mul(delta, float(i) / segments)),
+                                    Add(a, Mul(delta, float(i + 1) / segments)), Color(color),
+                                    f.style.linkWidth);
+            }
             if (hoveredPin && hoveredPin->id != s.connecting) {
                 auto verdict = CanConnect(f.graph, s.connecting, hoveredPin->id, s.reconnecting);
-                if (!verdict.allowed)
-                    ImGui::SetTooltip("%.*s", int(verdict.reason.size()), verdict.reason.data());
+                ImGui::SetTooltip("%s%s%.*s",
+                                  !verdict.allowed                                ? "Rejected"
+                                  : verdict.match == ConnectionMatch::Convertible ? "Convertible"
+                                                                                  : "Exact",
+                                  verdict.reason.empty() ? "" : ": ", int(verdict.reason.size()),
+                                  verdict.reason.data());
                 if (ImGui::IsMouseReleased(0)) {
                     if (verdict.allowed) {
                         auto r = Request(f, s.reconnecting ? EditKind::Reconnect : EditKind::CreateLink);
@@ -1354,7 +1780,7 @@ void EndEditor(EditorFrame &f) {
                     s.connecting = {};
                     s.reconnecting = {};
                 }
-            } else if (ImGui::IsMouseReleased(0)) {
+            } else if (ImGui::IsMouseReleased(0) && !popup) {
                 s.press = World(f, io.MousePos);
                 s.palette = true;
             }

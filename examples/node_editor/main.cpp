@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <memory>
 #include "../design_gallery/capture.h"
+#include "material_mock.h"
 
 namespace ne = imkit::node_editor;
 namespace {
@@ -535,11 +536,14 @@ void PreviewWave(void *user, ImVec2 size, bool) {
     ImGui::PlotLines("##wave", points, 80, 0, nullptr, -1, 1, size);
 }
 struct Demo {
+    material_mock::Page material;
+    bool materialPage = true;
     Model model;
     ne::EditorState state;
     std::array<ne::EditRequest, 4096> requests{};
     bool dark = true, snap = false, lasso = false;
-    int wire = 0;
+    int wire = 0, density = 1;
+    bool highContrast = false;
     GLuint texture = 0;
     void Init() {
         model.Init();
@@ -574,7 +578,10 @@ struct Demo {
         return {wave, image};
     }
     void Draw() {
-        auto theme = imkit::MakeTheme(dark ? imkit::ColorScheme::Dark : imkit::ColorScheme::Light);
+        auto theme =
+            imkit::MakeTheme(dark ? imkit::ColorScheme::Dark : imkit::ColorScheme::Light,
+                             highContrast ? imkit::ContrastMode::HighContrast : imkit::ContrastMode::Standard,
+                             static_cast<imkit::Density>(density));
         imkit::ThemeScope scope(theme);
         ImGui::SetNextWindowPos({0, 0});
         ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
@@ -583,6 +590,18 @@ struct Demo {
         ImGui::TextUnformatted("ModernKIT / Node Studio");
         ImGui::SameLine();
         ImGui::Checkbox("Dark", &dark);
+        ImGui::SameLine();
+        ImGui::Checkbox("Material Graph Mock", &materialPage);
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(135);
+        ImGui::Combo("Density", &density, "Compact\0Comfortable\0Touch\0");
+        ImGui::SameLine();
+        ImGui::Checkbox("High contrast", &highContrast);
+        if (materialPage) {
+            material.Draw(theme);
+            ImGui::End();
+            return;
+        }
         ImGui::SameLine();
         ImGui::Checkbox("Grid snap", &snap);
         ImGui::SameLine();
@@ -673,6 +692,9 @@ struct Demo {
             labels.push_back("Template " + std::to_string(i + 1));
         for (std::size_t i = 0; i < labels.size(); ++i)
             palette.push_back({1000 + i, labels[i], "Templates", "Host-owned reusable graph"});
+        for (auto &entry : palette)
+            if (entry.type == 1 || entry.type == 2 || entry.type == 3 || entry.type == 6)
+                entry.compatible = [](void *, ne::PinId) { return true; };
         ne::NodePalette(f, palette);
         ne::EndEditor(f);
         ImGui::SameLine();

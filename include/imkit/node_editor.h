@@ -38,6 +38,20 @@ struct NodeStyle {
     LinkStyle linkStyle = LinkStyle::Bezier;
 };
 NodeStyle MakeNodeStyle(const Theme &theme);
+enum class ConnectionMatch { Exact, Convertible, Rejected };
+struct SocketTypeView {
+    std::uint64_t id = 0;
+    std::string_view name{}, category{};
+    ImVec4 color{};
+    PinShape shape = PinShape::Circle;
+};
+struct PinCapabilities {
+    bool add = false, remove = false, rename = false, reorder = false, changeType = false;
+    bool changeMultiplicity = false, required = false;
+    std::uint64_t group = 0;
+    int minimum = 0, maximum = 64;
+    std::string_view reason{};
+};
 struct NodeView {
     NodeId id{};
     Point position{}, size{240, 240};
@@ -51,6 +65,7 @@ struct NodeView {
     double milliseconds = 0;
     bool breakpoint = false;
     const NodeStyle *style = nullptr; // Borrowed until EndEditor.
+    PinCapabilities inputs{}, outputs{};
 };
 struct PinView {
     PinId id{};
@@ -64,6 +79,9 @@ struct PinView {
     PinShape shape = PinShape::Circle;
     ImVec4 color{};   // Alpha zero inherits the editor accent.
     PinId internal{}; // Optional exposed -> internal socket correspondence.
+    PinCapabilities capabilities{};
+    bool inheritTypeStyle = true; // False preserves explicit shape even when type metadata is present.
+    bool manualPosition = true;   // Set false when submitting standard PinRow.
 };
 struct LinkView {
     LinkId id{};
@@ -77,7 +95,14 @@ struct LinkView {
 struct ConnectionVerdict {
     bool allowed = true;
     std::string_view reason{};
+    ConnectionMatch match = ConnectionMatch::Exact;
+    ConnectionVerdict() = default;
+    ConnectionVerdict(bool ok, std::string_view why = {})
+        : allowed(ok), reason(why), match(ok ? ConnectionMatch::Exact : ConnectionMatch::Rejected) {}
+    ConnectionVerdict(ConnectionMatch result, std::string_view why = {})
+        : allowed(result != ConnectionMatch::Rejected), reason(why), match(result) {}
 };
+struct EditRequest;
 struct GraphView {
     GraphId id{1};
     std::uint64_t revision = 0;
@@ -87,6 +112,10 @@ struct GraphView {
     void *user = nullptr;
     // Called on the UI thread. The host decides conversions, cycles and semantics.
     ConnectionVerdict (*canConnect)(void *, PinId output, PinId input) = nullptr;
+    std::span<const SocketTypeView> socketTypes{};
+    ConnectionVerdict (*typeCompatibility)(void *, std::uint64_t output, std::uint64_t input) = nullptr;
+    // Optional preflight; host must still validate the complete operation on application.
+    ConnectionVerdict (*canEditPin)(void *, const EditRequest &) = nullptr;
 };
 enum class EditKind {
     Move,
@@ -123,7 +152,22 @@ enum class EditKind {
     Stop,
     Rename,
     PreviewOutput,
-    PreviewRefresh
+    PreviewRefresh,
+    CreatePin,
+    DeletePin,
+    RenamePin,
+    ChangePinType,
+    SetPinMultiplicity,
+    SetPinLimits,
+    SetPinValue
+};
+enum class ValueKind { None, Color, Float, Integer, Boolean, Vector, Enum, Text, Custom };
+struct PinValue {
+    ValueKind kind = ValueKind::None;
+    std::array<float, 4> number{};
+    int integer = 0;
+    bool boolean = false;
+    std::array<char, 128> text{};
 };
 struct EditRequest {
     EditKind kind = EditKind::Move;
@@ -137,7 +181,12 @@ struct EditRequest {
     Point before{}, after{};
     std::uint64_t type = 0;
     int index = 0;
-    std::array<char, 128> text{}; // Bounded owned text for Rename; no retained host pointers.
+    std::array<char, 128> text{}; // Bounded owned text; no retained host pointers.
+    PinKind pinKind = PinKind::Input;
+    std::uint64_t group = 0;
+    int minimum = 0, maximum = 64;
+    PinValue value{}, previousValue{};
+    std::size_t affectedLinks = 0; // Advisory; host atomically accepts or rejects with links.
 };
 struct RequestBuffer {
     std::span<EditRequest> storage{};
@@ -192,6 +241,24 @@ ConnectionVerdict CanConnect(GraphView graph, PinId a, PinId b, LinkId replacing
 // Returns node IDs in deterministic traversal order; no writes on capacity error.
 LayoutResult TraceNodes(GraphView graph, NodeId start, bool upstream, std::span<NodeId> output);
 
+// Queue a complete operation or write nothing. IDs of created pins come from the host.
+ConnectionVerdict ValidatePinEdit(GraphView graph, const EditRequest &request);
+bool QueuePinEdits(GraphView graph, std::span<const EditRequest> edits, RequestBuffer &output,
+                   std::uint64_t operation);
+bool IsPinConnected(GraphView graph, PinId pin);
+struct PinRowOptions {
+    PinValue value{};
+    float minimum = 0, maximum = 1;
+    std::span<const std::string_view> choices{};
+    bool hideConnectedValue = true;
+    void *user = nullptr;
+    // Draw normal ImGui widgets, return changed. Set phase for multi-widget custom editors.
+    bool (*draw)(void *, PinValue &, Phase &) = nullptr;
+};
+struct PinRowPosition {
+    PinId pin{};
+    Point local{};
+};
 struct ViewState {
     GraphId graph{};
     Point origin{};
@@ -226,6 +293,11 @@ struct EditorState {
     std::vector<EditRequest> gesture;
     std::vector<Point> lasso;
     std::vector<std::pair<std::uint64_t, std::size_t>> nodeIndex, pinIndex;
+    std::vector<PinRowPosition> rowPositions;
+    EditRequest valueEdit{}, pendingPinEdit{};
+    std::array<char, 128> pinEditReason{};
+    bool paletteWasOpen = false;
+    bool valueEditing = false, valueTerminalPending = false;
     Point press{}, lastMouse{}, dragDelta{};
     PinId connecting{};
     LinkId reconnecting{};
@@ -245,6 +317,7 @@ struct EditorOptions {
     ImVec2 size{};
     bool grid = true, snap = false, minimap = true, readOnly = false, lasso = false;
     bool canRun = false, canDebug = false;
+    bool confirmPinImpact = true;
     double minimumZoom = .15, maximumZoom = 3;
     Keymap keys{};
 };
@@ -256,6 +329,7 @@ struct EditorFrame {
     EditorOptions options;
     ImVec2 min{}, max{};
     bool visible = false, hovered = false, blocked = false, nodeOpen = false, pinOpen = false;
+    bool linksQueued = false;
     std::string_view error{};
     const NodeView *node = nullptr;
     float fontSize = 14;
@@ -279,6 +353,9 @@ bool BeginNode(EditorFrame &frame, NodeId node); // EndNode only when true.
 void EndNode(EditorFrame &frame);
 void BeginPin(EditorFrame &frame, PinId pin);
 void EndPin(EditorFrame &frame);
+void PinRow(EditorFrame &frame, PinId pin, PinRowOptions options = {});
+void PinAddRow(EditorFrame &frame, NodeId node, PinKind kind, std::uint64_t group = 0);
+bool GetPinPosition(const EditorFrame &frame, PinId pin, ImVec2 &screenPosition);
 void Link(EditorFrame &frame, const LinkView &link);
 void DrawLinks(EditorFrame &frame);
 // Standard rendering uses the same Begin/End API. Body callback is optional.

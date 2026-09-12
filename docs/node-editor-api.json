@@ -45,6 +45,21 @@
     "header": "imkit/node_editor.h"
   },
   {
+    "name": "imkit::node_editor::ValidatePinEdit",
+    "declaration": "ConnectionVerdict ValidatePinEdit(GraphView graph, const EditRequest &request);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::QueuePinEdits",
+    "declaration": "bool QueuePinEdits(GraphView graph, std::span<const EditRequest> edits, RequestBuffer &output, std::uint64_t operation);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::IsPinConnected",
+    "declaration": "bool IsPinConnected(GraphView graph, PinId pin);",
+    "header": "imkit/node_editor.h"
+  },
+  {
     "name": "imkit::node_editor::CaptureView",
     "declaration": "ViewState CaptureView(const EditorState &state);",
     "header": "imkit/node_editor.h"
@@ -117,6 +132,21 @@
   {
     "name": "imkit::node_editor::EndPin",
     "declaration": "void EndPin(EditorFrame &frame);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::PinRow",
+    "declaration": "void PinRow(EditorFrame &frame, PinId pin, PinRowOptions options = {});",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::PinAddRow",
+    "declaration": "void PinAddRow(EditorFrame &frame, NodeId node, PinKind kind, std::uint64_t group = 0);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::GetPinPosition",
+    "declaration": "bool GetPinPosition(const EditorFrame &frame, PinId pin, ImVec2 &screenPosition);",
     "header": "imkit/node_editor.h"
   },
   {
