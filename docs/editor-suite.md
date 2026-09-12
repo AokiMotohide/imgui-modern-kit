@@ -117,10 +117,15 @@ Timelineは右下にFit・縮小・対数ズームバー・拡大を配置しま
 Payload memory is borrowed only for the callback, and the delivery flag distinguishes
 preview from the single accepted drop. `drawClipOverlay` adds application decoration
 inside clip bounds; it does not transfer hit testing or edit ownership from Timeline.
+An optional route preview returns the exact candidate range, track kind and a borrowed
+label. Timeline then draws a clip-shaped target instead of the native whole-row target;
+the host remains responsible for using the same planning rules at delivery.
 
 `TimelineProvider::externalDrops`は複数のホスト定義ImGui payload型を受け取ります。payload
 memoryはcallback中だけの非所有参照で、delivery flagによりpreviewと1回の確定dropを区別します。
 `drawClipOverlay`はclip内へアプリ固有表示を追加しますが、hit testと編集所有権はTimelineに残ります。
+任意のroute previewは候補の正確な時間範囲、track種別、非所有labelを返します。指定時は行全体ではなく
+clip形状の候補を描画し、確定時にも同じ計画規則を使う責務はホストに残ります。
 
 Video supplies variable-height role tracks, restrictions/source/target controls,
 related clip moves and trims, split/ripple/roll/slip/slide/ripple-delete, snap targets,

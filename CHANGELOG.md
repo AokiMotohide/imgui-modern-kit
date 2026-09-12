@@ -1,5 +1,10 @@
 # Changelog / 変更履歴
 
+## Unreleased
+
+- Add an optional Video Timeline external-drop preview callback so hosts can draw the exact candidate range instead of a whole-row target.
+- Video Timelineの外部drag/dropに、ホスト計画と同じ候補時間範囲を描く任意preview callbackを追加。
+
 ## 2.2.0 — 2026-09-12
 
 - Integrate the guided Gallery comparison, responsive workflow controls, Timeline interaction and Preview placement/Monitor contracts into one release line.

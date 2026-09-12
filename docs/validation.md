@@ -10,6 +10,17 @@ The runner sends public Dear ImGui IO and reads a real OpenGL backbuffer. It doe
 
 runnerは公開Dear ImGui IOを送り、実OpenGL backbufferを読みます。native OS/IME入力、支援技術、実機DPI、性能、外部ホストでの受け入れは確認しません。公開Gallery実行ファイルは別途Release build・stage・DLL import確認を行い、Microsoft Visual C++ Redistributableをarchiveに同梱しません。
 
+## Timeline external-drop preview / Timeline外部drop preview（2026-09-12）
+
+The Debug Video test, Editor API compile fixture and independent source consumer passed.
+The focused checks cover the optional exact candidate range callback, the preserved
+single delivery callback and source-compatible aggregate initialization. Release,
+native OS input and external-host acceptance were not run.
+
+DebugのVideo test、Editor API compile fixture、独立source consumerが合格しました。任意の正確な
+候補範囲callback、deliveryが1回だけであること、既存aggregate初期化とのsource互換を確認しました。
+Release、native OS入力、外部ホスト受け入れは未実施です。
+
 ## Preview placement extension / Preview配置拡張（2026-09-12）
 
 The affected Debug library, API-fixture and Gallery targets built successfully.

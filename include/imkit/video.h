@@ -74,11 +74,20 @@ struct TimelineEditingProvider {
     std::size_t (*trackClipCount)(void *,StableId)=nullptr;
     StableId (*trackAfter)(void *,StableId)=nullptr; // Zero denotes the end of the track list.
 };
+struct TimelineExternalDropPreview {
+    editor::Range range{};
+    TrackKind kind = TrackKind::Video;
+    const char *label = ""; // Borrowed for the current Timeline call only.
+    bool valid = false;
+};
 struct TimelineExternalDropRoute {
     const char *payloadType = "";
     void *user = nullptr;
     bool (*canDrop)(void *,StableId track,Tick at,const void *data,std::size_t size)=nullptr;
     void (*drop)(void *,StableId track,Tick at,const void *data,std::size_t size,bool delivery)=nullptr;
+    // Optional exact candidate range. When supplied, Timeline replaces the
+    // native whole-row target rectangle with a clip-shaped preview.
+    TimelineExternalDropPreview (*preview)(void *,StableId track,Tick at,const void *data,std::size_t size)=nullptr;
 };
 struct EnvelopePoint {StableId id=0;Tick tick=0;double gain=1;bool locked=false;};
 // Sorted clip-local points; empty envelope evaluates to unity gain.

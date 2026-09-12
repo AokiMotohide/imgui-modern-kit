@@ -1037,9 +1037,9 @@ int main() {
             std::array<video::TrackView,2> tracks{{{400,"Video A"},{401,"Video B"}}};
             video::ClipView clip;
             std::array<editor::StableId,1> boxIds{410};
-            int overlayCalls=0,dropPreviews=0,dropDeliveries=0,dropValue=0;
+            int overlayCalls=0,dropPreviews=0,dropDeliveries=0,dropValue=0,rangePreviews=0;
             editor::StableId dropTrack=0;
-            editor::Tick dropTick=0;
+            editor::Tick dropTick=0,previewFirst=0,previewLast=0;
         } fixture;
         fixture.clip.id=410;fixture.clip.track=400;fixture.clip.label="Editable";fixture.clip.duration=editor::FromSeconds(3);
         video::TimelineProvider p;p.user=&fixture;p.revision=1;p.trackCount=2;
@@ -1055,6 +1055,11 @@ int main() {
             [](void *u,editor::StableId track,editor::Tick at,const void *data,std::size_t,bool delivery){
                 auto &f=*static_cast<EditingFixture*>(u);++f.dropPreviews;f.dropTrack=track;f.dropTick=at;f.dropValue=*static_cast<const int*>(data);
                 if(delivery)++f.dropDeliveries;
+            },
+            [](void *u,editor::StableId,editor::Tick at,const void *,std::size_t){
+                auto &f=*static_cast<EditingFixture*>(u);++f.rangePreviews;
+                f.previewFirst=at;f.previewLast=at+editor::FromSeconds(3);
+                return video::TimelineExternalDropPreview{{f.previewFirst,f.previewLast},video::TrackKind::Effect,"Three seconds",true};
             }}};
         p.externalDrops=routes;
         std::array<editor::StableId,8> clipIds{},trackIds{};
@@ -1103,6 +1108,9 @@ int main() {
         io.AddMouseButtonEvent(0,false);render();
         check(fixture.dropPreviews>0 && fixture.dropDeliveries==1 && fixture.dropTrack==401 && fixture.dropValue==42,
               "external host payload previews and delivers once on the hovered track");
+        check(fixture.rangePreviews>0 && fixture.previewFirst==fixture.dropTick &&
+              fixture.previewLast-fixture.previewFirst==editor::FromSeconds(3),
+              "external drop range preview uses the exact host-owned candidate duration");
     }
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
