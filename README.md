@@ -109,4 +109,12 @@ Read the full [validation record and limits](docs/validation.md) before expandin
 
 ## License and provenance
 
-ImKit is [MIT licensed](LICENSE). Dear ImGui, GLFW and optional font assets retain their own licenses; versions, hashes, font provenance and distribution notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The v2.1 Gallery comparison and GIFs add no third-party image, icon, font or code asset.
+## Compatibility and status
+
+The verified baseline is Windows x64/MSVC with the pinned Dear ImGui docking revision. Other platforms and ImGui revisions are not silently claimed compatible. Native OS/IME behavior and integration into a particular application remain separate acceptance work. See [validation and limits](docs/validation.md).
+
+The stable core, themes and components are documented here. Advanced editor modules continue to evolve behind explicit host-owned data and typed-event contracts.
+
+## License and provenance
+
+ImKit is [MIT licensed](LICENSE). Dear ImGui, GLFW and optional font assets retain their own licenses; versions, hashes, font provenance and distribution notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The Gallery comparison and GIFs add no third-party image, icon, font or code asset.

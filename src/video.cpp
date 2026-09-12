@@ -762,7 +762,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             draw->AddRect(a, b,
                           ImGui::GetColorU32(selected ? theme.colors.focus
                                                      : theme.colors.border),
-                          4, selected ? 2.f : 1.f, ImDrawFlags_None);
+                          4, ImDrawFlags_None, selected ? 2.f : 1.f);
             const float edgeHit=std::min(10.f,std::max(6.f,(b.x-a.x)*.22f));
             const bool leftEdge=bodyHovered && io.MousePos.x-a.x<=edgeHit;
             const bool rightEdge=bodyHovered && b.x-io.MousePos.x<=edgeHit;

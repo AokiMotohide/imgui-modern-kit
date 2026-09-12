@@ -109,4 +109,12 @@ ctest --test-dir build/windows-debug -C Debug -R "imkit.(theme|workflow)" --outp
 
 ## ライセンスと出典
 
-ImKitは[MITライセンス](LICENSE)です。Dear ImGui、GLFW、任意font assetにはそれぞれのライセンスが適用されます。版、hash、fontの出典、配布noticeは[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)に記録しています。v2.1のGallery比較とGIFには、第三者の画像・icon・font・コードassetを追加していません。
+## 対応範囲と開発状況
+
+検証済み基準はWindows x64/MSVCと固定Dear ImGui docking版です。その他のOSやDear ImGui版を暗黙に互換とは扱いません。native OS/IMEと個別アプリへの組み込みは別の受け入れ確認です。[検証と制約](docs/validation.md)を参照してください。
+
+安定したcore、theme、componentはこのREADME群で説明します。高度なEditor moduleは、ホスト所有データと型付きeventの契約を維持しながら更新を継続します。
+
+## ライセンスと出典
+
+ImKitは[MITライセンス](LICENSE)です。Dear ImGui、GLFW、任意font assetにはそれぞれのライセンスが適用されます。版、hash、fontの出典、配布noticeは[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)に記録しています。Gallery比較とGIFには、第三者の画像・icon・font・コードassetを追加していません。
