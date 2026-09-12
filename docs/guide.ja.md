@@ -84,7 +84,7 @@ Windows x64、MSVC v145、Release `/MD`、Debug `/MDd`、Dear ImGui 1.92.9b dock
 # 対応するhost_imguiを先に作成
 set(IMKIT_IMGUI_TARGET host_imgui)
 set(IMKIT_SDK_ABI_CONFIRMED ON) # manifest・構成の一致を確認してから
-find_package(imkit 1.0 CONFIG REQUIRED)
+find_package(imkit 2.2 CONFIG REQUIRED)
 target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
 

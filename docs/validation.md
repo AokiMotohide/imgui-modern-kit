@@ -39,14 +39,21 @@ ImageViewportの4 mode、4 source aspect×5 Monitor状態×3配置、4 viewport 
 確認しています。`out/preview-contract-debug/`の生成物はcommitせず、ImageViewport、縦長Loading
 Monitor、縦長CGの代表captureを目視確認しました。
 
-Real camera enumeration/capture, media decoding, physical monitor selection or output,
-native OS/IME input and external-host integration were not performed. Release, install,
-package and publication validation were also not run; Debug and synthetic Gallery sources
+For v2.2.0, Debug and Release built the affected library, Gallery and API fixtures. The focused
+workflow, Video, CG, editor API, public API, Window Frame and accessibility checks passed; source
+and staged-SDK consumers configured, built and ran in Debug and Release. The Windows Gallery and
+SDK were staged for packaging, including the inspected DLL-import inventory.
+
+v2.2.0では、影響するlibrary、Gallery、API fixtureをDebug／Releaseでbuildしました。workflow、Video、CG、
+Editor API、公開API、Window Frame、accessibilityの対象checkが合格し、source consumerとstage済みSDK consumerを
+Debug／Releaseでconfigure・build・実行しました。Windows GalleryとSDKは、DLL import一覧を確認してpackage用にstageしています。
+
+Real camera enumeration/capture, media decoding, physical monitor selection or output, native OS/IME
+input and external-host integration were not performed. Debug/Release and synthetic Gallery sources
 do not establish those categories.
 
-実Camera列挙・capture、media decode、物理monitor選択・出力、native OS/IME入力、外部ホスト統合は
-未実施です。Release、install、package、公開検証も行っておらず、DebugとGalleryのsynthetic sourceを
-これらの合格とは扱いません。
+実Camera列挙・capture、media decode、物理monitor選択・出力、native OS/IME入力、外部ホスト統合は未実施です。
+Debug／Releaseとsynthetic Gallery sourceを、これらの合格とは扱いません。
 
 ## Public window frame / 公開ウィンドウ枠（2026-09-11）
 
