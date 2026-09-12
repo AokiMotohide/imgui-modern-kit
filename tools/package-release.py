@@ -18,7 +18,7 @@ gallery_stage = out / "gallery"
 version = re.search(r"project\(imgui-modern-kit VERSION ([\d.]+)",
                     (root / "CMakeLists.txt").read_text()).group(1)
 commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
-if subprocess.check_output(["git", "status", "--porcelain"], cwd=root, text=True).strip():
+if subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"], cwd=root, text=True).strip():
     raise RuntimeError("Commit the intended source tree before packaging")
 libraries = (
     "imkit.lib", "imkitd.lib",
