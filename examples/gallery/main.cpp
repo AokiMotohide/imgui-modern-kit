@@ -721,9 +721,18 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
         CaptureFrames(h,dir,frame,20);
         h.Click("comparison-default-apply");
         CaptureFrames(h,dir,frame,20);
-        h.Replace("comparison-default-name","Projection Console");
+        h.Replace("comparison-default-name","Studio Console");
         CaptureFrames(h,dir,frame,20);
         h.Click("comparison-imkit-enabled");
+        CaptureFrames(h,dir,frame,20);
+    } else if(demo=="icons") {
+        h.s.page=6;h.s.comparison.open=false;h.s.iconSearch[0]='\0';h.Settle();
+        CaptureFrames(h,dir,frame,20);
+        h.Replace("icon-search","camera");
+        CaptureFrames(h,dir,frame,20);
+        h.Click("icon-button");
+        CaptureFrames(h,dir,frame,20);
+        h.Replace("icon-search","timeline");
         CaptureFrames(h,dir,frame,20);
     } else if(demo=="themes") {
         auto applyPreset=[&](int index) {
@@ -1621,7 +1630,7 @@ int main(int argc, char **argv) {
         if(a=="--capture-demo" && i+1<argc) {
             captureDemo=argv[++i];
             if(captureDemo!="overview" && captureDemo!="comparison" && captureDemo!="themes" &&
-               captureDemo!="workflow" && captureDemo!="timeline") return 2;
+               captureDemo!="icons" && captureDemo!="workflow" && captureDemo!="timeline") return 2;
             continue;
         }
         if (a == "--verify-timeline-model") return VerifyTimelineModel();

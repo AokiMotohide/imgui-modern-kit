@@ -31,18 +31,18 @@ The Gallery runner uses public Dear ImGui IO and its real OpenGL backbuffer. It 
 $gallery = './build/windows-debug/catalog/Debug/imkit_gallery.exe'
 & $gallery --verify-comparison --output out/comparison
 & $gallery --capture-readme --width 960 --height 540 --output out/readme
-foreach ($demo in 'comparison', 'themes', 'workflow', 'timeline') {
+foreach ($demo in 'comparison', 'themes', 'icons', 'workflow', 'timeline') {
     & $gallery --capture-demo $demo --width 960 --height 540 --output out/gifs
 }
 ```
 
 `--verify-comparison` checks that Default and ImKit controls update shared host-owned state, that their temporary styles restore after a frame, and that close/reopen removes and restores the submitted controls.
 
-`--capture-readme` emits 120 frames. Each `--capture-demo` route emits 80 frames. The sequences show Start / Comparison / Components, shared-value edits, palette and preset transitions, workflow feedback, and timeline interaction. All frames are native `960×540` backbuffers.
+`--capture-readme` emits 120 frames. Each `--capture-demo` route emits 80 frames. The sequences show Start / Comparison / Components, shared-value edits, palette and preset transitions, icon search and selection, workflow feedback, and timeline interaction. All frames are native `960×540` backbuffers.
 
 ```powershell
 python tools/build_readme_gif.py out/readme/readme-frames docs/images/gallery-overview.gif
-foreach ($demo in 'comparison', 'themes', 'workflow', 'timeline') {
+foreach ($demo in 'comparison', 'themes', 'icons', 'workflow', 'timeline') {
     python tools/build_readme_gif.py (Join-Path out/gifs $demo) (Join-Path docs/images ("gallery-$demo.gif")) --expected-frames 80
 }
 ```

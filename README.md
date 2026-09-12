@@ -8,21 +8,23 @@
 
 MIT licensed · static library · Windows x64/MSVC verified · Dear ImGui `v1.92.9b-docking` baseline
 
-![A native ImKit Gallery tour](docs/images/gallery-overview.gif)
-
 > 🪟 **Try the Gallery first.** Download the [Windows x64 Gallery](https://github.com/AokiMotohide/imgui-modern-kit/releases/download/v2.1.0/imkit-2.1.0-gallery-windows-x64.zip), unzip it, then run `imkit_gallery.exe`. No installer, no application code required.
 
-## See the difference, not a marketing mockup
+## 🎞 Explore the native Gallery
 
-The movable **Compare** window puts a direct Dear ImGui specimen beside an ImKit specimen. Both columns edit the *same host-owned values*; the left uses public Dear ImGui widgets with `StyleColorsDark`, and the right uses ImKit controls and the selected theme.
+Every animation below is captured from the native Gallery. The first two make the choice concrete: the movable **Compare** window puts direct Dear ImGui next to ImKit, and both columns edit the *same host-owned values*.
 
-![Live Default Dear ImGui and ImKit comparison](docs/images/gallery-comparison.gif)
+| | |
+|---|---|
+| ![Guided Gallery start](docs/images/gallery-overview.gif)<br>**Start with a clear route**<br>Open comparison, components, workflow or the editor examples without facing an empty demo. | ![Live Default Dear ImGui and ImKit comparison](docs/images/gallery-comparison.gif)<br>**Compare the same interaction**<br>Direct `StyleColorsDark` widgets and ImKit controls update one shared value. |
+| ![Theme palette transitions](docs/images/gallery-themes.gif)<br>**Move through 12 complete themes**<br>Inspect palette and semantic-state changes in the running UI. | ![Generated icon search and selection](docs/images/gallery-icons.gif)<br>**Search 284 generated icons**<br>Seven pixel sizes and 1,988 atlas variants keep a large catalog practical. |
+| ![Workflow state feedback](docs/images/gallery-workflow.gif)<br>**Guide a real workflow**<br>Show host-owned requests, notifications and state feedback without adding a framework. | ![Timeline interaction](docs/images/gallery-timeline.gif)<br>**Scale into editing surfaces**<br>Explore timeline interaction and undo as a Gallery specimen. |
 
-This is a real Gallery capture from an OpenGL backbuffer, not a redrawn image. It demonstrates visual structure and interaction-contract continuity; it is **not** a performance, native OS/IME or accessibility benchmark. The comparison introduces no copied third-party UI code or assets.
+This is a real OpenGL-backbuffer capture, not a redrawn mockup. It demonstrates visual structure and interaction-contract continuity; it is **not** a performance, native OS/IME or accessibility benchmark. The comparison introduces no copied third-party UI code or assets.
 
-| Theme palettes | Workflow feedback | Timeline editing |
-|---|---|---|
-| ![Theme palette transitions](docs/images/gallery-themes.gif) | ![Workflow state feedback](docs/images/gallery-workflow.gif) | ![Timeline interaction](docs/images/gallery-timeline.gif) |
+## 🚀 Built to evolve
+
+ImKit evolves through versioned releases rather than a one-off visual refresh. The Gallery, reproducible GIFs, SDK manifests and English/Japanese documentation are updated together, so you can evaluate each improvement from a native executable before adopting it. Follow [Releases](https://github.com/AokiMotohide/imgui-modern-kit/releases) and the [changelog](CHANGELOG.md) for the current line and its evidence.
 
 ## Get value in 30 seconds
 

@@ -142,6 +142,8 @@ void ImKitComparisonSpecimen(GalleryState &s) {
 }
 void Icons(GalleryState &s) {
     Heading(s, "Icons / Generated outline glyphs");
+    TextDisabled("%d generated icons · %d atlas sizes · searchable catalog",
+                 static_cast<int>(GetIconCatalog().size()), static_cast<int>(IconPixelSizes.size()));
     SetNextItemWidth(210);
     InputText("Search", s.iconSearch, sizeof(s.iconSearch));
     Record(s, "icon-search");

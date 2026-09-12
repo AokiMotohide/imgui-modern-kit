@@ -2,9 +2,9 @@
 
 ## Gallery comparison and documentation captures / Gallery比較と文書capture（2026-09-12）
 
-The Debug native Gallery build passed `--verify-comparison`: Default Dear ImGui and ImKit controls changed the same host-owned value, temporary comparison styles restored after a frame, and closing/reopening removed then restored the submitted controls. The runner captured 120 overview frames and 80 frames each for comparison, themes, workflow and timeline at native `960×540`; the checked-in GIF encoder accepted all five outputs under its 8 MiB limit. Representative native frames were visually inspected.
+The Debug native Gallery build passed `--verify-comparison`: Default Dear ImGui and ImKit controls changed the same host-owned value, temporary comparison styles restored after a frame, and closing/reopening removed then restored the submitted controls. The runner captured 120 overview frames and 80 frames each for comparison, themes, icons, workflow and timeline at native `960×540`; the checked-in GIF encoder accepted all six outputs under its 8 MiB limit. Representative native frames were visually inspected.
 
-Debug native Galleryで`--verify-comparison`が成功しました。Default Dear ImGuiとImKitのcontrolは同じホスト所有値を変更し、比較用の一時styleはframe後に復元され、close/reopenでcontrolが消えて再表示されました。概要120 frame、比較・theme・workflow・timeline各80 frameをnative `960×540`でcaptureし、commitする5本のGIFは8MiB上限付きencoderを通過しました。代表native frameを目視確認しました。
+Debug native Galleryで`--verify-comparison`が成功しました。Default Dear ImGuiとImKitのcontrolは同じホスト所有値を変更し、比較用の一時styleはframe後に復元され、close/reopenでcontrolが消えて再表示されました。概要120 frame、比較・theme・icon・workflow・timeline各80 frameをnative `960×540`でcaptureし、commitする6本のGIFは8MiB上限付きencoderを通過しました。代表native frameを目視確認しました。
 
 The runner sends public Dear ImGui IO and reads a real OpenGL backbuffer. It does not establish native OS/IME input, assistive-technology operation, physical-DPI, performance or external-host acceptance. The released Gallery executable is separately built, staged and inspected for its DLL imports; its archive does not bundle the Microsoft Visual C++ Redistributable.
 

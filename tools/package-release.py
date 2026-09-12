@@ -98,7 +98,7 @@ with zipfile.ZipFile(evidence, "w", zipfile.ZIP_DEFLATED) as archive:
         archive.write(path, "comparison/" + path.name)
     for path in sorted((root / "out/readme/readme-frames").glob("capture.txt")):
         archive.write(path, "captures/readme-" + path.name)
-    for demo in ("comparison", "themes", "workflow", "timeline"):
+    for demo in ("comparison", "themes", "icons", "workflow", "timeline"):
         path = root / "out/gifs" / demo / "capture.txt"
         if path.is_file():
             archive.write(path, f"captures/{demo}-capture.txt")

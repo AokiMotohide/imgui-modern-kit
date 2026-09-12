@@ -8,21 +8,23 @@
 
 MITライセンス · 静的ライブラリ · Windows x64/MSVCで検証済み · Dear ImGui `v1.92.9b-docking` 基準
 
-![native ImKit Galleryの案内](docs/images/gallery-overview.gif)
-
 > 🪟 **まずGalleryを試してください。** [Windows x64 Gallery](https://github.com/AokiMotohide/imgui-modern-kit/releases/download/v2.1.0/imkit-2.1.0-gallery-windows-x64.zip)をdownloadし、展開後に`imkit_gallery.exe`を実行します。installerもアプリコードも不要です。
 
-## 宣伝用mockupではなく、実際に並べて確かめる
+## 🎞 native Galleryを動きで見る
 
-移動・resize可能な **Compare** windowでは、直接Dear ImGuiを使った実例とImKitの実例を並べます。両列は*同じホスト所有値*を編集します。左は`StyleColorsDark`と公開Dear ImGui widget、右はImKit部品と選択中Themeを使います。
+以下のanimationはすべてnative Galleryからcaptureしています。最初の2本は選択の違いを具体化します。移動・resize可能な **Compare** windowでは、直接Dear ImGuiとImKitを並べ、両列が*同じホスト所有値*を編集します。
 
-![Default Dear ImGuiとImKitのライブ比較](docs/images/gallery-comparison.gif)
+| | |
+|---|---|
+| ![案内付きGallery Start](docs/images/gallery-overview.gif)<br>**迷わず最初の画面から進める**<br>空のdemoではなく、比較、component、workflow、Editor実例へ進みます。 | ![Default Dear ImGuiとImKitのライブ比較](docs/images/gallery-comparison.gif)<br>**同じ操作を並べて比較する**<br>直接`StyleColorsDark` widgetとImKit controlが1つの共有値を更新します。 |
+| ![Theme paletteの遷移](docs/images/gallery-themes.gif)<br>**12種類の完全なThemeを切り替える**<br>実行中UIでpaletteと意味別stateの変化を確認できます。 | ![生成iconの検索と選択](docs/images/gallery-icons.gif)<br>**284個の生成iconを検索する**<br>7種類のpixel sizeと1,988個のatlas variantにより、大きなcatalogを実用的に扱えます。 |
+| ![Workflow状態のfeedback](docs/images/gallery-workflow.gif)<br>**実際のworkflowを導く**<br>frameworkを導入せず、ホスト所有request、notification、状態feedbackを示します。 | ![Timeline操作](docs/images/gallery-timeline.gif)<br>**編集surfaceへ拡張する**<br>Gallery specimenとしてTimeline操作とUndoを確認できます。 |
 
-これは描き直した画像ではなく、実GalleryのOpenGL backbufferから得たcaptureです。視覚構造と操作契約の継続性を示します。性能、native OS/IME、accessibilityのbenchmarkではありません。比較画面のために第三者UIコード・assetを複製、追加していません。
+これは描き直したmockupではなく、実OpenGL backbufferから得たcaptureです。視覚構造と操作契約の継続性を示します。性能、native OS/IME、accessibilityのbenchmarkではありません。比較画面のために第三者UIコード・assetを複製、追加していません。
 
-| Theme palette | Workflow feedback | Timeline編集 |
-|---|---|---|
-| ![Theme paletteの遷移](docs/images/gallery-themes.gif) | ![Workflow状態のfeedback](docs/images/gallery-workflow.gif) | ![Timeline操作](docs/images/gallery-timeline.gif) |
+## 🚀 継続して育つdesign system
+
+ImKitは一度きりの見た目更新ではなく、versioned releaseで進化します。Gallery、再生成可能GIF、SDK manifest、英日documentを同時に更新するため、導入前にnative executableで改善内容を確かめられます。現在の開発ラインと証跡は[Releases](https://github.com/AokiMotohide/imgui-modern-kit/releases)と[変更履歴](CHANGELOG.md)で確認してください。
 
 ## 30秒で価値を確認する
 

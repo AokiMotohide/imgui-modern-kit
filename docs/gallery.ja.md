@@ -31,18 +31,18 @@ Gallery runnerは公開Dear ImGui IOと実OpenGL backbufferを使用します。
 $gallery = './build/windows-debug/catalog/Debug/imkit_gallery.exe'
 & $gallery --verify-comparison --output out/comparison
 & $gallery --capture-readme --width 960 --height 540 --output out/readme
-foreach ($demo in 'comparison', 'themes', 'workflow', 'timeline') {
+foreach ($demo in 'comparison', 'themes', 'icons', 'workflow', 'timeline') {
     & $gallery --capture-demo $demo --width 960 --height 540 --output out/gifs
 }
 ```
 
 `--verify-comparison`は、DefaultとImKitのcontrolが共有ホスト所有状態を更新すること、一時styleがframe後に復元されること、close/reopen時にcontrolが消え、再表示されることを確認します。
 
-`--capture-readme`は120 frameを出力します。各`--capture-demo`は80 frameを出力します。Start／比較／Components、共有値の編集、paletteとpreset遷移、workflow feedback、timeline操作を扱います。すべてnative `960×540` backbufferです。
+`--capture-readme`は120 frameを出力します。各`--capture-demo`は80 frameを出力します。Start／比較／Components、共有値の編集、paletteとpreset遷移、icon検索と選択、workflow feedback、timeline操作を扱います。すべてnative `960×540` backbufferです。
 
 ```powershell
 python tools/build_readme_gif.py out/readme/readme-frames docs/images/gallery-overview.gif
-foreach ($demo in 'comparison', 'themes', 'workflow', 'timeline') {
+foreach ($demo in 'comparison', 'themes', 'icons', 'workflow', 'timeline') {
     python tools/build_readme_gif.py (Join-Path out/gifs $demo) (Join-Path docs/images ("gallery-$demo.gif")) --expected-frames 80
 }
 ```
