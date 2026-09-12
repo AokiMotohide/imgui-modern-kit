@@ -202,7 +202,7 @@ confirmPinImpactで接続済みソケットの短い確認表示を切り替え�
 ## Material Graph Mock
 
 独立Galleryの初期ページをMaterial Graph Mockにしました。
-ホスト実装はexamples/node_editor/material_mock.hです。従来Studioもページcheckboxで選べます。
+ホスト実装はexamples/node_editor/material_mock.hです。従来StudioもNode Studioボタンで選べます。
 Image／Color／Float／Normal、3種類のBRDF例、Principled、Mix／Add Closure、Emission、
 Material Outputの12テンプレートがgraphにあり、パンまたはFrame allで全体を確認できます。
 Principled入力は動的編集可能、Mixは可変長groupを持ち、Paletteは型で絞り込んで追加・自動接続を
@@ -221,8 +221,16 @@ graphの一括配線はDrawLinksを呼んだ場合だけ予約し、低レベル
 ## 周辺操作と外観
 
 両Galleryページで追加・Undo／Redo・全体表示のicon操作を共通化した。
-ページ選択でMaterial Graph MockとNode Studioを切り替え、設定menuで密度、contrast、
+ページボタンでMaterial Graph MockとNode Studioを切り替える。通常Gallery上部の
+**Node Editor**ボタンからNode Studioを直接開き、再クリック時は起動済みwindowを前面にする。
+`imkit_gallery`のbuildは同じ出力先にNode Editor実行ファイルも生成する。設定menuで密度、contrast、
 reduced motionとcanvas設定を変更する。補助操作とhelpをmenuへ整理し、Materialにも
 選択配線への挿入操作を配置した。検索結果は固定高でスクロールし、パンくずは折り返す。
 minimapクリックは背後のwidgetを操作せずviewportを移動する。既存icon atlasのuploadと
 日本語system fontの選択・寿命管理はホストが行う。
+
+ノードのheaderを選択すると、Inspectorの**Node properties**で**Name**と
+**Node color...**を編集できる。名前はEnterまたは欄から離れた時に確定する。
+色はRGB pickerで選び、Applyで確定、Use themeで既定色に戻し、Cancelで取り消す。
+変更対象はノードheaderで、名前・色とも例のUndo／Redoに含まれる。色は例のホストが所有し、
+ノードごとの借用`NodeStyle`を渡す。公開APIの変更はない。

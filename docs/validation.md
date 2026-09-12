@@ -1,5 +1,20 @@
 # Validation / 検証
 
+## Node editor access, appearance and collapse / Node editorの導線・外観・折りたたみ（2026-09-12）
+
+The Debug Gallery and Node Editor companion built successfully. `imkit.node_editor`
+passed host name/color Undo/Redo, borrowed header styles and repeated collapsed-node
+layout checks. The collapse regression reproduced Dear ImGui's cursor-boundary
+assertion before the fix. The native `--verify-node-actions` runner passed 60
+public-IO clicks on Output monitor, producing 30 collapse/expand transitions.
+Native OS mouse/IME input, launcher focus behavior and Release packaging were not verified.
+
+Debugの通常GalleryとNode Editor実行ファイルはbuildに成功した。`imkit.node_editor`で
+ホスト所有の名前・色のUndo／Redo、借用header style、折りたたみの反復を確認した。
+修正前には折りたたみ回帰テストでDear ImGuiのcursor境界assertionを再現した。
+native `--verify-node-actions`ではOutput monitorへの公開IOクリック60回、
+折りたたみ・展開30回が成功した。native OSマウス／IME、launcherの前面化、Release配布は未検証。
+
 ## Gallery comparison and documentation captures / Gallery比較と文書capture（2026-09-12）
 
 The Debug native Gallery build passed `--verify-comparison`: Default Dear ImGui and ImKit controls changed the same host-owned value, temporary comparison styles restored after a frame, and closing/reopening removed then restored the submitted controls. The runner captured 120 overview frames and 80 frames each for comparison, themes, icons, workflow and timeline at native `960×540`; the checked-in GIF encoder accepted all six outputs under its 8 MiB limit. Representative native frames were visually inspected.

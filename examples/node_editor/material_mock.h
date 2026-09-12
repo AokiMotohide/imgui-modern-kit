@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include "toolbar.h"
+#include "appearance.h"
 
 // Entirely host-owned GUI mock. No physical BRDF or shader compilation.
 namespace material_mock {
@@ -34,6 +35,8 @@ struct Pin {
     ne::PinValue value;
 };
 struct Node {
+    ImVec4 color{};
+    ne::NodeStyle customStyle{};
     ne::NodeView view;
     int type = 0;
     std::string name;
@@ -487,6 +490,7 @@ inline void DrawPreview(void *user, ImVec2 size, bool) {
     ImGui::Dummy(size);
 }
 struct Page {
+    node_gallery::AppearanceEditor appearance;
     Model model;
     ne::EditorState state;
     std::array<ne::EditRequest, 256> storage{};
@@ -525,6 +529,7 @@ struct Page {
         ne::RequestBuffer out{storage};
         auto style = ne::MakeNodeStyle(theme);
         style.linkStyle = wire;
+        node_gallery::StyleNodes(model.nodes, model, style);
         for (auto &view : model.nodes) {
             auto count = std::count_if(g.pins.begin(), g.pins.end(),
                                        [&](auto &pin) { return pin.node == view.id && !pin.hidden; });
@@ -578,6 +583,7 @@ struct Page {
         ne::DrawLinks(f);
         for (auto &n : model.data.nodes)
             if (ne::BeginNode(f, n.view.id)) {
+                ImGui::PushStyleColor(ImGuiCol_Text, style.text);
                 for (auto &p : model.data.pins)
                     if (p.view.node == n.view.id) {
                         ne::PinRowOptions opt;
@@ -593,6 +599,7 @@ struct Page {
                     preview.user = &n.preview;
                     ne::Preview(f, {&preview, 1});
                 }
+                ImGui::PopStyleColor();
                 ne::EndNode(f);
             }
         std::array<ne::PaletteEntry, 12> entries{};
@@ -607,6 +614,10 @@ struct Page {
         ImGui::BeginChild("Material inspector", {0, size.y}, ImGuiChildFlags_Borders);
         ne::NodeSearch(f);
         ImGui::Separator();
+        ImGui::SeparatorText("Node properties");
+        auto* selected = model.Find(state.active);
+        const bool applyColor = appearance.Draw(f, selected ? &selected->view : nullptr,
+                                                selected ? selected->color : ImVec4{}, style.accent);
         ne::NodeInspector(f, state.active);
         ImGui::EndChild();
         for (auto &n : model.data.nodes) {
@@ -618,6 +629,7 @@ struct Page {
             ne::DrawDetachedPreviews(f, n.view.id, {&preview, 1});
         }
         model.Apply(out.Requests());
+        if (applyColor) node_gallery::ApplyColor(model, appearance.node, appearance.draft);
     }
 };
 } // namespace material_mock

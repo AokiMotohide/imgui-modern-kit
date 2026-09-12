@@ -14,10 +14,17 @@
 #include "../design_gallery/capture.h"
 #include "material_mock.h"
 #include "toolbar.h"
+#include "appearance.h"
+#ifdef _MSC_VER
+#include <crtdbg.h>
+#include <cstdlib>
+#endif
 
 namespace ne = imkit::node_editor;
 namespace {
 struct Node {
+    ImVec4 color{};
+    ne::NodeStyle customStyle{};
     ne::NodeView view;
     ne::GraphId graph{1};
     std::string title;
@@ -539,6 +546,8 @@ void PreviewWave(void *user, ImVec2 size, bool) {
     ImGui::PlotLines("##wave", points, 80, 0, nullptr, -1, 1, size);
 }
 struct Demo {
+    node_gallery::AppearanceEditor appearance;
+    ImVec2 monitorHeader{};
     material_mock::Page material;
     bool materialPage = true;
     Model model;
@@ -609,10 +618,9 @@ struct Demo {
         ImGui::TextUnformatted("ModernKIT / Node Studio");
         if (ImGui::GetContentRegionAvail().x > 520)
             ImGui::SameLine();
-        ImGui::SetNextItemWidth(std::min(300.f, std::max(100.f, ImGui::GetContentRegionAvail().x - 70.f)));
-        int page = materialPage ? 0 : 1;
-        if (ImGui::Combo("##page", &page, "Material Graph Mock\0Node Studio\0"))
-            materialPage = page == 0;
+        if (ImGui::Button("Node Studio")) materialPage = false;
+        ImGui::SameLine();
+        if (ImGui::Button("Material Graph")) materialPage = true;
         ImGui::SameLine();
         if (node_gallery::Action("settings", icons, imkit::IconId::Settings,
                                  "Appearance and canvas settings"))
@@ -642,6 +650,7 @@ struct Demo {
         ne::RequestBuffer out{requests};
         auto style = ne::MakeNodeStyle(theme);
         style.linkStyle = static_cast<ne::LinkStyle>(wire);
+        node_gallery::StyleNodes(model.views, model, style);
         ne::EditorFrame controls;
         controls.graph = graph;
         controls.state = &state;
@@ -695,6 +704,11 @@ struct Demo {
         options.lasso = lasso;
         options.size = canvasSize;
         auto f = ne::BeginEditor("demo", graph, state, out, style, options);
+        if (model.data.nodes.size() > 2) {
+            const auto& monitor = model.data.nodes[2].view;
+            monitorHeader = {f.min.x + float((monitor.position.x - state.origin.x + 60) * state.zoom),
+                             f.min.y + float((monitor.position.y - state.origin.y) * state.zoom) + style.headerHeight * .5f};
+        }
         ne::DrawLinks(f);
         ne::DrawNodes(
             f,
@@ -705,6 +719,7 @@ struct Demo {
                     return;
                 if (node.kind == ne::NodeKind::Group || node.kind == ne::NodeKind::Frame)
                     return;
+                node_gallery::BodyTextScope bodyText(frame.style.text);
                 if (node.kind == ne::NodeKind::Note) {
                     ImGui::TextWrapped("This note belongs to the host. Group nodes to move them together.");
                     return;
@@ -741,6 +756,10 @@ struct Demo {
         ImGui::BeginChild("Inspector", {0, canvasSize.y}, ImGuiChildFlags_Borders);
         ne::NodeSearch(f);
         ImGui::Separator();
+        ImGui::SeparatorText("Node properties");
+        auto* selected = model.Find(state.active);
+        const bool applyColor = appearance.Draw(f, selected ? &selected->view : nullptr,
+                                                selected ? selected->color : ImVec4{}, style.accent);
         ne::NodeInspector(f, state.active);
         if (auto *n = model.Find(state.active)) {
             ne::PropertyView value{1, "Expose value", n->valueExposed};
@@ -756,6 +775,7 @@ struct Demo {
             }
         ImGui::End();
         model.Apply(out.Requests());
+        if (applyColor) node_gallery::ApplyColor(model, appearance.node, appearance.draft);
     }
 };
 bool ModelSmoke() {
@@ -817,6 +837,14 @@ bool ModelSmoke() {
 } // namespace
 int main(int argc, char **argv) {
     bool smoke = argc > 1 && std::string_view(argv[1]) == "--smoke";
+    const bool verify = argc > 1 && std::string_view(argv[1]) == "--verify-node-actions";
+#ifdef _MSC_VER
+    if (verify) {
+        _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
+        _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
+        _set_abort_behavior(0, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
+    }
+#endif
     if (!ModelSmoke()) {
         std::fprintf(stderr, "host model smoke failed\n");
         return 1;
@@ -824,7 +852,7 @@ int main(int argc, char **argv) {
     const auto com = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     if (!glfwInit())
         return 2;
-    glfwWindowHint(GLFW_VISIBLE, smoke ? GLFW_FALSE : GLFW_TRUE);
+    glfwWindowHint(GLFW_VISIBLE, smoke || verify ? GLFW_FALSE : GLFW_TRUE);
     auto has = [&](std::string_view option) {
         for (int i = 1; i < argc; ++i)
             if (argv[i] == option)
@@ -854,6 +882,7 @@ int main(int argc, char **argv) {
     auto demo = std::make_unique<Demo>();
     demo->Init();
     demo->materialPage = !has("--studio");
+    if (verify) demo->materialPage = false;
     demo->density = has("--touch") ? 2 : has("--compact") ? 0 : 1;
     demo->highContrast = has("--contrast");
     if (has("--narrow"))
@@ -863,12 +892,29 @@ int main(int argc, char **argv) {
         demo->material.model.data.pins[2].name = "未接続入力の長い日本語ラベル";
     }
     int frames = 0;
-    while (!glfwWindowShouldClose(window) && (!smoke || frames < 5)) {
+    int collapseChanges = 0;
+    bool collapsed = false;
+    while (!glfwWindowShouldClose(window) && (!smoke || frames < 5) && (!verify || frames < 724)) {
         glfwPollEvents();
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
+        if (verify) {
+            auto& io = ImGui::GetIO();
+            io.DeltaTime = 1.f / 60;
+            io.ConfigInputTrickleEventQueue = false;
+            if (frames >= 4) {
+                io.AddMousePosEvent(demo->monitorHeader.x, demo->monitorHeader.y);
+                const int burst = (frames - 4) % 24;
+                // Leave a double-click timeout between bursts so each pair toggles again.
+                io.AddMouseButtonEvent(0, burst == 0 || burst == 2);
+            }
+        }
         ImGui::NewFrame();
         demo->Draw();
+        if (verify && collapsed != demo->model.data.nodes[2].view.collapsed) {
+            collapsed = demo->model.data.nodes[2].view.collapsed;
+            ++collapseChanges;
+        }
         ImGui::Render();
         int w, h;
         glfwGetFramebufferSize(window, &w, &h);
@@ -892,5 +938,9 @@ int main(int argc, char **argv) {
         CoUninitialize();
     if (smoke)
         std::printf("node studio: host edit/undo/subgraph model and 5 native frames passed\n");
+    if (verify) {
+        std::printf("Output monitor: 60 public-IO clicks, %d collapse/expand transitions\n", collapseChanges);
+        return collapseChanges >= 20 ? 0 : 1;
+    }
     return 0;
 }

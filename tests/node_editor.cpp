@@ -3,6 +3,10 @@
 #include <cmath>
 #include <cstdio>
 #include <limits>
+#ifdef _MSC_VER
+#include <crtdbg.h>
+#include <cstdlib>
+#endif
 #include "../examples/node_editor/material_mock.h"
 using namespace imkit::node_editor;
 namespace {
@@ -216,6 +220,22 @@ void SocketTests() {
             p.value.number = {.1f, .1f, .1f, 1};
     m.Evaluate();
     Check(!Near(oldColor.x, m.Find(target)->preview.x), "host CPU preview changes after upstream input");
+    Check(node_gallery::ApplyColor(m, target, {.8f, .2f, .1f, 1}), "node header color commits");
+    auto undoColor = command(EditKind::Undo);
+    Check(m.Apply({&undoColor, 1}) && m.Find(target)->color.w == 0, "node color undo restores theme");
+    auto redoColor = command(EditKind::Redo);
+    Check(m.Apply({&redoColor, 1}) && Near(m.Find(target)->color.x, .8), "node color redo restores custom color");
+    auto rename = command(EditKind::Rename);
+    rename.node = target;
+    std::snprintf(rename.text.data(), rename.text.size(), "Custom output");
+    Check(m.Apply({&rename, 1}) && m.Find(target)->name == "Custom output", "node name commits");
+    auto undoName = command(EditKind::Undo);
+    Check(m.Apply({&undoName, 1}) && m.Find(target)->name == "Material Output", "node name undo");
+    auto view = m.View();
+    auto style = MakeNodeStyle(imkit::MakeTheme(imkit::ColorScheme::Dark));
+    node_gallery::StyleNodes(m.nodes, m, style);
+    Check(view.nodes.back().style && Near(view.nodes.back().style->header.x, .8),
+          "custom header color is supplied through borrowed per-node style");
 }
 void InputTests() {
     ImGui::CreateContext();
@@ -522,10 +542,30 @@ void InputTests() {
     frame();
     Check(out.count == 0 && state.gesture.empty(), "minimap consumes pointer without node edits");
     Check(!Near(state.origin.x, 0) || !Near(state.origin.y, 0), "minimap click navigates viewport");
+    // Empty/collapsed node bodies must still finish a valid child layout.
+    nodes[1].position = {400, 30};
+    for (int i = 0; i < 20; ++i) {
+        nodes[1].collapsed = i % 2 == 0;
+        state.origin = {};
+        ImGui::NewFrame();
+        ImGui::SetNextWindowPos({0, 0});
+        ImGui::SetNextWindowSize({1000, 700});
+        ImGui::Begin("collapse regression");
+        auto f = BeginEditor("collapse", graph, state, out, style);
+        DrawNodes(f);
+        EndEditor(f);
+        ImGui::End();
+        ImGui::Render();
+    }
     ImGui::DestroyContext();
 }
 } // namespace
 int main() {
+#ifdef _MSC_VER
+    _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
+    _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
+    _set_abort_behavior(0, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
+#endif
     LayoutTests();
     SocketTests();
     InputTests();

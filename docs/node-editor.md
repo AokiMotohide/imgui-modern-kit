@@ -262,7 +262,7 @@ host application.
 
 The independent Gallery defaults to Material Graph Mock. Its host implementation
 is `examples/node_editor/material_mock.h`; the previous studio page remains
-available through the page checkbox. Twelve node templates include image/color/
+available through the Node Studio button. Twelve node templates include image/color/
 scalar/normal sources, three BRDF examples, Principled, Mix/Add Closure, Emission
 and Material Output. All nodes are present in the graph; pan or Frame all to see
 the extended workspace. Principled inputs are editable, Mix has a variadic group,
@@ -284,9 +284,18 @@ See the [P0/P1 review](node-editor-review.md) for validation and remaining work.
 ## Navigation and appearance
 
 Both Gallery pages share icon actions for add, Undo/Redo and framing. The page
-selector switches Material Graph Mock and Node Studio. Settings contains density,
+buttons switch Material Graph Mock and Node Studio. The main Gallery's top-level
+**Node Editor** button opens Node Studio directly; clicking it again focuses the
+same running window. Building `imkit_gallery` also builds its companion Node
+Editor executable in the same directory. Settings contains density,
 contrast, reduced motion and canvas controls. Secondary actions and help live in
 menus; Material also exposes insertion into a selected wire. Search results scroll
 within a bounded panel, breadcrumbs wrap, and minimap clicks navigate without
 activating underlying widgets. The host uploads the existing icon atlas and
 prefers an installed Japanese font. It owns both resource lifetimes.
+
+Select a node header to edit **Name** and **Node color...** in the inspector's
+**Node properties** section. Names commit on Enter or leaving the field. Color
+uses an RGB picker with Apply, Use theme and Cancel; it changes the node header.
+Both edits participate in the example's Undo/Redo. The example owns colors and
+supplies borrowed per-node `NodeStyle` values; the public API is unchanged.

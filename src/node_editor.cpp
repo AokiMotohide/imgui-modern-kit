@@ -722,7 +722,9 @@ bool BeginNode(EditorFrame &f, NodeId id) {
         ImGui::SetTooltip("%.*s", int(n->description.size()), n->description.data());
     if (n->locked)
         dl->AddCircleFilled({a.x + px.x - 6 * z, a.y + 6 * z}, 2 * z, Color(st.muted));
-    ImGui::SetCursorScreenPos(Add(a, {st.padding * z, st.headerHeight * z + st.padding * z}));
+    // A collapsed node has no body item to validate an extended cursor position.
+    if (!n->collapsed)
+        ImGui::SetCursorScreenPos(Add(a, {st.padding * z, st.headerHeight * z + st.padding * z}));
     ImGui::PushItemWidth(std::max(1.f, px.x - 2 * st.padding * z));
     ImGui::BeginDisabled(f.options.readOnly || Locked(f, *n) || n->collapsed || s.zoom < st.detailZoom);
     return true;
@@ -1349,10 +1351,12 @@ void NodeInspector(EditorFrame &f, NodeId id) {
     }
     if (f.state->pinEditReason[0])
         ImGui::TextWrapped("%s", f.state->pinEditReason.data());
+    ImGui::PushID(std::to_string(id.value).c_str());
     char title[128]{};
     std::copy_n(n->title.data(), std::min(n->title.size(), sizeof(title) - 1), title);
     ImGui::BeginDisabled(f.options.readOnly || Locked(f, *n));
-    if (ImGui::InputText("Name", title, sizeof(title), ImGuiInputTextFlags_EnterReturnsTrue)) {
+    const bool rename = ImGui::InputText("Name", title, sizeof(title), ImGuiInputTextFlags_EnterReturnsTrue);
+    if ((rename || ImGui::IsItemDeactivatedAfterEdit()) && std::string_view(title) != n->title) {
         auto r = Request(f, EditKind::Rename, id);
         std::copy(std::begin(title), std::end(title), r.text.begin());
         f.requests->Push(r);
@@ -1432,6 +1436,7 @@ void NodeInspector(EditorFrame &f, NodeId id) {
             QueueCommand(f, EditKind::Stop);
     }
     ImGui::EndDisabled();
+    ImGui::PopID();
 }
 void ExposedProperties(EditorFrame &f, NodeId node, std::span<const PropertyView> properties) {
     ImGui::BeginDisabled(f.options.readOnly);
