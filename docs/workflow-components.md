@@ -54,6 +54,7 @@ and relocated SDK consumers. Existing signatures and native API inventory are re
 | `MultiSelectionBar`, `HelpCallout`, `ValidationSummary` | Host count, commands or issues; no validation engine / 検証処理を所有しない |
 | `ResponsiveToolbar(..., ToolbarOptions)` | Overflow, icon labels, disabled reasons, native keyboard focus / overflowとaccessible label |
 | `ImageGeometryValid`, `FitImage`, `ClampImage` | Numeric image layout independent of texture availability / textureと独立した数値layout |
+| `ResolveImagePlacement` | Pure Fit/Fill/Stretch destination and UV crop resolver; invalid geometry is rejected / 純粋な配置・UV crop計算。無効geometryは拒否 |
 | `PixelToNormalized`, `NormalizedToPixel` | Divide/multiply by image dimensions; invalid dimensions return zero / 無効寸法はzero |
 | `BeginImageViewport`, `EndImageViewport` | Existing Canvas, borrowed texture, uniform zoom; always paired / 同一Canvasを使用 |
 | `ZoomToolbar` | Fit/fill/1:1, zoom and pan; updates display state / 表示状態だけを更新 |
@@ -73,6 +74,16 @@ Fitは全体、Fillは切り抜き、1:1は画像pixelとImGui座標単位を対
 高DPIの物理pixelとは異なります。小さい画像は中央、大きい画像は端までpan可能です。
 zoom中心は端clampが必要になるまで保持します。Manual以外はresizeで再fitし、
 矩形・lasso選択は既存`CanvasSelection`を使用します。
+
+`ResolveImagePlacement` uses local coordinates whose origin is the available region's
+top-left. Fit returns a centered destination with full UVs, Fill returns the full
+destination with centered crop UVs, and Stretch uses both complete regions. It owns
+no texture or renderer and returns `valid=false` for non-positive, non-finite or
+non-drawable geometry.
+
+`ResolveImagePlacement`の原点は利用可能領域の左上です。Fitは中央配置と全UV、Fillは
+全表示領域と中央crop UV、Stretchは表示領域・UVの全域を返します。texture／rendererは
+所有せず、0以下・非有限・描画不能なgeometryでは`valid=false`を返します。
 
 Pass `ComponentOptions` for theme, locale and semantic publication. Draw-only
 overlays do not create interactive object nodes: the host describes edited objects.

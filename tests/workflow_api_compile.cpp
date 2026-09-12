@@ -22,6 +22,7 @@ auto volatile section=&imkit::SectionHeader;auto volatile multi=&imkit::MultiSel
 auto volatile help=&imkit::HelpCallout;auto volatile validation=&imkit::ValidationSummary;
 imkit::StableId (*volatile toolbar)(const char*,imkit::ToolbarState&,std::span<const imkit::Command>,imkit::ToolbarOptions,imkit::ComponentOptions)=&imkit::ResponsiveToolbar;
 auto volatile valid=&imkit::editor::ImageGeometryValid;
+auto volatile placement=&imkit::editor::ResolveImagePlacement;
 auto volatile fit=&imkit::editor::FitImage;auto volatile clamp=&imkit::editor::ClampImage;
 auto volatile normalized=&imkit::editor::PixelToNormalized;auto volatile pixel=&imkit::editor::NormalizedToPixel;
 auto volatile viewport=&imkit::editor::BeginImageViewport;auto volatile endViewport=&imkit::editor::EndImageViewport;
@@ -35,5 +36,5 @@ auto volatile endDiagnostics=&imkit::EndDiagnosticsDrawer;auto volatile themePic
 int main() {
     imkit::StableId ids[1];imkit::RequestBuffer requests{ids};
     imkit::editor::TileEvent events[1];imkit::editor::TileEventBuffer out{events};
-    return !(grouped&&iconToolbar&&labeledIconToolbar&&iconAction&&step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&card&&endCard&&section&&multi&&help&&validation&&toolbar&&valid&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&appBar&&workspaceHeader&&inspectorSection&&advancedSection&&bottomActionBar&&beginDiagnostics&&endDiagnostics&&themePicker&&requests.Push(1)&&out.Push({}));
+    return !(grouped&&iconToolbar&&labeledIconToolbar&&iconAction&&step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&card&&endCard&&section&&multi&&help&&validation&&toolbar&&valid&&placement&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&appBar&&workspaceHeader&&inspectorSection&&advancedSection&&bottomActionBar&&beginDiagnostics&&endDiagnostics&&themePicker&&requests.Push(1)&&out.Push({}));
 }

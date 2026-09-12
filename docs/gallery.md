@@ -23,6 +23,12 @@ cmake --build --preset windows-debug --target imkit_gallery --parallel
 
 The released Windows archive contains `imkit_gallery.exe`, the required `design-assets` directory, this project's license and third-party notices. It does not install a service, create a user configuration or add a runtime dependency to an ImKit consumer.
 
+A normal launch opens the ImKit Gallery and the official Dear ImGui Demo Window as two movable,
+resizable windows on the same canvas. They start side by side on a wide display and retain normal
+Dear ImGui docking behavior. The Gallery uses the selected ImKit theme; the official demo keeps the
+unmodified Dear ImGui style for direct comparison. Close or reopen the demo with the
+**Dear ImGui Demo** checkbox in the Gallery header.
+
 ## Verification and reproducible captures
 
 The Gallery runner uses public Dear ImGui IO and its real OpenGL backbuffer. It is appropriate for deterministic widget contracts and visual documentation; it is **not** native OS/IME, screen-reader or physical-DPI automation.
@@ -37,6 +43,9 @@ foreach ($demo in 'comparison', 'themes', 'icons', 'workflow', 'timeline') {
 ```
 
 `--verify-comparison` checks that Default and ImKit controls update shared host-owned state, that their temporary styles restore after a frame, and that close/reopen removes and restores the submitted controls.
+These use public Dear ImGui IO and real OpenGL backbuffers. They are not native OS/IME automation.
+Capture and verification modes retain the deterministic full-canvas Gallery layout and do not open
+the Dear ImGui Demo Window.
 
 `--capture-readme` emits 120 frames. Each `--capture-demo` route emits 80 frames. The sequences show Start / Comparison / Components, shared-value edits, palette and preset transitions, icon search and selection, workflow feedback, and timeline interaction. All frames are native `960×540` backbuffers.
 

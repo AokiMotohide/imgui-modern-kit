@@ -55,6 +55,24 @@ void WorkflowPages::Show(int page,GalleryState& host) {
                 ImGui::TextDisabled("Low-frequency settings");
             ImGui::EndTable();
         }
+        ImGui::SeparatorText(japanese?"画像previewのaspect契約":"Image preview aspect contract");
+        const editor::ImageScaleMode comparisonModes[]={editor::ImageScaleMode::Fit,editor::ImageScaleMode::Fill,
+            editor::ImageScaleMode::ActualSize,editor::ImageScaleMode::Manual};
+        const char* comparisonNames[]={"Fit","Fill","1:1","Manual"};
+        if(ImGui::BeginTable("image-mode-comparison",4,ImGuiTableFlags_BordersInnerV|ImGuiTableFlags_SizingStretchSame)) {
+            for(int i=0;i<4;++i) {
+                ImGui::TableNextColumn();ImGui::PushID(i);ImGui::TextUnformatted(comparisonNames[i]);
+                auto &state=imageComparisons[i];state.mode=comparisonModes[i];
+                if(i==3&&state.reset) {state.canvas.scale={.65,.65};state.canvas.origin={48,32};}
+                auto view=editor::BeginImageViewport("comparison",{host.texture,{512,288}},state,{0,120},theme,{true,true,disabled},o);
+                const auto center=editor::NormalizedToPixel({.5,.5},{512,288});
+                editor::Point circle[]={center};
+                editor::DrawOverlay(view,state.canvas,{editor::OverlayShape::Circle,circle,"",48},theme);
+                editor::EndImageViewport();
+                ImGui::PopID();
+            }
+            ImGui::EndTable();
+        }
         if(auto id=MultiSelectionBar("selection",selection.count,commands,toolbar,o))apply(id);
         apply(BottomActionBar("bottom",BottomActionBarView{japanese?"変更なし":"No pending changes",FeedbackKind::Info,commands},toolbar,o));
         auto preset=static_cast<ThemePreset>(host.presetIndex);
@@ -83,10 +101,11 @@ void WorkflowPages::Show(int page,GalleryState& host) {
             EndDiagnosticsDrawer();
         }
     } else {
-        editor::PreviewTileView tiles[4];
-        const char* names[]={"Preview A","Preview B with a long title / 長い名前","Offline","Error"};
-        for(int i=0;i<4;++i){tiles[i].id=i+1;tiles[i].title=names[i];tiles[i].detail="Host-owned texture";tiles[i].actions=commands;tiles[i].disabled=disabled;}
-        tiles[0].image={host.texture,{512,288}};tiles[1].status=editor::PreviewState::Loading;tiles[2].status=editor::PreviewState::Offline;tiles[3].status=editor::PreviewState::Error;
+        editor::PreviewTileView tiles[5];
+        const char* names[]={"Preview A","Loading","Empty","Offline","Error"};
+        for(int i=0;i<5;++i){tiles[i].id=i+1;tiles[i].title=names[i];tiles[i].detail="Host-owned texture and state";tiles[i].actions=commands;tiles[i].disabled=disabled;}
+        tiles[0].image={host.texture,{512,288}};tiles[1].status=editor::PreviewState::Loading;tiles[2].status=editor::PreviewState::Empty;
+        tiles[3].status=editor::PreviewState::Offline;tiles[4].status=editor::PreviewState::Error;
         std::array<editor::TileEvent,32> storage{};editor::TileEventBuffer events{storage};
         editor::ResizableTileStrip("strip",tiles,sizes,tileSelected,strip,events,{vertical?Orientation::Vertical:Orientation::Horizontal,180,{0,480}},o);
         for(std::size_t i=0;i<events.count;++i){auto& e=storage[i];if(e.action==editor::TileAction::Select||e.action==editor::TileAction::Open)tileSelected=e.tile;if(e.action==editor::TileAction::Command)apply(e.command);}

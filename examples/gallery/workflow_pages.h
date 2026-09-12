@@ -13,8 +13,9 @@ struct WorkflowPages {
     DiagnosticsDrawerState diagnostics;
     ThemePickerState themePicker;
     editor::ImageViewportState image;
+    std::array<editor::ImageViewportState,4> imageComparisons{};
     editor::TileStripState strip;
-    std::array<editor::TileSize,4> sizes{{{1,260},{2,260},{3,260},{4,260}}};
+    std::array<editor::TileSize,5> sizes{{{1,260},{2,260},{3,260},{4,260},{5,260}}};
     std::array<StableId,16> selectedStorage{};
     editor::Selection selection{selectedStorage};
     std::array<editor::Point,256> lassoScratch{};

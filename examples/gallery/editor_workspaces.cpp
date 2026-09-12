@@ -1647,10 +1647,10 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     ImGui::BeginChild("Monitors", {(std::max)(100.f, available - (mediaVisible?side:0) - (inspectorVisible?side:0) - 20), top},
                       ImGuiChildFlags_Borders);
     float width = ImGui::GetContentRegionAvail().x;
-    const char *modesEN[]={"Program","Source","Compare"};
-    const char *modesJP[]={"プログラム","ソース","比較"};
+    const char *modesEN[]={"Program","Source","Compare","Preview contract"};
+    const char *modesJP[]={"プログラム","ソース","比較","Preview契約"};
     ImGui::SetNextItemWidth(std::min(width,160.f));
-    ImGui::Combo("##monitors",&s.monitorMode,s.japanese?modesJP:modesEN,3);
+    ImGui::Combo("##monitors",&s.monitorMode,s.japanese?modesJP:modesEN,4);
     float monitorHeight = std::max(40.f,top-2*ImGui::GetFrameHeightWithSpacing()-ImGui::GetFontSize()-32-(s.monitorMode==1 ? ImGui::GetFrameHeightWithSpacing():0));
     video::MonitorLabels monitorLabels;
     if (s.japanese) {
@@ -1658,6 +1658,40 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         monitorLabels.bounds="変形枠";monitorLabels.anchor="アンカーポイント";monitorLabels.metadata="付加情報";
         monitorLabels.presets={"非表示","クリップ","詳細"};
     }
+    if(s.monitorMode==3) {
+        const char *sources[]={"Synthetic source A","Synthetic source B","Offline input"};
+        const editor::StableId sourceIds[]={41001,41003,41009};
+        ImGui::SetNextItemWidth(std::min(180.f,width*.3f));
+        SearchableCombo("Source",&s.monitorContractSource,sources,s.monitorContractSearch,sizeof(s.monitorContractSearch));
+        s.monitorContractSource=std::clamp(s.monitorContractSource,0,2);
+        ImGui::SameLine();
+        const char *aspects[]={"4:3","16:9","1:1","9:16"};
+        ImGui::SetNextItemWidth(90);ImGui::Combo("Aspect",&s.monitorContractAspect,aspects,4);
+        ImGui::SameLine();
+        const char *statuses[]={"Ready","Loading","Empty","Offline","Error"};
+        ImGui::SetNextItemWidth(110);ImGui::Combo("State",&s.monitorContractStatus,statuses,5);
+        ImGui::TextDisabled("Stable source ID: %llu",static_cast<unsigned long long>(sourceIds[s.monitorContractSource]));
+        const float aspectValues[]={4.f/3,16.f/9,1.f,9.f/16};
+        const char *placementNames[]={"Fit","Fill","Stretch"};
+        const auto placements=std::array{editor::ImagePlacementMode::Fit,editor::ImagePlacementMode::Fill,editor::ImagePlacementMode::Stretch};
+        const float gap=ImGui::GetStyle().ItemSpacing.x,cellWidth=std::max(50.f,(width-gap*2)/3);
+        const float previewArea=std::max(50.f,monitorHeight-2*ImGui::GetFrameHeightWithSpacing());
+        for(int i=0;i<3;++i) {
+            ImGui::PushID(i);ImGui::BeginGroup();ImGui::TextUnformatted(placementNames[i]);
+            const float previewWidth=std::min(cellWidth,previewArea*aspectValues[s.monitorContractAspect]);
+            const float previewHeight=previewWidth/aspectValues[s.monitorContractAspect];
+            const float offset=std::max(0.f,(cellWidth-previewWidth)*.5f);ImGui::SetCursorPosX(ImGui::GetCursorPosX()+offset);
+            video::MonitorView contract{{texture,{1920,1080}}};
+            contract.placement=placements[i];contract.status=static_cast<editor::PreviewState>(s.monitorContractStatus);
+            contract.stateView={statuses[s.monitorContractStatus],"Host-owned preview state",
+                                s.monitorContractStatus==4?"Retry":"",s.monitorContractStatus==4?FeedbackKind::Error:FeedbackKind::Info,
+                                IconId::Monitor,s.icons};
+            auto display=s.sourceMonitorOptions;display.label=placementNames[i];
+            if(video::Monitor("contract",contract,{previewWidth,previewHeight},s.timeline.time,display,theme))
+                s.editMessage="Preview action request";
+            ImGui::EndGroup();ImGui::PopID();if(i<2) ImGui::SameLine(0,gap);
+        }
+    } else {
     if (s.monitorMode!=0) {
     ImGui::BeginGroup();
     if (s.icons) {Icon(*s.icons,IconId::SourceMonitor,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
@@ -1705,16 +1739,18 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         if (editor::TickToFrame(marker.tick,s.timeline.time.rate)==editor::TickToFrame(s.timeline.time.playhead,s.timeline.time.rate)) {
             program.markerComment=marker.label;break;
         }
-    video::Monitor("Program", ImTextureRef(static_cast<ImTextureID>(s.previewRenderer.Texture())),
+    video::Monitor("Program",ImTextureRef(static_cast<ImTextureID>(s.previewRenderer.Texture())),
                    {s.monitorMode==2?width*.48f:width,monitorHeight},s.timeline.time,program,theme);
     s.programMonitorMin=ImGui::GetItemRectMin();s.programMonitorMax=ImGui::GetItemRectMax();
     s.viewportSize={s.programMonitorMax.x-s.programMonitorMin.x,s.programMonitorMax.y-s.programMonitorMin.y};
     if (ImGui::BeginPopupContextItem("monitor metadata")) {
         video::MonitorControls("program",s.programMonitorOptions,s.icons,monitorLabels);
+        s.programMonitorMetadataMin=ImGui::GetItemRectMin();s.programMonitorMetadataMax=ImGui::GetItemRectMax();
         s.monitorMetadata=s.programMonitorOptions.metadataPreset;
         ImGui::EndPopup();
     }
     ImGui::EndGroup();
+    }
     }
     TransportLanguage(s.timeline.time,s.japanese);
     editor::Transport(s.timeline.time, std::span(s.bindings).first(s.bindingCount), s.icons);
@@ -2085,7 +2121,13 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     const bool inspectorVisible=!compact || s.showInspector;
     const float workspaceHeight=ImGui::GetContentRegionAvail().y;
     side=std::min(side,width*.28f);
-    ImGui::BeginChild("View stack", {width - (inspectorVisible?side+10:0), top}, ImGuiChildFlags_Borders);
+    const char *aspectNames[]={"4:3","16:9","1:1","9:16"};
+    ImGui::SetNextItemWidth(100);ImGui::Combo(s.japanese?"Viewport比率":"Viewport aspect",&s.cgPreviewAspect,aspectNames,4);
+    const float aspectValues[]={4.f/3,16.f/9,1.f,9.f/16};
+    const float maximumViewWidth=width-(inspectorVisible?side+10:0);
+    const float estimatedCanvasHeight=std::max(100.f,top-2*ImGui::GetFrameHeightWithSpacing()-ImGui::GetStyle().WindowPadding.y*2);
+    const float viewStackWidth=std::min(maximumViewWidth,std::max(180.f,estimatedCanvasHeight*aspectValues[s.cgPreviewAspect]+ImGui::GetStyle().WindowPadding.x*2));
+    ImGui::BeginChild("View stack", {viewStackWidth, top}, ImGuiChildFlags_Borders);
     s.viewport.icons=s.icons;
     if(s.icons) {Icon(*s.icons,IconId::Monitor,{ImGui::GetFontSize()});ImGui::SameLine();}
     s.previewHelpers=true;

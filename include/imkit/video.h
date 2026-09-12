@@ -1,5 +1,5 @@
 #pragma once
-#include <imkit/editor_core.h>
+#include <imkit/editor_canvas.h>
 namespace imkit::video {
 using editor::StableId;
 using editor::Tick;
@@ -310,10 +310,20 @@ struct MonitorLabels {
     const char *metadata="Metadata";
     std::array<const char *,3> presets{"Off","Clip","Details"};
 };
+struct MonitorView {
+    explicit MonitorView(editor::ImageView source):image(source) {}
+    editor::ImageView image; // Borrowed host texture and source pixel dimensions.
+    editor::PreviewState status=editor::PreviewState::Ready;
+    editor::ImagePlacementMode placement=editor::ImagePlacementMode::Fit;
+    StateView stateView{}; // Borrowed text/icons for non-ready states.
+};
 // Edits host-owned display options only, with no media or renderer ownership.
 void MonitorControls(const char *id,MonitorOptions &options,const IconAtlas *icons=nullptr,const MonitorLabels &labels={});
 void Monitor(const char *id, ImTextureRef texture, ImVec2 size, const editor::TimeState &time,
              const MonitorOptions &options, const Theme &theme);
+// Displays a host-updated texture/status only. Returns a non-ready state action request.
+bool Monitor(const char *id,const MonitorView &view,ImVec2 size,const editor::TimeState &time,
+             const MonitorOptions &options,const Theme &theme,ComponentOptions components={});
 struct AudioBucket {
     float minimum = 0, maximum = 0, rms = 0, peak = 0;
 };

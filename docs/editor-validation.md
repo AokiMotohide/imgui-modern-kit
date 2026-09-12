@@ -6,6 +6,30 @@ they are not native OS/IME automation.
 2026-09-10、Windows x64・MSVC 19.51・Dear ImGui 1.92.9b-docking・RTX 3090 Ti・
 OpenGL 3.3 NVIDIA 616.56で確認しました。入力は公開ImGui IOで、native OS/IME自動操作ではありません。
 
+## Preview placement extension / Preview配置拡張（2026-09-12）
+
+The final affected Debug targets and the six requested test gates passed. The additive
+Monitor overload preserves source aspect by default, maps Fill cropping through image UVs,
+keeps `flipY` texture-only, clips normalized overlays to the resolved image, reuses the five
+existing preview states and reports state actions. The legacy overload retains its full-item
+stretch. Workflow tests cover placement and ImageViewport recomputation; CG tests cover
+perspective and orthographic projection at 4:3, 16:9, 1:1 and 9:16.
+
+最終差分の影響Debug targetと指定6 test gateは合格しました。追加Monitor overloadは既定でsource
+aspectを維持し、Fill cropをImageView UVへ合成し、`flipY`をtextureだけへ適用し、正規化overlayを
+解決済み画像領域へclipします。既存5状態を再利用してaction要求を返し、従来overloadはitem全域の
+stretchを維持します。Workflow testは配置とImageViewport再計算、CG testはPerspective／Orthographicの
+4:3・16:9・1:1・9:16投影を確認しました。
+
+The Debug Gallery verifier captured every Monitor aspect/state/placement combination and
+the four CG aspects using public ImGui IO and the native OpenGL backbuffer. Real cameras,
+decoders, physical monitors, native OS/IME input, external hosts and Release/package paths
+remain unverified.
+
+Debug Gallery verifierは公開ImGui IOとnative OpenGL backbufferを使い、Monitorの全aspect／状態／配置と
+CGの4 aspectをcaptureしました。実Camera・decoder・物理monitor・native OS/IME入力・外部host・
+Release／package経路は未検証です。
+
 ## Build and contracts / ビルドと契約
 
 Debug and Release passed the seven CPU/API/icon/context fixtures. After scoped changes,

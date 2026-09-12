@@ -88,6 +88,11 @@ int main() {
     monitorOptions.clipName="Clip";monitorOptions.markerComment="Marker comment";monitorOptions.metadata=monitorLines;
     monitorOptions.transform=true;monitorOptions.transformBounds={{.1,.25},{.9,.75}};
     video::Monitor("metadata monitor",{},ImVec2{200,120},time,monitorOptions,theme);
+    video::MonitorView monitorView{editor::ImageView{{},{1920,1080}}};
+    monitorView.placement=editor::ImagePlacementMode::Fill;
+    monitorView.status=editor::PreviewState::Loading;
+    monitorView.stateView={"Loading","Host updates this texture"};
+    (void)video::Monitor("aspect monitor",monitorView,ImVec2{200,120},time,monitorOptions,theme);
     video::EnvelopePoint envelopePoint{8001,0,1};
     (void)envelopePoint;
     video::TrackView trackView;

@@ -633,94 +633,114 @@ void Show(GalleryState &s) {
     s.theme.fonts = s.fonts;
     s.animation.Prune(GetFrameCount());
     ThemeScope scope(s.theme, s.scale);
-    SetNextWindowPos({0, s.windowFrameHeight});
-    SetNextWindowSize({ImGui::GetIO().DisplaySize.x,
-                      std::max(1.f,ImGui::GetIO().DisplaySize.y-s.windowFrameHeight)});
-    Begin("Precision Layers catalog", nullptr,
-          ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
-    static constexpr int pageIds[]={19,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18};
-    const char* pages[]={"Start","Components: Basic","Numeric / Units","Input / Media","Hierarchy / Table","Overlay / Layout","Composites","Icons","Editor Core","Video","CG","Foundations","Components","Patterns","Accessibility","Responsive","Generic Workspace","Feedback / States","Preview Tiles","Frame Lab"};
-    int pageIndex=0;
-    for(int i=0;i<static_cast<int>(std::size(pageIds));++i) if(pageIds[i]==s.page) {pageIndex=i;break;}
-    SetNextItemWidth(std::min(260.f,GetContentRegionAvail().x*.5f));
-    if(Combo("##section",&pageIndex,pages,static_cast<int>(std::size(pages)))) s.page=pageIds[pageIndex];
-    SameLine(); if(Button("Appearance")) OpenPopup("appearance");
-    Record(s,"appearance");
-    SameLine(); if(Button("Compare")) s.comparison.open=true;
-    Record(s,"comparison-open");
-    if(BeginPopup("appearance")) {
-        const bool themePicker=BeginCombo("Theme",ThemePresets()[s.presetIndex].displayName.data());
-        Record(s,"appearance-theme-picker");
-        if(themePicker) {
-            for(int i=0;i<static_cast<int>(ThemePresets().size());++i) {
-                if(Selectable(ThemePresets()[i].displayName.data(),s.presetIndex==i)) {
-                    s.presetIndex=i;
-                    s.theme=MakeTheme(ThemePresets()[i].preset);
-                    s.theme.fonts=s.fonts;
-                    s.dark=s.theme.scheme==ColorScheme::Dark;
-                    s.design.contrast=static_cast<int>(s.theme.contrast);
-                    s.design.density=static_cast<int>(s.theme.density);
+    ImGuiWindowFlags windowFlags=ImGuiWindowFlags_NoSavedSettings;
+    if(s.floatingComparison) {
+        constexpr float margin=24.f;
+        const auto display=ImGui::GetIO().DisplaySize;
+        const float top=s.windowFrameHeight+margin;
+        const bool sideBySide=display.x>=1200.f;
+        const float width=sideBySide
+            ? std::clamp(display.x-622.f,560.f,1120.f)
+            : std::max(320.f,display.x-margin*2.f);
+        const float height=std::max(320.f,display.y-top-margin);
+        SetNextWindowPos({margin,top},ImGuiCond_FirstUseEver);
+        SetNextWindowSize({width,height},ImGuiCond_FirstUseEver);
+    } else {
+        SetNextWindowPos({0, s.windowFrameHeight});
+        SetNextWindowSize({ImGui::GetIO().DisplaySize.x,
+                          std::max(1.f,ImGui::GetIO().DisplaySize.y-s.windowFrameHeight)});
+        windowFlags|=ImGuiWindowFlags_NoDecoration;
+    }
+    const bool visible=Begin("ImKit Gallery - Precision Layers",nullptr,windowFlags);
+    if(s.floatingComparison) {
+        s.floatingCatalogPosition=GetWindowPos();
+        s.floatingCatalogSize=GetWindowSize();
+    }
+    if(visible) {
+        static constexpr int pageIds[]={19,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18};
+        const char* pages[]={"Start","Components: Basic","Numeric / Units","Input / Media","Hierarchy / Table","Overlay / Layout","Composites","Icons","Editor Core","Video","CG","Foundations","Components","Patterns","Accessibility","Responsive","Generic Workspace","Feedback / States","Preview Tiles","Frame Lab"};
+        int pageIndex=0;
+        for(int i=0;i<static_cast<int>(std::size(pageIds));++i) if(pageIds[i]==s.page) {pageIndex=i;break;}
+        SetNextItemWidth(std::min(260.f,GetContentRegionAvail().x*.5f));
+        if(Combo("##section",&pageIndex,pages,static_cast<int>(std::size(pages)))) s.page=pageIds[pageIndex];
+        SameLine(); if(Button("Appearance")) OpenPopup("appearance");
+        Record(s,"appearance");
+        SameLine(); if(Button("Compare")) s.comparison.open=true;
+        Record(s,"comparison-open");
+        if(s.floatingComparison) {SameLine();Checkbox("Dear ImGui Demo",&s.showDearImGuiDemo);}
+        if(BeginPopup("appearance")) {
+            if(BeginCombo("Theme",ThemePresets()[s.presetIndex].displayName.data())) {
+                Record(s,"appearance-theme-picker");
+                for(int i=0;i<static_cast<int>(ThemePresets().size());++i) {
+                    if(Selectable(ThemePresets()[i].displayName.data(),s.presetIndex==i)) {
+                        s.presetIndex=i;
+                        s.theme=MakeTheme(ThemePresets()[i].preset);
+                        s.theme.fonts=s.fonts;
+                        s.dark=s.theme.scheme==ColorScheme::Dark;
+                        s.design.contrast=static_cast<int>(s.theme.contrast);
+                        s.design.density=static_cast<int>(s.theme.density);
+                    }
+                    Record(s,(std::string("appearance-theme-")+std::to_string(i)).c_str());
                 }
-                Record(s,(std::string("appearance-theme-")+std::to_string(i)).c_str());
+                EndCombo();
             }
-            EndCombo();
+            if(Checkbox("Dark",&s.dark)) { auto fonts=s.theme.fonts; s.theme=MakeTheme(s.dark?ColorScheme::Dark:ColorScheme::Light,s.theme.contrast,s.theme.density); s.theme.fonts=fonts; }
+            const char* densities[]={"Compact","Comfortable","Touch"};
+            if(Combo("Density",&s.design.density,densities,3)) SetDensity(s.theme,static_cast<Density>(s.design.density));
+            const char* contrasts[]={"Standard","High contrast"};
+            if(Combo("Contrast",&s.design.contrast,contrasts,2)) { auto fonts=s.theme.fonts; s.theme=MakeTheme(s.theme.scheme,static_cast<ContrastMode>(s.design.contrast),s.theme.density); s.theme.fonts=fonts; }
+            Checkbox("Reduced motion",&s.theme.motion.reducedMotion);
+            SliderFloat("Scale",&s.scale,ThemeScaleMinimum,ThemeScaleMaximum,"%.2f",ImGuiSliderFlags_AlwaysClamp);
+            EndPopup();
         }
-        if(Checkbox("Dark",&s.dark)) { auto fonts=s.theme.fonts; s.theme=MakeTheme(s.dark?ColorScheme::Dark:ColorScheme::Light,s.theme.contrast,s.theme.density); s.theme.fonts=fonts; }
-        const char* densities[]={"Compact","Comfortable","Touch"};
-        if(Combo("Density",&s.design.density,densities,3)) SetDensity(s.theme,static_cast<Density>(s.design.density));
-        const char* contrasts[]={"Standard","High contrast"};
-        if(Combo("Contrast",&s.design.contrast,contrasts,2)) { auto fonts=s.theme.fonts; s.theme=MakeTheme(s.theme.scheme,static_cast<ContrastMode>(s.design.contrast),s.theme.density); s.theme.fonts=fonts; }
-        Checkbox("Reduced motion",&s.theme.motion.reducedMotion);
-        SliderFloat("Scale",&s.scale,ThemeScaleMinimum,ThemeScaleMaximum,"%.2f",ImGuiSliderFlags_AlwaysClamp);
-        EndPopup();
+        Spacing();
+        BeginChild("Component panel", {s.page >= 6 ? GetContentRegionAvail().x
+                                                  : std::min(GetContentRegionAvail().x, 1120 * s.scale), 0},
+                   ImGuiChildFlags_Borders, s.page == 4 ? ImGuiWindowFlags_MenuBar : 0);
+        PushItemWidth(420 * s.scale);
+        switch (s.page) {
+        case 19: Start(s); break;
+        case 18: FrameLab(s); break;
+        case 15: case 16: case 17: s.workflow.Show(s.page,s); break;
+        case 10: case 11: case 12: case 13: case 14:
+            s.design.Show(s.page,s.theme); break;
+        case 0:
+            Basic(s);
+            break;
+        case 1:
+            Numeric(s);
+            break;
+        case 2:
+            InputColor(s);
+            break;
+        case 3:
+            Hierarchy(s);
+            break;
+        case 4:
+            Overlay(s);
+            break;
+        case 5:
+            Composites(s);
+            break;
+        case 6:
+            Icons(s);
+            break;
+        case 7:
+            s.editors.icons = &s.icons;
+            CoreWorkspace(s.editors, s.theme);
+            break;
+        case 8:
+            s.editors.icons = &s.icons;
+            VideoWorkspace(s.editors, s.theme, s.texture);
+            break;
+        case 9:
+            s.editors.icons = &s.icons;
+            CGWorkspace(s.editors, s.theme, s.texture);
+            break;
+        }
+        PopItemWidth();
+        EndChild();
     }
-    Spacing();
-    BeginChild("Component panel", {s.page >= 6 ? GetContentRegionAvail().x
-                                              : std::min(GetContentRegionAvail().x, 1120 * s.scale), 0},
-               ImGuiChildFlags_Borders, s.page == 4 ? ImGuiWindowFlags_MenuBar : 0);
-    PushItemWidth(420 * s.scale);
-    switch (s.page) {
-    case 19: Start(s); break;
-    case 18: FrameLab(s); break;
-    case 15: case 16: case 17: s.workflow.Show(s.page,s); break;
-    case 10: case 11: case 12: case 13: case 14:
-        s.design.Show(s.page,s.theme); break;
-    case 0:
-        Basic(s);
-        break;
-    case 1:
-        Numeric(s);
-        break;
-    case 2:
-        InputColor(s);
-        break;
-    case 3:
-        Hierarchy(s);
-        break;
-    case 4:
-        Overlay(s);
-        break;
-    case 5:
-        Composites(s);
-        break;
-    case 6:
-        Icons(s);
-        break;
-    case 7:
-        s.editors.icons = &s.icons;
-        CoreWorkspace(s.editors, s.theme);
-        break;
-    case 8:
-        s.editors.icons = &s.icons;
-        VideoWorkspace(s.editors, s.theme, s.texture);
-        break;
-    case 9:
-        s.editors.icons = &s.icons;
-        CGWorkspace(s.editors, s.theme, s.texture);
-        break;
-    }
-    PopItemWidth();
-    EndChild();
     End();
     if (s.palette) {
         SetNextWindowSize({380, 620}, ImGuiCond_FirstUseEver);

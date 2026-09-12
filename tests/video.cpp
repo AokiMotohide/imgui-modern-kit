@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <limits>
 #include <cstdlib>
+#include "../examples/gallery/allocation_probe.h"
 using namespace imkit;
 int main() {
 #ifdef _MSC_VER
@@ -930,6 +931,106 @@ int main() {
         toggle(4);check(options.showAnchor.has_value() && !*options.showAnchor,"Monitor anchor can be hidden independently");
         toggle(3);toggle(4);
         check(!options.transform && options.showAnchor.value_or(false),"Monitor anchor can remain visible without transform bounds");
+    }
+    {
+        const auto theme=MakePrecisionTheme(ColorScheme::Dark);
+        const ImTextureID textureId=static_cast<ImTextureID>(0x1234);
+        video::MonitorView monitor{editor::ImageView{ImTextureRef(textureId),{1920,1080},{.2f,.1f},{.8f,.9f}}};
+        video::MonitorOptions options;options.safeArea=true;options.guides=false;options.showTimecode=false;
+        options.metadataPreset=video::MonitorMetadataPreset::Off;options.transform=false;options.showAnchor=false;
+        struct Capture {
+            bool action=false;
+            ImVec2 itemMin{},itemMax{};
+            float imageMinX=std::numeric_limits<float>::infinity(),imageMinY=std::numeric_limits<float>::infinity();
+            float imageMaxX=-std::numeric_limits<float>::infinity(),imageMaxY=-std::numeric_limits<float>::infinity();
+            float uvMinX=std::numeric_limits<float>::infinity(),uvMinY=std::numeric_limits<float>::infinity();
+            float uvMaxX=-std::numeric_limits<float>::infinity(),uvMaxY=-std::numeric_limits<float>::infinity();
+            std::array<ImVec2,128> overlay{};std::size_t overlayCount=0;
+        };
+        ImGui::NewFrame();ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({500,400});ImGui::Begin("Legacy monitor");
+        const ImVec2 legacyMin=ImGui::GetCursorScreenPos();
+        video::Monitor("legacy",ImTextureRef(textureId),{400,300},{},options,theme);
+        const ImVec2 legacyMax=ImGui::GetItemRectMax();ImGui::End();ImGui::Render();
+        ImVec2 legacyImageMin{std::numeric_limits<float>::infinity(),std::numeric_limits<float>::infinity()};
+        ImVec2 legacyImageMax{-std::numeric_limits<float>::infinity(),-std::numeric_limits<float>::infinity()};
+        ImVec2 legacyUvMin{std::numeric_limits<float>::infinity(),std::numeric_limits<float>::infinity()};
+        ImVec2 legacyUvMax{-std::numeric_limits<float>::infinity(),-std::numeric_limits<float>::infinity()};
+        const auto *legacyDrawData=ImGui::GetDrawData();
+        for(int listIndex=0;listIndex<legacyDrawData->CmdListsCount;++listIndex) {
+            const ImDrawList *list=legacyDrawData->CmdLists[listIndex];
+            for(const auto &command:list->CmdBuffer) if(!command.TexRef._TexData&&command.TexRef._TexID==textureId)
+                for(unsigned i=0;i<command.ElemCount;++i) {
+                    const auto &vertex=list->VtxBuffer[list->IdxBuffer[command.IdxOffset+i]+command.VtxOffset];
+                    legacyImageMin={std::min(legacyImageMin.x,vertex.pos.x),std::min(legacyImageMin.y,vertex.pos.y)};
+                    legacyImageMax={std::max(legacyImageMax.x,vertex.pos.x),std::max(legacyImageMax.y,vertex.pos.y)};
+                    legacyUvMin={std::min(legacyUvMin.x,vertex.uv.x),std::min(legacyUvMin.y,vertex.uv.y)};
+                    legacyUvMax={std::max(legacyUvMax.x,vertex.uv.x),std::max(legacyUvMax.y,vertex.uv.y)};
+                }
+        }
+        check(std::abs(legacyMax.x-legacyMin.x-400)<1e-4f&&std::abs(legacyMax.y-legacyMin.y-300)<1e-4f,
+              "legacy Monitor retains full-region stretch item");
+        check(legacyImageMin.x==legacyMin.x&&legacyImageMin.y==legacyMin.y&&legacyImageMax.x==legacyMax.x&&legacyImageMax.y==legacyMax.y&&
+              legacyUvMin.x==0&&legacyUvMin.y==0&&legacyUvMax.x==1&&legacyUvMax.y==1,
+              "legacy Monitor retains full-region texture and UVs");
+        const auto drawFrame=[&](video::MonitorView &view,const video::MonitorOptions &drawOptions,ComponentOptions components=ComponentOptions{}) {
+            ImGui::NewFrame();if(components.accessibility) components.accessibility->Begin(ImGui::GetFrameCount());
+            ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({500,400});
+            ImGui::Begin("Aspect monitor");
+            Capture capture;capture.itemMin=ImGui::GetCursorScreenPos();capture.itemMax={capture.itemMin.x+400,capture.itemMin.y+300};
+            capture.action=video::Monitor("preview",view,{400,300},{},drawOptions,theme,components);
+            ImGui::End();ImGui::Render();
+            const ImU32 muted=ImGui::GetColorU32(theme.colors.muted);
+            const auto *drawData=ImGui::GetDrawData();
+            for(int listIndex=0;listIndex<drawData->CmdListsCount;++listIndex) {
+                const ImDrawList *list=drawData->CmdLists[listIndex];
+                for(const auto &vertex:list->VtxBuffer)
+                    if(vertex.col==muted&&capture.overlayCount<capture.overlay.size()) capture.overlay[capture.overlayCount++]=vertex.pos;
+                for(const auto &command:list->CmdBuffer) if(!command.TexRef._TexData&&command.TexRef._TexID==textureId)
+                    for(unsigned i=0;i<command.ElemCount;++i) {
+                        const auto index=list->IdxBuffer[command.IdxOffset+i]+command.VtxOffset;
+                        const auto &vertex=list->VtxBuffer[index];
+                        capture.imageMinX=std::min(capture.imageMinX,vertex.pos.x);capture.imageMaxX=std::max(capture.imageMaxX,vertex.pos.x);
+                        capture.imageMinY=std::min(capture.imageMinY,vertex.pos.y);capture.imageMaxY=std::max(capture.imageMaxY,vertex.pos.y);
+                        capture.uvMinX=std::min(capture.uvMinX,vertex.uv.x);capture.uvMaxX=std::max(capture.uvMaxX,vertex.uv.x);
+                        capture.uvMinY=std::min(capture.uvMinY,vertex.uv.y);capture.uvMaxY=std::max(capture.uvMaxY,vertex.uv.y);
+                    }
+            }
+            return capture;
+        };
+        monitor.placement=editor::ImagePlacementMode::Fit;
+        auto fit=drawFrame(monitor,options);
+        check(std::abs((fit.imageMaxX-fit.imageMinX)-400)<1e-4f&&std::abs((fit.imageMaxY-fit.imageMinY)-225)<1e-4f&&
+              std::abs((fit.imageMinY-fit.itemMin.y)-37.5f)<1e-4f,"Monitor Fit uses centered image rectangle");
+        monitor.placement=editor::ImagePlacementMode::Fill;
+        auto fill=drawFrame(monitor,options);
+        check(std::abs(fill.uvMinX-.275f)<1e-5f&&std::abs(fill.uvMaxX-.725f)<1e-5f&&
+              std::abs(fill.imageMaxX-fill.imageMinX-400)<1e-4f,"Monitor Fill composes centered crop with source UV");
+        auto flippedOptions=options;flippedOptions.flipY=true;
+        auto flipped=drawFrame(monitor,flippedOptions);
+        check(std::abs(flipped.uvMinY-.1f)<1e-5f&&std::abs(flipped.uvMaxY-.9f)<1e-5f&&
+              fill.overlayCount==flipped.overlayCount&&std::equal(fill.overlay.begin(),fill.overlay.begin()+fill.overlayCount,flipped.overlay.begin(),
+                  [](ImVec2 a,ImVec2 b){return a.x==b.x&&a.y==b.y;}),"flipY changes texture UV without changing logical overlays");
+        monitor.image.pixels={};auto invalid=drawFrame(monitor,options);
+        check(!std::isfinite(invalid.imageMinX),"invalid ready Monitor draws neutral canvas without texture");
+        monitor.image.pixels={1920,1080};
+        for(auto status:{editor::PreviewState::Loading,editor::PreviewState::Empty,editor::PreviewState::Offline,editor::PreviewState::Error}) {
+            monitor.status=status;monitor.stateView={"State","Host-owned preview state",status==editor::PreviewState::Error?"Retry":""};
+            auto state=drawFrame(monitor,options);check(!std::isfinite(state.imageMinX),"non-ready Monitor does not draw stale texture");
+        }
+        monitor.stateView={"","","Retry",FeedbackKind::Error};
+        std::array<accessibility::SemanticNode,8> stateNodes{};std::array<accessibility::ActionRequest,2> stateActions{};
+        accessibility::ActionQueue stateQueue(stateActions);accessibility::AccessibilityFrame stateSemantics(stateNodes,&stateQueue);
+        ComponentOptions stateComponents{&theme,nullptr,&stateSemantics};
+        auto retry=drawFrame(monitor,options,stateComponents);accessibility::StableId retryId=0;
+        for(const auto &node:stateSemantics.Tree().nodes)
+            if(node.role==accessibility::SemanticRole::Button&&node.name=="Retry") retryId=node.id;
+        check(retryId!=0&&stateQueue.Push({retryId,accessibility::SemanticAction::Press}),"Monitor exposes RetryState semantic action");
+        retry=drawFrame(monitor,options,stateComponents);
+        check(retry.action,"Monitor returns RetryState action request");
+        monitor.status=editor::PreviewState::Ready;
+        for(int i=0;i<4;++i) drawFrame(monitor,options);
+        gallery::CountAllocations(true);drawFrame(monitor,options);gallery::CountAllocations(false);
+        check(gallery::AllocationCount()==0,"steady Monitor frame performs no C++ heap allocation");
     }
     {
         struct EditingFixture {

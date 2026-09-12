@@ -10,6 +10,44 @@ The runner sends public Dear ImGui IO and reads a real OpenGL backbuffer. It doe
 
 runnerは公開Dear ImGui IOを送り、実OpenGL backbufferを読みます。native OS/IME入力、支援技術、実機DPI、性能、外部ホストでの受け入れは確認しません。公開Gallery実行ファイルは別途Release build・stage・DLL import確認を行い、Microsoft Visual C++ Redistributableをarchiveに同梱しません。
 
+## Preview placement extension / Preview配置拡張（2026-09-12）
+
+The affected Debug library, API-fixture and Gallery targets built successfully.
+`imkit.workflow`, `imkit.workflow_api_compile`, `imkit.video`, `imkit.cg`,
+`imkit.editor_api_compile` and `imkit.consumer_build` passed. CPU checks cover
+Fit/Fill/Stretch placement, invalid and extreme geometry, ImageViewport mode
+recalculation and pan/coordinate behavior, legacy and additive Monitor rendering,
+UV cropping and `flipY`, all five preview states, action requests, steady-frame
+allocation, and perspective/orthographic projection at 4:3, 16:9, 1:1 and 9:16.
+
+影響するDebug library・API fixture・Gallery targetはbuildに成功しました。
+`imkit.workflow`、`imkit.workflow_api_compile`、`imkit.video`、`imkit.cg`、
+`imkit.editor_api_compile`、`imkit.consumer_build`が合格しました。CPU検証は
+Fit／Fill／Stretch配置、不正・極端geometry、ImageViewport mode再計算とpan／座標変換、
+新旧Monitor描画、UV cropと`flipY`、5状態、action要求、定常frame allocation、
+Perspective／Orthographicの4:3・16:9・1:1・9:16投影を対象にしました。
+
+The Debug native Gallery verifier passed public-IO interaction and OpenGL backbuffer
+captures for the four ImageViewport modes, every combination of four source aspects,
+five Monitor states and three placement modes, and uniform CG projection at the four
+viewport aspects. The generated evidence under `out/preview-contract-debug/` is not
+committed. Representative ImageViewport, portrait Loading Monitor and portrait CG
+captures were visually inspected.
+
+Debug native Gallery verifierでは公開IO操作とOpenGL backbuffer captureが合格しました。
+ImageViewportの4 mode、4 source aspect×5 Monitor状態×3配置、4 viewport aspectのCG等方投影を
+確認しています。`out/preview-contract-debug/`の生成物はcommitせず、ImageViewport、縦長Loading
+Monitor、縦長CGの代表captureを目視確認しました。
+
+Real camera enumeration/capture, media decoding, physical monitor selection or output,
+native OS/IME input and external-host integration were not performed. Release, install,
+package and publication validation were also not run; Debug and synthetic Gallery sources
+do not establish those categories.
+
+実Camera列挙・capture、media decode、物理monitor選択・出力、native OS/IME入力、外部ホスト統合は
+未実施です。Release、install、package、公開検証も行っておらず、DebugとGalleryのsynthetic sourceを
+これらの合格とは扱いません。
+
 ## Public window frame / 公開ウィンドウ枠（2026-09-11）
 
 The isolated `build/window-frame-public-debug` tree passed the Debug public API unit test and compile fixture, the independent source consumer build, the minimal Gallery build, and `--verify-window-frame`. The verifier covered all four presets, Theme-derived color regeneration versus complete preset reset, metric and feature layout effects, UTF-8 elision, Win32 caption/client/edge hit tests including `HTMAXBUTTON`, maximize/work-area containment, restore, minimize and the GLFW close-request path. Generated captures and reports under `out/window-frame-public/` are not committed.

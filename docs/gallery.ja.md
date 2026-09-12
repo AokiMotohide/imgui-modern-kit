@@ -23,6 +23,11 @@ cmake --build --preset windows-debug --target imkit_gallery --parallel
 
 公開するWindows archiveには`imkit_gallery.exe`、必要な`design-assets` directory、本プロジェクトのlicense、第三者noticeを含めます。serviceをinstallせず、ユーザー設定も作成せず、ImKit consumerへruntime依存を追加しません。
 
+通常起動では、ImKit GalleryとDear ImGui公式Demo Windowを同じキャンバス上の可動・リサイズ可能な
+2つのウィンドウとして表示します。広い画面では左右に初期配置し、通常のDear ImGui docking操作を
+維持します。Galleryには選択中のImKit themeを適用し、公式Demoは比較のためDear ImGui標準styleの
+まま描画します。公式DemoはGallery headerの**Dear ImGui Demo**チェックから閉じる・再表示できます。
+
 ## 検証と再生成可能なcapture
 
 Gallery runnerは公開Dear ImGui IOと実OpenGL backbufferを使用します。決定的なwidget契約と文書用の外観確認には使えますが、native OS/IME、screen reader、実機DPIのautomationでは**ありません**。
@@ -37,6 +42,9 @@ foreach ($demo in 'comparison', 'themes', 'icons', 'workflow', 'timeline') {
 ```
 
 `--verify-comparison`は、DefaultとImKitのcontrolが共有ホスト所有状態を更新すること、一時styleがframe後に復元されること、close/reopen時にcontrolが消え、再表示されることを確認します。
+公開Dear ImGui IOと実OpenGL backbufferを使用します。native OS/IME automationではありません。
+captureと検証modeは、従来の決定的な全キャンバスGallery配置を維持し、Dear ImGui公式Demo Windowを
+表示しません。
 
 `--capture-readme`は120 frameを出力します。各`--capture-demo`は80 frameを出力します。Start／比較／Components、共有値の編集、paletteとpreset遷移、icon検索と選択、workflow feedback、timeline操作を扱います。すべてnative `960×540` backbufferです。
 
