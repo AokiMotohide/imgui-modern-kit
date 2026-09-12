@@ -320,6 +320,10 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
               editor::EventBuffer &out, const Theme &theme, ImVec2 size) {
     ImGui::PushID(id);
     EditingToolbar(p,s,selection,out);
+    if (p.toolbar.leading) {
+        p.toolbar.leading(p.user);
+        ImGui::SameLine();
+    }
     const float timelineWidth=size.x>0?size.x:ImGui::GetContentRegionAvail().x;
     constexpr editor::Command toolCommands[]={editor::Command::ToolSelect,editor::Command::ToolRazor,
         editor::Command::ToolRipple,editor::Command::ToolRoll,editor::Command::ToolSlip,editor::Command::ToolSlide,editor::Command::ToolHand};
@@ -390,6 +394,10 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             if (ImGui::Checkbox(names[i],&enabled)) s.snapKinds ^= 1u<<i;
         }
         ImGui::EndPopup();
+    }
+    if (p.toolbar.trailing) {
+        ImGui::SameLine();
+        p.toolbar.trailing(p.user);
     }
     ImGui::SameLine();
     bool fit=false;

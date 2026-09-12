@@ -52,6 +52,8 @@ int main() {
             return video::TimelineExternalDropPreview{{at,at+editor::TicksPerSecond},video::TrackKind::Video,"Preview",true};
         }};
     video::TimelineProvider gate;gate.isEditable=[](void *,editor::StableId){return true;};gate.canBeginEdit=[](void *,editor::StableId,editor::EditKind){return true;};
+    gate.toolbar.leading=[](void *){};
+    gate.toolbar.trailing=[](void *){};
     gate.externalDrops=std::span(&dropRoute,1);
     gate.drawClipOverlay=[](void *,editor::StableId,const editor::Value &,ImVec2,ImVec2){};
     timeline.labels.fit="Frame all clips";timeline.labels.followModes[0]="Disabled";
