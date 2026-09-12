@@ -1037,9 +1037,11 @@ int main() {
             std::array<video::TrackView,2> tracks{{{400,"Video A"},{401,"Video B"}}};
             video::ClipView clip;
             std::array<editor::StableId,1> boxIds{410};
-            int overlayCalls=0,dropPreviews=0,dropDeliveries=0,dropValue=0;
+            int overlayCalls=0,dropPreviews=0,dropDeliveries=0,dropValue=0,rangePreviews=0;
             editor::StableId dropTrack=0;
-            editor::Tick dropTick=0;
+            editor::StableId moveDestination=0;
+            editor::Tick dropTick=0,previewFirst=0,previewLast=0;
+            bool previewValid=true;
         } fixture;
         fixture.clip.id=410;fixture.clip.track=400;fixture.clip.label="Editable";fixture.clip.duration=editor::FromSeconds(3);
         video::TimelineProvider p;p.user=&fixture;p.revision=1;p.trackCount=2;
@@ -1047,6 +1049,10 @@ int main() {
         p.clips=[](void *u,editor::StableId track,editor::Range){auto &f=*static_cast<EditingFixture*>(u);return track==400 ? std::span<const video::ClipView>(&f.clip,1) : std::span<const video::ClipView>{};};
         p.editing.user=&fixture;
         p.editing.box=[](void *u,editor::Range,double,double){return std::span<const editor::StableId>(static_cast<EditingFixture*>(u)->boxIds);};
+        p.editing.destination=[](void *u,editor::StableId,editor::StableId,editor::StableId hovered){
+            static_cast<EditingFixture*>(u)->moveDestination=hovered;return hovered;
+        };
+        p.editing.canMove=[](void *,std::span<const editor::StableId>,editor::Tick,editor::StableId,editor::StableId){return true;};
         p.editing.cut=[](void *,editor::StableId){return video::CutTransitionView{410,411,0,editor::FromSeconds(1),video::TransitionKind::Dissolve};};
         p.drawClipOverlay=[](void *u,editor::StableId,const editor::Value&,ImVec2,ImVec2){++static_cast<EditingFixture*>(u)->overlayCalls;};
         std::array routes{video::TimelineExternalDropRoute{
@@ -1055,6 +1061,11 @@ int main() {
             [](void *u,editor::StableId track,editor::Tick at,const void *data,std::size_t,bool delivery){
                 auto &f=*static_cast<EditingFixture*>(u);++f.dropPreviews;f.dropTrack=track;f.dropTick=at;f.dropValue=*static_cast<const int*>(data);
                 if(delivery)++f.dropDeliveries;
+            },
+            [](void *u,editor::StableId,editor::Tick at,const void *,std::size_t){
+                auto &f=*static_cast<EditingFixture*>(u);++f.rangePreviews;
+                f.previewFirst=at;f.previewLast=at+editor::FromSeconds(3);
+                return video::TimelineExternalDropPreview{{f.previewFirst,f.previewLast},video::TrackKind::Effect,"Three seconds",f.previewValid};
             }}};
         p.externalDrops=routes;
         std::array<editor::StableId,8> clipIds{},trackIds{};
@@ -1095,6 +1106,13 @@ int main() {
         output.Clear();move(origin.x+55,origin.y+9);io.AddMouseButtonEvent(0,true);render();
         move(origin.x+55,origin.y+75);io.AddMouseButtonEvent(0,false);render();
         check(std::any_of(output.Events().begin(),output.Events().end(),[](const auto &e){return e.phase==editor::Phase::Commit && e.kind==editor::EditKind::TrackEdit && e.proposed.offset==static_cast<int>(video::TrackAction::Reorder) && e.proposed.parent==401;}),"track drag emits reorder request");
+        clipsSelected.Clear();output.Clear();
+        move(origin.x+state.headerWidth+30,origin.y+20);io.AddMouseButtonEvent(0,true);render();
+        move(origin.x+state.headerWidth+90,origin.y+state.rowHeight+20);render();
+        io.AddMouseButtonEvent(0,false);render();
+        check(fixture.moveDestination==401 && std::any_of(output.Events().begin(),output.Events().end(),[](const auto &e){
+                  return e.phase==editor::Phase::Commit && e.kind==editor::EditKind::Move && e.proposed.parent==401;
+              }),"clip drag resolves the destination track from its rectangle while active");
         output.Clear();move(shelfOrigin.x+25,shelfOrigin.y+10);io.AddMouseButtonEvent(0,true);render();
         move(origin.x+state.headerWidth+300,origin.y+29);io.AddMouseButtonEvent(0,false);render();
         check(std::any_of(output.Events().begin(),output.Events().end(),[](const auto &e){return e.phase==editor::Phase::Commit && e.kind==editor::EditKind::CutTransition && e.proposed.parent==411 && e.proposed.first==editor::TicksPerSecond;}),"shelf drag inserts shared transition at cut");
@@ -1103,6 +1121,14 @@ int main() {
         io.AddMouseButtonEvent(0,false);render();
         check(fixture.dropPreviews>0 && fixture.dropDeliveries==1 && fixture.dropTrack==401 && fixture.dropValue==42,
               "external host payload previews and delivers once on the hovered track");
+        check(fixture.rangePreviews>0 && fixture.previewFirst==fixture.dropTick &&
+              fixture.previewLast-fixture.previewFirst==editor::FromSeconds(3),
+              "external drop range preview uses the exact host-owned candidate duration");
+        fixture.previewValid=false;
+        move(assetOrigin.x+20,assetOrigin.y+10);io.AddMouseButtonEvent(0,true);render();
+        move(origin.x+state.headerWidth+350,origin.y+state.rowHeight+20);render();
+        io.AddMouseButtonEvent(0,false);render();
+        check(fixture.dropDeliveries==1,"invalid exact-range preview rejects delivery");
     }
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;

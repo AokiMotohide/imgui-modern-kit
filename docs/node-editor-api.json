@@ -1,0 +1,237 @@
+[
+  {
+    "name": "imkit::node_editor::MakeNodeStyle",
+    "declaration": "NodeStyle MakeNodeStyle(const Theme &theme);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::AlignNodes",
+    "declaration": "LayoutResult AlignNodes(GraphView graph, std::span<const NodeId> selection, std::span<PositionChange> output, AlignOptions options = {});",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::DistributeNodes",
+    "declaration": "LayoutResult DistributeNodes(GraphView graph, std::span<const NodeId> selection, std::span<PositionChange> output, Axis axis = Axis::Horizontal, Distribution distribution = Distribution::Gaps);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::ArrangeNodes",
+    "declaration": "LayoutResult ArrangeNodes(GraphView graph, std::span<const NodeId> selection, std::span<PositionChange> output, ArrangeOptions options = {});",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::SnapNodesToGrid",
+    "declaration": "LayoutResult SnapNodesToGrid(GraphView graph, std::span<const NodeId> selection, std::span<PositionChange> output, double spacing = 24);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::FitGroupToContents",
+    "declaration": "bool FitGroupToContents(GraphView graph, NodeId group, Rect &bounds, double padding = 24);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::QueueLayout",
+    "declaration": "bool QueueLayout(GraphView graph, std::span<const PositionChange> changes, RequestBuffer &output, std::uint64_t operation);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::CanConnect",
+    "declaration": "ConnectionVerdict CanConnect(GraphView graph, PinId a, PinId b, LinkId replacing = {});",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::TraceNodes",
+    "declaration": "LayoutResult TraceNodes(GraphView graph, NodeId start, bool upstream, std::span<NodeId> output);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::ValidatePinEdit",
+    "declaration": "ConnectionVerdict ValidatePinEdit(GraphView graph, const EditRequest &request);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::QueuePinEdits",
+    "declaration": "bool QueuePinEdits(GraphView graph, std::span<const EditRequest> edits, RequestBuffer &output, std::uint64_t operation);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::IsPinConnected",
+    "declaration": "bool IsPinConnected(GraphView graph, PinId pin);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::CaptureView",
+    "declaration": "ViewState CaptureView(const EditorState &state);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::RestoreView",
+    "declaration": "void RestoreView(EditorState &state, const ViewState &view);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::RememberView",
+    "declaration": "void RememberView(EditorState &state);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::NavigateHistory",
+    "declaration": "bool NavigateHistory(EditorState &state, int direction);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::AddBookmark",
+    "declaration": "bool AddBookmark(EditorState &state, std::string_view label);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::SetZoom",
+    "declaration": "void SetZoom(EditorState &state, double zoom, Point anchorInViewport = {});",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::FrameNodes",
+    "declaration": "bool FrameNodes(EditorState &state, GraphView graph, std::span<const NodeId> nodes, Point viewportSize, double padding = 40);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::IsSelected",
+    "declaration": "bool IsSelected(const EditorState &state, NodeId node);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::Select",
+    "declaration": "void Select(EditorState &state, NodeId node, bool additive = false, bool toggle = false);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::BeginEditor",
+    "declaration": "EditorFrame BeginEditor(const char *id, GraphView graph, EditorState &state, RequestBuffer &requests, const NodeStyle &style, EditorOptions options = {});",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::EndEditor",
+    "declaration": "void EndEditor(EditorFrame &frame);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::BeginNode",
+    "declaration": "bool BeginNode(EditorFrame &frame, NodeId node);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::EndNode",
+    "declaration": "void EndNode(EditorFrame &frame);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::BeginPin",
+    "declaration": "void BeginPin(EditorFrame &frame, PinId pin);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::EndPin",
+    "declaration": "void EndPin(EditorFrame &frame);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::PinRow",
+    "declaration": "void PinRow(EditorFrame &frame, PinId pin, PinRowOptions options = {});",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::PinAddRow",
+    "declaration": "void PinAddRow(EditorFrame &frame, NodeId node, PinKind kind, std::uint64_t group = 0);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::GetPinPosition",
+    "declaration": "bool GetPinPosition(const EditorFrame &frame, PinId pin, ImVec2 &screenPosition);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::Link",
+    "declaration": "void Link(EditorFrame &frame, const LinkView &link);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::DrawLinks",
+    "declaration": "void DrawLinks(EditorFrame &frame);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::DrawNodes",
+    "declaration": "void DrawNodes(EditorFrame &frame, void (*body)(void *, EditorFrame &, const NodeView &) = nullptr, void *user = nullptr);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::QueueCommand",
+    "declaration": "bool QueueCommand(EditorFrame &frame, EditKind kind, NodeId node = {});",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::InsertNode",
+    "declaration": "bool InsertNode(EditorFrame &frame, NodeId node, LinkId link);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::NodePalette",
+    "declaration": "void NodePalette(EditorFrame &frame, std::span<const PaletteEntry> entries);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::MiniMap",
+    "declaration": "void MiniMap(EditorFrame &frame, ImVec2 size = {180, 120});",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::Diagnostics",
+    "declaration": "void Diagnostics(EditorFrame &frame);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::LayoutToolbar",
+    "declaration": "void LayoutToolbar(EditorFrame &frame);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::NodeSearch",
+    "declaration": "void NodeSearch(EditorFrame &frame);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::NodeInspector",
+    "declaration": "void NodeInspector(EditorFrame &frame, NodeId node);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::ExposedProperties",
+    "declaration": "void ExposedProperties(EditorFrame &frame, NodeId node, std::span<const PropertyView> properties);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::BackgroundImage",
+    "declaration": "void BackgroundImage(EditorFrame &frame, ImTextureRef texture, Rect bounds, ImVec4 tint = {1, 1, 1, 1});",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::Annotation",
+    "declaration": "void Annotation(EditorFrame &frame, std::span<const Point> points, ImVec4 color, float width = 2);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::Breadcrumbs",
+    "declaration": "void Breadcrumbs(EditorFrame &frame, std::span<const PathEntry> path);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::Preview",
+    "declaration": "void Preview(EditorFrame &frame, std::span<const PreviewOutput> outputs, void (*demand)(void *, const PreviewDemand &) = nullptr, void *user = nullptr);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::DrawDetachedPreviews",
+    "declaration": "void DrawDetachedPreviews(EditorFrame &frame, NodeId node, std::span<const PreviewOutput> outputs, void (*demand)(void *, const PreviewDemand &) = nullptr, void *user = nullptr);",
+    "header": "imkit/node_editor.h"
+  }
+]

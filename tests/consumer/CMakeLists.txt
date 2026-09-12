@@ -60,3 +60,6 @@ add_executable(imkit_workflow_consumer "${IMKIT_SOURCE_DIR}/tests/workflow_api_c
 target_link_libraries(imkit_workflow_consumer PRIVATE imkit::editor_core)
 add_executable(imkit_editor_consumer "${IMKIT_SOURCE_DIR}/tests/editor_api_compile.cpp")
 target_link_libraries(imkit_editor_consumer PRIVATE imkit::editor_core imkit::video imkit::cg imkit::preview_opengl3 imkit::editor_suite)
+
+add_executable(imkit_node_editor_consumer "${IMKIT_SOURCE_DIR}/tests/node_editor_api_compile.cpp")
+target_link_libraries(imkit_node_editor_consumer PRIVATE imkit::node_editor)

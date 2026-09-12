@@ -77,6 +77,20 @@ void WorkflowPages::Show(int page,GalleryState& host) {
         apply(BottomActionBar("bottom",BottomActionBarView{japanese?"変更なし":"No pending changes",FeedbackKind::Info,commands},toolbar,o));
         auto preset=static_cast<ThemePreset>(host.presetIndex);
         if(ThemePicker("theme",&preset,themePicker,o)){host.presetIndex=static_cast<int>(preset);host.theme=MakeTheme(preset);}
+        ImGui::SeparatorText(japanese?"開閉式の右インスペクター":"Collapsible right inspector");
+        const ImVec2 panelAvailable{ImGui::GetContentRegionAvail().x,180};
+        const bool panelShortcut=!ImGui::GetIO().WantTextInput&&ImGui::IsKeyPressed(ImGuiKey_N);
+        RightSidePanelOptions panelOptions;
+        panelOptions.openLabel=japanese?"インスペクターを開く (N)":"Open inspector (N)";
+        panelOptions.closeLabel=japanese?"インスペクターを閉じる (N)":"Close inspector (N)";
+        panelOptions.resizeLabel=japanese?"インスペクターの幅を変更":"Resize inspector";
+        const auto panelLayout=ResolveRightSidePanelLayout(rightPanel,panelAvailable.x,panelShortcut,panelOptions);
+        ImGui::BeginChild("right-panel-content",{panelLayout.contentWidth,panelAvailable.y},ImGuiChildFlags_Borders);
+        ImGui::TextUnformatted(japanese?"制作ビュー":"Authoring view");
+        ImGui::TextDisabled("N");
+        ImGui::EndChild();ImGui::SameLine(0,0);
+        RightSidePanelHandle("right-panel-handle",rightPanel,panelAvailable,panelOptions,o);
+        if(panelLayout.panelVisible){ImGui::SameLine(0,0);ImGui::BeginChild("right-panel-body",{panelLayout.panelWidth,panelAvailable.y},ImGuiChildFlags_Borders);ImGui::TextUnformatted(japanese?"インスペクター":"Inspector");ImGui::TextDisabled(japanese?"状態と幅はホストが所有します":"The host owns open state and width");ImGui::EndChild();}
     } else if(page==16) {
         ImGui::SliderFloat("Progress",&fraction,-1,1);ImGui::SameLine();if(ActionButton("Modal progress",ActionVariant::Secondary,{},o))progressDialog.open=true;
         Record(host,"workflow-modal");

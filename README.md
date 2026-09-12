@@ -107,6 +107,11 @@ Read the full [validation record and limits](docs/validation.md) before expandin
 | Architecture and host ownership | [Architecture](docs/architecture.md) | [Architecture](docs/architecture.md) |
 | API and troubleshooting | [API coverage](docs/api-coverage.md) · [Troubleshooting](docs/troubleshooting.md) | [API coverage](docs/api-coverage.md) · [トラブルシューティング](docs/troubleshooting.ja.md) |
 
+## Node editor development
+
+Node editor development: [API and host integration](docs/node-editor.md), including alignment,
+distribution, connection-directed layout, grouping and per-node previews (`imkit::node_editor`).
+
 ## License and provenance
 
 ImKit is [MIT licensed](LICENSE). Dear ImGui, GLFW and optional font assets retain their own licenses; versions, hashes, font provenance and distribution notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The Gallery comparison and GIFs add no third-party image, icon, font or code asset.

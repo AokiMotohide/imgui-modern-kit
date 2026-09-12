@@ -346,3 +346,5 @@ if(IMKIT_BUILD_TESTS)
             -P "${CMAKE_CURRENT_BINARY_DIR}/run_consumer.cmake"
     )
 endif()
+
+include(cmake/imkitNodeEditor.cmake)

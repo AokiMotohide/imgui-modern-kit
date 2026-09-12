@@ -117,10 +117,15 @@ Timelineは右下にFit・縮小・対数ズームバー・拡大を配置しま
 Payload memory is borrowed only for the callback, and the delivery flag distinguishes
 preview from the single accepted drop. `drawClipOverlay` adds application decoration
 inside clip bounds; it does not transfer hit testing or edit ownership from Timeline.
+An optional route preview returns the exact candidate range, track kind and a borrowed
+label. Timeline then draws a clip-shaped target instead of the native whole-row target;
+the host remains responsible for using the same planning rules at delivery.
 
 `TimelineProvider::externalDrops`は複数のホスト定義ImGui payload型を受け取ります。payload
 memoryはcallback中だけの非所有参照で、delivery flagによりpreviewと1回の確定dropを区別します。
 `drawClipOverlay`はclip内へアプリ固有表示を追加しますが、hit testと編集所有権はTimelineに残ります。
+任意のroute previewは候補の正確な時間範囲、track種別、非所有labelを返します。指定時は行全体ではなく
+clip形状の候補を描画し、確定時にも同じ計画規則を使う責務はホストに残ります。
 
 Video supplies variable-height role tracks, restrictions/source/target controls,
 related clip moves and trims, split/ripple/roll/slip/slide/ripple-delete, snap targets,
@@ -192,12 +197,15 @@ DisplayLinkなど複数adapter環境で使用でき、OSの画面設定は変更
 
 ## Scope / 対象範囲
 
+The independent development node module is documented in [Node editor](node-editor.md).
+独立したノード編集の開発版は[ノードエディター](node-editor.ja.md)を参照してください。
+
 This is an editor UI suite, not a media decoder/player, resampler, color-management
-engine, node editor, UV unwrapper, IK/simulation/animation runtime, PBR/shadow renderer
+engine, UV unwrapper, IK/simulation/animation runtime, PBR/shadow renderer
 or file-format loader. Native OS/IME and real-project integration are not inferred
 from public ImGui IO or GPU tests. See [validation](editor-validation.md).
 
-本製品の対象は編集UIです。media decode/再生、resample、本格色管理、node editor、UV unwrap、
+本製品の対象は編集UIです。media decode/再生、resample、本格色管理、UV unwrap、
 IK/simulation/animation runtime、PBR/shadow、形式loaderは対象外です。native OS/IMEや実project統合を
 公開ImGui IO・GPUテストの合格から推定しません。[検証結果](editor-validation.md)を参照してください。
 

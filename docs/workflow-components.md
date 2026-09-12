@@ -53,6 +53,7 @@ and relocated SDK consumers. Existing signatures and native API inventory are re
 | `BeginCard`, `EndCard` | Always paired, even when Begin returns false / falseでもEnd必須 |
 | `MultiSelectionBar`, `HelpCallout`, `ValidationSummary` | Host count, commands or issues; no validation engine / 検証処理を所有しない |
 | `ResponsiveToolbar(..., ToolbarOptions)` | Overflow, icon labels, disabled reasons, native keyboard focus / overflowとaccessible label |
+| `ResolveRightSidePanelLayout`, `RightSidePanelHandle` | Host-owned open/width state, compact edge toggle and mouse/keyboard resize; host scopes shortcut requests / 開閉・幅はホスト所有、右端toggleとmouse／keyboard resize、shortcut範囲はホストが決定 |
 | `ImageGeometryValid`, `FitImage`, `ClampImage` | Numeric image layout independent of texture availability / textureと独立した数値layout |
 | `ResolveImagePlacement` | Pure Fit/Fill/Stretch destination and UV crop resolver; invalid geometry is rejected / 純粋な配置・UV crop計算。無効geometryは拒否 |
 | `PixelToNormalized`, `NormalizedToPixel` | Divide/multiply by image dimensions; invalid dimensions return zero / 無効寸法はzero |
@@ -94,6 +95,18 @@ static indicators; no new transitions are introduced.
 Theme・locale・semantic公開は`ComponentOptions`で渡します。描画専用overlayの編集対象nodeは
 ホストが定義します。Stepの矢印はdisabledを飛ばし、Tab／Shift-Tabと実行はnative操作です。
 Splitterは矢印resizeにも対応します。Reduced Motionでは既存の静止表示を利用します。
+
+`ResolveRightSidePanelLayout` returns widths for content, the always-visible edge
+handle and the optional panel. Draw those regions in that order and pass the same
+available extent to `RightSidePanelHandle`. The host decides whether an `N` key or
+another shortcut becomes `toggleRequested`; this prevents the library from stealing
+text input or shortcuts from unrelated editors. The handle remains visible while
+collapsed, and the panel reduces content width instead of covering it.
+
+`ResolveRightSidePanelLayout`は本文、常時表示する右端handle、任意panelの幅を返します。
+その順で描画し、同じ利用可能寸法を`RightSidePanelHandle`へ渡します。`N`キー等を
+`toggleRequested`へ変換する範囲はホストが決めるため、無関係なeditorや文字入力から
+shortcutを奪いません。閉じた状態でもhandleは残り、panelは本文へ重ならず幅を縮めます。
 
 ## Gallery / Gallery
 

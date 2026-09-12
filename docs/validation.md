@@ -10,6 +10,17 @@ The runner sends public Dear ImGui IO and reads a real OpenGL backbuffer. It doe
 
 runnerは公開Dear ImGui IOを送り、実OpenGL backbufferを読みます。native OS/IME入力、支援技術、実機DPI、性能、外部ホストでの受け入れは確認しません。公開Gallery実行ファイルは別途Release build・stage・DLL import確認を行い、Microsoft Visual C++ Redistributableをarchiveに同梱しません。
 
+## Timeline external-drop preview / Timeline外部drop preview（2026-09-12）
+
+The Debug Video test, Editor API compile fixture and independent source consumer passed.
+The focused checks cover the optional exact candidate range callback, the preserved
+single delivery callback and source-compatible aggregate initialization. Release,
+native OS input and external-host acceptance were not run.
+
+DebugのVideo test、Editor API compile fixture、独立source consumerが合格しました。任意の正確な
+候補範囲callback、deliveryが1回だけであること、既存aggregate初期化とのsource互換を確認しました。
+Release、native OS入力、外部ホスト受け入れは未実施です。
+
 ## Preview placement extension / Preview配置拡張（2026-09-12）
 
 The affected Debug library, API-fixture and Gallery targets built successfully.
@@ -153,3 +164,34 @@ consumers, native GPU, captures and the six-operation Release performance result
 EditorのCPU・公開IO・source/SDK consumer・実GPU・capture・6操作のRelease性能は上記を参照してください。
 Native OS/IME and real-project integration remain separate, unperformed categories.
 native OS/IMEと実project統合は別区分で、未実施です。
+
+## Dynamic node sockets / 動的ノードソケット（2026-09-12）
+
+The dedicated Debug node-editor library, API fixture and independent Gallery built
+successfully. `imkit.node_editor` and `imkit.node_editor_api_compile` passed. The
+same public fixture built and ran against a separate consumer-owned ImGui target.
+Native Gallery capture was visually checked; clipped preview and minimap overlap
+were corrected. [Review and exact scope](node-editor-review.md) records the P0/P1
+findings, focused regressions and remaining boundaries. No capture is committed.
+
+専用Debugのノードライブラリ・公開API fixture・独立Galleryがbuildに成功した。
+直接テスト2件が合格し、独自ImGui targetを持つ独立consumerもbuild・実行に成功した。
+Native captureを目視し、previewの切れとminimapの重なりを修正した。
+P0／P1、直接回帰、未実施境界は上記レビューに記録した。captureはcommitしない。
+実機OS／IME・DPI、支援技術、性能、外部ホスト統合、Release・配布検証は未実施。
+
+## Node navigation completion / ノード周辺操作の完了（2026-09-12）
+
+The focused Debug node test and native Gallery build passed. The new public-IO
+regression verifies that minimap clicks navigate without editing underlying nodes.
+Native captures cover both pages, Comfortable/Touch/Compact density, narrow width,
+Japanese labels and High Contrast. Touch preview clipping was corrected by sizing
+host views from control metrics; narrow vector controls retain precise tooltips.
+The initial minimap cursor-restoration assertion was fixed before the final pass.
+
+対象Debug testとnative Gallery buildが合格した。追加した公開IO回帰ではminimapのクリックが
+背後のノードを編集せずviewportを移動することを確認した。両ページ、Comfortable／Touch／Compact、
+狭幅、日本語ラベル、High Contrastをnative captureで目視した。Touchのpreview切れを
+control寸法に基づくホストView高さで修正し、狭いVector欄は正確な値をtooltipでも表示する。
+初回に検出したminimapカーソル復元assertは最終合格前に修正済み。
+実機IME・DPI、性能、外部ホスト統合の受入検証とは区別する。
