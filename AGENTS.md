@@ -46,6 +46,7 @@ ctest --test-dir build/windows-debug -C Debug -R "<対象テスト>" --output-on
 - `docs/images/` はnative Galleryの実captureだけを使う。再生成可能なbuild、`out/`、ログ、capture一式は依頼なしにコミットしない。
 - 第三者のicon、font、画像、コードを変更した場合はprovenance、license、`THIRD_PARTY_NOTICES.md`、配布対象を確認する。
 - 完了後は対象ファイルだけをステージし、`git diff --cached --check` 後、日本語でコミットする。ユーザーがコミット不要と指定した場合は除く。push、PR、Issue、Releaseは明示依頼時だけ行う。
+- ユーザーが現在の依頼で明示しない限り、新規ブランチを作成しない。release、検証、作業分離を理由にした自動作成も行わない。
 
 ## 機密保持
 
