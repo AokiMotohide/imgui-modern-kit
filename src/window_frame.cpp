@@ -32,10 +32,6 @@ WindowFrameRect TakeRight(float& right, float width, float height, bool visible)
     right -= width;
     return result;
 }
-WindowFrameRect OffsetRect(const WindowFrameRect& rect, ImVec2 offset) {
-    return {{rect.min.x + offset.x, rect.min.y + offset.y},
-            {rect.max.x + offset.x, rect.max.y + offset.y}};
-}
 void CaptionGlyph(ImDrawList* draw, const WindowFrameRect& rect, int index, bool maximized,
                   ImU32 ink, float scale) {
     const ImVec2 center{(rect.min.x + rect.max.x) * .5f, (rect.min.y + rect.max.y) * .5f};
@@ -153,20 +149,16 @@ WindowFrameResult DrawWindowFrame(const WindowFrameStyle& style, const WindowFra
                                   const WindowFrameLayout& layout, const WindowFrameState& state) {
     WindowFrameResult result{layout, state.pendingEvent};
     if (layout.titleBar.Height() <= 0) return result;
-    ImGuiViewport* viewport = ImGui::GetMainViewport();
-    ImDrawList* draw = ImGui::GetForegroundDrawList(viewport);
-    const ImVec2 origin = viewport ? viewport->Pos : ImVec2{};
-    const WindowFrameRect titleBar = OffsetRect(layout.titleBar, origin);
-    draw->AddRectFilled(titleBar.min, titleBar.max,
+    ImDrawList* draw = ImGui::GetForegroundDrawList(ImGui::GetMainViewport());
+    draw->AddRectFilled(layout.titleBar.min, layout.titleBar.max,
                         Color(state.active ? style.activeBackground : style.inactiveBackground));
     const float border = std::max(0.f, style.metrics.borderWidth * layout.scale);
-    if (border > 0) draw->AddLine({titleBar.min.x, titleBar.max.y - border * .5f},
-                                  {titleBar.max.x, titleBar.max.y - border * .5f},
+    if (border > 0) draw->AddLine({layout.titleBar.min.x, layout.titleBar.max.y - border * .5f},
+                                  {layout.titleBar.max.x, layout.titleBar.max.y - border * .5f},
                                   Color(style.border), border);
     if (style.features.icon && layout.icon.Width() > 0) {
-        const WindowFrameRect icon = OffsetRect(layout.icon, origin);
-        const ImVec2 center{(icon.min.x + icon.max.x) * .5f,
-                            (icon.min.y + icon.max.y) * .5f};
+        const ImVec2 center{(layout.icon.min.x + layout.icon.max.x) * .5f,
+                            (layout.icon.min.y + layout.icon.max.y) * .5f};
         const float d = std::min(layout.icon.Width(), layout.icon.Height()) * .2f;
         draw->AddRect({center.x - d, center.y - d}, {center.x + d, center.y + d}, Color(style.icon),
                       2 * layout.scale, 0, std::max(1.f, 1.5f * layout.scale));
@@ -183,27 +175,23 @@ WindowFrameResult DrawWindowFrame(const WindowFrameStyle& style, const WindowFra
         draw->AddText(font, fontSize, {rect.min.x, rect.min.y + (rect.Height() - fontSize) * .5f}, Color(color), shown.c_str());
         draw->PopClipRect();
     };
-    if (style.features.applicationName) drawText(OffsetRect(layout.applicationName, origin), content.applicationName, style.auxiliaryText);
-    if (style.features.projectName) drawText(OffsetRect(layout.projectName, origin), content.projectName, state.active ? style.titleText : style.auxiliaryText);
+    if (style.features.applicationName) drawText(layout.applicationName, content.applicationName, style.auxiliaryText);
+    if (style.features.projectName) drawText(layout.projectName, content.projectName, state.active ? style.titleText : style.auxiliaryText);
     if (style.features.unsavedIndicator && content.unsaved && layout.unsavedIndicator.Width() > 0) {
-        const WindowFrameRect unsaved = OffsetRect(layout.unsavedIndicator, origin);
-        const ImVec2 center{(unsaved.min.x + unsaved.max.x) * .5f,
-                            (unsaved.min.y + unsaved.max.y) * .5f};
+        const ImVec2 center{(layout.unsavedIndicator.min.x + layout.unsavedIndicator.max.x) * .5f,
+                            (layout.unsavedIndicator.min.y + layout.unsavedIndicator.max.y) * .5f};
         draw->AddCircleFilled(center, 2.5f * layout.scale, Color(style.auxiliaryText));
     }
     if (style.features.workspaceSwitcher && !content.workspaces.empty()) {
         const auto selected = std::min(content.selectedWorkspace, content.workspaces.size() - 1);
-        const WindowFrameRect workspaceSwitcher = OffsetRect(layout.workspaceSwitcher, origin);
-        drawText(workspaceSwitcher, content.workspaces[selected], style.auxiliaryText);
-        const float x = workspaceSwitcher.max.x - 8.f * layout.scale;
-        const float y = (workspaceSwitcher.min.y + workspaceSwitcher.max.y) * .5f;
+        drawText(layout.workspaceSwitcher, content.workspaces[selected], style.auxiliaryText);
+        const float x = layout.workspaceSwitcher.max.x - 8.f * layout.scale;
+        const float y = (layout.workspaceSwitcher.min.y + layout.workspaceSwitcher.max.y) * .5f;
         draw->AddTriangleFilled({x - 3.f * layout.scale, y - 1.f * layout.scale},
                                 {x + 3.f * layout.scale, y - 1.f * layout.scale},
                                 {x, y + 2.f * layout.scale}, Color(style.auxiliaryText));
     }
-    const std::array<WindowFrameRect, 3> buttons{
-        OffsetRect(layout.minimize, origin), OffsetRect(layout.maximizeRestore, origin),
-        OffsetRect(layout.close, origin)};
+    const std::array<WindowFrameRect, 3> buttons{layout.minimize, layout.maximizeRestore, layout.close};
     for (int index = 0; index < 3; ++index) {
         if (buttons[index].Width() <= 0) continue;
         if (state.hoveredButton == index) {
@@ -215,8 +203,7 @@ WindowFrameResult DrawWindowFrame(const WindowFrameStyle& style, const WindowFra
         CaptionGlyph(draw, buttons[index], index, state.maximized, Color(style.buttonText), layout.scale);
     }
     if (style.features.workspaceSwitcher && layout.workspaceSwitcher.Width() > 0 && !content.workspaces.empty()) {
-        const WindowFrameRect workspaceSwitcher = OffsetRect(layout.workspaceSwitcher, origin);
-        ImGui::SetNextWindowPos(workspaceSwitcher.min);
+        ImGui::SetNextWindowPos(layout.workspaceSwitcher.min);
         ImGui::SetNextWindowSize({layout.workspaceSwitcher.Width(), layout.workspaceSwitcher.Height()});
         ImGui::SetNextWindowBgAlpha(0);
         constexpr ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings |

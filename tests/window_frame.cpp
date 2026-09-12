@@ -33,7 +33,6 @@ int main() {
     io.Fonts->Build();
     ImGui::NewFrame();
     ImGuiViewport* viewport = ImGui::GetMainViewport();
-    viewport->Pos = {120, 80};
     const auto studioStyle = imkit::MakeWindowFrameStyle(imkit::WindowFramePreset::Studio, theme);
     const auto studioLayout = imkit::LayoutWindowFrame(640, studioStyle);
     const auto drawResult =
@@ -41,13 +40,15 @@ int main() {
     assert(drawResult.layout.titleBar.Height() == studioLayout.titleBar.Height());
     ImDrawList* foreground = ImGui::GetForegroundDrawList(viewport);
     assert(!foreground->VtxBuffer.empty());
-    assert(foreground->VtxBuffer.front().pos.x >= viewport->Pos.x);
-    assert(foreground->VtxBuffer.front().pos.y >= viewport->Pos.y);
+    assert(foreground->VtxBuffer.front().pos.x == studioLayout.titleBar.min.x);
+    assert(foreground->VtxBuffer.front().pos.y == studioLayout.titleBar.min.y);
+    ImGui::Render();
+    ImDrawData* drawData = ImGui::GetDrawData();
+    assert(drawData && drawData->TotalVtxCount >= foreground->VtxBuffer.Size);
     const auto elided = imkit::ElideWindowFrameTitle("Window / 長いUTF-8タイトル", 70, ImGui::GetFont(), 13);
     assert(elided.ends_with("...") && elided.find('\0') == std::string::npos);
     style.activeBackground = style.titleText;
     assert(!imkit::ValidateWindowFrameContrast(style).valid);
-    ImGui::EndFrame();
     ImGui::DestroyContext(context);
     return 0;
 }
