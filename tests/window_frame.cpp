@@ -32,6 +32,17 @@ int main() {
     io.Fonts->AddFontDefault();
     io.Fonts->Build();
     ImGui::NewFrame();
+    ImGuiViewport* viewport = ImGui::GetMainViewport();
+    viewport->Pos = {120, 80};
+    const auto studioStyle = imkit::MakeWindowFrameStyle(imkit::WindowFramePreset::Studio, theme);
+    const auto studioLayout = imkit::LayoutWindowFrame(640, studioStyle);
+    const auto drawResult =
+        imkit::DrawWindowFrame(studioStyle, {"", "project.pmproj", false, {}, 0}, studioLayout);
+    assert(drawResult.layout.titleBar.Height() == studioLayout.titleBar.Height());
+    ImDrawList* foreground = ImGui::GetForegroundDrawList(viewport);
+    assert(!foreground->VtxBuffer.empty());
+    assert(foreground->VtxBuffer.front().pos.x >= viewport->Pos.x);
+    assert(foreground->VtxBuffer.front().pos.y >= viewport->Pos.y);
     const auto elided = imkit::ElideWindowFrameTitle("Window / 長いUTF-8タイトル", 70, ImGui::GetFont(), 13);
     assert(elided.ends_with("...") && elided.find('\0') == std::string::npos);
     style.activeBackground = style.titleText;
