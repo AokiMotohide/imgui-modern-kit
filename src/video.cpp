@@ -1465,6 +1465,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     if (!accepted) continue;
                     const auto preview=route.preview ? route.preview(route.user,track.id,at,pending->Data,
                         static_cast<std::size_t>(pending->DataSize)) : TimelineExternalDropPreview{};
+                    if(route.preview && !preview.valid) continue;
                     ImGuiDragDropFlags flags=ImGuiDragDropFlags_AcceptBeforeDelivery;
                     if(route.preview) flags|=ImGuiDragDropFlags_AcceptNoDrawDefaultRect;
                     if (const auto *payload=ImGui::AcceptDragDropPayload(route.payloadType,flags)) {

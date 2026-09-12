@@ -1040,6 +1040,7 @@ int main() {
             int overlayCalls=0,dropPreviews=0,dropDeliveries=0,dropValue=0,rangePreviews=0;
             editor::StableId dropTrack=0;
             editor::Tick dropTick=0,previewFirst=0,previewLast=0;
+            bool previewValid=true;
         } fixture;
         fixture.clip.id=410;fixture.clip.track=400;fixture.clip.label="Editable";fixture.clip.duration=editor::FromSeconds(3);
         video::TimelineProvider p;p.user=&fixture;p.revision=1;p.trackCount=2;
@@ -1059,7 +1060,7 @@ int main() {
             [](void *u,editor::StableId,editor::Tick at,const void *,std::size_t){
                 auto &f=*static_cast<EditingFixture*>(u);++f.rangePreviews;
                 f.previewFirst=at;f.previewLast=at+editor::FromSeconds(3);
-                return video::TimelineExternalDropPreview{{f.previewFirst,f.previewLast},video::TrackKind::Effect,"Three seconds",true};
+                return video::TimelineExternalDropPreview{{f.previewFirst,f.previewLast},video::TrackKind::Effect,"Three seconds",f.previewValid};
             }}};
         p.externalDrops=routes;
         std::array<editor::StableId,8> clipIds{},trackIds{};
@@ -1111,6 +1112,11 @@ int main() {
         check(fixture.rangePreviews>0 && fixture.previewFirst==fixture.dropTick &&
               fixture.previewLast-fixture.previewFirst==editor::FromSeconds(3),
               "external drop range preview uses the exact host-owned candidate duration");
+        fixture.previewValid=false;
+        move(assetOrigin.x+20,assetOrigin.y+10);io.AddMouseButtonEvent(0,true);render();
+        move(origin.x+state.headerWidth+350,origin.y+state.rowHeight+20);render();
+        io.AddMouseButtonEvent(0,false);render();
+        check(fixture.dropDeliveries==1,"invalid exact-range preview rejects delivery");
     }
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;
