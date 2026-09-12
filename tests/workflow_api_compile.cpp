@@ -32,9 +32,11 @@ auto volatile appBar=&imkit::AppBar;auto volatile workspaceHeader=&imkit::Worksp
 auto volatile inspectorSection=&imkit::InspectorSection;auto volatile advancedSection=&imkit::AdvancedSection;
 auto volatile bottomActionBar=&imkit::BottomActionBar;auto volatile beginDiagnostics=&imkit::BeginDiagnosticsDrawer;
 auto volatile endDiagnostics=&imkit::EndDiagnosticsDrawer;auto volatile themePicker=&imkit::ThemePicker;
+auto volatile resolveRightPanel=&imkit::ResolveRightSidePanelLayout;
+auto volatile rightPanelHandle=&imkit::RightSidePanelHandle;
 }
 int main() {
     imkit::StableId ids[1];imkit::RequestBuffer requests{ids};
     imkit::editor::TileEvent events[1];imkit::editor::TileEventBuffer out{events};
-    return !(grouped&&iconToolbar&&labeledIconToolbar&&iconAction&&step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&card&&endCard&&section&&multi&&help&&validation&&toolbar&&valid&&placement&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&appBar&&workspaceHeader&&inspectorSection&&advancedSection&&bottomActionBar&&beginDiagnostics&&endDiagnostics&&themePicker&&requests.Push(1)&&out.Push({}));
+    return !(grouped&&iconToolbar&&labeledIconToolbar&&iconAction&&step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&card&&endCard&&section&&multi&&help&&validation&&toolbar&&valid&&placement&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&appBar&&workspaceHeader&&inspectorSection&&advancedSection&&bottomActionBar&&beginDiagnostics&&endDiagnostics&&themePicker&&resolveRightPanel&&rightPanelHandle&&requests.Push(1)&&out.Push({}));
 }

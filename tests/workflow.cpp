@@ -71,6 +71,32 @@ int main(){
         accessibility::ActionQueue queue(pending);accessibility::AccessibilityFrame semantics(nodes,&queue);
         ComponentOptions options{&theme,nullptr,&semantics};
         auto frame=[&](auto draw){io.AddFocusEvent(true);ImGui::NewFrame();semantics.Begin(generation);ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({900,740});ImGui::Begin("fixture",nullptr,ImGuiWindowFlags_NoSavedSettings);draw();ImGui::End();ImGui::Render();Check(semantics.Tree().Validate(),"valid semantic tree");};
+        RightSidePanelState rightPanel;
+        RightSidePanelLayout rightPanelLayout;
+        auto drawRightPanel=[&]{
+            const ImVec2 available{600,180};
+            rightPanelLayout=ResolveRightSidePanelLayout(rightPanel,available.x);
+            ImGui::BeginChild("panel-content",{rightPanelLayout.contentWidth,available.y});ImGui::TextUnformatted("Content");ImGui::EndChild();
+            ImGui::SameLine(0,0);RightSidePanelHandle("inspector",rightPanel,available,{},options);
+            if(rightPanelLayout.panelVisible){ImGui::SameLine(0,0);ImGui::BeginChild("panel-body",{rightPanelLayout.panelWidth,available.y},ImGuiChildFlags_Borders);ImGui::TextUnformatted("Inspector");ImGui::EndChild();}
+        };
+        frame(drawRightPanel);
+        Check(rightPanelLayout.panelVisible&&Near(rightPanelLayout.contentWidth+rightPanelLayout.handleWidth+rightPanelLayout.panelWidth,600),"right panel open layout conserves width");
+        accessibility::SemanticNode panelToggle{};
+        for(auto& item:semantics.Tree().nodes)if(item.name=="Close inspector")panelToggle=item;
+        queue.Push({panelToggle.id,accessibility::SemanticAction::Press});frame(drawRightPanel);frame(drawRightPanel);
+        Check(!rightPanel.open&&!rightPanelLayout.panelVisible&&Near(rightPanelLayout.contentWidth+rightPanelLayout.handleWidth,600),"right panel semantic toggle collapses to rail");
+        ResolveRightSidePanelLayout(rightPanel,600,true);
+        Check(rightPanel.open,"right panel host shortcut request opens panel");
+        frame(drawRightPanel);
+        accessibility::SemanticNode panelResize{};
+        for(auto& item:semantics.Tree().nodes)if(item.name=="Resize inspector")panelResize=item;
+        const float panelWidthBefore=rightPanel.width;
+        queue.Push({panelResize.id,accessibility::SemanticAction::Increment});frame(drawRightPanel);
+        Check(rightPanel.width>panelWidthBefore,"right panel semantic increment expands panel");
+        rightPanel.width=std::numeric_limits<float>::infinity();
+        rightPanelLayout=ResolveRightSidePanelLayout(rightPanel,300);
+        Check(std::isfinite(rightPanel.width)&&rightPanelLayout.contentWidth>=1&&rightPanelLayout.panelWidth>=1,"right panel clamps narrow and nonfinite input");
         std::array<StepItem,4> steps{{{1,"Same","Ready"},{2,"Same","Blocked",false,true,true},{3,"Long label without collisions","Description",true,true,false,FeedbackKind::Warning},{4,"Error","Description",false,true,false,FeedbackKind::Error}}};
         {
             std::array<StepGroup,2> groups{{{10,"First",0,2,{.25f,.60f,.95f,1.f}},{11,"Second",2,2,{.85f,.45f,.70f,1.f}}}};
@@ -194,6 +220,7 @@ int main(){
             BottomActionBar("bottom",BottomActionBarView{"Ready",FeedbackKind::Success,commands},toolbar,options);
             ThemePickerState picker;ThemePreset preset=ThemePreset::PrecisionDark;ThemePicker("theme",&preset,picker,options);
             DiagnosticsDrawerState diagnostics{true};if(BeginDiagnosticsDrawer("diagnostics","Diagnostics",diagnostics,{0,80},options)){ImGui::TextUnformatted("No issues");EndDiagnosticsDrawer();}
+            rightPanel.open=true;rightPanel.width=260;drawRightPanel();
         };
         for(int i=0;i<8;++i)frame(composed);
         measuring=true;gallery::CountAllocations(true);for(int i=0;i<8;++i)frame(composed);gallery::CountAllocations(false);measuring=false;

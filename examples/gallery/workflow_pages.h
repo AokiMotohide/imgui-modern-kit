@@ -11,6 +11,7 @@ struct WorkflowPages {
     CommandPaletteState palette;
     DialogState progressDialog;
     DiagnosticsDrawerState diagnostics;
+    RightSidePanelState rightPanel;
     ThemePickerState themePicker;
     editor::ImageViewportState image;
     std::array<editor::ImageViewportState,4> imageComparisons{};
