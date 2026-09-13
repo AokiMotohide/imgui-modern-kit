@@ -46,7 +46,7 @@ NSString *Role(SemanticRole role) {
     case SemanticRole::Radio:return NSAccessibilityRadioButtonRole;
     case SemanticRole::ComboBox:return NSAccessibilityComboBoxRole;
     case SemanticRole::TextField:return NSAccessibilityTextFieldRole;
-    case SemanticRole::Dialog:return NSAccessibilityDialogRole;
+    case SemanticRole::Dialog:return NSAccessibilityGroupRole;
     case SemanticRole::Toolbar:return NSAccessibilityToolbarRole;
     case SemanticRole::TabList:return NSAccessibilityTabGroupRole;
     case SemanticRole::Tab:return NSAccessibilityRadioButtonRole;
