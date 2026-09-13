@@ -184,7 +184,7 @@ StableId IconToolbar(const char* id,const IconAtlas& atlas,
         if(Annotate(item.label,item.description,accessibility::SemanticRole::Button,accessibility::SemanticAction::Press,item.selected,o,item.mixed) || pressed) result=item.id;
         auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
         auto* draw=ImGui::GetWindowDrawList();
-        if(item.selected) draw->AddRect(a,b,ImGui::GetColorU32(ImGuiCol_CheckMark),ImGui::GetStyle().FrameRounding,0,2.f);
+        if(item.selected) draw->AddRect(a,b,ImGui::GetColorU32(ImGuiCol_CheckMark),ImGui::GetStyle().FrameRounding,2.f,0);
         if(item.mixed) draw->AddLine({a.x+4,b.y-3},{b.x-4,b.y-3},ImGui::GetColorU32(ImGuiCol_TextDisabled),2.f);
         if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)||ImGui::IsItemFocused()) {
             ImGui::BeginTooltip();ImGui::PushTextWrapPos(ImGui::GetFontSize()*32.f);ImGui::TextUnformatted(Safe(item.label));
@@ -334,7 +334,7 @@ void CircularProgress(const char* id,const CircularProgressView& view,CircularPr
     if(available&&fraction>0.f) {
         const float start=-pi*.5f;
         if(fraction>=.9999f) draw->AddCircle(center,std::max(1.f,diameter*.5f-stroke*.5f),ImGui::GetColorU32(foreground),segments,stroke);
-        else {draw->PathArcTo(center,std::max(1.f,diameter*.5f-stroke*.5f),start,start+2.f*pi*fraction,std::max(2,static_cast<int>(segments*fraction)));draw->PathStroke(ImGui::GetColorU32(foreground),0,stroke);}
+        else {draw->PathArcTo(center,std::max(1.f,diameter*.5f-stroke*.5f),start,start+2.f*pi*fraction,std::max(2,static_cast<int>(segments*fraction)));draw->PathStroke(ImGui::GetColorU32(foreground),stroke,0);}
     }
     const ImVec2 valueSize=ImGui::CalcTextSize(value);
     draw->AddText({center.x-valueSize.x*.5f,center.y-valueSize.y*.5f},ImGui::GetColorU32(available?(o.theme?o.theme->semantic.text:ImGui::GetStyleColorVec4(ImGuiCol_Text)):foreground),value);

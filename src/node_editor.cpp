@@ -643,8 +643,8 @@ EditorFrame BeginEditor(const char *id, GraphView graph, EditorState &s, Request
             dl->AddRectFilled(a, b, Color(group ? st.group : st.surface), st.rounding);
             dl->AddRectFilled(a, {b.x, a.y + float(st.headerHeight * s.zoom)}, Color(st.header), st.rounding,
                               ImDrawFlags_RoundCornersTop);
-            dl->AddRect(a, b, Color(IsSelected(s, n.id) ? st.accent : st.border), st.rounding, 0,
-                        IsSelected(s, n.id) ? 2 : st.borderWidth);
+            dl->AddRect(a, b, Color(IsSelected(s, n.id) ? st.accent : st.border), st.rounding,
+                        IsSelected(s, n.id) ? 2 : st.borderWidth, 0);
             dl->AddLine({a.x + st.rounding, a.y + 1}, {b.x - st.rounding, a.y + 1}, Color(st.accent), 2);
         }
     return f;
