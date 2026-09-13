@@ -79,7 +79,7 @@ Use Dear ImGui docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be` exactly
 
 ## Installed SDK
 
-SDK artifacts are produced separately for Windows x64, Windows Arm64 and macOS Universal 2. Each manifest records OS, architecture, compiler and the Dear ImGui commit. Match compile definitions and `imconfig.h` across all translation units. The library archive does **not** contain ImGui core. Header guards reject other ImGui version numbers; the explicit ABI confirmation below also requires you to check the artifact manifest and type settings. It is not automatic binary introspection.
+Release packages are produced separately for Windows x64, Windows Arm64, macOS arm64, macOS x86_64 and macOS Universal 2. Each manifest records OS, architecture, compiler and the Dear ImGui commit. Match compile definitions and `imconfig.h` across all translation units. The library archive does **not** contain ImGui core. Header guards reject other ImGui version numbers; the explicit ABI confirmation below also requires you to check the artifact manifest and type settings. It is not automatic binary introspection.
 
 ```cmake
 # Create the matching host_imgui target first.

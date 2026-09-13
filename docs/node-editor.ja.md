@@ -108,14 +108,15 @@ readOnlyではグラフ編集だけを抑止します。実行・debug操作は�
 
 `imkit_node_editor_gallery` をビルドし、`catalog/Debug` 内の実行ファイルを起動します。
 `--smoke [出力PNGの絶対パス]` でホスト編集・Undo・サブグラフ解除とnative描画5frameを確認し、
-必要なら実backbufferを保存します。captureはbuild配下に置き、製品画像として自動追加しません。
-既存Galleryの実装ファイルは変更していません。
+必要なら実backbufferを保存します。`--capture-gif <directory>`は、zoom、pan、可視socket追加、
+互換link接続、inline値、preview、minimapを示す決定的な960×540 OpenGL backbuffer 80 frameを
+出力します。物理pointer timingに依存しないよう、文書captureではホスト所有graph modelを
+直接更新します。
 
 直接テストは `imkit.node_editor`、公開ヘッダーとlinkは `imkit.node_editor_api_compile` です。
 [API一覧](node-editor-api.json)は `python tools/generate_node_api.py` で独立に再生成できます。
 既存APIの生成物を巻き込まずに更新します。
 
-デザイン段階のAPIとして、固定の性能合格条件や製品間の網羅的互換保証は設定していません。
 native OS/IME、実機DPI、支援技術、Release性能、install済みSDKの配布確認は、これらの
 開発用テストで確認したことにはなりません。[English](node-editor.md)
 

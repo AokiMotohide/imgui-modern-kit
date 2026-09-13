@@ -9,16 +9,23 @@
 | macOS 15+ Apple Silicon | build, tests, Metal Gallery, app bundle, ZIP | required on one Apple Silicon Mac |
 | macOS 15+ Intel | build, tests, Metal Gallery, app bundle, ZIP | architecture-specific manual run is not required |
 
-The checked-in workflow defines all four automated gates. This Windows checkout has
-not executed the macOS jobs or Apple Silicon native acceptance. macOS support must not
-be reported as physically accepted until Gallery launch, Japanese IME, Retina scaling,
-docking/multi-viewport, traffic-light controls and basic VoiceOver navigation pass on
-the selected Mac. Signing/notarization runs only when release credentials are present.
+PR #8 head `326618c` passed all five GitHub Actions jobs on 2026-09-13:
+Windows x64 and Arm64 build/test/package, macOS arm64 and x86_64 build/test/package,
+and the Universal 2 Gallery/package job. The arm64 job also launched the native Metal
+Gallery smoke path. Signing/notarization steps were skipped because release credentials
+were unavailable.
 
-commit済みworkflowは4構成の自動gateを定義します。このWindows checkoutではmacOS jobと
-Apple Silicon実機受入を実行していません。選定MacでGallery起動、日本語IME、Retina、
-Docking/Multi-Viewport、traffic-light、基本VoiceOverを確認するまでは実機合格と記載しません。
-署名・notarizationはrelease資格情報がある場合だけ実行します。
+PR #8 head `326618c`は2026-09-13にGitHub Actions全5 jobへ合格しました。
+Windows x64／Arm64のbuild・test・package、macOS arm64／x86_64のbuild・test・package、
+Universal 2のGallery build・packageが対象です。arm64ではnative Metal Gallery smokeも
+成功しました。release資格情報がなかったため、署名・notarization stepは未実施です。
+
+These automated gates do not establish physical Apple Silicon/Intel acceptance,
+Japanese IME, Retina or mixed-DPI behavior, traffic-light interaction, VoiceOver,
+native pointer/keyboard behavior or external-host integration.
+
+これらの自動gateは、Apple Silicon／Intel実機受入、日本語IME、Retina／mixed-DPI、
+traffic-light操作、VoiceOver、native pointer／keyboard、外部host統合の合格を意味しません。
 
 ## Node editor access, appearance and collapse / Node editorの導線・外観・折りたたみ（2026-09-12）
 
@@ -27,19 +34,21 @@ passed host name/color Undo/Redo, borrowed header styles and repeated collapsed-
 layout checks. The collapse regression reproduced Dear ImGui's cursor-boundary
 assertion before the fix. The native `--verify-node-actions` runner passed 60
 public-IO clicks on Output monitor, producing 30 collapse/expand transitions.
-Native OS mouse/IME input, launcher focus behavior and Release packaging were not verified.
+Native OS mouse/IME input and launcher focus behavior were not verified. The v3 PR
+CI subsequently built and packaged the companion on every supported architecture.
 
 Debugの通常GalleryとNode Editor実行ファイルはbuildに成功した。`imkit.node_editor`で
 ホスト所有の名前・色のUndo／Redo、借用header style、折りたたみの反復を確認した。
 修正前には折りたたみ回帰テストでDear ImGuiのcursor境界assertionを再現した。
 native `--verify-node-actions`ではOutput monitorへの公開IOクリック60回、
-折りたたみ・展開30回が成功した。native OSマウス／IME、launcherの前面化、Release配布は未検証。
+折りたたみ・展開30回が成功した。native OSマウス／IMEとlauncherの前面化は未検証。
+v3 PR CIではその後、全対応architectureでcompanionのbuildとpackageが成功した。
 
-## Gallery comparison and documentation captures / Gallery比較と文書capture（2026-09-12）
+## V3 Gallery and documentation captures / V3 Galleryと文書capture（2026-09-13）
 
-The Debug native Gallery build passed `--verify-comparison`: Default Dear ImGui and ImKit controls changed the same host-owned value, temporary comparison styles restored after a frame, and closing/reopening removed then restored the submitted controls. The runner captured 120 overview frames and 80 frames each for comparison, themes, icons, workflow and timeline at native `960×540`; the checked-in GIF encoder accepted all six outputs under its 8 MiB limit. Representative native frames were visually inspected.
+The Debug native Gallery build passed `--verify-comparison`: Default Dear ImGui and ImKit controls changed the same host-owned value, temporary comparison styles restored after a frame, and closing/reopening removed then restored the submitted controls. V3 documentation captures contain 120 overview frames, 80 Node Editor frames, 120 workflow/progress frames, 80 timeline frames and 120 theme/comparison frames at native `960×540`. The checked-in encoder accepted all five GIFs under its 8 MiB limit. The Node Editor sequence deterministically changes host-owned zoom/pan state, adds a visible socket, connects it, and shows inline values, previews and the minimap. The showcase MP4 was encoded from the same 520 native frames.
 
-Debug native Galleryで`--verify-comparison`が成功しました。Default Dear ImGuiとImKitのcontrolは同じホスト所有値を変更し、比較用の一時styleはframe後に復元され、close/reopenでcontrolが消えて再表示されました。概要120 frame、比較・theme・icon・workflow・timeline各80 frameをnative `960×540`でcaptureし、commitする6本のGIFは8MiB上限付きencoderを通過しました。代表native frameを目視確認しました。
+Debug native Galleryで`--verify-comparison`が成功しました。Default Dear ImGuiとImKitのcontrolは同じホスト所有値を変更し、比較用の一時styleはframe後に復元され、close/reopenでcontrolが消えて再表示されました。V3文書用にoverview 120、Node Editor 80、workflow／progress 120、timeline 80、theme／comparison 120 frameをnative `960×540`でcaptureし、5本のGIFは8MiB上限付きencoderを通過しました。Node Editor列はホスト所有zoom／pan、可視socket追加と接続、inline値、preview、minimapを決定的に変化させます。showcase MP4は同じnative 520 frameから生成しました。
 
 The runner sends public Dear ImGui IO and reads a real OpenGL backbuffer. It does not establish native OS/IME input, assistive-technology operation, physical-DPI, performance or external-host acceptance. The released Gallery executable is separately built, staged and inspected for its DLL imports; its archive does not bundle the Microsoft Visual C++ Redistributable.
 
@@ -107,9 +116,15 @@ The isolated `build/window-frame-public-debug` tree passed the Debug public API 
 
 隔離した`build/window-frame-public-debug`で、Debug公開API unit test／compile fixture、独立source consumer build、最小Gallery build、`--verify-window-frame`が成功しました。枠検証は4 preset、Theme由来の色再生成と完全preset resetの区別、寸法・featureのlayout反映、UTF-8省略、`HTMAXBUTTON`を含むWin32 caption／client／edge hit test、最大化時のwork area、復元、最小化、GLFW終了要求経路を対象にしました。`out/window-frame-public/`の生成capture・reportはcommitしません。
 
-No real Mac was available. macOS compilation, launch, traffic-light controls, drag/full-screen/minimize/zoom and native input are unverified. Physical 100%/200% DPI, mixed-DPI monitor movement, screen readers, Release, installed-package and distribution acceptance were also not run. Debug compilation and synthetic Win32 messages do not establish those categories.
+GitHub-hosted macOS arm64/x86_64 compilation and arm64 automated Gallery smoke now pass.
+No interactive physical-Mac acceptance was performed for traffic-light controls,
+drag/full-screen/minimize/zoom, native input, 100%/200% or mixed-DPI behavior,
+screen readers, signing or notarization. Automated launch does not establish those categories.
 
-実Macは使用していません。macOS build・起動、traffic-light、drag／full-screen／最小化／拡大、native入力は未検証です。物理DPI 100%／200%、異なるDPI monitor間移動、screen reader、Release、installed package、配布受け入れも未実施です。Debug compileと合成Win32 messageを、それらの合格とは扱いません。
+GitHub-hosted macOS arm64／x86_64 buildとarm64自動Gallery smokeは成功しました。
+traffic-light、drag／full-screen／最小化／拡大、native入力、物理DPI 100%／200%、
+mixed-DPI、screen reader、署名、notarizationの対話的な実機受入は未実施です。
+自動起動をそれらの合格とは扱いません。
 
 ## Generic workflow extension / 汎用部品拡張（2026-09-11）
 

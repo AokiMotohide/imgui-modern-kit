@@ -1,34 +1,16 @@
-# imgui-modern-kit
+# ImKit
 
-[English](README.md) · [導入ガイド](docs/getting-started.ja.md) · [Gallery ガイド](docs/gallery.ja.md) · [変更履歴](CHANGELOG.md)
+[English](README.md) · [導入ガイド](docs/getting-started.ja.md) · [Gallery](docs/gallery.ja.md) · [Node Editor](docs/node-editor.ja.md) · [v3移行](docs/migration-v3.md) · [Releases](https://github.com/AokiMotohide/imgui-modern-kit/releases)
 
-## ✨ 開発ツールにも、プロダクトと同等のデザイン品質を
+**モダンなnative制作ツールを、より速く。** ImKit v3.0.0はDear ImGui向けのC++20静的UIライブラリです。一貫したTheme、制作向けcontrol、workflow／editor surface、ホスト所有のNode Editor、生成icon、native accessibility adapter、任意のOpenGL／Metal previewを、アプリケーションの所有権を奪わず追加します。
 
-**ImKit v3.0.0** はDear ImGui向けのC++20デザインレイヤーです。一貫した外観、再利用可能な操作部品、意味別テーマ、生成icon、任意のEditor surfaceを追加しながら、Context、renderer、データ、workflowの所有権はホストへ残します。
+MIT License · Windows x64/Arm64 · macOS arm64/x86_64/Universal 2 · Dear ImGui 1.93.0 WIP docking
 
-MITライセンス · 静的ライブラリ · Windows x64/Arm64・macOS Universal 2 build matrix · Dear ImGui `docking`完全固定
+## 30秒で試す
 
-> **まずGalleryを試してください。** v3 packageには同じGallery pageを持つWindows実行ファイルまたはmacOS app bundleが入ります。WindowsはGLFW/OpenGL3、macOSはGLFW/Metalです。
+[ImKit v3.0.0](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.0.0)から環境に合うpackageを取得して展開し、`bin/imkit_gallery.exe`または`imkit_gallery.app`を実行します。専用のNode Editor Galleryも同梱します。
 
-## 🎞 ネイティブギャラリーの動作デモ
-
-以下のGIFアニメーションは、すべてネイティブギャラリーからキャプチャしたものです。最初の2つは機能の違いを分かりやすく示しています。移動・リサイズが可能な **Compare** ウィンドウでは、Dear ImGui標準UIとImKitを並べ、双方から*ホスト側の同じ値*をリアルタイムに編集・同期できます。
-
-| | |
-|---|---|
-| ![案内付きGallery Start](docs/images/gallery-overview.gif)<br>**迷わず最初の画面から試せる**<br>空のデモ画面ではなく、機能比較、コンポーネント一覧、ワークフロー、エディタの実用例へとスムーズに案内します。 | ![Default Dear ImGuiとImKitのライブ比較](docs/images/gallery-comparison.gif)<br>**同じ操作を並べて比較**<br>標準の`StyleColorsDark`ウィジェットとImKitコントロールが、1つの共有値を同時に更新します。 |
-| ![Theme paletteの遷移](docs/images/gallery-themes.gif)<br>**12種類の完全なテーマを切り替え**<br>実行中のUIでカラーパレットや状態に応じた表示の変化を確認できます。 | ![生成iconの検索と選択](docs/images/gallery-icons.gif)<br>**284個の生成アイコンを検索**<br>7種類のピクセルサイズと1,988個のアトラスバリエーションにより、大規模なカタログを実用的に扱えます。 |
-| ![Workflow状態のfeedback](docs/images/gallery-workflow.gif)<br>**実際のワークフローを直感的に表示**<br>特定のフレームワークに依存せず、ホスト側のリクエスト、通知、状態のフィードバックを表示します。 | ![Timeline操作](docs/images/gallery-timeline.gif)<br>**編集インターフェースへの拡張**<br>ギャラリーのサンプルとして、タイムライン操作やUndo（取り消し）の動作を確認できます。 |
-
-これらは見た目だけ再現したモックアップではなく、実際のOpenGLバックバッファからキャプチャした映像です。視覚的構造と一貫性のある操作感を示しています。なお、パフォーマンス、OSネイティブのIME入力、アクセシビリティのベンチマークを目的とするものではありません。比較画面のためにサードパーティ製のUIコードやアセットを追加・複製していません。
-
-## 🚀 継続して進化するデザインシステム
-
-ImKitは一度限りの見た目の更新にとどまらず、バージョンリリースを通して進化し続けます。ギャラリー、再生成可能なGIF、SDKマニフェスト、日英のドキュメントを同時に更新するため、導入前にネイティブ実行ファイルで改善内容を確認できます。現在の開発状況と変更履歴は[Releases](https://github.com/AokiMotohide/imgui-modern-kit/releases)および[変更履歴](CHANGELOG.md)をご確認ください。
-
-## 30秒で価値を確認する
-
-ソースからギャラリーをビルドします。
+sourceからnative Galleryを起動する場合は次の3行です。
 
 ```powershell
 cmake --preset windows-debug
@@ -36,13 +18,10 @@ cmake --build --preset windows-debug --target imkit_gallery --parallel
 ./build/windows-debug/catalog/Debug/imkit_gallery.exe
 ```
 
-最初の画面から比較、component、theme、workflow、Frame Labへ案内します。各画面でホスト所有権の境界を見える化しているため、実例が知らないうちにframework依存へ変わりません。
-
-既存Dear ImGuiホストへ追加します。
+既存Dear ImGuiアプリケーションへの追加は、1 targetと1 theme scopeで始められます。
 
 ```cmake
-# 対応するDear ImGui本体を含むhost_imguiを先に作成します。
-set(IMKIT_IMGUI_TARGET host_imgui)
+set(IMKIT_IMGUI_TARGET host_imgui) # 互換する既存Dear ImGui target
 add_subdirectory(external/imgui-modern-kit)
 target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
@@ -51,69 +30,91 @@ target_link_libraries(your_app PRIVATE imkit::imkit)
 #include <imkit/imkit.h>
 
 auto theme = imkit::MakeTheme(imkit::ThemePreset::Ocean);
-imkit::ApplyTheme(theme); // Context作成後、NewFrameより前
 
-// ホストのframe内:
+// 既存Dear ImGui frame内
+imkit::ThemeScope themeScope(theme);
 if (imkit::Begin("Display")) {
     static bool enabled = true;
-    imkit::Toggle("Enabled", &enabled, {&theme});
-    imkit::ActionButton("Apply", imkit::ActionVariant::Primary, {}, {&theme});
+    imkit::Toggle("Enabled", &enabled);
+    imkit::ActionButton("Apply", imkit::ActionVariant::Primary);
 }
-imkit::End(); // Beginがfalseでも必要
+imkit::End(); // Beginの戻り値に関係なく必ず対にする
 ```
 
-## アプリらしさを決める部分は、アプリのまま残す
+Context、backend、renderer、font atlas、値、frame loopは既存アプリケーション側に残ります。
 
-ImKitは次のものを作成・所有しません。
+## v3でできること
 
-- Dear ImGui Context、backend、renderer、frame loop
-- Font atlas、texture、GPU resource、platform window
-- 編集値、scene/mediaデータ、Undo履歴、永続化、worker
+以下はすべて、実際のnative GalleryまたはNode Editor companionのbackbufferを960×540で記録したGIFです。再描画したmockや第三者製品の映像ではありません。[native showcase全編（MP4）](https://github.com/AokiMotohide/imgui-modern-kit/releases/download/v3.0.0/imkit-v3.0.0-showcase.mp4)も公開しています。
 
-ID、focus、keyboard navigation、callback、clipping、テキスト編集はDear ImGuiの標準動作を保ちます。ImKitはdesign/component libraryであり、renderer、アプリframework、Dear ImGui forkではありません。
+### V3 Overview
 
-## 必要なmoduleだけを選ぶ
+![ImKit v3 native Gallery overview](docs/images/v3-overview.gif)
 
-| Target | 主な用途 | 依存境界 |
+案内付きStartからDefault Dear ImGui／ImKitのlive比較を開き、componentやeditor workflowへ迷わず移動できます。
+
+### ホスト所有のNode Editor
+
+![動的socket、link、inline値、preview、minimapを備えたImKit v3 Node Editor](docs/images/v3-node-editor.gif)
+
+型付き接続、動的socket、inline値、pan／zoom、minimap、検索、layout、preview、groupと編集requestをアプリケーションdataから独立して提供します。companionのMaterial GraphはGUI mockであり、renderingと評価はホスト責務です。
+
+### Workflowと円形進捗
+
+![ImKit workflow feedbackと状態遷移する円形進捗](docs/images/v3-workflow-progress.gif)
+
+filter、notification、step navigation、dialog、state、responsiveな右panel、確定／未測定progressをapplication frameworkなしで構成できます。
+
+### Timeline操作
+
+![ImKit Timeline操作とUndo](docs/images/v3-timeline.gif)
+
+任意editor moduleは、拡張可能なTimeline、外部drop preview、host toolbar、Inspector、canvas、gizmo、curve、hierarchy、ホスト所有Undo／Redo契約を提供します。
+
+### Themeとlive比較
+
+![ImKit ThemeとDefault Dear ImGuiのlive比較](docs/images/v3-theme-comparison.gif)
+
+安定IDを持つ12 Theme、semantic color、density、contrastを一貫して適用し、周囲のDear ImGui styleと操作契約を維持します。
+
+## 必要なmoduleだけ選ぶ
+
+| CMake target | 追加するもの | ホストに残るもの |
 |---|---|---|
-| `imkit::imkit` | Theme、native wrapper、control、icon、workflow pattern | 互換Dear ImGui target |
-| `imkit::editor_core` | Canvas、選択、splitter、Editorデータ表示契約 | `imkit::imkit` |
-| `imkit::video`、`imkit::cg`、`imkit::editor_suite` | 任意の高度なEditor実例 | `imkit::editor_core` |
-| `imkit::preview_opengl3` | 明示的に構築するpreview helper | ホストが渡すOpenGL Context／関数表 |
-| `imkit::preview_metal` | 明示的に構築するMetal preview helper | 借用MTLDevice／command buffer、macOS限定 |
-| `imkit::window_frame_win32` / `imkit::window_frame_macos` | 任意の借用native window adapter | 該当platformのOS libraryだけ |
-| `imkit::accessibility_win32` / `imkit::accessibility_macos` | 任意のnative accessibility bridge | ホスト公開semantic tree／action sink |
+| `imkit::imkit` | Theme、control、icon、workflow、shell component | Context、frame loop、値、font |
+| `imkit::node_editor` | canvas、socket、link、layout、minimap、検索、request | graph model、validation、history、評価 |
+| `imkit::editor_core` | canvas、selection、editor共通契約 | documentとcommand |
+| `imkit::video`、`imkit::cg`、`imkit::editor_suite` | Timeline、Inspector、hierarchy、curve、編集surface | media／scene data、Undo、保存 |
+| `imkit::preview_opengl3` | 明示生成するOpenGL preview renderer | GL Contextとfunction table |
+| `imkit::preview_metal` | 明示生成するMetal preview renderer | device、command buffer、texture寿命 |
+| platform別WindowFrame／accessibility target | native frameとsemantic bridge | native windowと公開semantic tree |
 
-ソース導入を推奨します。Windows SDK archiveは検証済みcompiler／CRT／ImGui ABIの組合せ向けです。Galleryは開発用実行ファイルとしてGLFWとOpenGLを使いますが、`imkit::imkit`のconsumerへ追加しません。
+Galleryは開発用実行ファイルとしてのみGLFWとrenderer backendを使います。`imkit::imkit`をlinkしても利用アプリケーションへ追加されません。
 
-## ✅ 検証済み範囲を明確にする
+## 所有権の境界が機能である
 
-ABI基準はDear ImGui `docking` commit `367b2c24f399988ddafc0bb4628da0106bcc09be`（1.93.0 WIP）です。CIはWindows x64/Arm64とmacOS arm64/x86_64をbuild・packageします。Windows x64の自動検証はローカルで記録し、Apple Silicon実機の起動、IME、Retina、VoiceOver、notarizationは[検証記録](docs/validation.md)のmacOS gateで確認します。
+ImKitはDear ImGui Context、backend、renderer、platform window、font atlas、texture、編集data、Undo履歴、永続化、workerを作成・所有しません。Dear ImGuiのID、focus、navigation、callback、clipping、text editingも維持します。この境界により、ImKitは別frameworkではなく複数の制作ツールで再利用できるlibraryになります。
 
-```powershell
-cmake --build --preset windows-debug --target imkit_theme_test imkit_workflow_test --parallel
-ctest --test-dir build/windows-debug -C Debug -R "imkit.(theme|workflow)" --output-on-failure
-./build/windows-debug/catalog/Debug/imkit_gallery.exe --verify-comparison --output out/comparison
-```
+## 互換性と検証範囲
 
-互換範囲を広げる前に、完全な[検証記録と制約](docs/validation.md)を確認してください。
+v3のABI基準はDear ImGui docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be`（1.93.0 WIP）です。CIはWindows x64/Arm64とmacOS arm64/x86_64をbuild・test・packageし、Universal 2 packageもbuildします。macOS arm64 gateではMetal Gallery smokeを実行します。署名secretがない場合、macOS packageは未署名・未notarizeです。
 
-## 📚 次に読む文書
+自動testは物理pointer／keyboard、native IME、実screen reader、mixed-DPI、外部host統合、notarizationの受け入れを証明しません。主張を拡張する前に[検証範囲](docs/validation.md)と[依存関係](docs/dependencies.md)を確認してください。
+
+## 文書
 
 | 目的 | 日本語 | English |
 |---|---|---|
 | 導入と最初のframe | [導入ガイド](docs/getting-started.ja.md) | [Getting started](docs/getting-started.md) |
-| Gallery、操作、再生成可能GIF | [Gallery ガイド](docs/gallery.ja.md) | [Gallery guide](docs/gallery.md) |
-| Theme、font、倍率 | [テーマ](docs/themes.ja.md) | [Themes](docs/themes.md) |
-| 部品と実装recipe | [コンポーネント](docs/components.ja.md) | [Components](docs/components.md) |
-| 設計とホスト所有権 | [Architecture](docs/architecture.md) | [Architecture](docs/architecture.md) |
-| APIと問題解決 | [API coverage](docs/api-coverage.md) · [トラブルシューティング](docs/troubleshooting.ja.md) | [API coverage](docs/api-coverage.md) · [Troubleshooting](docs/troubleshooting.md) |
+| native Galleryとcapture | [Gallery](docs/gallery.ja.md) | [Gallery](docs/gallery.md) |
+| componentとrecipe | [ガイド](docs/guide.ja.md) | [Guide](docs/guide.md) |
+| Node Editor統合 | [Node Editor](docs/node-editor.ja.md) | [Node Editor](docs/node-editor.md) |
+| v3破壊的変更 | [Migration](docs/migration-v3.md) | [Migration](docs/migration-v3.md) |
+| 所有権とpackage | [Architecture](docs/architecture.md) · [Dependencies](docs/dependencies.md) | 同じ正本文書 |
+| 検証済み／未検証範囲 | [Validation](docs/validation.md) | [Validation](docs/validation.md) |
 
-## ノードエディター開発版
+v3の全追加機能と移行点は[CHANGELOG.md](CHANGELOG.md)に記録しています。
 
-ノードエディター開発版：[APIとホスト連携](docs/node-editor.ja.md)。整列・等間隔配置・接続に沿った
-自動配置・グループ化・ノードごとのプレビューを `imkit::node_editor` で提供します。
+## Licenseと出典
 
-## ライセンスと出典
-
-ImKitは[MITライセンス](LICENSE)です。Dear ImGui、GLFW、任意font assetにはそれぞれのライセンスが適用されます。版、hash、fontの出典、配布noticeは[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)に記録しています。Gallery比較とGIFには、第三者の画像・icon・font・コードassetを追加していません。
+ImKitは[MIT License](LICENSE)です。Dear ImGui、GLFW、任意font資産には各licenseが適用されます。正確なrevision、hash、配布noticeは[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)にあります。repository GIFとrelease MP4にはnative ImKit Gallery／companionのbackbufferだけを使用しています。

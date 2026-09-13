@@ -35,6 +35,7 @@ buffer、submitはホストが所有します。両OSのaccessibility adapterは
 | `native.h` | Exact overload sets imported from the host's public header / 標準overloadの透過公開 |
 | `widgets.h`, `widgets.cpp` | Original six compatible functions, pointer Selectable, selection/tree/tab markers / 公開DrawListで装飾 |
 | `components.h`, `components.cpp` | Small native compositions, explicitly passed optional theme/animation / 明示的な合成部品 |
+| `node_editor.h`, `node_editor.cpp`, `node_layout.cpp` | Graph snapshots, bounded requests and deterministic layout; no graph storage or evaluation / graph保存・評価を持たないsnapshot／request／layout |
 | Catalog host | Context, fonts, GLFW/OpenGL, image capture and representative inputs / 所有と実行環境 |
 
 `imkit` compiles only its own implementation. It does not compile Dear ImGui, link a backend, initialize a context, discover fonts, persist settings or spawn workers. Public wrappers preserve native Begin/End, focus, callback, disabled, clipping and ID contracts. Decoration submits no replacement item; compound controls use native groups.
@@ -56,6 +57,17 @@ Add overloads only after comparing the pinned public signature, preserving defau
 新しいDear ImGui版への対応では署名・style・font契約を比較し、対応表とcompile/link fixtureを更新します。version guardを緩めるだけでは対応完了にしません。寸法はThemeと文字サイズから導出し、状態容量を制限し、ホスト固有の情報・サービスを持ち込みません。
 
 ## Editor module ownership / Editor moduleの所有権
+
+The Node Editor is an independent optional target. It borrows a graph snapshot for one
+frame and emits bounded edit requests. Dynamic socket policy, compatibility decisions,
+revision acceptance, model mutation, preview computation, Undo and persistence remain
+host-owned. The Material Graph companion is a GUI integration specimen, not a renderer
+or shader system.
+
+Node Editorは独立した任意targetです。1 frameだけgraph snapshotを借用し、容量が明示された
+編集requestを返します。動的socket policy、互換判定、revision受理、model更新、preview計算、
+Undo、永続化はホスト所有です。Material Graph companionはGUI統合例であり、rendererや
+shader systemではありません。
 
 Editor Core, Video and CG consume non-owning provider views and emit fixed-buffer events. They do not own edited scene/media data, selection, undo, worker or context. The explicitly constructed optional OpenGL3 preview object owns its own graphics resources only; its context and GL function table originate from the host. See [Editor Suite contracts](editor-suite.md).
 

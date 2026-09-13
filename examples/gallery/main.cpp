@@ -772,6 +772,8 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
         CaptureFrames(h,dir,frame,20);
         h.s.palette=false;h.Settle();
         CaptureFrames(h,dir,frame,20);
+        h.s.page=19;h.s.comparison.open=true;h.Settle();
+        CaptureFrames(h,dir,frame,40);
     } else if(demo=="workflow") {
         h.s.page=15;h.s.comparison.open=false;h.Settle();
         CaptureFrames(h,dir,frame,20);
@@ -781,9 +783,20 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
         CaptureFrames(h,dir,frame,20);
         h.Click("workflow-steps");
         CaptureFrames(h,dir,frame,20);
+        h.s.page=16;h.Settle();
+        for(int i=0;i<40;++i) {
+            h.s.workflow.fraction=static_cast<float>(i)/39.f;
+            char name[32];std::snprintf(name,sizeof(name),"frame-%03d.png",frame++);
+            h.Frame({},dir/name);
+        }
     } else if(demo=="progress") {
         h.s.page=16;h.s.comparison.open=false;h.Settle();
-        h.Frame({},dir/"circular-progress.png");
+        for(int i=0;i<80;++i) {
+            const float phase=static_cast<float>(i)/79.f;
+            h.s.workflow.fraction=phase<.82f?phase/.82f:1.f;
+            char name[32];std::snprintf(name,sizeof(name),"frame-%03d.png",frame++);
+            h.Frame({},dir/name);
+        }
     } else if(demo=="timeline") {
         auto &s=h.s.editors;s.Dataset(false);h.s.page=8;h.s.comparison.open=false;h.Settle();
         CaptureFrames(h,dir,frame,20);

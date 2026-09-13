@@ -10,6 +10,10 @@ ImKitは、ホストが用意した1つのDear ImGui実装へ重ねるC++20静�
 - CMake 3.20以降
 - package matrix：Windows x64/Arm64＋MSVC、macOS 15以降arm64/x86_64＋Apple Clang
 
+## 最短で評価する
+
+環境に合う[v3.0.0 package](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.0.0)を展開し、Windowsでは`bin/`内のGalleryとNode Editor Gallery、macOSでは2つの`.app` bundleを実行します。両CPU familyで同じarchiveを使う場合はUniversal 2を選びます。
+
 ## ソース導入
 
 Dear ImGui targetを先に作り、include directoryを公開してから、ImKitへtarget名を渡します。
@@ -69,9 +73,12 @@ target_link_libraries(your_app PRIVATE imkit::imkit)
 
 binary条件が異なる場合はソース導入を使います。archiveにDear ImGui本体は含まれません。
 
+独立Node Editorが必要な場合だけ`imkit::node_editor`をlinkします。graph snapshot、編集validation、評価、Undo、永続化はホスト所有のままです。
+
 ## 次に読む文書
 
 - [テーマ](themes.ja.md)を選び、配色を調整する。
 - [コンポーネントrecipe](components.ja.md)を利用する。
 - native [Gallery](gallery.ja.md)で操作する。
+- ホスト所有の[Node Editor](node-editor.ja.md)を統合する。
 - 構成エラーは[トラブルシューティング](troubleshooting.ja.md)で確認する。

@@ -40,6 +40,8 @@ $gallery = './build/windows-debug/catalog/Debug/imkit_gallery.exe'
 foreach ($demo in 'comparison', 'themes', 'icons', 'workflow', 'timeline') {
     & $gallery --capture-demo $demo --width 960 --height 540 --output out/gifs
 }
+$node = './build/windows-debug/catalog/Debug/imkit_node_editor_gallery.exe'
+& $node --capture-gif out/gifs/node-editor
 ```
 
 `--verify-comparison` checks that Default and ImKit controls update shared host-owned state, that their temporary styles restore after a frame, and that close/reopen removes and restores the submitted controls.
@@ -47,17 +49,18 @@ These use public Dear ImGui IO and real OpenGL backbuffers. They are not native 
 Capture and verification modes retain the deterministic full-canvas Gallery layout and do not open
 the Dear ImGui Demo Window.
 
-`--capture-readme` emits 120 frames. Each `--capture-demo` route emits 80 frames. The sequences show Start / Comparison / Components, shared-value edits, palette and preset transitions, icon search and selection, workflow feedback, and timeline interaction. All frames are native `960×540` backbuffers.
+`--capture-readme` emits 120 frames. The v3 README routes emit 120 workflow/progress frames, 80 timeline frames, 120 theme/comparison frames and 80 Node Editor frames. The Node Editor capture uses host-owned deterministic state to show zoom, pan, a dynamic socket, a new connection, inline values, previews and the minimap. All frames are native `960×540` backbuffers.
 
 ```powershell
-python tools/build_readme_gif.py out/readme/readme-frames docs/images/gallery-overview.gif
-foreach ($demo in 'comparison', 'themes', 'icons', 'workflow', 'timeline') {
-    python tools/build_readme_gif.py (Join-Path out/gifs $demo) (Join-Path docs/images ("gallery-$demo.gif")) --expected-frames 80
-}
+python tools/build_readme_gif.py out/readme/readme-frames docs/images/v3-overview.gif
+python tools/build_readme_gif.py out/gifs/node-editor docs/images/v3-node-editor.gif --expected-frames 80
+python tools/build_readme_gif.py out/gifs/workflow docs/images/v3-workflow-progress.gif
+python tools/build_readme_gif.py out/gifs/timeline docs/images/v3-timeline.gif --expected-frames 80
+python tools/build_readme_gif.py out/gifs/themes docs/images/v3-theme-comparison.gif
 ```
 
 The encoder rejects wrong frame counts or dimensions and GIFs over 8 MiB. Pillow is a documentation-only tool: it is neither linked nor installed by ImKit.
 
 ## Provenance and distribution boundary
 
-Checked-in `docs/images/gallery-*.gif` files are generated from the Gallery. No stock image, third-party icon, font, UI implementation or media asset was added for the v2.2 comparison and GIFs. Dear ImGui, GLFW and optional fonts retain their existing licenses and notices in [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md). See [validation](validation.md) for exact evidence and exclusions, and [public window frame](gallery-window-frame.md) for Frame Lab's platform-adapter boundary.
+Checked-in `docs/images/v3-*.gif` files are generated from the Gallery or Node Editor companion. The release showcase MP4 is encoded from the same native frames. No stock image, third-party product screen, icon, font, UI implementation or media asset is included. Dear ImGui, GLFW and optional fonts retain their licenses and notices in [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md). See [validation](validation.md) for exact evidence and exclusions, and [public window frame](gallery-window-frame.md) for Frame Lab's platform-adapter boundary.

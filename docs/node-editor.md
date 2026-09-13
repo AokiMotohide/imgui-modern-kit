@@ -151,16 +151,18 @@ Run/debug controls appear only when the host advertises those capabilities.
 
 Build `imkit_node_editor_gallery` and run the executable from `catalog/Debug`.
 `--smoke [absolute-output.png]` checks host edits/undo/subgraph unpack, renders five
-native frames and optionally captures a real backbuffer. Captures belong in build
-output, not source assets. Existing Gallery implementation files are unchanged.
+native frames and optionally captures a real backbuffer. `--capture-gif <directory>`
+emits 80 deterministic 960×540 OpenGL backbuffer frames showing zoom, pan, a visible
+dynamic socket addition, a new compatible link, inline values, previews and the
+minimap. The host-owned graph model is changed directly so documentation capture
+does not depend on physical pointer timing.
 
 Focused checks are `imkit.node_editor` (layout, transaction safety and native public
 IO) and `imkit.node_editor_api_compile` (independent public header/link consumer).
 The API inventory is [node-editor-api.json](node-editor-api.json), regenerated with
 `python tools/generate_node_api.py` without rewriting existing API inventories.
 
-This remains a design-stage API: no fixed performance acceptance threshold or
-claim of exhaustive product parity. Native OS/IME, physical DPI, assistive technology,
+Native OS/IME, physical DPI, assistive technology,
 Release performance and installed-SDK distribution are not established by these
 development checks. [日本語](node-editor.ja.md)
 

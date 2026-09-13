@@ -39,6 +39,8 @@ $gallery = './build/windows-debug/catalog/Debug/imkit_gallery.exe'
 foreach ($demo in 'comparison', 'themes', 'icons', 'workflow', 'timeline') {
     & $gallery --capture-demo $demo --width 960 --height 540 --output out/gifs
 }
+$node = './build/windows-debug/catalog/Debug/imkit_node_editor_gallery.exe'
+& $node --capture-gif out/gifs/node-editor
 ```
 
 `--verify-comparison`は、DefaultとImKitのcontrolが共有ホスト所有状態を更新すること、一時styleがframe後に復元されること、close/reopen時にcontrolが消え、再表示されることを確認します。
@@ -46,17 +48,18 @@ foreach ($demo in 'comparison', 'themes', 'icons', 'workflow', 'timeline') {
 captureと検証modeは、従来の決定的な全キャンバスGallery配置を維持し、Dear ImGui公式Demo Windowを
 表示しません。
 
-`--capture-readme`は120 frameを出力します。各`--capture-demo`は80 frameを出力します。Start／比較／Components、共有値の編集、paletteとpreset遷移、icon検索と選択、workflow feedback、timeline操作を扱います。すべてnative `960×540` backbufferです。
+`--capture-readme`は120 frameを出力します。v3 README用routeはworkflow／progress 120、timeline 80、theme／comparison 120、Node Editor 80 frameです。Node Editor captureはホスト所有の決定的状態でzoom、pan、動的socket、新しい接続、inline値、preview、minimapを示します。すべてnative `960×540` backbufferです。
 
 ```powershell
-python tools/build_readme_gif.py out/readme/readme-frames docs/images/gallery-overview.gif
-foreach ($demo in 'comparison', 'themes', 'icons', 'workflow', 'timeline') {
-    python tools/build_readme_gif.py (Join-Path out/gifs $demo) (Join-Path docs/images ("gallery-$demo.gif")) --expected-frames 80
-}
+python tools/build_readme_gif.py out/readme/readme-frames docs/images/v3-overview.gif
+python tools/build_readme_gif.py out/gifs/node-editor docs/images/v3-node-editor.gif --expected-frames 80
+python tools/build_readme_gif.py out/gifs/workflow docs/images/v3-workflow-progress.gif
+python tools/build_readme_gif.py out/gifs/timeline docs/images/v3-timeline.gif --expected-frames 80
+python tools/build_readme_gif.py out/gifs/themes docs/images/v3-theme-comparison.gif
 ```
 
 encoderはframe数・寸法の不一致、8MiBを超えるGIFを拒否します。Pillowは文書生成専用であり、ImKitからlink・installしません。
 
 ## 出典と配布境界
 
-commitした`docs/images/gallery-*.gif`はGalleryから生成します。v2.2の比較とGIFに、stock image、第三者icon・font・UI実装・media assetを追加していません。Dear ImGui、GLFW、任意fontには既存のlicenseが適用され、noticeは[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)にあります。証拠と対象外は[検証記録](validation.md)、Frame Labのplatform adapter境界は[公開window frame](gallery-window-frame.md)を参照してください。
+commitした`docs/images/v3-*.gif`はGalleryまたはNode Editor companionから生成します。release showcase MP4も同じnative frame列からencodeします。stock image、第三者製品画面、icon・font・UI実装・media assetは含みません。Dear ImGui、GLFW、任意fontには既存のlicenseが適用され、noticeは[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)にあります。証拠と対象外は[検証記録](validation.md)、Frame Labのplatform adapter境界は[公開window frame](gallery-window-frame.md)を参照してください。

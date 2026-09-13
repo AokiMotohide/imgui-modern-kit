@@ -17,6 +17,7 @@
 #include <array>
 #include <cmath>
 #include <cstdio>
+#include <fstream>
 #include <string>
 #include <unordered_map>
 #include <memory>
@@ -879,6 +880,17 @@ bool ModelSmoke() {
 int main(int argc, char **argv) {
     bool smoke = argc > 1 && std::string_view(argv[1]) == "--smoke";
     const bool verify = argc > 1 && std::string_view(argv[1]) == "--verify-node-actions";
+    std::filesystem::path captureDirectory;
+    for (int i = 1; i < argc; ++i)
+        if (std::string_view(argv[i]) == "--capture-gif" && i + 1 < argc)
+            captureDirectory = argv[++i];
+#ifdef IMKIT_NODE_EDITOR_METAL
+    if (!captureDirectory.empty()) {
+        std::fprintf(stderr, "--capture-gif requires the OpenGL companion host\n");
+        return 2;
+    }
+#endif
+    const bool capture = !captureDirectory.empty();
 #ifdef _MSC_VER
     if (verify) {
         _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
@@ -895,7 +907,7 @@ int main(int argc, char **argv) {
 #endif
     if (!glfwInit())
         return 2;
-    glfwWindowHint(GLFW_VISIBLE, smoke || verify ? GLFW_FALSE : GLFW_TRUE);
+    glfwWindowHint(GLFW_VISIBLE, smoke || verify || capture ? GLFW_FALSE : GLFW_TRUE);
 #ifdef IMKIT_NODE_EDITOR_METAL
     glfwWindowHint(GLFW_CLIENT_API,GLFW_NO_API);
 #endif
@@ -905,8 +917,8 @@ int main(int argc, char **argv) {
                 return true;
         return false;
     };
-    auto *window =
-        glfwCreateWindow(has("--narrow") ? 780 : 1400, 900, "ModernKIT Node Studio", nullptr, nullptr);
+    auto *window = glfwCreateWindow(capture ? 960 : has("--narrow") ? 780 : 1400,
+                                    capture ? 540 : 900, "ModernKIT Node Studio", nullptr, nullptr);
     if (!window) {
         glfwTerminate();
         return 3;
@@ -917,7 +929,7 @@ int main(int argc, char **argv) {
     ImGui::CreateContext();
     ImGui::GetIO().IniFilename = nullptr;
     ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard|ImGuiConfigFlags_DockingEnable;
-    if(!smoke && !verify) ImGui::GetIO().ConfigFlags|=ImGuiConfigFlags_ViewportsEnable;
+    if(!smoke && !verify && !capture) ImGui::GetIO().ConfigFlags|=ImGuiConfigFlags_ViewportsEnable;
     ImGui::GetIO().ConfigDpiScaleFonts=true;
     ImGui::GetIO().ConfigDpiScaleViewports=true;
     // Host-owned system font: used locally, never bundled with the library.
@@ -952,10 +964,17 @@ int main(int argc, char **argv) {
         demo->material.model.data.nodes[1].name = "長い名前のマテリアル・プレビュー設定";
         demo->material.model.data.pins[2].name = "未接続入力の長い日本語ラベル";
     }
+    if (capture) {
+        std::filesystem::create_directories(captureDirectory);
+        demo->materialPage = true;
+        demo->material.state.zoom = .72;
+        demo->material.state.origin = {-8, -18};
+    }
     int frames = 0;
     int collapseChanges = 0;
     bool collapsed = false;
-    while (!glfwWindowShouldClose(window) && (!smoke || frames < 5) && (!verify || frames < 724)) {
+    while (!glfwWindowShouldClose(window) && (!smoke || frames < 5) && (!verify || frames < 724) &&
+           (!capture || frames < 80)) {
         glfwPollEvents();
 #ifdef IMKIT_NODE_EDITOR_METAL
         @autoreleasepool {
@@ -968,6 +987,47 @@ int main(int argc, char **argv) {
         ImGui_ImplOpenGL3_NewFrame();
 #endif
         ImGui_ImplGlfw_NewFrame();
+        if (capture) {
+            const auto transition = [](int value, int first, int last) {
+                return std::clamp(static_cast<float>(value - first) / static_cast<float>(last - first), 0.f, 1.f);
+            };
+            const float zoomIn = transition(frames, 10, 24);
+            const float panOut = transition(frames, 58, 72);
+            demo->material.state.zoom = .72 + .12 * zoomIn - .08 * panOut;
+            demo->material.state.origin = {-8.0 - 52.0 * zoomIn - 48.0 * panOut,
+                                           -18.0 - 18.0 * zoomIn + 12.0 * panOut};
+            if (frames == 24) {
+                auto node = std::find_if(demo->material.model.data.nodes.begin(),
+                                         demo->material.model.data.nodes.end(),
+                                         [](const auto &entry) { return entry.type == 7; });
+                if (node != demo->material.model.data.nodes.end()) {
+                    demo->material.model.AddPin(node->view.id, ne::PinKind::Input, 2, "Coat weight");
+                    ++demo->material.model.revision;
+                    demo->material.model.Resize();
+                }
+            }
+            if (frames == 48) {
+                auto mix = std::find_if(demo->material.model.data.nodes.begin(),
+                                        demo->material.model.data.nodes.end(),
+                                        [](const auto &entry) { return entry.type == 7; });
+                auto source = std::find_if(demo->material.model.data.nodes.begin(),
+                                           demo->material.model.data.nodes.end(),
+                                           [](const auto &entry) { return entry.type == 1; });
+                if (mix != demo->material.model.data.nodes.end() &&
+                    source != demo->material.model.data.nodes.end()) {
+                    auto from = demo->material.model.Socket(source->view.id, ne::PinKind::Output, 1);
+                    auto to = std::find_if(demo->material.model.data.pins.rbegin(),
+                                           demo->material.model.data.pins.rend(), [&](const auto &pin) {
+                                               return pin.view.node == mix->view.id && pin.name == "Coat weight";
+                                           });
+                    if (to != demo->material.model.data.pins.rend() &&
+                        demo->material.model.Connect(from, to->view.id)) {
+                        ++demo->material.model.revision;
+                        demo->material.model.Evaluate();
+                    }
+                }
+            }
+        }
         if (verify) {
             auto& io = ImGui::GetIO();
             io.DeltaTime = 1.f / 60;
@@ -1003,11 +1063,24 @@ int main(int argc, char **argv) {
 #ifndef IMKIT_NODE_EDITOR_METAL
         if (smoke && frames == 4 && argc > 2)
             imkit::design::SaveBackbuffer(argv[2], w, h);
+        if (capture) {
+            char name[32];
+            std::snprintf(name, sizeof(name), "frame-%03d.png", frames - 1);
+            imkit::design::SaveBackbuffer(captureDirectory / name, w, h);
+        }
         glfwSwapBuffers(window);
 #else
         }
 #endif
     }
+#ifndef IMKIT_NODE_EDITOR_METAL
+    if (capture) {
+        std::ofstream metadata(captureDirectory / "capture.txt");
+        metadata << "scenario=node-editor\nframes=" << frames
+                 << "\nsize=960x540\nsource=native OpenGL backbuffer; deterministic host-owned "
+                    "zoom, pan, dynamic socket, link and preview state\n";
+    }
+#endif
 #ifdef IMKIT_NODE_EDITOR_METAL
     demo->icons.Clear(); demo->texture=nil; for(auto &texture:demo->iconTextures) texture=nil; ImGui_ImplMetal_Shutdown();
 #else
@@ -1024,6 +1097,8 @@ int main(int argc, char **argv) {
 #endif
     if (smoke)
         std::printf("node studio: host edit/undo/subgraph model and 5 native frames passed\n");
+    if (capture)
+        std::printf("node studio: captured %d deterministic native frames at 960x540\n", frames);
     if (verify) {
         std::printf("Output monitor: 60 public-IO clicks, %d collapse/expand transitions\n", collapseChanges);
         return collapseChanges >= 20 ? 0 : 1;

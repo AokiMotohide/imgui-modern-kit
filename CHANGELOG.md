@@ -2,14 +2,55 @@
 
 ## Unreleased
 
-- Prepare ImKit 3.0 with a pinned Dear ImGui 1.93.0 WIP docking revision, Windows x64/Arm64 and macOS arm64/x86_64 CI/package gates.
-- Add the GLFW/Metal full Gallery hosts, Metal preview renderer, NSAccessibility bridge and measured macOS WindowFrame integration.
-- Split OpenGL preview declarations into `preview_opengl3.h`, add the platform-neutral native action sink and remove Dear ImGui 1.88 legacy WindowFrame targets.
-- Dear ImGui最新docking固定、Windows x64/Arm64・macOS両CPUのCI／package、Metal Gallery／preview、NSAccessibility、macOS WindowFrameをv3へ追加。
-- OpenGL preview公開ヘッダーを分離し、共通native action sinkへ統一。Dear ImGui 1.88互換targetを削除。
+No changes yet. / 変更はまだありません。
 
-- Add an optional Video Timeline external-drop preview callback so hosts can draw the exact candidate range instead of a whole-row target.
-- Video Timelineの外部drag/dropに、ホスト計画と同じ候補時間範囲を描く任意preview callbackを追加。
+## 3.0.0 — 2026-09-13
+
+### Node Editor
+
+- Add independent `imkit::node_editor` snapshots and bounded edit-request buffers with typed IDs, host-controlled revision validation and atomic operations.
+- Add pan/zoom, selection, link create/reconnect/delete, connection compatibility feedback, grouping/subgraphs, bookmarks, diagnostics, search, palette, minimap and detached or inline previews.
+- Add deterministic align/distribute/arrange/snap helpers that do not require a Dear ImGui context.
+- Add dynamic socket create/delete/rename/reorder/type/multiplicity/value/exposure/limit edits. Connected destructive changes are requests the host may reject; the library never silently removes application links.
+- Add standard `PinRow`, inline color/float/vector editing, variable input groups, node appearance hooks, density/contrast/narrow/Japanese states and the native Material Graph companion.
+- 独立`imkit::node_editor`、型付きID、revision検証、atomic request、pan／zoom、選択、link編集、互換feedback、group／subgraph、検索、palette、minimap、previewを追加。
+- 動的socketの作成・削除・rename・並べ替え・型・多重度・値・公開・上限編集、標準`PinRow`とMaterial Graph companionを追加。接続を壊す操作はホストの明示判断を必要とします。
+
+### Platform, rendering and accessibility
+
+- Pin the supported ABI to Dear ImGui 1.93.0 WIP docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be`.
+- Add Windows x64/Arm64 and macOS arm64/x86_64 build/test/package gates plus a macOS Universal 2 package.
+- Add the GLFW/Metal native Gallery host, explicitly constructed `imkit::preview_metal`, an NSAccessibility bridge and the macOS WindowFrame adapter.
+- Add Windows Arm64 packaging and retain the Win32 accessibility and WindowFrame adapters.
+- Split OpenGL-specific declarations into `<imkit/preview_opengl3.h>`; `preview.h` now contains renderer-neutral contracts.
+- Replace the Win32-only action sink with platform-neutral `NativeActionSink`, including UTF-8 value actions.
+- Remove Dear ImGui 1.88 compatibility targets and legacy WindowFrame ABI paths.
+- Windows x64／Arm64、macOS arm64／x86_64／Universal 2、Metal Gallery／preview、NSAccessibility、macOS WindowFrameを追加。OpenGL headerを分離し、共通`NativeActionSink`へ移行、1.88互換targetを削除しました。
+
+### Workflow, shell and editors
+
+- Add circular determinate, complete and unavailable progress states with size/stroke options.
+- Add a responsive, resizable right Inspector panel whose open state and width stay host-owned.
+- Add optional Video Timeline external-drop preview callbacks for the exact candidate time range and a host toolbar layout contract above the timeline.
+- Preserve host-owned documents, commands, Undo/Redo, scene/media state, persistence, workers and preview resources across Editor Core, Video and CG surfaces.
+- 円形進捗、responsiveな右Inspector panel、Timeline外部dropの正確な候補範囲preview、host toolbar配置契約を追加しました。
+
+### Gallery, documentation and distribution
+
+- Add the dedicated Node Editor Gallery, direct launcher/focus behavior, native Metal Gallery and deterministic 960×540 documentation capture modes.
+- Replace the small README GIF grid with large V3 Overview, Node Editor, Workflow/Circular Progress, Timeline and Theme/Comparison animations captured only from native backbuffers.
+- Add the native `imkit-v3.0.0-showcase.mp4` release asset from the same frame sequences.
+- Synchronize English/Japanese README, Getting Started, Gallery, Guide and Node Editor documentation with Migration, Architecture, Dependencies and Validation.
+- Install the complete English/Japanese documentation, Gallery, Node Editor Gallery, notices and platform libraries in CPack packages.
+- native backbuffer由来の大判GIF 5本とshowcase MP4、Node Editor Gallery、英日導入文書、全対応環境のCPack配布を追加しました。
+
+### Breaking changes
+
+- Consumers must use the exact pinned Dear ImGui ABI and rebuild all ImKit-dependent translation units.
+- OpenGL preview consumers must include `<imkit/preview_opengl3.h>`.
+- Native accessibility action handlers migrate from `Win32ActionSink` to `NativeActionSink`.
+- Dear ImGui 1.88 legacy targets are no longer built or installed.
+- 正確な移行手順は[docs/migration-v3.md](docs/migration-v3.md)を参照してください。
 
 ## 2.2.0 — 2026-09-12
 

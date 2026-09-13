@@ -78,7 +78,7 @@ Dear ImGui docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be`を完全固
 
 ## インストール済みSDK
 
-SDK成果物はWindows x64、Windows Arm64、macOS Universal 2ごとに生成し、manifestへOS、architecture、compiler、Dear ImGui commitを記録します。compile definitionと`imconfig.h`は全翻訳単位で揃えてください。archiveにImGui本体は含みません。別のImGui版はheader guardで拒否します。以下の確認flagは成果物manifestと型設定の一致を利用者が確認したことを表し、自動的なbinary解析ではありません。
+release packageはWindows x64、Windows Arm64、macOS arm64、macOS x86_64、macOS Universal 2ごとに生成し、manifestへOS、architecture、compiler、Dear ImGui commitを記録します。compile definitionと`imconfig.h`は全翻訳単位で揃えてください。archiveにImGui本体は含みません。別のImGui版はheader guardで拒否します。以下の確認flagは成果物manifestと型設定の一致を利用者が確認したことを表し、自動的なbinary解析ではありません。
 
 ```cmake
 # 対応するhost_imguiを先に作成

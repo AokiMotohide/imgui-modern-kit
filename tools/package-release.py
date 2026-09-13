@@ -1,110 +1,219 @@
-"""Package a committed source tree and an already validated staged SDK.
+#!/usr/bin/env python3
+"""Assemble and verify ImKit release metadata around CI-produced CPack archives.
 
-Run after tools/stage-sdk.ps1, tools/stage-gallery.ps1 and the relocated
-Debug/Release consumer checks.
-This tool neither builds nor publishes. Archives contain no build caches.
+This tool does not build or publish. Run it from the committed release commit.
+Pass --packages-dir after downloading and extracting the five GitHub Actions
+artifacts. The native showcase must already exist in out/release.
 """
+
+import argparse
 import hashlib
 import json
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import zipfile
 
-root = Path(__file__).resolve().parents[1]
-out = root / "out/release"
-stage = out / "sdk"
-gallery_stage = out / "gallery"
-version = re.search(r"project\(imgui-modern-kit VERSION ([\d.]+)",
-                    (root / "CMakeLists.txt").read_text()).group(1)
-commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
-if subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"], cwd=root, text=True).strip():
-    raise RuntimeError("Commit the intended source tree before packaging")
-libraries = (
-    "imkit.lib", "imkitd.lib",
-    "imkit_editor_core.lib", "imkit_editor_cored.lib",
-    "imkit_video.lib", "imkit_videod.lib",
-    "imkit_cg.lib", "imkit_cgd.lib",
-    "imkit_preview_opengl3.lib", "imkit_preview_opengl3d.lib",
-    "imkit_window_frame_win32.lib", "imkit_window_frame_win32d.lib",
-)
-for name in libraries:
-    if not (stage / "lib" / name).is_file():
-        raise RuntimeError("Stage and validate both SDK configurations first")
-for name in ("imkit_gallery.exe", "design-assets", "LICENSE", "THIRD_PARTY_NOTICES.md",
-             "DEPENDENCIES.txt", "RUN-GALLERY.md"):
-    if not (gallery_stage / name).exists():
-        raise RuntimeError("Stage and inspect the Windows Gallery before packaging")
 
-manifest = {
-    "version": version,
-    "source_commit": commit,
-    "dear_imgui": {"version": "1.92.9b docking", "version_num": 19291,
-                   "commit": "b48d1afbe8ee8b238e2961dc363a949dd7304e23",
-                   "configuration": "default imconfig.h ABI types; host supplies core"},
-    "sdk": {"platform": "Windows", "architecture": "x64", "language": "C++20",
-            "compiler": "MSVC 19.51.36256", "toolset": "v145",
-            "windows_sdk": "10.0.26100.0", "Debug": "/MDd; imkitd.lib",
-            "Release": "/MD; imkit.lib",
-            "debug_metadata": "Embedded CodeView; source/object paths normalized. Executable sections and relocations unchanged."},
-    "modules": ["imkit", "editor_core", "video", "cg", "editor_suite", "preview_opengl3",
-                "window_frame_win32"],
-    "shell_components": ["AppBar", "WorkspaceHeader", "InspectorSection", "AdvancedSection",
-                         "BottomActionBar", "DiagnosticsDrawer", "ThemePicker"],
-    "font_assets": {"directory": "share/imkit/fonts", "manifest": "share/imkit/fonts/manifest.json",
-                    "ownership": "host-loaded and host-owned"},
-    "validation": {"api_overloads": 365, "catalog_categories": 6,
-                   "input": "public Dear ImGui IO events; native OS/IME not tested",
-                   "consumer": "relocated SDK Debug and Release compile/link/run",
-                   "gpu": "actual OpenGL backbuffer; light/dark and representative 1.5 scale",
-                   "gallery_comparison": "public Dear ImGui IO shared-state check; native OS/IME, performance and accessibility are excluded"},
-    "gallery": {"platform": "Windows x64", "archive": f"imkit-{version}-gallery-windows-x64.zip",
-                "runtime": "Microsoft Visual C++ Redistributable x64 may be required and is not bundled",
-                "contents": ["imkit_gallery.exe", "design-assets", "LICENSE", "THIRD_PARTY_NOTICES.md", "DEPENDENCIES.txt", "RUN-GALLERY.md"],
-                "provenance": "native Gallery executable and checked-in project assets; no release-specific third-party media or UI asset added"},
-    "integration": "Source build against the pinned host ImGui is the recommended route. Match all ABI/CRT settings before using the SDK."
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / "out/release"
+EXPECTED_PACKAGES = {
+    "windows-x64": re.compile(r"imgui-modern-kit-.*-Windows-x64\.zip$", re.I),
+    "windows-arm64": re.compile(r"imgui-modern-kit-.*-Windows-arm64\.zip$", re.I),
+    "macos-arm64": re.compile(r"imgui-modern-kit-.*-Darwin-arm64\.zip$", re.I),
+    "macos-x86_64": re.compile(r"imgui-modern-kit-.*-Darwin-x86_64\.zip$", re.I),
+    "macos-universal2": re.compile(r"imgui-modern-kit-.*-Darwin-universal2\.zip$", re.I),
 }
-manifest_bytes = (json.dumps(manifest, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
-manifest_file = out / "manifest.json"
-manifest_file.write_bytes(manifest_bytes)
 
-source = out / f"imkit-{version}-source.zip"
-source_prefix = f"imkit-{version}-source/"
-subprocess.run(["git", "archive", "--format=zip", f"--prefix={source_prefix}",
-                "-o", str(source), commit], cwd=root, check=True)
-with zipfile.ZipFile(source, "a", zipfile.ZIP_DEFLATED) as archive:
-    archive.writestr(source_prefix + "manifest.json", manifest_bytes)
 
-sdk = out / f"imkit-{version}-windows-x64-msvc-v145.zip"
-with zipfile.ZipFile(sdk, "w", zipfile.ZIP_DEFLATED) as archive:
-    for path in sorted(stage.rglob("*")):
-        if path.is_file():
-            archive.write(path, f"imkit-{version}-sdk/" + path.relative_to(stage).as_posix())
-    archive.writestr(f"imkit-{version}-sdk/manifest.json", manifest_bytes)
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
 
-gallery = out / f"imkit-{version}-gallery-windows-x64.zip"
-with zipfile.ZipFile(gallery, "w", zipfile.ZIP_DEFLATED) as archive:
-    for path in sorted(gallery_stage.rglob("*")):
-        if path.is_file():
-            archive.write(path, f"imkit-{version}-gallery/" + path.relative_to(gallery_stage).as_posix())
-    archive.writestr(f"imkit-{version}-gallery/manifest.json", manifest_bytes)
 
-evidence = out / f"imkit-{version}-evidence.zip"
-with zipfile.ZipFile(evidence, "w", zipfile.ZIP_DEFLATED) as archive:
-    for path in sorted((root / "out/catalog").glob("*")):
-        if path.suffix in (".png", ".txt"):
-            archive.write(path, "catalog/" + path.name)
-    for path in sorted((root / "out/verification").glob("*.txt")):
-        archive.write(path, "comparison/" + path.name)
-    for path in sorted((root / "out/readme/readme-frames").glob("capture.txt")):
-        archive.write(path, "captures/readme-" + path.name)
-    for demo in ("comparison", "themes", "icons", "workflow", "timeline"):
-        path = root / "out/gifs" / demo / "capture.txt"
-        if path.is_file():
-            archive.write(path, f"captures/{demo}-capture.txt")
-    archive.writestr("manifest.json", manifest_bytes)
+def one_member(names: set[str], suffix: str) -> bool:
+    return any(name.replace("\\", "/").endswith(suffix) for name in names)
 
-artifacts = [source, sdk, gallery, evidence, manifest_file]
-checksums = "".join(hashlib.sha256(p.read_bytes()).hexdigest() + "  " + p.name + "\n" for p in artifacts)
-(out / "SHA256SUMS").write_text(checksums, encoding="ascii")
-print(checksums, end="")
+
+def verify_package(key: str, archive: Path) -> dict:
+    with zipfile.ZipFile(archive) as package:
+        names = {name.rstrip("/") for name in package.namelist()}
+    common = [
+        "README.md",
+        "README.ja.md",
+        "LICENSE",
+        "THIRD_PARTY_NOTICES.md",
+        "docs/getting-started.md",
+        "docs/getting-started.ja.md",
+        "docs/node-editor.md",
+        "docs/node-editor.ja.md",
+    ]
+    missing = [name for name in common if not one_member(names, name)]
+    if key.startswith("windows"):
+        required = [
+            "lib/imkit.lib",
+            "lib/imkit_node_editor.lib",
+            "bin/imkit_gallery.exe",
+            "bin/imkit_node_editor_gallery.exe",
+        ]
+    else:
+        required = [
+            "lib/libimkit.a",
+            "lib/libimkit_node_editor.a",
+            "imkit_gallery.app/Contents/MacOS/imkit_gallery",
+            "imkit_node_editor_gallery.app/Contents/MacOS/imkit_node_editor_gallery",
+        ]
+    missing.extend(name for name in required if not one_member(names, name))
+    if missing:
+        raise RuntimeError(f"{archive.name} is incomplete: {', '.join(missing)}")
+    return {
+        "file": archive.name,
+        "sha256": sha256(archive),
+        "entries": len(names),
+        "verified": common + required,
+    }
+
+
+def find_packages(directory: Path) -> dict[str, Path]:
+    archives = list(directory.rglob("*.zip"))
+    found: dict[str, Path] = {}
+    for key, pattern in EXPECTED_PACKAGES.items():
+        matches = [path for path in archives if pattern.search(path.name)]
+        if len(matches) != 1:
+            raise RuntimeError(f"expected one {key} CPack archive, found {len(matches)}")
+        found[key] = matches[0]
+    return found
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--packages-dir", type=Path)
+    args = parser.parse_args()
+    version_match = re.search(
+        r"project\(imgui-modern-kit VERSION ([\d.]+)", (ROOT / "CMakeLists.txt").read_text()
+    )
+    if not version_match:
+        raise RuntimeError("project version was not found")
+    version = version_match.group(1)
+    commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    dirty = subprocess.check_output(
+        ["git", "status", "--porcelain", "--untracked-files=no"], cwd=ROOT, text=True
+    ).strip()
+    if dirty:
+        raise RuntimeError("commit the intended source tree before assembling the release")
+
+    OUT.mkdir(parents=True, exist_ok=True)
+    showcase = OUT / f"imkit-v{version}-showcase.mp4"
+    if not showcase.is_file():
+        raise RuntimeError(f"missing native showcase: {showcase}")
+
+    package_records = {}
+    package_files: list[Path] = []
+    if args.packages_dir:
+        package_dir = args.packages_dir.resolve()
+        for key, source in find_packages(package_dir).items():
+            destination = OUT / source.name
+            if source.resolve() != destination.resolve():
+                shutil.copy2(source, destination)
+            package_records[key] = verify_package(key, destination)
+            package_files.append(destination)
+
+    manifest = {
+        "version": version,
+        "tag": f"v{version}",
+        "source_commit": commit,
+        "language": "C++20",
+        "license": "MIT",
+        "dear_imgui": {
+            "version": "1.93.0 WIP docking",
+            "version_num": 19297,
+            "commit": "367b2c24f399988ddafc0bb4628da0106bcc09be",
+            "configuration": "matching imconfig.h and ABI required; host supplies core",
+        },
+        "platforms": [
+            "Windows x64",
+            "Windows Arm64",
+            "macOS arm64",
+            "macOS x86_64",
+            "macOS Universal 2",
+        ],
+        "modules": [
+            "imkit",
+            "node_editor",
+            "editor_core",
+            "video",
+            "cg",
+            "editor_suite",
+            "preview_opengl3",
+            "preview_metal",
+            "window_frame_win32",
+            "window_frame_macos",
+            "accessibility_win32",
+            "accessibility_macos",
+        ],
+        "host_ownership": [
+            "Dear ImGui context and backends",
+            "renderer and platform windows",
+            "font atlas and textures",
+            "application graph, scene and media data",
+            "Undo, persistence and workers",
+        ],
+        "documentation_media": {
+            "gif_size": "960x540",
+            "gif_count": 5,
+            "showcase": showcase.name,
+            "source": "native Gallery and Node Editor companion backbuffers only",
+        },
+        "signing": {
+            "macos": "unsigned and not notarized when CI release credentials are unavailable"
+        },
+        "validation_boundary": (
+            "CI build/test/package and native automated smoke do not establish physical input, "
+            "native IME, real screen-reader, mixed-DPI, external-host or notarization acceptance"
+        ),
+        "packages": package_records,
+    }
+    manifest_path = OUT / f"imkit-v{version}-manifest.json"
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    source = OUT / f"imkit-v{version}-source.zip"
+    subprocess.run(
+        ["git", "archive", "--format=zip", f"--prefix=imgui-modern-kit-{version}/",
+         f"--output={source}", commit],
+        cwd=ROOT,
+        check=True,
+    )
+
+    evidence = OUT / f"imkit-v{version}-validation-evidence.zip"
+    with zipfile.ZipFile(evidence, "w", zipfile.ZIP_DEFLATED) as archive:
+        archive.write(ROOT / "docs/validation.md", "validation.md")
+        archive.write(manifest_path, manifest_path.name)
+        for gif in sorted((ROOT / "docs/images").glob("v3-*.gif")):
+            archive.write(gif, f"images/{gif.name}")
+        capture_sources = {
+            "overview": ROOT / "out/v3-native/overview/capture.txt",
+            "node-editor": ROOT / "out/v3-native/node-editor-final/capture.txt",
+            "workflow-progress": ROOT / "out/v3-native/workflow/capture.txt",
+            "timeline": ROOT / "out/v3-native/timeline/capture.txt",
+            "theme-comparison": ROOT / "out/v3-native/themes/capture.txt",
+        }
+        for name, metadata in capture_sources.items():
+            if not metadata.is_file():
+                raise RuntimeError(f"missing capture metadata: {metadata}")
+            archive.write(metadata, f"captures/{name}.txt")
+
+    artifacts = sorted(
+        {source, evidence, manifest_path, showcase, *package_files}, key=lambda path: path.name.lower()
+    )
+    checksums = "".join(f"{sha256(path)}  {path.name}\n" for path in artifacts)
+    (OUT / "SHA256SUMS").write_text(checksums, encoding="ascii")
+    print(checksums, end="")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
