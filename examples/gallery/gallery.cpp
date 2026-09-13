@@ -68,6 +68,10 @@ void Start(GalleryState &s) {
     if (Button("Explore components"))
         s.page = 0;
     Record(s, "start-components");
+    SameLine();
+    if (Button("Circular progress"))
+        s.page = 16;
+    Record(s, "start-circular-progress");
     SeparatorText("Choose a route");
     if (BeginTable("start-routes", 2, ImGuiTableFlags_SizingStretchSame)) {
         TableNextRow();

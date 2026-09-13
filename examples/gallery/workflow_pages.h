@@ -22,7 +22,7 @@ struct WorkflowPages {
     std::array<editor::Point,256> lassoScratch{};
     std::array<accessibility::SemanticNode,512> nodes{};
     accessibility::AccessibilityFrame semantics{nodes};
-    bool notice=true,open=true,advanced=false,chip=false,vertical=false,japanese=false,disabled=false,lasso=false;
+    bool notice=false,open=true,advanced=false,chip=false,vertical=false,japanese=false,disabled=false,lasso=false;
     int actions=0,toastPriority=1;
     float fraction=.4f;
     double expiresAt=0;

@@ -98,6 +98,8 @@ void WorkflowPages::Show(int page,GalleryState& host) {
         if(imkit::Progress("inline",progress,ProgressPresentation::Inline,progressDialog,{},o))++actions;
         if(imkit::Progress("overlay",progress,ProgressPresentation::Overlay,progressDialog,{0,130},o))++actions;
         if(imkit::Progress("modal",progress,ProgressPresentation::Modal,progressDialog,{},o)){progressDialog.open=false;++actions;}
+        ImGui::SeparatorText(japanese?"円形進捗":"Circular progress");
+        ImGui::TextDisabled(japanese?"値、完了、未測定を同じコンポーネントで表示します。":"Known, complete, and unavailable states use the same component.");
         CircularProgress("coverage-total",CircularProgressView{.82f,"41/50",japanese?"全体":"Overall"},{96,7},o);ImGui::SameLine();
         CircularProgress("coverage-one",CircularProgressView{1.f,"10/10","PJ1",FeedbackKind::Success},{58,0},o);ImGui::SameLine();
         CircularProgress("coverage-two",CircularProgressView{.7f,"7/10","PJ2"},{58,0},o);ImGui::SameLine();

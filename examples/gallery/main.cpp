@@ -781,6 +781,9 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
         CaptureFrames(h,dir,frame,20);
         h.Click("workflow-steps");
         CaptureFrames(h,dir,frame,20);
+    } else if(demo=="progress") {
+        h.s.page=16;h.s.comparison.open=false;h.Settle();
+        h.Frame({},dir/"circular-progress.png");
     } else if(demo=="timeline") {
         auto &s=h.s.editors;s.Dataset(false);h.s.page=8;h.s.comparison.open=false;h.Settle();
         CaptureFrames(h,dir,frame,20);
@@ -1680,7 +1683,7 @@ int main(int argc, char **argv) {
         if(a=="--capture-demo" && i+1<argc) {
             captureDemo=argv[++i];
             if(captureDemo!="overview" && captureDemo!="comparison" && captureDemo!="themes" &&
-               captureDemo!="icons" && captureDemo!="workflow" && captureDemo!="timeline") return 2;
+               captureDemo!="icons" && captureDemo!="workflow" && captureDemo!="progress" && captureDemo!="timeline") return 2;
             continue;
         }
         if (a == "--verify-timeline-model") return VerifyTimelineModel();
