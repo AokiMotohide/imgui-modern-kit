@@ -117,4 +117,6 @@ v3の全追加機能と移行点は[CHANGELOG.md](CHANGELOG.md)に記録して�
 
 ## Licenseと出典
 
+ImKitは、Omar Cornut氏とcontributorの皆様が築いてきた[Dear ImGui](https://github.com/ocornut/imgui)の明快さ、移植性、immediate-modeの思想に深い敬意を持って開発しています。Dear ImGuiのforkや代替ではなく、その優れた動作と所有権の境界を維持しながら機能を重ねる独立した拡張layerです。
+
 ImKitは[MIT License](LICENSE)です。Dear ImGui、GLFW、任意font資産には各licenseが適用されます。正確なrevision、hash、配布noticeは[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)にあります。repository GIFとrelease MP4にはnative ImKit Gallery／companionのbackbufferだけを使用しています。

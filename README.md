@@ -117,4 +117,6 @@ See [CHANGELOG.md](CHANGELOG.md) for every v3 addition and migration point.
 
 ## License and provenance
 
+ImKit is developed with deep respect for [Dear ImGui](https://github.com/ocornut/imgui), and for the clarity, portability and immediate-mode philosophy established by Omar Cornut and its contributors. ImKit is an independent extension layer—not a fork or replacement—and aims to preserve the behavior and ownership boundaries that make Dear ImGui effective.
+
 ImKit is [MIT licensed](LICENSE). Dear ImGui, GLFW and optional font assets retain their own licenses; exact revisions, hashes and distribution notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Repository GIFs and the release MP4 contain only native ImKit Gallery/companion backbuffers.
