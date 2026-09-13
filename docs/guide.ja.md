@@ -74,17 +74,17 @@ add_subdirectory(external/imgui-modern-kit)
 target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
 
-固定版1.92.9b dockingを使用してください。1.91.9と1.89 WIP（18814）の構成も読み取り比較しましたが、現在のfont/style/API契約が異なるため本Releaseの対応外です。ホストのImGui更新は別途判断し、既存forkを暗黙に置換しないでください。他OS/toolchainは未検証です。
+Dear ImGui docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be`を完全固定で使用してください。以前のfont/style/API契約はv3の対応外です。ホストを明示的に更新し、参加する全targetで同一commitを使用します。
 
 ## インストール済みSDK
 
-Windows x64、MSVC v145、Release `/MD`、Debug `/MDd`、Dear ImGui 1.92.9b dockingの既定ABI型が条件です。compile definitionと`imconfig.h`も全翻訳単位で揃えてください。archiveにImGui本体は含みません。別のImGui版はheader guardで拒否します。以下の確認flagはcompiler/CRT/architecture/型の一致を利用者が確認したことを表し、自動的なbinary解析ではありません。
+SDK成果物はWindows x64、Windows Arm64、macOS Universal 2ごとに生成し、manifestへOS、architecture、compiler、Dear ImGui commitを記録します。compile definitionと`imconfig.h`は全翻訳単位で揃えてください。archiveにImGui本体は含みません。別のImGui版はheader guardで拒否します。以下の確認flagは成果物manifestと型設定の一致を利用者が確認したことを表し、自動的なbinary解析ではありません。
 
 ```cmake
 # 対応するhost_imguiを先に作成
 set(IMKIT_IMGUI_TARGET host_imgui)
 set(IMKIT_SDK_ABI_CONFIRMED ON) # manifest・構成の一致を確認してから
-find_package(imkit 2.2 CONFIG REQUIRED)
+find_package(imkit 3.0 CONFIG REQUIRED)
 target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
 

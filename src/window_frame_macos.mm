@@ -37,12 +37,17 @@ WindowFrameState WindowFrameMacOSAdapter::State() const {
     WindowFrameState state;
     if (!window_) return state;
     NSWindow* window = (__bridge NSWindow*)window_;
-    // Cocoa/GLFW window coordinates are points (DIP); framebuffer scaling is renderer-owned.
-    state.dpiScale = 1.f;
+    state.dpiScale = static_cast<float>(window.backingScaleFactor);
     state.active = window.isKeyWindow;
-    state.maximized = (window.styleMask & NSWindowStyleMaskFullScreen) != 0;
+    state.maximized = window.zoomed || (window.styleMask & NSWindowStyleMaskFullScreen) != 0;
     state.systemCaptionButtons = true;
-    state.leadingSystemAreaDip = 78.f;
+    NSButton *button=[window standardWindowButton:NSWindowZoomButton];
+    NSView *content=window.contentView;
+    if(button && button.superview && content) {
+        const NSRect buttonScreen=[button.superview convertRectToScreen:button.frame];
+        const NSRect contentScreen=[content convertRectToScreen:content.bounds];
+        state.leadingSystemAreaDip=static_cast<float>(NSMaxX(buttonScreen)-NSMinX(contentScreen)+8.0);
+    }
     return state;
 }
 void WindowFrameMacOSAdapter::Execute(WindowFrameOperation operation) {

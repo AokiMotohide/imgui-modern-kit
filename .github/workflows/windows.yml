@@ -1,17 +1,86 @@
-name: windows
+name: supported-platforms
 
 on:
   push:
   pull_request:
 
 jobs:
-  source-consumer:
-    runs-on: windows-2022
+  windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2022
+            arch: x64
+          - runner: windows-11-arm
+            arch: ARM64
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
       - name: Configure
-        run: cmake -S . -B build/ci -G "Visual Studio 17 2022" -A x64 -DIMKIT_BUILD_GALLERY=OFF -DIMKIT_BUILD_TESTS=ON
+        run: cmake -S . -B build/ci -G "Visual Studio 17 2022" -A ${{ matrix.arch }} -DIMKIT_BUILD_GALLERY=ON -DIMKIT_BUILD_TESTS=ON -DIMKIT_BUILD_ACCESSIBILITY_WIN32=ON
       - name: Build
         run: cmake --build build/ci --config Release --parallel
       - name: Test
         run: ctest --test-dir build/ci -C Release --output-on-failure
+      - name: Package
+        run: cmake --build build/ci --config Release --target package --parallel
+      - uses: actions/upload-artifact@v4
+        with:
+          name: imkit-Windows-${{ matrix.arch }}
+          path: build/ci/imgui-modern-kit-*.zip
+
+  macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    env:
+      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      APPLE_NOTARY_PROFILE: ${{ secrets.APPLE_NOTARY_PROFILE }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build/ci -G Xcode -DCMAKE_OSX_ARCHITECTURES=${{ matrix.arch }} -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DIMKIT_BUILD_GALLERY=ON -DIMKIT_BUILD_TESTS=ON -DIMKIT_BUILD_ACCESSIBILITY_MACOS=ON
+      - name: Build
+        run: cmake --build build/ci --config Release --parallel
+      - name: Test
+        run: ctest --test-dir build/ci -C Release --output-on-failure
+      - name: Gallery smoke
+        if: matrix.arch == 'arm64'
+        run: build/ci/catalog/Release/imkit_gallery.app/Contents/MacOS/imkit_gallery --smoke
+      - name: Sign and notarize when credentials are available
+        if: matrix.arch == 'arm64' && env.APPLE_SIGNING_IDENTITY != '' && env.APPLE_NOTARY_PROFILE != ''
+        run: .github/scripts/sign-and-notarize.sh build/ci/catalog/Release/imkit_gallery.app
+      - name: Package
+        run: cmake --build build/ci --config Release --target package --parallel
+      - uses: actions/upload-artifact@v4
+        with:
+          name: imkit-macOS-${{ matrix.arch }}
+          path: build/ci/imgui-modern-kit-*.zip
+
+  macos-universal-package:
+    runs-on: macos-15
+    env:
+      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      APPLE_NOTARY_PROFILE: ${{ secrets.APPLE_NOTARY_PROFILE }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Universal 2
+        run: cmake -S . -B build/universal -G Xcode '-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64' -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DIMKIT_BUILD_GALLERY=ON -DIMKIT_BUILD_TESTS=OFF
+      - name: Build Gallery
+        run: cmake --build build/universal --config Release --target imkit_gallery --parallel
+      - name: Sign and notarize when credentials are available
+        if: env.APPLE_SIGNING_IDENTITY != '' && env.APPLE_NOTARY_PROFILE != ''
+        run: .github/scripts/sign-and-notarize.sh build/universal/catalog/Release/imkit_gallery.app
+      - name: Package
+        run: cmake --build build/universal --config Release --target package --parallel
+      - uses: actions/upload-artifact@v4
+        with:
+          name: imkit-macOS-universal2
+          path: build/universal/imgui-modern-kit-*.zip

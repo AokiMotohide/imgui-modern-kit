@@ -13,6 +13,21 @@ The cross-cutting design-system additions, explicit semantic frame, locale and p
 
 Precision Layers separates semantic design, native behavior and host state.
 
+## v3 platform boundary / v3 platform境界
+
+The core remains platform and renderer neutral. Official Dear ImGui backends are
+compiled only by the Gallery host: GLFW/OpenGL3 on Windows and GLFW/Metal on macOS.
+The optional `preview_opengl3` and `preview_metal` targets own only their explicit
+off-screen GPU resources; the host owns contexts, devices, command buffers and
+submission. `accessibility_win32` and `accessibility_macos` copy a published semantic
+snapshot and return actions through the same `NativeActionSink`.
+
+coreはplatform／renderer非依存を維持します。公式Dear ImGui backendを組み込むのは
+Gallery hostだけで、WindowsはGLFW/OpenGL3、macOSはGLFW/Metalです。任意のpreview
+targetが所有するのは明示的なoff-screen GPU resourceだけで、Context、device、command
+buffer、submitはホストが所有します。両OSのaccessibility adapterはsemantic snapshotを
+複製し、共通`NativeActionSink`へ操作要求を返します。
+
 | Layer | Responsibility / 責務 |
 |---|---|
 | `version.h` | Explicit baseline guard; no silent cross-version ABI claim / 対応版を明示 |

@@ -40,10 +40,10 @@ struct Paint {
         float r=radius<0?t.radius:radius;
         d->AddRectFilled(p,Plus(p,size),C(fill),r);
         float b=border<0?t.border:border;
-        if(b>0) d->AddRect(p,Plus(p,size),C(t.color.border),r,0,b);
+        if(b>0) d->AddRect(p,Plus(p,size),C(t.color.border),r,b,0);
     }
     void Focus(ImVec2 p,ImVec2 size) const {
-        d->AddRect(P(p.x-3,p.y-3),P(p.x+size.x+3,p.y+size.y+3),C(t.color.focus),t.radius+3,0,t.focus);
+        d->AddRect(P(p.x-3,p.y-3),P(p.x+size.x+3,p.y+size.y+3),C(t.color.focus),t.radius+3,t.focus,0);
         if(t.proposal==2) d->AddRect(P(p.x-6,p.y-6),P(p.x+size.x+6,p.y+size.y+6),C(t.color.text),t.radius+5);
         if(t.proposal==4) d->AddLine(P(p.x,p.y+size.y-1),P(p.x+size.x,p.y+size.y-1),C(t.color.focus),3);
     }
@@ -86,7 +86,7 @@ struct Paint {
             float f=fraction<0?(value?1.f:0.f):fraction;
             ImVec4 track=Mix(t.color.border,ink,f);
             d->AddRectFilled(p,P(p.x+44,p.y+24),C(track),12);
-            if(t.proposal==2) d->AddRect(p,P(p.x+44,p.y+24),C(t.color.text),12,0,1.5f);
+            if(t.proposal==2) d->AddRect(p,P(p.x+44,p.y+24),C(t.color.text),12,1.5f,0);
             d->AddCircleFilled(P(p.x+12+20*f,p.y+12),8,C(value?fg:t.color.surface));
         } else if(kind==1) {
             Box(p,P(22,22),value?ink:t.color.inset,disabled?1:t.border,std::min(t.radius,5.f));
@@ -113,7 +113,7 @@ struct Paint {
         ImVec4 bg=st==SpecimenState::Disabled?Mix(t.color.inset,t.color.surface,.7f):t.color.inset;
         Box(p,size,bg);
         if(t.proposal==4) d->AddLine(P(p.x,p.y+size.y),Plus(p,size),C(t.color.border),1);
-        if(error) d->AddRect(p,Plus(p,size),C(t.color.danger),t.radius,0,1.5f);
+        if(error) d->AddRect(p,Plus(p,size),C(t.color.danger),t.radius,1.5f,0);
         if(st==SpecimenState::Focused) Focus(p,size);
         if(search) Icon(P(p.x+18,p.y+size.y/2),1,t.color.muted);
         Text(P(p.x+(search?38:12),p.y+(size.y-t.body)/2),text,0,false,placeholder||st==SpecimenState::Disabled);

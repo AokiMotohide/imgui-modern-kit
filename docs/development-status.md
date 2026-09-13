@@ -8,8 +8,8 @@ Precision Layersは固定版の公開GUI API、12種類の名前付きsemantic t
 - [Validation / 検証](validation.md): Debug/Release, ownership, public IO interactions, actual GPU captures and relocated SDK consumer.
 - [Getting started / English](getting-started.md) / [導入ガイド / 日本語](getting-started.ja.md): source integration and installed SDK.
 - [Themes / English](themes.md) / [テーマ / 日本語](themes.ja.md): presets, font/DPI and lifetime contracts.
-- [Release v2.2.0](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v2.2.0): source, Windows x64 SDK, Gallery archive, manifest, checksums and capture evidence.
+- [v3 changelog](../CHANGELOG.md): Windows/macOS targets, package matrix, migration notes and verification boundaries.
 
-Supported baseline is Dear ImGui 1.92.9b docking on Windows x64/MSVC v145. Native OS/IME acceptance, other platforms, older forks and integration into another application are not verified. Earlier design-comparison documents are historical experiments; the twelve presets documented in [Themes](themes.md) are the supported set.
+The supported baseline is Dear ImGui 1.93.0 WIP docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be`. The build matrix covers Windows 10/11 x64, Windows 11 Arm64 and macOS 15+ arm64/x86_64. Windows x64 automation is locally verified; the other architecture jobs and Apple Silicon native acceptance remain pending as recorded in [Validation](validation.md).
 
-対応基準はDear ImGui 1.92.9b docking、Windows x64/MSVC v145です。native OS/IME、他OS、旧fork、他アプリへの導入は未検証です。以前の比較文書は実験履歴であり、対応presetは[テーマ文書](themes.ja.md)の12種類です。
+対応基準はDear ImGui 1.93.0 WIP docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be`です。build matrixはWindows 10/11 x64、Windows 11 Arm64、macOS 15以降arm64/x86_64を対象とします。Windows x64の自動検証はローカル合格済みで、他architectureのjobとApple Silicon実機受入は[検証記録](validation.md)記載の未実施項目です。

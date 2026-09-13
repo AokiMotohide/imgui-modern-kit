@@ -48,7 +48,7 @@ struct GalleryState {
     std::size_t frameWorkspace = 0;
     bool frameUnsaved = true;
     bool dark = false, palette = false;
-    bool floatingComparison = false, showDearImGuiDemo = true, demoWindowPositioned = false;
+    bool floatingComparison = false, showDearImGuiDemo = false, demoWindowPositioned = false;
     ImVec2 floatingCatalogPosition{}, floatingCatalogSize{};
     char gallerySearch[96]{};
     bool focusApply = false, applyFocused = false;

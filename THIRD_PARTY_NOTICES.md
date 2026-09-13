@@ -50,8 +50,8 @@ For any future source or asset reuse, review the exact file's license and preser
 ## Dear ImGui
 
 - Source: https://github.com/ocornut/imgui
-- Release/tag: `v1.92.9b-docking`
-- Commit: `b48d1afbe8ee8b238e2961dc363a949dd7304e23`
+- Branch: `docking` (exact revision, not a floating dependency)
+- Commit: `367b2c24f399988ddafc0bb4628da0106bcc09be`
 - License: MIT
 - Used files: core sources, public headers, demo source, and the official GLFW/OpenGL3 backend
 

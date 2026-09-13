@@ -2,6 +2,7 @@
 #include <imkit/video.h>
 #include <imkit/cg.h>
 #include <imkit/preview.h>
+#include <imkit/preview_opengl3.h>
 #include <array>
 int main() {
     using namespace imkit;
@@ -47,8 +48,13 @@ int main() {
     video::ClipView evaluationClip;evaluationClip.keyEvaluation={};
     video::TimelineLabels relationLabels;relationLabels.unlink="Unlink";relationLabels.ungroup="Detach";relationLabels.linkSelection="Link selected";relationLabels.groupSelection="Group selected";
     video::TimelineExternalDropRoute dropRoute{"IMKIT_ASSET",nullptr,nullptr,
-        [](void *,editor::StableId,editor::Tick,const void *,std::size_t,bool){}};
+        [](void *,editor::StableId,editor::Tick,const void *,std::size_t,bool){},
+        [](void *,editor::StableId,editor::Tick at,const void *,std::size_t){
+            return video::TimelineExternalDropPreview{{at,at+editor::TicksPerSecond},video::TrackKind::Video,"Preview",true};
+        }};
     video::TimelineProvider gate;gate.isEditable=[](void *,editor::StableId){return true;};gate.canBeginEdit=[](void *,editor::StableId,editor::EditKind){return true;};
+    gate.toolbar.leading=[](void *){};
+    gate.toolbar.trailing=[](void *){};
     gate.externalDrops=std::span(&dropRoute,1);
     gate.drawClipOverlay=[](void *,editor::StableId,const editor::Value &,ImVec2,ImVec2){};
     timeline.labels.fit="Frame all clips";timeline.labels.followModes[0]="Disabled";

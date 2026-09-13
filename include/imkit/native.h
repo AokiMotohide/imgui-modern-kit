@@ -1,10 +1,10 @@
 #pragma once
 #include <imgui.h>
-#if IMGUI_VERSION_NUM != 19291
-#error "ImKit 0.2 requires Dear ImGui 1.92.9b; rebuild with the documented version."
+#if IMGUI_VERSION_NUM != 19297
+#error "ImKit 3.0 requires the pinned Dear ImGui 1.93.0 WIP docking revision."
 #endif
 #ifndef IMGUI_HAS_DOCK
-#error "ImKit 0.2 requires the documented docking branch."
+#error "ImKit 3.0 requires the documented docking branch."
 #endif
 namespace imkit {
 // Exact native overload sets and defaults; visual styling comes from ApplyTheme.

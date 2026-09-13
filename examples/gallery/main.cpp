@@ -92,6 +92,11 @@ struct Host {
         glClearColor(.1f, .1f, .1f, 1);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        if(ImGui::GetIO().ConfigFlags&ImGuiConfigFlags_ViewportsEnable) {
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+            glfwMakeContextCurrent(window);
+        }
         if (!shot.empty())
             imkit::design::SaveBackbuffer(shot, w, h);
         glfwSwapBuffers(window);
@@ -776,6 +781,9 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
         CaptureFrames(h,dir,frame,20);
         h.Click("workflow-steps");
         CaptureFrames(h,dir,frame,20);
+    } else if(demo=="progress") {
+        h.s.page=16;h.s.comparison.open=false;h.Settle();
+        h.Frame({},dir/"circular-progress.png");
     } else if(demo=="timeline") {
         auto &s=h.s.editors;s.Dataset(false);h.s.page=8;h.s.comparison.open=false;h.Settle();
         CaptureFrames(h,dir,frame,20);
@@ -1675,7 +1683,7 @@ int main(int argc, char **argv) {
         if(a=="--capture-demo" && i+1<argc) {
             captureDemo=argv[++i];
             if(captureDemo!="overview" && captureDemo!="comparison" && captureDemo!="themes" &&
-               captureDemo!="icons" && captureDemo!="workflow" && captureDemo!="timeline") return 2;
+               captureDemo!="icons" && captureDemo!="workflow" && captureDemo!="progress" && captureDemo!="timeline") return 2;
             continue;
         }
         if (a == "--verify-timeline-model") return VerifyTimelineModel();
@@ -1767,6 +1775,9 @@ int main(int argc, char **argv) {
     auto &io = ImGui::GetIO();
     io.IniFilename = nullptr;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable;
+    if(!h.automated) io.ConfigFlags|=ImGuiConfigFlags_ViewportsEnable;
+    io.ConfigDpiScaleFonts=true;
+    io.ConfigDpiScaleViewports=true;
     bool backend = ImGui_ImplGlfw_InitForOpenGL(h.window, true),
          renderer = backend && ImGui_ImplOpenGL3_Init("#version 130");
     if(!h.automated) {

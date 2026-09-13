@@ -4,7 +4,7 @@ ImKit-owned window-frame values and optional platform adapters are inventoried s
 
 ImKit固有のwindow frame値型と任意platform adapterは[window-frame-api-inventory.json](window-frame-api-inventory.json)へ分離して記録し、`tests/window_frame_api_compile.cpp`でcompileします。
 
-Generated from pinned Dear ImGui 1.92.9b docking (19291). Every row is one overload. Native aliases preserve exact defaults, callbacks, flags and Begin/End contracts. ApplyTheme is required for Precision Layers styling. Helpers have no visual output of their own. Every included row requires the pinned version; known limits are in [validation](validation.md). Composite controls are listed separately in [the guide](guide.md#components).
+Generated from pinned Dear ImGui 1.93.0 WIP docking (19297), commit `367b2c24f399988ddafc0bb4628da0106bcc09be`. Every row is one overload. Native aliases preserve exact defaults, callbacks, flags and Begin/End contracts. ApplyTheme is required for Precision Layers styling. Helpers have no visual output of their own. Every included row requires the pinned version; known limits are in [validation](validation.md). Composite controls are listed separately in [the guide](guide.md#components).
 
 固定版の宣言をoverloadごとに記録。native aliasは標準実装への直接公開で、共通Themeが外観を適用します。非描画補助には単独の外観はありません。全overloadを個別操作したという意味ではなく、署名compile/linkとカテゴリ代表操作を組み合わせて検証します。
 
