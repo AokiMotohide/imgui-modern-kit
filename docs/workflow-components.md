@@ -50,6 +50,7 @@ and relocated SDK consumers. Existing signatures and native API inventory are re
 | `ToastRegion(id, ...)` | Host queue/time/scratch, work-area-clamped stack, no focus stealing / ホスト時刻とqueue |
 | `EmptyState(id, StateView)`, `UnavailableState`, `RetryState` | Heading, description, optional icon/action; returns request / 見出し・説明・任意action |
 | `Progress(ProgressView, ...)` | Inline, child overlay, modal; negative fraction means indeterminate; cancel request / 表示と取消要求のみ |
+| `CircularProgress(CircularProgressView, ...)` | Borrowed fraction/value/label; negative or non-finite fraction means unavailable; no threshold or state ownership / 借用した割合・中央値・ラベルを円形表示し、負値・非有限値は測定不能。判定・状態を所有しない |
 | `BeginCard`, `EndCard` | Always paired, even when Begin returns false / falseでもEnd必須 |
 | `MultiSelectionBar`, `HelpCallout`, `ValidationSummary` | Host count, commands or issues; no validation engine / 検証処理を所有しない |
 | `ResponsiveToolbar(..., ToolbarOptions)` | Overflow, icon labels, disabled reasons, native keyboard focus / overflowとaccessible label |

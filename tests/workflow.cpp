@@ -186,6 +186,10 @@ int main(){
         progressState.open=true;
         auto modal=[&]{imkit::Progress("modal",ProgressView{.5f,"Stage","Working",true},ProgressPresentation::Modal,progressState,{},options);};
         frame(modal);frame(modal);progressState.open=false;frame(modal);frame(modal);
+        frame([&]{CircularProgress("known",CircularProgressView{.5f,"5/10","Coverage"},{72,5},options);ImGui::SameLine();CircularProgress("complete",CircularProgressView{1.f,"10/10","Complete",FeedbackKind::Success},{54,0},options);ImGui::SameLine();CircularProgress("unknown",CircularProgressView{-1.f,"","Unknown"},{54,0},options);});
+        int circularNodes=0;bool sawKnown=false,sawUnknown=false;
+        for(const auto& node:semantics.Tree().nodes)if(node.role==accessibility::SemanticRole::Progress){++circularNodes;sawKnown=sawKnown||(node.name=="Coverage"&&node.value=="5/10"&&!node.state.invalid);sawUnknown=sawUnknown||(node.name=="Unknown"&&node.value=="\xE2\x80\x94"&&node.state.invalid);}
+        Check(circularNodes==3&&sawKnown&&sawUnknown,"circular progress semantics and unavailable state");
         std::array<StableId,4> dismissStorage{};
         frame([&]{RequestBuffer requests{dismissStorage};ToastRegion("toast",notices,5,order,requests,{2,220},options);});
         Check(semantics.Tree().nodes.size()==4,"toast display maximum");
@@ -209,6 +213,7 @@ int main(){
             EmptyState("empty",StateView{"Empty","Description","Create"},options);
             UnavailableState("offline",StateView{"Offline","Description"},options);RetryState("retry",StateView{"Error","Description","Retry"},options);
             imkit::Progress("inline-progress",ProgressView{.5f,"Stage","Working",true},ProgressPresentation::Inline,progressState,{},options);
+            CircularProgress("circular-progress",CircularProgressView{.75f,"3/4","Coverage"},{64,0},options);
             ResponsiveToolbar("toolbar",toolbar,commands,ToolbarOptions{},options);
             SectionHeader("section","Section",open,options);MultiSelectionBar("selected",2,commands,toolbar,options);
             HelpCallout("help",StateView{"Help","Description"},options);ValidationSummary("issues",steps,options);

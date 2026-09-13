@@ -100,6 +100,21 @@ struct ProgressView {
     const char* description="";
     bool cancellable=false;
 };
+struct CircularProgressView {
+    // Negative or non-finite values render as unavailable. Finite values are clamped to [0, 1].
+    float fraction=-1;
+    const char* value="";
+    const char* label="";
+    FeedbackKind kind=FeedbackKind::Info;
+};
+struct CircularProgressOptions {
+    // Zero uses three frame heights. Stroke width zero derives from the resolved diameter.
+    float diameter=0;
+    float strokeWidth=0;
+};
+// Draw-only progress. Text is borrowed for the current frame; the host owns values and state.
+void CircularProgress(const char* id, const CircularProgressView& view,
+                      CircularProgressOptions layout={}, ComponentOptions options={});
 // Modal open state is explicit. Overlay occupies/clips to the requested child region.
 bool Progress(const char* id, const ProgressView& view, ProgressPresentation presentation,
               DialogState& state, ImVec2 size={}, ComponentOptions options={});

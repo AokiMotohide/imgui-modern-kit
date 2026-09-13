@@ -316,6 +316,33 @@ bool EmptyState(const char* id,const StateView& v,ComponentOptions o) {
 }
 bool UnavailableState(const char* id,const StateView& view,ComponentOptions o) {return EmptyState(id,view,o);}
 bool RetryState(const char* id,const StateView& view,ComponentOptions o) {return EmptyState(id,view,o);}
+void CircularProgress(const char* id,const CircularProgressView& view,CircularProgressOptions layout,ComponentOptions o) {
+    constexpr float pi=3.14159265358979323846f;
+    constexpr const char* unavailable="\xE2\x80\x94";
+    const float diameter=std::max(12.f,layout.diameter>0?layout.diameter:ImGui::GetFrameHeight()*3.f);
+    const float stroke=std::clamp(layout.strokeWidth>0?layout.strokeWidth:diameter*.075f,1.f,diameter*.24f);
+    const bool available=std::isfinite(view.fraction)&&view.fraction>=0.f;
+    const float fraction=available?std::clamp(view.fraction,0.f,1.f):0.f;
+    const char* value=*Safe(view.value)?view.value:(available?"":unavailable);
+    const ImVec4 track=o.theme?o.theme->semantic.border:ImGui::GetStyleColorVec4(ImGuiCol_Border);
+    const ImVec4 foreground=available?Color(view.kind,o):(o.theme?o.theme->semantic.textDisabled:ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+    ImGui::PushID(id);ImGui::BeginGroup();
+    const ImVec2 top=ImGui::GetCursorScreenPos();ImGui::Dummy({diameter,diameter});
+    const ImVec2 center{top.x+diameter*.5f,top.y+diameter*.5f};
+    auto* draw=ImGui::GetWindowDrawList();const int segments=std::clamp(static_cast<int>(diameter*.75f),24,96);
+    draw->AddCircle(center,std::max(1.f,diameter*.5f-stroke*.5f),ImGui::GetColorU32(track),segments,stroke);
+    if(available&&fraction>0.f) {
+        const float start=-pi*.5f;
+        if(fraction>=.9999f) draw->AddCircle(center,std::max(1.f,diameter*.5f-stroke*.5f),ImGui::GetColorU32(foreground),segments,stroke);
+        else {draw->PathArcTo(center,std::max(1.f,diameter*.5f-stroke*.5f),start,start+2.f*pi*fraction,std::max(2,static_cast<int>(segments*fraction)));draw->PathStroke(ImGui::GetColorU32(foreground),0,stroke);}
+    }
+    const ImVec2 valueSize=ImGui::CalcTextSize(value);
+    draw->AddText({center.x-valueSize.x*.5f,center.y-valueSize.y*.5f},ImGui::GetColorU32(available?(o.theme?o.theme->semantic.text:ImGui::GetStyleColorVec4(ImGuiCol_Text)):foreground),value);
+    if(*Safe(view.label)) {const float width=ImGui::CalcTextSize(view.label).x;ImGui::SetCursorPosX(ImGui::GetCursorPosX()+std::max(0.f,(diameter-width)*.5f));ImGui::TextUnformatted(view.label);}
+    ImGui::EndGroup();
+    if(o.accessibility) {accessibility::SemanticNode n;n.id=ImGui::GetID("progress");n.parent=o.parent;n.name=Safe(view.label);n.value=value;n.role=accessibility::SemanticRole::Progress;n.state.readOnly=true;n.state.invalid=!available;accessibility::AnnotateLastItem(*o.accessibility,n);}
+    ImGui::PopID();
+}
 bool Progress(const char* id,const ProgressView& view,ProgressPresentation presentation,DialogState& state,ImVec2 size,ComponentOptions o) {
     bool visible=true,modal=presentation==ProgressPresentation::Modal,child=presentation==ProgressPresentation::Overlay;
     ImGui::PushID(id);

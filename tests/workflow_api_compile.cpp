@@ -17,6 +17,7 @@ bool (*volatile empty)(const char*,const imkit::StateView&,imkit::ComponentOptio
 auto volatile unavailable=&imkit::UnavailableState;
 auto volatile retry=&imkit::RetryState;
 bool (*volatile progress)(const char*,const imkit::ProgressView&,imkit::ProgressPresentation,imkit::DialogState&,ImVec2,imkit::ComponentOptions)=&imkit::Progress;
+void (*volatile circularProgress)(const char*,const imkit::CircularProgressView&,imkit::CircularProgressOptions,imkit::ComponentOptions)=&imkit::CircularProgress;
 auto volatile card=&imkit::BeginCard;auto volatile endCard=&imkit::EndCard;
 auto volatile section=&imkit::SectionHeader;auto volatile multi=&imkit::MultiSelectionBar;
 auto volatile help=&imkit::HelpCallout;auto volatile validation=&imkit::ValidationSummary;

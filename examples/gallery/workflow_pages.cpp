@@ -98,6 +98,10 @@ void WorkflowPages::Show(int page,GalleryState& host) {
         if(imkit::Progress("inline",progress,ProgressPresentation::Inline,progressDialog,{},o))++actions;
         if(imkit::Progress("overlay",progress,ProgressPresentation::Overlay,progressDialog,{0,130},o))++actions;
         if(imkit::Progress("modal",progress,ProgressPresentation::Modal,progressDialog,{},o)){progressDialog.open=false;++actions;}
+        CircularProgress("coverage-total",CircularProgressView{.82f,"41/50",japanese?"全体":"Overall"},{96,7},o);ImGui::SameLine();
+        CircularProgress("coverage-one",CircularProgressView{1.f,"10/10","PJ1",FeedbackKind::Success},{58,0},o);ImGui::SameLine();
+        CircularProgress("coverage-two",CircularProgressView{.7f,"7/10","PJ2"},{58,0},o);ImGui::SameLine();
+        CircularProgress("coverage-unknown",CircularProgressView{-1.f,"","PJ3"},{58,0},o);
         FeedbackView info{10,japanese?"設定を更新しました":"Settings updated","Inline feedback",FeedbackKind::Success,0,0,false};
         InlineAlert("inline-alert",info,o);PersistentBanner("banner",{11,"Review required","Persistent warning",FeedbackKind::Warning,0,0,false},o);
         if(BeginCard("states",{0,260},o)) {
