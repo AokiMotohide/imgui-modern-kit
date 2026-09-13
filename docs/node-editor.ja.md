@@ -1,7 +1,7 @@
 # ノードエディター（開発中API）
 
 独立した `imkit::node_editor` targetを追加しました。`imkit::editor_suite`からも利用できます。
-公開ヘッダーは `<imkit/node_editor.h>`。対応環境は既存と同じC++20 / Dear ImGui 1.92.9b dockingです。
+公開ヘッダーは `<imkit/node_editor.h>`。対応環境はC++20と完全固定したDear ImGui 1.93.0 WIP docking commitです。
 
 独自実装であり、imgui-node-editorを取得・リンクしません。同ライブラリはAPIと操作の参考です。
 第三者のコードや画像を追加していません。独立デモだけがインストール済みWindowsのSegoe UIを

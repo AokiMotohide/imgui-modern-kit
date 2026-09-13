@@ -4,8 +4,8 @@
 cut transitions, track management and selection/clipboard operations.
 独立したフェード、境界トランジション、トラック管理、選択・クリップボード操作は上記を参照してください。
 
-ImKit provides reusable C++20 editor controls on Dear ImGui 1.92.9b-docking.
-ImKitはDear ImGui 1.92.9b-docking上の再利用可能なC++20編集部品です。
+ImKit provides reusable C++20 editor controls on the pinned Dear ImGui 1.93.0 WIP docking commit.
+ImKitは完全固定したDear ImGui 1.93.0 WIP docking commit上の再利用可能なC++20編集部品です。
 
 ## Modules / module構成
 

@@ -3,7 +3,7 @@
 The independent `imkit::node_editor` target provides native Dear ImGui node editing,
 context-free layout utilities and host-driven previews. It is included by
 `imkit::editor_suite`, or can be linked on its own. Include `<imkit/node_editor.h>`.
-The baseline remains Dear ImGui 1.92.9b docking / C++20.
+The baseline is the pinned Dear ImGui 1.93.0 WIP docking commit / C++20.
 
 This is an original implementation. `imgui-node-editor` is an API/interaction
 reference, not a source, build or runtime dependency. No third-party assets were
