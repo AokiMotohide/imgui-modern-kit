@@ -44,8 +44,10 @@ WindowFrameState WindowFrameMacOSAdapter::State() const {
     NSButton *button=[window standardWindowButton:NSWindowZoomButton];
     NSView *content=window.contentView;
     if(button && button.superview && content) {
-        const NSRect buttonScreen=[button.superview convertRectToScreen:button.frame];
-        const NSRect contentScreen=[content convertRectToScreen:content.bounds];
+        const NSRect buttonWindow=[button.superview convertRect:button.frame toView:nil];
+        const NSRect contentWindow=[content convertRect:content.bounds toView:nil];
+        const NSRect buttonScreen=[window convertRectToScreen:buttonWindow];
+        const NSRect contentScreen=[window convertRectToScreen:contentWindow];
         state.leadingSystemAreaDip=static_cast<float>(NSMaxX(buttonScreen)-NSMinX(contentScreen)+8.0);
     }
     return state;
