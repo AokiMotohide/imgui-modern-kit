@@ -1,6 +1,6 @@
 include(FetchContent)
 
-set(IMKIT_IMGUI_COMMIT "b48d1afbe8ee8b238e2961dc363a949dd7304e23")
+set(IMKIT_IMGUI_COMMIT "367b2c24f399988ddafc0bb4628da0106bcc09be")
 set(IMKIT_GLFW_COMMIT "d9d6f0f1f967807ffade6598ea9a631ebaf37a56")
 
 function(imkit_provide_bundled_imgui out_target out_source_dir)
@@ -65,22 +65,30 @@ function(imkit_provide_gallery_dependencies imgui_target imgui_source_dir out_ba
     )
     FetchContent_MakeAvailable(imkit_glfw_source)
 
-    find_package(OpenGL REQUIRED)
-
-    add_library(imkit_gallery_backends STATIC
-        "${imgui_source_dir}/backends/imgui_impl_glfw.cpp"
-        "${imgui_source_dir}/backends/imgui_impl_opengl3.cpp"
-    )
+    if(APPLE)
+        enable_language(OBJCXX)
+        add_library(imkit_gallery_backends STATIC
+            "${imgui_source_dir}/backends/imgui_impl_glfw.cpp"
+            "${imgui_source_dir}/backends/imgui_impl_metal.mm"
+        )
+    else()
+        find_package(OpenGL REQUIRED)
+        add_library(imkit_gallery_backends STATIC
+            "${imgui_source_dir}/backends/imgui_impl_glfw.cpp"
+            "${imgui_source_dir}/backends/imgui_impl_opengl3.cpp"
+        )
+    endif()
     target_compile_features(imkit_gallery_backends PUBLIC cxx_std_20)
     target_include_directories(imkit_gallery_backends
         PUBLIC "${imgui_source_dir}/backends"
     )
-    target_link_libraries(imkit_gallery_backends
-        PUBLIC
-            "${imgui_target}"
-            glfw
-            OpenGL::GL
-    )
+    target_link_libraries(imkit_gallery_backends PUBLIC "${imgui_target}" glfw)
+    if(APPLE)
+        target_link_libraries(imkit_gallery_backends PUBLIC
+            "-framework Cocoa" "-framework Metal" "-framework MetalKit" "-framework QuartzCore")
+    else()
+        target_link_libraries(imkit_gallery_backends PUBLIC OpenGL::GL)
+    endif()
 
     set(${out_backend_target} imkit_gallery_backends PARENT_SCOPE)
 endfunction()

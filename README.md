@@ -4,11 +4,11 @@
 
 ## ✨ Make the tool feel as intentional as the work
 
-**ImKit v2.2.0** is a C++20 design layer for Dear ImGui. It adds a coherent visual system, reusable controls, semantic themes, generated icons and optional editor surfaces—while the host keeps its context, renderer, data and workflow.
+**ImKit v3.0.0** is a C++20 design layer for Dear ImGui. It adds a coherent visual system, reusable controls, semantic themes, generated icons and optional editor surfaces—while the host keeps its context, renderer, data and workflow.
 
-MIT licensed · static library · Windows x64/MSVC verified · Dear ImGui `v1.92.9b-docking` baseline
+MIT licensed · static library · Windows x64/Arm64 and macOS Universal 2 build matrix · pinned Dear ImGui `docking`
 
-> 🪟 **Try the Gallery first.** Download the [Windows x64 Gallery](https://github.com/AokiMotohide/imgui-modern-kit/releases/download/v2.2.0/imkit-2.2.0-gallery-windows-x64.zip), unzip it, then run `imkit_gallery.exe`. No installer, no application code required.
+> **Try the Gallery first.** v3 packages contain the Windows executable or macOS app bundle with the same Gallery pages. Windows uses GLFW/OpenGL3; macOS uses GLFW/Metal.
 
 ## 🎞 Explore the native Gallery
 
@@ -80,13 +80,15 @@ Dear ImGui continues to own IDs, focus, keyboard navigation, callbacks, clipping
 | `imkit::editor_core` | canvas, selection, splitters and editor data-view contracts | `imkit::imkit` |
 | `imkit::video`, `imkit::cg`, `imkit::editor_suite` | optional advanced editor examples | `imkit::editor_core` |
 | `imkit::preview_opengl3` | explicitly constructed preview helper | host-provided OpenGL context/function table |
+| `imkit::preview_metal` | explicitly constructed Metal preview helper | borrowed MTLDevice/command buffer; macOS only |
 | `imkit::window_frame_win32` / `imkit::window_frame_macos` | optional borrowed native-window adapters | matching platform libraries only |
+| `imkit::accessibility_win32` / `imkit::accessibility_macos` | optional native accessibility bridges | host-published semantic tree and action sink |
 
 Source integration is recommended. The Windows SDK archive is available for the verified compiler/CRT/ImGui ABI combination; the Gallery uses GLFW and OpenGL only as a development executable and never adds them to `imkit::imkit` consumers.
 
 ## ✅ Know what is verified
 
-The supported baseline is Dear ImGui `v1.92.9b-docking` at `b48d1afbe8ee8b238e2961dc363a949dd7304e23`, on Windows x64/MSVC. The native Gallery captures are reproducible from checked-in code. Public-IO verification covers the shared-state comparison and gallery workflows; native OS/IME input, assistive technology, other platforms and acceptance in a particular host application remain separate work.
+The ABI baseline is Dear ImGui `docking` commit `367b2c24f399988ddafc0bb4628da0106bcc09be` (1.93.0 WIP). CI builds and packages Windows x64/Arm64 and macOS arm64/x86_64. Windows x64 automated verification is recorded locally; real Apple Silicon launch, IME, Retina, VoiceOver and notarization require the macOS gate described in [validation](docs/validation.md).
 
 ```powershell
 cmake --build --preset windows-debug --target imkit_theme_test imkit_workflow_test --parallel

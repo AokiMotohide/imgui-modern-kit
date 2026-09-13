@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Prepare ImKit 3.0 with a pinned Dear ImGui 1.93.0 WIP docking revision, Windows x64/Arm64 and macOS arm64/x86_64 CI/package gates.
+- Add the GLFW/Metal full Gallery hosts, Metal preview renderer, NSAccessibility bridge and measured macOS WindowFrame integration.
+- Split OpenGL preview declarations into `preview_opengl3.h`, add the platform-neutral native action sink and remove Dear ImGui 1.88 legacy WindowFrame targets.
+- Dear ImGui最新docking固定、Windows x64/Arm64・macOS両CPUのCI／package、Metal Gallery／preview、NSAccessibility、macOS WindowFrameをv3へ追加。
+- OpenGL preview公開ヘッダーを分離し、共通native action sinkへ統一。Dear ImGui 1.88互換targetを削除。
+
 - Add an optional Video Timeline external-drop preview callback so hosts can draw the exact candidate range instead of a whole-row target.
 - Video Timelineの外部drag/dropに、ホスト計画と同じ候補時間範囲を描く任意preview callbackを追加。
 

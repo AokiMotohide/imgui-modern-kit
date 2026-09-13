@@ -1,5 +1,25 @@
 # Validation / 検証
 
+## v3.0 platform matrix / v3.0 platform matrix
+
+| Configuration | Automated gate | Native acceptance |
+|---|---|---|
+| Windows 10/11 x64 | build, focused tests, Gallery, install consumer, ZIP | required on one Windows x64 machine |
+| Windows 11 Arm64 | build, focused tests, Gallery, install consumer, ZIP | architecture-specific manual run is not required |
+| macOS 15+ Apple Silicon | build, tests, Metal Gallery, app bundle, ZIP | required on one Apple Silicon Mac |
+| macOS 15+ Intel | build, tests, Metal Gallery, app bundle, ZIP | architecture-specific manual run is not required |
+
+The checked-in workflow defines all four automated gates. This Windows checkout has
+not executed the macOS jobs or Apple Silicon native acceptance. macOS support must not
+be reported as physically accepted until Gallery launch, Japanese IME, Retina scaling,
+docking/multi-viewport, traffic-light controls and basic VoiceOver navigation pass on
+the selected Mac. Signing/notarization runs only when release credentials are present.
+
+commit済みworkflowは4構成の自動gateを定義します。このWindows checkoutではmacOS jobと
+Apple Silicon実機受入を実行していません。選定MacでGallery起動、日本語IME、Retina、
+Docking/Multi-Viewport、traffic-light、基本VoiceOverを確認するまでは実機合格と記載しません。
+署名・notarizationはrelease資格情報がある場合だけ実行します。
+
 ## Node editor access, appearance and collapse / Node editorの導線・外観・折りたたみ（2026-09-12）
 
 The Debug Gallery and Node Editor companion built successfully. `imkit.node_editor`
@@ -162,7 +182,7 @@ README animationは960×540のnative backbuffer 120枚から生成します。`t
 
 ## Limits / 制約
 
-- Baseline: Dear ImGui **1.92.9b docking**, default ABI types, Windows x64/MSVC. Other versions and platforms are not verified or implicitly compatible.
+- Baseline: Dear ImGui docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be`, default ABI types. Supported artifacts are the four v3 matrix configurations above; other combinations require source builds and explicit validation.
 - Native OS/IME input, physical devices and integration into another application are not tested by this runner.
 - Reordering/resizing/drag-drop preserve exact native APIs; exhaustive combinations are not reimplemented or exhaustively retested.
 - Native wrappers are immediate. Optional explicit animation affects custom decoration only; fonts/renderer/state ownership stays with the host.

@@ -16,6 +16,31 @@
         "IMKIT_BUILD_GALLERY": "ON",
         "IMKIT_BUILD_TESTS": "ON"
       }
+    },
+    {
+      "name": "windows-arm64",
+      "displayName": "Windows Arm64 Release",
+      "generator": "Visual Studio 18 2026",
+      "architecture": "ARM64",
+      "binaryDir": "${sourceDir}/build/windows-arm64",
+      "cacheVariables": {
+        "IMKIT_BUILD_GALLERY": "ON",
+        "IMKIT_BUILD_TESTS": "ON",
+        "IMKIT_BUILD_ACCESSIBILITY_WIN32": "ON"
+      }
+    },
+    {
+      "name": "macos-universal",
+      "displayName": "macOS 15 Universal 2 Release",
+      "generator": "Xcode",
+      "binaryDir": "${sourceDir}/build/macos-universal",
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "arm64;x86_64",
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "15.0",
+        "IMKIT_BUILD_GALLERY": "ON",
+        "IMKIT_BUILD_TESTS": "ON",
+        "IMKIT_BUILD_ACCESSIBILITY_MACOS": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -23,7 +48,16 @@
       "name": "windows-debug",
       "configurePreset": "windows-debug",
       "configuration": "Debug"
+    },
+    {
+      "name": "windows-arm64",
+      "configurePreset": "windows-arm64",
+      "configuration": "Release"
+    },
+    {
+      "name": "macos-universal",
+      "configurePreset": "macos-universal",
+      "configuration": "Release"
     }
   ]
 }
-

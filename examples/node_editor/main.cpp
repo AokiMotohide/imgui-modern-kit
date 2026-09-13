@@ -1,9 +1,18 @@
 #include <imkit/node_editor.h>
-#include <windows.h>
-#include <objbase.h>
 #include <GLFW/glfw3.h>
 #include <imgui_impl_glfw.h>
+#ifdef IMKIT_NODE_EDITOR_METAL
+#include <imgui_impl_metal.h>
+#define GLFW_EXPOSE_NATIVE_COCOA
+#include <GLFW/glfw3native.h>
+#import <Cocoa/Cocoa.h>
+#import <Metal/Metal.h>
+#import <QuartzCore/QuartzCore.h>
+#else
+#include <windows.h>
+#include <objbase.h>
 #include <imgui_impl_opengl3.h>
+#endif
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -22,6 +31,15 @@
 
 namespace ne = imkit::node_editor;
 namespace {
+#ifdef IMKIT_NODE_EDITOR_METAL
+id<MTLDevice> gMetalDevice=nil;
+id<MTLTexture> MakeMetalTexture(int width,int height,const void *rgba) {
+    auto *d=[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm width:width height:height mipmapped:NO];
+    d.usage=MTLTextureUsageShaderRead; d.storageMode=MTLStorageModeShared;
+    id<MTLTexture> texture=[gMetalDevice newTextureWithDescriptor:d];
+    [texture replaceRegion:MTLRegionMake2D(0,0,width,height) mipmapLevel:0 withBytes:rgba bytesPerRow:width*4]; return texture;
+}
+#endif
 struct Node {
     ImVec4 color{};
     ne::NodeStyle customStyle{};
@@ -556,14 +574,28 @@ struct Demo {
     bool dark = true, snap = false, lasso = false;
     int wire = 0, density = 1;
     bool highContrast = false;
+    #ifdef IMKIT_NODE_EDITOR_METAL
+    id<MTLTexture> texture=nil;
+    #else
     GLuint texture = 0;
+    #endif
     imkit::IconAtlas icons;
+    #ifdef IMKIT_NODE_EDITOR_METAL
+    std::array<id<MTLTexture>,7> iconTextures{};
+    #else
     std::array<GLuint, 7> iconTextures{};
+    #endif
     bool reducedMotion = false;
     void Init() {
+#ifndef IMKIT_NODE_EDITOR_METAL
         glGenTextures(int(iconTextures.size()), iconTextures.data());
+#endif
         for (std::size_t i = 0; i < iconTextures.size(); ++i) {
             auto pixels = imkit::GetIconAtlasPixels(imkit::IconPixelSizes[i]);
+#ifdef IMKIT_NODE_EDITOR_METAL
+            iconTextures[i]=MakeMetalTexture(pixels.width,pixels.height,pixels.rgba.data());
+            icons.SetTexture(imkit::IconPixelSizes[i],ImTextureRef((__bridge void*)iconTextures[i]));
+#else
             glBindTexture(GL_TEXTURE_2D, iconTextures[i]);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -572,6 +604,7 @@ struct Demo {
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pixels.width, pixels.height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
                          pixels.rgba.data());
             icons.SetTexture(imkit::IconPixelSizes[i], ImTextureRef(ImTextureID(iconTextures[i])));
+#endif
         }
         model.Init();
         state.Reserve(1024);
@@ -585,11 +618,15 @@ struct Demo {
                 pixels[i + 2] = 180;
                 pixels[i + 3] = 255;
             }
+#ifdef IMKIT_NODE_EDITOR_METAL
+        texture=MakeMetalTexture(64,64,pixels.data());
+#else
         glGenTextures(1, &texture);
         glBindTexture(GL_TEXTURE_2D, texture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+#endif
     }
     std::array<ne::PreviewOutput, 2> Outputs(Node &n) {
         ne::PreviewOutput wave;
@@ -600,7 +637,11 @@ struct Demo {
         ne::PreviewOutput image;
         image.title = "Texture";
         image.status = ne::PreviewStatus::Ready;
+#ifdef IMKIT_NODE_EDITOR_METAL
+        image.texture=ImTextureRef((__bridge void*)texture);
+#else
         image.texture = ImTextureRef(ImTextureID(texture));
+#endif
         image.aspect = 1;
         return {wave, image};
     }
@@ -849,10 +890,15 @@ int main(int argc, char **argv) {
         std::fprintf(stderr, "host model smoke failed\n");
         return 1;
     }
+#ifndef IMKIT_NODE_EDITOR_METAL
     const auto com = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+#endif
     if (!glfwInit())
         return 2;
     glfwWindowHint(GLFW_VISIBLE, smoke || verify ? GLFW_FALSE : GLFW_TRUE);
+#ifdef IMKIT_NODE_EDITOR_METAL
+    glfwWindowHint(GLFW_CLIENT_API,GLFW_NO_API);
+#endif
     auto has = [&](std::string_view option) {
         for (int i = 1; i < argc; ++i)
             if (argv[i] == option)
@@ -865,20 +911,35 @@ int main(int argc, char **argv) {
         glfwTerminate();
         return 3;
     }
-    glfwMakeContextCurrent(window);
-    glfwSwapInterval(1);
+#ifndef IMKIT_NODE_EDITOR_METAL
+    glfwMakeContextCurrent(window); glfwSwapInterval(1);
+#endif
     ImGui::CreateContext();
     ImGui::GetIO().IniFilename = nullptr;
-    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard|ImGuiConfigFlags_DockingEnable;
+    if(!smoke && !verify) ImGui::GetIO().ConfigFlags|=ImGuiConfigFlags_ViewportsEnable;
+    ImGui::GetIO().ConfigDpiScaleFonts=true;
+    ImGui::GetIO().ConfigDpiScaleViewports=true;
     // Host-owned system font: used locally, never bundled with the library.
-    for (const char *font :
-         {"C:/Windows/Fonts/YuGothR.ttc", "C:/Windows/Fonts/meiryo.ttc", "C:/Windows/Fonts/segoeui.ttf"})
+#ifdef IMKIT_NODE_EDITOR_METAL
+    const std::array<const char*,2> systemFonts{"/System/Library/Fonts/ヒラギノ角ゴシック W3.ttc","/System/Library/Fonts/Helvetica.ttc"};
+#else
+    const std::array<const char*,3> systemFonts{"C:/Windows/Fonts/YuGothR.ttc","C:/Windows/Fonts/meiryo.ttc","C:/Windows/Fonts/segoeui.ttf"};
+#endif
+    for (const char *font : systemFonts)
         if (std::filesystem::exists(font)) {
             ImGui::GetIO().FontDefault = ImGui::GetIO().Fonts->AddFontFromFileTTF(font, 18);
             break;
         }
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 130");
+#ifdef IMKIT_NODE_EDITOR_METAL
+    gMetalDevice=MTLCreateSystemDefaultDevice(); id<MTLCommandQueue> commandQueue=[gMetalDevice newCommandQueue];
+    NSWindow *nativeWindow=glfwGetCocoaWindow(window); CAMetalLayer *layer=[CAMetalLayer layer]; layer.device=gMetalDevice; layer.pixelFormat=MTLPixelFormatBGRA8Unorm; nativeWindow.contentView.layer=layer; nativeWindow.contentView.wantsLayer=YES;
+    ImGui::GetIO().ConfigFlags|=ImGuiConfigFlags_DockingEnable|ImGuiConfigFlags_ViewportsEnable;
+    ImGui::GetIO().ConfigDpiScaleFonts=true; ImGui::GetIO().ConfigDpiScaleViewports=true;
+    ImGui_ImplGlfw_InitForOther(window,true); ImGui_ImplMetal_Init(gMetalDevice);
+#else
+    ImGui_ImplGlfw_InitForOpenGL(window, true); ImGui_ImplOpenGL3_Init("#version 130");
+#endif
     auto demo = std::make_unique<Demo>();
     demo->Init();
     demo->materialPage = !has("--studio");
@@ -896,7 +957,16 @@ int main(int argc, char **argv) {
     bool collapsed = false;
     while (!glfwWindowShouldClose(window) && (!smoke || frames < 5) && (!verify || frames < 724)) {
         glfwPollEvents();
+#ifdef IMKIT_NODE_EDITOR_METAL
+        @autoreleasepool {
+        int metalWidth=0,metalHeight=0;glfwGetFramebufferSize(window,&metalWidth,&metalHeight);layer.drawableSize=CGSizeMake(metalWidth,metalHeight);
+        id<CAMetalDrawable> drawable=[layer nextDrawable]; if(!drawable) continue;
+        id<MTLCommandBuffer> commandBuffer=[commandQueue commandBuffer]; MTLRenderPassDescriptor *pass=[MTLRenderPassDescriptor renderPassDescriptor];
+        pass.colorAttachments[0].texture=drawable.texture;pass.colorAttachments[0].loadAction=MTLLoadActionClear;pass.colorAttachments[0].storeAction=MTLStoreActionStore;pass.colorAttachments[0].clearColor=MTLClearColorMake(.06,.07,.09,1);
+        ImGui_ImplMetal_NewFrame(pass);
+#else
         ImGui_ImplOpenGL3_NewFrame();
+#endif
         ImGui_ImplGlfw_NewFrame();
         if (verify) {
             auto& io = ImGui::GetIO();
@@ -918,24 +988,40 @@ int main(int argc, char **argv) {
         ImGui::Render();
         int w, h;
         glfwGetFramebufferSize(window, &w, &h);
+#ifdef IMKIT_NODE_EDITOR_METAL
+        id<MTLRenderCommandEncoder> encoder=[commandBuffer renderCommandEncoderWithDescriptor:pass]; ImGui_ImplMetal_RenderDrawData(ImGui::GetDrawData(),commandBuffer,encoder); [encoder endEncoding];
+        if(ImGui::GetIO().ConfigFlags&ImGuiConfigFlags_ViewportsEnable){ImGui::UpdatePlatformWindows();ImGui::RenderPlatformWindowsDefault();}
+        [commandBuffer presentDrawable:drawable];[commandBuffer commit];
+#else
         glViewport(0, 0, w, h);
         glClearColor(.06f, .07f, .09f, 1);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        if(ImGui::GetIO().ConfigFlags&ImGuiConfigFlags_ViewportsEnable){ImGui::UpdatePlatformWindows();ImGui::RenderPlatformWindowsDefault();glfwMakeContextCurrent(window);}
+#endif
         ++frames;
+#ifndef IMKIT_NODE_EDITOR_METAL
         if (smoke && frames == 4 && argc > 2)
             imkit::design::SaveBackbuffer(argv[2], w, h);
         glfwSwapBuffers(window);
+#else
+        }
+#endif
     }
+#ifdef IMKIT_NODE_EDITOR_METAL
+    demo->icons.Clear(); demo->texture=nil; for(auto &texture:demo->iconTextures) texture=nil; ImGui_ImplMetal_Shutdown();
+#else
     glDeleteTextures(1, &demo->texture);
     glDeleteTextures(int(demo->iconTextures.size()), demo->iconTextures.data());
     ImGui_ImplOpenGL3_Shutdown();
+#endif
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
     glfwDestroyWindow(window);
     glfwTerminate();
-    if (SUCCEEDED(com))
-        CoUninitialize();
+#ifndef IMKIT_NODE_EDITOR_METAL
+    if (SUCCEEDED(com)) CoUninitialize();
+#endif
     if (smoke)
         std::printf("node studio: host edit/undo/subgraph model and 5 native frames passed\n");
     if (verify) {

@@ -8,7 +8,7 @@ int main() {
     HWND window=CreateWindowExW(0,L"STATIC",L"UIA fixture",WS_OVERLAPPEDWINDOW,0,0,640,480,nullptr,nullptr,GetModuleHandleW(nullptr),nullptr);
     SemanticNode n; n.id=1; n.name="Save"; n.role=SemanticRole::Button; n.actions=SemanticAction::Press;
     std::array<SemanticNode,1> nodes{n}; int calls=0;
-    Win32ActionSink sink{&calls,[](void* p,StableId id,SemanticAction action)->HRESULT { if(id!=1 || action!=SemanticAction::Press) return E_INVALIDARG; ++*static_cast<int*>(p); return S_OK; }};
+    NativeActionSink sink{&calls,[](void* p,StableId id,SemanticAction action,std::string_view)->bool { if(id!=1 || action!=SemanticAction::Press) return false; ++*static_cast<int*>(p); return true; }};
     IRawElementProviderFragmentRoot* root=nullptr;
     bool ok=SUCCEEDED(CreateWin32Provider(window,{nodes,1,false},sink,&root));
     IRawElementProviderFragment* fragment=nullptr;

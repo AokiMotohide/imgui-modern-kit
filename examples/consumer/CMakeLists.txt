@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(imkit-example LANGUAGES CXX)
 if(NOT IMGUI_SOURCE_DIR)
-    message(FATAL_ERROR "Set IMGUI_SOURCE_DIR to Dear ImGui 1.92.9b docking.")
+    message(FATAL_ERROR "Set IMGUI_SOURCE_DIR to Dear ImGui commit 367b2c24f399988ddafc0bb4628da0106bcc09be.")
 endif()
 add_library(host_imgui STATIC
     ${IMGUI_SOURCE_DIR}/imgui.cpp

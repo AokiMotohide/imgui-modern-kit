@@ -92,6 +92,11 @@ struct Host {
         glClearColor(.1f, .1f, .1f, 1);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        if(ImGui::GetIO().ConfigFlags&ImGuiConfigFlags_ViewportsEnable) {
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+            glfwMakeContextCurrent(window);
+        }
         if (!shot.empty())
             imkit::design::SaveBackbuffer(shot, w, h);
         glfwSwapBuffers(window);
@@ -1767,6 +1772,9 @@ int main(int argc, char **argv) {
     auto &io = ImGui::GetIO();
     io.IniFilename = nullptr;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable;
+    if(!h.automated) io.ConfigFlags|=ImGuiConfigFlags_ViewportsEnable;
+    io.ConfigDpiScaleFonts=true;
+    io.ConfigDpiScaleViewports=true;
     bool backend = ImGui_ImplGlfw_InitForOpenGL(h.window, true),
          renderer = backend && ImGui_ImplOpenGL3_Init("#version 130");
     if(!h.automated) {

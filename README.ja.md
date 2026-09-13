@@ -4,11 +4,11 @@
 
 ## ✨ 作る道具にも、仕事と同じ意図を宿す
 
-**ImKit v2.2.0** はDear ImGui向けのC++20デザインレイヤーです。一貫した外観、再利用可能な操作部品、意味別テーマ、生成icon、任意のEditor surfaceを追加しながら、Context、renderer、データ、workflowの所有権はホストへ残します。
+**ImKit v3.0.0** はDear ImGui向けのC++20デザインレイヤーです。一貫した外観、再利用可能な操作部品、意味別テーマ、生成icon、任意のEditor surfaceを追加しながら、Context、renderer、データ、workflowの所有権はホストへ残します。
 
-MITライセンス · 静的ライブラリ · Windows x64/MSVCで検証済み · Dear ImGui `v1.92.9b-docking` 基準
+MITライセンス · 静的ライブラリ · Windows x64/Arm64・macOS Universal 2 build matrix · Dear ImGui `docking`完全固定
 
-> 🪟 **まずGalleryを試してください。** [Windows x64 Gallery](https://github.com/AokiMotohide/imgui-modern-kit/releases/download/v2.2.0/imkit-2.2.0-gallery-windows-x64.zip)をdownloadし、展開後に`imkit_gallery.exe`を実行します。installerもアプリコードも不要です。
+> **まずGalleryを試してください。** v3 packageには同じGallery pageを持つWindows実行ファイルまたはmacOS app bundleが入ります。WindowsはGLFW/OpenGL3、macOSはGLFW/Metalです。
 
 ## 🎞 native Galleryを動きで見る
 
@@ -80,13 +80,15 @@ ID、focus、keyboard navigation、callback、clipping、テキスト編集はDe
 | `imkit::editor_core` | Canvas、選択、splitter、Editorデータ表示契約 | `imkit::imkit` |
 | `imkit::video`、`imkit::cg`、`imkit::editor_suite` | 任意の高度なEditor実例 | `imkit::editor_core` |
 | `imkit::preview_opengl3` | 明示的に構築するpreview helper | ホストが渡すOpenGL Context／関数表 |
+| `imkit::preview_metal` | 明示的に構築するMetal preview helper | 借用MTLDevice／command buffer、macOS限定 |
 | `imkit::window_frame_win32` / `imkit::window_frame_macos` | 任意の借用native window adapter | 該当platformのOS libraryだけ |
+| `imkit::accessibility_win32` / `imkit::accessibility_macos` | 任意のnative accessibility bridge | ホスト公開semantic tree／action sink |
 
 ソース導入を推奨します。Windows SDK archiveは検証済みcompiler／CRT／ImGui ABIの組合せ向けです。Galleryは開発用実行ファイルとしてGLFWとOpenGLを使いますが、`imkit::imkit`のconsumerへ追加しません。
 
 ## ✅ 検証済み範囲を明確にする
 
-対応基準はDear ImGui `v1.92.9b-docking`、commit `b48d1afbe8ee8b238e2961dc363a949dd7304e23`、Windows x64/MSVCです。native Gallery captureはcommit済みコードから再生成できます。公開IO検証では共有状態の比較とGallery workflowを扱います。native OS/IME入力、支援技術、別platform、個別ホストアプリの受け入れは別作業です。
+ABI基準はDear ImGui `docking` commit `367b2c24f399988ddafc0bb4628da0106bcc09be`（1.93.0 WIP）です。CIはWindows x64/Arm64とmacOS arm64/x86_64をbuild・packageします。Windows x64の自動検証はローカルで記録し、Apple Silicon実機の起動、IME、Retina、VoiceOver、notarizationは[検証記録](docs/validation.md)のmacOS gateで確認します。
 
 ```powershell
 cmake --build --preset windows-debug --target imkit_theme_test imkit_workflow_test --parallel

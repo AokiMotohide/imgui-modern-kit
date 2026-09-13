@@ -1,4 +1,4 @@
-#include <imkit/preview.h>
+#include <imkit/preview_opengl3.h>
 #include <cmath>
 #include <algorithm>
 namespace imkit::preview {
