@@ -5,11 +5,17 @@ function(imkit_copy_font_assets target destination)
     if(NOT DEFINED IMKIT_FONT_ASSET_DIR OR NOT IS_DIRECTORY "${IMKIT_FONT_ASSET_DIR}")
         message(FATAL_ERROR "ImKit font asset directory is unavailable: ${IMKIT_FONT_ASSET_DIR}")
     endif()
+    get_target_property(target_is_bundle "${target}" MACOSX_BUNDLE)
+    if(APPLE AND target_is_bundle)
+        set(asset_destination "$<TARGET_BUNDLE_DIR:${target}>/Contents/Resources/${destination}")
+    else()
+        set(asset_destination "$<TARGET_FILE_DIR:${target}>/${destination}")
+    endif()
     add_custom_command(TARGET "${target}" POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E make_directory
-            "$<TARGET_FILE_DIR:${target}>/${destination}"
+            "${asset_destination}"
         COMMAND "${CMAKE_COMMAND}" -E copy_directory
             "${IMKIT_FONT_ASSET_DIR}"
-            "$<TARGET_FILE_DIR:${target}>/${destination}"
+            "${asset_destination}"
         VERBATIM)
 endfunction()

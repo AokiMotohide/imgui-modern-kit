@@ -14,7 +14,7 @@ std::wstring Wide(std::string_view text) {
     MultiByteToWideChar(CP_UTF8,0,text.data(),static_cast<int>(text.size()),result.data(),size); return result;
 }
 struct OwnedNode { SemanticNode node; std::wstring name,description,value; };
-struct Snapshot { HWND window; Win32ActionSink actions; std::vector<OwnedNode> nodes; };
+struct Snapshot { HWND window; NativeActionSink actions; std::vector<OwnedNode> nodes; };
 CONTROLTYPEID Type(SemanticRole role) {
     switch(role) {
     case SemanticRole::Button:return UIA_ButtonControlTypeId;
@@ -37,15 +37,18 @@ CONTROLTYPEID Type(SemanticRole role) {
     }
 }
 class Provider final : public IRawElementProviderSimple, public IRawElementProviderFragment,
-                       public IRawElementProviderFragmentRoot, public IInvokeProvider, public IToggleProvider {
+                       public IRawElementProviderFragmentRoot, public IInvokeProvider, public IToggleProvider,
+                       public IValueProvider, public IRangeValueProvider, public ISelectionItemProvider,
+                       public IExpandCollapseProvider {
     std::atomic<ULONG> references_{1};
     std::shared_ptr<Snapshot> snapshot_; int index_; // -1 is the window root.
     const OwnedNode* Node() const { return index_<0?nullptr:&snapshot_->nodes[index_]; }
-    HRESULT Action(SemanticAction action) {
+    HRESULT Action(SemanticAction action, std::string_view value={}) {
         auto n=Node();
         if(!n || n->node.state.disabled) return UIA_E_ELEMENTNOTENABLED;
         if(!Supports(n->node.actions,action)) return UIA_E_NOTSUPPORTED;
-        return snapshot_->actions.dispatch?snapshot_->actions.dispatch(snapshot_->actions.user,n->node.id,action):UIA_E_NOTSUPPORTED;
+        if(!snapshot_->actions.dispatch) return UIA_E_NOTSUPPORTED;
+        return snapshot_->actions.dispatch(snapshot_->actions.user,n->node.id,action,value)?S_OK:E_FAIL;
     }
     HRESULT At(int index, IRawElementProviderFragment** result) {
         if(!result) return E_POINTER; *result=nullptr;
@@ -62,6 +65,10 @@ public:
         else if(index_<0 && iid==__uuidof(IRawElementProviderFragmentRoot)) *result=static_cast<IRawElementProviderFragmentRoot*>(this);
         else if(iid==__uuidof(IInvokeProvider)) *result=static_cast<IInvokeProvider*>(this);
         else if(iid==__uuidof(IToggleProvider)) *result=static_cast<IToggleProvider*>(this);
+        else if(iid==__uuidof(IValueProvider)) *result=static_cast<IValueProvider*>(this);
+        else if(iid==__uuidof(IRangeValueProvider)) *result=static_cast<IRangeValueProvider*>(this);
+        else if(iid==__uuidof(ISelectionItemProvider)) *result=static_cast<ISelectionItemProvider*>(this);
+        else if(iid==__uuidof(IExpandCollapseProvider)) *result=static_cast<IExpandCollapseProvider*>(this);
         else return E_NOINTERFACE;
         AddRef(); return S_OK;
     }
@@ -77,6 +84,15 @@ public:
             return QueryInterface(__uuidof(IInvokeProvider),reinterpret_cast<void**>(result));
         if(id==UIA_TogglePatternId && Supports(n->node.actions,SemanticAction::Toggle))
             return QueryInterface(__uuidof(IToggleProvider),reinterpret_cast<void**>(result));
+        if(id==UIA_ValuePatternId && Supports(n->node.actions,SemanticAction::SetValue))
+            return QueryInterface(__uuidof(IValueProvider),reinterpret_cast<void**>(result));
+        if(id==UIA_RangeValuePatternId &&
+           (Supports(n->node.actions,SemanticAction::Increment) || Supports(n->node.actions,SemanticAction::Decrement)))
+            return QueryInterface(__uuidof(IRangeValueProvider),reinterpret_cast<void**>(result));
+        if(id==UIA_SelectionItemPatternId && Supports(n->node.actions,SemanticAction::Select))
+            return QueryInterface(__uuidof(ISelectionItemProvider),reinterpret_cast<void**>(result));
+        if(id==UIA_ExpandCollapsePatternId && n->node.state.expandable)
+            return QueryInterface(__uuidof(IExpandCollapseProvider),reinterpret_cast<void**>(result));
         return S_OK;
     }
     HRESULT STDMETHODCALLTYPE GetPropertyValue(PROPERTYID id,VARIANT* result) override {
@@ -154,9 +170,30 @@ public:
         if(!result) return E_POINTER; auto n=Node(); if(!n) return UIA_E_NOTSUPPORTED;
         *result=n->node.state.mixed?ToggleState_Indeterminate:n->node.state.checked?ToggleState_On:ToggleState_Off; return S_OK;
     }
+    HRESULT STDMETHODCALLTYPE SetValue(LPCWSTR value) override {
+        if(!value) return E_INVALIDARG; const auto bytes=WideCharToMultiByte(CP_UTF8,0,value,-1,nullptr,0,nullptr,nullptr);
+        if(bytes<=0) return E_INVALIDARG; std::string utf8(static_cast<std::size_t>(bytes),'\0');
+        WideCharToMultiByte(CP_UTF8,0,value,-1,utf8.data(),bytes,nullptr,nullptr); utf8.pop_back(); return Action(SemanticAction::SetValue,utf8);
+    }
+    HRESULT STDMETHODCALLTYPE get_Value(BSTR* result) override { if(!result)return E_POINTER;auto n=Node();if(!n)return UIA_E_NOTSUPPORTED;*result=SysAllocString(n->value.c_str());return *result?S_OK:E_OUTOFMEMORY; }
+    HRESULT STDMETHODCALLTYPE get_IsReadOnly(BOOL* result) override { if(!result)return E_POINTER;auto n=Node();if(!n)return UIA_E_NOTSUPPORTED;*result=n->node.state.readOnly;return S_OK; }
+    HRESULT STDMETHODCALLTYPE SetValue(double value) override { return Action(SemanticAction::SetValue,std::to_string(value)); }
+    HRESULT STDMETHODCALLTYPE get_Value(double* result) override { if(!result)return E_POINTER;auto n=Node();if(!n)return UIA_E_NOTSUPPORTED;*result=n->node.numericValue;return S_OK; }
+    HRESULT STDMETHODCALLTYPE get_Maximum(double* result) override { if(!result)return E_POINTER;auto n=Node();if(!n)return UIA_E_NOTSUPPORTED;*result=n->node.maximumValue;return S_OK; }
+    HRESULT STDMETHODCALLTYPE get_Minimum(double* result) override { if(!result)return E_POINTER;auto n=Node();if(!n)return UIA_E_NOTSUPPORTED;*result=n->node.minimumValue;return S_OK; }
+    HRESULT STDMETHODCALLTYPE get_LargeChange(double* result) override { if(!result)return E_POINTER;auto n=Node();if(!n)return UIA_E_NOTSUPPORTED;*result=n->node.largeChange;return S_OK; }
+    HRESULT STDMETHODCALLTYPE get_SmallChange(double* result) override { if(!result)return E_POINTER;auto n=Node();if(!n)return UIA_E_NOTSUPPORTED;*result=n->node.smallChange;return S_OK; }
+    HRESULT STDMETHODCALLTYPE AddToSelection() override { return Action(SemanticAction::Select); }
+    HRESULT STDMETHODCALLTYPE RemoveFromSelection() override { return UIA_E_NOTSUPPORTED; }
+    HRESULT STDMETHODCALLTYPE Select() override { return Action(SemanticAction::Select); }
+    HRESULT STDMETHODCALLTYPE get_IsSelected(BOOL* result) override { if(!result)return E_POINTER;auto n=Node();if(!n)return UIA_E_NOTSUPPORTED;*result=n->node.state.selected;return S_OK; }
+    HRESULT STDMETHODCALLTYPE get_SelectionContainer(IRawElementProviderSimple** result) override { if(!result)return E_POINTER;*result=nullptr;return S_OK; }
+    HRESULT STDMETHODCALLTYPE Expand() override { return Action(SemanticAction::Expand); }
+    HRESULT STDMETHODCALLTYPE Collapse() override { return Action(SemanticAction::Collapse); }
+    HRESULT STDMETHODCALLTYPE get_ExpandCollapseState(ExpandCollapseState* result) override { if(!result)return E_POINTER;auto n=Node();if(!n)return UIA_E_NOTSUPPORTED;*result=!n->node.state.expandable?ExpandCollapseState_LeafNode:n->node.state.expanded?ExpandCollapseState_Expanded:ExpandCollapseState_Collapsed;return S_OK; }
 };
 }
-HRESULT CreateWin32Provider(HWND window,const AccessibilityTree& tree,Win32ActionSink actions,IRawElementProviderFragmentRoot** result) {
+HRESULT CreateWin32Provider(HWND window,const AccessibilityTree& tree,NativeActionSink actions,IRawElementProviderFragmentRoot** result) {
     if(!result) return E_POINTER; *result=nullptr;
     if(!IsWindow(window) || !tree.Validate()) return E_INVALIDARG;
     try {

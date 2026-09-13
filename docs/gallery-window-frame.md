@@ -4,9 +4,9 @@
 
 `imkit/window_frame.h`はOS非依存の値型描画・配置APIです。Dear ImGui Context、backend、renderer、font、Theme、アプリウィンドウ、選択中preset、編集済みStyle、永続化はホストが所有します。`MakeWindowFrameStyle(preset, theme)`は完全なコピーを返し、Theme変更が既存Styleを暗黙に変更することはありません。生成後は全色・寸法・featureを直接編集できます。
 
-Hosts fixed to Falcor's Dear ImGui 1.88.14 may enable `IMKIT_BUILD_WINDOW_FRAME_LEGACY_IMGUI` and link only `imkit::window_frame_legacy` plus `imkit::window_frame_win32_legacy`. This narrow source-integration target exposes the frame value/drawing API and borrowed Win32 adapter only; the rest of ModernKIT still requires the documented 1.92.9b docking baseline.
+v3 removes the Dear ImGui 1.88 compatibility targets. Windows hosts link `imkit::imkit` and `imkit::window_frame_win32`; macOS hosts link `imkit::imkit` and `imkit::window_frame_macos` against the exact pinned docking revision.
 
-Falcor同梱のDear ImGui 1.88.14へ固定されたホストは、`IMKIT_BUILD_WINDOW_FRAME_LEGACY_IMGUI`を有効にし、`imkit::window_frame_legacy`と`imkit::window_frame_win32_legacy`だけをリンクできます。この限定的なソース統合targetが提供するのは枠の値型／描画APIと借用Win32 adapterだけです。ModernKITのその他の機能は、従来どおり文書記載の1.92.9b dockingを必要とします。
+v3ではDear ImGui 1.88互換targetを削除しました。Windows hostは`imkit::imkit`と`imkit::window_frame_win32`、macOS hostは`imkit::imkit`と`imkit::window_frame_macos`を、完全固定したdocking版に接続します。
 
 | Preset | Default / 既定 |
 |---|---|

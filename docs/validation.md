@@ -1,5 +1,40 @@
 # Validation / 検証
 
+## v3.0 platform matrix / v3.0 platform matrix
+
+| Configuration | Automated gate | Native acceptance |
+|---|---|---|
+| Windows 10/11 x64 | build, focused tests, Gallery, install consumer, ZIP | required on one Windows x64 machine |
+| Windows 11 Arm64 | build, focused tests, Gallery, install consumer, ZIP | architecture-specific manual run is not required |
+| macOS 15+ Apple Silicon | build, tests, Metal Gallery, app bundle, ZIP | required on one Apple Silicon Mac |
+| macOS 15+ Intel | build, tests, Metal Gallery, app bundle, ZIP | architecture-specific manual run is not required |
+
+The checked-in workflow defines all four automated gates. This Windows checkout has
+not executed the macOS jobs or Apple Silicon native acceptance. macOS support must not
+be reported as physically accepted until Gallery launch, Japanese IME, Retina scaling,
+docking/multi-viewport, traffic-light controls and basic VoiceOver navigation pass on
+the selected Mac. Signing/notarization runs only when release credentials are present.
+
+commit済みworkflowは4構成の自動gateを定義します。このWindows checkoutではmacOS jobと
+Apple Silicon実機受入を実行していません。選定MacでGallery起動、日本語IME、Retina、
+Docking/Multi-Viewport、traffic-light、基本VoiceOverを確認するまでは実機合格と記載しません。
+署名・notarizationはrelease資格情報がある場合だけ実行します。
+
+## Node editor access, appearance and collapse / Node editorの導線・外観・折りたたみ（2026-09-12）
+
+The Debug Gallery and Node Editor companion built successfully. `imkit.node_editor`
+passed host name/color Undo/Redo, borrowed header styles and repeated collapsed-node
+layout checks. The collapse regression reproduced Dear ImGui's cursor-boundary
+assertion before the fix. The native `--verify-node-actions` runner passed 60
+public-IO clicks on Output monitor, producing 30 collapse/expand transitions.
+Native OS mouse/IME input, launcher focus behavior and Release packaging were not verified.
+
+Debugの通常GalleryとNode Editor実行ファイルはbuildに成功した。`imkit.node_editor`で
+ホスト所有の名前・色のUndo／Redo、借用header style、折りたたみの反復を確認した。
+修正前には折りたたみ回帰テストでDear ImGuiのcursor境界assertionを再現した。
+native `--verify-node-actions`ではOutput monitorへの公開IOクリック60回、
+折りたたみ・展開30回が成功した。native OSマウス／IME、launcherの前面化、Release配布は未検証。
+
 ## Gallery comparison and documentation captures / Gallery比較と文書capture（2026-09-12）
 
 The Debug native Gallery build passed `--verify-comparison`: Default Dear ImGui and ImKit controls changed the same host-owned value, temporary comparison styles restored after a frame, and closing/reopening removed then restored the submitted controls. The runner captured 120 overview frames and 80 frames each for comparison, themes, icons, workflow and timeline at native `960×540`; the checked-in GIF encoder accepted all six outputs under its 8 MiB limit. Representative native frames were visually inspected.
@@ -9,6 +44,17 @@ Debug native Galleryで`--verify-comparison`が成功しました。Default Dear
 The runner sends public Dear ImGui IO and reads a real OpenGL backbuffer. It does not establish native OS/IME input, assistive-technology operation, physical-DPI, performance or external-host acceptance. The released Gallery executable is separately built, staged and inspected for its DLL imports; its archive does not bundle the Microsoft Visual C++ Redistributable.
 
 runnerは公開Dear ImGui IOを送り、実OpenGL backbufferを読みます。native OS/IME入力、支援技術、実機DPI、性能、外部ホストでの受け入れは確認しません。公開Gallery実行ファイルは別途Release build・stage・DLL import確認を行い、Microsoft Visual C++ Redistributableをarchiveに同梱しません。
+
+## Timeline external-drop preview / Timeline外部drop preview（2026-09-12）
+
+The Debug Video test, Editor API compile fixture and independent source consumer passed.
+The focused checks cover the optional exact candidate range callback, the preserved
+single delivery callback and source-compatible aggregate initialization. Release,
+native OS input and external-host acceptance were not run.
+
+DebugのVideo test、Editor API compile fixture、独立source consumerが合格しました。任意の正確な
+候補範囲callback、deliveryが1回だけであること、既存aggregate初期化とのsource互換を確認しました。
+Release、native OS入力、外部ホスト受け入れは未実施です。
 
 ## Preview placement extension / Preview配置拡張（2026-09-12）
 
@@ -136,7 +182,7 @@ README animationは960×540のnative backbuffer 120枚から生成します。`t
 
 ## Limits / 制約
 
-- Baseline: Dear ImGui **1.92.9b docking**, default ABI types, Windows x64/MSVC. Other versions and platforms are not verified or implicitly compatible.
+- Baseline: Dear ImGui docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be`, default ABI types. Supported artifacts are the four v3 matrix configurations above; other combinations require source builds and explicit validation.
 - Native OS/IME input, physical devices and integration into another application are not tested by this runner.
 - Reordering/resizing/drag-drop preserve exact native APIs; exhaustive combinations are not reimplemented or exhaustively retested.
 - Native wrappers are immediate. Optional explicit animation affects custom decoration only; fonts/renderer/state ownership stays with the host.
@@ -153,3 +199,34 @@ consumers, native GPU, captures and the six-operation Release performance result
 EditorのCPU・公開IO・source/SDK consumer・実GPU・capture・6操作のRelease性能は上記を参照してください。
 Native OS/IME and real-project integration remain separate, unperformed categories.
 native OS/IMEと実project統合は別区分で、未実施です。
+
+## Dynamic node sockets / 動的ノードソケット（2026-09-12）
+
+The dedicated Debug node-editor library, API fixture and independent Gallery built
+successfully. `imkit.node_editor` and `imkit.node_editor_api_compile` passed. The
+same public fixture built and ran against a separate consumer-owned ImGui target.
+Native Gallery capture was visually checked; clipped preview and minimap overlap
+were corrected. [Review and exact scope](node-editor-review.md) records the P0/P1
+findings, focused regressions and remaining boundaries. No capture is committed.
+
+専用Debugのノードライブラリ・公開API fixture・独立Galleryがbuildに成功した。
+直接テスト2件が合格し、独自ImGui targetを持つ独立consumerもbuild・実行に成功した。
+Native captureを目視し、previewの切れとminimapの重なりを修正した。
+P0／P1、直接回帰、未実施境界は上記レビューに記録した。captureはcommitしない。
+実機OS／IME・DPI、支援技術、性能、外部ホスト統合、Release・配布検証は未実施。
+
+## Node navigation completion / ノード周辺操作の完了（2026-09-12）
+
+The focused Debug node test and native Gallery build passed. The new public-IO
+regression verifies that minimap clicks navigate without editing underlying nodes.
+Native captures cover both pages, Comfortable/Touch/Compact density, narrow width,
+Japanese labels and High Contrast. Touch preview clipping was corrected by sizing
+host views from control metrics; narrow vector controls retain precise tooltips.
+The initial minimap cursor-restoration assertion was fixed before the final pass.
+
+対象Debug testとnative Gallery buildが合格した。追加した公開IO回帰ではminimapのクリックが
+背後のノードを編集せずviewportを移動することを確認した。両ページ、Comfortable／Touch／Compact、
+狭幅、日本語ラベル、High Contrastをnative captureで目視した。Touchのpreview切れを
+control寸法に基づくホストView高さで修正し、狭いVector欄は正確な値をtooltipでも表示する。
+初回に検出したminimapカーソル復元assertは最終合格前に修正済み。
+実機IME・DPI、性能、外部ホスト統合の受入検証とは区別する。

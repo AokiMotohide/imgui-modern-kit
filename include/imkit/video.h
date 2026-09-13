@@ -74,11 +74,27 @@ struct TimelineEditingProvider {
     std::size_t (*trackClipCount)(void *,StableId)=nullptr;
     StableId (*trackAfter)(void *,StableId)=nullptr; // Zero denotes the end of the track list.
 };
+// Optional host-owned controls rendered on the same fixed-height row as the
+// timeline tools. Callbacks run during Timeline() and must not retain ImGui or
+// provider state beyond the current frame.
+struct TimelineToolbarProvider {
+    void (*leading)(void *) = nullptr;
+    void (*trailing)(void *) = nullptr;
+};
+struct TimelineExternalDropPreview {
+    editor::Range range{};
+    TrackKind kind = TrackKind::Video;
+    const char *label = ""; // Borrowed for the current Timeline call only.
+    bool valid = false;
+};
 struct TimelineExternalDropRoute {
     const char *payloadType = "";
     void *user = nullptr;
     bool (*canDrop)(void *,StableId track,Tick at,const void *data,std::size_t size)=nullptr;
     void (*drop)(void *,StableId track,Tick at,const void *data,std::size_t size,bool delivery)=nullptr;
+    // Optional exact candidate range. When supplied, Timeline replaces the
+    // native whole-row target rectangle with a clip-shaped preview.
+    TimelineExternalDropPreview (*preview)(void *,StableId track,Tick at,const void *data,std::size_t size)=nullptr;
 };
 struct EnvelopePoint {StableId id=0;Tick tick=0;double gain=1;bool locked=false;};
 // Sorted clip-local points; empty envelope evaluates to unity gain.
@@ -186,6 +202,7 @@ struct TimelineProvider {
     // Enables centered Dissolve/Crossfade overlap bands and half-duration handles.
     Tick (*transitionLimit)(void *,StableId clip,bool outgoing)=nullptr;
     WaveformProvider waveform;
+    TimelineToolbarProvider toolbar;
     TimelineEditingProvider editing;
     // Optional host-owned payload routes. Data is borrowed for this call only.
     std::span<const TimelineExternalDropRoute> externalDrops;

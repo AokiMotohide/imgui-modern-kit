@@ -8,6 +8,11 @@
 #include <cstdlib>
 #include "../examples/gallery/allocation_probe.h"
 using namespace imkit;
+#ifdef __APPLE__
+constexpr ImGuiKey TestControlModifier = ImGuiMod_Super;
+#else
+constexpr ImGuiKey TestControlModifier = ImGuiMod_Ctrl;
+#endif
 int main() {
 #ifdef _MSC_VER
     _set_error_mode(_OUT_TO_STDERR);
@@ -464,14 +469,14 @@ int main() {
     full.Clear();frame(full);
     check(full.count==2 && full.Events()[0].phase==editor::Phase::Commit && full.Events()[1].phase==editor::Phase::Commit &&
           !timeline.keyDrag.active && !clipKeyCompanions[0].active,"clip multi-key commits complete retry batch");
-    full.Clear();io.AddMousePosEvent(keyX,keyY);io.AddKeyEvent(ImGuiMod_Ctrl,true);frame(full);
+    full.Clear();io.AddMousePosEvent(keyX,keyY);io.AddKeyEvent(TestControlModifier,true);frame(full);
     io.AddMouseButtonEvent(0,true);frame(full);
     check(!keySelection.Contains(clipKeys[0].id) && keySelection.Contains(clipKeys[1].id) &&
           !timeline.keyDrag.active && full.count==0 && !full.overflow,
           "Ctrl-click deselects clip key without starting a drag or reporting shortage");
     io.AddMousePosEvent(keyX+30,keyY);frame(full);io.AddMouseButtonEvent(0,false);frame(full);
     check(full.count==0 && !timeline.drag.active,"deselected key cannot move remaining keys or the clip");
-    io.AddKeyEvent(ImGuiMod_Ctrl,false);frame(full);keySelection.Set(clipKeys[0].id,true);
+    io.AddKeyEvent(TestControlModifier,false);frame(full);keySelection.Set(clipKeys[0].id,true);
     std::array keyBindings{editor::Binding{editor::Command::Duplicate,ImGuiKey_F7},editor::Binding{editor::Command::Delete,ImGuiKey_F6}};
     timeline.bindings=keyBindings;
     full.Clear();io.AddKeyEvent(ImGuiKey_F7,true);frame(full);io.AddKeyEvent(ImGuiKey_F7,false);frame(full);
@@ -575,12 +580,12 @@ int main() {
           "clip body drag keeps parent window stationary");
     io.AddMouseButtonEvent(0,false);frame(full);
     check(!timeline.drag.active && full.Events().back().phase==editor::Phase::Commit,"clip body drag commits normally");
-    full.Clear();io.AddKeyEvent(ImGuiMod_Ctrl,true);frame(full);
+    full.Clear();io.AddKeyEvent(TestControlModifier,true);frame(full);
     io.AddMouseButtonEvent(0,true);frame(full);
     check(!selection.Contains(transitionFixture.clip.id) && !timeline.drag.active && full.count==0 && !full.overflow,
           "Ctrl-click deselects clip without starting edit transaction");
     io.AddMousePosEvent(clipOrigin.x+timeline.headerWidth+160,clipOrigin.y+25);frame(full);
-    io.AddMouseButtonEvent(0,false);frame(full);io.AddKeyEvent(ImGuiMod_Ctrl,false);frame(full);
+    io.AddMouseButtonEvent(0,false);frame(full);io.AddKeyEvent(TestControlModifier,false);frame(full);
     check(full.count==0 && !timeline.drag.active,"deselected clip emits no Update or Commit after mouse movement");
     std::array splitClips{transitionFixture.clip,transitionFixture.clip};splitClips[1].id=902;
     auto savedUser=provider.user;
@@ -1037,9 +1042,11 @@ int main() {
             std::array<video::TrackView,2> tracks{{{400,"Video A"},{401,"Video B"}}};
             video::ClipView clip;
             std::array<editor::StableId,1> boxIds{410};
-            int overlayCalls=0,dropPreviews=0,dropDeliveries=0,dropValue=0;
+            int overlayCalls=0,dropPreviews=0,dropDeliveries=0,dropValue=0,rangePreviews=0;
             editor::StableId dropTrack=0;
-            editor::Tick dropTick=0;
+            editor::StableId moveDestination=0;
+            editor::Tick dropTick=0,previewFirst=0,previewLast=0;
+            bool previewValid=true;
         } fixture;
         fixture.clip.id=410;fixture.clip.track=400;fixture.clip.label="Editable";fixture.clip.duration=editor::FromSeconds(3);
         video::TimelineProvider p;p.user=&fixture;p.revision=1;p.trackCount=2;
@@ -1047,6 +1054,10 @@ int main() {
         p.clips=[](void *u,editor::StableId track,editor::Range){auto &f=*static_cast<EditingFixture*>(u);return track==400 ? std::span<const video::ClipView>(&f.clip,1) : std::span<const video::ClipView>{};};
         p.editing.user=&fixture;
         p.editing.box=[](void *u,editor::Range,double,double){return std::span<const editor::StableId>(static_cast<EditingFixture*>(u)->boxIds);};
+        p.editing.destination=[](void *u,editor::StableId,editor::StableId,editor::StableId hovered){
+            static_cast<EditingFixture*>(u)->moveDestination=hovered;return hovered;
+        };
+        p.editing.canMove=[](void *,std::span<const editor::StableId>,editor::Tick,editor::StableId,editor::StableId){return true;};
         p.editing.cut=[](void *,editor::StableId){return video::CutTransitionView{410,411,0,editor::FromSeconds(1),video::TransitionKind::Dissolve};};
         p.drawClipOverlay=[](void *u,editor::StableId,const editor::Value&,ImVec2,ImVec2){++static_cast<EditingFixture*>(u)->overlayCalls;};
         std::array routes{video::TimelineExternalDropRoute{
@@ -1055,6 +1066,11 @@ int main() {
             [](void *u,editor::StableId track,editor::Tick at,const void *data,std::size_t,bool delivery){
                 auto &f=*static_cast<EditingFixture*>(u);++f.dropPreviews;f.dropTrack=track;f.dropTick=at;f.dropValue=*static_cast<const int*>(data);
                 if(delivery)++f.dropDeliveries;
+            },
+            [](void *u,editor::StableId,editor::Tick at,const void *,std::size_t){
+                auto &f=*static_cast<EditingFixture*>(u);++f.rangePreviews;
+                f.previewFirst=at;f.previewLast=at+editor::FromSeconds(3);
+                return video::TimelineExternalDropPreview{{f.previewFirst,f.previewLast},video::TrackKind::Effect,"Three seconds",f.previewValid};
             }}};
         p.externalDrops=routes;
         std::array<editor::StableId,8> clipIds{},trackIds{};
@@ -1085,16 +1101,23 @@ int main() {
         move(origin.x+state.headerWidth+100,origin.y+10);io.AddMouseButtonEvent(0,false);render();
         check(clipsSelected.Contains(410) && !state.boxSelecting,"public IO box selects an intersecting clip");
         check(state.view.min.x==origin.x && state.view.min.y==origin.y,"box drag does not move host window");
-        io.AddKeyEvent(ImGuiMod_Ctrl,true);render();
+        io.AddKeyEvent(TestControlModifier,true);render();
         move(origin.x+state.headerWidth+400,origin.y+50);io.AddMouseButtonEvent(0,true);render();
         move(origin.x+state.headerWidth+100,origin.y+10);io.AddMouseButtonEvent(0,false);render();
         check(!clipsSelected.Contains(410),"Ctrl rectangle toggles existing selection");
-        io.AddKeyEvent(ImGuiMod_Ctrl,false);render();
+        io.AddKeyEvent(TestControlModifier,false);render();
         move(origin.x+55,origin.y+9);io.AddMouseButtonEvent(0,true);render();io.AddMouseButtonEvent(0,false);render();
         check(tracksSelected.Contains(400) && clipsSelected.count==0,"track selection is independent of clips");
         output.Clear();move(origin.x+55,origin.y+9);io.AddMouseButtonEvent(0,true);render();
         move(origin.x+55,origin.y+75);io.AddMouseButtonEvent(0,false);render();
         check(std::any_of(output.Events().begin(),output.Events().end(),[](const auto &e){return e.phase==editor::Phase::Commit && e.kind==editor::EditKind::TrackEdit && e.proposed.offset==static_cast<int>(video::TrackAction::Reorder) && e.proposed.parent==401;}),"track drag emits reorder request");
+        clipsSelected.Clear();output.Clear();
+        move(origin.x+state.headerWidth+30,origin.y+20);io.AddMouseButtonEvent(0,true);render();
+        move(origin.x+state.headerWidth+90,origin.y+state.rowHeight+20);render();
+        io.AddMouseButtonEvent(0,false);render();
+        check(fixture.moveDestination==401 && std::any_of(output.Events().begin(),output.Events().end(),[](const auto &e){
+                  return e.phase==editor::Phase::Commit && e.kind==editor::EditKind::Move && e.proposed.parent==401;
+              }),"clip drag resolves the destination track from its rectangle while active");
         output.Clear();move(shelfOrigin.x+25,shelfOrigin.y+10);io.AddMouseButtonEvent(0,true);render();
         move(origin.x+state.headerWidth+300,origin.y+29);io.AddMouseButtonEvent(0,false);render();
         check(std::any_of(output.Events().begin(),output.Events().end(),[](const auto &e){return e.phase==editor::Phase::Commit && e.kind==editor::EditKind::CutTransition && e.proposed.parent==411 && e.proposed.first==editor::TicksPerSecond;}),"shelf drag inserts shared transition at cut");
@@ -1103,6 +1126,14 @@ int main() {
         io.AddMouseButtonEvent(0,false);render();
         check(fixture.dropPreviews>0 && fixture.dropDeliveries==1 && fixture.dropTrack==401 && fixture.dropValue==42,
               "external host payload previews and delivers once on the hovered track");
+        check(fixture.rangePreviews>0 && fixture.previewFirst==fixture.dropTick &&
+              fixture.previewLast-fixture.previewFirst==editor::FromSeconds(3),
+              "external drop range preview uses the exact host-owned candidate duration");
+        fixture.previewValid=false;
+        move(assetOrigin.x+20,assetOrigin.y+10);io.AddMouseButtonEvent(0,true);render();
+        move(origin.x+state.headerWidth+350,origin.y+state.rowHeight+20);render();
+        io.AddMouseButtonEvent(0,false);render();
+        check(fixture.dropDeliveries==1,"invalid exact-range preview rejects delivery");
     }
     ImGui::DestroyContext(context);
     return failures ? 1 : 0;

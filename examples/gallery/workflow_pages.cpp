@@ -77,6 +77,20 @@ void WorkflowPages::Show(int page,GalleryState& host) {
         apply(BottomActionBar("bottom",BottomActionBarView{japanese?"変更なし":"No pending changes",FeedbackKind::Info,commands},toolbar,o));
         auto preset=static_cast<ThemePreset>(host.presetIndex);
         if(ThemePicker("theme",&preset,themePicker,o)){host.presetIndex=static_cast<int>(preset);host.theme=MakeTheme(preset);}
+        ImGui::SeparatorText(japanese?"開閉式の右インスペクター":"Collapsible right inspector");
+        const ImVec2 panelAvailable{ImGui::GetContentRegionAvail().x,180};
+        const bool panelShortcut=!ImGui::GetIO().WantTextInput&&ImGui::IsKeyPressed(ImGuiKey_N);
+        RightSidePanelOptions panelOptions;
+        panelOptions.openLabel=japanese?"インスペクターを開く (N)":"Open inspector (N)";
+        panelOptions.closeLabel=japanese?"インスペクターを閉じる (N)":"Close inspector (N)";
+        panelOptions.resizeLabel=japanese?"インスペクターの幅を変更":"Resize inspector";
+        const auto panelLayout=ResolveRightSidePanelLayout(rightPanel,panelAvailable.x,panelShortcut,panelOptions);
+        ImGui::BeginChild("right-panel-content",{panelLayout.contentWidth,panelAvailable.y},ImGuiChildFlags_Borders);
+        ImGui::TextUnformatted(japanese?"制作ビュー":"Authoring view");
+        ImGui::TextDisabled("N");
+        ImGui::EndChild();ImGui::SameLine(0,0);
+        RightSidePanelHandle("right-panel-handle",rightPanel,panelAvailable,panelOptions,o);
+        if(panelLayout.panelVisible){ImGui::SameLine(0,0);ImGui::BeginChild("right-panel-body",{panelLayout.panelWidth,panelAvailable.y},ImGuiChildFlags_Borders);ImGui::TextUnformatted(japanese?"インスペクター":"Inspector");ImGui::TextDisabled(japanese?"状態と幅はホストが所有します":"The host owns open state and width");ImGui::EndChild();}
     } else if(page==16) {
         ImGui::SliderFloat("Progress",&fraction,-1,1);ImGui::SameLine();if(ActionButton("Modal progress",ActionVariant::Secondary,{},o))progressDialog.open=true;
         Record(host,"workflow-modal");
@@ -84,6 +98,12 @@ void WorkflowPages::Show(int page,GalleryState& host) {
         if(imkit::Progress("inline",progress,ProgressPresentation::Inline,progressDialog,{},o))++actions;
         if(imkit::Progress("overlay",progress,ProgressPresentation::Overlay,progressDialog,{0,130},o))++actions;
         if(imkit::Progress("modal",progress,ProgressPresentation::Modal,progressDialog,{},o)){progressDialog.open=false;++actions;}
+        ImGui::SeparatorText(japanese?"円形進捗":"Circular progress");
+        ImGui::TextDisabled(japanese?"値、完了、未測定を同じコンポーネントで表示します。":"Known, complete, and unavailable states use the same component.");
+        CircularProgress("coverage-total",CircularProgressView{.82f,"41/50",japanese?"全体":"Overall"},{96,7},o);ImGui::SameLine();
+        CircularProgress("coverage-one",CircularProgressView{1.f,"10/10","PJ1",FeedbackKind::Success},{58,0},o);ImGui::SameLine();
+        CircularProgress("coverage-two",CircularProgressView{.7f,"7/10","PJ2"},{58,0},o);ImGui::SameLine();
+        CircularProgress("coverage-unknown",CircularProgressView{-1.f,"","PJ3"},{58,0},o);
         FeedbackView info{10,japanese?"設定を更新しました":"Settings updated","Inline feedback",FeedbackKind::Success,0,0,false};
         InlineAlert("inline-alert",info,o);PersistentBanner("banner",{11,"Review required","Persistent warning",FeedbackKind::Warning,0,0,false},o);
         if(BeginCard("states",{0,260},o)) {

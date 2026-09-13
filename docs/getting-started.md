@@ -6,9 +6,9 @@ ImKit is a C++20 static library layered over one Dear ImGui implementation suppl
 
 ## Requirements
 
-- Dear ImGui v1.92.9b-docking at `b48d1afbe8ee8b238e2961dc363a949dd7304e23`
+- Dear ImGui docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be` (1.93.0 WIP)
 - CMake 3.20 or newer
-- Verified binary environment: Windows x64, MSVC v145
+- Package matrix: Windows x64/Arm64 with MSVC, macOS 15+ arm64/x86_64 with Apple Clang
 
 ## Source integration
 
@@ -63,7 +63,7 @@ Create the matching host ImGui target first, configure with the SDK prefix, and 
 ```cmake
 set(IMKIT_IMGUI_TARGET host_imgui)
 set(IMKIT_SDK_ABI_CONFIRMED ON)
-find_package(imkit 2.2 CONFIG REQUIRED)
+find_package(imkit 3.0 CONFIG REQUIRED)
 target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
 

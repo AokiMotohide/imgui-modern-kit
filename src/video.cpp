@@ -320,6 +320,10 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
               editor::EventBuffer &out, const Theme &theme, ImVec2 size) {
     ImGui::PushID(id);
     EditingToolbar(p,s,selection,out);
+    if (p.toolbar.leading) {
+        p.toolbar.leading(p.user);
+        ImGui::SameLine();
+    }
     const float timelineWidth=size.x>0?size.x:ImGui::GetContentRegionAvail().x;
     constexpr editor::Command toolCommands[]={editor::Command::ToolSelect,editor::Command::ToolRazor,
         editor::Command::ToolRipple,editor::Command::ToolRoll,editor::Command::ToolSlip,editor::Command::ToolSlide,editor::Command::ToolHand};
@@ -390,6 +394,10 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             if (ImGui::Checkbox(names[i],&enabled)) s.snapKinds ^= 1u<<i;
         }
         ImGui::EndPopup();
+    }
+    if (p.toolbar.trailing) {
+        ImGui::SameLine();
+        p.toolbar.trailing(p.user);
     }
     ImGui::SameLine();
     bool fit=false;
@@ -600,7 +608,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         const float rowHeight=p.layout ? TrackExtent(track) : s.rowHeight;
         float y = view.min.y + static_cast<float>(rowTop-s.verticalScroll);
         rowTop+=rowHeight;
-        if(io.MousePos.y>=y && io.MousePos.y<y+rowHeight && view.hovered) s.hoveredTrack=track.id;
+        if(io.MousePos.x>=view.min.x && io.MousePos.x<view.max.x &&
+           io.MousePos.y>=y && io.MousePos.y<y+rowHeight) s.hoveredTrack=track.id;
         draw->AddRectFilled({view.min.x, y}, {view.max.x, y + rowHeight - 2},
                             ImGui::GetColorU32(theme.editor.trackHeader));
         ImGui::SetCursorScreenPos({view.min.x + 4, y + 3});
@@ -1463,8 +1472,34 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     const bool accepted=!route.canDrop || route.canDrop(route.user,track.id,at,pending->Data,
                         static_cast<std::size_t>(pending->DataSize));
                     if (!accepted) continue;
-                    if (const auto *payload=ImGui::AcceptDragDropPayload(route.payloadType,ImGuiDragDropFlags_AcceptBeforeDelivery))
+                    const auto preview=route.preview ? route.preview(route.user,track.id,at,pending->Data,
+                        static_cast<std::size_t>(pending->DataSize)) : TimelineExternalDropPreview{};
+                    if(route.preview && !preview.valid) continue;
+                    ImGuiDragDropFlags flags=ImGuiDragDropFlags_AcceptBeforeDelivery;
+                    if(route.preview) flags|=ImGuiDragDropFlags_AcceptNoDrawDefaultRect;
+                    if (const auto *payload=ImGui::AcceptDragDropPayload(route.payloadType,flags)) {
+                        if(route.preview && preview.valid && preview.range.last>preview.range.first) {
+                            const float left=view.min.x+s.headerWidth+float((editor::Seconds(preview.range.first)-s.canvas.origin.x)*s.canvas.scale.x);
+                            const float right=view.min.x+s.headerWidth+float((editor::Seconds(preview.range.last)-s.canvas.origin.x)*s.canvas.scale.x);
+                            const float clippedLeft=std::clamp(left,view.min.x+s.headerWidth,view.max.x);
+                            const float clippedRight=std::clamp(right,view.min.x+s.headerWidth,view.max.x);
+                            if(clippedRight>clippedLeft) {
+                                auto color=preview.kind==TrackKind::Audio ? theme.editor.audioClip
+                                    : preview.kind==TrackKind::Caption ? theme.editor.captionClip
+                                    : preview.kind==TrackKind::Effect ? theme.editor.effectClip
+                                    : preview.kind==TrackKind::Adjustment ? theme.editor.adjustmentClip
+                                    : preview.kind==TrackKind::Group ? theme.editor.groupClip
+                                    : theme.editor.videoClip;
+                                color.w=.58f;
+                                const ImVec2 a{clippedLeft,y+4},b{clippedRight,y+rowHeight-7};
+                                draw->AddRectFilled(a,b,ImGui::GetColorU32(color),4);
+                                draw->AddRect(a,b,ImGui::GetColorU32(theme.colors.accent),4.f,ImDrawFlags_None,2.f);
+                                if(preview.label && preview.label[0] && clippedRight-clippedLeft>24)
+                                    draw->AddText({clippedLeft+5,y+9},ImGui::GetColorU32(theme.colors.text),preview.label);
+                            }
+                        }
                         route.drop(route.user,track.id,at,payload->Data,static_cast<std::size_t>(payload->DataSize),payload->IsDelivery());
+                    }
                 }
                 ImGui::EndDragDropTarget();
             }

@@ -6,9 +6,9 @@ ImKitは、ホストが用意した1つのDear ImGui実装へ重ねるC++20静�
 
 ## 必要環境
 
-- Dear ImGui v1.92.9b-docking、`b48d1afbe8ee8b238e2961dc363a949dd7304e23`
+- Dear ImGui docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be`（1.93.0 WIP）
 - CMake 3.20以降
-- binary検証環境：Windows x64、MSVC v145
+- package matrix：Windows x64/Arm64＋MSVC、macOS 15以降arm64/x86_64＋Apple Clang
 
 ## ソース導入
 
@@ -63,7 +63,7 @@ ImGui::Render();
 ```cmake
 set(IMKIT_IMGUI_TARGET host_imgui)
 set(IMKIT_SDK_ABI_CONFIRMED ON)
-find_package(imkit 2.2 CONFIG REQUIRED)
+find_package(imkit 3.0 CONFIG REQUIRED)
 target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
 

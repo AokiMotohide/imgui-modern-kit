@@ -3,7 +3,7 @@ if(POLICY CMP0141)
     cmake_policy(SET CMP0141 NEW)
 endif()
 
-project(imgui-modern-kit VERSION 2.2.0 LANGUAGES CXX)
+project(imgui-modern-kit VERSION 3.0.0 LANGUAGES CXX)
 
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(IMKIT_IS_TOP_LEVEL ON)
@@ -27,7 +27,6 @@ endif()
 option(IMKIT_BUILD_WINDOW_FRAME_WIN32 "Build the borrowed HWND window-frame adapter" ${IMKIT_WINDOW_FRAME_WIN32_DEFAULT})
 option(IMKIT_BUILD_WINDOW_FRAME_MACOS "Build the borrowed NSWindow window-frame adapter" ${IMKIT_WINDOW_FRAME_MACOS_DEFAULT})
 option(IMKIT_BUILD_WINDOW_FRAME_DEMO_MACOS "Build the lightweight macOS window-frame demo" OFF)
-option(IMKIT_BUILD_WINDOW_FRAME_LEGACY_IMGUI "Build only the window-frame API for the supported legacy Dear ImGui 1.88 host" OFF)
 
 set(IMKIT_FONT_ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets/fonts"
     CACHE INTERNAL "ImKit optional host font assets" FORCE)
@@ -84,29 +83,10 @@ if(MSVC)
     endif()
 endif()
 
-if(IMKIT_BUILD_WINDOW_FRAME_LEGACY_IMGUI)
-    add_library(imkit_window_frame_legacy STATIC src/window_frame.cpp)
-    add_library(imkit::window_frame_legacy ALIAS imkit_window_frame_legacy)
-    target_compile_features(imkit_window_frame_legacy PUBLIC cxx_std_20)
-    target_include_directories(imkit_window_frame_legacy PUBLIC
-        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-        "$<INSTALL_INTERFACE:include>")
-    target_link_libraries(imkit_window_frame_legacy PUBLIC "${IMKIT_IMGUI_TARGET}")
-    target_compile_definitions(imkit_window_frame_legacy PUBLIC IMKIT_WINDOW_FRAME_LEGACY_IMGUI=1)
-    target_compile_options(imkit_window_frame_legacy PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
-    set_target_properties(imkit_window_frame_legacy PROPERTIES DEBUG_POSTFIX d)
-    if(WIN32)
-        add_library(imkit_window_frame_win32_legacy STATIC src/window_frame_win32.cpp)
-        add_library(imkit::window_frame_win32_legacy ALIAS imkit_window_frame_win32_legacy)
-        target_link_libraries(imkit_window_frame_win32_legacy PUBLIC imkit::window_frame_legacy PRIVATE comctl32 dwmapi user32)
-        target_compile_definitions(imkit_window_frame_win32_legacy PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
-        set_target_properties(imkit_window_frame_win32_legacy PROPERTIES DEBUG_POSTFIX d)
-    endif()
-endif()
-
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 option(IMKIT_BUILD_ACCESSIBILITY_WIN32 "Build the host-owned HWND UI Automation adapter" OFF)
+option(IMKIT_BUILD_ACCESSIBILITY_MACOS "Build the host-owned NSAccessibility adapter" ${IMKIT_WINDOW_FRAME_MACOS_DEFAULT})
 if(IMKIT_BUILD_ACCESSIBILITY_WIN32)
     if(NOT WIN32)
         message(FATAL_ERROR "IMKIT_BUILD_ACCESSIBILITY_WIN32 requires Windows")
@@ -117,6 +97,19 @@ if(IMKIT_BUILD_ACCESSIBILITY_WIN32)
     target_link_libraries(imkit_accessibility_win32 PUBLIC imkit::imkit PRIVATE uiautomationcore oleaut32 user32)
     target_compile_definitions(imkit_accessibility_win32 PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
     install(TARGETS imkit_accessibility_win32 EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
+if(IMKIT_BUILD_ACCESSIBILITY_MACOS)
+    if(NOT APPLE)
+        message(FATAL_ERROR "IMKIT_BUILD_ACCESSIBILITY_MACOS requires macOS")
+    endif()
+    enable_language(OBJCXX)
+    add_library(imkit_accessibility_macos STATIC src/accessibility_macos.mm)
+    add_library(imkit::accessibility_macos ALIAS imkit_accessibility_macos)
+    set_target_properties(imkit_accessibility_macos PROPERTIES EXPORT_NAME accessibility_macos DEBUG_POSTFIX d)
+    target_link_libraries(imkit_accessibility_macos PUBLIC imkit::imkit PRIVATE "-framework Cocoa")
+    target_compile_options(imkit_accessibility_macos PRIVATE -fobjc-arc)
+    install(TARGETS imkit_accessibility_macos EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    install(FILES include/imkit/accessibility_macos.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/imkit)
 endif()
 if(IMKIT_BUILD_WINDOW_FRAME_WIN32)
     if(NOT WIN32)
@@ -169,11 +162,27 @@ add_library(imkit::preview_opengl3 ALIAS imkit_preview_opengl3)
 set_target_properties(imkit_preview_opengl3 PROPERTIES EXPORT_NAME preview_opengl3 DEBUG_POSTFIX d)
 target_link_libraries(imkit_preview_opengl3 PUBLIC imkit::cg)
 install(TARGETS imkit_preview_opengl3 EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(APPLE)
+    enable_language(OBJCXX)
+    add_library(imkit_preview_metal STATIC src/preview_metal.mm)
+    add_library(imkit::preview_metal ALIAS imkit_preview_metal)
+    set_target_properties(imkit_preview_metal PROPERTIES EXPORT_NAME preview_metal DEBUG_POSTFIX d)
+    target_link_libraries(imkit_preview_metal PUBLIC imkit::cg PRIVATE "-framework Metal" "-framework QuartzCore")
+    install(TARGETS imkit_preview_metal EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 install(TARGETS imkit EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(DIRECTORY include/imkit DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     PATTERN "window_frame_win32.h" EXCLUDE
-    PATTERN "window_frame_macos.h" EXCLUDE)
+    PATTERN "window_frame_macos.h" EXCLUDE
+    PATTERN "accessibility_macos.h" EXCLUDE)
 install(EXPORT imkitTargets NAMESPACE imkit:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/imkit)
+set(IMKIT_SDK_SYSTEM_NAME "${CMAKE_SYSTEM_NAME}")
+set(IMKIT_SDK_PROCESSOR "${CMAKE_SYSTEM_PROCESSOR}")
+set(IMKIT_SDK_ARCHITECTURES "${CMAKE_OSX_ARCHITECTURES}")
+set(IMKIT_SDK_COMPILER_ID "${CMAKE_CXX_COMPILER_ID}")
+set(IMKIT_SDK_COMPILER_VERSION "${CMAKE_CXX_COMPILER_VERSION}")
+set(IMKIT_SDK_POINTER_SIZE "${CMAKE_SIZEOF_VOID_P}")
+set(IMKIT_SDK_IMGUI_COMMIT "${IMKIT_IMGUI_COMMIT}")
 configure_package_config_file(cmake/imkitConfig.cmake.in "${CMAKE_CURRENT_BINARY_DIR}/imkitConfig.cmake" INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/imkit)
 write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/imkitConfigVersion.cmake" VERSION ${PROJECT_VERSION} COMPATIBILITY SameMinorVersion)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/imkitConfig.cmake" "${CMAKE_CURRENT_BINARY_DIR}/imkitConfigVersion.cmake" DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/imkit)
@@ -192,8 +201,8 @@ install(FILES examples/design_gallery/assets/OFL.txt examples/design_gallery/ass
     DESTINATION examples/design_gallery/assets)
 
 if(IMKIT_BUILD_GALLERY OR IMKIT_BUILD_DESIGN_GALLERY OR IMKIT_BUILD_WINDOW_FRAME_DEMO_MACOS)
-    if((IMKIT_BUILD_GALLERY OR IMKIT_BUILD_DESIGN_GALLERY) AND NOT WIN32)
-        message(FATAL_ERROR "Catalog capture hosts currently require Windows. Disable catalog targets for library-only builds.")
+    if((IMKIT_BUILD_GALLERY OR IMKIT_BUILD_DESIGN_GALLERY) AND NOT (WIN32 OR APPLE))
+        message(FATAL_ERROR "Gallery hosts are supported on Windows and macOS.")
     endif()
     if(IMKIT_IMGUI_SOURCE_DIR STREQUAL "")
         imkit_find_imgui_source_dir_from_target(
@@ -216,33 +225,45 @@ if(IMKIT_BUILD_GALLERY OR IMKIT_BUILD_DESIGN_GALLERY OR IMKIT_BUILD_WINDOW_FRAME
 endif()
 
 if(IMKIT_BUILD_GALLERY)
-    if(NOT TARGET imkit_window_frame_win32)
-        message(FATAL_ERROR "IMKIT_BUILD_GALLERY requires IMKIT_BUILD_WINDOW_FRAME_WIN32")
+    if(WIN32 AND NOT TARGET imkit_window_frame_win32)
+        message(FATAL_ERROR "Windows Gallery requires IMKIT_BUILD_WINDOW_FRAME_WIN32")
+    endif()
+    if(APPLE AND NOT TARGET imkit_window_frame_macos)
+        message(FATAL_ERROR "macOS Gallery requires IMKIT_BUILD_WINDOW_FRAME_MACOS")
+    endif()
+    if(APPLE)
+        set(IMKIT_GALLERY_MAIN examples/gallery/main_macos.mm)
+    else()
+        set(IMKIT_GALLERY_MAIN examples/gallery/main.cpp examples/design_gallery/capture.cpp)
     endif()
     add_executable(imkit_gallery
-        examples/gallery/main.cpp
+        ${IMKIT_GALLERY_MAIN}
         examples/gallery/gallery.cpp
         examples/gallery/design_pages.cpp
         examples/gallery/workflow_pages.cpp
         examples/gallery/editor_workspaces.cpp
         examples/gallery/allocation_probe.cpp
         examples/gallery/gallery.h
-        examples/design_gallery/capture.cpp
     )
     target_compile_features(imkit_gallery PRIVATE cxx_std_20)
     set_target_properties(imkit_gallery PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/catalog")
     target_compile_options(imkit_gallery PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
-    target_compile_definitions(imkit_gallery PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
+    target_compile_definitions(imkit_gallery PRIVATE $<$<BOOL:${WIN32}>:NOMINMAX;WIN32_LEAN_AND_MEAN>)
     target_include_directories(imkit_gallery PRIVATE examples/gallery)
     target_link_libraries(imkit_gallery
         PRIVATE
             imkit::imkit
             imkit::editor_suite
             imkit::preview_opengl3
-            imkit::window_frame_win32
             "${IMKIT_GALLERY_BACKEND_TARGET}"
-            windowscodecs ole32 comctl32 dwmapi
     )
+    if(WIN32)
+        target_link_libraries(imkit_gallery PRIVATE imkit::window_frame_win32 windowscodecs ole32 comctl32 dwmapi)
+    else()
+        target_link_libraries(imkit_gallery PRIVATE imkit::window_frame_macos imkit::preview_metal
+            "-framework Cocoa" "-framework Metal" "-framework QuartzCore")
+        set_target_properties(imkit_gallery PROPERTIES MACOSX_BUNDLE TRUE)
+    endif()
     imkit_copy_font_assets(imkit_gallery "design-assets")
 endif()
 
@@ -257,20 +278,21 @@ if(IMKIT_BUILD_WINDOW_FRAME_DEMO_MACOS)
 endif()
 
 if(IMKIT_BUILD_DESIGN_GALLERY)
-    if(NOT WIN32)
-        message(FATAL_ERROR "The experimental capture host currently requires Windows WIC.")
+    if(WIN32)
+        add_executable(imkit_design_gallery
+            examples/design_gallery/main.cpp
+            examples/design_gallery/design_lab.cpp
+            examples/design_gallery/capture.cpp
+        )
+        target_compile_features(imkit_design_gallery PRIVATE cxx_std_20)
+        target_compile_options(imkit_design_gallery PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
+        target_compile_definitions(imkit_design_gallery PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
+        target_link_libraries(imkit_design_gallery PRIVATE imkit::imkit
+            "${IMKIT_GALLERY_BACKEND_TARGET}" windowscodecs ole32)
+        imkit_copy_font_assets(imkit_design_gallery "design-assets")
+    else()
+        message(STATUS "The full macOS Gallery contains the design pages; standalone capture remains Windows-only")
     endif()
-    add_executable(imkit_design_gallery
-        examples/design_gallery/main.cpp
-        examples/design_gallery/design_lab.cpp
-        examples/design_gallery/capture.cpp
-    )
-    target_compile_features(imkit_design_gallery PRIVATE cxx_std_20)
-    target_compile_options(imkit_design_gallery PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
-    target_compile_definitions(imkit_design_gallery PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
-    target_link_libraries(imkit_design_gallery PRIVATE imkit::imkit
-        "${IMKIT_GALLERY_BACKEND_TARGET}" windowscodecs ole32)
-    imkit_copy_font_assets(imkit_design_gallery "design-assets")
 endif()
 
 if(IMKIT_BUILD_TESTS)
@@ -292,6 +314,11 @@ if(IMKIT_BUILD_TESTS)
         target_link_libraries(imkit_accessibility_win32_test PRIVATE imkit::accessibility_win32 ole32)
         add_test(NAME imkit.accessibility_win32 COMMAND imkit_accessibility_win32_test)
     endif()
+    if(IMKIT_BUILD_ACCESSIBILITY_MACOS)
+        add_executable(imkit_accessibility_macos_test tests/accessibility_macos.mm)
+        target_link_libraries(imkit_accessibility_macos_test PRIVATE imkit::accessibility_macos "-framework Cocoa")
+        add_test(NAME imkit.accessibility_macos COMMAND imkit_accessibility_macos_test)
+    endif()
     add_executable(imkit_editor_core_test tests/editor_core.cpp)
     target_link_libraries(imkit_editor_core_test PRIVATE imkit::editor_core)
     add_test(NAME imkit.editor_core COMMAND imkit_editor_core_test)
@@ -304,6 +331,11 @@ if(IMKIT_BUILD_TESTS)
     add_executable(imkit_editor_api_compile tests/editor_api_compile.cpp)
     target_link_libraries(imkit_editor_api_compile PRIVATE imkit::editor_suite imkit::preview_opengl3)
     add_test(NAME imkit.editor_api_compile COMMAND imkit_editor_api_compile)
+    if(TARGET imkit_preview_metal)
+        add_executable(imkit_preview_metal_api_compile tests/preview_metal_api_compile.mm)
+        target_link_libraries(imkit_preview_metal_api_compile PRIVATE imkit::preview_metal "-framework Metal")
+        add_test(NAME imkit.preview_metal_api_compile COMMAND imkit_preview_metal_api_compile)
+    endif()
     add_executable(imkit_icons_test tests/icons.cpp)
     target_link_libraries(imkit_icons_test PRIVATE imkit::imkit)
     add_test(NAME imkit.icons COMMAND imkit_icons_test)
@@ -346,3 +378,25 @@ if(IMKIT_BUILD_TESTS)
             -P "${CMAKE_CURRENT_BINARY_DIR}/run_consumer.cmake"
     )
 endif()
+
+include(cmake/imkitNodeEditor.cmake)
+
+if(TARGET imkit_gallery)
+    install(TARGETS imkit_gallery RUNTIME DESTINATION bin BUNDLE DESTINATION .)
+endif()
+if(TARGET imkit_node_editor_gallery)
+    install(TARGETS imkit_node_editor_gallery RUNTIME DESTINATION bin BUNDLE DESTINATION .)
+endif()
+if(APPLE AND CMAKE_OSX_ARCHITECTURES MATCHES "arm64" AND CMAKE_OSX_ARCHITECTURES MATCHES "x86_64")
+    set(IMKIT_PACKAGE_ARCH universal2)
+elseif(CMAKE_GENERATOR_PLATFORM)
+    string(TOLOWER "${CMAKE_GENERATOR_PLATFORM}" IMKIT_PACKAGE_ARCH)
+else()
+    string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" IMKIT_PACKAGE_ARCH)
+endif()
+set(CPACK_GENERATOR ZIP)
+set(CPACK_PACKAGE_NAME "imgui-modern-kit")
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+set(CPACK_PACKAGE_FILE_NAME "imgui-modern-kit-${PROJECT_VERSION}-${CMAKE_SYSTEM_NAME}-${IMKIT_PACKAGE_ARCH}")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+include(CPack)

@@ -75,17 +75,17 @@ add_subdirectory(external/imgui-modern-kit)
 target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
 
-Use the pinned 1.92.9b docking source. Historical 1.91.9 and 1.89 WIP (18814) configurations were inspected for compatibility: they lack current font/style/API contracts and are not supported by this release. Upgrade the host's ImGui deliberately before adopting ImKit; do not replace a host's fork implicitly. Other OS/toolchains are not verified.
+Use Dear ImGui docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be` exactly. Earlier font/style/API contracts are not supported by v3. Upgrade the host deliberately and keep the same commit in every participating target.
 
 ## Installed SDK
 
-The binary SDK is Windows x64, MSVC v145, `/MD` Release and `/MDd` Debug, with Dear ImGui 1.92.9b docking default ABI types. Match compile definitions and `imconfig.h` across all translation units. The library archive does **not** contain ImGui core. Header guards reject other ImGui version numbers; the explicit ABI confirmation below also requires you to check compiler, CRT, architecture and type settings. It is not automatic binary introspection.
+SDK artifacts are produced separately for Windows x64, Windows Arm64 and macOS Universal 2. Each manifest records OS, architecture, compiler and the Dear ImGui commit. Match compile definitions and `imconfig.h` across all translation units. The library archive does **not** contain ImGui core. Header guards reject other ImGui version numbers; the explicit ABI confirmation below also requires you to check the artifact manifest and type settings. It is not automatic binary introspection.
 
 ```cmake
 # Create the matching host_imgui target first.
 set(IMKIT_IMGUI_TARGET host_imgui)
 set(IMKIT_SDK_ABI_CONFIRMED ON) # only after checking the manifest and settings
-find_package(imkit 2.2 CONFIG REQUIRED)
+find_package(imkit 3.0 CONFIG REQUIRED)
 target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
 

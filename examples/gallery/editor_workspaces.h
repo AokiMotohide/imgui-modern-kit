@@ -1,7 +1,7 @@
 #pragma once
 #include <imkit/video.h>
 #include <imkit/cg.h>
-#include <imkit/preview.h>
+#include <imkit/preview_opengl3.h>
 #include <vector>
 #include <array>
 #include <map>

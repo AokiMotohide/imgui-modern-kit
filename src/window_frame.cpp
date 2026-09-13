@@ -42,9 +42,9 @@ void CaptionGlyph(ImDrawList* draw, const WindowFrameRect& rect, int index, bool
             const std::array<ImVec2, 3> back{{{center.x - 2 * scale, center.y - 5 * scale},
                                               {center.x + 5 * scale, center.y - 5 * scale},
                                               {center.x + 5 * scale, center.y + 2 * scale}}};
-            draw->AddPolyline(back.data(), static_cast<int>(back.size()), ink, 0, stroke);
+            draw->AddPolyline(back.data(), static_cast<int>(back.size()), ink, stroke, 0);
         }
-        draw->AddRect({center.x - d, center.y - d}, {center.x + d, center.y + d}, ink, 0, 0, stroke);
+        draw->AddRect({center.x - d, center.y - d}, {center.x + d, center.y + d}, ink, 0, stroke, 0);
     }
     if (index == 2) {
         draw->AddLine({center.x - d, center.y - d}, {center.x + d, center.y + d}, ink, stroke);
@@ -161,7 +161,7 @@ WindowFrameResult DrawWindowFrame(const WindowFrameStyle& style, const WindowFra
                             (layout.icon.min.y + layout.icon.max.y) * .5f};
         const float d = std::min(layout.icon.Width(), layout.icon.Height()) * .2f;
         draw->AddRect({center.x - d, center.y - d}, {center.x + d, center.y + d}, Color(style.icon),
-                      2 * layout.scale, 0, std::max(1.f, 1.5f * layout.scale));
+                      2 * layout.scale, std::max(1.f, 1.5f * layout.scale), 0);
         draw->AddLine({center.x - d * .55f, center.y + d * .1f},
                       {center.x + d * .55f, center.y - d * .55f}, Color(style.icon),
                       std::max(1.f, 1.5f * layout.scale));

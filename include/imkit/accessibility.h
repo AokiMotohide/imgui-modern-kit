@@ -30,6 +30,7 @@ struct SemanticNode {
     ImVec2 minimum{}, maximum{}; // Desktop screen coordinates, like ImGui item rectangles.
     std::span<const StableId> children{};
     SemanticAction actions=SemanticAction::None;
+    double numericValue=0, minimumValue=0, maximumValue=1, smallChange=1, largeChange=10;
 };
 struct AccessibilityTree {
     std::span<const SemanticNode> nodes{};
@@ -41,6 +42,12 @@ struct AccessibilityTree {
 struct AccessibilitySink {
     void* user=nullptr;
     void (*publish)(void*, const AccessibilityTree&)=nullptr;
+};
+// Platform-neutral native bridge callback. The adapter copies value for the duration
+// of dispatch; the host owns queuing and thread synchronization.
+struct NativeActionSink {
+    void* user=nullptr;
+    bool (*dispatch)(void*, StableId, SemanticAction, std::string_view value)=nullptr;
 };
 struct ActionRequest { StableId id=0; SemanticAction action=SemanticAction::None; std::string_view value{}; };
 // Host serializes access, including requests from a native accessibility adapter.

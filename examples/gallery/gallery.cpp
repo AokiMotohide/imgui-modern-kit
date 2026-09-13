@@ -1,4 +1,5 @@
 #include "gallery.h"
+#include "node_launcher.h"
 #include <algorithm>
 #include <cstdio>
 #include <cctype>
@@ -67,6 +68,10 @@ void Start(GalleryState &s) {
     if (Button("Explore components"))
         s.page = 0;
     Record(s, "start-components");
+    SameLine();
+    if (Button("Circular progress"))
+        s.page = 16;
+    Record(s, "start-circular-progress");
     SeparatorText("Choose a route");
     if (BeginTable("start-routes", 2, ImGuiTableFlags_SizingStretchSame)) {
         TableNextRow();
@@ -667,6 +672,11 @@ void Show(GalleryState &s) {
         Record(s,"appearance");
         SameLine(); if(Button("Compare")) s.comparison.open=true;
         Record(s,"comparison-open");
+        static NodeLauncher nodeLauncher;
+        SameLine();
+        if(Button("Node Editor")) nodeLauncher.Open();
+        Record(s,"node-editor-open");
+        if(nodeLauncher.error) TextWrapped("Cannot open Node Editor (Windows error %lu). Place imkit_node_editor_gallery.exe beside this Gallery.", nodeLauncher.error);
         if(s.floatingComparison) {SameLine();Checkbox("Dear ImGui Demo",&s.showDearImGuiDemo);}
         if(BeginPopup("appearance")) {
             if(BeginCombo("Theme",ThemePresets()[s.presetIndex].displayName.data())) {

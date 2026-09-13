@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <cstring>
 #include <string>
 
@@ -27,6 +28,30 @@ bool Contains(const char* text,const char* query) {
 
 void DrawStatus(const char* status,FeedbackKind kind,const Theme* theme) {
     if(status&&*status)StatusBadge(status,ToStatusKind(kind),theme);
+}
+
+float FiniteOr(float value,float fallback) {
+    return std::isfinite(value)?value:fallback;
+}
+
+RightSidePanelOptions Sanitize(RightSidePanelOptions options) {
+    options.minimumWidth=std::max(1.0f,FiniteOr(options.minimumWidth,240.0f));
+    options.minimumContentWidth=std::max(1.0f,FiniteOr(options.minimumContentWidth,160.0f));
+    options.maximumWidthRatio=std::clamp(FiniteOr(options.maximumWidthRatio,0.55f),0.05f,0.95f);
+    options.splitterWidth=std::max(1.0f,FiniteOr(options.splitterWidth,6.0f));
+    options.railWidth=std::max(ImGui::GetFrameHeight(),FiniteOr(options.railWidth,24.0f));
+    options.keyboardStep=std::max(1.0f,FiniteOr(options.keyboardStep,16.0f));
+    return options;
+}
+
+void ClampPanelWidth(RightSidePanelState& state,float availableWidth,
+                     const RightSidePanelOptions& options) {
+    availableWidth=std::max(1.0f,FiniteOr(availableWidth,1.0f));
+    const float fixed=options.railWidth+(state.open?options.splitterWidth:0.0f);
+    const float room=std::max(1.0f,availableWidth-fixed-options.minimumContentWidth);
+    const float maximum=std::max(1.0f,std::min(availableWidth*options.maximumWidthRatio,room));
+    const float minimum=std::min(options.minimumWidth,maximum);
+    state.width=std::clamp(FiniteOr(state.width,minimum),minimum,maximum);
 }
 }
 
@@ -92,6 +117,68 @@ StableId BottomActionBar(const char* id,const BottomActionBarView& view,ToolbarS
     }
     ImGui::PopID();
     return action;
+}
+
+RightSidePanelLayout ResolveRightSidePanelLayout(
+    RightSidePanelState& state,float availableWidth,bool toggleRequested,
+    RightSidePanelOptions options) {
+    options=Sanitize(options);
+    availableWidth=std::max(1.0f,FiniteOr(availableWidth,1.0f));
+    if(toggleRequested)state.open=!state.open;
+    ClampPanelWidth(state,availableWidth,options);
+    RightSidePanelLayout layout;
+    layout.panelVisible=state.open;
+    layout.handleWidth=options.railWidth+(state.open?options.splitterWidth:0.0f);
+    layout.panelWidth=state.open?state.width:0.0f;
+    layout.contentWidth=std::max(1.0f,availableWidth-layout.handleWidth-layout.panelWidth);
+    return layout;
+}
+
+bool RightSidePanelHandle(const char* id,RightSidePanelState& state,
+                          ImVec2 available,RightSidePanelOptions options,
+                          ComponentOptions components) {
+    options=Sanitize(options);
+    available.x=std::max(1.0f,FiniteOr(available.x,1.0f));
+    available.y=std::max(1.0f,FiniteOr(available.y,1.0f));
+    ClampPanelWidth(state,available.x,options);
+    bool changed=false;
+    ImGui::PushID(id);
+    if(state.open) {
+        ImGui::InvisibleButton("splitter",{options.splitterWidth,available.y});
+        const bool disabled=(ImGui::GetItemFlags()&ImGuiItemFlags_Disabled)!=0;
+        if(ImGui::IsItemHovered()||ImGui::IsItemActive())ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
+        if(!disabled&&ImGui::IsItemActive()&&ImGui::GetIO().MouseDelta.x!=0.0f) {
+            state.width-=ImGui::GetIO().MouseDelta.x;changed=true;
+        }
+        if(!disabled&&ImGui::IsItemFocused()) {
+            if(ImGui::IsKeyPressed(ImGuiKey_LeftArrow)){state.width+=options.keyboardStep;changed=true;}
+            if(ImGui::IsKeyPressed(ImGuiKey_RightArrow)){state.width-=options.keyboardStep;changed=true;}
+        }
+        if(components.accessibility) {
+            using namespace accessibility;
+            const auto item=ImGui::GetItemID();
+            if(!disabled&&components.accessibility->Take(item,SemanticAction::Increment)){state.width+=options.keyboardStep;changed=true;}
+            if(!disabled&&components.accessibility->Take(item,SemanticAction::Decrement)){state.width-=options.keyboardStep;changed=true;}
+            if(!disabled&&components.accessibility->Take(item,SemanticAction::Focus)){ImGui::SetKeyboardFocusHere(-1);ImGui::SetNavCursorVisible(true);}
+            SemanticNode node;node.id=item;node.parent=components.parent;node.role=SemanticRole::Button;
+            node.name=options.resizeLabel?options.resizeLabel:"Resize inspector";node.state.disabled=disabled;
+            node.actions=SemanticAction::Increment|SemanticAction::Decrement|SemanticAction::Focus;
+            AnnotateLastItem(*components.accessibility,node);
+        }
+        ClampPanelWidth(state,available.x,options);
+        ImGui::SameLine(0.0f,0.0f);
+    }
+    if(ImGui::BeginChild("rail",{options.railWidth,available.y},ImGuiChildFlags_Borders,
+                         ImGuiWindowFlags_NoScrollbar|ImGuiWindowFlags_NoScrollWithMouse)) {
+        const char* label=state.open?options.closeLabel:options.openLabel;
+        if(IconButton("toggle",state.open?ImGuiDir_Right:ImGuiDir_Left,
+                      label?label:"Inspector",components)) {
+            state.open=!state.open;changed=true;
+        }
+    }
+    ImGui::EndChild();
+    ImGui::PopID();
+    return changed;
 }
 
 bool BeginDiagnosticsDrawer(const char* id,const char* title,DiagnosticsDrawerState& state,ImVec2 size,ComponentOptions options) {
