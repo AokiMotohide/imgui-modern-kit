@@ -42,6 +42,7 @@ void Matrix(const cg::Camera &c, const cg::Transform &t, float aspect, float *re
     float pv[16]; Multiply(projection,view,pv); Multiply(pv,model,result);
 }
 template<class T> T Object(void *value) { return (__bridge T)value; }
+template<class T> void *Retain(T value) { return const_cast<void *>(CFBridgingRetain(value)); }
 void Release(void *&value) { if(value) { CFRelease(value); value=nullptr; } }
 }
 
@@ -77,7 +78,7 @@ fragment Outputs preview_fragment(VertexOut in [[stage_in]], constant Uniforms& 
     MTLDepthStencilDescriptor *depthDescriptor=[MTLDepthStencilDescriptor new];
     depthDescriptor.depthCompareFunction=MTLCompareFunctionLess; depthDescriptor.depthWriteEnabled=YES;
     id<MTLDepthStencilState> depthState=[device newDepthStencilStateWithDescriptor:depthDescriptor];
-    device_=CFBridgingRetain(device); pipeline_=CFBridgingRetain(pipeline); depthState_=CFBridgingRetain(depthState);
+    device_=Retain(device); pipeline_=Retain(pipeline); depthState_=Retain(depthState);
     return Resize(width,height);
 }
 
@@ -94,7 +95,7 @@ bool MetalRenderer::Resize(int width, int height) {
     id<MTLTexture> depth=texture(MTLPixelFormatDepth32Float,MTLTextureUsageRenderTarget,MTLStorageModePrivate);
     id<MTLTexture> picking=texture(MTLPixelFormatRG32Uint,MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead,MTLStorageModeShared);
     if(!color || !depth || !picking) return false;
-    color_=CFBridgingRetain(color); depth_=CFBridgingRetain(depth); picking_=CFBridgingRetain(picking);
+    color_=Retain(color); depth_=Retain(depth); picking_=Retain(picking);
     width_=width; height_=height; return true;
 }
 
