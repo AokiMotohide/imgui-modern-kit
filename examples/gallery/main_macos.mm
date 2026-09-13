@@ -115,8 +115,8 @@ int main(int argc,char **argv) {
         imkit::MakeWindowFrameStyle(imkit::WindowFramePreset::Workspace,host.state.theme),
         imkit::MakeWindowFrameStyle(imkit::WindowFramePreset::Tool,host.state.theme)};
     host.state.frameStyle=imkit::MakeWindowFrameStyle(preset,host.state.theme);
-    const auto executable=std::filesystem::path([[[NSBundle mainBundle] executablePath] UTF8String]);
-    const auto assets=executable.parent_path()/"design-assets";
+    const auto resources=std::filesystem::path([[[NSBundle mainBundle] resourcePath] UTF8String]);
+    const auto assets=resources/"design-assets";
     auto loadFont=[&](const char *file) {
         const auto path=assets/file; if(!std::filesystem::exists(path)) return (ImFont*)nullptr;
         ImFont *font=io.Fonts->AddFontFromFileTTF(path.string().c_str(),14);
