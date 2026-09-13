@@ -8,6 +8,11 @@
 #include <cstdlib>
 #include "../examples/gallery/allocation_probe.h"
 using namespace imkit;
+#ifdef __APPLE__
+constexpr ImGuiKey TestControlModifier = ImGuiMod_Super;
+#else
+constexpr ImGuiKey TestControlModifier = ImGuiMod_Ctrl;
+#endif
 int main() {
 #ifdef _MSC_VER
     _set_error_mode(_OUT_TO_STDERR);
@@ -464,14 +469,14 @@ int main() {
     full.Clear();frame(full);
     check(full.count==2 && full.Events()[0].phase==editor::Phase::Commit && full.Events()[1].phase==editor::Phase::Commit &&
           !timeline.keyDrag.active && !clipKeyCompanions[0].active,"clip multi-key commits complete retry batch");
-    full.Clear();io.AddMousePosEvent(keyX,keyY);io.AddKeyEvent(ImGuiMod_Ctrl,true);frame(full);
+    full.Clear();io.AddMousePosEvent(keyX,keyY);io.AddKeyEvent(TestControlModifier,true);frame(full);
     io.AddMouseButtonEvent(0,true);frame(full);
     check(!keySelection.Contains(clipKeys[0].id) && keySelection.Contains(clipKeys[1].id) &&
           !timeline.keyDrag.active && full.count==0 && !full.overflow,
           "Ctrl-click deselects clip key without starting a drag or reporting shortage");
     io.AddMousePosEvent(keyX+30,keyY);frame(full);io.AddMouseButtonEvent(0,false);frame(full);
     check(full.count==0 && !timeline.drag.active,"deselected key cannot move remaining keys or the clip");
-    io.AddKeyEvent(ImGuiMod_Ctrl,false);frame(full);keySelection.Set(clipKeys[0].id,true);
+    io.AddKeyEvent(TestControlModifier,false);frame(full);keySelection.Set(clipKeys[0].id,true);
     std::array keyBindings{editor::Binding{editor::Command::Duplicate,ImGuiKey_F7},editor::Binding{editor::Command::Delete,ImGuiKey_F6}};
     timeline.bindings=keyBindings;
     full.Clear();io.AddKeyEvent(ImGuiKey_F7,true);frame(full);io.AddKeyEvent(ImGuiKey_F7,false);frame(full);
@@ -575,12 +580,12 @@ int main() {
           "clip body drag keeps parent window stationary");
     io.AddMouseButtonEvent(0,false);frame(full);
     check(!timeline.drag.active && full.Events().back().phase==editor::Phase::Commit,"clip body drag commits normally");
-    full.Clear();io.AddKeyEvent(ImGuiMod_Ctrl,true);frame(full);
+    full.Clear();io.AddKeyEvent(TestControlModifier,true);frame(full);
     io.AddMouseButtonEvent(0,true);frame(full);
     check(!selection.Contains(transitionFixture.clip.id) && !timeline.drag.active && full.count==0 && !full.overflow,
           "Ctrl-click deselects clip without starting edit transaction");
     io.AddMousePosEvent(clipOrigin.x+timeline.headerWidth+160,clipOrigin.y+25);frame(full);
-    io.AddMouseButtonEvent(0,false);frame(full);io.AddKeyEvent(ImGuiMod_Ctrl,false);frame(full);
+    io.AddMouseButtonEvent(0,false);frame(full);io.AddKeyEvent(TestControlModifier,false);frame(full);
     check(full.count==0 && !timeline.drag.active,"deselected clip emits no Update or Commit after mouse movement");
     std::array splitClips{transitionFixture.clip,transitionFixture.clip};splitClips[1].id=902;
     auto savedUser=provider.user;
@@ -1096,11 +1101,11 @@ int main() {
         move(origin.x+state.headerWidth+100,origin.y+10);io.AddMouseButtonEvent(0,false);render();
         check(clipsSelected.Contains(410) && !state.boxSelecting,"public IO box selects an intersecting clip");
         check(state.view.min.x==origin.x && state.view.min.y==origin.y,"box drag does not move host window");
-        io.AddKeyEvent(ImGuiMod_Ctrl,true);render();
+        io.AddKeyEvent(TestControlModifier,true);render();
         move(origin.x+state.headerWidth+400,origin.y+50);io.AddMouseButtonEvent(0,true);render();
         move(origin.x+state.headerWidth+100,origin.y+10);io.AddMouseButtonEvent(0,false);render();
         check(!clipsSelected.Contains(410),"Ctrl rectangle toggles existing selection");
-        io.AddKeyEvent(ImGuiMod_Ctrl,false);render();
+        io.AddKeyEvent(TestControlModifier,false);render();
         move(origin.x+55,origin.y+9);io.AddMouseButtonEvent(0,true);render();io.AddMouseButtonEvent(0,false);render();
         check(tracksSelected.Contains(400) && clipsSelected.count==0,"track selection is independent of clips");
         output.Clear();move(origin.x+55,origin.y+9);io.AddMouseButtonEvent(0,true);render();

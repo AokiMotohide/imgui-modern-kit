@@ -5,6 +5,11 @@
 #include <cstdio>
 #include <limits>
 using namespace imkit::cg;
+#ifdef __APPLE__
+constexpr ImGuiKey TestControlModifier = ImGuiMod_Super;
+#else
+constexpr ImGuiKey TestControlModifier = ImGuiMod_Ctrl;
+#endif
 int main() {
     int failures = 0;
     auto check = [&](bool ok, const char *s) {
@@ -246,11 +251,11 @@ int main() {
     check(dopeEvents.count==2 && dopeEvents.Events()[0].phase==imkit::editor::Phase::Cancel &&
         dopeEvents.Events()[1].phase==imkit::editor::Phase::Cancel,"Dope Sheet revision change cancels complete batch");
     io.AddMouseButtonEvent(0,false);dopeFrame();
-    io.AddKeyEvent(ImGuiMod_Ctrl,true);dopeFrame();
+    io.AddKeyEvent(TestControlModifier,true);dopeFrame();
     io.AddMousePosEvent(dopeX,dopeY);dopeFrame();io.AddMouseButtonEvent(0,true);dopeFrame();
     check(dopeSelection.count==1 && !dopeSelection.Contains(901) && !dopeState.drag.active &&
         dopeEvents.count==0,"Ctrl deselection does not begin a Dope Sheet edit");
-    io.AddMouseButtonEvent(0,false);dopeFrame();io.AddKeyEvent(ImGuiMod_Ctrl,false);dopeFrame();
+    io.AddMouseButtonEvent(0,false);dopeFrame();io.AddKeyEvent(TestControlModifier,false);dopeFrame();
     dopeSelection.Set(901,true);
     std::array dopeBindings{imkit::editor::Binding{imkit::editor::Command::Delete,ImGuiKey_F9}};
     dopeState.bindings=dopeBindings;
