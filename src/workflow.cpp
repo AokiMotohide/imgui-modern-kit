@@ -320,7 +320,7 @@ void CircularProgress(const char* id,const CircularProgressView& view,CircularPr
     constexpr float pi=3.14159265358979323846f;
     constexpr const char* unavailable="\xE2\x80\x94";
     const float diameter=std::max(12.f,layout.diameter>0?layout.diameter:ImGui::GetFrameHeight()*3.f);
-    const float stroke=std::clamp(layout.strokeWidth>0?layout.strokeWidth:diameter*.075f,1.f,diameter*.24f);
+    const float stroke=std::clamp(layout.strokeWidth>0?layout.strokeWidth:diameter*.06f,1.f,diameter*.24f);
     const bool available=std::isfinite(view.fraction)&&view.fraction>=0.f;
     const float fraction=available?std::clamp(view.fraction,0.f,1.f):0.f;
     const char* value=*Safe(view.value)?view.value:(available?"":unavailable);
@@ -329,16 +329,34 @@ void CircularProgress(const char* id,const CircularProgressView& view,CircularPr
     ImGui::PushID(id);ImGui::BeginGroup();
     const ImVec2 top=ImGui::GetCursorScreenPos();ImGui::Dummy({diameter,diameter});
     const ImVec2 center{top.x+diameter*.5f,top.y+diameter*.5f};
+    const float radius=std::max(1.f,diameter*.5f-stroke*.5f-1.f);
     auto* draw=ImGui::GetWindowDrawList();const int segments=std::clamp(static_cast<int>(diameter*.75f),24,96);
-    draw->AddCircle(center,std::max(1.f,diameter*.5f-stroke*.5f),ImGui::GetColorU32(track),segments,stroke);
+    draw->AddCircle(center,radius,ImGui::GetColorU32(track),segments,stroke);
     if(available&&fraction>0.f) {
         const float start=-pi*.5f;
-        if(fraction>=.9999f) draw->AddCircle(center,std::max(1.f,diameter*.5f-stroke*.5f),ImGui::GetColorU32(foreground),segments,stroke);
-        else {draw->PathArcTo(center,std::max(1.f,diameter*.5f-stroke*.5f),start,start+2.f*pi*fraction,std::max(2,static_cast<int>(segments*fraction)));draw->PathStroke(ImGui::GetColorU32(foreground),stroke,0);}
+        if(fraction>=.9999f) draw->AddCircle(center,radius,ImGui::GetColorU32(foreground),segments,stroke);
+        else {
+            const float end=start+2.f*pi*fraction;
+            draw->PathArcTo(center,radius,start,end,std::max(2,static_cast<int>(segments*fraction)));
+            draw->PathStroke(ImGui::GetColorU32(foreground),stroke,0);
+            for(float angle:{start,end})
+                draw->AddCircleFilled({center.x+std::cos(angle)*radius,center.y+std::sin(angle)*radius},stroke*.5f,ImGui::GetColorU32(foreground));
+        }
     }
     const ImVec2 valueSize=ImGui::CalcTextSize(value);
-    draw->AddText({center.x-valueSize.x*.5f,center.y-valueSize.y*.5f},ImGui::GetColorU32(available?(o.theme?o.theme->semantic.text:ImGui::GetStyleColorVec4(ImGuiCol_Text)):foreground),value);
-    if(*Safe(view.label)) {const float width=ImGui::CalcTextSize(view.label).x;ImGui::SetCursorPosX(ImGui::GetCursorPosX()+std::max(0.f,(diameter-width)*.5f));ImGui::TextUnformatted(view.label);}
+    const float innerWidth=std::max(1.f,(radius-stroke*.5f)*1.55f);
+    const float textScale=std::min({diameter>=ImGui::GetFontSize()*4.f?1.15f:1.f,
+                                  innerWidth/std::max(1.f,valueSize.x),
+                                  innerWidth/std::max(1.f,valueSize.y)});
+    draw->AddText(ImGui::GetFont(),ImGui::GetFontSize()*textScale,
+                  {center.x-valueSize.x*textScale*.5f,center.y-valueSize.y*textScale*.5f},
+                  ImGui::GetColorU32(available?(o.theme?o.theme->semantic.text:ImGui::GetStyleColorVec4(ImGuiCol_Text)):foreground),value);
+    if(*Safe(view.label)) {
+        const float width=ImGui::CalcTextSize(view.label).x;
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX()+std::max(0.f,(diameter-width)*.5f));
+        ImGui::PushStyleColor(ImGuiCol_Text,o.theme?o.theme->semantic.textDisabled:ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+        ImGui::TextUnformatted(view.label);ImGui::PopStyleColor();
+    }
     ImGui::EndGroup();
     if(o.accessibility) {accessibility::SemanticNode n;n.id=ImGui::GetID("progress");n.parent=o.parent;n.name=Safe(view.label);n.value=value;n.role=accessibility::SemanticRole::Progress;n.state.readOnly=true;n.state.invalid=!available;accessibility::AnnotateLastItem(*o.accessibility,n);}
     ImGui::PopID();
