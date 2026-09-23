@@ -1,5 +1,7 @@
 # Widget inventory / 部品一覧
 
+[日本語](widget-inventory.ja.md) · [English](widget-inventory.md)
+
 **Precision Layers** is the selected implementation. The authoritative overload-level mapping is [api-coverage.md](api-coverage.md), backed by [api-inventory.json](api-inventory.json) and `tests/api_compile.cpp`.
 
 採用実装はPrecision Layersです。標準GUI部品と組み合わせに必要な公開補助をoverload単位で対応表に記載しています。分類は「共通Themeと標準描画」「公開DrawList装飾」「標準部品の合成」「非視覚補助」「対象外」です。

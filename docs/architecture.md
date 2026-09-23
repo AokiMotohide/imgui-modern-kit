@@ -1,5 +1,7 @@
 # Architecture / 設計
 
+[日本語](architecture.ja.md) · [English](architecture.md)
+
 Generic workflow components extend patterns; image/preview components belong to
 Editor Core and reuse Canvas/Selection/Splitter. Base imkit does not depend on Editor
 Core. See [public contracts](workflow-components.md).

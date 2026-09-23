@@ -1,5 +1,7 @@
 # アプリケーションShell部品
 
+[English](shell-components.md) · [日本語](shell-components.ja.md)
+
 ImKitは`AppBar`、`WorkspaceHeader`、`InspectorSection`、`AdvancedSection`、
 `BottomActionBar`、`DiagnosticsDrawer`、`ThemePicker`を提供します。
 

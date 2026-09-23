@@ -44,7 +44,7 @@ void Heading(GalleryState &s, const char *text) {
 void StartCard(GalleryState &s, int page, const char *eyebrow, const char *title,
                const char *description, const char *action) {
     PushID(page);
-    if (BeginChild("route", {0, 142}, ImGuiChildFlags_Borders)) {
+    if (BeginChild("route", {0, 190}, ImGuiChildFlags_Borders)) {
         TextDisabled("%s", eyebrow);
         PushFont(s.fonts.emphasis, s.theme.metrics.headingSize);
         TextUnformatted(title);
@@ -76,16 +76,17 @@ void Start(GalleryState &s) {
     if (BeginTable("start-routes", 2, ImGuiTableFlags_SizingStretchSame)) {
         TableNextRow();
         TableNextColumn();
-        StartCard(s, 0, "01 / FOUNDATION", "Keep the interaction contract", "Start with familiar inputs, IDs, focus and keyboard navigation.", "Open components");
+        StartCard(s, 0, "01 / FOUNDATION", "Keep the interaction contract", "Try ActionButton, stable IDs, focus and keyboard navigation.", "Open components");
         TableNextColumn();
-        StartCard(s, 6, "02 / VISUAL SYSTEM", "Make states easier to read", "Inspect generated icons, semantic color and the active theme together.", "Open themes and icons");
+        StartCard(s, 6, "02 / VISUAL SYSTEM", "Make states easier to read", "Inspect icons and Theme. Change the scheme in Appearance.", "Open themes and icons");
         TableNextRow();
         TableNextColumn();
-        StartCard(s, 15, "03 / WORKFLOW", "Guide a real task", "Try host-owned requests, responsive navigation and an image workspace.", "Open workflow");
+        StartCard(s, 15, "03 / WORKFLOW", "Guide a real task", "Try step navigation and the image workspace. The host applies each request.", "Open workflow");
         TableNextColumn();
-        StartCard(s, 8, "04 / EDITING", "Scale into timelines", "Explore the advanced Video workspace as a Gallery specimen, not an application runtime.", "Open timeline");
+        StartCard(s, 8, "04 / EDITING", "Scale into timelines", "Explore Video editing UI. Media, project data and Undo stay in the host.", "Open timeline");
         EndTable();
     }
+    TextDisabled("Learning map: docs/examples-recipes.md (English) / docs/examples-recipes.ja.md (日本語)");
     SeparatorText("What remains yours");
     TextWrapped("Your Dear ImGui context, renderer, font atlas, data, undo history and persistence stay in the host. "
                 "ImKit supplies visual structure and reusable controls without taking those responsibilities.");

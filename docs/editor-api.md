@@ -1,5 +1,7 @@
 # Editor API reference / Editor API reference
 
+[日本語](editor-api.ja.md) · [English](editor-api.md)
+
 These are custom APIs, separate from the generated native Dear ImGui overload inventory.
 Timeline additions: `FadeCurve`, `FadeView`, `EvaluateFade`, `FadePicker`, `CutTransitionView`,
 `TimelineEditingProvider`, `TrackAction`, `ClipboardAction`, and `TransitionShelf`.

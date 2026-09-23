@@ -11,6 +11,8 @@ Windows native Galleryは、初見向けの案内アプリと公開APIの実例�
 3. **Components、themes、icons** で、検索可能なnative specimen、palette編集、生成iconを確認できます。
 4. **Workflow、timeline、Frame Lab** では、任意の合成部品とEditor向けsurfaceを扱います。ただしホストのscene、Undo、rendererをImKitが所有するとは主張しません。
 
+Start画面から **Components: Basic** (page 0)、**Icons** (page 6、ThemeはheaderのAppearanceで変更)、**Generic Workspace** (page 15)、**Video** (page 8)へ直接移動します。[実例とrecipe](examples-recipes.ja.md)は画面と公開header、CMake target、実装source、所有権、次に読むguideを対応付けています。Start routeのIDはGallery verifierで操作確認されます。
+
 比較のbaselineは公開Dear ImGui APIだけです（`StyleColorsDark`と直接widget）。視覚と操作契約の実例であり、性能、OS入力、accessibilityを比較するものではありません。ImKit列はホスト所有の`Theme`、scale、状態、animationを借用します。global registryやGallery専用の第三者assetは導入していません。
 
 ## Buildと実行

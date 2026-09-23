@@ -160,6 +160,18 @@ void Verify(Host &h, const std::filesystem::path &out) {
         if (!ok)
             throw std::runtime_error(name);
     };
+    h.Page(19);
+    h.Click("start-Open components");
+    check(h.s.page == 0, ("Start route: components (page " + std::to_string(h.s.page) + ")").c_str());
+    h.Page(19);
+    h.Click("start-Open themes and icons");
+    check(h.s.page == 6, "Start route: visual system");
+    h.Page(19);
+    h.Click("start-Open workflow");
+    check(h.s.page == 15, "Start route: workflow");
+    h.Page(19);
+    h.Click("start-Open timeline");
+    check(h.s.page == 8, "Start route: timeline");
     h.Page(0);
     h.Click("apply");
     check(h.s.clicks == 1, "Action activation");

@@ -1,5 +1,7 @@
 # Public window frame / 公開ウィンドウ枠
 
+[日本語](gallery-window-frame.ja.md) · [English](gallery-window-frame.md)
+
 `imkit/window_frame.h` is a cross-platform, value-based drawing and layout API. The host owns the Dear ImGui context, backend, renderer, fonts, theme, window, selected preset, edited style and persistence. `MakeWindowFrameStyle(preset, theme)` returns a complete copy; changing the Theme never mutates an existing frame style. Applications may edit every returned color, metric and feature directly.
 
 `imkit/window_frame.h`はOS非依存の値型描画・配置APIです。Dear ImGui Context、backend、renderer、font、Theme、アプリウィンドウ、選択中preset、編集済みStyle、永続化はホストが所有します。`MakeWindowFrameStyle(preset, theme)`は完全なコピーを返し、Theme変更が既存Styleを暗黙に変更することはありません。生成後は全色・寸法・featureを直接編集できます。

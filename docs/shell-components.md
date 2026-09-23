@@ -1,5 +1,7 @@
 # Application shell components
 
+[日本語](shell-components.ja.md) · [English](shell-components.md)
+
 ImKit provides host-owned building blocks for persistent application chrome:
 `AppBar`, `WorkspaceHeader`, `InspectorSection`, `AdvancedSection`,
 `BottomActionBar`, `DiagnosticsDrawer`, and `ThemePicker`.

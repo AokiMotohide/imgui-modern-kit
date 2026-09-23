@@ -377,6 +377,13 @@ if(IMKIT_BUILD_TESTS)
             "-DIMKIT_CONSUMER_CONFIG=$<CONFIG>"
             -P "${CMAKE_CURRENT_BINARY_DIR}/run_consumer.cmake"
     )
+    if(WIN32 AND TARGET imkit_gallery)
+        add_test(
+            NAME imkit.gallery_learning
+            COMMAND $<TARGET_FILE:imkit_gallery> --verify
+                --output "${CMAKE_CURRENT_BINARY_DIR}/gallery-learning-smoke"
+        )
+    endif()
 endif()
 
 include(cmake/imkitNodeEditor.cmake)

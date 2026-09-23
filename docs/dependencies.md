@@ -1,5 +1,7 @@
 # Dependencies
 
+[日本語](dependencies.ja.md) · [English](dependencies.md)
+
 ## Pinned standalone dependencies
 
 | Dependency | Official source | Version | Commit | License | Scope |

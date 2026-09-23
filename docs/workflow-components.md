@@ -1,5 +1,7 @@
 # Generic workflow components / 汎用ワークフロー部品
 
+[日本語](workflow-components.ja.md) · [English](workflow-components.md)
+
 Include `imkit/workflow.h` (also included by `imkit/imkit.h`) and link `imkit::imkit`.
 For images/previews include `imkit/editor_canvas.h` and link `imkit::editor_core`.
 These additive APIs reuse patterns, Canvas, Selection and Splitter. They do not

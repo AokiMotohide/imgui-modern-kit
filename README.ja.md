@@ -1,6 +1,6 @@
 # ImKit
 
-[English](README.md) · [導入ガイド](docs/getting-started.ja.md) · [Gallery](docs/gallery.ja.md) · [Node Editor](docs/node-editor.ja.md) · [v3移行](docs/migration-v3.md) · [Releases](https://github.com/AokiMotohide/imgui-modern-kit/releases)
+[English](README.md) · [文書目次](docs/README.ja.md) · [導入ガイド](docs/getting-started.ja.md) · [Gallery](docs/gallery.ja.md) · [Node Editor](docs/node-editor.ja.md) · [v3移行](docs/migration-v3.ja.md) · [Releases](https://github.com/AokiMotohide/imgui-modern-kit/releases)
 
 **モダンなnative制作ツールを、より速く。** ImKit v3.0.0はDear ImGui向けのC++20静的UIライブラリです。一貫したTheme、制作向けcontrol、workflow／editor surface、ホスト所有のNode Editor、生成icon、native accessibility adapter、任意のOpenGL／Metal previewを、アプリケーションの所有権を奪わず追加します。
 
