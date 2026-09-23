@@ -105,6 +105,7 @@ v3のABI基準はDear ImGui docking commit `367b2c24f399988ddafc0bb4628da0106bcc
 
 | 目的 | 日本語 | English |
 |---|---|---|
+| 目的から文書を探す | [文書一覧](docs/README.ja.md) | [Documentation index](docs/README.md) |
 | 導入と最初のframe | [導入ガイド](docs/getting-started.ja.md) | [Getting started](docs/getting-started.md) |
 | native Galleryとcapture | [Gallery](docs/gallery.ja.md) | [Gallery](docs/gallery.md) |
 | componentとrecipe | [ガイド](docs/guide.ja.md) | [Guide](docs/guide.md) |

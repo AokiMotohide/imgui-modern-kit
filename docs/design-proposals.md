@@ -3,9 +3,9 @@
 Historical comparison record. Generated `out/` images are local artifacts; see the [production catalog](development-status.md) for the adopted library and public screenshots.
 
 
-Five experimental Dear ImGui themes are available in the separate `imkit_design_gallery` executable. Public library functions and the foundation Gallery are unchanged. No proposal is selected for production.
+This is a historical comparison record. Direction 04 from the original set became the refinement basis; **01 Precision Layers** is the selected production theme. These five entries are design history, not current production alternatives. See [design refinements](design-refinements.md) and the shipped [theme guide](themes.md).
 
-The original direction 04 was selected for refinement. The Gallery now opens with [three Layered Depth refinements](design-refinements.md); use **Original 5** to return to this first comparison set. The initial five images below remain preserved.
+The Gallery's **Original 5** view preserves this first comparison set; its initial images remain historical records.
 
 ## Run
 

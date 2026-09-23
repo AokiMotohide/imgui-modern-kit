@@ -105,6 +105,7 @@ Automated tests do not establish physical pointer/keyboard, native IME, real scr
 
 | Need | English | 日本語 |
 |---|---|---|
+| Browse all documentation by task | [Documentation index](docs/README.md) | [文書一覧](docs/README.ja.md) |
 | Install and first frame | [Getting started](docs/getting-started.md) | [導入ガイド](docs/getting-started.ja.md) |
 | Native Gallery and capture | [Gallery](docs/gallery.md) | [Galleryガイド](docs/gallery.ja.md) |
 | Components and recipes | [Guide](docs/guide.md) | [ガイド](docs/guide.ja.md) |
