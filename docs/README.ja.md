@@ -51,7 +51,6 @@
 - [Design proposal](design-proposals.md) · [Design refinement](design-refinements.md)
 - [開発状況](development-status.md) · [Editor更新記録](editor-refresh.md) · [Editor検証記録](editor-validation.md)
 - [Editor実装checklist](editor-implementation-checklist.md) · [Node Editor review](node-editor-review.md)
-- [Precision Layers実装brief](precision-layers-implementation-prompt.md)
 - [GitHub profile原稿](github-profile.md)
 - [Performance evidence](evidence/)
 

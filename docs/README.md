@@ -51,7 +51,6 @@ Some records describe an earlier release or checkout. Their status tables are hi
 - [Design proposals](design-proposals.md) · [Design refinements](design-refinements.md)
 - [Development status](development-status.md) · [Editor refresh](editor-refresh.md) · [Editor validation](editor-validation.md)
 - [Editor implementation checklist](editor-implementation-checklist.md) · [Node Editor review](node-editor-review.md)
-- [Precision Layers implementation brief](precision-layers-implementation-prompt.md)
 - [GitHub profile copy](github-profile.md)
 - [Performance evidence](evidence/)
 
