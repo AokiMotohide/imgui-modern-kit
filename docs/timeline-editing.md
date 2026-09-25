@@ -1,5 +1,7 @@
 # Timeline editing / タイムライン編集
 
+[日本語](timeline-editing.ja.md) · [English](timeline-editing.md)
+
 The timeline's optional `TimelineEditingProvider` enables independent clip fades,
 cut transitions, rectangular selection and validated track-to-track moves. Without
 the provider the legacy transition controls remain available. Providers, borrowed

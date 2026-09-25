@@ -25,6 +25,18 @@ EXPECTED_PACKAGES = {
     "macos-x86_64": re.compile(r"imgui-modern-kit-.*-Darwin-x86_64\.zip$", re.I),
     "macos-universal2": re.compile(r"imgui-modern-kit-.*-Darwin-universal2\.zip$", re.I),
 }
+PUBLIC_DOCS = [
+    f"docs/{name}{suffix}.md"
+    for name in (
+        "README", "documentation-catalog", "getting-started", "guide", "gallery",
+        "examples-recipes", "components", "themes", "troubleshooting", "migration-v3",
+        "architecture", "dependencies", "workflow-components", "shell-components",
+        "node-editor", "editor-suite", "editor-api", "timeline-editing",
+        "gallery-window-frame", "icons", "design-system", "api-coverage",
+        "widget-inventory", "validation",
+    )
+    for suffix in ("", ".ja")
+]
 
 
 def sha256(path: Path) -> str:
@@ -47,11 +59,8 @@ def verify_package(key: str, archive: Path) -> dict:
         "README.ja.md",
         "LICENSE",
         "THIRD_PARTY_NOTICES.md",
-        "docs/getting-started.md",
-        "docs/getting-started.ja.md",
-        "docs/node-editor.md",
-        "docs/node-editor.ja.md",
     ]
+    common.extend(PUBLIC_DOCS)
     missing = [name for name in common if not one_member(names, name)]
     if key.startswith("windows"):
         required = [

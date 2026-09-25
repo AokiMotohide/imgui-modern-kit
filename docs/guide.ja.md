@@ -92,6 +92,10 @@ target_link_libraries(your_app PRIVATE imkit::imkit)
 
 検証の範囲と制約は[検証記録](validation.md)、ライセンスは[第三者通知](../THIRD_PARTY_NOTICES.md)を参照してください。公開IOによる統合確認と、native OS/IME・実機の受け入れ確認は別です。
 
+## Build and evidence
+
+このguide内のbuild可能例とSDK consumer確認はcompile/linkの証拠です。Galleryの公開IO/GPU smokeやnative OS/IMEの受け入れとは区別します。詳細は[検証記録](validation.ja.md)を参照してください。
+
 ## Editor Suite 2.0 workspace
 
 native GalleryのEditor Core／Video Editor／CG Editorを開きます。`--verify-editors --capture-editors --output out/editors`で公開IO検証と150%を含む実backbuffer画像を取得できます。Timeline右下にはFit・縮小・対数zoom・拡大があり、中ボタンでpan/orbit、Ctrl+wheelでポインタ位置を固定してzoom、clip端でtrim、Razorでsplit、gizmo軸端でdragします。UV/Graphタブの点も編集できます。[Editor Suite 2.0の検証結果と範囲](editor-refresh.md)を参照してください。

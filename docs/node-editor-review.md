@@ -1,5 +1,9 @@
 # Socket redesign review / ソケット再設計レビュー
 
+Historical baseline review: the table records issues found on the named branch and the resolutions made during that work. Priority labels describe the original review, not current open defects. For the shipped API, use the [Node Editor guide](node-editor.md) and current [validation record](validation.md).
+
+上記baselineに対する過去のreviewです。表は当時の問題と対応を記録しています。Priorityはreview時の分類であり、現在の未解決issue一覧ではありません。公開APIは[Node Editorガイド](node-editor.md)、検証範囲は最新の[Validation記録](validation.md)を参照してください。
+
 Baseline: `Version3.0-addNodeEditor`, `27ba4d5`.
 CodeGraph was used first to trace PinView, BeginPin, PinPosition, NodeInspector,
 CanConnect and NodePalette. Baseline PinPosition read a fixed offset while

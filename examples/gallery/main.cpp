@@ -19,6 +19,7 @@
 #include "allocation_probe.h"
 #include <algorithm>
 namespace {
+int lastGlfwErrorCode = GLFW_NO_ERROR;
 const std::filesystem::path &NoCapturePath() {
     static const std::filesystem::path empty;
     return empty;
@@ -160,6 +161,18 @@ void Verify(Host &h, const std::filesystem::path &out) {
         if (!ok)
             throw std::runtime_error(name);
     };
+    h.Page(19);
+    h.Click("start-Open components");
+    check(h.s.page == 0, ("Start route: components (page " + std::to_string(h.s.page) + ")").c_str());
+    h.Page(19);
+    h.Click("start-Open themes and icons");
+    check(h.s.page == 6, "Start route: visual system");
+    h.Page(19);
+    h.Click("start-Open workflow");
+    check(h.s.page == 15, "Start route: workflow");
+    h.Page(19);
+    h.Click("start-Open timeline");
+    check(h.s.page == 8, "Start route: timeline");
     h.Page(0);
     h.Click("apply");
     check(h.s.clicks == 1, "Action activation");
@@ -1743,11 +1756,12 @@ int main(int argc, char **argv) {
         return 1;
     }
     glfwSetErrorCallback([](int code,const char *description) {
+        lastGlfwErrorCode=code;
         std::fprintf(stderr,"Catalog: GLFW error %d: %s\n",code,description ? description : "unknown");
     });
     if (!glfwInit()) {
         CoUninitialize();
-        return 1;
+        return verify && lastGlfwErrorCode==GLFW_API_UNAVAILABLE ? 77 : 1;
     }
     if(listMonitors || monitorIndex>=0) {
         int count=0;auto monitors=glfwGetMonitors(&count);
@@ -1774,9 +1788,12 @@ int main(int argc, char **argv) {
     h.windowTitle=windowTitle;
     h.window = glfwCreateWindow(captureWidth, captureHeight,windowTitle.c_str(), nullptr, nullptr);
     if (!h.window) {
+        const bool openGLUnavailable=lastGlfwErrorCode==GLFW_API_UNAVAILABLE;
         glfwTerminate();
         CoUninitialize();
-        return 1;
+        if(verify && openGLUnavailable)
+            std::fprintf(stderr,"Gallery verification skipped: OpenGL is unavailable on this runner.\n");
+        return verify && openGLUnavailable ? 77 : 1;
     }
     glfwMakeContextCurrent(h.window);
     glfwSwapInterval(h.automated ? 0 : 1);

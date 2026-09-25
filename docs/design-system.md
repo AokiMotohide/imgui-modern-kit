@@ -1,5 +1,7 @@
 # Design system refresh / デザインシステム刷新
 
+[日本語](design-system.ja.md) · [English](design-system.md)
+
 This change adds cross-cutting foundations to Editor Suite 2.0. It is **not full acceptance of the comprehensive next-release specification**. The implementation and remaining work below are separate from previous Editor Suite verification.
 
 Editor Suite 2.0に横断基盤を追加した変更です。**次期リリース総合仕様の全項目完了ではありません**。以下の実装・残作業は、以前のEditor Suite検証とは区別します。

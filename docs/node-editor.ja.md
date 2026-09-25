@@ -1,5 +1,7 @@
 # ノードエディター（開発中API）
 
+[English](node-editor.md) · [日本語](node-editor.ja.md)
+
 独立した `imkit::node_editor` targetを追加しました。`imkit::editor_suite`からも利用できます。
 公開ヘッダーは `<imkit/node_editor.h>`。対応環境はC++20と完全固定したDear ImGui 1.93.0 WIP docking commitです。
 

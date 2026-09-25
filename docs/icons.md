@@ -1,5 +1,7 @@
 # Modern outline icons
 
+[日本語](icons.ja.md) · [English](icons.md)
+
 The timeline/3D extension appends 32 IDs, including Empty, Frustum, Camera3D,
 Projector3D, geometric primitives and light types. `cg::ObjectView::icon` lets hosts
 select a semantic glyph without extending ObjectKind. The existing IDs retain their order.

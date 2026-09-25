@@ -1,5 +1,7 @@
 # Node editor (development API)
 
+[日本語](node-editor.ja.md) · [English](node-editor.md)
+
 The independent `imkit::node_editor` target provides native Dear ImGui node editing,
 context-free layout utilities and host-driven previews. It is included by
 `imkit::editor_suite`, or can be linked on its own. Include `<imkit/node_editor.h>`.

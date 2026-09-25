@@ -4,6 +4,21 @@
 
 No changes yet. / 変更はまだありません。
 
+## 3.1.0 — 2026-09-26
+
+### Documentation and onboarding
+
+- Add a bilingual documentation catalog that connects each public guide to its audience, API contract, Gallery page, source and SDK package path.
+- Add module recipes for components, themes, workflow, Node Editor, Editor Suite, Timeline editing and WindowFrame, including frame placement and host-ownership limits.
+- Update the Gallery Start screen with clearer task routes and a direct link to the recipe map; expand the English/Japanese documentation and examples.
+- Add automated checks for language pairs, headings, procedures, links and Gallery routes, and verify all 48 public documentation files in release packages.
+- No public API or ABI changes.
+- 英日文書カタログを追加し、各ガイドの読者、API契約、Gallery画面、source、SDK package内のpathを対応付けました。
+- Components、Theme、Workflow、Node Editor、Editor Suite、Timeline編集、WindowFrameのrecipeを追加し、frame内の呼出し位置とホスト所有の範囲を示しました。
+- GalleryのStart画面に目的別の案内とrecipe一覧への導線を追加し、英日文書と実例を拡充しました。
+- 言語pair、見出し、手順、link、Gallery routeの自動検査を追加し、release package内の公開文書48件を確認します。
+- 公開APIとABIに変更はありません。
+
 ## 3.0.0 — 2026-09-13
 
 ### Node Editor

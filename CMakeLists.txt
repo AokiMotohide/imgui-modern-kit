@@ -3,7 +3,7 @@ if(POLICY CMP0141)
     cmake_policy(SET CMP0141 NEW)
 endif()
 
-project(imgui-modern-kit VERSION 3.0.0 LANGUAGES CXX)
+project(imgui-modern-kit VERSION 3.1.0 LANGUAGES CXX)
 
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(IMKIT_IS_TOP_LEVEL ON)
@@ -377,6 +377,14 @@ if(IMKIT_BUILD_TESTS)
             "-DIMKIT_CONSUMER_CONFIG=$<CONFIG>"
             -P "${CMAKE_CURRENT_BINARY_DIR}/run_consumer.cmake"
     )
+    if(WIN32 AND TARGET imkit_gallery)
+        add_test(
+            NAME imkit.gallery_learning
+            COMMAND $<TARGET_FILE:imkit_gallery> --verify
+                --output "${CMAKE_CURRENT_BINARY_DIR}/gallery-learning-smoke"
+        )
+        set_tests_properties(imkit.gallery_learning PROPERTIES SKIP_RETURN_CODE 77)
+    endif()
 endif()
 
 include(cmake/imkitNodeEditor.cmake)
