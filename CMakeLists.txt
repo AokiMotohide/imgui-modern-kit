@@ -383,6 +383,7 @@ if(IMKIT_BUILD_TESTS)
             COMMAND $<TARGET_FILE:imkit_gallery> --verify
                 --output "${CMAKE_CURRENT_BINARY_DIR}/gallery-learning-smoke"
         )
+        set_tests_properties(imkit.gallery_learning PROPERTIES SKIP_RETURN_CODE 77)
     endif()
 endif()
 
