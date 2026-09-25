@@ -1,14 +1,14 @@
 # ImKit
 
-[English](README.md) · [文書目次](docs/README.ja.md) · [導入ガイド](docs/getting-started.ja.md) · [Gallery](docs/gallery.ja.md) · [Node Editor](docs/node-editor.ja.md) · [v3移行](docs/migration-v3.ja.md) · [Releases](https://github.com/AokiMotohide/imgui-modern-kit/releases)
+[English](README.md) · [文書目次](docs/README.ja.md) · [文書カタログ](docs/documentation-catalog.ja.md) · [実例とrecipe](docs/examples-recipes.ja.md) · [導入ガイド](docs/getting-started.ja.md) · [Gallery](docs/gallery.ja.md) · [Node Editor](docs/node-editor.ja.md) · [v3移行](docs/migration-v3.ja.md) · [Releases](https://github.com/AokiMotohide/imgui-modern-kit/releases)
 
-**モダンなnative制作ツールを、より速く。** ImKit v3.0.0はDear ImGui向けのC++20静的UIライブラリです。一貫したTheme、制作向けcontrol、workflow／editor surface、ホスト所有のNode Editor、生成icon、native accessibility adapter、任意のOpenGL／Metal previewを、アプリケーションの所有権を奪わず追加します。
+**モダンなnative制作ツールを、より速く。** ImKit v3.1.0はDear ImGui向けのC++20静的UIライブラリです。Theme、制作向けcontrol、workflow／editor surface、ホスト所有のNode Editor、生成icon、native accessibility adapter、任意のOpenGL／Metal previewを、既存アプリケーションの所有権を保って利用できます。今回の更新では、目的から選べる英日文書カタログ、module別recipe、Galleryの学習案内を整えました。
 
 MIT License · Windows x64/Arm64 · macOS arm64/x86_64/Universal 2 · Dear ImGui 1.93.0 WIP docking
 
 ## 30秒で試す
 
-[ImKit v3.0.0](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.0.0)から環境に合うpackageを取得して展開し、`bin/imkit_gallery.exe`または`imkit_gallery.app`を実行します。専用のNode Editor Galleryも同梱します。
+[ImKit v3.1.0](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.1.0)から環境に合うpackageを取得して展開し、`bin/imkit_gallery.exe`または`imkit_gallery.app`を実行します。専用のNode Editor Galleryも同梱します。
 
 sourceからnative Galleryを起動する場合は次の3行です。
 
@@ -45,13 +45,15 @@ Context、backend、renderer、font atlas、値、frame loopは既存アプリ�
 
 ## v3でできること
 
-以下はすべて、実際のnative GalleryまたはNode Editor companionのbackbufferを960×540で記録したGIFです。再描画したmockや第三者製品の映像ではありません。[native showcase全編（MP4）](https://github.com/AokiMotohide/imgui-modern-kit/releases/download/v3.0.0/imkit-v3.0.0-showcase.mp4)も公開しています。
+Galleryから実例を探し、対応するAPIと統合方法をすぐ確認できるようになりました。[文書カタログ](docs/documentation-catalog.ja.md)は読者と目的から読むページを案内し、[実例とrecipe](docs/examples-recipes.ja.md)はmodule、CMake target、frame内の呼出し、Gallery画面、source、制約を結び付けます。Start画面にもrecipe一覧への案内があります。
+
+以下はすべて、実際のnative GalleryまたはNode Editor companionのbackbufferを960×540で記録したGIFです。再描画したmockや第三者製品の映像ではありません。[native showcase全編（MP4）](https://github.com/AokiMotohide/imgui-modern-kit/releases/download/v3.1.0/imkit-v3.1.0-showcase.mp4)も公開しています。
 
 ### V3 Overview
 
 ![ImKit v3 native Gallery overview](docs/images/v3-overview.gif)
 
-案内付きStartからDefault Dear ImGui／ImKitのlive比較を開き、componentやeditor workflowへ迷わず移動できます。
+Start画面の4つの目的別routeとrecipe案内から、比較、component、workflow、Timelineの実例へ進めます。
 
 ### ホスト所有のNode Editor
 
@@ -106,6 +108,8 @@ v3のABI基準はDear ImGui docking commit `367b2c24f399988ddafc0bb4628da0106bcc
 | 目的 | 日本語 | English |
 |---|---|---|
 | 目的から文書を探す | [文書一覧](docs/README.ja.md) | [Documentation index](docs/README.md) |
+| API・Gallery・sourceと文書の対応を見る | [文書カタログ](docs/documentation-catalog.ja.md) | [Documentation catalog](docs/documentation-catalog.md) |
+| module別の実例と統合位置を調べる | [実例とrecipe](docs/examples-recipes.ja.md) | [Examples and recipes](docs/examples-recipes.md) |
 | 導入と最初のframe | [導入ガイド](docs/getting-started.ja.md) | [Getting started](docs/getting-started.md) |
 | native Galleryとcapture | [Gallery](docs/gallery.ja.md) | [Gallery](docs/gallery.md) |
 | componentとrecipe | [ガイド](docs/guide.ja.md) | [Guide](docs/guide.md) |

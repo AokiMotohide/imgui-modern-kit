@@ -1,14 +1,14 @@
 # ImKit
 
-[日本語](README.ja.md) · [Documentation index](docs/README.md) · [Getting started](docs/getting-started.md) · [Gallery](docs/gallery.md) · [Node Editor](docs/node-editor.md) · [v3 migration](docs/migration-v3.md) · [Releases](https://github.com/AokiMotohide/imgui-modern-kit/releases)
+[日本語](README.ja.md) · [Documentation index](docs/README.md) · [Documentation catalog](docs/documentation-catalog.md) · [Examples and recipes](docs/examples-recipes.md) · [Getting started](docs/getting-started.md) · [Gallery](docs/gallery.md) · [Node Editor](docs/node-editor.md) · [v3 migration](docs/migration-v3.md) · [Releases](https://github.com/AokiMotohide/imgui-modern-kit/releases)
 
-**Build modern native tools faster.** ImKit v3.0.0 is a C++20 static UI library for Dear ImGui. It adds a coherent theme system, production controls, workflow and editor surfaces, a host-owned Node Editor, generated icons, native accessibility adapters, and optional OpenGL/Metal preview helpers—without taking ownership of your application.
+**Build modern native tools faster.** ImKit v3.1.0 is a C++20 static UI library for Dear ImGui. It provides themes, production controls, workflow and editor surfaces, a host-owned Node Editor, generated icons, native accessibility adapters, and optional OpenGL/Metal preview helpers—without taking ownership of your application. This release adds task-oriented bilingual documentation, module recipes and a clearer Gallery learning path.
 
 MIT licensed · Windows x64/Arm64 · macOS arm64/x86_64/Universal 2 · Dear ImGui 1.93.0 WIP docking
 
 ## Try it in 30 seconds
 
-Download the package for your machine from [ImKit v3.0.0](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.0.0), extract it, and run `bin/imkit_gallery.exe` or `imkit_gallery.app`. The dedicated Node Editor Gallery is included.
+Download the package for your machine from [ImKit v3.1.0](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.1.0), extract it, and run `bin/imkit_gallery.exe` or `imkit_gallery.app`. The dedicated Node Editor Gallery is included.
 
 Or build the native Gallery:
 
@@ -45,13 +45,15 @@ Your context, backends, renderer, font atlas, values and frame loop stay exactly
 
 ## See what v3 can do
 
-Each animation is a 960×540 capture of the real native Gallery or Node Editor companion backbuffer—not a redraw or a third-party product recording. [Watch the complete native showcase (MP4)](https://github.com/AokiMotohide/imgui-modern-kit/releases/download/v3.0.0/imkit-v3.0.0-showcase.mp4).
+The bilingual [documentation catalog](docs/documentation-catalog.md) maps each page to its audience, API, Gallery route, source and package path. [Examples and recipes](docs/examples-recipes.md) connect module targets and frame calls to interactive Gallery specimens. The Start screen links these learning routes directly.
+
+Each animation is a 960×540 capture of the real native Gallery or Node Editor companion backbuffer—not a redraw or a third-party product recording. [Watch the complete native showcase (MP4)](https://github.com/AokiMotohide/imgui-modern-kit/releases/download/v3.1.0/imkit-v3.1.0-showcase.mp4).
 
 ### V3 overview
 
 ![ImKit v3 native Gallery overview](docs/images/v3-overview.gif)
 
-Start from a guided home page, open the live Default Dear ImGui/ImKit comparison, and move directly into components and editor workflows.
+The Start screen presents four task routes and a link to the recipe map, then leads into the live comparison, components, workflow and Timeline specimens.
 
 ### Host-owned Node Editor
 
@@ -106,6 +108,8 @@ Automated tests do not establish physical pointer/keyboard, native IME, real scr
 | Need | English | 日本語 |
 |---|---|---|
 | Browse all documentation by task | [Documentation index](docs/README.md) | [文書一覧](docs/README.ja.md) |
+| Map audiences, APIs, Gallery routes and source | [Documentation catalog](docs/documentation-catalog.md) | [文書カタログ](docs/documentation-catalog.ja.md) |
+| Find a module recipe and its frame call | [Examples and recipes](docs/examples-recipes.md) | [実例とrecipe](docs/examples-recipes.ja.md) |
 | Install and first frame | [Getting started](docs/getting-started.md) | [導入ガイド](docs/getting-started.ja.md) |
 | Native Gallery and capture | [Gallery](docs/gallery.md) | [Galleryガイド](docs/gallery.ja.md) |
 | Components and recipes | [Guide](docs/guide.md) | [ガイド](docs/guide.ja.md) |

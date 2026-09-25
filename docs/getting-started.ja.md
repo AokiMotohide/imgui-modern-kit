@@ -12,7 +12,7 @@ ImKitは、ホストが用意した1つのDear ImGui実装へ重ねるC++20静�
 
 ## 最短で評価する
 
-環境に合う[v3.0.0 package](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.0.0)を展開し、Windowsでは`bin/`内のGalleryとNode Editor Gallery、macOSでは2つの`.app` bundleを実行します。両CPU familyで同じarchiveを使う場合はUniversal 2を選びます。
+環境に合う[v3.1.0 package](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.1.0)を展開し、Windowsでは`bin/`内のGalleryとNode Editor Gallery、macOSでは2つの`.app` bundleを実行します。両CPU familyで同じarchiveを使う場合はUniversal 2を選びます。
 
 ## ソース導入
 

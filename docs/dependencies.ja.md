@@ -18,7 +18,7 @@
 - ImKitはDear ImGui本体を再compileしません。includeとlink要件は指定target経由でconsumerへ渡します。
 - Windows GalleryはCMake `FindOpenGL`を使います。macOS Galleryはsystem Metal、MetalKit、Cocoa frameworkを使います。
 
-CMakeの最低対応versionは3.20です。`imkit` 3.0.0のconsumerは上記固定docking ABIを使います。別revision、`imconfig.h`、compiler/architectureの組合せは同一ABIと推定せず、明示確認が必要です。
+CMakeの最低対応versionは3.20です。`imkit` 3.1.0のconsumerは上記固定docking ABIを使います。別revision、`imconfig.h`、compiler/architectureの組合せは同一ABIと推定せず、明示確認が必要です。
 
 Inter 4.1とNoto Sans JP 2.004は任意のhost assetです。出典、hash、OFLは`THIRD_PARTY_NOTICES.md`に記録されています。`imkit_copy_font_assets`はtarget隣へ配置しますが、fontをatlasにloadし寿命を持つのはホストです。
 

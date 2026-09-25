@@ -12,7 +12,7 @@ ImKit is a C++20 static library layered over one Dear ImGui implementation suppl
 
 ## Fastest evaluation
 
-Download the matching [v3.0.0 package](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.0.0), extract it, then run the Gallery and Node Editor Gallery in `bin/` on Windows or the two `.app` bundles on macOS. Universal 2 is the default macOS choice when one archive must run on both CPU families.
+Download the matching [v3.1.0 package](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.1.0), extract it, then run the Gallery and Node Editor Gallery in `bin/` on Windows or the two `.app` bundles on macOS. Universal 2 is the default macOS choice when one archive must run on both CPU families.
 
 ## Source integration
 

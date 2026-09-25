@@ -1,8 +1,8 @@
 # Project status and contract map / 開発状況と契約文書
 
-This page is a stable map of the current ImKit source contract, not a live CI dashboard. The source and CMake project version is 3.0.0. Use the [release page](https://github.com/AokiMotohide/imgui-modern-kit/releases) for published packages and [CHANGELOG](../CHANGELOG.md) for versioned changes. Build and acceptance evidence is recorded separately in [Validation](validation.md), with dates and explicit exclusions.
+This page is a stable map of the current ImKit source contract, not a live CI dashboard. The source and CMake project version is 3.1.0. Use the [release page](https://github.com/AokiMotohide/imgui-modern-kit/releases) for published packages and [CHANGELOG](../CHANGELOG.md) for versioned changes. Build and acceptance evidence is recorded separately in [Validation](validation.md), with dates and explicit exclusions.
 
-このページはImKitの現行source契約への案内です。live CI dashboardではありません。sourceとCMakeのproject versionは3.0.0です。公開packageは[Release一覧](https://github.com/AokiMotohide/imgui-modern-kit/releases)、versionごとの変更は[CHANGELOG](../CHANGELOG.md)、buildと受け入れ証拠は確認日と対象外を分けた[Validation](validation.md)で確認してください。
+このページはImKitの現行source契約への案内です。live CI dashboardではありません。sourceとCMakeのproject versionは3.1.0です。公開packageは[Release一覧](https://github.com/AokiMotohide/imgui-modern-kit/releases)、versionごとの変更は[CHANGELOG](../CHANGELOG.md)、buildと受け入れ証拠は確認日と対象外を分けた[Validation](validation.md)で確認してください。
 
 ## Product contract / 製品契約
 
