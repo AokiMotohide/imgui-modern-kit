@@ -744,29 +744,50 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
     int frame=0;
     if(demo=="overview") {
         h.s.page=19;h.s.comparison.open=false;h.Settle();
-        CaptureFrames(h,dir,frame,30);
+        CaptureFrames(h,dir,frame,16);
         h.s.comparison.open=true;h.Settle();
-        CaptureFrames(h,dir,frame,50);
+        CaptureFrames(h,dir,frame,24);
         h.Click("start-components");h.s.comparison.open=false;
-        CaptureFrames(h,dir,frame,40);
+        CaptureFrames(h,dir,frame,20);
     } else if(demo=="comparison") {
         h.s.page=19;h.s.comparison.open=true;h.Settle();
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,14);
         h.Click("comparison-default-apply");
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,14);
         h.Replace("comparison-default-name","Studio Console");
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,14);
         h.Click("comparison-imkit-enabled");
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,14);
+    } else if(demo=="components") {
+        h.s.page=0;h.s.comparison.open=false;h.Settle();
+        CaptureFrames(h,dir,frame,16);
+        h.Click("apply");CaptureFrames(h,dir,frame,12);
+        h.Click("toggle");CaptureFrames(h,dir,frame,12);
+        h.Click("mixed");CaptureFrames(h,dir,frame,12);
     } else if(demo=="icons") {
-        h.s.page=6;h.s.comparison.open=false;h.s.iconSearch[0]='\0';h.Settle();
+        const auto catalog=imkit::GetIconCatalog();
+        auto iconIndex=[&](std::string_view name) {
+            const auto item=std::find_if(catalog.begin(),catalog.end(),[&](const auto &entry){return entry.name==name;});
+            return item==catalog.end()?static_cast<int>(imkit::IconId::Search):static_cast<int>(item->id);
+        };
+        auto categoryIndex=[&](std::string_view name) {
+            std::vector<std::string_view> categories{"All"};
+            for(const auto &item:catalog)
+                if(std::find(categories.begin(),categories.end(),item.category)==categories.end())
+                    categories.push_back(item.category);
+            const auto category=std::find(categories.begin(),categories.end(),name);
+            return category==categories.end()?0:static_cast<int>(category-categories.begin());
+        };
+        h.s.page=6;h.s.comparison.open=false;h.s.iconSearch[0]='\0';h.s.iconCategory=0;
+        h.s.selectedIcon=iconIndex("Camera");h.Settle();
         CaptureFrames(h,dir,frame,20);
-        h.Replace("icon-search","camera");
-        CaptureFrames(h,dir,frame,20);
-        h.Click("icon-button");
-        CaptureFrames(h,dir,frame,20);
-        h.Replace("icon-search","timeline");
-        CaptureFrames(h,dir,frame,20);
+        h.s.iconCategory=categoryIndex("Editor");h.s.selectedIcon=iconIndex("Timecode");h.Settle();
+        CaptureFrames(h,dir,frame,12);
+        h.s.iconCategory=categoryIndex("Media");h.s.selectedIcon=iconIndex("Camera");h.Settle();
+        CaptureFrames(h,dir,frame,12);
+        h.s.iconCategory=0;h.s.selectedIcon=iconIndex("Projector3D");
+        std::strcpy(h.s.iconSearch,"projector");h.Settle();
+        CaptureFrames(h,dir,frame,12);
     } else if(demo=="themes") {
         auto applyPreset=[&](int index) {
             h.s.presetIndex=index;
@@ -778,35 +799,43 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
             h.Settle();
         };
         h.s.page=6;h.s.comparison.open=false;h.s.palette=true;h.Settle();
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,8);
         applyPreset(4);
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,8);
         applyPreset(8);
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,8);
         applyPreset(static_cast<int>(imkit::ThemePreset::Slate));
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,8);
         h.s.palette=false;h.Settle();
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,8);
         h.s.page=19;h.s.comparison.open=true;h.Settle();
-        CaptureFrames(h,dir,frame,40);
+        CaptureFrames(h,dir,frame,16);
     } else if(demo=="vector") {
         h.s.page=1;h.s.comparison.open=false;h.s.floatingComparison=false;
         h.s.theme=imkit::MakeTheme(imkit::ThemePreset::Slate);h.s.theme.fonts=h.s.fonts;h.s.dark=true;h.Settle();
         CaptureFrames(h,dir,frame,20);
     } else if(demo=="workflow") {
         h.s.page=15;h.s.comparison.open=false;h.Settle();
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,10);
         h.Click("workflow-chip");
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,10);
         h.Click("workflow-notify");
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,10);
         h.Click("workflow-steps");
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,10);
         h.s.page=16;h.Settle();
-        for(int i=0;i<40;++i) {
-            h.s.workflow.fraction=static_cast<float>(i)/39.f;
+        for(int i=0;i<24;++i) {
+            h.s.workflow.fraction=static_cast<float>(i)/23.f;
             char name[32];std::snprintf(name,sizeof(name),"frame-%03d.png",frame++);
             h.Frame({},dir/name);
+        }
+    } else if(demo=="preview-contract") {
+        auto &s=h.s.editors;s.Dataset(false);h.s.page=8;h.s.comparison.open=false;h.Settle();
+        s.videoTopRatio=.95f;
+        s.monitorMode=3;s.monitorContractSource=0;s.monitorContractAspect=1;
+        for(int state=0;state<5;++state) {
+            s.monitorContractStatus=state;h.Settle(2);
+            CaptureFrames(h,dir,frame,10);
         }
     } else if(demo=="progress") {
         h.s.page=16;h.s.comparison.open=false;h.Settle();
@@ -818,16 +847,17 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
         }
     } else if(demo=="timeline") {
         auto &s=h.s.editors;s.Dataset(false);h.s.page=8;h.s.comparison.open=false;h.Settle();
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,16);
         const auto origin=s.timeline.view.min;
         h.mouse={origin.x+s.timeline.headerWidth+5,origin.y+11};h.Settle();
         h.Frame([](ImGuiIO &io){io.AddMouseButtonEvent(0,true);});
         h.mouse.x+=60;h.Frame();
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,16);
         h.Frame([](ImGuiIO &io){io.AddMouseButtonEvent(0,false);});h.Settle();
-        CaptureFrames(h,dir,frame,20);
+        h.mouse={-100,-100};h.Settle();
+        CaptureFrames(h,dir,frame,16);
         s.Undo();h.Settle();
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,16);
     } else {
         throw std::runtime_error("unknown capture demo");
     }
@@ -1715,7 +1745,9 @@ int main(int argc, char **argv) {
         if(a=="--capture-demo" && i+1<argc) {
             captureDemo=argv[++i];
             if(captureDemo!="overview" && captureDemo!="comparison" && captureDemo!="themes" &&
-               captureDemo!="icons" && captureDemo!="vector" && captureDemo!="workflow" && captureDemo!="progress" && captureDemo!="timeline") return 2;
+               captureDemo!="icons" && captureDemo!="vector" && captureDemo!="workflow" &&
+               captureDemo!="progress" && captureDemo!="timeline" && captureDemo!="components" &&
+               captureDemo!="preview-contract") return 2;
             continue;
         }
         if (a == "--verify-timeline-model") return VerifyTimelineModel();

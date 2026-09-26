@@ -2,18 +2,18 @@
 
 [English](gallery.md) · [README](../README.ja.md)
 
-Windows native Galleryは、初見向けの案内アプリと公開APIの実例を兼ねます。consumerがlinkするImKitと同じlibraryを使い、demoだけに存在する代替widgetを隠しません。
+Windows向けのGalleryは、初めて使う人への案内と公開APIの実例を兼ねています。利用者のアプリと同じImKitライブラリを使い、デモ専用の代替widgetは使っていません。
 
 ## 初回訪問のための導線
 
-1. **Start** でホスト所有権の境界を説明し、目的別の画面へ直接案内します。
-2. **Compare** で、移動・resize可能なDefault Dear ImGui / ImKit windowを開きます。両列は同じホスト所有値を更新するため、片方の操作がもう片方にも反映されます。
-3. **Components、themes、icons** で、検索可能なnative specimen、palette編集、生成iconを確認できます。
-4. **Workflow、timeline、Frame Lab** では、任意の合成部品とEditor向けsurfaceを扱います。ただしホストのscene、Undo、rendererをImKitが所有するとは主張しません。
+1. **Start** でImKitとアプリ側の責任範囲を説明し、目的に合った画面へ案内します。
+2. **Compare** でDear ImGui標準部品とImKitの比較画面を開きます。ウィンドウは移動・サイズ変更でき、どちらの列からも同じ値を変更できます。
+3. **Components、themes、icons** の各ページで部品の動作や配色を試せます。プリセットアイコンは284種類あり、7つのサイズで確認できます。
+4. **Workflow、timeline、Frame Lab** では、任意で使える画面部品やEditor向け機能を紹介します。scene、Undo履歴、rendererはImKitではなくアプリ側が管理します。
 
-Start画面から **Components: Basic** (page 0)、**Icons** (page 6、ThemeはheaderのAppearanceで変更)、**Generic Workspace** (page 15)、**Video** (page 8)へ直接移動します。[実例とrecipe](examples-recipes.ja.md)は画面と公開header、CMake target、実装source、所有権、次に読むguideを対応付けています。Start routeのIDはGallery verifierで操作確認されます。
+Start画面から **Components: Basic** (page 0)、**Icons** (page 6、テーマは上部のAppearanceから変更)、**Generic Workspace** (page 15)、**Video** (page 8)へ移動できます。[実例と実装例](examples-recipes.ja.md)では、画面、公開ヘッダー、CMakeターゲット、実装ファイル、所有範囲、関連ガイドを対応付けています。各Startカードの移動先はGalleryの検証処理で確認しています。
 
-比較のbaselineは公開Dear ImGui APIだけです（`StyleColorsDark`と直接widget）。視覚と操作契約の実例であり、性能、OS入力、accessibilityを比較するものではありません。ImKit列はホスト所有の`Theme`、scale、状態、animationを借用します。global registryやGallery専用の第三者assetは導入していません。
+比較対象は、公開Dear ImGui APIから直接描画した標準部品（`StyleColorsDark`）です。見た目と操作方法の例であり、性能、OS入力、アクセシビリティを比較するものではありません。ImKit側ではアプリが管理する`Theme`、scale、状態、animationを使います。グローバルな登録機構やGallery専用の第三者製素材は追加していません。
 
 ## Buildと実行
 
@@ -31,45 +31,45 @@ cmake --build --preset macos-universal --target imkit_gallery --parallel
 # .app は build/macos-universal の出力ディレクトリに生成されます。
 ```
 
-公開するWindows archiveには`imkit_gallery.exe`、必要な`design-assets` directory、本プロジェクトのlicense、第三者noticeを含めます。serviceをinstallせず、ユーザー設定も作成せず、ImKit consumerへruntime依存を追加しません。
+Windows向け配布zipには`imkit_gallery.exe`、必要な`design-assets` directory、本プロジェクトのlicense、第三者noticeを含めます。serviceやユーザー設定は追加せず、ImKitを組み込むアプリのruntime依存も増やしません。
 
-通常起動では、ImKit GalleryとDear ImGui公式Demo Windowを同じキャンバス上の可動・リサイズ可能な
-2つのウィンドウとして表示します。広い画面では左右に初期配置し、通常のDear ImGui docking操作を
-維持します。Galleryには選択中のImKit themeを適用し、公式Demoは比較のためDear ImGui標準styleの
-まま描画します。公式DemoはGallery headerの**Dear ImGui Demo**チェックから閉じる・再表示できます。
+通常起動では、ImKit GalleryとDear ImGui公式Demo Windowを、移動・サイズ変更が可能な2つのウィンドウとして
+同じキャンバスに表示します。広い画面では左右に並べ、通常のDear ImGuiと同じドッキング操作ができます。
+Galleryには選択中のImKit themeを適用し、公式Demoは比較できるようDear ImGui標準styleのまま表示します。
+公式DemoはGallery上部の**Dear ImGui Demo**チェックから閉じたり、再表示したりできます。
 
 ## 検証と再生成可能なcapture
 
-Gallery runnerは公開Dear ImGui IOと実OpenGL backbufferを使用します。決定的なwidget契約と文書用の外観確認には使えますが、native OS/IME、screen reader、実機DPIのautomationでは**ありません**。
+Gallery runnerは公開Dear ImGui IOを使い、OpenGL backbufferを撮影します。次のコマンドで文書用の画面を再生成できます。OSの入力操作、IME、画面読み上げ、実機DPIの自動検証ではありません。
 
-```powershell
-$gallery = './build/windows-debug/catalog/Debug/imkit_gallery.exe'
-& $gallery --verify-comparison --output out/comparison
-& $gallery --capture-readme --width 960 --height 540 --output out/readme
-foreach ($demo in 'comparison', 'themes', 'icons', 'workflow', 'timeline') {
-    & $gallery --capture-demo $demo --width 960 --height 540 --output out/gifs
-}
-$node = './build/windows-debug/catalog/Debug/imkit_node_editor_gallery.exe'
-& $node --capture-gif out/gifs/node-editor
-```
+    $gallery = './build/windows-debug/catalog/Debug/imkit_gallery.exe'
+    & $gallery --verify-comparison --output out/comparison
+    $routes = @('overview', 'comparison', 'components', 'icons', 'themes', 'workflow', 'preview-contract', 'timeline')
+    foreach ($route in $routes) {
+        & $gallery --capture-demo $route --width 1440 --height 810 --output out/readme
+    }
+    $node = './build/windows-debug/catalog/Debug/imkit_node_editor_gallery.exe'
+    & $node --capture-gif out/readme/node-editor --width 1440 --height 810
 
-`--verify-comparison`は、DefaultとImKitのcontrolが共有ホスト所有状態を更新すること、一時styleがframe後に復元されること、close/reopen時にcontrolが消え、再表示されることを確認します。
-公開Dear ImGui IOと実OpenGL backbufferを使用します。native OS/IME automationではありません。
-captureと検証modeは、従来の決定的な全キャンバスGallery配置を維持し、Dear ImGui公式Demo Windowを
-表示しません。
+各画面の撮影結果はnative backbufferからout/readme以下に出力されます。撮影時は1440×810にし、README画像へ変換するとき960×540に縮小します。Node Editorは指定した撮影サイズで56枚出力します。READMEに載せる9本は、画面ごとのframe数を指定して生成します。
 
-`--capture-readme`は120 frameを出力します。v3 README用routeはworkflow／progress 120、timeline 80、theme／comparison 120、Node Editor 80 frameです。Node Editor captureはホスト所有の決定的状態でzoom、pan、動的socket、新しい接続、inline値、preview、minimapを示します。すべてnative `960×540` backbufferです。
+    $routes = @(
+        @{name='overview'; file='v3-overview.gif'; frames=60; colors=128; dither='floyd-steinberg'},
+        @{name='comparison'; file='v3-comparison.gif'; frames=56; colors=128; dither='floyd-steinberg'},
+        @{name='components'; file='v3-components.gif'; frames=52; colors=128; dither='floyd-steinberg'},
+        @{name='icons'; file='v3-icons.gif'; frames=56; colors=128; dither='floyd-steinberg'},
+        @{name='themes'; file='v3-theme-comparison.gif'; frames=56; colors=128; dither='floyd-steinberg'},
+        @{name='workflow'; file='v3-workflow-progress.gif'; frames=64; colors=96; dither='floyd-steinberg'},
+        @{name='preview-contract'; file='v3-preview-contract.gif'; frames=50; colors=128; dither='floyd-steinberg'},
+        @{name='timeline'; file='v3-timeline.gif'; frames=64; colors=128; dither='floyd-steinberg'},
+        @{name='node-editor'; file='v3-node-editor.gif'; frames=56; colors=96; dither='none'}
+    )
+    foreach ($route in $routes) {
+        python tools/build_readme_gif.py "out/readme/$($route.name)" "docs/images/$($route.file)" --expected-frames $route.frames --width 960 --height 540 --fps 8 --colors $route.colors --dither $route.dither
+    }
 
-```powershell
-python tools/build_readme_gif.py out/readme/readme-frames docs/images/v3-overview.gif
-python tools/build_readme_gif.py out/gifs/node-editor docs/images/v3-node-editor.gif --expected-frames 80
-python tools/build_readme_gif.py out/gifs/workflow docs/images/v3-workflow-progress.gif
-python tools/build_readme_gif.py out/gifs/timeline docs/images/v3-timeline.gif --expected-frames 80
-python tools/build_readme_gif.py out/gifs/themes docs/images/v3-theme-comparison.gif
-```
-
-encoderはframe数・寸法の不一致、8MiBを超えるGIFを拒否します。Pillowは文書生成専用であり、ImKitからlink・installしません。
+変換スクリプトは同じ16:9のframeを960×540に縮小し、8 fpsのGIFを生成します。2 MiBを超えるGIFは出力しません。Node Editorは容量を抑えるため、96色のpaletteを使い、ditheringを無効にしています。ほかの画面には表の設定を使います。READMEに掲載するGIF9本は、合計9 MiB以内に保ちます。Pillowは文書画像の再生成だけに使い、ImKitの依存には加えません。
 
 ## 出典と配布境界
 
-commitした`docs/images/v3-*.gif`はGalleryまたはNode Editor companionから生成します。release showcase MP4も同じnative frame列からencodeします。stock image、第三者製品画面、icon・font・UI実装・media assetは含みません。Dear ImGui、GLFW、任意fontには既存のlicenseが適用され、noticeは[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)にあります。証拠と対象外は[検証記録](validation.md)、Frame Labのplatform adapter境界は[公開window frame](gallery-window-frame.md)を参照してください。
+`docs/images/v3-*.gif`はGalleryまたはNode Editor companionから生成します。リリース用showcase MP4も同じnative frame列から作ります。既成画像、第三者製品の画面、外部のicon・font・UI実装・media assetは含みません。Dear ImGui、GLFW、任意fontにはそれぞれのlicenseが適用され、詳細は[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)に記載しています。検証の証拠と対象外は[検証記録](validation.md)、Frame Labのplatform adapter境界は[公開window frame](gallery-window-frame.md)を参照してください。
