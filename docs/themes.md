@@ -4,11 +4,11 @@
 
 ## Named presets
 
-`ThemePresets()` returns twelve entries in a stable display order. Each `ThemePresetInfo` contains an enum value, a stable lowercase ID for host persistence, an English display name and its Light/Dark scheme.
+`ThemePresets()` returns thirteen entries in a stable display order. Each `ThemePresetInfo` contains an enum value, a stable lowercase ID for host persistence, an English display name and its Light/Dark scheme.
 
 | Light | Dark |
 |---|---|
-| Precision Light, Warm Sand, Rose, Solar, High Contrast Light | Precision Dark, Graphite, Midnight, Ocean, Forest, Violet, High Contrast Dark |
+| Precision Light, Warm Sand, Rose, Solar, High Contrast Light | Precision Dark, Graphite, Midnight, Ocean, Forest, Violet, High Contrast Dark, Slate |
 
 ```cpp
 auto theme = imkit::MakeTheme(imkit::ThemePreset::Forest);

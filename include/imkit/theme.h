@@ -10,7 +10,7 @@ namespace imkit {
 enum class ColorScheme { Light, Dark };
 enum class ThemePreset : std::uint8_t {
     PrecisionLight, PrecisionDark, Graphite, Midnight, Ocean, Forest,
-    WarmSand, Rose, Violet, Solar, HighContrastLight, HighContrastDark
+    WarmSand, Rose, Violet, Solar, HighContrastLight, HighContrastDark, Slate
 };
 struct ThemePresetInfo {
     ThemePreset preset;

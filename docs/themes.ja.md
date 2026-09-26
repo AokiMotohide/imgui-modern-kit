@@ -4,11 +4,11 @@
 
 ## 名前付きpreset
 
-`ThemePresets()`は固定順の12項目を返します。各`ThemePresetInfo`にはenum値、ホスト側保存用の安定した小文字ID、英語表示名、Light/Dark区分があります。
+`ThemePresets()`は固定順の13項目を返します。各`ThemePresetInfo`にはenum値、ホスト側保存用の安定した小文字ID、英語表示名、Light/Dark区分があります。
 
 | Light | Dark |
 |---|---|
-| Precision Light、Warm Sand、Rose、Solar、High Contrast Light | Precision Dark、Graphite、Midnight、Ocean、Forest、Violet、High Contrast Dark |
+| Precision Light、Warm Sand、Rose、Solar、High Contrast Light | Precision Dark、Graphite、Midnight、Ocean、Forest、Violet、High Contrast Dark、Slate |
 
 ```cpp
 auto theme = imkit::MakeTheme(imkit::ThemePreset::Forest);

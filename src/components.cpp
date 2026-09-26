@@ -208,13 +208,15 @@ bool Toggle(const char *label, bool *value, ComponentOptions options) {
     }
     auto *d = ImGui::GetWindowDrawList();
     auto fill = Mix(style.Colors[ImGuiCol_FrameBg], Accent(options.theme), position);
+    auto thumb = Mix(style.Colors[ImGuiCol_Text],
+                     options.theme ? options.theme->colors.onAccent : ImVec4(1,1,1,1), position);
     // Fit in native checkbox's square so label layout and hit target remain native.
-    float y = min.y + h * .25f;
-    d->AddRectFilled({min.x, y}, {min.x + h, y + h * .5f}, ImGui::GetColorU32(fill), round);
-    d->AddRect({min.x, y}, {min.x + h, y + h * .5f}, ImGui::GetColorU32(style.Colors[ImGuiCol_Border]),
+    float y = min.y + h * .19f;
+    d->AddRectFilled({min.x, y}, {min.x + h, y + h * .62f}, ImGui::GetColorU32(fill), round);
+    d->AddRect({min.x, y}, {min.x + h, y + h * .62f}, ImGui::GetColorU32(style.Colors[ImGuiCol_Border]),
                round);
-    d->AddCircleFilled({min.x + h * (.25f + .5f * position), min.y + h * .5f}, h * .19f,
-                       ImGui::GetColorU32(style.Colors[ImGuiCol_Text]));
+    d->AddCircleFilled({min.x + h * (.29f + .42f * position), min.y + h * .5f}, h * .235f,
+                       ImGui::GetColorU32(thumb));
     if (ImGui::IsItemFocused())
         d->AddRect(min, {min.x + h, min.y + h}, ImGui::GetColorU32(ImGuiCol_NavCursor), style.FrameRounding,
                    1.5f, ImDrawFlags_None);
@@ -309,20 +311,31 @@ bool InputVector3WithUnit(const char *label, float *value, const char *unit, con
     bool changed = false;
     ImGui::PushID(label);
     ImGui::BeginGroup();
-    float w = std::max(60.f, (ImGui::CalcItemWidth() - 2 * ImGui::GetStyle().ItemSpacing.x) / 3);
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted(label);
+    if (unit && *unit) {
+        ImGui::SameLine();
+        ImGui::TextDisabled("(%s)", unit);
+    }
+    const float spacing = ImGui::GetStyle().ItemSpacing.x;
+    const float available = ImGui::CalcItemWidth();
+    const bool stacked = available < 240.f;
+    const float width = stacked ? std::max(72.f, available) : (available - 2 * spacing) / 3;
     const char *axes[] = {"X", "Y", "Z"};
+    const ImGuiCol colors[] = {ImGuiCol_PlotLines, ImGuiCol_PlotHistogram, ImGuiCol_CheckMark};
     for (int i = 0; i < 3; ++i) {
-        if (i)
+        if (i && !stacked)
             ImGui::SameLine();
         ImGui::PushID(i);
-        ImGui::SetNextItemWidth(w);
-        changed |= ImGui::InputFloat(axes[i], value + i, 0, 0, format);
+        ImGui::BeginGroup();
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextColored(ImGui::GetStyleColorVec4(colors[i]), "%s", axes[i]);
+        ImGui::SameLine(0, spacing * .5f);
+        ImGui::SetNextItemWidth(std::max(45.f, width - ImGui::CalcTextSize(axes[i]).x - spacing * .5f));
+        changed |= ImGui::InputFloat("##value", value + i, 0, 0, format);
+        ImGui::EndGroup();
         ImGui::PopID();
     }
-    ImGui::SameLine();
-    ImGui::TextDisabled("%s", unit);
-    ImGui::SameLine();
-    ImGui::TextUnformatted(label);
     ImGui::EndGroup();
     ImGui::PopID();
     return changed;

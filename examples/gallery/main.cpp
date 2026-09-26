@@ -783,6 +783,8 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
         CaptureFrames(h,dir,frame,20);
         applyPreset(8);
         CaptureFrames(h,dir,frame,20);
+        applyPreset(static_cast<int>(imkit::ThemePreset::Slate));
+        CaptureFrames(h,dir,frame,20);
         h.s.palette=false;h.Settle();
         CaptureFrames(h,dir,frame,20);
         h.s.page=19;h.s.comparison.open=true;h.Settle();
