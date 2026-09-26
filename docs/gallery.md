@@ -23,6 +23,14 @@ cmake --build --preset windows-debug --target imkit_gallery --parallel
 ./build/windows-debug/catalog/Debug/imkit_gallery.exe
 ```
 
+On macOS use the `macos-universal` preset (Release, arm64/x86_64, Universal 2):
+
+```bash
+cmake --preset macos-universal
+cmake --build --preset macos-universal --target imkit_gallery --parallel
+# The app bundle is produced in the build/macos-universal output directory.
+```
+
 The released Windows archive contains `imkit_gallery.exe`, the required `design-assets` directory, this project's license and third-party notices. It does not install a service, create a user configuration or add a runtime dependency to an ImKit consumer.
 
 A normal launch opens the ImKit Gallery and the official Dear ImGui Demo Window as two movable,

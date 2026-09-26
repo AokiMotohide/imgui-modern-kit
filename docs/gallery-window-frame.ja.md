@@ -2,7 +2,7 @@
 
 [English](gallery-window-frame.md) · [実例recipe](examples-recipes.ja.md) · [文書カタログ](documentation-catalog.ja.md)
 
-WindowFrame APIはtitle areaの配置と描画、型付きwindow操作要求を提供します。基本targetは`imkit::window_frame`、headerは`<imkit/window_frame.h>`です。`Style`、寸法、feature、content、stateは呼出し側が明示します。文字列/spanはdraw呼出し中だけ借用します。
+WindowFrame APIはtitle areaの配置と描画、型付きwindow操作要求を提供します。基本targetは`imkit::imkit`、headerは`<imkit/window_frame.h>`です。`Style`、寸法、feature、content、stateは呼出し側が明示します。文字列/spanはdraw呼出し中だけ借用します。
 
 ## frame内の使い方
 

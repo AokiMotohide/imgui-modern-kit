@@ -2,7 +2,26 @@
 
 ## Unreleased
 
-No changes yet. / 変更はまだありません。
+### Themes
+
+- Add `Slate` as the 13th named theme preset (previously 12). Stable IDs and display order are preserved; existing consumers are unaffected.
+- Improve contrast and visibility of the general dark theme and its associated controls.
+- 名前付きtheme presetに`Slate`を13番目で追加（従来12）。安定IDと表示順を保持し、既存consumerに影響を与えません。
+- 汎用ダークテーマと関連する操作部品のコントラスト・視認性を向上しました。
+
+### Workflow and hierarchy
+
+- Add a generic work tab, a hierarchy listing, and a settings card to the workflow surface.
+- Let hierarchy headings and rows expose auxiliary operations as selectable requests.
+- workflow surfaceに汎用作業タブ、階層一覧、設定カードを追加しました。
+- 階層の見出し・行が選択可能な補助操作要求を返すようにしました。
+
+### Components
+
+- Add `DragVector3WithUnit`: per-axis drag input with a shared unit label; each axis keeps native `DragFloat` behavior and a stable ID scope, and fields stack at narrow widths.
+- 単位付き三軸drag入力の `DragVector3WithUnit` を追加しました。各軸は標準 `DragFloat` の挙動と安定ID範囲を保つ。狭い幅では欄を縦並びにします。
+
+- No public API or ABI breaking changes in this set. / このセットには破壊的変更はありません。
 
 ## 3.1.0 — 2026-09-26
 

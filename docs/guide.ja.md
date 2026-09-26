@@ -84,7 +84,7 @@ release packageはWindows x64、Windows Arm64、macOS arm64、macOS x86_64、mac
 # 対応するhost_imguiを先に作成
 set(IMKIT_IMGUI_TARGET host_imgui)
 set(IMKIT_SDK_ABI_CONFIRMED ON) # manifest・構成の一致を確認してから
-find_package(imkit 3.0 CONFIG REQUIRED)
+find_package(imkit 3.1 CONFIG REQUIRED)
 target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
 

@@ -1,39 +1,45 @@
-# Architecture / 設計
+# 設計
 
-[English](architecture.md) · [文書カタログ](documentation-catalog.ja.md)
+[English](architecture.md)
 
-### 所有境界
+## 配置
 
-ImKitはDear ImGui上で再利用できるUIを提供する静的ライブラリです。Dear ImGui Context・backend・renderer・font atlas・texture・アプリケーションdata・保存・Undo・workerを初期化・所有しません。描画APIはホストが開始したframe内で呼びます。
+ワークフロー部品は patterns の拡張です。画像・preview 部品は Editor Core に属し、Canvas・Selection・Splitter を再利用します。基本の `imkit` は Editor Core に依存しません。公開契約は [汎用ワークフロー部品](workflow-components.ja.md) を参照してください。
 
-公開wrapperはDear ImGuiのBegin/End、focus、callback、disabled、clipping、ID、入力編集の契約を維持します。独自部品は標準widgetと公開DrawListで構成し、入力処理そのものを置き換えません。
+横断的なデザインシステムの追加、明示的な semantic frame、locale、provider 契約は [デザインシステム刷新](design-system.ja.md) に記載されています。`MakeTheme`／`ResolveTheme` を使う場合、従来 palette/metrics は新 semantic token の描画用導出値として扱われます。
 
-## v3 platform境界
+Precision Layers は semantic なデザイン、native な動作、ホスト state を分離します。
 
-coreはplatform・renderer非依存です。公式Dear ImGui backendをlinkするのはGallery hostだけです。optional previewは明示的に作成し、渡されたdevice/Context上で動作します。accessibility adapterもsnapshotをコピーし、型付きactionをホストへ返します。
+## プラットフォーム境界
 
-### module構成
+core は platform・renderer 非依存を維持します。公式 Dear ImGui backend をコンパイルするのは Gallery host のみ（Windows は GLFW/OpenGL3、macOS は GLFW/Metal）です。任意の `preview_opengl3`・`preview_metal` target は明示的な off-screen GPU リソースのみを所有し、Context・device・command buffer・submission はホスト所有です。`accessibility_win32`・`accessibility_macos` アダプタは公開された semantic snapshot をコピーし、共通の `NativeActionSink` 経由で操作要求を返します。
 
-| module | 主な責務 | 所有者・制約 |
-|---|---|---|
-| `imkit` | Theme、native API、widget、composition | host-owned値と非所有viewを受け取る |
-| `node_editor` | graph snapshot表示と有限容量のedit request | graph保存、評価、Undo、revision受理はホスト |
-| Editor Core / Video / CG | 編集UI、provider query、event生成 | scene/media data、selection、Undo、workerはホスト |
-| Preview | 明示的に初期化するoptional offscreen描画 | GPU resourceを所有する場合もdevice、Context、submissionはホスト |
-| WindowFrame | frame配置計算、描画、型付きoperation返却 | native windowとOS操作はホスト。OS adapterは別target |
+| レイヤー | 責務 |
+|---|---|
+| `version.h` | 対応版を明示する guard。暗黙の跨版 ABI 保証なし |
+| `theme.h`、`theme.cpp` | 名前付き preset の列挙、コピー可能な palette/metrics/fonts/motion、決定的な style 導出、入れ子 RAII |
+| `native.h` | ホストの公開ヘッダーから import した正確な overload 群 |
+| `widgets.h`、`widgets.cpp` | 既存6関数、pointer Selectable、公開 DrawList による選択/tree/tab マーク |
+| `components.h`、`components.cpp` | 小さな native 合成。theme/animation は任意・明示的に渡す |
+| `node_editor.h`、`node_editor.cpp`、`node_layout.cpp` | graph snapshot、容量有限な request、決定的な layout。graph 保存・評価は持たない |
+| Gallery host | Context、fonts、GLFW/OpenGL、画像キャプチャ、代表入力 |
 
-基本`imkit`はEditor Coreへ依存しません。各moduleのtargetとheaderは[Editor Suite](editor-suite.ja.md)および[実例recipe](examples-recipes.ja.md)を参照してください。
+`imkit` は自身の実装だけをコンパイルします。Dear ImGui をコンパイルし、backend をリンクし、Context を初期化し、font を探し、設定を永続化し、worker を生み出したりしません。公開ラッパーは native の Begin/End、focus、callback、disabled、clipping、ID の契約を維持します。装飾は別 item を提出せず、複合部品は native group を使います。
 
-### Themeと状態
+## Theme と state
 
-Themeは`MakeTheme()`が返す値としてホストが保持し、グローバルregistryや選択状態はありません。FontSetは非所有参照です。AnimationStateもホストが寿命を管理し、Contextより先に関連scopeを終了してください。
+グローバルな Theme registry はありません。`ThemePresets()` は不変の列挙 metadata、`MakeTheme()` はコピー可能でホスト所有の値を返します。どちらにも現在の選択は保持されません。`FontSet` は非所有参照を含む。`AnimationState` はホストが明示的に寿命を管理する固定容量の保存です。scope はその Context が破棄される前に終了してください。静的 SDK は、利用者が先に作成した ImGui target に import interface adapter 経由で結合します。
 
-## Extension policy / 拡張方針
+`window_frame.h` も同じ境界を守ります。style、寸法、feature、content、state は明示的な値です。文字列/span は 1 回の描画中だけ借用されます。core は配置の計算、current Dear ImGui context への描画、型付き request の返却だけを行い、native window や platform 入力を所有しません。`window_frame_win32`・`window_frame_macos` は `HWND` または Cocoa window を借用する別 target で、対応 platform だけで build・export・install され、`imkit::imkit` に Windows/Cocoa 依存を加えません。
 
-Dear ImGuiの固定版公開宣言と比較してoverload、default、戻り値、callbackの意味を維持します。新しい版への対応はversion guardを緩めるだけで完了せず、adapter・style・font契約とcompile fixtureを確認します。寸法や状態容量はboundedにし、利用アプリ固有の型やserviceをlibraryへ導入しません。
+## 拡張方針
 
-## Editor moduleの所有権
+overload を追加するのは、固定の公開签名と比較し、default と戻り値の语义を維持したときだけです。`tools/generate_api.py` で API 対応表と compile/link fixture を再生成してください。対応していない新しい Dear ImGui 版への対応には、単なる version guard の緩和ではなく、adapter/style への意識的なレビューが必要です。描画寸法は theme・文字サイズから導出し、state は容量を制限し、native 編集を維持してください。ホスト固有のデータや service をこの library には持ち込みません。
 
-Node Editorはgraph snapshotを借用して有限容量requestを返します。graph保存、評価、revision受理、Undoはホスト所有です。Editor Core・Video・CGはprovider viewからUIを構成しますが、scene/media dataやselectionを保持しません。詳細は[Editor Suite](editor-suite.ja.md)を参照してください。
+## Editor module の所有権
 
-履歴付きの設計記録は[保守用文書一覧](documentation-catalog.ja.md)から参照できます。現行契約は公開headerと英語版の[architecture](architecture.md)を基準にしてください。
+Node Editor は独立した任意 target です。1 frame の間 graph snapshot を借用し、容量有限な編集 request を返します。動的 socket policy、互換判定、revision 受理、model 変更、preview 計算、Undo、永続化はホスト所有です。Material Graph companion は GUI 統合のサンプルであり、renderer や shader system ではありません。
+
+Editor Core、Video、CG は非所有の provider view を消費し、固定バッファの event を生成します。編集された scene/media データ、選択、Undo、worker、Context は所有しません。明示的に生成した任意の OpenGL3 preview object は、自身の graphics リソースのみを所有します。Context と GL 関数表はホストから来ます。詳細は [Editor Suite](editor-suite.ja.md) を参照してください。
+
+CG の変換は任意方向の非均等な scale に対して rotation、scale、上三角の shear を保持します。Scale イベントはアフィン成分を明示的に持ち、ホストは scale とまとめて適用します。両 preview 経路は同じ完全な線形変換と逆転置 normal を使います。

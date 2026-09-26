@@ -85,7 +85,7 @@ Release packages are produced separately for Windows x64, Windows Arm64, macOS a
 # Create the matching host_imgui target first.
 set(IMKIT_IMGUI_TARGET host_imgui)
 set(IMKIT_SDK_ABI_CONFIRMED ON) # only after checking the manifest and settings
-find_package(imkit 3.0 CONFIG REQUIRED)
+find_package(imkit 3.1 CONFIG REQUIRED)
 target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
 

@@ -165,8 +165,7 @@ The API inventory is [node-editor-api.json](node-editor-api.json), regenerated w
 `python tools/generate_node_api.py` without rewriting existing API inventories.
 
 Native OS/IME, physical DPI, assistive technology,
-Release performance and installed-SDK distribution are not established by these
-development checks. [日本語](node-editor.ja.md)
+Release performance and installed-SDK distribution are not established by these development checks.
 
 
 ## Dynamic sockets and standard rows

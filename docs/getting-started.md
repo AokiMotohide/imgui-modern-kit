@@ -67,7 +67,7 @@ Create the matching host ImGui target first, configure with the SDK prefix, and 
 ```cmake
 set(IMKIT_IMGUI_TARGET host_imgui)
 set(IMKIT_SDK_ABI_CONFIRMED ON)
-find_package(imkit 3.0 CONFIG REQUIRED)
+find_package(imkit 3.1 CONFIG REQUIRED)
 target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
 

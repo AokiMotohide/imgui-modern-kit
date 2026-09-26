@@ -24,6 +24,5 @@ Timeline providerは選択、隣接clip、offscreen対象、external dropの候�
 
 range/marker/property array callbackのdataとscratch storageは呼出し側が用意します。IDをsort/filter間で維持し、容量不足時は明示的に失敗を扱います。最終決定はホストが所有し、ImKitが編集dataやUndo履歴を保持しません。
 
-[Editor Suite guide](editor-suite.ja.md)はmodule選択とGallery source、[Timeline recipe](timeline-editing.ja.md)は具体操作を説明します。[Public API coverage](api-coverage.ja.md)はDear ImGui基礎APIの対応範囲を示します。
 
 [Editor Suite guide](editor-suite.ja.md)は用途・target・Gallery上の画面を説明し、[Timeline recipe](timeline-editing.ja.md)は編集操作のhost責任を示します。[公開API coverage](api-coverage.ja.md)は固定Dear ImGui APIの範囲を記載します。これらは異なるmoduleの契約なので、相互に同一の検証証拠とは扱いません。

@@ -1,26 +1,30 @@
-# Timeline editing / Timeline編集
+# Timeline編集
 
-[English](timeline-editing.md) · [Editor Suite](editor-suite.ja.md) · [Editor API](editor-api.ja.md)
+[English](timeline-editing.md)
 
-任意の`TimelineEditingProvider`を使うと、独立fade、cut transition、矩形selection、検証付きtrack間移動が有効になります。未指定なら従来のtransition操作を利用します。provider、借用view、clipboard、Undo履歴はホスト所有です。公開APIは`<imkit/video.h>`と`imkit::video` targetから利用できます。
+Timeline の任意の `TimelineEditingProvider` が独立したクリップフェード、cut transition、矩形選択、検証付きのトラック間移動を有効にします。provider を指定しなければ、従来の transition コントロールも利用できます。provider、借用 view、クリップボード、Undo 履歴はホスト所有です。
 
-## 操作例
+## 入力
 
-- clip上端のhandleをdragしてfadeを作成・resizeします。右clickで時間、Linear/Ease in/Ease out、削除を指定します。
-- TransitionShelfからDissolveまたはCrossfadeを隣接cutへdragします。bandをresizeし、context menuで時間変更・削除を行います。Dissolveはvideo、Crossfadeはaudio対象です。VideoにはDip to blackもあります。
-- 空白timelineをdragして交差clipを矩形選択し、Shiftで追加、Ctrlで反転します。複数選択をdragする場合、providerが全対象を同じtrack offsetで検証します。
-- track名をclickして選択し、Shift/Ctrlで複数選択します。選択名を他の名前へdragすると元順で挿入します。Tracks menuから追加・複製・削除し、空でないtrack削除は確認します。
+- クリップの上端ハンドルをドラッグすると、ゼロからフェードの作成・リサイズができます。ハンドルを右クリックすると、長さ、Linear/Ease in/Ease out、削除を指定できます。
+- `TransitionShelf` から Dissolve または Crossfade を隣接 cut へドラッグします。band をドラッグしてリサイズし、context menu で長さを変更・削除できます。Dissolve は video、Crossfade は audio を対象にします。provider の media handle 制限が初期 1 秒の長さおよび以降の編集を上限にします。video は shelf と種類メニューで Dip to black（`TransitionKind::Fade`）も対応します。
+- 空の timeline 領域をドラッグすると交差するクリップを選択できます。Shift で追加、Ctrl で切り替え。選択済みのクリップをドラッグすると選択集合を維持します。到達先 callback はすべてのメンバーを同じ track offset でマッピングし、`canMove` が完全集合を検証します。
+- track 名をクリックして行を選択できます。Shift で追加、Ctrl で切り替え。選択中の名前を別の名前にドラッグすると、元の順序でその前の行に選択行を挿入します。Tracks メニューで track の追加・複製・削除ができます。中身がある削除は確認します。名の上半分・下半分は该行の前後への挿入受け入れで、ホストが `trackAfter` を提供する場合は最終行の下半分は末尾追加になります。
+- Ctrl+wheel はポインタ基準でズーム、Shift+wheel は横方向スクロール、wheel は縦方向スクロール。+/− は表示中心でズーム。Fit、Fit selection、overview range のハンドルが明示的な導航を提供します。アクティブな gesture はビューポート端でスクロールします。
+- Edit clips メニューは Copy/Cut/Paste を要求します。Paste は再生ヘッドとアクティブな track を基準に、相対時間と track offset を保持します。ホストは Insert または Overwrite を実装し、互換しない到達先は原子的に拒否します。
 
-Galleryの **Video** page (`8`) を操作し、[`editor_workspaces.cpp`](../examples/gallery/editor_workspaces.cpp)のsample host実装を参照してください。より広いmodule recipeは[実例一覧](examples-recipes.ja.md)にあります。
+## イベント契約
 
-### ホスト契約
+`ClipFades` はクリップを対象にします：`first/last` は tick 単位の in/out 長さ、`x/y` は `FadeCurve` の値です。`CutTransition` は左クリップを対象にします：`parent` は右クリップ、`first` は全長、`x` は `TransitionKind`。長さがゼロなら transition を削除します。cut は隣接を維持し、同じ unlock された track 上で、両側の source media に十分な余地が必要です。`EvaluateFade` はクリップ局所のフェード利得を評価し、media のデコードや audio/video 効果の適用はしません。
 
-media decode・playback・capture、clip data、selection、collision policy、revision、event buffer、Undo、保存、workerはホスト所有です。Providerは画面外対象や関連clipを含め、要求された完全な結果を返す必要があります。容量不足、lock、stale revisionを成功扱いせず、編集全体を検証してから適用してください。正確なoverloadとcallbackの寿命は[English API contract](timeline-editing.md)と[Editor API](editor-api.ja.md)を参照してください。
+`TrackEdit` は `offset=TrackAction`、`parent=挿入先より前の track`（ゼロは末尾追加）、追加時は `x=TrackKind` を使います。`Clipboard` は `offset=ClipboardAction`、`first=再生ヘッド`、`parent=到達先 track`、`x=PlacementMode` を使います。
 
-## Event contract / Event契約
+公開構造体は末尾フィールドを追加します。利用側は再ビルドしてください。以前コンパイルされた構造体とのバイナリ互換は保証しません。既存の enum 値と関数シグネチャの意味は維持されます。backend や ImGui 版の変更はありません。
 
-編集要求はホスト提供bufferへ出力されます。容量、revision、lock、選択全体を検証してからmodelへ適用します。overflow時に部分成功を仮定しません。
+## 検証
 
-## Verification / 検証
+Windows x64 の Debug で検証済みです：video 公開 IO テスト、Editor Core、CG、アイコン、API compile fixture。独立したホスト ImGui consumer もコンパイル・リンク・実行に成功しました。Gallery の `--verify-timeline-model` と既存の inspector モデル確認は合格です。`--verify-timeline-ui` は native OpenGL/公開 IO でのフェード作成、プレビュー/コミット、Undo、複数トラック選択、末尾追加/並べ替えに合格しました。100k クリップの fixture は可視行/クリップの問い合わせを維持（検査したフレームごとに 64 行以下・1000 クリップ以下）。238 アイコンが 6 サイズの alpha/atlas 整合性を合格しました。native の明暗 capture（新規 3D セットを含む 16/20/24 ピクセル）を目視確認しました。
 
-Galleryと自動testはsample provider、公開ImGui IO、合成データを対象にします。native OS入力、実media、利用host側の衝突・Undo統合は個別に受け入れてください。証拠baselineは[Validation](validation.ja.md)にあります。
+生成されたログ・capture は `out/timeline-ui/` にあり、コミットしません。本次の変更に対して Release/配布、実素材処理、native OS/IME、他アプリ統合は実行していません。
+
+実装と検証の結果はタスクの完了報告に別記しています。公開 IO 確認は native OS/IME、実素材処理、他アプリへの組込みを証明しません。

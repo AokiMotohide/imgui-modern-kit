@@ -23,6 +23,14 @@ cmake --build --preset windows-debug --target imkit_gallery --parallel
 ./build/windows-debug/catalog/Debug/imkit_gallery.exe
 ```
 
+macOS なら `macos-universal` preset（Release、arm64/x86_64、Universal 2）を使います。
+
+```bash
+cmake --preset macos-universal
+cmake --build --preset macos-universal --target imkit_gallery --parallel
+# .app は build/macos-universal の出力ディレクトリに生成されます。
+```
+
 公開するWindows archiveには`imkit_gallery.exe`、必要な`design-assets` directory、本プロジェクトのlicense、第三者noticeを含めます。serviceをinstallせず、ユーザー設定も作成せず、ImKit consumerへruntime依存を追加しません。
 
 通常起動では、ImKit GalleryとDear ImGui公式Demo Windowを同じキャンバス上の可動・リサイズ可能な
