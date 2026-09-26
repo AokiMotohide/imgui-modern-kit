@@ -255,14 +255,23 @@ StableId WorkspaceTabs(const char* id,std::span<const WorkspaceTab> tabs,
     ImGui::PopID();return request;
 }
 bool HierarchyGroupHeader(const char* id,const char* label,int count,bool* open,
-                          const IconAtlas* icons,IconId icon,ComponentOptions) {
+                          const IconAtlas* icons,IconId icon,ComponentOptions,
+                          bool* actionRequested,const char* actionLabel) {
     ImGui::PushID(id);
     bool local=open?*open:true;
     if(ImGui::ArrowButton("toggle",local?ImGuiDir_Down:ImGuiDir_Right))local=!local;
     ImGui::SameLine();
     if(icons&&icon!=IconId::Count) {Icon(*icons,icon,{ImGui::GetFontSize()});ImGui::SameLine();}
     char caption[256];std::snprintf(caption,sizeof(caption),"%s (%d)",Safe(label),std::max(0,count));
-    if(ImGui::Selectable(caption,false,0,{0,ImGui::GetFrameHeight()}))local=!local;
+    const float actionWidth=actionRequested?ImGui::GetFrameHeight()+ImGui::GetStyle().ItemSpacing.x:0.f;
+    if(ImGui::Selectable(caption,false,0,
+                         {actionRequested?std::max(1.f,ImGui::GetContentRegionAvail().x-actionWidth):0.f,
+                          ImGui::GetFrameHeight()}))local=!local;
+    if(actionRequested) {
+        ImGui::SameLine();
+        *actionRequested=icons?IconButton("group_action",*icons,IconId::Add,Safe(actionLabel),{ImGui::GetFontSize()})
+                              :ImGui::SmallButton(Safe(actionLabel));
+    }
     if(open)*open=local;
     ImGui::PopID();return local;
 }

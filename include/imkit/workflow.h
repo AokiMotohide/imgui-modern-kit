@@ -83,7 +83,8 @@ enum class HierarchyRowAction { None, Select, ToggleVisibility, ToggleLock, More
 // Header open state is host-owned; a row only returns a requested action.
 bool HierarchyGroupHeader(const char* id, const char* label, int count,
                           bool* open, const IconAtlas* icons=nullptr,
-                          IconId icon=IconId::Count, ComponentOptions options={});
+                          IconId icon=IconId::Count, ComponentOptions options={},
+                          bool* actionRequested=nullptr, const char* actionLabel="Add");
 HierarchyRowAction HierarchyRow(const char* id, const HierarchyRowView& row,
                                const IconAtlas* icons=nullptr,
                                ComponentOptions options={});

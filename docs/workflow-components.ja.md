@@ -10,7 +10,7 @@ Workflow部品は複数画面の制作ツールで再利用できるUIです。`
 
 公開APIにはProgress、step navigation、responsive toolbar/workspace、data table、image viewport、toast、empty/loading/error stateなどがあります。frame内では`imkit::StepNavigator(id, items, current, hostOwnedState, layout, options)`のように呼びます。戻り値は選択要求で、current値を自動更新しません。部品一覧とoverload条件は[`include/imkit/workflow.h`](../include/imkit/workflow.h)、[`tests/workflow_api_compile.cpp`](../tests/workflow_api_compile.cpp)、英語版の[API inventory](workflow-components.md)で確認してください。
 
-`WorkspaceTabs`はアイコンと文字を併記し、幅が足りないときはcomboへ切り替わります。`HierarchyGroupHeader`と`HierarchyRow`はホストが持つ開閉・選択・表示・ロック状態を描画し、行操作を要求として返します。表示またはロック操作がない項目では、行の`visibilityAvailable`または`lockAvailable`をfalseにできます。`BeginInspectorCard`と`EndInspectorCard`は関連設定を高さ自動のcardにまとめ、BeginがfalseでもEndを呼びます。`SettingToggleRow`は説明と無効理由を示し、値の更新を要求として返します。いずれも業務データとCommandを所有しません。
+`WorkspaceTabs`はアイコンと文字を併記し、幅が足りないときはcomboへ切り替わります。`HierarchyGroupHeader`と`HierarchyRow`はホストが持つ開閉・選択・表示・ロック状態を描画し、行操作を要求として返します。見出しの任意の追加操作も`actionRequested`として返します。表示またはロック操作がない項目では、行の`visibilityAvailable`または`lockAvailable`をfalseにできます。`BeginInspectorCard`と`EndInspectorCard`は関連設定を高さ自動のcardにまとめ、BeginがfalseでもEndを呼びます。`SettingToggleRow`は説明と無効理由を示し、値の更新を要求として返します。いずれも業務データとCommandを所有しません。
 
 ## Gallery
 
