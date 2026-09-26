@@ -326,7 +326,11 @@ void DrawIconArtworkShowcase(Host &h) {
         ImGui::TextUnformatted(slide.category.c_str());
         ImGui::PopFont();
         ImGui::SameLine();
-        ImGui::TextDisabled("%d presets  ·  %d PNG artworks", slide.presetCount, slide.sourceImageCount);
+        if (static_cast<int>(slide.tiles.size()) < slide.sourceImageCount)
+            ImGui::TextDisabled("%d presets  ·  %d PNG artworks  ·  %d featured",
+                                slide.presetCount, slide.sourceImageCount, static_cast<int>(slide.tiles.size()));
+        else
+            ImGui::TextDisabled("%d presets  ·  %d PNG artworks", slide.presetCount, slide.sourceImageCount);
         ImGui::TextDisabled("%s", slide.description.c_str());
         ImGui::Spacing();
         if (ImGui::BeginTable("##icon-artwork-grid", 5,
