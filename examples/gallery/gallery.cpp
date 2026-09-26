@@ -86,7 +86,7 @@ void Start(GalleryState &s) {
         StartCard(s, 8, "04 / EDITING", "Scale into timelines", "Explore Video editing UI. Media, project data and Undo stay in the host.", "Open timeline");
         EndTable();
     }
-    TextDisabled("Learning map: docs/examples-recipes.md (English) / docs/examples-recipes.ja.md (日本語)");
+    TextDisabled("Learning map: docs/getting-started/examples-recipes.md (English) / docs/getting-started/実例とレシピ.md (日本語)");
     SeparatorText("What remains yours");
     TextWrapped("Your Dear ImGui context, renderer, font atlas, data, undo history and persistence stay in the host. "
                 "ImKit supplies visual structure and reusable controls without taking those responsibilities.");

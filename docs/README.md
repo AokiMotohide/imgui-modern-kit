@@ -1,83 +1,99 @@
 # ImKit documentation
 
-[日本語](README.ja.md) · [Project overview](../README.md)
+[日本語](目次.md) · [Project overview](../README.md)
 
-ImKit's documentation is organized in three stages, following the patterns of established GUI projects (Dear ImGui, GTK, Qt, egui, Flutter):
+ImKit's documentation is organized in structured categories to help Dear ImGui developers quickly find what they need:
 
-1. **Learn** — the mental model: ownership, the Dear ImGui frame, theming, and module layout.
-2. **Build** — runnable codelabs, from your first themed window to a node editor, timeline, and custom component.
-3. **Reference and verify** — the authoritative module contracts, API inventories, and dated validation evidence.
+- **Getting Started (`getting-started/`)** — the mental model, ownership principles, installation, and usage guide.
+- **Tutorials (`tutorials/`)** — runnable codelabs from your first themed window to full node editors and timelines.
+- **Architecture (`architecture/`)** — authoritative ownership model, design tokens, themes, and dependencies.
+- **Components (`components/`)** — detailed guides for individual components and modules.
+- **Reference (`reference/`)** — API signatures, widget inventory, migration guides, and validation records.
 
-For the complete bilingual page map, audience, source/API mapping, and package paths, see the [documentation catalog](documentation-catalog.md). For practical, module-by-module examples, see [examples and recipes](examples-recipes.md).
+For the complete bilingual page map, audience, and source mapping, see the [documentation catalog](reference/documentation-catalog.md). For practical recipes, see [examples and recipes](getting-started/examples-recipes.md).
 
-## Learn the mental model
+---
 
-| Read | What it answers |
-|---|---|
-| [How ImKit works](how-it-works.md) | Who owns what, the Dear ImGui frame, and where ImKit fits |
-| [Architecture](architecture.md) | The authoritative ownership model, module layout, and public contract |
-| [Design system](design-system.md) | Design tokens, themes, and icon APIs |
-| [Dependencies](dependencies.md) | The required Dear ImGui revision and external packages |
-| [User guide](guide.md) | A short orientation to the host–library split and first calls |
+## 🗺️ Learning Roadmap
 
-## Build it (codelabs)
+```mermaid
+flowchart TD
+    Start["Want to use ImKit?"] --> Choice{"What is your goal?"}
 
-Step-by-step, host-owned builds you can port into your application. Each pairs with a reference page below that defines the full contract.
+    Choice -->|"Quick evaluation / First app"| QuickPath["1. Getting Started"]
+    QuickPath --> GS["getting-started/getting-started.md"]
+    GS --> FA["tutorials/build-first-app.md"]
+    FA --> Gallery["getting-started/gallery.md"]
 
-- [Build your first ImKit app](build-first-app.md) — context, theme, and your first themed controls.
-- [Build a settings screen](build-settings-screen.md) — host state, setting rows, and save/validation/notify.
-- [Build a node editor](build-node-editor.md) — graph snapshot in, edit requests out.
-- [Build a timeline editor](build-timeline.md) — tracks, clips, fades, transitions, and ripple moves.
-- [Author a custom component](custom-component.md) — `ThemeScope`, semantic colors, and reporting.
+    Choice -->|"Deep dive into architecture"| DeepPath["2. Design & Architecture"]
+    DeepPath --> HIW["getting-started/how-it-works.md"]
+    HIW --> Arch["architecture/architecture.md"]
+    Arch --> DS["architecture/design-system.md"]
 
-## Start using ImKit (by goal)
+    Choice -->|"Build a specific UI"| FeaturePath["3. Codelabs & Features"]
+    FeaturePath --> FEAT{"Which UI?"}
+    FEAT -->|"Node Editor"| NodeEd["components/node-editor.md"]
+    FEAT -->|"Video Timeline"| TL["components/timeline-editing.md"]
+    FEAT -->|"Settings screen"| SetSc["tutorials/build-settings-screen.md"]
+    FEAT -->|"Custom widget"| CustomComp["tutorials/custom-component.md"]
 
-| Goal | Read |
-|---|---|
-| Add ImKit to an existing Dear ImGui application | [Getting started](getting-started.md) |
-| Understand host and library ownership, themes, and module choices | [User guide](guide.md), [Architecture](architecture.md) |
-| Build a common settings interface from reusable controls | [Components and recipes](components.md) |
-| Explore the live examples | [Gallery guide](gallery.md) |
-| Choose, customize, and apply a theme | [Themes](themes.md) |
-| Diagnose configuration or runtime issues | [Troubleshooting](troubleshooting.md) |
-| Upgrade an existing v2 consumer | [v3 migration](migration-v3.md) |
-| Find the Gallery page, source, API, and next reading for a task | [Learning map and recipes](examples-recipes.md) |
+    Choice -->|"Troubleshooting / API lookup"| RefPath["4. Reference & Fixes"]
+    RefPath --> Trouble["reference/troubleshooting.md"]
+    RefPath --> API["reference/api-coverage.md"]
+    RefPath --> Migration["reference/migration-v3.md"]
+```
 
-## Integrate a specific module
+---
 
-| Module | Guide | Contract or deeper reference |
-|---|---|---|
-| Node Editor | [Node Editor integration](node-editor.md) | [Generated API inventory](node-editor-api.json), [recipe](examples-recipes.md) |
-| Workflow and data components | [Workflow components](workflow-components.md) | [Shell components](shell-components.md), [recipes](examples-recipes.md) |
-| Editor Core, Video, and CG | [Editor Suite](editor-suite.md) | [Editor API](editor-api.md), [Timeline editing](timeline-editing.md), [recipes](examples-recipes.md) |
-| Window frame | [Gallery WindowFrame guide](gallery-window-frame.md) | [WindowFrame API inventory](window-frame-api-inventory.json), [recipe](examples-recipes.md) |
-| Icons | [Icon reference](icons.md) | [recipe](examples-recipes.md) |
+## 📂 Documentation by Category
 
-## Verify a claim or inspect the API
+### Getting Started (`getting-started/`)
+- [Getting started](getting-started/getting-started.md) — Prerequisites, CMake integration, and first calls.
+- [User guide](getting-started/guide.md) — Host–library split, basic usage, and first themed controls.
+- [How ImKit works](getting-started/how-it-works.md) — Ownership model, immediate mode frame loop, and Dear ImGui relation.
+- [Gallery guide](getting-started/gallery.md) — Exploring the native Gallery and code locations.
+- [Examples and recipes](getting-started/examples-recipes.md) — Practical code snippets and patterns.
 
-| Question | Canonical reference |
-|---|---|
-| What does ImKit own, and what stays in the host? | [Architecture](architecture.md) |
-| Which Dear ImGui revision and external packages are required? | [Dependencies](dependencies.md) |
-| Which Dear ImGui functions and overloads are exposed? | [Public API coverage](api-coverage.md), [API inventory](api-inventory.json) |
-| What has been built or exercised, and what remains unverified? | [Validation](validation.md) |
-| What does the widget catalog cover? | [Widget inventory](widget-inventory.md) |
-| What are the design-system tokens and APIs? | [Design system](design-system.md), [Design-system API inventory](design-system-api.json) |
+### Tutorials (`tutorials/`)
+- [Build your first ImKit app](tutorials/build-first-app.md) — Minimal host-owned application setup.
+- [Build a settings screen](tutorials/build-settings-screen.md) — Host state, setting rows, and save/validation.
+- [Build a node editor](tutorials/build-node-editor.md) — Graph snapshot in, edit requests out.
+- [Build a timeline](tutorials/build-timeline.md) — Multi-track timeline, clips, and playhead.
+- [Build a custom component](tutorials/custom-component.md) — Using `ThemeScope` and tokens for custom widgets.
 
-`architecture.md` and `validation.md` are the canonical ownership and evidence references. Validation is time- and revision-specific: a recorded pass does not automatically describe a later checkout or establish native OS input, accessibility, external-host, or physical-device acceptance.
+### Architecture (`architecture/`)
+- [Architecture](architecture/architecture.md) — Authoritative ownership model, module split, and host boundary.
+- [Design system](architecture/design-system.md) — Semantic design tokens, typography, and contrast invariants.
+- [Themes](architecture/themes.md) — 13 built-in presets, palette customization, and `ThemeScope`.
+- [Icons](architecture/icons.md) — Procedural outline icons, multi-size atlases, and GPU upload.
+- [Dependencies](architecture/dependencies.md) — Pinned Dear ImGui docking commit, compiler flags, and options.
 
-## Maintainer notes and design records
+### Components (`components/`)
+- [Components](components/components.md) — Themed Dear ImGui controls and composite widgets.
+- [Node editor](components/node-editor.md) — Snapshot/request node canvas and editor widgets.
+- [Timeline editing](components/timeline-editing.md) — Track actions, roll/slide gestures, and external drop.
+- [Editor suite](components/editor-suite.md) — Professional workspace modules (Core, Video, CG).
+- [Workflow components](components/workflow-components.md) — Multi-step workflows, wizards, feedback, and cards.
+- [Shell components](components/shell-components.md) — Top chrome, header bars, and bottom action bars.
+- [Window frame](components/gallery-window-frame.md) — Modern custom title bars and OS window frame integration.
 
-These pages preserve project decisions, proposals, checklists, and review context. They are not consumer API promises; use the public headers and the contract references above when integrating ImKit.
+### Reference (`reference/`)
+- [Public API coverage](reference/api-coverage.md) — Full coverage table of Dear ImGui overloads.
+- [Editor API](reference/editor-api.md) — Accurate signature reference for all Editor Suite modules.
+- [Widget inventory](reference/widget-inventory.md) — Complete widget list and audit rationale.
+- [Documentation catalog](reference/documentation-catalog.md) — Complete page index, audience, and source mapping.
+- [Validation](reference/validation.md) — Automated gate and acceptance evidence.
+- [Migration v3](reference/migration-v3.md) — Upgrading from ImKit v2 to v3.
+- [Troubleshooting](reference/troubleshooting.md) — Solutions to common integration and build issues.
 
-Some records describe an earlier release or checkout. Their status tables are historical snapshots, not current TODO lists or publication authorization; use their stated baseline and date and confirm current behavior against the public contract pages.
+---
 
-- [Design proposals](design-proposals.md) · [Design refinements](design-refinements.md)
-- [Development status](development-status.md) · [Editor refresh](editor-refresh.md) · [Editor validation](editor-validation.md)
-- [Editor implementation checklist](editor-implementation-checklist.md) · [Node Editor review](node-editor-review.md)
-- [GitHub profile copy](github-profile.md)
-- [Performance evidence](evidence/)
+## 💡 The Core Mental Model: You Own Everything
 
-## Documentation approach
+There is only one essential principle to remember when using ImKit:
 
-The information flow follows patterns used by established GUI projects: Dear ImGui routes readers from setup to backend-specific examples and its live demo; GTK starts with a buildable first application; Qt separates tutorials/examples from API reference; egui pairs concise examples with an interactive demo. ImKit applies these structure choices to its host-owned, immediate-mode contract without copying their code or presentation. See [Dear ImGui Getting Started](https://github.com/ocornut/imgui/wiki/Getting-Started), [GTK Getting Started](https://docs.gtk.org/gtk4/getting_started.html), [Qt documentation categories](https://doc.qt.io/qt-6/qdoc-categories.html), and [egui](https://docs.rs/egui/latest/egui/).
+> **"You own everything; ImKit only draws and reports events."**
+
+The Dear ImGui context, allocations, persistence, undo/redo history, and business models all belong strictly to **your host application**. ImKit never stores mutable document state or silently alters your data. Instead, it renders your models and returns typed requests that you validate and commit.
+
+For details, see [How ImKit works](getting-started/how-it-works.md).

@@ -4,7 +4,7 @@
 
 ImKitは、既存のDear ImGuiアプリにテーマと再利用できるUI部品を追加するC++20の静的ライブラリです。まずGalleryで動作を確かめ、必要な部品だけをアプリに組み込めます。
 
-[English](README.md) · [最新リリースをダウンロード](https://github.com/AokiMotohide/imgui-modern-kit/releases/latest) · [文書一覧](docs/README.ja.md) · [Release一覧](https://github.com/AokiMotohide/imgui-modern-kit/releases)
+[English](README.md) · [最新リリースをダウンロード](https://github.com/AokiMotohide/imgui-modern-kit/releases/latest) · [文書一覧](docs/目次.md) · [Release一覧](https://github.com/AokiMotohide/imgui-modern-kit/releases)
 
 <img src="docs/images/v3-overview.gif" alt="Galleryのスタート画面から実例を開く" width="960">
 
@@ -54,7 +54,7 @@ Dear ImGuiのコンテキスト、描画バックエンド、レンダラー、�
 - **編集用部品** — タイムライン、インスペクター、曲線編集、階層表示、プレビューモニター、追加可能なNode Editor。
 - **ネイティブ連携** — OpenGL／Metalによるプレビュー描画、ウィンドウ枠、アクセシビリティ連携。
 
-必要な部品に応じてCMakeターゲットを選んでください。[モジュール別の実装例](docs/examples-recipes.ja.md)では、ターゲット、公開ヘッダー、Galleryの該当画面、描画ループから呼び出す位置を対応付けています。
+必要な部品に応じてCMakeターゲットを選んでください。[モジュール別の実装例](docs/getting-started/実例とレシピ.md)では、ターゲット、公開ヘッダー、Galleryの該当画面、描画ループから呼び出す位置を対応付けています。
 
 ## 画面で見る
 
@@ -126,18 +126,18 @@ Fit／Fill／Stretchの配置と、Ready、Loading、Empty、Offline、Errorの�
 
 v3のABIはDear ImGui 1.93.0 WIP docking commit 367b2c24f399988ddafc0bb4628da0106bcc09beを基準にしています。配布パッケージはWindows x64／Arm64、macOS arm64／x86_64、macOS Universal 2に対応します。
 
-macOSのパッケージには署名・公証を行っていません。自動検証では、実機の入力操作、OS標準IME、画面読み上げ、複数のDPI設定を組み合わせた表示、外部アプリへの組み込みを確認していません。[検証範囲](docs/validation.ja.md)と[依存関係](docs/dependencies.ja.md)を参照してください。
+macOSのパッケージには署名・公証を行っていません。自動検証では、実機の入力操作、OS標準IME、画面読み上げ、複数のDPI設定を組み合わせた表示、外部アプリへの組み込みを確認していません。[検証範囲](docs/reference/検証記録.md)と[依存関係](docs/architecture/依存関係.md)を参照してください。
 
 ## 文書
 
-- [文書一覧](docs/README.ja.md)
-- [導入ガイド](docs/getting-started.ja.md)
-- [部品と使い方](docs/guide.ja.md)
-- [モジュール別の実例と実装例](docs/examples-recipes.ja.md)
-- [Galleryガイド](docs/gallery.ja.md)
-- [Node Editorの導入](docs/node-editor.ja.md)
-- [v3移行ガイド](docs/migration-v3.ja.md)
-- [設計と所有権](docs/architecture.ja.md)
+- [文書一覧・ロードマップ](docs/目次.md)
+- [導入ガイド](docs/getting-started/導入ガイド.md)
+- [部品と使い方（利用ガイド）](docs/getting-started/利用ガイド.md)
+- [モジュール別の実例と実装例](docs/getting-started/実例とレシピ.md)
+- [Galleryガイド](docs/getting-started/ギャラリーガイド.md)
+- [Node Editorの導入](docs/components/ノードエディタ.md)
+- [v3移行ガイド](docs/reference/v3移行ガイド.md)
+- [設計と所有権（アーキテクチャ）](docs/architecture/アーキテクチャ.md)
 - [変更履歴](CHANGELOG.md)
 
 ## ライセンス

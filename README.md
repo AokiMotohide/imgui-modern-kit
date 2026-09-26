@@ -54,7 +54,7 @@ Your application keeps its Dear ImGui context, backends, renderer, fonts, data, 
 - **Editor building blocks** — timelines, inspectors, curves, hierarchy, preview monitors, and an optional Node Editor.
 - **Native integration points** — optional OpenGL or Metal preview paths, WindowFrame adapters, and accessibility bridges.
 
-Choose the smallest CMake target that provides the components you need. The [module recipes](docs/examples-recipes.md) show the target, public header, Gallery page, and frame placement for each area.
+Choose the smallest CMake target that provides the components you need. The [module recipes](docs/getting-started/examples-recipes.md) show the target, public header, Gallery page, and frame placement for each area.
 
 ## See the components in action
 
@@ -126,18 +126,18 @@ Compare named themes and palette choices in the native Gallery.
 
 The v3 ABI targets Dear ImGui 1.93.0 WIP docking commit 367b2c24f399988ddafc0bb4628da0106bcc09be. Release packages are available for Windows x64 and Arm64, macOS arm64 and x86_64, and macOS Universal 2.
 
-The macOS packages are unsigned and not notarized. Automated checks do not establish physical input, native IME, screen-reader, mixed-DPI, or third-party host acceptance. See [validation scope](docs/validation.md) and [dependencies](docs/dependencies.md).
+The macOS packages are unsigned and not notarized. Automated checks do not establish physical input, native IME, screen-reader, mixed-DPI, or third-party host acceptance. See [validation scope](docs/reference/validation.md) and [dependencies](docs/architecture/dependencies.md).
 
 ## Documentation
 
 - [Documentation index](docs/README.md)
-- [Getting started](docs/getting-started.md)
-- [Components and usage](docs/guide.md)
-- [Module examples and recipes](docs/examples-recipes.md)
-- [Gallery guide](docs/gallery.md)
-- [Node Editor integration](docs/node-editor.md)
-- [v3 migration guide](docs/migration-v3.md)
-- [Architecture and ownership](docs/architecture.md)
+- [Getting started](docs/getting-started/getting-started.md)
+- [Components and usage](docs/getting-started/guide.md)
+- [Module examples and recipes](docs/getting-started/examples-recipes.md)
+- [Gallery guide](docs/getting-started/gallery.md)
+- [Node Editor integration](docs/components/node-editor.md)
+- [v3 migration guide](docs/reference/migration-v3.md)
+- [Architecture and ownership](docs/architecture/architecture.md)
 - [Changelog](CHANGELOG.md)
 
 日本語の文書は[日本語README](README.ja.md)から参照できます。
