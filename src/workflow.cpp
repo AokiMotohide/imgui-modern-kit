@@ -259,6 +259,12 @@ bool HierarchyGroupHeader(const char* id,const char* label,int count,bool* open,
                           bool* actionRequested,const char* actionLabel) {
     ImGui::PushID(id);
     bool local=open?*open:true;
+    const auto padding=ImGui::GetStyle().FramePadding;
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,{padding.x*.65f,padding.y*.65f});
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize,0.f);
+    ImGui::PushStyleColor(ImGuiCol_Button,ImVec4(0,0,0,0));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered,ImGui::GetStyleColorVec4(ImGuiCol_HeaderHovered));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive,ImGui::GetStyleColorVec4(ImGuiCol_HeaderActive));
     if(ImGui::ArrowButton("toggle",local?ImGuiDir_Down:ImGuiDir_Right))local=!local;
     ImGui::SameLine();
     if(icons&&icon!=IconId::Count) {Icon(*icons,icon,{ImGui::GetFontSize()});ImGui::SameLine();}
@@ -272,6 +278,8 @@ bool HierarchyGroupHeader(const char* id,const char* label,int count,bool* open,
         *actionRequested=icons?IconButton("group_action",*icons,IconId::Add,Safe(actionLabel),{ImGui::GetFontSize()})
                               :ImGui::SmallButton(Safe(actionLabel));
     }
+    ImGui::PopStyleColor(3);
+    ImGui::PopStyleVar(2);
     if(open)*open=local;
     ImGui::PopID();return local;
 }
@@ -280,6 +288,9 @@ HierarchyRowAction HierarchyRow(const char* id,const HierarchyRowView& row,
     ImGui::PushID(id);Push(row.id);
     HierarchyRowAction result=HierarchyRowAction::None;
     ImGui::BeginDisabled(row.disabled||!row.id);
+    const auto padding=ImGui::GetStyle().FramePadding;
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,{padding.x*.65f,padding.y*.65f});
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize,0.f);
     ImGui::Indent(std::max(0,row.depth)*ImGui::GetFontSize());
     if(icons&&row.icon!=IconId::Count) {Icon(*icons,row.icon,{ImGui::GetFontSize()});ImGui::SameLine();}
     const int actionCount=1+int(row.visibilityAvailable)+int(row.lockAvailable);
@@ -293,8 +304,12 @@ HierarchyRowAction HierarchyRow(const char* id,const HierarchyRowView& row,
     if((ImGui::IsItemHovered()||ImGui::IsItemFocused())&&*Safe(row.detail))ImGui::SetTooltip("%s",row.detail);
     const auto actionButton=[&](const char* key,IconId icon,const char* text) {
         ImGui::SameLine(0,ImGui::GetStyle().ItemSpacing.x);
+        ImGui::PushStyleColor(ImGuiCol_Button,ImVec4(0,0,0,0));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered,ImGui::GetStyleColorVec4(ImGuiCol_HeaderHovered));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,ImGui::GetStyleColorVec4(ImGuiCol_HeaderActive));
         bool pressed=icons?IconButton(key,*icons,icon,text,{ImGui::GetFontSize()})
                           :ImGui::SmallButton(text);
+        ImGui::PopStyleColor(3);
         if(ImGui::IsItemHovered()||ImGui::IsItemFocused())ImGui::SetTooltip("%s",text);
         return pressed;
     };
@@ -304,6 +319,7 @@ HierarchyRowAction HierarchyRow(const char* id,const HierarchyRowView& row,
                     row.locked?Safe(row.lockedLabel):Safe(row.unlockedLabel)))result=HierarchyRowAction::ToggleLock;
     if(actionButton("more",IconId::More,Safe(row.moreLabel)))result=HierarchyRowAction::More;
     ImGui::Unindent(std::max(0,row.depth)*ImGui::GetFontSize());
+    ImGui::PopStyleVar(2);
     ImGui::EndDisabled();Pop();ImGui::PopID();return result;
 }
 bool BeginInspectorCard(const char* id,const char* title,const char* description,
