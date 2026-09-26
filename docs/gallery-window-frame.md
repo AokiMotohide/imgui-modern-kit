@@ -31,7 +31,11 @@ auto result = imkit::DrawWindowFrame(style, content, layout, state);
 
 `WindowFrameContent` uses non-owning `string_view` and `span` values. Keep their storage valid through the draw call. `WindowFrameResult` reports an operation or workspace selection; the host applies it. The library does not retain content, style, selection or a current Theme. Contrast validation reports ratios and warnings but never rejects a color.
 
+`WindowFrameContent::iconTexture` optionally borrows a host texture for the title bar icon. An invalid texture keeps the built-in geometric icon.
+
 `WindowFrameContent`の`string_view`と`span`は非所有です。描画呼出しの終了まで参照先を保持してください。`WindowFrameResult`が操作またはworkspace選択eventを返し、適用するのはホストです。ライブラリはcontent、Style、選択、current Themeを保持しません。コントラスト検証は比率と警告を返しますが、色入力を拒否しません。
+
+`WindowFrameContent::iconTexture`にはホスト所有のタイトルバー用textureを渡せます。無効なtextureのときは既定の幾何学アイコンを表示します。
 
 ## API inventory / API一覧
 

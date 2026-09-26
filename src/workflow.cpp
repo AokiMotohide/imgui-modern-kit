@@ -196,6 +196,142 @@ StableId IconToolbar(const char* id,const IconAtlas& atlas,
     }
     ImGui::PopID();return result;
 }
+StableId WorkspaceTabs(const char* id,std::span<const WorkspaceTab> tabs,
+                       StableId selected,const IconAtlas* icons,ComponentOptions o) {
+    ImGui::PushID(id);
+    StableId request=0;
+    float required=0;
+    for(const auto& tab:tabs)
+        required+=ImGui::CalcTextSize(Safe(tab.label)).x+ImGui::GetStyle().FramePadding.x*2+
+            (icons&&tab.icon!=IconId::Count?ImGui::GetFrameHeight():0)+ImGui::GetStyle().ItemSpacing.x;
+    if(required>ImGui::GetContentRegionAvail().x && tabs.size()>1) {
+        const char* preview="";
+        for(const auto& tab:tabs)if(tab.id==selected)preview=Safe(tab.label);
+        if(ImGui::BeginCombo("##workspaces",preview)) {
+            for(const auto& tab:tabs) {
+                Push(tab.id);ImGui::BeginDisabled(tab.disabled||!tab.id);
+                if(ImGui::Selectable(Safe(tab.label),tab.id==selected))request=tab.id;
+                Annotate(tab.label,tab.description,accessibility::SemanticRole::Tab,
+                         accessibility::SemanticAction::Select,tab.id==selected,o);
+                ImGui::EndDisabled();Pop();
+            }
+            ImGui::EndCombo();
+        }
+    } else {
+        for(std::size_t i=0;i<tabs.size();++i) {
+            const auto& tab=tabs[i];
+            if(i)ImGui::SameLine(0,ImGui::GetStyle().ItemSpacing.x);
+            Push(tab.id);ImGui::BeginDisabled(tab.disabled||!tab.id);
+            const bool active=tab.id==selected;
+            if(active) {
+                ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_Header));
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered,ImGui::GetStyleColorVec4(ImGuiCol_HeaderHovered));
+            }
+            const bool hit=icons&&tab.icon!=IconId::Count
+                ?IconLabelButton("tab",*icons,tab.icon,Safe(tab.label),{ImGui::GetFontSize()})
+                :ImGui::Button(Safe(tab.label));
+            if(active)ImGui::PopStyleColor(2);
+            if(Annotate(tab.label,tab.description,accessibility::SemanticRole::Tab,
+                        accessibility::SemanticAction::Select,active,o)||hit)request=tab.id;
+            if(active) {
+                auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
+                ImGui::GetWindowDrawList()->AddLine({a.x,b.y-1},{b.x,b.y-1},
+                    ImGui::GetColorU32(ImGuiCol_CheckMark),2.f);
+            }
+            if((ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)||ImGui::IsItemFocused())&&*Safe(tab.description))
+                ImGui::SetTooltip("%s",tab.description);
+            if(ImGui::IsItemFocused()&&tabs.size()>1) {
+                int direction=ImGui::IsKeyPressed(ImGuiKey_RightArrow)?1:ImGui::IsKeyPressed(ImGuiKey_LeftArrow)?-1:0;
+                for(std::size_t n=1;direction&&n<tabs.size();++n) {
+                    const auto next=(static_cast<long long>(i)+direction*static_cast<long long>(n)+static_cast<long long>(tabs.size()))%static_cast<long long>(tabs.size());
+                    if(tabs[static_cast<std::size_t>(next)].id&&!tabs[static_cast<std::size_t>(next)].disabled) {
+                        request=tabs[static_cast<std::size_t>(next)].id;break;
+                    }
+                }
+            }
+            ImGui::EndDisabled();Pop();
+        }
+    }
+    ImGui::PopID();return request;
+}
+bool HierarchyGroupHeader(const char* id,const char* label,int count,bool* open,
+                          const IconAtlas* icons,IconId icon,ComponentOptions) {
+    ImGui::PushID(id);
+    bool local=open?*open:true;
+    if(ImGui::ArrowButton("toggle",local?ImGuiDir_Down:ImGuiDir_Right))local=!local;
+    ImGui::SameLine();
+    if(icons&&icon!=IconId::Count) {Icon(*icons,icon,{ImGui::GetFontSize()});ImGui::SameLine();}
+    char caption[256];std::snprintf(caption,sizeof(caption),"%s (%d)",Safe(label),std::max(0,count));
+    if(ImGui::Selectable(caption,false,0,{0,ImGui::GetFrameHeight()}))local=!local;
+    if(open)*open=local;
+    ImGui::PopID();return local;
+}
+HierarchyRowAction HierarchyRow(const char* id,const HierarchyRowView& row,
+                               const IconAtlas* icons,ComponentOptions o) {
+    ImGui::PushID(id);Push(row.id);
+    HierarchyRowAction result=HierarchyRowAction::None;
+    ImGui::BeginDisabled(row.disabled||!row.id);
+    ImGui::Indent(std::max(0,row.depth)*ImGui::GetFontSize());
+    if(icons&&row.icon!=IconId::Count) {Icon(*icons,row.icon,{ImGui::GetFontSize()});ImGui::SameLine();}
+    const float actions=ImGui::GetFrameHeight()*3+ImGui::GetStyle().ItemSpacing.x*4;
+    if(ImGui::Selectable(Safe(row.label),row.selected,ImGuiSelectableFlags_AllowOverlap,
+                         {std::max(1.f,ImGui::GetContentRegionAvail().x-actions),ImGui::GetFrameHeight()}))
+        result=HierarchyRowAction::Select;
+    if(Annotate(row.label,row.detail,accessibility::SemanticRole::TreeItem,
+                accessibility::SemanticAction::Select,row.selected,o))result=HierarchyRowAction::Select;
+    if((ImGui::IsItemHovered()||ImGui::IsItemFocused())&&*Safe(row.detail))ImGui::SetTooltip("%s",row.detail);
+    const auto actionButton=[&](const char* key,IconId icon,const char* text) {
+        ImGui::SameLine(0,ImGui::GetStyle().ItemSpacing.x);
+        bool pressed=icons?IconButton(key,*icons,icon,text,{ImGui::GetFontSize()})
+                          :ImGui::SmallButton(text);
+        if(ImGui::IsItemHovered()||ImGui::IsItemFocused())ImGui::SetTooltip("%s",text);
+        return pressed;
+    };
+    if(actionButton("visibility",row.visible?IconId::Eye:IconId::EyeOff,
+                    row.visible?Safe(row.visibleLabel):Safe(row.hiddenLabel)))result=HierarchyRowAction::ToggleVisibility;
+    if(actionButton("lock",row.locked?IconId::Lock:IconId::Unlock,
+                    row.locked?Safe(row.lockedLabel):Safe(row.unlockedLabel)))result=HierarchyRowAction::ToggleLock;
+    if(actionButton("more",IconId::More,Safe(row.moreLabel)))result=HierarchyRowAction::More;
+    ImGui::Unindent(std::max(0,row.depth)*ImGui::GetFontSize());
+    ImGui::EndDisabled();Pop();ImGui::PopID();return result;
+}
+bool BeginInspectorCard(const char* id,const char* title,const char* description,
+                        const IconAtlas* icons,IconId icon,ComponentOptions) {
+    ImGui::PushStyleColor(ImGuiCol_ChildBg,ImGui::GetStyleColorVec4(ImGuiCol_FrameBg));
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,ImGui::GetStyle().FrameRounding);
+    const bool visible=ImGui::BeginChild(id,{0,0},
+        ImGuiChildFlags_Borders|ImGuiChildFlags_AutoResizeY,ImGuiWindowFlags_NoScrollbar);
+    if(visible) {
+        if(icons&&icon!=IconId::Count) {Icon(*icons,icon,{ImGui::GetFontSize()});ImGui::SameLine();}
+        ImGui::TextUnformatted(Safe(title));
+        if(*Safe(description))ImGui::TextDisabled("%s",description);
+        ImGui::Separator();
+    }
+    return visible;
+}
+void EndInspectorCard() {ImGui::EndChild();ImGui::PopStyleVar();ImGui::PopStyleColor();}
+bool SettingToggleRow(const char* id,const char* label,const char* description,
+                      bool current,bool disabled,const char* disabledReason,ComponentOptions o) {
+    ImGui::PushID(id);
+    bool next=current,changed=false;
+    if(ImGui::BeginTable("row",2,ImGuiTableFlags_SizingStretchProp)) {
+        ImGui::TableSetupColumn("label",ImGuiTableColumnFlags_WidthStretch);
+        ImGui::TableSetupColumn("toggle",ImGuiTableColumnFlags_WidthFixed,ImGui::GetFrameHeight()*2.4f);
+        ImGui::TableNextRow();ImGui::TableNextColumn();
+        ImGui::TextUnformatted(Safe(label));
+        if(*Safe(description))ImGui::TextDisabled("%s",description);
+        ImGui::TableNextColumn();
+        ImGui::BeginDisabled(disabled);
+        ComponentOptions toggleOptions=o;toggleOptions.accessibility=nullptr;
+        changed=Toggle("##value",&next,toggleOptions);
+        changed=Annotate(label,description,accessibility::SemanticRole::Toggle,
+                         accessibility::SemanticAction::Toggle,current,o)||changed;
+        if(disabled&&*Safe(disabledReason)&&ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+            ImGui::SetTooltip("%s",disabledReason);
+        ImGui::EndDisabled();ImGui::EndTable();
+    }
+    ImGui::PopID();return changed;
+}
 StableId StepNavigator(const char* id,std::span<const StepItem> items,StableId current,
                       StepNavigatorState& state,StepNavigatorOptions layout,ComponentOptions o) {
     ImGui::PushID(id);

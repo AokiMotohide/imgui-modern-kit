@@ -46,6 +46,10 @@ and relocated SDK consumers. Existing signatures and native API inventory are re
 | API | Contract / 契約 |
 |---|---|
 | `StepNavigator`, `NavigationRail` | Borrowed StepItem span, current ID, explicit focus state; returns selection request / 選択要求のみ |
+| `WorkspaceTabs` | Icon and label navigation; collapses to a combo when space is narrow and returns a selection request / 狭い幅ではcomboへ切替 |
+| `HierarchyGroupHeader`, `HierarchyRow` | Host-owned group state and stable row IDs; selection, visibility, lock and more actions are requests / 階層と操作要求のみ |
+| `BeginInspectorCard`, `EndInspectorCard` | Groups related controls in an auto-height bordered card; always pair Begin/End / 高さ自動の設定card |
+| `SettingToggleRow` | Label, description and optional disabled reason; returns a toggle request without changing host state / 説明付き切替要求 |
 | `FilterChip`, `SectionHeader` | Explicit selection/open state, native activation / 明示状態とnative操作 |
 | `SelectNotifications` | Last duplicate wins before expiry filtering; priority descending, stable ties / 重複更新・期限・優先順位 |
 | `NotificationCard(FeedbackView)`, `InlineAlert`, `PersistentBanner` | Semantic status and dismiss request; banner persists / 意味色とdismiss要求 |
