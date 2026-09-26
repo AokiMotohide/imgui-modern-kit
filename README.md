@@ -70,13 +70,21 @@ Start with a task, open its live specimen, and follow the route to the integrati
 
 Explore common controls with enabled, toggled, and mixed-selection states.
 
-### Preset icon catalogue · 284 icons
+### Production icon artwork · 238 PNG masters
 
-**284 preset outline icons · 7 pixel sizes · 1,988 icon-size combinations.** Browse the tile catalogue, search by name or category, and use atlas sizes from 12 to 64 px.
+**238 transparent PNG artwork masters · 16 image-backed categories.** The collection includes `Projector`, `Projector3D`, `ProjectionSurface`, `Camera3D`, `Frustum`, and `Lens`, alongside 91 editor icons, 10 production controls, 10 3D objects, and 9 lighting icons.
 
-<img src="docs/images/v3-icons.gif" alt="A tile catalogue of ImKit's 284 preset icons, changing selection and category" width="960">
+<img src="docs/images/v3-icon-artwork.gif" alt="Large tiled projector, projection, lighting, object, production, and editor icon artwork with a moving highlight" width="960">
 
-The Gallery shows the complete catalogue as a searchable tile grid and previews the selected icon with its matching C++ call.
+The animated board highlights the detailed source artwork at a readable size. Browse [all 238 source PNGs](assets/icons/originals/) or the [named 284-icon catalogue](assets/icons/catalog.json); the complete runtime catalogue appears below.
+
+### Runtime icon catalogue · 284 presets
+
+The C++ catalogue contains **284 named icons in 18 categories**, with seven atlas sizes from 12 to 64 px (1,988 icon-size combinations). Search by name or category, select a tile, and copy its matching C++ call.
+
+<img src="docs/images/v3-icons.gif" alt="ImKit's searchable 284-icon catalogue, with categories, size choices, and a selected icon preview" width="960">
+
+The Gallery exposes every preset in a searchable tile grid and previews the selected icon with its C++ call.
 
 ### Live comparison
 

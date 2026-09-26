@@ -147,8 +147,10 @@ void ImKitComparisonSpecimen(GalleryState &s) {
     Record(s, "comparison-imkit-quality");
 }
 void Icons(GalleryState &s) {
-    Heading(s, "Icons / Generated outline glyphs");
-    TextDisabled("%d generated icons · %d atlas sizes · searchable catalog",
+    char heading[64];
+    std::snprintf(heading, sizeof(heading), "Icons / %d preset icons", static_cast<int>(GetIconCatalog().size()));
+    Heading(s, heading);
+    TextDisabled("%d preset icons · %d atlas sizes · searchable catalog",
                  static_cast<int>(GetIconCatalog().size()), static_cast<int>(IconPixelSizes.size()));
     SetNextItemWidth(210);
     InputText("Search", s.iconSearch, sizeof(s.iconSearch));
