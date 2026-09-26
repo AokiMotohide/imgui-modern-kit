@@ -6,7 +6,7 @@
 
 ## Design / 設計
 
-semantic tokenからstyleを導出し、host providerでdataを供給する方針です。locale callback、native widget、明示accessibility stateを利用し、global localeやhost serviceを導入しません。参考にした設計原則と出典は[英語版](design-system.md#design-設計)に記載されています。
+semantic tokenからstyleを導出し、host providerでdataを供給する方針です。locale callback、native widget、明示accessibility stateを利用し、global localeやhost serviceを導入しません。参考にした設計原則と出典は[英語版](design-system.md#design)に記載されています。
 
 ## APIとmigration
 

@@ -2,11 +2,35 @@
 
 [日本語](README.ja.md) · [Project overview](../README.md)
 
-For the complete bilingual page map, audience, source/API mapping and package paths, see the [documentation catalog](documentation-catalog.md). For practical, module-by-module examples, see [examples and recipes](examples-recipes.md).
+ImKit's documentation is organized in three stages, following the patterns of established GUI projects (Dear ImGui, GTK, Qt, egui, Flutter):
 
-This index is the entry point for the documentation. Choose a path by what you are trying to do; the reference pages below define the library contract, while dated validation pages record evidence and its limits.
+1. **Learn** — the mental model: ownership, the Dear ImGui frame, theming, and module layout.
+2. **Build** — runnable codelabs, from your first themed window to a node editor, timeline, and custom component.
+3. **Reference and verify** — the authoritative module contracts, API inventories, and dated validation evidence.
 
-## Start using ImKit
+For the complete bilingual page map, audience, source/API mapping, and package paths, see the [documentation catalog](documentation-catalog.md). For practical, module-by-module examples, see [examples and recipes](examples-recipes.md).
+
+## Learn the mental model
+
+| Read | What it answers |
+|---|---|
+| [How ImKit works](how-it-works.md) | Who owns what, the Dear ImGui frame, and where ImKit fits |
+| [Architecture](architecture.md) | The authoritative ownership model, module layout, and public contract |
+| [Design system](design-system.md) | Design tokens, themes, and icon APIs |
+| [Dependencies](dependencies.md) | The required Dear ImGui revision and external packages |
+| [User guide](guide.md) | A short orientation to the host–library split and first calls |
+
+## Build it (codelabs)
+
+Step-by-step, host-owned builds you can port into your application. Each pairs with a reference page below that defines the full contract.
+
+- [Build your first ImKit app](build-first-app.md) — context, theme, and your first themed controls.
+- [Build a settings screen](build-settings-screen.md) — host state, setting rows, and save/validation/notify.
+- [Build a node editor](build-node-editor.md) — graph snapshot in, edit requests out.
+- [Build a timeline editor](build-timeline.md) — tracks, clips, fades, transitions, and ripple moves.
+- [Author a custom component](custom-component.md) — `ThemeScope`, semantic colors, and reporting.
+
+## Start using ImKit (by goal)
 
 | Goal | Read |
 |---|---|

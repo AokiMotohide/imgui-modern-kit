@@ -160,7 +160,7 @@ No claim is made that pre-existing Editor Suite acceptance is complete.
 全状態組合せ、native OS/IME、実スクリーンリーダー、他アプリ統合、Release公開は未実施です。
 既存Editor Suiteの全受け入れ項目を今回の結果で完了扱いにはしません。
 
-Design-system foundation verification and remaining implementation: [design-system.md](design-system.md#recorded-verification-今回の検証). This is separate from the Editor Suite 2.0 record below.
+Design-system foundation verification and remaining implementation: [design-system.md](design-system.md#recorded-verification). This is separate from the Editor Suite 2.0 record below.
 
 デザインシステム基盤の検証・残る実装は[刷新文書](design-system.md)を参照してください。以下のEditor Suite 2.0記録とは別の検証です。
 

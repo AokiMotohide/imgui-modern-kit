@@ -1,6 +1,6 @@
 # Editor Suite 2.0
 
-[日本語](editor-suite.ja.md)
+[English](editor-suite.md)
 
 [Timeline editing](timeline-editing.md) は独立したフェード、cut transition、トラック管理、選択・クリップボード操作を説明します。
 

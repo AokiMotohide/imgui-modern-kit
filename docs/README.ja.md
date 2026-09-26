@@ -1,59 +1,83 @@
-# ImKit ドキュメント
+# ImKit 文書
 
-[English](README.md) · [プロジェクト概要](../README.ja.md)
+[English](README.md) · [プロジェクト概要](../README.md)
 
-対象読者、英日ページ、API・Gallery・ソース・package収録先の一覧は[文書カタログ](documentation-catalog.ja.md)を参照してください。module別の実例は[学習マップとrecipe](examples-recipes.ja.md)にまとめています。
+ImKit の文書は、確立した GUI プロジェクト（Dear ImGui、GTK、Qt、egui、Flutter）の構図に倣って、3 段階で整理されています：
 
-このページは、目的に合う文書を選ぶための入口です。APIの契約は参照文書を確認し、検証記録では確認した時点と範囲を確認してください。
+1. **Learn（学習）** — 心智モデル：所有、Dear ImGui のフレーム、テーマング、モジュール配置。
+2. **Build（作り上げる）** — 実行可能な codelab：初回のテーマ付きウィンドウから、ノードエディター、タイムライン、カスタムコンポーネントまで。
+3. **Reference and verify（参照・検証）** — モジュール契約の権威的参照、API 一覧、日付付き検証のエビデンス。
 
-## 利用を始める
+完全な二言語ページマップ、ターゲット読者、ソース/API 対応、パッケージ経路については [文書カタログ](documentation-catalog.md) を参照。実用的なモジュール毎の例については [例とレシピ](examples-recipes.md) を参照。
 
-| 目的 | 文書 |
+## 心智モデルを学習する
+
+| 読む | 答えられること |
 |---|---|
-| 既存Dear ImGuiアプリへImKitを追加する | [導入ガイド](getting-started.ja.md) |
-| ホストとライブラリの所有権、Theme、module選択を理解する | [利用ガイド](guide.ja.md)、[Architecture](architecture.md) |
-| 再利用部品で一般的な設定画面を組み立てる | [コンポーネントとrecipe](components.ja.md) |
-| 実際に操作できる例を見る | [Galleryガイド](gallery.ja.md) |
-| Themeを選び、調整して適用する | [Theme](themes.ja.md) |
-| 構成や実行時の問題を調べる | [トラブルシューティング](troubleshooting.ja.md) |
-| v2利用者が更新する | [v3移行ガイド](migration-v3.ja.md) |
-| Galleryの画面、source、API、次に読む文書を調べる | [学習マップとrecipe](examples-recipes.ja.md) |
+| [ImKit の仕組み](how-it-works.md) | 誰が何を所有するか、Dear ImGui のフレーム、ImKit の位置づけ |
+| [アーキテクチャ](architecture.md) | 所有モデル、モジュール配置、公開契約の権威的な参照 |
+| [デザインシステム](design-system.md) | デザイントークン、テーマ、アイコン API |
+| [依存関係](dependencies.md) | 必要な Dear ImGui リビジョンと外部パッケージ |
+| [ユーザーガイド](guide.md) | ホストとライブラリの分離と最初の呼び出しの短い導入 |
 
-## 個別moduleを統合する
+## 作り上げる（codelab）
 
-| module | ガイド | 契約・詳細資料 |
+あなたのアプリに移植できる、ステップバイステップのホスト所有のビルド。各 codelab は、完全な契約を定義する下の参照ページとセットになります。
+
+- [ImKit アプリの作り方](build-first-app.md) — コンテキスト、テーマ、最初のテーマ付きコントロール。
+- [設定画面の作り方](build-settings-screen.md) — ホスト状態、設定行、保存/検証/通知。
+- [ノードエディターの作り方](build-node-editor.md) — グラフスナップショット投入、編集リクエスト返却。
+- [タイムラインエディターの作り方](build-timeline.md) — トラックス、クリップ、フェード、トランジション、リップル移動。
+- [カスタムコンポーネントの作成](custom-component.md) — `ThemeScope`、セマンティックカラー、報告。
+
+## ImKit の導入（目的別）
+
+| 目的 | 読む |
+|---|---|
+| 既存の Dear ImGui アプリに ImKit を追加 | [導入ガイド](getting-started.md) |
+| ホストとライブラリーの所有、テーマ、モジュール選択を理解する | [ユーザーガイド](guide.md)、[アーキテクチャ](architecture.md) |
+| 再利用可能なコントロールで一般的な設定インターフェースを作る | [コンポーネントとレシピ](components.md) |
+| ライブの例を探索する | [Gallery ガイド](gallery.md) |
+| テーマの選択、カスタマイズ、適用 | [テーマ](themes.md) |
+| 設定やランタイムの問題を診断する | [トラブルシューティング](troubleshooting.md) |
+| 既存の v2 コンサマーをアップグレード | [v3 ミグレーション](migration-v3.md) |
+| タスクに対する Gallery ページ、ソース、API、次の読書を検索 | [学習マップとレシピ](examples-recipes.md) |
+
+## 特定のモジュールを統合する
+
+| モジュール | ガイド | 契約またはより深い参照 |
 |---|---|---|
-| Node Editor | [Node Editor統合](node-editor.ja.md) | [生成API一覧](node-editor-api.json)、[recipe](examples-recipes.ja.md) |
-| Workflow・data component | [Workflow component](workflow-components.ja.md) | [Shell component](shell-components.ja.md)、[recipe](examples-recipes.ja.md) |
-| Editor Core・Video・CG | [Editor Suite](editor-suite.ja.md) | [Editor API](editor-api.ja.md)、[Timeline編集](timeline-editing.ja.md)、[recipe](examples-recipes.ja.md) |
-| Window frame | [Gallery WindowFrameガイド](gallery-window-frame.ja.md) | [WindowFrame API一覧](window-frame-api-inventory.json)、[recipe](examples-recipes.ja.md) |
-| Icon | [Icon一覧](icons.ja.md) | [recipe](examples-recipes.ja.md) |
+| Node Editor | [ノードエディター連携](node-editor.md) | [自動生成 API 一覧](node-editor-api.json), [レシピ](examples-recipes.md) |
+| Workflow とデータコンポーネント | [ワークフローコンポーネント](workflow-components.md) | [シェルコンポーネント](shell-components.md), [レシピ](examples-recipes.md) |
+| Editor Core, Video, CG | [エディタースイート](editor-suite.md) | [エディター API](editor-api.md), [タイムライン編集](timeline-editing.md), [レシピ](examples-recipes.md) |
+| ウィンドウフレーム | [Gallery WindowFrame ガイド](gallery-window-frame.md) | [WindowFrame API 一覧](window-frame-api-inventory.json), [レシピ](examples-recipes.md) |
+| アイコン | [アイコン参照](icons.md) | [レシピ](examples-recipes.md) |
 
-## 契約やAPIを確認する
+## 主張を検証する、または API を調べる
 
-| 確認したいこと | 基準となる文書 |
+| 質問 | 権威的な参照 |
 |---|---|
-| ImKitが所有するもの、ホストに残るもの | [Architecture](architecture.ja.md) |
-| 必須Dear ImGui revisionと外部package | [Dependencies](dependencies.ja.md) |
-| 公開するDear ImGui関数とoverload | [公開API対応表](api-coverage.ja.md)、[API inventory](api-inventory.json) |
-| build・操作で確認した範囲と未検証事項 | [Validation](validation.ja.md) |
-| widget catalogの対象 | [Widget inventory](widget-inventory.ja.md) |
-| design-system tokenとAPI | [Design system](design-system.ja.md)、[Design-system API一覧](design-system-api.json) |
+| ImKit は何を所有し、ホストに何を残すか？ | [アーキテクチャ](architecture.md) |
+| どの Dear ImGui リビジョンと外部パッケージが必要か？ | [依存関係](dependencies.md) |
+| どの Dear ImGui 関数とオーバーロードが公開されているか？ | [公開 API カバーレージ](api-coverage.md), [API 一覧](api-inventory.json) |
+| 何が構築され、何が未検証か？ | [検証](validation.md) |
+| ウジジェットカタログは何をカバーするか？ | [ウジジェット一覧](widget-inventory.md) |
+| デザインシステムのトークンと API は何か？ | [デザインシステム](design-system.md), [デザインシステム API 一覧](design-system-api.json) |
 
-所有権の基準は`architecture.ja.md`、検証証拠の基準は`validation.ja.md`です。Validationは特定の時点・revisionに対する記録です。過去の合格を後続checkoutの証明として扱わず、native OS入力、accessibility、外部host、実機の受入範囲も個別に確認してください。
+`architecture.md` と `validation.md` は所有とエビデンスの権威的な参照です。検証は時間・リビジョン特定です：記録された合格は自動的に後のチェックアウトを記述したり、ネイティブ OS の入力、アクセシビリティ、外部ホスト、実機の受け入れを確立したりしません。
 
 ## 保守用メモと設計記録
 
-以下は設計判断、提案、checklist、review経緯を残す資料です。利用者向けAPI契約ではありません。ImKit統合時は公開headerと上記の契約文書を参照してください。
+これらのページはプロジェクトの決定、提案、チェックリスト、レビューコンテキストを保持します。これらは消費者 API の約束ではありません。ImKit を統合するときは、上記の公開ヘッダと契約参照を使用してください。
 
-過去のreleaseやcheckoutを対象にした記録も含みます。そこにある状態表は履歴であり、現在のTODO一覧や後続公開の許可ではありません。記載されたbaselineと日付を確認し、現行の動作は公開契約文書で照合してください。
+一部の記録は以前のリリースやチェックアウトを記述しています。それらのステータステーブルは歴史的スナップショットであり、現在の TODO リストや公開承認ではありません。その基線と日付を使用し、現在の動作は公開契約ページに対して確認してください。
 
-- [Design proposal](design-proposals.md) · [Design refinement](design-refinements.md)
-- [開発状況](development-status.md) · [Editor更新記録](editor-refresh.md) · [Editor検証記録](editor-validation.md)
-- [Editor実装checklist](editor-implementation-checklist.md) · [Node Editor review](node-editor-review.md)
-- [GitHub profile原稿](github-profile.md)
-- [Performance evidence](evidence/)
+- [デザイン提案](design-proposals.md) · [デザイン改善](design-refinements.md)
+- [開発状況](development-status.md) · [エディターリフレッシュ](editor-refresh.md) · [エディター検証](editor-validation.md)
+- [エディター実装チェックリスト](editor-implementation-checklist.md) · [ノードエディターレビュー](node-editor-review.md)
+- [GitHub プロフィール用コピー](github-profile.md)
+- [パフォーマンスのエビデンス](evidence/)
 
-## 文書構成の考え方
+## 文書のアプローチ
 
-広く使われるGUI projectの文書構成を参考にしています。Dear ImGuiは導入からFAQ・実例・Demoへ案内し、Qtは学習tutorialとexampleをAPI referenceから分けています。ImKitも目的別の導線を作りつつ、ホスト所有とimmediate-mode統合の契約を明記します。[Dear ImGui](https://github.com/ocornut/imgui) · [Qt Examples and Tutorials](https://doc.qt.io/qt-6/qtexamplesandtutorials.html)
+情報の流れは確立した GUI プロジェクトのパターンを踏まえています：Dear ImGui はセットアップからバックエンド特定の例とライブデモへリードします；GTK はビルド可能な最初のアプリケーションから始まります；Qt はチュートリアル/例を API 参照と分離します；egui は簡潔な例とインタラクティブデモをセットにします。ImKit は、彼らのコードや表現をコピーせずに、ホスト所有の即時モード契約にこれらの構造選択を適用しています。[Dear ImGui Getting Started](https://github.com/ocornut/imgui/wiki/Getting-Started)、[GTK Getting Started](https://docs.gtk.org/gtk4/getting_started.html)、[Qt ドキュメントカテゴリー](https://doc.qt.io/qt-6/qdoc-categories.html)、[egui](https://docs.rs/egui/latest/egui/) を参照。
