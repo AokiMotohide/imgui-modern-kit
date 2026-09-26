@@ -203,7 +203,8 @@ StableId WorkspaceTabs(const char* id,std::span<const WorkspaceTab> tabs,
     float required=0;
     for(const auto& tab:tabs)
         required+=ImGui::CalcTextSize(Safe(tab.label)).x+ImGui::GetStyle().FramePadding.x*2+
-            (icons&&tab.icon!=IconId::Count?ImGui::GetFrameHeight():0)+ImGui::GetStyle().ItemSpacing.x;
+            (icons&&tab.icon!=IconId::Count?ImGui::GetFontSize()+ImGui::GetStyle().ItemInnerSpacing.x:0)+
+            ImGui::GetStyle().ItemSpacing.x;
     if(required>ImGui::GetContentRegionAvail().x && tabs.size()>1) {
         const char* preview="";
         for(const auto& tab:tabs)if(tab.id==selected)preview=Safe(tab.label);
@@ -324,7 +325,6 @@ HierarchyRowAction HierarchyRow(const char* id,const HierarchyRowView& row,
 }
 bool BeginInspectorCard(const char* id,const char* title,const char* description,
                         const IconAtlas* icons,IconId icon,ComponentOptions) {
-    ImGui::PushStyleColor(ImGuiCol_ChildBg,ImGui::GetStyleColorVec4(ImGuiCol_FrameBg));
     ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,ImGui::GetStyle().FrameRounding);
     const bool visible=ImGui::BeginChild(id,{0,0},
         ImGuiChildFlags_Borders|ImGuiChildFlags_AutoResizeY,ImGuiWindowFlags_NoScrollbar);
@@ -336,7 +336,7 @@ bool BeginInspectorCard(const char* id,const char* title,const char* description
     }
     return visible;
 }
-void EndInspectorCard() {ImGui::EndChild();ImGui::PopStyleVar();ImGui::PopStyleColor();}
+void EndInspectorCard() {ImGui::EndChild();ImGui::PopStyleVar();}
 bool SettingToggleRow(const char* id,const char* label,const char* description,
                       bool current,bool disabled,const char* disabledReason,ComponentOptions o) {
     ImGui::PushID(id);

@@ -157,22 +157,22 @@ Theme MakeTheme(ThemePreset preset) {
     if (preset == ThemePreset::Slate) {
         auto theme = MakePrecisionTheme(ColorScheme::Dark);
         auto& c = theme.semantic;
-        c.canvas = Hex(0x141519);
-        c.surface = Hex(0x1c1e23);
-        c.surfaceRaised = Hex(0x2a2c32);
-        c.overlay = Hex(0x303239);
-        c.text = Hex(0xf0f1f3);
-        c.textSecondary = Hex(0xb6bac4);
-        c.textDisabled = Hex(0x9da3af);
-        c.border = Hex(0x6d727e);
-        c.control.rest = Hex(0x25272d);
-        c.control.hover = Hex(0x30343d);
-        c.control.pressed = Hex(0x3b414d);
+        c.canvas = Hex(0x111318);
+        c.surface = Hex(0x191c22);
+        c.surfaceRaised = Hex(0x242932);
+        c.overlay = Hex(0x2b313b);
+        c.text = Hex(0xf5f7fa);
+        c.textSecondary = Hex(0xc6cdd8);
+        c.textDisabled = Hex(0x929ba9);
+        c.border = Hex(0x48515f);
+        c.control.rest = Hex(0x20242b);
+        c.control.hover = Hex(0x2b323d);
+        c.control.pressed = Hex(0x384455);
         c.control.disabled = c.control.rest;
-        theme.radius = {4, 8, 11};
+        theme.radius = {4, 7, 10};
         theme.stroke = {1, 2};
         ResolveTheme(theme);
-        SetAccent(theme, Hex(0x92beff));
+        SetAccent(theme, Hex(0x78aaff));
         return theme;
     }
     auto theme = MakePrecisionTheme(info.scheme);
