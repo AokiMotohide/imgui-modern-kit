@@ -77,6 +77,7 @@ struct HierarchyRowView {
     const char* lockedLabel="Locked";
     const char* unlockedLabel="Unlocked";
     const char* moreLabel="More actions";
+    bool visibilityAvailable=true, lockAvailable=true;
 };
 enum class HierarchyRowAction { None, Select, ToggleVisibility, ToggleLock, More };
 // Header open state is host-owned; a row only returns a requested action.

@@ -273,7 +273,9 @@ HierarchyRowAction HierarchyRow(const char* id,const HierarchyRowView& row,
     ImGui::BeginDisabled(row.disabled||!row.id);
     ImGui::Indent(std::max(0,row.depth)*ImGui::GetFontSize());
     if(icons&&row.icon!=IconId::Count) {Icon(*icons,row.icon,{ImGui::GetFontSize()});ImGui::SameLine();}
-    const float actions=ImGui::GetFrameHeight()*3+ImGui::GetStyle().ItemSpacing.x*4;
+    const int actionCount=1+int(row.visibilityAvailable)+int(row.lockAvailable);
+    const float actions=ImGui::GetFrameHeight()*actionCount+
+        ImGui::GetStyle().ItemSpacing.x*(actionCount+1);
     if(ImGui::Selectable(Safe(row.label),row.selected,ImGuiSelectableFlags_AllowOverlap,
                          {std::max(1.f,ImGui::GetContentRegionAvail().x-actions),ImGui::GetFrameHeight()}))
         result=HierarchyRowAction::Select;
@@ -287,9 +289,9 @@ HierarchyRowAction HierarchyRow(const char* id,const HierarchyRowView& row,
         if(ImGui::IsItemHovered()||ImGui::IsItemFocused())ImGui::SetTooltip("%s",text);
         return pressed;
     };
-    if(actionButton("visibility",row.visible?IconId::Eye:IconId::EyeOff,
+    if(row.visibilityAvailable&&actionButton("visibility",row.visible?IconId::Eye:IconId::EyeOff,
                     row.visible?Safe(row.visibleLabel):Safe(row.hiddenLabel)))result=HierarchyRowAction::ToggleVisibility;
-    if(actionButton("lock",row.locked?IconId::Lock:IconId::Unlock,
+    if(row.lockAvailable&&actionButton("lock",row.locked?IconId::Lock:IconId::Unlock,
                     row.locked?Safe(row.lockedLabel):Safe(row.unlockedLabel)))result=HierarchyRowAction::ToggleLock;
     if(actionButton("more",IconId::More,Safe(row.moreLabel)))result=HierarchyRowAction::More;
     ImGui::Unindent(std::max(0,row.depth)*ImGui::GetFontSize());
