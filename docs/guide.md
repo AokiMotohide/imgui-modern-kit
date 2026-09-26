@@ -45,7 +45,7 @@ The catalog uses Inter 4.1 first, then Noto Sans JP 2.004 Regular in merge mode 
 | `Segmented` | Host-selected stable index over a span of labels |
 | `SearchableCombo` | Host-owned UTF-8 search buffer and selection; optional disabled-index span; ASCII case folding, exact non-ASCII matching |
 | `InputScalarWithUnit` | Native scalar parsing and precision; unit is a separate label |
-| `DragFloatWithUnit`, `InputVector3WithUnit` | Native editing; explicit unit and equal-width vector fields |
+| `DragFloatWithUnit`, `InputVector3WithUnit`, `DragVector3WithUnit` | Native editing; explicit units and labeled X/Y/Z fields that stack at narrow widths |
 | `BeginSettingRow` / `EndSettingRow` | Two-column table; call End only if Begin returned true |
 | `StatusBadge` | Text and marker shape supplement semantic status color |
 | `NotificationCard` | Host owns expiry/removal; returns a dismiss request; zero expiry persists |

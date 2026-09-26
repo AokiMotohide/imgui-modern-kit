@@ -97,6 +97,8 @@ if (imkit::BeginSettingRow("exposure", "Exposure")) {
 
 Call `EndSettingRow` only when `BeginSettingRow` returns true. Native scalar parsing and precision are preserved.
 
+For a three-axis drag value, use `DragVector3WithUnit("Offset", values, "cm", .1f, -10.f, 10.f)`. Each axis remains a native `DragFloat`; the label scopes its stable IDs and narrow widths stack the fields.
+
 ## Status and notification
 
 ```cpp

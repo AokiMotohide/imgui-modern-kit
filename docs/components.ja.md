@@ -97,6 +97,8 @@ if (imkit::BeginSettingRow("exposure", "Exposure")) {
 
 `BeginSettingRow`がtrueのときだけ`EndSettingRow`を呼びます。scalarの標準解析と精度を維持します。
 
+3軸をドラッグで編集する場合は`DragVector3WithUnit("Offset", values, "cm", .1f, -10.f, 10.f)`を使います。各軸は標準`DragFloat`のままで、ラベルをIDの親として使い、狭い幅では縦並びになります。
+
 ## 状態と通知
 
 ```cpp

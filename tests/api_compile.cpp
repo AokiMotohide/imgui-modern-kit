@@ -1172,7 +1172,10 @@ decltype(&reference::overload_393) volatile api_393 =
 int main() {
     const auto presets = imkit::ThemePresets();
     const auto theme = imkit::MakeTheme(imkit::ThemePreset::Slate);
+    auto* dragVector = static_cast<bool (*)(const char*, float*, const char*, float, float, float,
+                                           const char*, ImGuiSliderFlags)>(&imkit::DragVector3WithUnit);
     return presets.size() == 13 && theme.scheme == imkit::ColorScheme::Dark &&
+                   dragVector != nullptr &&
                    imkit::ThemeScaleMinimum == .5f &&
                    imkit::ThemeScaleDefault == 1.25f &&
                    imkit::ThemeScaleMaximum == 2.5f

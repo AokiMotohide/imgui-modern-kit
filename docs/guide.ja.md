@@ -44,7 +44,7 @@ theme = saved; // ホストが保持・復元。自動永続化は行わない
 | `Segmented` | label spanとホスト所有の選択index |
 | `SearchableCombo` | ホスト所有のUTF-8検索buffer・選択値・disabled index。ASCIIのみ大文字小文字を無視 |
 | `InputScalarWithUnit` | 標準scalarの解析・精度を維持し、単位を別表示 |
-| `DragFloatWithUnit`, `InputVector3WithUnit` | 標準編集と単位、等幅の複数成分入力 |
+| `DragFloatWithUnit`, `InputVector3WithUnit`, `DragVector3WithUnit` | 標準編集と単位。X/Y/Z欄は狭幅で縦並び |
 | `BeginSettingRow` / `EndSettingRow` | 2列table。BeginがtrueのときだけEnd |
 | `StatusBadge` | 色に加え、文字とマーク形状で状態を表示 |
 | `NotificationCard` | 寿命・削除はホスト所有。dismiss要求を返す。expiry=0は期限なし |

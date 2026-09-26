@@ -329,6 +329,10 @@ void Numeric(GalleryState &s) {
     InputScalarWithUnit("Distance", ImGuiDataType_Double, &s.precise, "mm");
     SetNextItemWidth(400);
     InputVector3WithUnit("Position", s.vector, "mm");
+    SetNextItemWidth(400);
+    DragVector3WithUnit("Offset", s.vector, "mm", .1f, -100.f, 100.f, "%.2f");
+    SetNextItemWidth(160);
+    DragVector3WithUnit("Narrow offset", s.vector, "mm", .1f, -100.f, 100.f, "%.2f");
     SetNextItemWidth(300);
     DragFloatWithUnit("Angle", &s.vector[0], "deg", .1f, -180, 180);
     VSliderFloat("##vertical", {56, 90}, &s.scalar, 0, 1, "%.2f");

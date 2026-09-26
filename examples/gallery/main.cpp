@@ -789,6 +789,10 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
         CaptureFrames(h,dir,frame,20);
         h.s.page=19;h.s.comparison.open=true;h.Settle();
         CaptureFrames(h,dir,frame,40);
+    } else if(demo=="vector") {
+        h.s.page=1;h.s.comparison.open=false;h.s.floatingComparison=false;
+        h.s.theme=imkit::MakeTheme(imkit::ThemePreset::Slate);h.s.theme.fonts=h.s.fonts;h.s.dark=true;h.Settle();
+        CaptureFrames(h,dir,frame,20);
     } else if(demo=="workflow") {
         h.s.page=15;h.s.comparison.open=false;h.Settle();
         CaptureFrames(h,dir,frame,20);
@@ -1711,7 +1715,7 @@ int main(int argc, char **argv) {
         if(a=="--capture-demo" && i+1<argc) {
             captureDemo=argv[++i];
             if(captureDemo!="overview" && captureDemo!="comparison" && captureDemo!="themes" &&
-               captureDemo!="icons" && captureDemo!="workflow" && captureDemo!="progress" && captureDemo!="timeline") return 2;
+               captureDemo!="icons" && captureDemo!="vector" && captureDemo!="workflow" && captureDemo!="progress" && captureDemo!="timeline") return 2;
             continue;
         }
         if (a == "--verify-timeline-model") return VerifyTimelineModel();

@@ -311,6 +311,7 @@ bool InputVector3WithUnit(const char *label, float *value, const char *unit, con
     bool changed = false;
     ImGui::PushID(label);
     ImGui::BeginGroup();
+    const float available = ImGui::CalcItemWidth();
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted(label);
     if (unit && *unit) {
@@ -318,7 +319,6 @@ bool InputVector3WithUnit(const char *label, float *value, const char *unit, con
         ImGui::TextDisabled("(%s)", unit);
     }
     const float spacing = ImGui::GetStyle().ItemSpacing.x;
-    const float available = ImGui::CalcItemWidth();
     const bool stacked = available < 240.f;
     const float width = stacked ? std::max(72.f, available) : (available - 2 * spacing) / 3;
     const char *axes[] = {"X", "Y", "Z"};
@@ -333,6 +333,40 @@ bool InputVector3WithUnit(const char *label, float *value, const char *unit, con
         ImGui::SameLine(0, spacing * .5f);
         ImGui::SetNextItemWidth(std::max(45.f, width - ImGui::CalcTextSize(axes[i]).x - spacing * .5f));
         changed |= ImGui::InputFloat("##value", value + i, 0, 0, format);
+        ImGui::EndGroup();
+        ImGui::PopID();
+    }
+    ImGui::EndGroup();
+    ImGui::PopID();
+    return changed;
+}
+bool DragVector3WithUnit(const char *label, float *value, const char *unit, float speed,
+                         float minimum, float maximum, const char *format, ImGuiSliderFlags flags) {
+    bool changed = false;
+    ImGui::PushID(label);
+    ImGui::BeginGroup();
+    const float available = ImGui::CalcItemWidth();
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted(label);
+    if (unit && *unit) {
+        ImGui::SameLine();
+        ImGui::TextDisabled("(%s)", unit);
+    }
+    const float spacing = ImGui::GetStyle().ItemSpacing.x;
+    const bool stacked = available < 240.f;
+    const float width = stacked ? std::max(72.f, available) : (available - 2 * spacing) / 3;
+    const char *axes[] = {"X", "Y", "Z"};
+    const ImGuiCol colors[] = {ImGuiCol_PlotLines, ImGuiCol_PlotHistogram, ImGuiCol_CheckMark};
+    for (int i = 0; i < 3; ++i) {
+        if (i && !stacked)
+            ImGui::SameLine();
+        ImGui::PushID(i);
+        ImGui::BeginGroup();
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextColored(ImGui::GetStyleColorVec4(colors[i]), "%s", axes[i]);
+        ImGui::SameLine(0, spacing * .5f);
+        ImGui::SetNextItemWidth(std::max(45.f, width - ImGui::CalcTextSize(axes[i]).x - spacing * .5f));
+        changed |= ImGui::DragFloat("##value", value + i, speed, minimum, maximum, format, flags);
         ImGui::EndGroup();
         ImGui::PopID();
     }
