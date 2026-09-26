@@ -529,6 +529,94 @@ bool DragVector3WithUnit(const char *label, float *value, const char *unit, floa
     ImGui::PopID();
     return changed;
 }
+bool CompactIconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
+                             const char *label, bool selected, ImVec4 accent,
+                             const ImVec2 &size, const char *description,
+                             ComponentOptions options) {
+    const auto &style = ImGui::GetStyle();
+    const float iconSize = std::max(14.f, ImGui::GetFontSize());
+    const ImVec2 textSize = ImGui::CalcTextSize(label);
+    const float width = size.x > 0.f ? size.x : iconSize + textSize.x +
+        style.ItemInnerSpacing.x + style.FramePadding.x * 2.f;
+    const float height = size.y > 0.f ? size.y : std::max(iconSize, textSize.y) +
+        style.FramePadding.y * 2.f;
+    const bool pressedByWidget = ImGui::InvisibleButton(id, ImVec2(width, height));
+    const ImVec2 min = ImGui::GetItemRectMin();
+    const ImVec2 max = ImGui::GetItemRectMax();
+    auto *draw = ImGui::GetWindowDrawList();
+    const ImVec4 base = style.Colors[ImGuiCol_Button];
+    const ImVec4 fill = Mix(base, accent, selected ? .27f : (ImGui::IsItemHovered() ? .13f : .04f));
+    draw->AddRectFilled(min, max, ImGui::GetColorU32(fill), style.FrameRounding);
+    draw->AddRect(min, max, ImGui::GetColorU32(selected ? accent : style.Colors[ImGuiCol_Border]),
+                  style.FrameRounding, 0, selected ? 1.5f : 1.f);
+    const float contentWidth = iconSize + style.ItemInnerSpacing.x + textSize.x;
+    const float x = min.x + std::max(style.FramePadding.x, (width - contentWidth) * .5f);
+    ImGui::PushStyleColor(ImGuiCol_Text, accent);
+    DrawAtlasIcon(atlas, icon, ImVec2(x, min.y + (height - iconSize) * .5f), iconSize);
+    ImGui::PopStyleColor();
+    draw->AddText(ImVec2(x + iconSize + style.ItemInnerSpacing.x,
+                         min.y + (height - textSize.y) * .5f),
+                  ImGui::GetColorU32(ImGuiCol_Text), label);
+    if ((ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) || ImGui::IsItemFocused()) &&
+        description && *description) ImGui::SetTooltip("%s", description);
+    return SemanticItem(options, label, accessibility::SemanticRole::Button,
+                        accessibility::SemanticAction::Press, selected) || pressedByWidget;
+}
+bool AxisVector3Field(const char *id, const char *label, float *value, const char *unit,
+                      float speed, float minimum, float maximum, const char *format,
+                      ImGuiSliderFlags flags, AxisVector3Interaction *interaction) {
+    if (interaction) *interaction = {};
+    ImGui::PushID(id);
+    ImGui::BeginGroup();
+    ImGui::TextUnformatted(label);
+    if (unit && *unit) {
+        ImGui::SameLine(0.f, 5.f);
+        ImGui::TextDisabled("(%s)", unit);
+    }
+    ImGui::Spacing();
+    const float available = ImGui::GetContentRegionAvail().x;
+    const float gap = ImGui::GetStyle().ItemSpacing.x;
+    const bool stacked = available < 330.f;
+    const float cellWidth = stacked ? available : (available - gap * 2.f) / 3.f;
+    const ImVec4 axes[] = {{.91f, .37f, .37f, 1.f}, {.37f, .77f, .46f, 1.f}, {.38f, .60f, .94f, 1.f}};
+    const char *names[] = {"X", "Y", "Z"};
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5.f);
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(7.f, 5.f));
+    bool changed = false;
+    for (int axis = 0; axis < 3; ++axis) {
+        if (axis && !stacked) ImGui::SameLine(0.f, gap);
+        ImGui::PushID(axis);
+        ImGui::BeginGroup();
+        ImGui::PushStyleColor(ImGuiCol_Text, axes[axis]);
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted(names[axis]);
+        ImGui::PopStyleColor();
+        ImGui::SameLine(0.f, 5.f);
+        const float labelWidth = ImGui::CalcTextSize(names[axis]).x + 5.f;
+        ImGui::SetNextItemWidth(std::max(55.f, cellWidth - labelWidth));
+        const ImVec4 base = ImGui::GetStyleColorVec4(ImGuiCol_FrameBg);
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, Mix(base, axes[axis], .06f));
+        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, Mix(base, axes[axis], .14f));
+        ImGui::PushStyleColor(ImGuiCol_FrameBgActive, Mix(base, axes[axis], .19f));
+        ImGui::PushStyleColor(ImGuiCol_Border, Mix(base, axes[axis], .42f));
+        changed |= ImGui::DragFloat("##value", value + axis, speed, minimum, maximum, format, flags);
+        if (interaction) {
+            interaction->activated |= ImGui::IsItemActivated();
+            interaction->committed |= ImGui::IsItemDeactivatedAfterEdit();
+            interaction->canceled |= ImGui::IsItemActive() && ImGui::IsKeyPressed(ImGuiKey_Escape);
+        }
+        ImGui::PopStyleColor(4);
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s %s%s%s", label, names[axis],
+            unit && *unit ? " / " : "", unit && *unit ? unit : "");
+        ImGui::EndGroup();
+        ImGui::PopID();
+    }
+    ImGui::PopStyleVar(3);
+    ImGui::EndGroup();
+    ImGui::PopID();
+    return changed;
+}
 bool BeginSettingRow(const char *id, const char *label, float width) {
     if (!ImGui::BeginTable(id, 2, ImGuiTableFlags_SizingStretchProp))
         return false;

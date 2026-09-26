@@ -32,6 +32,11 @@ bool IconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
                       const char *label, const char *description = "",
                       ActionVariant variant = ActionVariant::Secondary,
                       ComponentOptions options = {});
+// Compact icon and text action with a stable ID and restrained role accent.
+bool CompactIconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
+                             const char *label, bool selected, ImVec4 accent,
+                             const ImVec2 &size = ImVec2(0, 0), const char *description = "",
+                             ComponentOptions options = {});
 bool IconButton(const char *id, ImGuiDir direction, const char *accessibleLabel, ComponentOptions options = {});
 bool Toggle(const char *label, bool *value, ComponentOptions options = {});
 inline bool Switch(const char *label, bool *value, ComponentOptions options = {}) {
@@ -52,6 +57,16 @@ bool InputVector3WithUnit(const char *label, float value[3], const char *unit, c
 bool DragVector3WithUnit(const char *label, float value[3], const char *unit, float speed = 1.f,
                          float minimum = 0.f, float maximum = 0.f, const char *format = "%.3f",
                          ImGuiSliderFlags flags = 0);
+struct AxisVector3Interaction {
+    bool activated = false;
+    bool committed = false;
+    bool canceled = false;
+};
+// Groups the label and unit above axis fields that stack at narrow widths.
+bool AxisVector3Field(const char *id, const char *label, float value[3], const char *unit,
+                      float speed = 1.f, float minimum = 0.f, float maximum = 0.f,
+                      const char *format = "%.3f", ImGuiSliderFlags flags = 0,
+                      AxisVector3Interaction *interaction = nullptr);
 // Begin/End pair; editor is placed in second column. End only when Begin is true.
 bool BeginSettingRow(const char *id, const char *label, float labelWidth = 140);
 void EndSettingRow();

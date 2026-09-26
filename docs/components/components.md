@@ -99,6 +99,8 @@ Call `EndSettingRow` only when `BeginSettingRow` returns true. Native scalar par
 
 For a three-axis drag value, use `DragVector3WithUnit("Offset", values, "cm", .1f, -10.f, 10.f)`. Each axis remains a native `DragFloat`; the label scopes its stable IDs and narrow widths stack the fields.
 
+For a labeled inspector field, use `AxisVector3Field("position", "Position", values, "m", .01f)`. It keeps X/Y/Z colors and native drag or direct numeric input, stacking the axes when space is limited. Hosts that need edit lifecycle events can receive activation, commit, and cancellation through the final `AxisVector3Interaction*` argument. `CompactIconActionButton` pairs an atlas icon with a visible label and a subtle role accent for compact tool groups; the host owns the atlas and action state.
+
 ## Status and notification
 
 ```cpp

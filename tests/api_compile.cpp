@@ -1174,8 +1174,10 @@ int main() {
     const auto theme = imkit::MakeTheme(imkit::ThemePreset::Slate);
     auto* dragVector = static_cast<bool (*)(const char*, float*, const char*, float, float, float,
                                            const char*, ImGuiSliderFlags)>(&imkit::DragVector3WithUnit);
+    auto* axisVector = &imkit::AxisVector3Field;
+    auto* compactAction = &imkit::CompactIconActionButton;
     return presets.size() == 13 && theme.scheme == imkit::ColorScheme::Dark &&
-                   dragVector != nullptr &&
+                   dragVector != nullptr && axisVector != nullptr && compactAction != nullptr &&
                    imkit::ThemeScaleMinimum == .5f &&
                    imkit::ThemeScaleDefault == 1.25f &&
                    imkit::ThemeScaleMaximum == 2.5f

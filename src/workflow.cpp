@@ -484,18 +484,35 @@ HierarchyRowAction HierarchyRow(const char* id,const HierarchyRowView& row,
 }
 bool BeginInspectorCard(const char* id,const char* title,const char* description,
                         const IconAtlas* icons,IconId icon,ComponentOptions) {
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,ImGui::GetStyle().FrameRounding+4.f);
+    const ImGuiStyle& style=ImGui::GetStyle();
+    const ImVec4 surface=Mix(style.Colors[ImGuiCol_WindowBg],style.Colors[ImGuiCol_FrameBg],.68f);
+    const ImVec4 border=Mix(surface,style.Colors[ImGuiCol_Text],.13f);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,std::max(8.f,style.FrameRounding));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,{style.WindowPadding.x+5.f,style.WindowPadding.y+4.f});
+    ImGui::PushStyleColor(ImGuiCol_ChildBg,surface);
+    ImGui::PushStyleColor(ImGuiCol_Border,border);
     const bool visible=ImGui::BeginChild(id,{0,0},
         ImGuiChildFlags_Borders|ImGuiChildFlags_AutoResizeY,ImGuiWindowFlags_NoScrollbar);
     if(visible) {
+        const ImVec2 marker=ImGui::GetCursorScreenPos();
+        const ImVec4 header=Mix(surface,style.Colors[ImGuiCol_CheckMark],.14f);
+        ImGui::GetWindowDrawList()->AddRectFilled(marker,
+            {marker.x+ImGui::GetContentRegionAvail().x,marker.y+ImGui::GetTextLineHeight()+8.f},
+            ImGui::GetColorU32(header),4.f);
+        ImGui::Dummy({4.f,ImGui::GetTextLineHeight()+7.f});
+        ImGui::SameLine(0.f,style.ItemSpacing.x+2.f);
         if(icons&&icon!=IconId::Count) {Icon(*icons,icon,{ImGui::GetFontSize()});ImGui::SameLine();}
+        ImGui::PushStyleColor(ImGuiCol_Text,Mix(style.Colors[ImGuiCol_Text],style.Colors[ImGuiCol_CheckMark],.13f));
         ImGui::TextUnformatted(Safe(title));
+        ImGui::PopStyleColor();
+        ImGui::GetWindowDrawList()->AddRectFilled(marker,{marker.x+3.f,marker.y+ImGui::GetTextLineHeight()+7.f},
+            ImGui::GetColorU32(ImGuiCol_CheckMark),2.f);
         if(*Safe(description))ImGui::TextDisabled("%s",description);
-        ImGui::Separator();
+        ImGui::Spacing();
     }
     return visible;
 }
-void EndInspectorCard() {ImGui::EndChild();ImGui::PopStyleVar();}
+void EndInspectorCard() {ImGui::EndChild();ImGui::PopStyleColor(2);ImGui::PopStyleVar(2);}
 bool SettingToggleRow(const char* id,const char* label,const char* description,
                       bool current,bool disabled,const char* disabledReason,ComponentOptions o) {
     ImGui::PushID(id);
