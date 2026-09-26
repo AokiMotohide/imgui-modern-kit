@@ -313,7 +313,7 @@ bool InputVector3WithUnit(const char *label, float *value, const char *unit, con
     ImGui::BeginGroup();
     const float available = ImGui::CalcItemWidth();
     ImGui::AlignTextToFramePadding();
-    ImGui::TextUnformatted(label);
+    ImGui::TextUnformatted(label, std::strstr(label, "##"));
     if (unit && *unit) {
         ImGui::SameLine();
         ImGui::TextDisabled("(%s)", unit);
@@ -347,7 +347,7 @@ bool DragVector3WithUnit(const char *label, float *value, const char *unit, floa
     ImGui::BeginGroup();
     const float available = ImGui::CalcItemWidth();
     ImGui::AlignTextToFramePadding();
-    ImGui::TextUnformatted(label);
+    ImGui::TextUnformatted(label, std::strstr(label, "##"));
     if (unit && *unit) {
         ImGui::SameLine();
         ImGui::TextDisabled("(%s)", unit);
