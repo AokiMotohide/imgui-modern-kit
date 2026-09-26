@@ -42,6 +42,10 @@ bool InputScalarWithUnit(const char *label, ImGuiDataType type, void *value, con
 bool DragFloatWithUnit(const char *label, float *value, const char *unit, float speed = 1, float minimum = 0,
                        float maximum = 0, const char *format = "%.3f", ImGuiSliderFlags flags = 0);
 bool InputVector3WithUnit(const char *label, float value[3], const char *unit, const char *format = "%.3f");
+// Three native drag fields with stable per-axis IDs. Narrow widths stack the axes.
+bool DragVector3WithUnit(const char *label, float value[3], const char *unit, float speed = 1.f,
+                         float minimum = 0.f, float maximum = 0.f, const char *format = "%.3f",
+                         ImGuiSliderFlags flags = 0);
 // Begin/End pair; editor is placed in second column. End only when Begin is true.
 bool BeginSettingRow(const char *id, const char *label, float labelWidth = 140);
 void EndSettingRow();

@@ -25,18 +25,39 @@ EXPECTED_PACKAGES = {
     "macos-x86_64": re.compile(r"imgui-modern-kit-.*-Darwin-x86_64\.zip$", re.I),
     "macos-universal2": re.compile(r"imgui-modern-kit-.*-Darwin-universal2\.zip$", re.I),
 }
-PUBLIC_DOCS = [
-    f"docs/{name}{suffix}.md"
-    for name in (
-        "README", "documentation-catalog", "getting-started", "guide", "gallery",
-        "examples-recipes", "components", "themes", "troubleshooting", "migration-v3",
-        "architecture", "dependencies", "workflow-components", "shell-components",
-        "node-editor", "editor-suite", "editor-api", "timeline-editing",
-        "gallery-window-frame", "icons", "design-system", "api-coverage",
-        "widget-inventory", "validation",
-    )
-    for suffix in ("", ".ja")
+DOCS_PAIRS = [
+    ("README.md", "目次.md"),
+    ("getting-started/getting-started.md", "getting-started/導入ガイド.md"),
+    ("getting-started/how-it-works.md", "getting-started/仕組みと設計思想.md"),
+    ("getting-started/guide.md", "getting-started/利用ガイド.md"),
+    ("getting-started/gallery.md", "getting-started/ギャラリーガイド.md"),
+    ("getting-started/examples-recipes.md", "getting-started/実例とレシピ.md"),
+    ("tutorials/build-first-app.md", "tutorials/最初のアプリの作成.md"),
+    ("tutorials/build-settings-screen.md", "tutorials/設定画面の作成.md"),
+    ("tutorials/build-node-editor.md", "tutorials/ノードエディタの作成.md"),
+    ("tutorials/build-timeline.md", "tutorials/タイムラインの作成.md"),
+    ("tutorials/custom-component.md", "tutorials/カスタムコンポーネントの作成.md"),
+    ("architecture/architecture.md", "architecture/アーキテクチャ.md"),
+    ("architecture/design-system.md", "architecture/デザインシステム.md"),
+    ("architecture/themes.md", "architecture/テーマ.md"),
+    ("architecture/icons.md", "architecture/アイコン.md"),
+    ("architecture/dependencies.md", "architecture/依存関係.md"),
+    ("components/components.md", "components/基本コンポーネント.md"),
+    ("components/node-editor.md", "components/ノードエディタ.md"),
+    ("components/timeline-editing.md", "components/タイムライン編集.md"),
+    ("components/editor-suite.md", "components/エディタスイート.md"),
+    ("components/workflow-components.md", "components/ワークフローコンポーネント.md"),
+    ("components/shell-components.md", "components/シェルコンポーネント.md"),
+    ("components/gallery-window-frame.md", "components/ウィンドウフレーム.md"),
+    ("reference/api-coverage.md", "reference/公開API一覧.md"),
+    ("reference/editor-api.md", "reference/エディタAPI.md"),
+    ("reference/widget-inventory.md", "reference/ウィジェット一覧.md"),
+    ("reference/documentation-catalog.md", "reference/文書カタログ.md"),
+    ("reference/validation.md", "reference/検証記録.md"),
+    ("reference/migration-v3.md", "reference/v3移行ガイド.md"),
+    ("reference/troubleshooting.md", "reference/トラブルシューティング.md"),
 ]
+PUBLIC_DOCS = [f"docs/{en}" for en, _ in DOCS_PAIRS] + [f"docs/{ja}" for _, ja in DOCS_PAIRS]
 
 
 def sha256(path: Path) -> str:

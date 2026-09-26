@@ -1,5 +1,7 @@
 #include <windows.h>
 #include <objbase.h>
+#include <wincodec.h>
+#include <wrl/client.h>
 #include <GLFW/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
@@ -18,12 +20,29 @@
 #include <chrono>
 #include "allocation_probe.h"
 #include <algorithm>
+#include <array>
+#include <set>
 namespace {
 int lastGlfwErrorCode = GLFW_NO_ERROR;
 const std::filesystem::path &NoCapturePath() {
     static const std::filesystem::path empty;
     return empty;
 }
+struct IconArtworkTile {
+    std::string name;
+    GLuint texture = 0;
+};
+struct IconArtworkSlide {
+    std::string category;
+    std::string description;
+    int presetCount = 0;
+    int sourceImageCount = 0;
+    std::vector<IconArtworkTile> tiles;
+};
+struct Host;
+void DrawIconArtworkShowcase(Host &h);
+void LoadIconArtworkShowcase(Host &h);
+void DestroyIconArtworkShowcase(Host &h);
 struct Host {
     GLFWwindow *window = nullptr;
     imkit::gallery::GalleryState s;
@@ -36,6 +55,12 @@ struct Host {
     bool countImGuiAllocations=false;
     std::size_t imguiAllocations=0;
     ImVec2 mouse{-100, -100};
+    bool iconArtworkShowcase=false;
+    int iconArtworkSlide=0;
+    int iconArtworkSourceCount=0;
+    int iconArtworkSourceCategoryCount=0;
+    int iconArtworkCatalogCategoryCount=0;
+    std::vector<IconArtworkSlide> iconArtworkSlides;
     void Frame(const std::function<void(ImGuiIO &)> &input = {}, const std::filesystem::path &shot = NoCapturePath()) {
         glfwPollEvents();
         const bool wantsCustomFrame=s.framePreset!=imkit::WindowFramePreset::Native;
@@ -61,8 +86,12 @@ struct Host {
             windowFrame.SetLayout(frameLayout);
             s.windowFrameHeight=frameLayout.titleBar.max.y;
         } else s.windowFrameHeight=0;
-        imkit::gallery::Show(s);
-        imkit::gallery::ShowComparison(s);
+        if (iconArtworkShowcase) {
+            DrawIconArtworkShowcase(*this);
+        } else {
+            imkit::gallery::Show(s);
+            imkit::gallery::ShowComparison(s);
+        }
         if(s.floatingComparison && s.showDearImGuiDemo) {
             ImGui::ShowDemoWindow(&s.showDearImGuiDemo);
             if(!s.demoWindowPositioned) {
@@ -153,6 +182,191 @@ struct Host {
         Settle();
     }
 };
+GLuint LoadIconArtworkTexture(IWICImagingFactory *factory, const std::filesystem::path &path) {
+    using Microsoft::WRL::ComPtr;
+    ComPtr<IWICBitmapDecoder> decoder;
+    if (FAILED(factory->CreateDecoderFromFilename(path.c_str(), nullptr, GENERIC_READ,
+                                                   WICDecodeMetadataCacheOnLoad, decoder.GetAddressOf())))
+        throw std::runtime_error("Unable to decode icon artwork PNG");
+    ComPtr<IWICBitmapFrameDecode> frame;
+    if (FAILED(decoder->GetFrame(0, frame.GetAddressOf())))
+        throw std::runtime_error("Unable to read icon artwork PNG frame");
+    ComPtr<IWICBitmapScaler> scaler;
+    if (FAILED(factory->CreateBitmapScaler(scaler.GetAddressOf())) ||
+        FAILED(scaler->Initialize(frame.Get(), 128, 128, WICBitmapInterpolationModeFant)))
+        throw std::runtime_error("Unable to resize icon artwork PNG");
+    ComPtr<IWICFormatConverter> converter;
+    if (FAILED(factory->CreateFormatConverter(converter.GetAddressOf())) ||
+        FAILED(converter->Initialize(scaler.Get(), GUID_WICPixelFormat32bppRGBA,
+                                     WICBitmapDitherTypeNone, nullptr, 0.0,
+                                     WICBitmapPaletteTypeCustom)))
+        throw std::runtime_error("Unable to convert icon artwork PNG");
+    constexpr UINT width = 128, height = 128, stride = width * 4;
+    std::vector<unsigned char> pixels(stride * height);
+    if (FAILED(converter->CopyPixels(nullptr, stride, static_cast<UINT>(pixels.size()), pixels.data())))
+        throw std::runtime_error("Unable to copy icon artwork pixels");
+    for (std::size_t offset = 0; offset < pixels.size(); offset += 4)
+        pixels[offset] = pixels[offset + 1] = pixels[offset + 2] = 255;
+    GLuint texture = 0;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    constexpr GLint clampToEdge = 0x812F;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clampToEdge);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clampToEdge);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return texture;
+}
+void LoadIconArtworkShowcase(Host &h) {
+    using Microsoft::WRL::ComPtr;
+    ComPtr<IWICImagingFactory> factory;
+    if (FAILED(CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER,
+                                IID_PPV_ARGS(factory.GetAddressOf()))))
+        throw std::runtime_error("Unable to initialize Windows Imaging Component");
+    const auto sourceDirectory = std::filesystem::current_path() / "assets" / "icons" / "originals";
+    if (!std::filesystem::is_directory(sourceDirectory))
+        throw std::runtime_error("Run icon-artwork capture from the repository root");
+    const auto catalog = imkit::GetIconCatalog();
+    const std::array<std::pair<std::string_view, std::string_view>, 5> groups{{
+        {"3D Projection", "Projectors, camera frusta, optics, and projection surfaces."},
+        {"Production", "Production controls for layers, monitors, movement, and alignment."},
+        {"3D Objects", "Scene primitives, collections, and reusable 3D objects."},
+        {"3D Lighting", "Lighting rigs and spatial references for 3D scenes."},
+        {"Editor", "Timeline, curve, selection, and geometry tools."},
+    }};
+    constexpr std::array<std::string_view, 10> editorHighlights{
+        "AnimationTimeline", "CurveEditor", "DopeSheet", "Marker", "ProgramMonitor",
+        "SafeArea", "SourceMonitor", "Timecode", "Transition", "Waveform"};
+    std::set<std::string> sourceCategories;
+    std::set<std::string> catalogCategories;
+    for (const auto &item : catalog) {
+        catalogCategories.emplace(item.category);
+        const auto path = sourceDirectory / (std::string(item.name) + ".png");
+        if (std::filesystem::exists(path))
+            sourceCategories.emplace(item.category);
+    }
+    h.iconArtworkSourceCount = 0;
+    h.iconArtworkSourceCategoryCount = static_cast<int>(sourceCategories.size());
+    h.iconArtworkCatalogCategoryCount = static_cast<int>(catalogCategories.size());
+    for (const auto &item : catalog)
+        if (std::filesystem::exists(sourceDirectory / (std::string(item.name) + ".png")))
+            ++h.iconArtworkSourceCount;
+    for (const auto &[category, description] : groups) {
+        h.iconArtworkSlides.emplace_back();
+        auto &slide = h.iconArtworkSlides.back();
+        slide.category = category;
+        slide.description = description;
+        for (const auto &item : catalog) {
+            if (std::string_view(item.category) != category)
+                continue;
+            ++slide.presetCount;
+            const auto path = sourceDirectory / (std::string(item.name) + ".png");
+            if (!std::filesystem::exists(path))
+                continue;
+            ++slide.sourceImageCount;
+            if (category == "Editor" &&
+                std::find(editorHighlights.begin(), editorHighlights.end(), item.name) == editorHighlights.end())
+                continue;
+            slide.tiles.push_back({std::string(item.name), 0});
+            slide.tiles.back().texture = LoadIconArtworkTexture(factory.Get(), path);
+        }
+        if (slide.tiles.empty())
+            throw std::runtime_error("Icon artwork showcase category has no source PNGs");
+    }
+}
+void DestroyIconArtworkShowcase(Host &h) {
+    for (const auto &slide : h.iconArtworkSlides)
+        for (const auto &tile : slide.tiles)
+            if (tile.texture)
+                glDeleteTextures(1, &tile.texture);
+    h.iconArtworkSlides.clear();
+}
+void DrawIconArtworkShowcase(Host &h) {
+    auto &s = h.s;
+    s.theme.fonts = s.fonts;
+    imkit::ThemeScope theme(s.theme, s.scale);
+    const auto display = ImGui::GetIO().DisplaySize;
+    ImGui::SetNextWindowPos({0, 0}, ImGuiCond_Always);
+    ImGui::SetNextWindowSize(display, ImGuiCond_Always);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {28, 22});
+    constexpr ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
+                                       ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar;
+    if (ImGui::Begin("##icon-artwork-showcase", nullptr, flags)) {
+        ImGui::TextDisabled("IMKIT  /  PRESET ICON ARTWORK");
+        ImGui::PushFont(s.fonts.emphasis, 27);
+        ImGui::TextUnformatted("Ready-made imagery for creative tools");
+        ImGui::PopFont();
+        ImGui::Text("%d source PNGs  ·  %d image categories  ·  %d presets in %d catalog categories",
+                    h.iconArtworkSourceCount, h.iconArtworkSourceCategoryCount,
+                    static_cast<int>(imkit::GetIconCatalog().size()), h.iconArtworkCatalogCategoryCount);
+        ImGui::Spacing();
+        for (int index = 0; index < static_cast<int>(h.iconArtworkSlides.size()); ++index) {
+            if (index)
+                ImGui::SameLine();
+            const auto &slide = h.iconArtworkSlides[static_cast<std::size_t>(index)];
+            char label[96];
+            std::snprintf(label, sizeof(label), "%s  %d", slide.category.c_str(), slide.presetCount);
+            const bool selected = h.iconArtworkSlide == index;
+            const auto button = selected ? s.theme.colors.accent : ImGui::GetStyleColorVec4(ImGuiCol_FrameBg);
+            const auto foreground = selected ? s.theme.colors.onAccent : ImGui::GetStyleColorVec4(ImGuiCol_Text);
+            ImGui::PushStyleColor(ImGuiCol_Button, button);
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, button);
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, button);
+            ImGui::PushStyleColor(ImGuiCol_Text, foreground);
+            if (ImGui::Button(label, {0, 28}))
+                h.iconArtworkSlide = index;
+            ImGui::PopStyleColor(4);
+        }
+        const auto &slide = h.iconArtworkSlides.at(static_cast<std::size_t>(h.iconArtworkSlide));
+        ImGui::Separator();
+        ImGui::PushFont(s.fonts.emphasis, 19);
+        ImGui::TextUnformatted(slide.category.c_str());
+        ImGui::PopFont();
+        ImGui::SameLine();
+        if (static_cast<int>(slide.tiles.size()) < slide.sourceImageCount)
+            ImGui::TextDisabled("%d presets  ·  %d PNG artworks  ·  %d featured",
+                                slide.presetCount, slide.sourceImageCount, static_cast<int>(slide.tiles.size()));
+        else
+            ImGui::TextDisabled("%d presets  ·  %d PNG artworks", slide.presetCount, slide.sourceImageCount);
+        ImGui::TextDisabled("%s", slide.description.c_str());
+        ImGui::Spacing();
+        if (ImGui::BeginTable("##icon-artwork-grid", 5,
+                              ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_BordersInnerV)) {
+            const int activeTile = static_cast<int>((ImGui::GetFrameCount() / 3) % slide.tiles.size());
+            for (int index = 0; index < static_cast<int>(slide.tiles.size()); ++index) {
+                const auto &tile = slide.tiles[static_cast<std::size_t>(index)];
+                ImGui::TableNextColumn();
+                ImGui::PushID(tile.name.c_str());
+                const bool active = index == activeTile;
+                const ImVec4 card = ImGui::GetStyleColorVec4(active ? ImGuiCol_Header : ImGuiCol_FrameBg);
+                const ImVec4 border = ImGui::GetStyleColorVec4(active ? ImGuiCol_CheckMark : ImGuiCol_Border);
+                ImGui::PushStyleColor(ImGuiCol_ChildBg, card);
+                ImGui::PushStyleColor(ImGuiCol_Border, border);
+                if (ImGui::BeginChild("##asset-tile", {0, 174}, ImGuiChildFlags_Borders,
+                                      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse)) {
+                    constexpr float imageSize = 112;
+                    const float imageX = std::max(0.0f, (ImGui::GetContentRegionAvail().x - imageSize) * .5f);
+                    ImGui::SetCursorPosX(imageX);
+                    ImGui::Image(ImTextureRef(static_cast<ImTextureID>(tile.texture)), {imageSize, imageSize});
+                    ImGui::Spacing();
+                    ImGui::SetCursorPosX(10);
+                    ImGui::PushFont(s.fonts.emphasis, 14);
+                    ImGui::TextUnformatted(tile.name.c_str());
+                    ImGui::PopFont();
+                }
+                ImGui::EndChild();
+                ImGui::PopStyleColor(2);
+                ImGui::PopID();
+            }
+            ImGui::EndTable();
+        }
+    }
+    ImGui::End();
+    ImGui::PopStyleVar(2);
+}
 void Verify(Host &h, const std::filesystem::path &out) {
     std::ofstream log(out / "interaction.txt");
     auto check = [&](bool ok, const char *name) {
@@ -744,29 +958,62 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
     int frame=0;
     if(demo=="overview") {
         h.s.page=19;h.s.comparison.open=false;h.Settle();
-        CaptureFrames(h,dir,frame,30);
+        CaptureFrames(h,dir,frame,16);
         h.s.comparison.open=true;h.Settle();
-        CaptureFrames(h,dir,frame,50);
+        CaptureFrames(h,dir,frame,24);
         h.Click("start-components");h.s.comparison.open=false;
-        CaptureFrames(h,dir,frame,40);
+        CaptureFrames(h,dir,frame,20);
     } else if(demo=="comparison") {
         h.s.page=19;h.s.comparison.open=true;h.Settle();
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,14);
         h.Click("comparison-default-apply");
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,14);
         h.Replace("comparison-default-name","Studio Console");
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,14);
         h.Click("comparison-imkit-enabled");
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,14);
+    } else if(demo=="components") {
+        h.s.page=0;h.s.comparison.open=false;h.Settle();
+        CaptureFrames(h,dir,frame,16);
+        h.Click("apply");CaptureFrames(h,dir,frame,12);
+        h.Click("toggle");CaptureFrames(h,dir,frame,12);
+        h.Click("mixed");CaptureFrames(h,dir,frame,12);
     } else if(demo=="icons") {
-        h.s.page=6;h.s.comparison.open=false;h.s.iconSearch[0]='\0';h.Settle();
+        const auto catalog=imkit::GetIconCatalog();
+        auto iconIndex=[&](std::string_view name) {
+            const auto item=std::find_if(catalog.begin(),catalog.end(),[&](const auto &entry){return entry.name==name;});
+            return item==catalog.end()?static_cast<int>(imkit::IconId::Search):static_cast<int>(item->id);
+        };
+        auto categoryIndex=[&](std::string_view name) {
+            std::vector<std::string_view> categories{"All"};
+            for(const auto &item:catalog)
+                if(std::find(categories.begin(),categories.end(),item.category)==categories.end())
+                    categories.push_back(item.category);
+            const auto category=std::find(categories.begin(),categories.end(),name);
+            return category==categories.end()?0:static_cast<int>(category-categories.begin());
+        };
+        h.s.page=6;h.s.comparison.open=false;h.s.iconSearch[0]='\0';h.s.iconCategory=0;
+        h.s.selectedIcon=iconIndex("Camera");h.Settle();
         CaptureFrames(h,dir,frame,20);
-        h.Replace("icon-search","camera");
-        CaptureFrames(h,dir,frame,20);
-        h.Click("icon-button");
-        CaptureFrames(h,dir,frame,20);
-        h.Replace("icon-search","timeline");
-        CaptureFrames(h,dir,frame,20);
+        h.s.iconCategory=categoryIndex("Editor");h.s.selectedIcon=iconIndex("Timecode");h.Settle();
+        CaptureFrames(h,dir,frame,12);
+        h.s.iconCategory=categoryIndex("Media");h.s.selectedIcon=iconIndex("Camera");h.Settle();
+        CaptureFrames(h,dir,frame,12);
+        h.s.iconCategory=0;h.s.selectedIcon=iconIndex("Projector3D");
+        std::strcpy(h.s.iconSearch,"projector");h.Settle();
+        CaptureFrames(h,dir,frame,12);
+    } else if(demo=="icon-artwork") {
+        h.s.theme=imkit::MakeTheme(imkit::ThemePreset::Graphite);
+        h.s.theme.fonts=h.s.fonts;
+        h.s.scale=1;
+        LoadIconArtworkShowcase(h);
+        h.iconArtworkShowcase=true;
+        h.mouse={-100,-100};
+        for (h.iconArtworkSlide=0;h.iconArtworkSlide<static_cast<int>(h.iconArtworkSlides.size());++h.iconArtworkSlide) {
+            h.Settle();
+            CaptureFrames(h,dir,frame,12);
+        }
+        h.iconArtworkShowcase=false;
     } else if(demo=="themes") {
         auto applyPreset=[&](int index) {
             h.s.presetIndex=index;
@@ -778,29 +1025,43 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
             h.Settle();
         };
         h.s.page=6;h.s.comparison.open=false;h.s.palette=true;h.Settle();
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,8);
         applyPreset(4);
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,8);
         applyPreset(8);
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,8);
+        applyPreset(static_cast<int>(imkit::ThemePreset::Slate));
+        CaptureFrames(h,dir,frame,8);
         h.s.palette=false;h.Settle();
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,8);
         h.s.page=19;h.s.comparison.open=true;h.Settle();
-        CaptureFrames(h,dir,frame,40);
+        CaptureFrames(h,dir,frame,16);
+    } else if(demo=="vector") {
+        h.s.page=1;h.s.comparison.open=false;h.s.floatingComparison=false;
+        h.s.theme=imkit::MakeTheme(imkit::ThemePreset::Slate);h.s.theme.fonts=h.s.fonts;h.s.dark=true;h.Settle();
+        CaptureFrames(h,dir,frame,20);
     } else if(demo=="workflow") {
         h.s.page=15;h.s.comparison.open=false;h.Settle();
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,10);
         h.Click("workflow-chip");
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,10);
         h.Click("workflow-notify");
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,10);
         h.Click("workflow-steps");
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,10);
         h.s.page=16;h.Settle();
-        for(int i=0;i<40;++i) {
-            h.s.workflow.fraction=static_cast<float>(i)/39.f;
+        for(int i=0;i<24;++i) {
+            h.s.workflow.fraction=static_cast<float>(i)/23.f;
             char name[32];std::snprintf(name,sizeof(name),"frame-%03d.png",frame++);
             h.Frame({},dir/name);
+        }
+    } else if(demo=="preview-contract") {
+        auto &s=h.s.editors;s.Dataset(false);h.s.page=8;h.s.comparison.open=false;h.Settle();
+        s.videoTopRatio=.95f;
+        s.monitorMode=3;s.monitorContractSource=0;s.monitorContractAspect=1;
+        for(int state=0;state<5;++state) {
+            s.monitorContractStatus=state;h.Settle(2);
+            CaptureFrames(h,dir,frame,10);
         }
     } else if(demo=="progress") {
         h.s.page=16;h.s.comparison.open=false;h.Settle();
@@ -812,16 +1073,17 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
         }
     } else if(demo=="timeline") {
         auto &s=h.s.editors;s.Dataset(false);h.s.page=8;h.s.comparison.open=false;h.Settle();
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,16);
         const auto origin=s.timeline.view.min;
         h.mouse={origin.x+s.timeline.headerWidth+5,origin.y+11};h.Settle();
         h.Frame([](ImGuiIO &io){io.AddMouseButtonEvent(0,true);});
         h.mouse.x+=60;h.Frame();
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,16);
         h.Frame([](ImGuiIO &io){io.AddMouseButtonEvent(0,false);});h.Settle();
-        CaptureFrames(h,dir,frame,20);
+        h.mouse={-100,-100};h.Settle();
+        CaptureFrames(h,dir,frame,16);
         s.Undo();h.Settle();
-        CaptureFrames(h,dir,frame,20);
+        CaptureFrames(h,dir,frame,16);
     } else {
         throw std::runtime_error("unknown capture demo");
     }
@@ -1709,7 +1971,9 @@ int main(int argc, char **argv) {
         if(a=="--capture-demo" && i+1<argc) {
             captureDemo=argv[++i];
             if(captureDemo!="overview" && captureDemo!="comparison" && captureDemo!="themes" &&
-               captureDemo!="icons" && captureDemo!="workflow" && captureDemo!="progress" && captureDemo!="timeline") return 2;
+               captureDemo!="icons" && captureDemo!="icon-artwork" && captureDemo!="vector" && captureDemo!="workflow" &&
+               captureDemo!="progress" && captureDemo!="timeline" && captureDemo!="components" &&
+               captureDemo!="preview-contract") return 2;
             continue;
         }
         if (a == "--verify-timeline-model") return VerifyTimelineModel();
@@ -2055,6 +2319,7 @@ int main(int argc, char **argv) {
         result = 1;
     }
     h.s.editors.previewRenderer.Shutdown();
+    DestroyIconArtworkShowcase(h);
     if (texture)
         glDeleteTextures(1, &texture);
     h.s.icons.Clear();

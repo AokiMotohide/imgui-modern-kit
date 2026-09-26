@@ -10,16 +10,50 @@ from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
-PAIRS = [
-    "README", "documentation-catalog", "getting-started", "guide", "gallery",
-    "examples-recipes", "components", "themes", "troubleshooting", "migration-v3",
-    "architecture", "dependencies", "workflow-components", "shell-components",
-    "node-editor", "editor-suite", "editor-api", "timeline-editing",
-    "gallery-window-frame", "icons", "design-system", "api-coverage",
-    "widget-inventory", "validation",
+
+# (English relative path from docs/, Japanese relative path from docs/)
+PAIRS: list[tuple[str, str]] = [
+    ("README.md", "目次.md"),
+    # getting-started
+    ("getting-started/getting-started.md", "getting-started/導入ガイド.md"),
+    ("getting-started/how-it-works.md", "getting-started/仕組みと設計思想.md"),
+    ("getting-started/guide.md", "getting-started/利用ガイド.md"),
+    ("getting-started/gallery.md", "getting-started/ギャラリーガイド.md"),
+    ("getting-started/examples-recipes.md", "getting-started/実例とレシピ.md"),
+    # tutorials
+    ("tutorials/build-first-app.md", "tutorials/最初のアプリの作成.md"),
+    ("tutorials/build-settings-screen.md", "tutorials/設定画面の作成.md"),
+    ("tutorials/build-node-editor.md", "tutorials/ノードエディタの作成.md"),
+    ("tutorials/build-timeline.md", "tutorials/タイムラインの作成.md"),
+    ("tutorials/custom-component.md", "tutorials/カスタムコンポーネントの作成.md"),
+    # architecture
+    ("architecture/architecture.md", "architecture/アーキテクチャ.md"),
+    ("architecture/design-system.md", "architecture/デザインシステム.md"),
+    ("architecture/themes.md", "architecture/テーマ.md"),
+    ("architecture/icons.md", "architecture/アイコン.md"),
+    ("architecture/dependencies.md", "architecture/依存関係.md"),
+    # components
+    ("components/components.md", "components/基本コンポーネント.md"),
+    ("components/node-editor.md", "components/ノードエディタ.md"),
+    ("components/timeline-editing.md", "components/タイムライン編集.md"),
+    ("components/editor-suite.md", "components/エディタスイート.md"),
+    ("components/workflow-components.md", "components/ワークフローコンポーネント.md"),
+    ("components/shell-components.md", "components/シェルコンポーネント.md"),
+    ("components/gallery-window-frame.md", "components/ウィンドウフレーム.md"),
+    # reference
+    ("reference/api-coverage.md", "reference/公開API一覧.md"),
+    ("reference/editor-api.md", "reference/エディタAPI.md"),
+    ("reference/widget-inventory.md", "reference/ウィジェット一覧.md"),
+    ("reference/documentation-catalog.md", "reference/文書カタログ.md"),
+    ("reference/validation.md", "reference/検証記録.md"),
+    ("reference/migration-v3.md", "reference/v3移行ガイド.md"),
+    ("reference/troubleshooting.md", "reference/トラブルシューティング.md"),
 ]
-PUBLIC_FILES = {ROOT / f"README{suffix}.md" for suffix in ("", ".ja")}
-PUBLIC_FILES |= {DOCS / f"{name}{suffix}.md" for name in PAIRS for suffix in ("", ".ja")}
+
+PUBLIC_FILES = {ROOT / "README.md", ROOT / "README.ja.md"}
+PUBLIC_FILES |= {DOCS / en for en, _ in PAIRS}
+PUBLIC_FILES |= {DOCS / ja for _, ja in PAIRS}
+
 LINK_RE = re.compile(r"(?<!!)\[[^\]]*\]\(([^)]+)\)")
 HEADING_RE = re.compile(r"^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$")
 HTML_ID_RE = re.compile(r"\bid=[\"']([^\"']+)[\"']", re.IGNORECASE)
@@ -84,9 +118,9 @@ def check_links(path: Path) -> list[str]:
 
 def main() -> int:
     errors: list[str] = []
-    for name in PAIRS:
-        english = DOCS / f"{name}.md"
-        japanese = DOCS / f"{name}.ja.md"
+    for en_rel, ja_rel in PAIRS:
+        english = DOCS / en_rel
+        japanese = DOCS / ja_rel
         for path in (english, japanese):
             if not path.is_file():
                 errors.append(f"missing language pair member: {path.relative_to(ROOT)}")
@@ -111,7 +145,7 @@ def main() -> int:
         else:
             errors.extend(check_links(path))
     gallery_source = (ROOT / "examples/gallery/gallery.cpp").read_text(encoding="utf-8")
-    gallery_guides = [DOCS / "gallery.md", DOCS / "gallery.ja.md"]
+    gallery_guides = [DOCS / "getting-started/gallery.md", DOCS / "getting-started/ギャラリーガイド.md"]
     for page, action, title in (
         (0, "Open components", "Components: Basic"),
         (6, "Open themes and icons", "Icons"),

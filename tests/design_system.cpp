@@ -68,6 +68,20 @@ int main() {
         gallery::CountAllocations(false);
     }
     measure=false; Check(allocations==0,"steady ImGui allocations zero");
+    float vector[3]{1.f,2.f,3.f};
+    auto vectorFrame=[&](float width) {
+        ImGui::NewFrame();ImGui::SetNextWindowSize({600,400});ImGui::Begin("vector fixture");
+        ImGui::SetNextItemWidth(width);
+        const float top=ImGui::GetCursorScreenPos().y;
+        const bool changed=DragVector3WithUnit("Offset",vector,"cm",.1f,-10.f,10.f,"%.2f");
+        const float consumed=ImGui::GetCursorScreenPos().y-top;
+        ImGui::End();ImGui::Render();
+        Check(!changed,"untouched vector returns no change");
+        return consumed;
+    };
+    const float wideHeight=vectorFrame(400.f),narrowHeight=vectorFrame(150.f);
+    Check(narrowHeight>wideHeight*1.5f,"narrow vector stacks axis drag fields");
+    Check(vector[0]==1.f&&vector[1]==2.f&&vector[2]==3.f,"vector values remain host-owned");
     DialogState dialog; bool launcherFocused=false;
     auto dialogFrame=[&](bool focus) {
         io.AddFocusEvent(true);

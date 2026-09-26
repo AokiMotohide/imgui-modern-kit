@@ -139,6 +139,7 @@ std::span<const ThemePresetInfo> ThemePresets() noexcept {
         ThemePresetInfo{ThemePreset::Solar, "solar", "Solar", ColorScheme::Light},
         ThemePresetInfo{ThemePreset::HighContrastLight, "high-contrast-light", "High Contrast Light", ColorScheme::Light},
         ThemePresetInfo{ThemePreset::HighContrastDark, "high-contrast-dark", "High Contrast Dark", ColorScheme::Dark},
+        ThemePresetInfo{ThemePreset::Slate, "slate", "Slate", ColorScheme::Dark},
     };
     return presets;
 }
@@ -153,6 +154,27 @@ Theme MakeTheme(ThemePreset preset) {
     const auto info = ThemePresets()[static_cast<std::size_t>(preset)];
     if (preset == ThemePreset::HighContrastLight || preset == ThemePreset::HighContrastDark)
         return MakeTheme(info.scheme, ContrastMode::HighContrast);
+    if (preset == ThemePreset::Slate) {
+        auto theme = MakePrecisionTheme(ColorScheme::Dark);
+        auto& c = theme.semantic;
+        c.canvas = Hex(0x111318);
+        c.surface = Hex(0x191c22);
+        c.surfaceRaised = Hex(0x242932);
+        c.overlay = Hex(0x2b313b);
+        c.text = Hex(0xf5f7fa);
+        c.textSecondary = Hex(0xc6cdd8);
+        c.textDisabled = Hex(0x929ba9);
+        c.border = Hex(0x48515f);
+        c.control.rest = Hex(0x20242b);
+        c.control.hover = Hex(0x2b323d);
+        c.control.pressed = Hex(0x384455);
+        c.control.disabled = c.control.rest;
+        theme.radius = {4, 7, 10};
+        theme.stroke = {1, 2};
+        ResolveTheme(theme);
+        SetAccent(theme, Hex(0x78aaff));
+        return theme;
+    }
     auto theme = MakePrecisionTheme(info.scheme);
     constexpr std::array accents = {0x005ca8u, 0x8ab4f8u, 0x78d6c6u, 0x8eafffu,
                                     0x56d3e5u, 0x83d69cu, 0x9b5c2eu, 0xa9466bu,

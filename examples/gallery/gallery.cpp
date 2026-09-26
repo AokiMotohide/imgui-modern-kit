@@ -86,7 +86,7 @@ void Start(GalleryState &s) {
         StartCard(s, 8, "04 / EDITING", "Scale into timelines", "Explore Video editing UI. Media, project data and Undo stay in the host.", "Open timeline");
         EndTable();
     }
-    TextDisabled("Learning map: docs/examples-recipes.md (English) / docs/examples-recipes.ja.md (日本語)");
+    TextDisabled("Learning map: docs/getting-started/examples-recipes.md (English) / docs/getting-started/実例とレシピ.md (日本語)");
     SeparatorText("What remains yours");
     TextWrapped("Your Dear ImGui context, renderer, font atlas, data, undo history and persistence stay in the host. "
                 "ImKit supplies visual structure and reusable controls without taking those responsibilities.");
@@ -147,8 +147,10 @@ void ImKitComparisonSpecimen(GalleryState &s) {
     Record(s, "comparison-imkit-quality");
 }
 void Icons(GalleryState &s) {
-    Heading(s, "Icons / Generated outline glyphs");
-    TextDisabled("%d generated icons · %d atlas sizes · searchable catalog",
+    char heading[64];
+    std::snprintf(heading, sizeof(heading), "Icons / %d preset icons", static_cast<int>(GetIconCatalog().size()));
+    Heading(s, heading);
+    TextDisabled("%d preset icons · %d atlas sizes · searchable catalog",
                  static_cast<int>(GetIconCatalog().size()), static_cast<int>(IconPixelSizes.size()));
     SetNextItemWidth(210);
     InputText("Search", s.iconSearch, sizeof(s.iconSearch));
@@ -329,6 +331,10 @@ void Numeric(GalleryState &s) {
     InputScalarWithUnit("Distance", ImGuiDataType_Double, &s.precise, "mm");
     SetNextItemWidth(400);
     InputVector3WithUnit("Position", s.vector, "mm");
+    SetNextItemWidth(400);
+    DragVector3WithUnit("Offset", s.vector, "mm", .1f, -100.f, 100.f, "%.2f");
+    SetNextItemWidth(160);
+    DragVector3WithUnit("Narrow offset", s.vector, "mm", .1f, -100.f, 100.f, "%.2f");
     SetNextItemWidth(300);
     DragFloatWithUnit("Angle", &s.vector[0], "deg", .1f, -180, 180);
     VSliderFloat("##vertical", {56, 90}, &s.scalar, 0, 1, "%.2f");

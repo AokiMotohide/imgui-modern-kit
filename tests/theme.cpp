@@ -32,7 +32,7 @@ int main() {
         imkit::ThemeScaleMaximum != 2.5f)
         return 11;
     const auto presets = imkit::ThemePresets();
-    if (presets.size() != 12)
+    if (presets.size() != 13)
         return 1;
     std::set<std::string> ids;
     for (const auto &info : presets) {
@@ -87,6 +87,11 @@ int main() {
         }
     }
     ImGui::DestroyContext();
-    std::puts("12 theme presets, stable IDs, scale bounds and legacy factories validated");
+    const auto slate = imkit::MakeTheme(imkit::ThemePreset::Slate);
+    if (slate.radius.control <= dark.radius.control ||
+        slate.colors.canvas.x >= slate.colors.surface.x ||
+        imkit::ThemePresetFromId("slate") != imkit::ThemePreset::Slate)
+        return 14;
+    std::puts("13 theme presets, stable IDs, scale bounds and legacy factories validated");
     return 0;
 }

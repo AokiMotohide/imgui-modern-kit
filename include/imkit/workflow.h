@@ -53,6 +53,51 @@ StableId IconToolbar(const char* id, const IconAtlas& atlas,
 StableId IconToolbar(const char* id, const IconAtlas& atlas,
     std::span<const IconToolbarItem> items, IconToolbarOptions layout,
     ComponentOptions options={});
+struct WorkspaceTab {
+    StableId id=0;
+    const char* label="";
+    const char* description="";
+    IconId icon=IconId::Count;
+    bool disabled=false;
+};
+// Returns a selection request. The host owns the selected tab and its content.
+StableId WorkspaceTabs(const char* id, std::span<const WorkspaceTab> tabs,
+                       StableId selected, const IconAtlas* icons=nullptr,
+                       ComponentOptions options={});
+
+struct HierarchyRowView {
+    StableId id=0;
+    const char* label="";
+    const char* detail="";
+    IconId icon=IconId::Count;
+    int depth=0;
+    bool selected=false, visible=true, locked=false, disabled=false;
+    const char* visibleLabel="Visible";
+    const char* hiddenLabel="Hidden";
+    const char* lockedLabel="Locked";
+    const char* unlockedLabel="Unlocked";
+    const char* moreLabel="More actions";
+    bool visibilityAvailable=true, lockAvailable=true;
+};
+enum class HierarchyRowAction { None, Select, ToggleVisibility, ToggleLock, More };
+// Header open state is host-owned; a row only returns a requested action.
+bool HierarchyGroupHeader(const char* id, const char* label, int count,
+                          bool* open, const IconAtlas* icons=nullptr,
+                          IconId icon=IconId::Count, ComponentOptions options={},
+                          bool* actionRequested=nullptr, const char* actionLabel="Add");
+HierarchyRowAction HierarchyRow(const char* id, const HierarchyRowView& row,
+                               const IconAtlas* icons=nullptr,
+                               ComponentOptions options={});
+
+// Always pair EndInspectorCard with BeginInspectorCard, including a false return.
+bool BeginInspectorCard(const char* id, const char* title, const char* description="",
+                        const IconAtlas* icons=nullptr, IconId icon=IconId::Count,
+                        ComponentOptions options={});
+void EndInspectorCard();
+// Returns a toggle request; current remains owned by the host.
+bool SettingToggleRow(const char* id, const char* label, const char* description,
+                      bool current, bool disabled=false, const char* disabledReason="",
+                      ComponentOptions options={});
 bool FilterChip(const char* id, const char* label, bool selected, ComponentOptions options={});
 
 struct FeedbackView {

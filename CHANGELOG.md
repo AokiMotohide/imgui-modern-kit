@@ -1,112 +1,128 @@
 # Changelog / 変更履歴
 
+> Published release entries present English first, followed by equivalent Japanese notes. Unreleased remains a work-in-progress list.
+
 ## Unreleased
 
-No changes yet. / 変更はまだありません。
+**Added**
+- `Slate` — the 13th named theme preset. Stable ID and display order are preserved, so existing consumers are unaffected.
+- `imkit::DragVector3WithUnit` — per-axis drag with a shared unit label. Each axis keeps native `DragFloat` behavior and its own stable ID scope; the three fields stack vertically when the window is narrow.
+- Workflow surface gains a generic work tab, a hierarchy listing, and a settings card.
+
+**Changed**
+- Hierarchy headings and rows now expose auxiliary operations as selectable requests; the host decides which are available.
+- Contrast and visibility of the general dark theme and its controls were improved.
+
+**Breaking changes** — none. No public API or ABI changes.
+
+**日本語**
+- **追加**: 13番目の名前付き theme preset `Slate`。安定IDと表示順は維持され、既存 consumer に影響ありません。
+- **追加**: `imkit::DragVector3WithUnit`（単位付き三軸 drag）。各軸は標準 `DragFloat` の挙動と安定 ID 範囲を保持し、狭い幅では3欄を縦並びにします。
+- **追加**: workflow surface に汎用作業タブ、階層一覧、設定カードを追加。
+- **変更**: 階層の見出し・行が選択可能な補助操作要求を返すようになりました（利用可能か決めるのはホスト）。
+- **変更**: 汎用ダークテーマと関連コントロールのコントラスト・視認性を向上。
+- **破壊的変更**: なし（公開 API・ABI は不変）。
 
 ## 3.1.0 — 2026-09-26
 
-### Documentation and onboarding
+### Added
+- A bilingual documentation catalog maps each public guide to its audience, API contract, Gallery page, source file, and SDK package path.
+- Module recipes cover Components, Themes, Workflow, Node Editor, Editor Suite, Timeline, and WindowFrame, including frame placement and host-owned responsibilities.
+- Gallery Start adds task-focused routes and a direct path to the recipe map.
 
-- Add a bilingual documentation catalog that connects each public guide to its audience, API contract, Gallery page, source and SDK package path.
-- Add module recipes for components, themes, workflow, Node Editor, Editor Suite, Timeline editing and WindowFrame, including frame placement and host-ownership limits.
-- Update the Gallery Start screen with clearer task routes and a direct link to the recipe map; expand the English/Japanese documentation and examples.
-- Add automated checks for language pairs, headings, procedures, links and Gallery routes, and verify all 48 public documentation files in release packages.
-- No public API or ABI changes.
-- 英日文書カタログを追加し、各ガイドの読者、API契約、Gallery画面、source、SDK package内のpathを対応付けました。
-- Components、Theme、Workflow、Node Editor、Editor Suite、Timeline編集、WindowFrameのrecipeを追加し、frame内の呼出し位置とホスト所有の範囲を示しました。
-- GalleryのStart画面に目的別の案内とrecipe一覧への導線を追加し、英日文書と実例を拡充しました。
-- 言語pair、見出し、手順、link、Gallery routeの自動検査を追加し、release package内の公開文書48件を確認します。
-- 公開APIとABIに変更はありません。
+### Compatibility
+- No public API or ABI changes. The Dear ImGui ABI baseline remains the one introduced in v3.0.0.
+
+### 日本語
+#### 追加
+- 英日文書カタログを追加し、各ガイドの対象読者、API契約、Gallery画面、実装source、SDK内の配置先を対応付けました。
+- Components、Theme、Workflow、Node Editor、Editor Suite、Timeline、WindowFrameの実装例を追加しました。フレーム内で呼ぶ位置と、ホスト側に残る責務も確認できます。
+- GalleryのStart画面に目的別の案内を設け、実装例一覧へ直接進めるようにしました。
+
+#### 互換性
+- 公開API・ABIに変更はありません。Dear ImGuiのABI基準はv3.0.0から変わっていません。
 
 ## 3.0.0 — 2026-09-13
 
-### Node Editor
+### Added
+- A standalone imkit::node_editor target adds a host-controlled graph canvas, typed connections, dynamic sockets, inline values, minimap, search, previews, and revision-checked edit requests.
+- Context-free helpers arrange, align, distribute, and snap nodes. The host retains the graph model, validation, evaluation, undo, and persistence.
+- Workflow and Editor Suite additions include circular progress, a resizable Inspector, Timeline drop previews, and a host toolbar layout contract.
+- Native Metal Gallery and preview support, macOS WindowFrame and accessibility bridges, and Windows/macOS platform packages.
 
-- Add independent `imkit::node_editor` snapshots and bounded edit-request buffers with typed IDs, host-controlled revision validation and atomic operations.
-- Add pan/zoom, selection, link create/reconnect/delete, connection compatibility feedback, grouping/subgraphs, bookmarks, diagnostics, search, palette, minimap and detached or inline previews.
-- Add deterministic align/distribute/arrange/snap helpers that do not require a Dear ImGui context.
-- Add dynamic socket create/delete/rename/reorder/type/multiplicity/value/exposure/limit edits. Connected destructive changes are requests the host may reject; the library never silently removes application links.
-- Add standard `PinRow`, inline color/float/vector editing, variable input groups, node appearance hooks, density/contrast/narrow/Japanese states and the native Material Graph companion.
-- 独立`imkit::node_editor`、型付きID、revision検証、atomic request、pan／zoom、選択、link編集、互換feedback、group／subgraph、検索、palette、minimap、previewを追加。
-- 動的socketの作成・削除・rename・並べ替え・型・多重度・値・公開・上限編集、標準`PinRow`とMaterial Graph companionを追加。接続を壊す操作はホストの明示判断を必要とします。
+### Fixed
+- Invalid Timeline drop candidates are rejected before commit. Node Editor collapse and minimap interaction issues were corrected, and macOS WindowFrame coordinate and bundle-resource handling was fixed.
 
-### Platform, rendering and accessibility
+### Breaking changes and migration
+- The supported ABI is pinned to Dear ImGui 1.93.0 WIP docking commit 367b2c24f399988ddafc0bb4628da0106bcc09be. Rebuild all ImKit-dependent translation units against that revision.
+- OpenGL preview declarations moved to the separate preview_opengl3.h header. Win32ActionSink was replaced by NativeActionSink.
+- Dear ImGui 1.88 compatibility targets and legacy WindowFrame ABI paths were removed. Follow the v3 migration guide before upgrading.
 
-- Pin the supported ABI to Dear ImGui 1.93.0 WIP docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be`.
-- Add Windows x64/Arm64 and macOS arm64/x86_64 build/test/package gates plus a macOS Universal 2 package.
-- Add the GLFW/Metal native Gallery host, explicitly constructed `imkit::preview_metal`, an NSAccessibility bridge and the macOS WindowFrame adapter.
-- Add Windows Arm64 packaging and retain the Win32 accessibility and WindowFrame adapters.
-- Split OpenGL-specific declarations into `<imkit/preview_opengl3.h>`; `preview.h` now contains renderer-neutral contracts.
-- Replace the Win32-only action sink with platform-neutral `NativeActionSink`, including UTF-8 value actions.
-- Remove Dear ImGui 1.88 compatibility targets and legacy WindowFrame ABI paths.
-- Windows x64／Arm64、macOS arm64／x86_64／Universal 2、Metal Gallery／preview、NSAccessibility、macOS WindowFrameを追加。OpenGL headerを分離し、共通`NativeActionSink`へ移行、1.88互換targetを削除しました。
+### 日本語
+#### 追加
+- 独立したimkit::node_editor targetを追加しました。ホストが管理するgraph canvas上で、型付き接続、動的socket、値の直接編集、minimap、検索、preview、revisionを検証する編集要求を扱えます。
+- Dear ImGui Contextに依存しない、nodeの配置・整列・分配・snap機能を追加しました。graph model、検証、評価、Undo、保存はホスト側で管理します。
+- WorkflowとEditor Suiteに、円形進捗、幅を変更できるInspector、Timelineのdrop候補preview、ホストtoolbarの配置契約を追加しました。
+- Metal対応Gallery／preview、macOS WindowFrame／accessibility bridge、Windows／macOSの配布packageを追加しました。
 
-### Workflow, shell and editors
+#### 修正
+- Timelineで無効なdrop候補を確定できないようにしました。Node Editorの折りたたみ時の異常終了とminimap操作を修正し、macOS WindowFrameの座標変換とbundle内の資産配置も修正しました。
 
-- Add circular determinate, complete and unavailable progress states with size/stroke options.
-- Add a responsive, resizable right Inspector panel whose open state and width stay host-owned.
-- Add optional Video Timeline external-drop preview callbacks for the exact candidate time range and a host toolbar layout contract above the timeline.
-- Preserve host-owned documents, commands, Undo/Redo, scene/media state, persistence, workers and preview resources across Editor Core, Video and CG surfaces.
-- 円形進捗、responsiveな右Inspector panel、Timeline外部dropの正確な候補範囲preview、host toolbar配置契約を追加しました。
-
-### Gallery, documentation and distribution
-
-- Add the dedicated Node Editor Gallery, direct launcher/focus behavior, native Metal Gallery and deterministic 960×540 documentation capture modes.
-- Replace the small README GIF grid with large V3 Overview, Node Editor, Workflow/Circular Progress, Timeline and Theme/Comparison animations captured only from native backbuffers.
-- Add the native `imkit-v3.0.0-showcase.mp4` release asset from the same frame sequences.
-- Synchronize English/Japanese README, Getting Started, Gallery, Guide and Node Editor documentation with Migration, Architecture, Dependencies and Validation.
-- Install the complete English/Japanese documentation, Gallery, Node Editor Gallery, notices and platform libraries in CPack packages.
-- native backbuffer由来の大判GIF 5本とshowcase MP4、Node Editor Gallery、英日導入文書、全対応環境のCPack配布を追加しました。
-
-### Breaking changes
-
-- Consumers must use the exact pinned Dear ImGui ABI and rebuild all ImKit-dependent translation units.
-- OpenGL preview consumers must include `<imkit/preview_opengl3.h>`.
-- Native accessibility action handlers migrate from `Win32ActionSink` to `NativeActionSink`.
-- Dear ImGui 1.88 legacy targets are no longer built or installed.
-- 正確な移行手順は[docs/migration-v3.md](docs/migration-v3.md)を参照してください。
+#### 破壊的変更と移行
+- 対応ABIをDear ImGui 1.93.0 WIP docking commit 367b2c24f399988ddafc0bb4628da0106bcc09beに固定しました。全ImKit依存translation unitをこのrevisionに合わせて再buildしてください。
+- OpenGL previewの宣言をpreview_opengl3.hへ分離しました。Win32ActionSinkはNativeActionSinkへ置き換わります。
+- Dear ImGui 1.88互換targetと旧WindowFrame ABI pathを削除しました。更新前にv3移行ガイドを確認してください。
 
 ## 2.2.0 — 2026-09-12
 
-- Integrate the guided Gallery comparison, responsive workflow controls, Timeline interaction and Preview placement/Monitor contracts into one release line.
-- Add Fit/Fill/Stretch preview placement, cropped and flipped Monitor presentation, five preview states and Gallery coverage for representative source and viewport aspects.
-- Refresh the English/Japanese release entry points and native Gallery GIFs; the overview now introduces the route before showing the live comparison.
-- 案内付きGallery比較、responsive workflow操作、Timeline操作、Preview配置／Monitor契約を1つのリリース系列へ統合。
-- Fit／Fill／Stretch配置、crop／flip対応Monitor、5つのpreview状態、代表的な素材／viewport aspectのGallery確認を追加。
-- 英日READMEとnative Gallery GIFを更新し、概要GIFは最初に利用導線を示してからライブ比較へ進む構成に変更。
+### Added
+- Preview placement now supports Fit, Fill, and Stretch. Monitor presentation also supports crop and vertical flip.
+- Five explicit preview states—Ready, Loading, Empty, Offline, and Error—make unavailable or incomplete media visible to the user.
+- Gallery examples cover representative source and viewport aspect ratios alongside the live comparison, Workflow, and Timeline surfaces.
+
+### 日本語
+#### 追加
+- Previewの配置方法にFit、Fill、Stretchを追加しました。Monitorではcropと上下反転も指定できます。
+- Ready、Loading、Empty、Offline、Errorの5状態を追加し、素材の準備中や利用できない状態を画面上で示せるようにしました。
+- 代表的なsource／viewportのアスペクト比を使ったGallery実例を追加し、ライブ比較、Workflow、Timelineの画面と合わせて確認できます。
 
 ## 2.1.0 — 2026-09-12
 
-- Add a guided Gallery Start screen and a movable, resizable live comparison between direct Default Dear ImGui and ImKit controls. The two columns share host-owned state and the comparison preserves the surrounding ImGui style after each frame.
-- Add reproducible native GIF routes for the overview, comparison, theme palettes, workflow feedback and timeline editing. The encoder verifies frame count, dimensions and size limits.
-- Publish a Windows x64 Gallery archive with its required design assets, runtime dependency inventory, license and third-party notices.
-- Refresh English and Japanese README/Gallery guidance around trying the native demo first, host ownership, compatibility limits and asset provenance.
-- GalleryのStart画面と、直接Dear ImGui／ImKitを並べる移動・resize可能な比較windowを追加。両列はホスト所有状態を共有し、比較後も周囲のImGui styleを復元します。
-- 概要、比較、Theme palette、workflow feedback、timeline操作のnative GIFを再生成可能にしました。encoderはframe数、寸法、容量上限を検証します。
-- 必要なdesign asset、runtime dependency一覧、license、第三者noticeを含むWindows x64 Gallery archiveを公開します。
-- native demoを最初に試す導線、ホスト所有権、互換範囲、asset出典を中心に英日README／Gallery文書を更新しました。
+### Added
+- Gallery Start guides new users to a movable, resizable comparison between Default Dear ImGui and ImKit. Both sides update the same host-owned values.
+- Reproducible native capture routes cover the overview, comparison, theme palettes, Workflow feedback, and Timeline editing.
+- A Windows x64 Gallery archive includes the required design assets, runtime dependency inventory, license, and third-party notices.
+
+### 日本語
+#### 追加
+- GalleryのStart画面から、Default Dear ImGuiとImKitを並べた比較を開けます。windowは移動・resizeでき、両側から同じホスト所有値を更新します。
+- 概要、比較、Theme palette、Workflowのfeedback、Timeline編集を、再生成できるnative capture routeとして追加しました。
+- 必要なdesign asset、runtime dependency一覧、license、第三者noticeを含むWindows x64 Gallery archiveを用意しました。
 
 ## 2.0.0
 
-- Add host-owned application shell components: AppBar, WorkspaceHeader, InspectorSection, BottomActionBar, AdvancedSection, DiagnosticsDrawer and ThemePicker.
-- Ship versioned Inter and Noto Sans JP assets with OFL notices, SHA-256 inventory and a CMake copy helper; font atlas and GPU lifetime remain host-owned.
-- Extend source/SDK packaging, installed-consumer verification and Windows CI for the complete Editor Suite and shell surface.
-- Add `ThemePresetFromId()` for host-owned stable preset persistence and document pinned-submodule/local-source development.
-- 安定preset IDの復元APIと、固定submodule／ローカルソースを切り替える並行開発手順を追加。
-- Open the native Gallery on the Components page instead of an empty initial canvas.
-- native Galleryの初期表示を空画面ではなくComponents pageへ修正。
-- Add twelve discoverable named themes with stable IDs, complete editor palettes and checked contrast thresholds.
-- Redesign the native Gallery around guided onboarding, searchable navigation, live examples and copyable code.
-- Refresh the English/Japanese onboarding documentation and add a reproducible native README animation.
-- Translate arrows, shared gizmo preview and immutable drag projection.
-- Source-time stereo waveform providers and pixel envelopes.
-- Editor workspace layout, timeline overview, source placement and host Undo/Redo.
-- Inspector property curves, batch reservation and consumer migration documentation.
-- ホスト所有のアプリshell部品、Inter／Noto Sans JP font資産、CMake配置helper、完全なSDK／install後consumer検証を追加。
-- 12種類の名前付きTheme、製品型Gallery、英日導入文書、実backbufferから再生成できるREADME GIFを追加。
-- 移動矢印・Gizmo追従・素材時間波形・編集画面・ホスト履歴を更新。利用側の再ビルドが必要。
+### Added
+- Host-owned application shell components: AppBar, WorkspaceHeader, InspectorSection, BottomActionBar, AdvancedSection, DiagnosticsDrawer, and ThemePicker.
+- The Editor Suite expands with timeline overview and source placement, host-owned undo/redo, waveform and pixel-envelope providers, property curves, and batch reservations.
+- Twelve named themes have stable IDs; ThemePresetFromId supports host-owned preset persistence. The native Gallery opens on Components and provides searchable examples.
+- Versioned Inter and Noto Sans JP font assets include OFL notices, hashes, and a CMake copy helper. Font atlas and GPU lifetime remain host-owned.
+- Source and Windows SDK packages add install/consumer verification for the expanded library.
 
+### Fixed
+- Multi-clip timeline edits validate the full selection before commit, preventing partial application when a clip or selection limit is reached.
+- Clip and transition hit regions now follow Dear ImGui layout and scale. Editing a deselected keyframe is rejected, and Inspector reset behavior is corrected.
+
+### 日本語
+#### 追加
+- AppBar、WorkspaceHeader、InspectorSection、BottomActionBar、AdvancedSection、DiagnosticsDrawer、ThemePickerなど、ホスト側で構成するアプリシェル部品を追加しました。
+- Editor Suiteを拡張し、Timeline overview、素材配置、ホスト所有のUndo／Redo、waveformとpixel envelopeのprovider、property curve、batch reservationを追加しました。
+- 安定ID付きの名前付きThemeを12種類用意しました。ThemePresetFromIdでホスト側に保存したpresetを復元できます。GalleryはComponents画面から開き、実例を検索できます。
+- InterとNoto Sans JPのversion固定font資産に、OFL notice、hash、CMake配置helperを追加しました。font atlasとGPU資源の寿命はホスト側で管理します。
+- 拡張したlibraryに合わせてsource／Windows SDK packageと、install後のconsumer確認を整えました。
+
+#### 修正
+- 複数clipのTimeline編集はcommit前に選択範囲全体を検証し、容量や選択queryの不足による部分適用を防ぐようにしました。
+- clipとtransitionの入力領域をDear ImGuiのlayoutと倍率に合わせました。選択解除済みkeyframeの編集開始を拒否し、Inspectorのreset動作も修正しました。
 
 ## 1.0.0 — 2026-09-10
 
@@ -121,17 +137,28 @@ No changes yet. / 変更はまだありません。
 
 ## 0.2.0 — Precision Layers
 
-- Adopt Precision Layers across public GUI families, with light/dark semantic palettes and explicit scale/font scopes.
-- Expose 365 current public overloads with signature/link coverage; preserve six original wrappers.
-- Add selected row/tree/tab marks and composable actions, switches, mixed selection, search, units, settings, badges, notifications and toolbars.
-- Add a six-category live catalog, Japanese fallback, public-IO verification and real GPU captures.
-- Provide CMake install/export, source and Windows x64 Debug/Release SDK distribution and bilingual documentation.
+### Added
+- Precision Layers applies light/dark semantic palettes, scale, and font scopes across the public GUI families.
+- The release tracks 365 public GUI and helper overloads with signature and link coverage while preserving the original six wrappers.
+- Composite controls include selection marks, action variants, switches, mixed selection, segments, searchable selection, units, settings rows, badges, notifications, and toolbars.
+- An optional six-category live catalog includes an editable palette, Japanese glyph fallback, public-IO verification, and native GPU captures.
 
-- 公開GUI部品群にPrecision Layersを適用。light/dark、意味別配色、倍率とfont scopeを提供。
-- 365の公開overloadを対応表とcompile/link fixtureで追跡。既存6関数を維持。
-- 選択・tree・tabのマークと各種合成部品を追加。
-- 実APIによる6カテゴリのカタログ、日本語フォールバック、公開IO検証、実GPU画像を追加。
-- CMake install/export、ソース・Windows x64 Debug/Release SDK、日英文書を整備。
+### SDK scope
+- C++20 static library targeting Dear ImGui 1.92.9b docking commit b48d1afbe8ee8b238e2961dc363a949dd7304e23.
+- The binary SDK is Windows x64 / MSVC v145, with Debug and Release CRT variants. ImGui core is not embedded; use a matching host target.
+- The source archive is the recommended route for other platforms, compilers, or ABI configurations. Changing only the version guard does not port the ABI.
+
+### 日本語
+#### 追加
+- 公開GUI部品群にPrecision Layersを適用し、light／darkの意味別palette、倍率、font scopeを追加しました。
+- 公開GUI／helperの365 overloadをsignatureとlinkの両面から追跡し、従来の6 wrapperを維持しました。
+- 選択mark、action variant、switch、mixed selection、segment、検索可能な選択欄、単位表示、設定行、badge、notification、toolbarを追加しました。
+- 任意で起動できる6カテゴリのlive catalogに、編集可能なpalette、日本語glyph fallback、公開IOによる操作確認、native GPU captureを用意しました。
+
+#### SDKの対象
+- Dear ImGui 1.92.9b docking commit b48d1afbe8ee8b238e2961dc363a949dd7304e23を対象とするC++20静的libraryです。
+- binary SDKはWindows x64／MSVC v145向けで、Debug／ReleaseのCRT構成を収録します。ImGui coreは含まず、ホスト側の対応targetを使用します。
+- ほかのOS、compiler、ABI構成ではsource archiveから導入してください。version guardだけを変更してもABI移植にはなりません。
 
 ## 0.1.0
 

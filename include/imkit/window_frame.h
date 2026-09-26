@@ -53,6 +53,7 @@ struct WindowFrameContent {
     bool unsaved = false;
     std::span<const std::string_view> workspaces{};
     std::size_t selectedWorkspace = 0;
+    ImTextureRef iconTexture{};
 };
 
 enum class WindowFrameOperation { None, Minimize, MaximizeRestore, Close, SystemMenu };
