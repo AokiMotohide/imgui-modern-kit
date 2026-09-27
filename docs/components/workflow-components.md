@@ -19,8 +19,9 @@ Reset event buffers each frame. Full buffers set `overflow`. Keyboard tile resiz
 | `StepNavigator`, `NavigationRail` | Borrowed StepItem span, current ID, explicit focus state; returns a selection request |
 | `WorkspaceTabs` | Icon and label navigation; collapses to a combo when space is narrow; returns a selection request |
 | `ChoiceGroup` | Bordered heading and responsive one-to-three-column radio choices; returns the selected stable ID as a request; host owns current state |
-| `HierarchyGroupHeader`, `HierarchyRow` | Host-owned group state and stable row IDs; selection, visibility, lock and optional group action are requests; unavailable visibility or lock actions may be omitted |
+| `HierarchyGroupHeader`, `HierarchyRow` | Host-owned group state and stable row IDs; full-width selection, ellipsized labels and optional `accentColor`; selection, visibility, lock and optional group action are requests; unavailable visibility or lock actions may be omitted |
 | `BeginInspectorCard`, `EndInspectorCard` | Groups related controls in an auto-height bordered card; always pair Begin/End |
+| `BeginCollapsibleInspectorCard`, `EndCollapsibleInspectorCard` | Inspector card with a host-owned open state; call End only when Begin returns true. Closed content is not drawn |
 | `SettingToggleRow` | Label, description and optional disabled reason; returns a toggle request without changing host state |
 | `FilterChip`, `SectionHeader` | Explicit selection/open state, native activation |
 | `SelectNotifications` | Last duplicate wins before expiry filtering; priority descending, stable ties |

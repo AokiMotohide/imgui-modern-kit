@@ -449,21 +449,60 @@ HierarchyRowAction HierarchyRow(const char* id,const HierarchyRowView& row,
     HierarchyRowAction result=HierarchyRowAction::None;
     ImGui::BeginDisabled(row.disabled||!row.id);
     const auto padding=ImGui::GetStyle().FramePadding;
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,{padding.x*.65f,padding.y*.65f});
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,{padding.x*.65f,padding.y*.55f});
     ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize,0.f);
-    ImGui::Indent(std::max(0,row.depth)*ImGui::GetFontSize());
-    if(icons&&row.icon!=IconId::Count) {Icon(*icons,row.icon,{ImGui::GetFontSize()});ImGui::SameLine();}
+    const ImVec2 origin=ImGui::GetCursorScreenPos();
+    const float width=std::max(1.f,ImGui::GetContentRegionAvail().x);
+    const float height=ImGui::GetFrameHeight();
     const int actionCount=1+int(row.visibilityAvailable)+int(row.lockAvailable);
-    const float actions=ImGui::GetFrameHeight()*actionCount+
+    const float actionWidth=height*actionCount+
         ImGui::GetStyle().ItemSpacing.x*(actionCount+1);
-    if(ImGui::Selectable(Safe(row.label),row.selected,ImGuiSelectableFlags_AllowOverlap,
-                         {std::max(1.f,ImGui::GetContentRegionAvail().x-actions),ImGui::GetFrameHeight()}))
+    ImGui::PushStyleColor(ImGuiCol_Text,ImVec4(0,0,0,0));
+    if(ImGui::Selectable(Safe(row.label),row.selected,ImGuiSelectableFlags_AllowOverlap,{width,height}))
         result=HierarchyRowAction::Select;
+    ImGui::PopStyleColor();
+    const bool hovered=ImGui::IsItemHovered();
+    const bool focused=ImGui::IsItemFocused();
     if(Annotate(row.label,row.detail,accessibility::SemanticRole::TreeItem,
                 accessibility::SemanticAction::Select,row.selected,o))result=HierarchyRowAction::Select;
-    if((ImGui::IsItemHovered()||ImGui::IsItemFocused())&&*Safe(row.detail))ImGui::SetTooltip("%s",row.detail);
+    if((hovered||focused)&&*Safe(row.detail))ImGui::SetTooltip("%s",row.detail);
+    const ImVec2 afterRow=ImGui::GetCursorScreenPos();
+    ImDrawList* draw=ImGui::GetWindowDrawList();
+    const float indent=std::max(0,row.depth)*ImGui::GetFontSize();
+    if(row.accentColor.w>0.f)
+        draw->AddRectFilled({origin.x+indent,origin.y+3.f},
+                            {origin.x+indent+3.f,origin.y+height-3.f},
+                            ImGui::ColorConvertFloat4ToU32(row.accentColor),2.f);
+    float textX=origin.x+indent+9.f;
+    if(icons&&row.icon!=IconId::Count) {
+        ImGui::SetCursorScreenPos({textX,origin.y+(height-ImGui::GetFontSize())*.5f});
+        Icon(*icons,row.icon,{ImGui::GetFontSize()});
+        textX+=ImGui::GetFontSize()+ImGui::GetStyle().ItemInnerSpacing.x;
+    }
+    const float textEnd=std::max(textX+1.f,origin.x+width-actionWidth);
+    const ImVec2 textPos(textX,origin.y+(height-ImGui::GetTextLineHeight())*.5f);
+    std::string_view visibleLabel=Safe(row.label);
+    if(auto suffix=visibleLabel.find("##");suffix!=std::string_view::npos)
+        visibleLabel=visibleLabel.substr(0,suffix);
+    float room=std::max(0.f,textEnd-textX);
+    const bool ellipsis=ImGui::CalcTextSize(visibleLabel.data(),visibleLabel.data()+visibleLabel.size()).x>room;
+    if(ellipsis) {
+        room=std::max(0.f,room-ImGui::CalcTextSize("...").x);
+        while(!visibleLabel.empty() && ImGui::CalcTextSize(visibleLabel.data(),visibleLabel.data()+visibleLabel.size()).x>room) {
+            auto count=visibleLabel.size()-1;
+            while(count && (static_cast<unsigned char>(visibleLabel[count])&0xc0)==0x80)--count;
+            visibleLabel=visibleLabel.substr(0,count);
+        }
+    }
+    draw->PushClipRect({textX,origin.y},{textEnd,origin.y+height},true);
+    draw->AddText(textPos,ImGui::GetColorU32(ImGuiCol_Text),visibleLabel.data(),visibleLabel.data()+visibleLabel.size());
+    if(ellipsis)draw->AddText({textX+ImGui::CalcTextSize(visibleLabel.data(),visibleLabel.data()+visibleLabel.size()).x,textPos.y},
+                             ImGui::GetColorU32(ImGuiCol_Text),"...");
+    draw->PopClipRect();
+    float actionX=origin.x+width-actionWidth+ImGui::GetStyle().ItemSpacing.x;
     const auto actionButton=[&](const char* key,IconId icon,const char* text) {
-        ImGui::SameLine(0,ImGui::GetStyle().ItemSpacing.x);
+        ImGui::SetCursorScreenPos({actionX,origin.y});
+        actionX+=height+ImGui::GetStyle().ItemSpacing.x;
         ImGui::PushStyleColor(ImGuiCol_Button,ImVec4(0,0,0,0));
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered,ImGui::GetStyleColorVec4(ImGuiCol_HeaderHovered));
         ImGui::PushStyleColor(ImGuiCol_ButtonActive,ImGui::GetStyleColorVec4(ImGuiCol_HeaderActive));
@@ -478,7 +517,8 @@ HierarchyRowAction HierarchyRow(const char* id,const HierarchyRowView& row,
     if(row.lockAvailable&&actionButton("lock",row.locked?IconId::Lock:IconId::Unlock,
                     row.locked?Safe(row.lockedLabel):Safe(row.unlockedLabel)))result=HierarchyRowAction::ToggleLock;
     if(actionButton("more",IconId::More,Safe(row.moreLabel)))result=HierarchyRowAction::More;
-    ImGui::Unindent(std::max(0,row.depth)*ImGui::GetFontSize());
+    ImGui::SetCursorScreenPos(afterRow);
+    ImGui::Dummy({0.f,0.f});
     ImGui::PopStyleVar(2);
     ImGui::EndDisabled();Pop();ImGui::PopID();return result;
 }
@@ -493,7 +533,7 @@ bool BeginInspectorCard(const char* id,const char* title,const char* description
     ImGui::PushStyleColor(ImGuiCol_Border,border);
     const bool visible=ImGui::BeginChild(id,{0,0},
         ImGuiChildFlags_Borders|ImGuiChildFlags_AutoResizeY,ImGuiWindowFlags_NoScrollbar);
-    if(visible) {
+    if(visible&&*Safe(title)) {
         const ImVec2 marker=ImGui::GetCursorScreenPos();
         const ImVec4 header=Mix(surface,style.Colors[ImGuiCol_CheckMark],.14f);
         ImGui::GetWindowDrawList()->AddRectFilled(marker,
@@ -513,6 +553,17 @@ bool BeginInspectorCard(const char* id,const char* title,const char* description
     return visible;
 }
 void EndInspectorCard() {ImGui::EndChild();ImGui::PopStyleColor(2);ImGui::PopStyleVar(2);}
+bool BeginCollapsibleInspectorCard(const char* id,const char* title,bool* open,
+                                   const IconAtlas* icons,IconId icon,ComponentOptions o) {
+    ImGui::PushID(id);
+    ImGui::SetNextItemOpen(open?*open:true,ImGuiCond_Always);
+    const bool expanded=ImGui::CollapsingHeader(Safe(title),ImGuiTreeNodeFlags_SpanAvailWidth);
+    if(open)*open=expanded;
+    if(!expanded) {ImGui::PopID();return false;}
+    BeginInspectorCard("##body","","",icons,icon,o);
+    return true;
+}
+void EndCollapsibleInspectorCard() {EndInspectorCard();ImGui::PopID();}
 bool SettingToggleRow(const char* id,const char* label,const char* description,
                       bool current,bool disabled,const char* disabledReason,ComponentOptions o) {
     ImGui::PushID(id);

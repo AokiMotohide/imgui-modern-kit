@@ -96,6 +96,7 @@ struct HierarchyRowView {
     const char* unlockedLabel="Unlocked";
     const char* moreLabel="More actions";
     bool visibilityAvailable=true, lockAvailable=true;
+    ImVec4 accentColor{};
 };
 enum class HierarchyRowAction { None, Select, ToggleVisibility, ToggleLock, More };
 // Header open state is host-owned; a row only returns a requested action.
@@ -112,6 +113,11 @@ bool BeginInspectorCard(const char* id, const char* title, const char* descripti
                         const IconAtlas* icons=nullptr, IconId icon=IconId::Count,
                         ComponentOptions options={});
 void EndInspectorCard();
+// The host owns the open state. Call End only when Begin returns true.
+bool BeginCollapsibleInspectorCard(const char* id, const char* title, bool* open,
+                                   const IconAtlas* icons=nullptr, IconId icon=IconId::Count,
+                                   ComponentOptions options={});
+void EndCollapsibleInspectorCard();
 // Returns a toggle request; current remains owned by the host.
 bool SettingToggleRow(const char* id, const char* label, const char* description,
                       bool current, bool disabled=false, const char* disabledReason="",
