@@ -2196,6 +2196,16 @@ void VerifyWindowFrame(Host& h,const std::filesystem::path& out) {
     auto frameState=h.windowFrame.State();
     auto layout=imkit::LayoutWindowFrame(static_cast<float>(layoutClient.right),h.s.frameStyle,frameState);
     h.windowFrame.SetLayout(layout);
+    const int middleX=layoutClient.right/2, middleY=layoutClient.bottom/2;
+    require(hit(middleX,0)==HTTOP,"Top edge must resize");
+    require(hit(0,0)==HTTOPLEFT && hit(layoutClient.right-1,0)==HTTOPRIGHT,
+            "Top corners must resize");
+    require(hit(0,middleY)==HTLEFT && hit(layoutClient.right-1,middleY)==HTRIGHT,
+            "Side edges must resize");
+    require(hit(middleX,layoutClient.bottom-1)==HTBOTTOM,"Bottom edge must resize");
+    require(hit(0,layoutClient.bottom-1)==HTBOTTOMLEFT &&
+            hit(layoutClient.right-1,layoutClient.bottom-1)==HTBOTTOMRIGHT,
+            "Bottom corners must resize");
     require(hit(100,int(layout.titleBar.max.y/2))==HTCAPTION,"Drag region hit test");
     const std::array<imkit::WindowFrameRect,3> buttons{layout.minimize,layout.maximizeRestore,layout.close};
     for(int i=0;i<3;++i) {
@@ -2203,10 +2213,18 @@ void VerifyWindowFrame(Host& h,const std::filesystem::path& out) {
         require(hit(int((r.min.x+r.max.x)/2),int((r.min.y+r.max.y)/2))==
                 (i==0?HTMINBUTTON:i==1?HTMAXBUTTON:HTCLOSE),"Caption button hit test");
     }
-    require(hit(0,0)==HTTOPLEFT,"Resize corner hit test");
     require(hit(100,int(layout.titleBar.max.y)+30)==HTCLIENT,"Content must receive client input");
+    RECT windowRect{};GetWindowRect(window,&windowRect);
+    SIZE dpiScaledSize{windowRect.right-windowRect.left,windowRect.bottom-windowRect.top};
+    const SIZE originalSize=dpiScaledSize;
+    SendMessageW(window,WM_GETDPISCALEDSIZE,GetDpiForWindow(window)+48,
+                 reinterpret_cast<LPARAM>(&dpiScaledSize));
+    require(dpiScaledSize.cx==originalSize.cx && dpiScaledSize.cy==originalSize.cy,
+            "Custom frame must not add native border on DPI change");
     h.windowFrame.Execute(imkit::WindowFrameOperation::MaximizeRestore); h.Settle(2);
     require(IsZoomed(window),"Maximize failed");
+    require(hit(100,int(layout.titleBar.max.y/2))==HTCAPTION && hit(middleX,0)!=HTTOP,
+            "Maximized frame must not resize");
     RECT client{};GetClientRect(window,&client);
     POINT origin{};ClientToScreen(window,&origin);
     MONITORINFO monitor{sizeof(MONITORINFO)};

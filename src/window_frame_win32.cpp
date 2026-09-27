@@ -48,28 +48,28 @@ int WindowFrameWin32Adapter::HitTest(POINT screen) const {
     RECT rect{};
     GetWindowRect(window_, &rect);
     const UINT dpi = GetDpiForWindow(window_);
-    const int border = GetSystemMetricsForDpi(SM_CXSIZEFRAME, dpi) +
-                       GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
+    const int borderX = GetSystemMetricsForDpi(SM_CXSIZEFRAME, dpi) +
+                        GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
+    const int borderY = GetSystemMetricsForDpi(SM_CYSIZEFRAME, dpi) +
+                        GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
     POINT client = screen;
     ScreenToClient(window_, &client);
     const ImVec2 point{static_cast<float>(client.x), static_cast<float>(client.y)};
+    if (!IsZoomed(window_)) {
+        const bool left = screen.x < rect.left + borderX, right = screen.x >= rect.right - borderX;
+        const bool top = screen.y < rect.top + borderY, bottom = screen.y >= rect.bottom - borderY;
+        if (top) return left ? HTTOPLEFT : right ? HTTOPRIGHT : HTTOP;
+        if (bottom) return left ? HTBOTTOMLEFT : right ? HTBOTTOMRIGHT : HTBOTTOM;
+        if (left) return HTLEFT;
+        if (right) return HTRIGHT;
+    }
     if (layout_.workspaceSwitcher.Contains(point)) return HTCLIENT;
     if (layout_.minimize.Contains(point)) return HTMINBUTTON;
     if (layout_.maximizeRestore.Contains(point)) return HTMAXBUTTON;
     if (layout_.close.Contains(point)) return HTCLOSE;
     if (layout_.icon.Contains(point)) return HTSYSMENU;
 
-    const bool inTitleBar = layout_.titleBar.Contains(point);
-    if (!IsZoomed(window_)) {
-        const bool left = screen.x < rect.left + border, right = screen.x >= rect.right - border;
-        const bool top = screen.y < rect.top + border, bottom = screen.y >= rect.bottom - border;
-        if (bottom) return left ? HTBOTTOMLEFT : right ? HTBOTTOMRIGHT : HTBOTTOM;
-        if (left) return top ? HTTOPLEFT : HTLEFT;
-        if (right) return top ? HTTOPRIGHT : HTRIGHT;
-        // 描画されたタイトルバー上端はリサイズ帯と重なるため、中央部では移動を優先する。
-        if (top && !inTitleBar) return HTTOP;
-    }
-    return inTitleBar ? HTCAPTION : HTCLIENT;
+    return layout_.titleBar.Contains(point) ? HTCAPTION : HTCLIENT;
 }
 
 WindowFrameState WindowFrameWin32Adapter::State() {
@@ -127,6 +127,9 @@ LRESULT WindowFrameWin32Adapter::Message(UINT message, WPARAM w, LPARAM l) {
         limits->ptMinTrackSize.y = std::max(limits->ptMinTrackSize.y, LONG(MulDiv(200, dpi, 96)));
         return result;
     }
+    case WM_GETDPISCALEDSIZE:
+        // 非クライアント領域は全て描画面にしたため、GLFWの額縁幅補正を加えない。
+        return TRUE;
     case WM_NCCALCSIZE: {
         auto* rect = w ? &reinterpret_cast<NCCALCSIZE_PARAMS*>(l)->rgrc[0] : reinterpret_cast<RECT*>(l);
         if (IsZoomed(window_)) {
