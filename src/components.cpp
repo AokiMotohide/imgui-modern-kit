@@ -61,23 +61,36 @@ bool Contains(const char *text, const char *query) {
 bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, ComponentOptions options) {
     const auto *t = options.theme;
     auto &style = ImGui::GetStyle();
+    const bool subtleDestructive = variant == ActionVariant::SubtleDestructive;
+    const ImVec4 destructive = t ? t->colors.destructive : ImVec4(.68f, .20f, .25f, 1);
     ImVec4 fill = style.Colors[ImGuiCol_Button], text = style.Colors[ImGuiCol_Text];
     if (variant == ActionVariant::Primary) {
         fill = Accent(t);
         text = t ? t->colors.onAccent : ImVec4(1, 1, 1, 1);
     }
     if (variant == ActionVariant::Destructive) {
-        fill = t ? t->colors.destructive : ImVec4(.68f, .20f, .25f, 1);
+        fill = destructive;
         text = t ? t->colors.onDestructive : ImVec4(1, 1, 1, 1);
+    }
+    if (subtleDestructive) {
+        fill = destructive;
+        fill.w *= .12f;
+        text = destructive;
     }
     if (variant == ActionVariant::Ghost)
         fill.w = 0;
     ImGui::PushStyleColor(ImGuiCol_Button, fill);
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Mix(fill, Accent(t), .18f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, Mix(fill, Accent(t), .32f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Mix(fill, subtleDestructive ? destructive : Accent(t), .18f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, Mix(fill, subtleDestructive ? destructive : Accent(t), .32f));
     ImGui::PushStyleColor(ImGuiCol_Text, text);
     if (variant == ActionVariant::Ghost)
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
+    else if (subtleDestructive) {
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, std::max(1.f, style.FrameBorderSize));
+        auto border = destructive;
+        border.w *= .58f;
+        ImGui::PushStyleColor(ImGuiCol_Border, border);
+    }
     const auto id = ImGui::GetID(label);
     bool pressed = ImGui::Button(label, size);
     if(ImGui::IsItemFocused()) ImGui::SetNavCursorVisible(true);
@@ -99,9 +112,9 @@ bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, 
                                                 ImGui::GetColorU32(color), style.FrameRounding,
                                                 t ? t->metrics.focusWidth : 1.5f, ImDrawFlags_None);
     }
-    if (variant == ActionVariant::Ghost)
+    if (variant == ActionVariant::Ghost || subtleDestructive)
         ImGui::PopStyleVar();
-    ImGui::PopStyleColor(4);
+    ImGui::PopStyleColor(subtleDestructive ? 5 : 4);
     return pressed;
 }
 void DrawAtlasIcon(const IconAtlas& atlas,IconId icon,ImVec2 position,float size) {
@@ -120,23 +133,36 @@ bool IconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
                       ComponentOptions options) {
     const auto *t = options.theme;
     auto &style = ImGui::GetStyle();
+    const bool subtleDestructive = variant == ActionVariant::SubtleDestructive;
+    const ImVec4 destructive = t ? t->colors.destructive : ImVec4(.68f, .20f, .25f, 1);
     ImVec4 fill = style.Colors[ImGuiCol_Button], text = style.Colors[ImGuiCol_Text];
     if (variant == ActionVariant::Primary) {
         fill = Accent(t);
         text = t ? t->colors.onAccent : ImVec4(1, 1, 1, 1);
     }
     if (variant == ActionVariant::Destructive) {
-        fill = t ? t->colors.destructive : ImVec4(.68f, .20f, .25f, 1);
+        fill = destructive;
         text = t ? t->colors.onDestructive : ImVec4(1, 1, 1, 1);
+    }
+    if (subtleDestructive) {
+        fill = destructive;
+        fill.w *= .12f;
+        text = destructive;
     }
     if (variant == ActionVariant::Ghost)
         fill.w = 0;
     ImGui::PushStyleColor(ImGuiCol_Button, fill);
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Mix(fill, Accent(t), .18f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, Mix(fill, Accent(t), .32f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Mix(fill, subtleDestructive ? destructive : Accent(t), .18f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, Mix(fill, subtleDestructive ? destructive : Accent(t), .32f));
     ImGui::PushStyleColor(ImGuiCol_Text, text);
     if (variant == ActionVariant::Ghost)
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
+    else if (subtleDestructive) {
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, std::max(1.f, style.FrameBorderSize));
+        auto border = destructive;
+        border.w *= .58f;
+        ImGui::PushStyleColor(ImGuiCol_Border, border);
+    }
     const float iconSize = std::max(12.f, ImGui::GetFontSize());
     const std::string_view fullLabel=label?label:"";
     const auto visibleLabel=fullLabel.substr(0,fullLabel.find("##"));
@@ -173,9 +199,9 @@ bool IconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
         ImGui::PopTextWrapPos();
         ImGui::EndTooltip();
     }
-    if (variant == ActionVariant::Ghost)
+    if (variant == ActionVariant::Ghost || subtleDestructive)
         ImGui::PopStyleVar();
-    ImGui::PopStyleColor(4);
+    ImGui::PopStyleColor(subtleDestructive ? 5 : 4);
     return pressed;
 }
 bool IconButton(const char *id, ImGuiDir direction, const char *accessibleLabel, ComponentOptions options) {
@@ -208,13 +234,15 @@ bool Toggle(const char *label, bool *value, ComponentOptions options) {
     }
     auto *d = ImGui::GetWindowDrawList();
     auto fill = Mix(style.Colors[ImGuiCol_FrameBg], Accent(options.theme), position);
+    auto thumb = Mix(style.Colors[ImGuiCol_Text],
+                     options.theme ? options.theme->colors.onAccent : ImVec4(1,1,1,1), position);
     // Fit in native checkbox's square so label layout and hit target remain native.
-    float y = min.y + h * .25f;
-    d->AddRectFilled({min.x, y}, {min.x + h, y + h * .5f}, ImGui::GetColorU32(fill), round);
-    d->AddRect({min.x, y}, {min.x + h, y + h * .5f}, ImGui::GetColorU32(style.Colors[ImGuiCol_Border]),
+    float y = min.y + h * .19f;
+    d->AddRectFilled({min.x, y}, {min.x + h, y + h * .62f}, ImGui::GetColorU32(fill), round);
+    d->AddRect({min.x, y}, {min.x + h, y + h * .62f}, ImGui::GetColorU32(style.Colors[ImGuiCol_Border]),
                round);
-    d->AddCircleFilled({min.x + h * (.25f + .5f * position), min.y + h * .5f}, h * .19f,
-                       ImGui::GetColorU32(style.Colors[ImGuiCol_Text]));
+    d->AddCircleFilled({min.x + h * (.29f + .42f * position), min.y + h * .5f}, h * .235f,
+                       ImGui::GetColorU32(thumb));
     if (ImGui::IsItemFocused())
         d->AddRect(min, {min.x + h, min.y + h}, ImGui::GetColorU32(ImGuiCol_NavCursor), style.FrameRounding,
                    1.5f, ImDrawFlags_None);
@@ -309,20 +337,65 @@ bool InputVector3WithUnit(const char *label, float *value, const char *unit, con
     bool changed = false;
     ImGui::PushID(label);
     ImGui::BeginGroup();
-    float w = std::max(60.f, (ImGui::CalcItemWidth() - 2 * ImGui::GetStyle().ItemSpacing.x) / 3);
+    const float available = ImGui::CalcItemWidth();
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted(label, std::strstr(label, "##"));
+    if (unit && *unit) {
+        ImGui::SameLine();
+        ImGui::TextDisabled("(%s)", unit);
+    }
+    const float spacing = ImGui::GetStyle().ItemSpacing.x;
+    const bool stacked = available < 240.f;
+    const float width = stacked ? std::max(72.f, available) : (available - 2 * spacing) / 3;
     const char *axes[] = {"X", "Y", "Z"};
+    const ImGuiCol colors[] = {ImGuiCol_PlotLines, ImGuiCol_PlotHistogram, ImGuiCol_CheckMark};
     for (int i = 0; i < 3; ++i) {
-        if (i)
+        if (i && !stacked)
             ImGui::SameLine();
         ImGui::PushID(i);
-        ImGui::SetNextItemWidth(w);
-        changed |= ImGui::InputFloat(axes[i], value + i, 0, 0, format);
+        ImGui::BeginGroup();
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextColored(ImGui::GetStyleColorVec4(colors[i]), "%s", axes[i]);
+        ImGui::SameLine(0, spacing * .5f);
+        ImGui::SetNextItemWidth(std::max(45.f, width - ImGui::CalcTextSize(axes[i]).x - spacing * .5f));
+        changed |= ImGui::InputFloat("##value", value + i, 0, 0, format);
+        ImGui::EndGroup();
         ImGui::PopID();
     }
-    ImGui::SameLine();
-    ImGui::TextDisabled("%s", unit);
-    ImGui::SameLine();
-    ImGui::TextUnformatted(label);
+    ImGui::EndGroup();
+    ImGui::PopID();
+    return changed;
+}
+bool DragVector3WithUnit(const char *label, float *value, const char *unit, float speed,
+                         float minimum, float maximum, const char *format, ImGuiSliderFlags flags) {
+    bool changed = false;
+    ImGui::PushID(label);
+    ImGui::BeginGroup();
+    const float available = ImGui::CalcItemWidth();
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted(label, std::strstr(label, "##"));
+    if (unit && *unit) {
+        ImGui::SameLine();
+        ImGui::TextDisabled("(%s)", unit);
+    }
+    const float spacing = ImGui::GetStyle().ItemSpacing.x;
+    const bool stacked = available < 240.f;
+    const float width = stacked ? std::max(72.f, available) : (available - 2 * spacing) / 3;
+    const char *axes[] = {"X", "Y", "Z"};
+    const ImGuiCol colors[] = {ImGuiCol_PlotLines, ImGuiCol_PlotHistogram, ImGuiCol_CheckMark};
+    for (int i = 0; i < 3; ++i) {
+        if (i && !stacked)
+            ImGui::SameLine();
+        ImGui::PushID(i);
+        ImGui::BeginGroup();
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextColored(ImGui::GetStyleColorVec4(colors[i]), "%s", axes[i]);
+        ImGui::SameLine(0, spacing * .5f);
+        ImGui::SetNextItemWidth(std::max(45.f, width - ImGui::CalcTextSize(axes[i]).x - spacing * .5f));
+        changed |= ImGui::DragFloat("##value", value + i, speed, minimum, maximum, format, flags);
+        ImGui::EndGroup();
+        ImGui::PopID();
+    }
     ImGui::EndGroup();
     ImGui::PopID();
     return changed;
@@ -363,6 +436,67 @@ void StatusBadge(const char *text, StatusKind kind, const Theme *theme) {
     else
         d->AddCircleFilled({p.x + 8, p.y + size.y / 2}, 3, ImGui::GetColorU32(color));
     d->AddText({p.x + 17, p.y + 4}, ImGui::GetColorU32(color), text);
+}
+CompactActionRowRequest CompactActionRow(const char *id,
+                                         const CompactActionRowOptions &options) {
+    const bool hasStatus = options.statusText && options.statusText[0] != '\0';
+    const bool hasPrimary = options.primaryLabel && options.primaryLabel[0] != '\0';
+    const bool hasSettings = options.settingsLabel && options.settingsLabel[0] != '\0';
+    const auto &style = ImGui::GetStyle();
+    const float spacing = style.ItemSpacing.x;
+    const auto textWidth = [](const char *label) {
+        return ImGui::CalcTextSize(label, nullptr, true).x +
+               ImGui::GetStyle().FramePadding.x * 2.0f;
+    };
+    const float statusWidth = hasStatus ? ImGui::CalcTextSize(options.statusText).x + 24.0f : 0.0f;
+    const float primaryWidth = hasPrimary ? textWidth(options.primaryLabel) : 0.0f;
+    const float settingsWidth = hasSettings ? textWidth(options.settingsLabel) : 0.0f;
+    const float available = ImGui::GetContentRegionAvail().x;
+    float oneLineWidth = statusWidth + primaryWidth + settingsWidth;
+    int itemCount = static_cast<int>(hasStatus) + static_cast<int>(hasPrimary) + static_cast<int>(hasSettings);
+    if (itemCount > 1)
+        oneLineWidth += spacing * static_cast<float>(itemCount - 1);
+    const bool allFit = oneLineWidth <= available;
+    const bool actionsFit = primaryWidth + settingsWidth +
+        ((hasPrimary && hasSettings) ? spacing : 0.0f) <= available;
+
+    CompactActionRowRequest request = CompactActionRowRequest::None;
+    ImGui::PushID(id ? id : "##compactActionRow");
+    ImGui::BeginGroup();
+    if (hasStatus)
+        StatusBadge(options.statusText, options.statusKind, options.components.theme);
+
+    if (hasPrimary) {
+        if (hasStatus && allFit)
+            ImGui::SameLine();
+        ImGui::BeginDisabled(!options.primaryEnabled);
+        ImGui::PushID("primary");
+        auto primaryOptions = options.components;
+        primaryOptions.disabledReason = options.primaryDisabledReason
+            ? options.primaryDisabledReason : options.components.disabledReason;
+        if (ActionButton(options.primaryLabel, options.primaryVariant, {}, primaryOptions))
+            request = CompactActionRowRequest::Primary;
+        ImGui::PopID();
+        ImGui::EndDisabled();
+    }
+
+    if (hasSettings) {
+        if ((hasPrimary || hasStatus) && (allFit || (!allFit && actionsFit && hasPrimary)))
+            ImGui::SameLine();
+        ImGui::BeginDisabled(!options.settingsEnabled);
+        ImGui::PushID("settings");
+        auto settingsOptions = options.components;
+        settingsOptions.disabledReason = options.settingsDisabledReason
+            ? options.settingsDisabledReason : options.components.disabledReason;
+        if (ActionButton(options.settingsLabel, options.settingsVariant, {}, settingsOptions) &&
+            request == CompactActionRowRequest::None)
+            request = CompactActionRowRequest::Settings;
+        ImGui::PopID();
+        ImGui::EndDisabled();
+    }
+    ImGui::EndGroup();
+    ImGui::PopID();
+    return request;
 }
 bool NotificationCard(const Notification &n, double now, const Theme *t) {
     if (n.expiresAt > 0 && now >= n.expiresAt)

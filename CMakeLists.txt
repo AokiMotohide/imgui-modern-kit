@@ -58,7 +58,7 @@ if(NOT TARGET "${IMKIT_IMGUI_TARGET}")
         "Create the Dear ImGui target before adding imgui-modern-kit.")
 endif()
 
-add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/components.cpp src/icons.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp src/shell.cpp src/window_frame.cpp)
+add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/components.cpp src/icons.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp src/toast.cpp src/shell.cpp src/window_frame.cpp)
 add_library(imkit::imkit ALIAS imkit)
 
 target_compile_features(imkit PUBLIC cxx_std_20)
@@ -241,6 +241,7 @@ if(IMKIT_BUILD_GALLERY)
         examples/gallery/gallery.cpp
         examples/gallery/design_pages.cpp
         examples/gallery/workflow_pages.cpp
+        examples/gallery/toast_page.cpp
         examples/gallery/editor_workspaces.cpp
         examples/gallery/allocation_probe.cpp
         examples/gallery/gallery.h
@@ -297,6 +298,12 @@ endif()
 
 if(IMKIT_BUILD_TESTS)
     include(CTest)
+    add_executable(imkit_toast_test tests/toast.cpp)
+    target_link_libraries(imkit_toast_test PRIVATE imkit::imkit)
+    add_test(NAME imkit.toast COMMAND imkit_toast_test)
+    add_executable(imkit_toast_api_compile tests/toast_api_compile.cpp)
+    target_link_libraries(imkit_toast_api_compile PRIVATE imkit::imkit)
+    add_test(NAME imkit.toast_api_compile COMMAND imkit_toast_api_compile)
     add_executable(imkit_workflow_test tests/workflow.cpp examples/gallery/allocation_probe.cpp)
     target_link_libraries(imkit_workflow_test PRIVATE imkit::editor_core)
     add_test(NAME imkit.workflow COMMAND imkit_workflow_test)

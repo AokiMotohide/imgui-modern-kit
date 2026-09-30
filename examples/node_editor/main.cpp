@@ -881,9 +881,15 @@ int main(int argc, char **argv) {
     bool smoke = argc > 1 && std::string_view(argv[1]) == "--smoke";
     const bool verify = argc > 1 && std::string_view(argv[1]) == "--verify-node-actions";
     std::filesystem::path captureDirectory;
-    for (int i = 1; i < argc; ++i)
+    int captureWidth = 1440, captureHeight = 810;
+    for (int i = 1; i < argc; ++i) {
         if (std::string_view(argv[i]) == "--capture-gif" && i + 1 < argc)
             captureDirectory = argv[++i];
+        else if (std::string_view(argv[i]) == "--width" && i + 1 < argc)
+            captureWidth = std::clamp(std::stoi(argv[++i]), 640, 7680);
+        else if (std::string_view(argv[i]) == "--height" && i + 1 < argc)
+            captureHeight = std::clamp(std::stoi(argv[++i]), 480, 4320);
+    }
 #ifdef IMKIT_NODE_EDITOR_METAL
     if (!captureDirectory.empty()) {
         std::fprintf(stderr, "--capture-gif requires the OpenGL companion host\n");
@@ -917,8 +923,8 @@ int main(int argc, char **argv) {
                 return true;
         return false;
     };
-    auto *window = glfwCreateWindow(capture ? 960 : has("--narrow") ? 780 : 1400,
-                                    capture ? 540 : 900, "ModernKIT Node Studio", nullptr, nullptr);
+    auto *window = glfwCreateWindow(capture ? captureWidth : has("--narrow") ? 780 : 1400,
+                                    capture ? captureHeight : 900, "ModernKIT Node Studio", nullptr, nullptr);
     if (!window) {
         glfwTerminate();
         return 3;
@@ -974,7 +980,7 @@ int main(int argc, char **argv) {
     int collapseChanges = 0;
     bool collapsed = false;
     while (!glfwWindowShouldClose(window) && (!smoke || frames < 5) && (!verify || frames < 724) &&
-           (!capture || frames < 80)) {
+           (!capture || frames < 56)) {
         glfwPollEvents();
 #ifdef IMKIT_NODE_EDITOR_METAL
         @autoreleasepool {
@@ -991,12 +997,12 @@ int main(int argc, char **argv) {
             const auto transition = [](int value, int first, int last) {
                 return std::clamp(static_cast<float>(value - first) / static_cast<float>(last - first), 0.f, 1.f);
             };
-            const float zoomIn = transition(frames, 10, 24);
-            const float panOut = transition(frames, 58, 72);
+            const float zoomIn = transition(frames, 8, 18);
+            const float panOut = transition(frames, 38, 48);
             demo->material.state.zoom = .72 + .12 * zoomIn - .08 * panOut;
             demo->material.state.origin = {-8.0 - 52.0 * zoomIn - 48.0 * panOut,
                                            -18.0 - 18.0 * zoomIn + 12.0 * panOut};
-            if (frames == 24) {
+            if (frames == 18) {
                 auto node = std::find_if(demo->material.model.data.nodes.begin(),
                                          demo->material.model.data.nodes.end(),
                                          [](const auto &entry) { return entry.type == 7; });
@@ -1006,7 +1012,7 @@ int main(int argc, char **argv) {
                     demo->material.model.Resize();
                 }
             }
-            if (frames == 48) {
+            if (frames == 34) {
                 auto mix = std::find_if(demo->material.model.data.nodes.begin(),
                                         demo->material.model.data.nodes.end(),
                                         [](const auto &entry) { return entry.type == 7; });
@@ -1075,9 +1081,12 @@ int main(int argc, char **argv) {
     }
 #ifndef IMKIT_NODE_EDITOR_METAL
     if (capture) {
+        int framebufferWidth=0,framebufferHeight=0;
+        glfwGetFramebufferSize(window,&framebufferWidth,&framebufferHeight);
         std::ofstream metadata(captureDirectory / "capture.txt");
         metadata << "scenario=node-editor\nframes=" << frames
-                 << "\nsize=960x540\nsource=native OpenGL backbuffer; deterministic host-owned "
+                 << "\nsize=" << framebufferWidth << "x" << framebufferHeight
+                 << "\nsource=native OpenGL backbuffer; deterministic host-owned "
                     "zoom, pan, dynamic socket, link and preview state\n";
     }
 #endif
@@ -1098,7 +1107,8 @@ int main(int argc, char **argv) {
     if (smoke)
         std::printf("node studio: host edit/undo/subgraph model and 5 native frames passed\n");
     if (capture)
-        std::printf("node studio: captured %d deterministic native frames at 960x540\n", frames);
+        std::printf("node studio: captured %d deterministic native frames at %dx%d\n",
+                    frames,captureWidth,captureHeight);
     if (verify) {
         std::printf("Output monitor: 60 public-IO clicks, %d collapse/expand transitions\n", collapseChanges);
         return collapseChanges >= 20 ? 0 : 1;

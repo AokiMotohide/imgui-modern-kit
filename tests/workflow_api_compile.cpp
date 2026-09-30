@@ -2,6 +2,12 @@
 #include <imkit/editor_canvas.h>
 namespace {
 auto volatile grouped=&imkit::GroupedStepNavigator;
+auto volatile workspaceTabs=&imkit::WorkspaceTabs;
+auto volatile hierarchyGroup=&imkit::HierarchyGroupHeader;
+auto volatile hierarchyRow=&imkit::HierarchyRow;
+auto volatile inspectorCard=&imkit::BeginInspectorCard;
+auto volatile endInspectorCard=&imkit::EndInspectorCard;
+auto volatile settingToggleRow=&imkit::SettingToggleRow;
 imkit::StableId (*volatile iconToolbar)(const char*,const imkit::IconAtlas&,std::span<const imkit::IconToolbarItem>,imkit::ComponentOptions)=&imkit::IconToolbar;
 imkit::StableId (*volatile labeledIconToolbar)(const char*,const imkit::IconAtlas&,std::span<const imkit::IconToolbarItem>,imkit::IconToolbarOptions,imkit::ComponentOptions)=&imkit::IconToolbar;
 bool (*volatile iconAction)(const char*,const imkit::IconAtlas&,imkit::IconId,const char*,const char*,imkit::ActionVariant,imkit::ComponentOptions)=&imkit::IconActionButton;
@@ -39,5 +45,5 @@ auto volatile rightPanelHandle=&imkit::RightSidePanelHandle;
 int main() {
     imkit::StableId ids[1];imkit::RequestBuffer requests{ids};
     imkit::editor::TileEvent events[1];imkit::editor::TileEventBuffer out{events};
-    return !(grouped&&iconToolbar&&labeledIconToolbar&&iconAction&&step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&card&&endCard&&section&&multi&&help&&validation&&toolbar&&valid&&placement&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&appBar&&workspaceHeader&&inspectorSection&&advancedSection&&bottomActionBar&&beginDiagnostics&&endDiagnostics&&themePicker&&resolveRightPanel&&rightPanelHandle&&requests.Push(1)&&out.Push({}));
+    return !(grouped&&workspaceTabs&&hierarchyGroup&&hierarchyRow&&inspectorCard&&endInspectorCard&&settingToggleRow&&iconToolbar&&labeledIconToolbar&&iconAction&&step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&card&&endCard&&section&&multi&&help&&validation&&toolbar&&valid&&placement&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&appBar&&workspaceHeader&&inspectorSection&&advancedSection&&bottomActionBar&&beginDiagnostics&&endDiagnostics&&themePicker&&resolveRightPanel&&rightPanelHandle&&requests.Push(1)&&out.Push({}));
 }

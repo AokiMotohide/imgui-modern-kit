@@ -121,6 +121,31 @@ void WorkflowPages::Show(int page,GalleryState& host) {
             EndDiagnosticsDrawer();
         }
     } else {
+        const std::array<WorkspaceTab,3> workspaces{{
+            {101, japanese?"編集":"Edit", "Edit items", IconId::Cube},
+            {102, japanese?"接続":"Connect", "Route sources", IconId::Connected},
+            {103, japanese?"仕上げ":"Review", "Review settings", IconId::Settings}}};
+        if(auto request=WorkspaceTabs("workspace-tabs",workspaces,workspace,&host.icons,o))workspace=request;
+        ImGui::Spacing();
+        if(ImGui::BeginTable("component-layout",2,ImGuiTableFlags_SizingFixedFit,{880,0})) {
+            ImGui::TableSetupColumn("Items",ImGuiTableColumnFlags_WidthFixed,350);
+            ImGui::TableSetupColumn("Settings",ImGuiTableColumnFlags_WidthFixed,520);
+            ImGui::TableNextRow();ImGui::TableNextColumn();
+            if(HierarchyGroupHeader("group",japanese?"項目":"Items",2,&hierarchyOpen,&host.icons,IconId::Layers,o)) {
+                HierarchyRow("first",{1,japanese?"項目 A":"Item A","Visible and editable",IconId::Cube,1,true},&host.icons,o);
+                HierarchyRow("second",{2,japanese?"項目 B":"Item B","Hidden and locked",IconId::Image,1,false,false,true},&host.icons,o);
+            }
+            ImGui::TableNextColumn();
+            if(BeginInspectorCard("settings-card",japanese?"基本設定":"Basic settings",
+                                  japanese?"関連する操作をまとめて表示":"Related controls stay together",
+                                  &host.icons,IconId::Settings,o)) {
+                if(SettingToggleRow("enabled",japanese?"有効":"Enabled",
+                                    japanese?"現在の項目を使用":"Use this item",settingEnabled,false,"",o))
+                    settingEnabled=!settingEnabled;
+                ImGui::DragFloat(japanese?"強さ":"Strength",&position[0],.01f,0.f,10.f,"%.2f");
+            }
+            EndInspectorCard();ImGui::EndTable();
+        }
         editor::PreviewTileView tiles[5];
         const char* names[]={"Preview A","Loading","Empty","Offline","Error"};
         for(int i=0;i<5;++i){tiles[i].id=i+1;tiles[i].title=names[i];tiles[i].detail="Host-owned texture and state";tiles[i].actions=commands;tiles[i].disabled=disabled;}

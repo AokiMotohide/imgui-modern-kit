@@ -8,6 +8,7 @@
 #include "editor_workspaces.h"
 #include "design_pages.h"
 #include "workflow_pages.h"
+#include "toast_page.h"
 namespace imkit::gallery {
 struct Probe {
     ImVec2 min, max;
@@ -29,6 +30,7 @@ struct ComparisonState {
 struct GalleryState {
     DesignPages design;
     WorkflowPages workflow;
+    ToastPage toasts;
     EditorWorkspaces editors;
     Theme theme = MakeTheme(ThemePreset::PrecisionLight);
     FontSet fonts{};

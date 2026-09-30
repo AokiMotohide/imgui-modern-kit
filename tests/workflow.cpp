@@ -97,6 +97,28 @@ int main(){
         rightPanel.width=std::numeric_limits<float>::infinity();
         rightPanelLayout=ResolveRightSidePanelLayout(rightPanel,300);
         Check(std::isfinite(rightPanel.width)&&rightPanelLayout.contentWidth>=1&&rightPanelLayout.panelWidth>=1,"right panel clamps narrow and nonfinite input");
+        StableId workspaceRequest=0;
+        bool toggleRequest=false,groupOpen=true;
+        auto drawWorkspace=[&]{
+            const WorkspaceTab tabs[]={{101,"Edit","Edit items"},{102,"Connect","Connect items"},{103,"Review","Review items"}};
+            workspaceRequest=WorkspaceTabs("workspace-tabs",tabs,101,nullptr,options);
+            if(HierarchyGroupHeader("items","Items",1,&groupOpen,nullptr,IconId::Count,options))
+                HierarchyRow("row",{7,"Item A","Selectable item",IconId::Count,1,true},nullptr,options);
+            if(BeginInspectorCard("card","Settings","Related controls",nullptr,IconId::Count,options))
+                toggleRequest=SettingToggleRow("enabled","Enabled","Use this item",false,false,"",options);
+            EndInspectorCard();
+        };
+        frame(drawWorkspace);
+        accessibility::SemanticNode connect{},toggle{};
+        for(const auto& node:semantics.Tree().nodes) {
+            if(node.name=="Connect")connect=node;
+            if(node.name=="Enabled")toggle=node;
+        }
+        Check(connect.id&&toggle.id,"workspace and setting controls expose semantic names");
+        queue.Push({connect.id,accessibility::SemanticAction::Select});frame(drawWorkspace);
+        Check(workspaceRequest==102,"workspace returns selection request without changing host selection");
+        queue.Push({toggle.id,accessibility::SemanticAction::Toggle});frame(drawWorkspace);
+        Check(toggleRequest,"setting row returns toggle request without changing host value");
         std::array<StepItem,4> steps{{{1,"Same","Ready"},{2,"Same","Blocked",false,true,true},{3,"Long label without collisions","Description",true,true,false,FeedbackKind::Warning},{4,"Error","Description",false,true,false,FeedbackKind::Error}}};
         {
             std::array<StepGroup,2> groups{{{10,"First",0,2,{.25f,.60f,.95f,1.f}},{11,"Second",2,2,{.85f,.45f,.70f,1.f}}}};
