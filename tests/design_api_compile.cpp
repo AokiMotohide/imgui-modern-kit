@@ -7,5 +7,6 @@ imkit::StableId (*volatile palette)(const char*,imkit::CommandPaletteState&,std:
 void (*volatile table)(const char*,imkit::DataTableState&,const imkit::DataProvider&,std::span<const imkit::DataColumn>,float,imkit::ComponentOptions)=&imkit::DataTable;
 decltype(table) tree=&imkit::TreeDataGrid;
 bool (*volatile annotate)(imkit::accessibility::AccessibilityFrame&,imkit::accessibility::SemanticNode)=&imkit::accessibility::AnnotateLastItem;
+imkit::CompactActionRowRequest (*volatile compactActionRow)(const char*,const imkit::CompactActionRowOptions&)=&imkit::CompactActionRow;
 }
-int main(){return theme && resolve && contrast && palette && table && tree && annotate?0:1;}
+int main(){return theme && resolve && contrast && palette && table && tree && annotate && compactActionRow?0:1;}

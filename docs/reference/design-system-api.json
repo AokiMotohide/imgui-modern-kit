@@ -56,6 +56,22 @@
     "contract": "docs/design-system.md"
   },
   {
+    "header": "include/imkit/components.h",
+    "types": [
+      "ActionVariant",
+      "CheckState",
+      "StatusKind",
+      "CompactActionRowRequest",
+      "ComponentOptions",
+      "CompactActionRowOptions",
+      "Notification"
+    ],
+    "functions": [
+      "CompactActionRow"
+    ],
+    "contract": "docs/design-system.md"
+  },
+  {
     "header": "include/imkit/patterns.h",
     "types": [
       "Command",

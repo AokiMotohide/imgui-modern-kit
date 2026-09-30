@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <utility>
 #include <array>
 #include <limits>
 #include "../examples/gallery/allocation_probe.h"
@@ -99,6 +100,41 @@ int main() {
     io.AddKeyEvent(ImGuiKey_Escape,true); dialogFrame(false);
     io.AddKeyEvent(ImGuiKey_Escape,false); dialogFrame(false); dialogFrame(false); dialogFrame(false);
     Check(!dialog.open && launcherFocused,"Escape closes and restores launcher focus");
+    std::array<SemanticNode,16> rowNodes{}; std::array<ActionRequest,4> rowRequests{};
+    ActionQueue rowQueue(rowRequests); AccessibilityFrame rowSemantics(rowNodes,&rowQueue);
+    CompactActionRowOptions rowOptions;
+    rowOptions.statusText="Ready"; rowOptions.statusKind=StatusKind::Success;
+    rowOptions.primaryLabel="Configure"; rowOptions.settingsLabel="Configure";
+    rowOptions.components.accessibility=&rowSemantics;
+    auto drawActionRow=[&](int generation,float windowWidth) {
+        rowSemantics.Begin(static_cast<std::uint64_t>(generation));
+        ImGui::NewFrame(); ImGui::SetNextWindowSize({windowWidth,180},ImGuiCond_Always);
+        ImGui::Begin("compact action row fixture");
+        const float before=ImGui::GetCursorScreenPos().y;
+        const auto request=CompactActionRow("camera-1",rowOptions);
+        const float height=ImGui::GetCursorScreenPos().y-before;
+        ImGui::End(); ImGui::Render();
+        return std::pair{request,height};
+    };
+    const auto [wideRequest,rowHeightWide]=drawActionRow(100,640.f);
+    Check(wideRequest==CompactActionRowRequest::None,"compact action row returns no request when idle");
+    StableId primaryId=0,settingsId=0;
+    for(const auto& item:rowSemantics.Tree().nodes) {
+        if(item.name!="Configure") continue;
+        if(!primaryId) primaryId=item.id;
+        else settingsId=item.id;
+    }
+    Check(primaryId!=0&&settingsId!=0&&primaryId!=settingsId,"compact action row keeps duplicate labels addressable");
+    Check(rowQueue.Push({primaryId,SemanticAction::Press}),"compact primary request queues");
+    Check(drawActionRow(101,640.f).first==CompactActionRowRequest::Primary,"compact action row returns primary request");
+    Check(rowQueue.Push({settingsId,SemanticAction::Press}),"compact settings request queues");
+    Check(drawActionRow(102,640.f).first==CompactActionRowRequest::Settings,"compact action row returns settings request");
+    const auto [narrowRequest,rowHeightNarrow]=drawActionRow(103,150.f);
+    Check(narrowRequest==CompactActionRowRequest::None,"narrow compact action row remains idle");
+    Check(rowHeightNarrow>rowHeightWide,"compact action row wraps when the available width is narrow");
+    rowOptions.primaryEnabled=false;
+    Check(rowQueue.Push({primaryId,SemanticAction::Press}),"disabled primary request queues");
+    Check(drawActionRow(104,640.f).first==CompactActionRowRequest::None,"disabled primary action emits no request");
     ImGui::DestroyContext(context);
     std::printf("design system failures=%d allocations=%d\n",failures,allocations); return failures?1:0;
 }

@@ -7,9 +7,10 @@
 #include <cstddef>
 
 namespace imkit {
-enum class ActionVariant { Primary, Secondary, Ghost, Destructive };
+enum class ActionVariant { Primary, Secondary, Ghost, Destructive, SubtleDestructive };
 enum class CheckState { Unchecked, Checked, Mixed };
 enum class StatusKind { Neutral, Success, Warning, Error };
+enum class CompactActionRowRequest { None, Primary, Settings };
 struct ComponentOptions {
     const Theme *theme = nullptr; // Optional semantic overrides, never retained.
     AnimationState *animation = nullptr;
@@ -50,6 +51,22 @@ bool DragVector3WithUnit(const char *label, float value[3], const char *unit, fl
 bool BeginSettingRow(const char *id, const char *label, float labelWidth = 140);
 void EndSettingRow();
 void StatusBadge(const char *text, StatusKind kind = StatusKind::Neutral, const Theme *theme = nullptr);
+struct CompactActionRowOptions {
+    const char *statusText = nullptr;
+    StatusKind statusKind = StatusKind::Neutral;
+    const char *primaryLabel = nullptr;
+    ActionVariant primaryVariant = ActionVariant::Primary;
+    const char *settingsLabel = "Settings";
+    ActionVariant settingsVariant = ActionVariant::Ghost;
+    bool primaryEnabled = true;
+    bool settingsEnabled = true;
+    const char *primaryDisabledReason = nullptr;
+    const char *settingsDisabledReason = nullptr;
+    ComponentOptions components{};
+};
+// Draws host-owned status and actions. Returns a request; it never changes host state.
+// The row wraps its actions when the available width is too narrow for one line.
+CompactActionRowRequest CompactActionRow(const char *id, const CompactActionRowOptions &options);
 struct Notification {
     const char *id;
     const char *text;

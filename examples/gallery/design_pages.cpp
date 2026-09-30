@@ -44,6 +44,25 @@ void DesignPages::Show(int section,Theme& theme) {
         ImGui::TextWrapped("Tab / Shift+Tab: focus. Space: activate. UI Automation adapter is an optional host integration; this page shows the frame tree.");
     } else {
         ImGui::TextUnformatted(section==11?"Components":section==12?"Patterns":"Responsive");
+        if(section==11) {
+            ImGui::TextDisabled(language==1?"コンパクトな機器状態":"Compact device status");
+            CompactActionRowOptions row;
+            row.statusText=language==1?(sampleStreaming?"受信中":"停止"):(sampleStreaming?"Streaming":"Stopped");
+            row.statusKind=sampleStreaming?StatusKind::Success:StatusKind::Neutral;
+            row.primaryLabel=language==1?(sampleStreaming?"停止":"接続"):(sampleStreaming?"Stop":"Connect");
+            row.primaryVariant=sampleStreaming?ActionVariant::SubtleDestructive:ActionVariant::Primary;
+            row.settingsLabel=language==1?"設定":"Settings";
+            row.components=options;
+            switch(CompactActionRow("sample-camera",row)) {
+            case CompactActionRowRequest::Primary: sampleStreaming=!sampleStreaming; break;
+            case CompactActionRowRequest::Settings: ++settingsRequests; break;
+            case CompactActionRowRequest::None: break;
+            }
+            if(settingsRequests) {
+                if(language==1) ImGui::TextDisabled("設定要求: %d",settingsRequests);
+                else ImGui::TextDisabled("Settings requests: %d",settingsRequests);
+            }
+        }
         const char* languages[]={"English","日本語","Pseudo RTL"}; ImGui::Combo("Language",&language,languages,3);
         const char* crumbs[]={"Workspace","Documents","Current record"}; Breadcrumbs("path",crumbs,options);
         const Command commands[]={{1,"New record","Ctrl+N"},{2,"Command palette","Ctrl+K"},{3,"Show notification"},{4,"Unavailable","",true,"Waiting for host data"}};

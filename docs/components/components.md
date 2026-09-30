@@ -109,4 +109,25 @@ if (imkit::NotificationCard({"saved", "Settings saved", imkit::StatusKind::Succe
 
 Notification expiry and removal belong to the host. More overload-level details are in [API coverage](../reference/api-coverage.md).
 
+## Compact status and actions
+
+```cpp
+imkit::CompactActionRowOptions row;
+row.statusText = streaming ? "Streaming" : "Stopped";
+row.statusKind = streaming ? imkit::StatusKind::Success : imkit::StatusKind::Neutral;
+row.primaryLabel = streaming ? "Stop" : "Connect";
+row.primaryVariant = streaming ? imkit::ActionVariant::SubtleDestructive
+                               : imkit::ActionVariant::Primary;
+row.settingsLabel = "Settings";
+
+switch (imkit::CompactActionRow("camera-1", row)) {
+case imkit::CompactActionRowRequest::Primary: requestConnectionChange = true; break;
+case imkit::CompactActionRowRequest::Settings: openSettings = true; break;
+case imkit::CompactActionRowRequest::None: break;
+}
+```
+
+`CompactActionRow` draws host-provided status and actions, then returns a request. Connection state, command execution, and settings window lifetime stay with the host. When the available width is too narrow, it wraps the status and actions onto multiple lines.
+Each action can be disabled independently; its disabled reason appears in that button's tooltip. Use `SubtleDestructive` for reversible risky actions such as stopping a stream.
+
 `NotificationCard` returns a dismiss request. A zero `expiresAt` means it remains visible until the host removes it; a nonzero expiration is compared with the `now` value supplied by the host.
