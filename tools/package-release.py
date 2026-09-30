@@ -194,7 +194,7 @@ def main() -> int:
         ],
         "documentation_media": {
             "gif_size": "960x540",
-            "gif_count": 5,
+            "gif_count": len(list((ROOT / "docs/images").glob("v3-*.gif"))),
             "showcase": showcase.name,
             "source": "native Gallery and Node Editor companion backbuffers only",
         },

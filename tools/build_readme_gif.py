@@ -10,17 +10,19 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("frames", type=Path)
     parser.add_argument("output", type=Path)
+    parser.add_argument("--pattern", default="frame-*.png", help="PNG frame filename glob")
     parser.add_argument("--colors", type=int, default=128)
     parser.add_argument("--expected-frames", type=int, default=60)
     parser.add_argument("--width", type=int, default=960)
     parser.add_argument("--height", type=int, default=540)
     parser.add_argument("--fps", type=int, default=8)
+    parser.add_argument("--disposal", type=int, choices=(1, 2, 3), default=1)
     parser.add_argument("--dither", choices=("floyd-steinberg", "none"), default="floyd-steinberg")
     parser.add_argument("--max-bytes", type=int, default=2 * 1024 * 1024)
     args = parser.parse_args()
     if args.expected_frames < 1 or args.width < 1 or args.height < 1 or args.fps < 1 or args.max_bytes < 1:
         raise SystemExit("frame count, dimensions, fps and max bytes must be positive")
-    paths = sorted(args.frames.glob("frame-*.png"))
+    paths = sorted(args.frames.glob(args.pattern))
     if len(paths) != args.expected_frames:
         raise SystemExit(f"expected {args.expected_frames} native frames, found {len(paths)}")
     images = [Image.open(path).convert("RGB") for path in paths]
@@ -40,7 +42,7 @@ def main() -> int:
     encoded = [image.quantize(palette=palette, dither=dither) for image in images]
     args.output.parent.mkdir(parents=True, exist_ok=True)
     encoded[0].save(args.output, save_all=True, append_images=encoded[1:], duration=round(1000 / args.fps), loop=0,
-                    optimize=True, disposal=1)
+                    optimize=True, disposal=args.disposal)
     size = args.output.stat().st_size
     if size > args.max_bytes:
         raise SystemExit(f"GIF exceeds {args.max_bytes} bytes: {size} bytes")

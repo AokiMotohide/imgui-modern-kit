@@ -2211,6 +2211,7 @@ int main(int argc, char **argv) {
                 h.Click(afterHostClick->first.c_str());require(demo.actionCount==3,"toast stays interactive above host after host click");
                 for(int dark=0;dark<2;++dark) {
                     h.s.theme=imkit::MakeTheme(dark?imkit::ThemePreset::PrecisionDark:imkit::ThemePreset::PrecisionLight);h.s.theme.fonts=h.s.fonts;
+                    h.s.theme.motion.enabled=false;
                     h.s.dark=dark!=0;
                     for(int position=0;position<6;++position) {
                         demo.position=position;demo.state.Reset();h.Settle();

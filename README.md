@@ -70,6 +70,12 @@ Start with a task, open its live specimen, and follow the route to the integrati
 
 Explore common controls with enabled, toggled, and mixed-selection states.
 
+### Toast notifications
+
+<img src="docs/images/v3-toasts.gif" alt="Theme-colored toast cards moving among six screen positions, including loading, success, warning, and error notifications" width="960">
+
+Choose a toast position, pause expiry while it is being read, and return action requests to the host application.
+
 ### Production icon artwork · 238 PNG masters
 
 **238 transparent PNG artwork masters · 16 image-backed categories.** The collection includes `Projector`, `Projector3D`, `ProjectionSurface`, `Camera3D`, `Frustum`, and `Lens`, alongside 91 editor icons, 10 production controls, 10 3D objects, and 9 lighting icons.

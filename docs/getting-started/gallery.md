@@ -45,6 +45,7 @@ The Gallery runner uses public Dear ImGui IO and captures its OpenGL backbuffer.
 
     $gallery = './build/windows-debug/catalog/Debug/imkit_gallery.exe'
     & $gallery --verify-comparison --output out/comparison
+    & $gallery --verify-toasts --width 1440 --height 810 --output out/readme/toasts
     $routes = @('overview', 'comparison', 'components', 'icons', 'icon-artwork', 'themes', 'workflow', 'preview-contract', 'timeline')
     foreach ($route in $routes) {
         & $gallery --capture-demo $route --width 1440 --height 810 --output out/readme
@@ -52,7 +53,7 @@ The Gallery runner uses public Dear ImGui IO and captures its OpenGL backbuffer.
     $node = './build/windows-debug/catalog/Debug/imkit_node_editor_gallery.exe'
     & $node --capture-gif out/readme/node-editor --width 1440 --height 810
 
-Each Gallery route writes native backbuffer frames to a directory under out/readme. Run the icon-artwork route from the repository root so it can read the checked-in PNG masters. The Gallery decodes those files with Windows Imaging Component, renders the artwork as tiles, and captures the OpenGL backbuffer. Capture at 1440×810, then downsample to 960×540 for the README. The Node Editor mode writes 56 frames at the requested capture size. Encode all ten README images with the expected frame count for each route:
+Each Gallery route writes native backbuffer frames to a directory under out/readme. Run the icon-artwork route from the repository root so it can read the checked-in PNG masters. The Gallery decodes those files with Windows Imaging Component, renders the artwork as tiles, and captures the OpenGL backbuffer. Capture at 1440×810, then downsample to 960×540 for the README. The Node Editor mode writes 56 frames at the requested capture size. Encode the eleven README animations with the expected frame count for each route:
 
     $routes = @(
         @{name='overview'; file='v3-overview.gif'; frames=60; colors=128; dither='floyd-steinberg'},
@@ -69,8 +70,9 @@ Each Gallery route writes native backbuffer frames to a directory under out/read
     foreach ($route in $routes) {
         python tools/build_readme_gif.py "out/readme/$($route.name)" "docs/images/$($route.file)" --expected-frames $route.frames --width 960 --height 540 --fps 8 --colors $route.colors --dither $route.dither
     }
+    python tools/build_readme_gif.py out/readme/toasts docs/images/v3-toasts.gif --pattern 'toasts-[0-5]-*.png' --expected-frames 12 --width 960 --height 540 --fps 6 --colors 96 --dither none --disposal 2
 
-The encoder requires a consistent 16:9 source, resizes it to 960×540, uses 8 fps, and rejects any GIF over 2 MiB. The Node Editor uses a 96-color palette without dithering to stay within that limit; the other routes use the values in the table. Keep the ten README animations within a combined 9 MiB budget. Pillow is only needed to regenerate documentation images; it is not linked or installed by ImKit.
+The encoder requires a consistent 16:9 source, resizes it to 960×540, and rejects any GIF over 2 MiB. The Node Editor and Toasts routes use a 96-color palette without dithering; the others use the values in the table. Keep all eleven README animations within a combined 9 MiB budget. Pillow is only needed to regenerate documentation images; it is not linked or installed by ImKit.
 
 ## Provenance and distribution boundary
 
