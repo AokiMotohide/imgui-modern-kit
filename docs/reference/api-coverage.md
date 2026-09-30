@@ -6,6 +6,8 @@ ImKit-owned window-frame values and optional platform adapters are inventoried s
 
 ## Overview and prerequisites
 
+The colored toast API is inventoried separately in [toast-api-inventory.json](toast-api-inventory.json), compiled by `tests/toast_api_compile.cpp` and documented in [Toasts](../components/toasts.md).
+
 Generated from pinned Dear ImGui 1.93.0 WIP docking (19297). Every row is one overload. Native aliases preserve exact defaults, callbacks, flags and Begin/End contracts. ApplyTheme is required for Precision Layers styling. Helpers have no visual output of their own. Every included row requires the pinned version; known limits are in [validation](validation.md). Composite controls are listed separately in [the guide](../getting-started/guide.md#components).
 
 ## Host boundaries and exclusions

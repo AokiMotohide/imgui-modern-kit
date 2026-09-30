@@ -2,6 +2,10 @@
 
 [日本語](検証記録.md) · [English](validation.md)
 
+## Colored toasts / 色付きトースト（2026-10-01）
+
+Windows x64 Debug: new toast and API compile tests, existing workflow regressions, and an external host-ImGui toast consumer compiled successfully. Native OpenGL Gallery `--verify-toasts --output out/toast-verification` checked mouse action/dismiss, keyboard Space action and same-ID loading completion, and captured six positions in light/dark plus Japanese indeterminate loading. Captures are local generated artifacts, not distributed documentation assets. Host covering windows use `NoBringToFrontOnFocus` to retain notification visibility after host clicks. Native OS/IME, screen-reader, cross-monitor DPI, macOS, Arm64, Release and installed-package acceptance for this addition were not performed. See [Toasts](../components/toasts.md).
+
 ## v3.0 platform matrix / v3.0 platform matrix
 
 | Configuration | Automated gate | Native acceptance |

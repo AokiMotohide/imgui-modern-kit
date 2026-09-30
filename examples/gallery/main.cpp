@@ -1946,6 +1946,7 @@ int main(int argc, char **argv) {
     bool verifyWindowFrame=false;
     std::string windowTitle="ImKit Precision Layers";
     bool verifyWorkflow=false;
+    bool verifyToasts=false;
     bool captureDesign=false;
     bool capture = false, verify = false, verifyIcons = false, verifyEditors = false, verifyColor = false, benchmarkEditors = false, verifyMonitors = false, verifyTrackControls = false, verifyLinkedClips = false, verifyNormals = false;
     bool verifyComparison=false, captureReadme=false;
@@ -1965,6 +1966,7 @@ int main(int argc, char **argv) {
         if(a=="--window-title" && i+1<argc) {windowTitle=argv[++i];continue;}
         if(a=="--verify-window-frame") {verifyWindowFrame=true;frameMode=1;continue;}
         if(a=="--verify-workflow") {verifyWorkflow=true;capture=true;continue;}
+        if(a=="--verify-toasts") {verifyToasts=true;capture=true;capturePage=20;continue;}
         if(a=="--capture-design-system") {captureDesign=true; capture=true; continue;}
         if(a=="--verify-comparison") {verifyComparison=true;continue;}
         if(a=="--capture-readme") {captureDemo="overview";captureReadme=true;continue;}
@@ -2192,6 +2194,38 @@ int main(int argc, char **argv) {
             VerifyWindowFrame(h,out);
         } else if (h.automated) {
             std::filesystem::create_directories(out);
+            if(verifyToasts) {
+                h.s.comparison.open=false;h.Page(20);
+                auto& demo=h.s.toasts;
+                auto require=[](bool ok,const char* what){if(!ok) throw std::runtime_error(what);};
+                require(demo.items.size()==4,"toast demo seed");
+                // Public mouse and keyboard IO through the real Gallery host.
+                const auto retry=std::find_if(h.s.probes.begin(),h.s.probes.end(),[](const auto& probe){return probe.first.starts_with("toast-action-")&&probe.first!="toast-action-0";});
+                require(retry!=h.s.probes.end(),"toast action probe");
+                h.Click(retry->first.c_str());require(demo.actionCount==1,"toast mouse action");
+                h.Key(ImGuiKey_Space);require(demo.actionCount==2,"toast keyboard action");
+                h.Click("toast-complete");
+                require(std::none_of(demo.items.begin(),demo.items.end(),[](auto& v){return v.phase==imkit::ToastPhase::Loading;}),"toast loading completion");
+                const auto afterHostClick=std::find_if(h.s.probes.begin(),h.s.probes.end(),[](const auto& probe){return probe.first.starts_with("toast-action-");});
+                require(afterHostClick!=h.s.probes.end(),"toast action after host click");
+                h.Click(afterHostClick->first.c_str());require(demo.actionCount==3,"toast stays interactive above host after host click");
+                for(int dark=0;dark<2;++dark) {
+                    h.s.theme=imkit::MakeTheme(dark?imkit::ThemePreset::PrecisionDark:imkit::ThemePreset::PrecisionLight);h.s.theme.fonts=h.s.fonts;
+                    h.s.dark=dark!=0;
+                    for(int position=0;position<6;++position) {
+                        demo.position=position;demo.state.Reset();h.Settle();
+                        h.Frame({},out/("toasts-"+std::to_string(position)+(dark?"-dark.png":"-light.png")));
+                    }
+                }
+                demo.japanese=true;demo.items.clear();demo.initialized=false;demo.state.Reset();
+                demo.position=2;demo.indeterminate=true;h.Settle();
+                h.Frame({},out/"toasts-japanese-loading.png");
+                const auto close=std::find_if(h.s.probes.begin(),h.s.probes.end(),[](const auto& probe){return probe.first.starts_with("toast-close-");});
+                require(close!=h.s.probes.end(),"toast close probe");
+                const auto before=demo.items.size();h.Click(close->first.c_str());require(demo.items.size()==before-1,"toast mouse dismissal");
+                std::ofstream report(out/"toasts-verification.txt");
+                report<<"PASS: native OpenGL Gallery; mouse action/dismiss; keyboard Space action; same-ID loading completion; six positions in light/dark; Japanese indeterminate loading.\nPublic ImGui IO is not physical OS input, IME, screen-reader or multi-monitor DPI acceptance.\n";
+            }
             if (verify)
                 Verify(h, out);
             if (verifyComparison)
@@ -2244,11 +2278,12 @@ int main(int argc, char **argv) {
             } else if(!captureDemo.empty()) {
                 CaptureDemo(h,out,captureDemo,captureReadme);
             } else if(captureDesign) {
+                h.s.comparison.open=false;
                 for(int dark=0;dark<2;++dark) for(int contrast=0;contrast<2;++contrast) for(int density=0;density<3;++density) {
                     h.s.dark=dark!=0;
                     h.s.theme=imkit::MakeTheme(static_cast<imkit::ColorScheme>(dark),static_cast<imkit::ContrastMode>(contrast),static_cast<imkit::Density>(density));
                     h.s.design.density=density; h.s.design.contrast=contrast;
-                    for(int page:{10,12,13,14}) {
+                    for(int page:{10,11,12,13,14}) {
                         h.Page(page);
                         h.Frame({},out/("design-"+std::to_string(page)+"-"+std::to_string(dark)+"-"+std::to_string(contrast)+"-"+std::to_string(density)+".png"));
                     }

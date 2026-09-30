@@ -663,14 +663,15 @@ void Show(GalleryState &s) {
                           std::max(1.f,ImGui::GetIO().DisplaySize.y-s.windowFrameHeight)});
         windowFlags|=ImGuiWindowFlags_NoDecoration;
     }
+    if(s.page==20) windowFlags|=ImGuiWindowFlags_NoBringToFrontOnFocus;
     const bool visible=Begin("ImKit Gallery - Precision Layers",nullptr,windowFlags);
     if(s.floatingComparison) {
         s.floatingCatalogPosition=GetWindowPos();
         s.floatingCatalogSize=GetWindowSize();
     }
     if(visible) {
-        static constexpr int pageIds[]={19,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18};
-        const char* pages[]={"Start","Components: Basic","Numeric / Units","Input / Media","Hierarchy / Table","Overlay / Layout","Composites","Icons","Editor Core","Video","CG","Foundations","Components","Patterns","Accessibility","Responsive","Generic Workspace","Feedback / States","Preview Tiles","Frame Lab"};
+        static constexpr int pageIds[]={19,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,20};
+        const char* pages[]={"Start","Components: Basic","Numeric / Units","Input / Media","Hierarchy / Table","Overlay / Layout","Composites","Icons","Editor Core","Video","CG","Foundations","Components","Patterns","Accessibility","Responsive","Generic Workspace","Feedback / States","Preview Tiles","Frame Lab","Toasts"};
         int pageIndex=0;
         for(int i=0;i<static_cast<int>(std::size(pageIds));++i) if(pageIds[i]==s.page) {pageIndex=i;break;}
         SetNextItemWidth(std::min(260.f,GetContentRegionAvail().x*.5f));
@@ -716,6 +717,7 @@ void Show(GalleryState &s) {
                    ImGuiChildFlags_Borders, s.page == 4 ? ImGuiWindowFlags_MenuBar : 0);
         PushItemWidth(420 * s.scale);
         switch (s.page) {
+        case 20: s.toasts.Show(s); break;
         case 19: Start(s); break;
         case 18: FrameLab(s); break;
         case 15: case 16: case 17: s.workflow.Show(s.page,s); break;

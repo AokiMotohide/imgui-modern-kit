@@ -7,6 +7,8 @@
 
 ## 概要と前提環境
 
+色付きトーストの公開APIは [toast-api-inventory.json](toast-api-inventory.json) に別途記録し、`tests/toast_api_compile.cpp` でコンパイルします。使い方は[トースト](../components/トースト.md)を参照してください。
+
 本対応表は、Dear ImGui `1.93.0 WIP docking`（コミットリビジョン `367b2c24f399988ddafc0bb4628da0106bcc09be`）を対象として生成されています。
 
 - **シグネチャの完全維持**: ImKitが提供するネイティブエイリアスは、Dear ImGui標準のデフォルト引数、コールバック関数、各種フラグ、および `Begin`/`End` のスコープ規約をそのまま維持します。

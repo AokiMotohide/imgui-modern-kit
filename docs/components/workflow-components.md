@@ -51,4 +51,6 @@ Pass `ComponentOptions` for theme, locale and semantic publication. Draw-only ov
 
 ## Gallery
 
+For colored cards with six positions, actions and progress, see [Toasts](toasts.md). Existing `ToastRegion` behavior remains unchanged.
+
 Open **Generic Workspace**, **Feedback / States**, or **Preview Tiles**. The workspace combines navigation, toolbar, image, overlays, selection, feedback and status. It uses the existing procedural texture. `--verify-workflow --output <directory>` runs public IO checks and captures 36 page/theme combinations plus two narrow Japanese/disabled examples. Native GPU captures are distinct from native OS/IME and screen-reader tests.

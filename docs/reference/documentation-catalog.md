@@ -56,6 +56,7 @@ Documentation is organized into five structured categories based on development 
 | [Timeline Editing](../components/timeline-editing.md) / [JA](../components/タイムライン編集.md) | Clip placement, ripple trims, roll, and slide editing | `imkit/video.h` |
 | [Editor Suite](../components/editor-suite.md) / [JA](../components/エディタスイート.md) | 3D viewports, transform gizmos, outliners, and UV editor | `imkit/cg.h`, `imkit/preview.h` |
 | [Workflow Components](../components/workflow-components.md) / [JA](../components/ワークフローコンポーネント.md) | Wizards, breadcrumbs, inspector cards, and side panels | `imkit/workflow.h` |
+| [Toasts](../components/toasts.md) / [JA](../components/トースト.md) | Colored notification cards, positions, actions, timing and progress | `imkit/toast.h` |
 | [Shell Components](../components/shell-components.md) / [JA](../components/シェルコンポーネント.md) | App bars, workspace headers, action bars, and drawers | `imkit/shell.h` |
 | [Window Frame](../components/gallery-window-frame.md) / [JA](../components/ウィンドウフレーム.md) | Custom title bars, snap layouts, and OS window adapters | `imkit/window_frame.h` |
 
