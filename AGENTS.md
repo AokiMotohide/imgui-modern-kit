@@ -27,12 +27,12 @@
 
 ## ビルドと検証
 
-通常は構成済み `build/windows-debug/` のDebug増分ビルドを使う。
+通常は主チェックアウト C:\aokiDev\imgui-modern-kit の構成済み build/windows-debug/ を使う。worktree内から直接CMakeを実行するとsourceDir配下に別build treeができるため、共有ランチャーで主チェックアウトのbuildを使う。
 
-```powershell
-cmake --build --preset windows-debug --target <imkit|対象テスト|imkit_gallery> --parallel
-ctest --test-dir build/windows-debug -C Debug -R "<対象テスト>" --output-on-failure
-```
+    & 'C:\aokiDev\imgui-modern-kit\tools\Invoke-SharedBuild.ps1' -Target '<imkit|対象テスト|imkit_gallery>'
+    & 'C:\aokiDev\imgui-modern-kit\tools\Invoke-SharedBuild.ps1' -Tests -TestRegex '<対象テスト>'
+
+構成が必要な場合はConfigureを指定する。Windows Arm64は同じ主チェックアウトの標準preset windows-arm64を-Preset windows-arm64で指定する。build出力は登録済みのbuild/windows-debugまたはbuild/windows-arm64に限り、セッション名・検証名のbuild treeを作らない。
 
 - 変更した最小targetと直接回帰だけを1回確認する。成功後のno-op再ビルド、同一テスト、全テスト、`ALL_BUILD`、`clean`、`Rebuild` は追加しない。
 - 再構成は新規build、CMake・依存変更、構成不整合時だけ行う。Release、install、package、SDK consumerは変更範囲または依頼が必要とする場合だけ実行する。
