@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [ValidateSet('windows-debug', 'windows-arm64')]
     [string]$Preset = 'windows-debug',
