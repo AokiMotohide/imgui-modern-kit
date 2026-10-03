@@ -27,6 +27,8 @@
 
 ## ビルドと検証
 
+正規のビルド親は `C:\aokiDev\imgui-modern-kit\build` 一つに固定する。`tools/Invoke-SharedBuild.ps1` は絶対パスの `C:\aokiDev\tools\build-coordination\Invoke-SharedBuild.ps1` を呼び、同じ場所の `projects.json` に登録した親をキーとする排他ロックを使う。構成・ビルド・清掃・ソース統合は主担当が同じロックで直列化し、競合時は待機する。親の中でも日時・セッション・検証別の `build-*` や `target-*` を新設しない。worktreeでは静的確認だけを行い、変更を正規チェックアウトへ統合してから共有出力で検証する。
+
 通常は主チェックアウト C:\aokiDev\imgui-modern-kit の構成済み build/windows-debug/ を使う。worktree内から直接CMakeを実行するとsourceDir配下に別build treeができるため、共有ランチャーで主チェックアウトのbuildを使う。
 
     & 'C:\aokiDev\imgui-modern-kit\tools\Invoke-SharedBuild.ps1' -Target '<imkit|対象テスト|imkit_gallery>'
