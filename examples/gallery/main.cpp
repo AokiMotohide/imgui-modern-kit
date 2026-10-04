@@ -10,6 +10,7 @@
 #include "gallery.h"
 #include <imkit/window_frame_win32.h>
 #include "../design_gallery/capture.h"
+#include "../design_gallery/motion_capture.h"
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -61,6 +62,7 @@ struct Host {
     int iconArtworkSourceCategoryCount=0;
     int iconArtworkCatalogCategoryCount=0;
     std::vector<IconArtworkSlide> iconArtworkSlides;
+    imkit::design::MotionCapture* motion=nullptr;
     void Frame(const std::function<void(ImGuiIO &)> &input = {}, const std::filesystem::path &shot = NoCapturePath()) {
         glfwPollEvents();
         const bool wantsCustomFrame=s.framePreset!=imkit::WindowFramePreset::Native;
@@ -115,6 +117,7 @@ struct Host {
             if(frameEvent.type==imkit::WindowFrameEventType::WorkspaceSelected) s.frameWorkspace=frameEvent.workspace;
         }
         s.editors.RenderPreview();
+        if(motion) motion->Cursor();
         ImGui::Render();
         int w, h;
         glfwGetFramebufferSize(window, &w, &h);
@@ -129,6 +132,7 @@ struct Host {
         }
         if (!shot.empty())
             imkit::design::SaveBackbuffer(shot, w, h);
+        if(motion) motion->Capture(w,h);
         glfwSwapBuffers(window);
         if(frameEvent.type==imkit::WindowFrameEventType::Operation) windowFrame.Execute(frameEvent.operation);
     }
@@ -963,6 +967,114 @@ void CaptureFrames(Host &h,const std::filesystem::path &dir,int &index,int count
         char name[32];std::snprintf(name,sizeof(name),"frame-%03d.png",index++);
         h.Frame({},dir/name);
     }
+}
+void CaptureMotion(Host& h,const std::filesystem::path& out,const std::string& demo) {
+    using namespace imkit;
+    h.s.theme=MakeTheme(ThemePreset::Graphite);h.s.theme.fonts=h.s.fonts;
+    h.s.scale=1.3f;h.s.presetIndex=2;h.s.dark=true;h.s.comparison.open=false;
+    int page=demo=="comparison"?21:demo=="workspace"?22:demo=="icons"||demo=="themes"||demo=="icon-artwork"?6:
+        demo=="toasts"?20:demo=="timeline"||demo=="preview-contract"?8:demo=="workflow"?15:demo=="overview"?19:0;
+    if(page==21)h.s.comparison.open=true;
+    if(page==8)h.s.editors.Dataset(false);
+    if(demo=="preview-contract")h.s.editors.monitorMode=3;
+    if(page==20){h.s.toasts.initialized=true;h.s.toasts.items.clear();h.s.toasts.state.Reset();}
+    h.Page(page);h.mouse={350,150};h.Settle();
+    std::filesystem::create_directories(out);
+    std::ofstream layout(out/(demo+".layout.json"));layout<<"{";bool first=true;
+    for(const auto& [name,b]:h.s.probes){if(!first)layout<<",";first=false;layout<<"\""<<name<<"\":["<<b.min.x<<","<<b.min.y<<","<<b.max.x<<","<<b.max.y<<"]";}layout<<"}";layout.close();
+    imkit::design::MotionCapture recording;recording.Start(out/(demo+".mkv"),1920,1080);h.motion=&recording;
+    auto hold=[&](int n){h.Settle(n);};
+    auto move=[&](ImVec2 target,int n=28){auto start=h.mouse;for(int i=1;i<=n;++i){float u=float(i)/n;u=u*u*(3-2*u);h.mouse={start.x+(target.x-start.x)*u,start.y+(target.y-start.y)*u};h.Frame();}};
+    auto clickAt=[&](ImVec2 p,const char* action){recording.Mark(action);move(p);h.Frame([](auto&io){io.AddMouseButtonEvent(0,true);});hold(7);h.Frame([](auto&io){io.AddMouseButtonEvent(0,false);});hold(20);};
+    auto click=[&](const char* name){clickAt(h.s.probes.at(name).Center(),name);};
+    auto drag=[&](ImVec2 from,ImVec2 to,const char* action){recording.Mark(action);move(from);h.Frame([](auto&io){io.AddMouseButtonEvent(0,true);});hold(8);move(to,66);h.Frame([](auto&io){io.AddMouseButtonEvent(0,false);});hold(22);};
+    auto type=[&](const char* probe,const char* text){click(probe);h.Frame([](auto&io){io.AddKeyEvent(ImGuiMod_Ctrl,true);io.AddKeyEvent(ImGuiKey_A,true);});h.Frame([](auto&io){io.AddKeyEvent(ImGuiMod_Ctrl,false);io.AddKeyEvent(ImGuiKey_A,false);});for(auto p=text;*p;++p){char c[]={*p,0};h.Frame([&](auto&io){io.AddInputCharactersUTF8(c);});hold(5);}h.Key(ImGuiKey_Enter);hold(18);};
+    hold(24);
+    if(demo=="comparison") {
+        auto b=h.s.probes.at("comparison-default-level");auto p=b.Center();p.x=b.min.x+(b.max.x-b.min.x)*.64f;
+        drag(p,{b.min.x+(b.max.x-b.min.x)*.30f,p.y},"Default slider edits shared value");recording.Check("shared slider changed",h.s.comparison.level<.45,h.s.comparison.level);
+        click("comparison-default-apply");type("comparison-imkit-name","Modern Studio");
+        b=h.s.probes.at("comparison-imkit-level");p=b.Center();p.x=b.min.x+(b.max.x-b.min.x)*.30f;
+        drag(p,{b.min.x+(b.max.x-b.min.x)*.88f,p.y},"ImKit slider edits same value");
+        recording.Check("modern shared value changed",h.s.comparison.level>.65,h.s.comparison.level);
+        click("comparison-imkit-apply");click("comparison-default-enabled");click("comparison-imkit-enabled");
+        recording.Check("both Apply buttons",h.s.comparison.applyCount==2,h.s.comparison.applyCount);
+    } else if(demo=="workspace") {
+        click("workbench-tab-1");recording.Check("Inspect selected",h.s.workflow.workspace==102,h.s.workflow.workspace);
+        click("workbench-row-1");recording.Check("hierarchy selection",h.s.workflow.selected==2,h.s.workflow.selected);
+        click("workbench-enabled");click("workbench-enabled");
+        auto b=h.s.probes.at("workbench-position");ImVec2 p{b.min.x+60,b.max.y-ImGui::GetFrameHeight()*.5f};
+        drag(p,{p.x+100,p.y},"Drag position X / live preview");recording.Check("axis input edited",h.s.workflow.position[0]!=0,h.s.workflow.position[0]);
+        clickAt({b.min.x+(b.max.x-b.min.x)*.35f,b.max.y-ImGui::GetFrameHeight()*.5f},"Select next axis");
+        click("workbench-mobile");recording.Check("Mobile selected",h.s.workflow.choiceSource==703,h.s.workflow.choiceSource);
+        click("workbench-apply");recording.Check("Apply request handled",h.s.workflow.actions>0,h.s.workflow.actions);
+        click("workbench-tab-2");recording.Check("Deliver selected",h.s.workflow.workspace==103,h.s.workflow.workspace);
+        click("workbench-tab-0");
+        click("workbench-hierarchy");recording.Check("hierarchy collapsed",!h.s.workflow.hierarchyOpen);
+        click("workbench-hierarchy");recording.Check("hierarchy expanded",h.s.workflow.hierarchyOpen);
+    } else if(demo=="icons"||demo=="icon-artwork") {
+        type("icon-search","camera");click("icon-pick-Camera");recording.Check("Camera selected",h.s.selectedIcon==static_cast<int>(IconId::Camera),h.s.selectedIcon);
+        click("icon-label-button");type("icon-search","projector");click("icon-pick-Projector3D");
+        recording.Check("Projector selected",h.s.selectedIcon==static_cast<int>(IconId::Projector3D),h.s.selectedIcon);click("icon-button");
+    } else if(demo=="themes") {
+        for(int theme:{4,8,2,0}) {
+            click("appearance");click("appearance-theme-picker");const auto key="appearance-theme-"+std::to_string(theme);
+            // Use the same public keyboard navigation as a consumer. Home/Down
+            // scrolls the popup to off-screen choices without stale hit boxes.
+            recording.Mark(key.c_str());h.Key(ImGuiKey_Home);
+            for(int i=0;i<theme;++i){h.Key(ImGuiKey_DownArrow);hold(3);}
+            h.Key(ImGuiKey_Enter);hold(20);
+            recording.Check("theme selection",h.s.presetIndex==theme,h.s.presetIndex);h.Key(ImGuiKey_Escape);hold(24);
+        }
+    } else if(demo=="toasts") {
+        click("toast-loading");recording.Check("loading toast created",!h.s.toasts.items.empty());hold(45);
+        click("toast-complete");recording.Check("success completion",std::none_of(h.s.toasts.items.begin(),h.s.toasts.items.end(),[](auto&v){return v.phase==ToastPhase::Loading;}));
+        click("toast-success");hold(36);
+    } else if(demo=="preview-contract") {
+        auto& s=h.s.editors;
+        for(int state:{1,4,0,3}) {
+            clickAt({(s.motionStateMin.x+s.motionStateMax.x)/2,(s.motionStateMin.y+s.motionStateMax.y)/2},"Preview state selector");
+            h.Key(ImGuiKey_Home);for(int i=0;i<state;++i)h.Key(ImGuiKey_DownArrow);h.Key(ImGuiKey_Enter);hold(24);
+            recording.Check("preview state applied",s.monitorContractStatus==state,s.monitorContractStatus);
+        }
+        clickAt({(s.motionAspectMin.x+s.motionAspectMax.x)/2,(s.motionAspectMin.y+s.motionAspectMax.y)/2},"Preview aspect selector");
+        h.Key(ImGuiKey_Home);h.Key(ImGuiKey_DownArrow);h.Key(ImGuiKey_Enter);recording.Check("preview aspect applied",s.monitorContractAspect==1,s.monitorContractAspect);
+    } else if(demo=="timeline") {
+        auto& s=h.s.editors;const auto origin=s.timeline.view.min;
+        auto p=ImVec2{origin.x+s.timeline.headerWidth+15,origin.y-30};
+        const auto previous=s.timeline.time.playhead;
+        drag(p,{p.x+240,p.y},"Scrub playhead");recording.Check("playhead changed",s.timeline.time.playhead!=previous,double(s.timeline.time.playhead));
+        const auto clipStart=s.clips.front().start;
+        drag({p.x+80,origin.y+32},{p.x+110,origin.y+32},"Move clip within its available gap");recording.Check("clip moved",s.clips.front().start!=clipStart,double(s.clips.front().start));
+        auto play=ImVec2{s.motionPlay.x+ImGui::GetFrameHeight()*.5f,s.motionPlay.y+ImGui::GetFrameHeight()*.5f};
+        clickAt(play,"Play timeline");recording.Check("playback started",s.timeline.time.playing);hold(75);clickAt(play,"Pause timeline");recording.Check("playback paused",!s.timeline.time.playing);
+        drag({p.x+240,p.y},{p.x+75,p.y},"Scrub back");
+    } else if(demo=="overview") {
+        click("start-Open 3.2 workspace");click("workbench-row-1");click("workbench-tab-1");click("workbench-enabled");click("workbench-enabled");
+        recording.Check("Start route applied",h.s.page==22);
+    } else if(demo=="workflow") {
+        click("workflow-chip");recording.Check("filter enabled",h.s.workflow.chip);
+        click("workflow-review");
+        recording.Check("Review selected",h.s.workflow.selected==3,h.s.workflow.selected);
+        recording.Mark("Scroll to notification action");move({1450,800});
+        for(int i=0;i<30 && h.s.probes.at("workflow-notify").max.y>1065;++i){h.Frame([](auto& io){io.AddMouseWheelEvent(0,-1);});hold(4);}
+        recording.Check("notification control visible",h.s.probes.at("workflow-notify").max.y<1078);
+        click("workflow-notify");recording.Check("notification displayed",h.s.workflow.notice);hold(70);
+    } else {click("apply");click("toggle");click("mixed");click("checkbox");click("toggle");recording.Check("component action",h.s.clicks>0,h.s.clicks);}
+    move({1750,990},24);hold(24);
+    // Enough genuine per-frame action for the edit, rather than duplicating stills.
+    const int minimum=demo=="workspace"?960:demo=="comparison"?840:480;
+    while(recording.Frames()<minimum){
+        if(demo=="toasts"){click("toast-loading");hold(75);click("toast-complete");}
+        else if(demo=="comparison") {click("comparison-imkit-apply");click("comparison-default-apply");}
+        else if(demo=="workspace"||demo=="overview") {click("workbench-tab-1");click("workbench-tab-0");}
+        else if(demo=="timeline") {const auto& s=h.s.editors;auto p=ImVec2{s.timeline.view.min.x+s.timeline.headerWidth+80,s.timeline.view.min.y-30};drag(p,{p.x+140,p.y},"Scrub edit continuation");}
+        else if(demo=="preview-contract") {auto& s=h.s.editors;clickAt({(s.motionStateMin.x+s.motionStateMax.x)/2,(s.motionStateMin.y+s.motionStateMax.y)/2},"Preview state navigation");h.Key(ImGuiKey_Home);h.Key(ImGuiKey_Enter);hold(30);}
+        else if(demo=="icons"||demo=="icon-artwork") {click("icon-label-button");click("icon-button");}
+        else if(demo=="workflow") {click("workflow-chip");click("workflow-steps");}
+        else {click("toggle");click("checkbox");}
+    }
+    h.motion=nullptr;recording.Finish();
 }
 void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &demo,bool legacyReadme) {
     const auto dir=out/(legacyReadme ? "readme-frames" : demo);
@@ -1979,6 +2091,7 @@ int main(int argc, char **argv) {
     bool verifyTimelineUI=false;
     bool listMonitors=false;
     std::string iconSearch, captureDemo;
+    bool captureMotion=false;
     std::filesystem::path out = "out/catalog";
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
@@ -1994,7 +2107,8 @@ int main(int argc, char **argv) {
         if(a=="--capture-design-system") {captureDesign=true; capture=true; continue;}
         if(a=="--verify-comparison") {verifyComparison=true;continue;}
         if(a=="--capture-readme") {captureDemo="overview";captureReadme=true;continue;}
-        if(a=="--capture-demo" && i+1<argc) {
+        if((a=="--capture-demo"||a=="--capture-motion") && i+1<argc) {
+            captureMotion=a=="--capture-motion";
             captureDemo=argv[++i];
             if(captureDemo!="overview" && captureDemo!="comparison" && captureDemo!="themes" &&
                captureDemo!="icons" && captureDemo!="icon-artwork" && captureDemo!="vector" && captureDemo!="workflow" &&
@@ -2301,7 +2415,8 @@ int main(int argc, char **argv) {
                 check(true,"Light/Dark, contrast, density, reduced motion, Japanese, narrow, disabled GPU captures");
                 log<<"Public ImGui IO and native GPU backbuffer; native OS/IME and external applications are not tested.\n";
             } else if(!captureDemo.empty()) {
-                CaptureDemo(h,out,captureDemo,captureReadme);
+                if(captureMotion) CaptureMotion(h,out,captureDemo);
+                else CaptureDemo(h,out,captureDemo,captureReadme);
             } else if(captureDesign) {
                 h.s.comparison.open=false;
                 for(int dark=0;dark<2;++dark) for(int contrast=0;contrast<2;++contrast) for(int density=0;density<3;++density) {

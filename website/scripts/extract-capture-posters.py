@@ -18,8 +18,12 @@ CAPTURES = (
     "gallery-icons",
 )
 POSTER_FRAMES = {
-    "v3-overview": -1,  # Last captured screen shows the Components: Basic page.
-    "v3-timeline": 2,  # Captured fade tooltip makes the edit action visible.
+    "v3-overview": 65,  # Enter the live 3.2 workspace from Start.
+    "v3-workspace": 85,  # Inspector, shared values and live preview.
+    "v3-comparison": 80,
+    "v3-icons": 65,
+    "v3-node-editor": 65,  # Actual socket drag and connection.
+    "v3-timeline": 65,
 }
 
 

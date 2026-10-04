@@ -244,6 +244,7 @@ void Icons(GalleryState &s) {
             PushID(static_cast<int>(item.id));
             if (IconLabelButton("pick", s.icons, item.id, item.name, options))
                 s.selectedIcon = static_cast<int>(item.id);
+            Record(s,(std::string("icon-pick-")+std::string(item.name)).c_str());
             PopID();
         }
         EndTable();
@@ -732,6 +733,7 @@ void Show(GalleryState &s) {
         Separator();
         SetNextItemWidth(std::min(260.f,GetContentRegionAvail().x*.45f));
         if(Combo("##section",&pageIndex,pages,static_cast<int>(std::size(pages)))) s.page=pageIds[pageIndex];
+        Record(s,"gallery-section");
         SameLine(); if(Button("Appearance")) OpenPopup("appearance");
         Record(s,"appearance");
         if(GetContentRegionAvail().x>280.f) SameLine(); if(Button("Compare")) {s.page=21;s.comparison.open=true;}
@@ -743,8 +745,9 @@ void Show(GalleryState &s) {
         if(nodeLauncher.error) TextWrapped("Cannot open Node Editor (Windows error %lu). Place imkit_node_editor_gallery.exe beside this Gallery.", nodeLauncher.error);
         if(s.floatingComparison) {SameLine();Checkbox("Dear ImGui Demo",&s.showDearImGuiDemo);}
         if(BeginPopup("appearance")) {
-            if(BeginCombo("Theme",ThemePresets()[s.presetIndex].displayName.data())) {
-                Record(s,"appearance-theme-picker");
+            const bool themePickerOpen=BeginCombo("Theme",ThemePresets()[s.presetIndex].displayName.data());
+            Record(s,"appearance-theme-picker");
+            if(themePickerOpen) {
                 for(int i=0;i<static_cast<int>(ThemePresets().size());++i) {
                     if(Selectable(ThemePresets()[i].displayName.data(),s.presetIndex==i)) {
                         s.presetIndex=i;

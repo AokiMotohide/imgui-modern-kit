@@ -37,42 +37,25 @@ A normal launch opens a focused Gallery. Wide windows show category navigation; 
 
 ## Verification and reproducible captures
 
-The Gallery runner uses public Dear ImGui IO and captures its OpenGL backbuffer. These routes produce deterministic documentation frames; they are not native OS, IME, screen-reader, or physical-DPI automation.
+The revised media records continuous 1920×1080 native OpenGL backbuffers at 60 Hz. Public Dear ImGui IO supplies the pointer movement, button holds, drag, wheel and character input. A large cursor and click ring are drawn by the capture host at the real input coordinates. Assertions check shared comparison values, workspace requests and node link/move results. This does not verify native OS input, IME, screen readers or physical DPI.
 
-    $gallery = './build/windows-debug/catalog/Debug/imkit_gallery.exe'
-    & $gallery --verify-comparison --output out/comparison
-    & $gallery --verify-toasts --width 1440 --height 810 --output out/readme/toasts
-    $routes = @('overview', 'comparison', 'components', 'icons', 'icon-artwork', 'themes', 'workflow', 'preview-contract', 'timeline', 'workspace', 'toasts')
-    foreach ($route in $routes) {
-        & $gallery --capture-demo $route --width 1440 --height 810 --output out/readme
-    }
-    $node = './build/windows-debug/catalog/Debug/imkit_node_editor_gallery.exe'
-    & $node --capture-gif out/readme/node-editor --width 1440 --height 810
+```powershell
+& './tools/Invoke-SharedBuild.ps1' -Target imkit_gallery,imkit_node_editor_gallery
+python tools/capture_v32_media.py
+python tools/render_v32_film.py --review-only
+python tools/render_v32_film.py
+python tools/check_v32_media.py
+```
 
-Each Gallery route writes native backbuffer frames to a directory under out/readme. Run the icon-artwork route from the repository root so it can read the checked-in PNG masters. The Gallery decodes those files with Windows Imaging Component, renders the artwork as tiles, and captures the OpenGL backbuffer. Capture at 1440×810, then downsample to 960×540 for the README. The Node Editor mode writes 56 frames at the requested capture size. Encode the eleven README animations with the expected frame count for each route:
+Run from the repository root. FFmpeg must be on PATH; Python needs Pillow and NumPy for the film. These are development tools, not ImKit runtime dependencies. Lossless videos, input events and checks remain in `out/v3.2-native`; film audio and review frames remain in `out/promo`. Native frames stream into FFmpeg, rather than accumulating a PNG sequence.
 
-    $routes = @(
-        @{name='overview'; file='v3-overview.gif'; frames=60; colors=128; dither='floyd-steinberg'},
-        @{name='comparison'; file='v3-comparison.gif'; frames=56; colors=128; dither='floyd-steinberg'},
-        @{name='components'; file='v3-components.gif'; frames=52; colors=128; dither='floyd-steinberg'},
-        @{name='icons'; file='v3-icons.gif'; frames=56; colors=128; dither='floyd-steinberg'},
-        @{name='icon-artwork'; file='v3-icon-artwork.gif'; frames=60; colors=128; dither='floyd-steinberg'},
-        @{name='themes'; file='v3-theme-comparison.gif'; frames=56; colors=128; dither='floyd-steinberg'},
-        @{name='workflow'; file='v3-workflow-progress.gif'; frames=64; colors=96; dither='floyd-steinberg'},
-        @{name='preview-contract'; file='v3-preview-contract.gif'; frames=50; colors=128; dither='floyd-steinberg'},
-        @{name='timeline'; file='v3-timeline.gif'; frames=64; colors=128; dither='floyd-steinberg'},
-        @{name='node-editor'; file='v3-node-editor.gif'; frames=56; colors=96; dither='none'}
-    )
-    foreach ($route in $routes) {
-        python tools/build_readme_gif.py "out/readme/$($route.name)" "docs/images/$($route.file)" --expected-frames $route.frames --width 960 --height 540 --fps 8 --colors $route.colors --dither $route.dither
-    }
-    python tools/build_readme_gif.py out/readme/toasts docs/images/v3-toasts.gif --pattern 'toasts-[0-5]-*.png' --expected-frames 12 --width 960 --height 540 --fps 6 --colors 96 --dither none --disposal 2
+The twelve finished GIFs are 960×540, normally 20 fps, six to eight seconds and no more than 2 MiB each. Longer takes are accelerated continuously; the Node Editor GIF focuses on socket connection and header movement, while the film also shows pan and zoom. Encoding can lower the palette or frame rate to meet the size limit. Only finished media is committed.
 
-The encoder requires a consistent 16:9 source, resizes it to 960×540, and rejects any GIF over 2 MiB. The Node Editor and Toasts routes use a 96-color palette without dithering; the others use the values in the table. Keep all eleven README animations within a combined 9 MiB budget. Pillow is only needed to regenerate documentation images; it is not linked or installed by ImKit.
+The English 60-second film combines these operations with original kinetic typography and a synthesized 128 BPM electro-house score. The scripts reproduce the composition and score without stock footage, sampled music or narration. Review the actual playback and operation results as well as media metadata; a file-format check is not a visual-quality review.
 
 ## Provenance and distribution boundary
 
-Checked-in `docs/images/v3-*.gif` files are generated from the Gallery or Node Editor companion. The release showcase MP4 is encoded from the same native frames. No stock image, third-party product screen, icon, font, UI implementation or media asset is included. Dear ImGui, GLFW and optional fonts retain their licenses and notices in [THIRD_PARTY_NOTICES.md](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/THIRD_PARTY_NOTICES.md). See [validation](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/validation.md) for exact evidence and exclusions, and [public window frame](../../features/window-frame/) for Frame Lab's platform-adapter boundary.
+Checked-in `docs/images/v3-*.gif` files are generated from the Gallery or Node Editor companion. The release showcase MP4 uses the same continuous native videos. No stock image, third-party product screen, icon, font, UI implementation or media asset is included. Dear ImGui, GLFW and optional fonts retain their licenses and notices in [THIRD_PARTY_NOTICES.md](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/THIRD_PARTY_NOTICES.md). See [validation](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/validation.md) for exact evidence and exclusions, and [public window frame](../../features/window-frame/) for Frame Lab's platform-adapter boundary.
 
 ## ImKit 3.2 layout
 

@@ -2,6 +2,22 @@
 
 [日本語](検証記録.md) · [English](validation.md)
 
+## Media revision 2 / 映像改訂2（2026-10-05）
+
+### Native operation footage / native操作素材
+
+Windows x64 Debug Gallery and Node Editor compiled in the canonical shared output. Twelve continuous 1920×1080/60 Hz public-IO takes contain 7,857 recorded frames and 38 successful state checks. Checks cover shared comparison edits, workspace tabs and hierarchy, axis dragging, host-applied actions, typed icon searches/selections, four theme selections, Loading→Success, timeline scrubbing/clip movement/play/pause, and an actual socket connection and node-header drag. Middle-button pan and wheel zoom are recorded. The independent comparison regression also passed keyboard/disabled/style-restoration and host-workbench checks. Raw videos and event logs remain outside Git.
+
+### Film and site review / 映像とサイトのレビュー
+
+The English film has 25 cuts, kinetic type, focused native screens, masked transitions, an icon expansion and an original 128 BPM score. Review fixes include cropped headings, caption overlap, crowded icon tiles, offscreen theme targets, an invalid timeline move, a scrolled notification control, and clipped/overlapping nodes after navigation. Corrected compositions were rechecked in 24 timecoded stills and complete normal-speed browser playback; a video-only copy also completed 60 seconds for silent review. Source exhaustion raises an error instead of repeating the final frame.
+
+Final measurements: 60.000 seconds, 1920×1080, 60 fps/3,600 frames, H.264/AAC stereo 48 kHz, 8,557,071 bytes, −16.06 LUFS, −1.84 dBTP. Two-pass normalization leaves AAC reconstruction headroom. All twelve native GIFs are 960×540, 20 fps, 6–8 seconds, each below 2 MiB; the largest is 1,325,419 bytes. Pages generation, Astro type checking, static build and 61-page/4,182-link inspection passed. Browser checks cover Japanese/English, light/dark, desktop and approximately 390 CSS-pixel width, video playback and GIF play/stop. README and Pages use the revised poster; the Pages video URL includes the film content hash.
+
+### Evidence and limits / 証拠と未確認事項
+
+The v3.2.0 library tag, source archive, five SDK archives and original release CI identity remain unchanged. Revised media has its own production commit, timestamp, hashes and evidence in the release manifest. These measurements and visual reviews do not establish perceptual listening quality, commercial buyer acceptance, physical OS/IME input or hardware acceptance. The new footage is a Windows OpenGL development capture; it is not a claim of native operation acceptance on every packaged platform.
+
 ## ImKit 3.2 release preparation / 3.2公開準備（2026-10-04）
 
 ### Gallery and API

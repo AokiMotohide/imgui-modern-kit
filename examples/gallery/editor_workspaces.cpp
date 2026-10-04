@@ -1667,9 +1667,11 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         ImGui::SameLine();
         const char *aspects[]={"4:3","16:9","1:1","9:16"};
         ImGui::SetNextItemWidth(90);ImGui::Combo("Aspect",&s.monitorContractAspect,aspects,4);
+        s.motionAspectMin=ImGui::GetItemRectMin();s.motionAspectMax=ImGui::GetItemRectMax();
         ImGui::SameLine();
         const char *statuses[]={"Ready","Loading","Empty","Offline","Error"};
         ImGui::SetNextItemWidth(110);ImGui::Combo("State",&s.monitorContractStatus,statuses,5);
+        s.motionStateMin=ImGui::GetItemRectMin();s.motionStateMax=ImGui::GetItemRectMax();
         ImGui::TextDisabled("Stable source ID: %llu",static_cast<unsigned long long>(sourceIds[s.monitorContractSource]));
         const float aspectValues[]={4.f/3,16.f/9,1.f,9.f/16};
         const char *placementNames[]={"Fit","Fill","Stretch"};
@@ -1753,6 +1755,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     }
     }
     TransportLanguage(s.timeline.time,s.japanese);
+    s.motionPlay=ImGui::GetCursorScreenPos();
     editor::Transport(s.timeline.time, std::span(s.bindings).first(s.bindingCount), s.icons);
     ImGui::EndChild();
     if(inspectorVisible) {
