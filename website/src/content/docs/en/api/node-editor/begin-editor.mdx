@@ -1,0 +1,76 @@
+---
+title: BeginEditor
+description: Begin one Node Editor surface and return its frame-scoped drawing handle.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Declaration
+
+Declared in the `imkit::node_editor` namespace in `<imkit/node_editor.h>`.
+
+```cpp
+namespace imkit::node_editor {
+EditorFrame BeginEditor(const char *id, GraphView graph, EditorState &state,
+                        RequestBuffer &requests, const NodeStyle &style,
+                        EditorOptions options = {});
+}
+```
+
+This declaration matches the public header and the `imkit::node_editor::BeginEditor` entry in `docs/node-editor-api.json`.
+
+## Arguments
+
+| Argument | Type | Meaning and handling |
+|---|---|---|
+| `id` | `const char*` | Identifies this editor surface within the current ImGui ID scope. Read during the call. |
+| `graph` | `GraphView` | Value view of graph ID/revision, node/pin/link views, and callbacks. Spans and callback data are borrowed. |
+| `state` | `EditorState&` | Host-owned selection, camera, and interaction state. Reuse it for this editor and context across frames. |
+| `requests` | `RequestBuffer&` | Host-owned bounded buffer for UI edits. The host reads and validates it before clearing it. |
+| `style` | `const NodeStyle&` | Style for this frame. It is copied into the returned `EditorFrame`. |
+| `options` | `EditorOptions` | Frame settings such as size, grid, snapping, minimap, and read-only mode. Omitted options use default member values. |
+
+## Return value
+
+Returns an `EditorFrame` by value. Check `visible` before drawing and pass the handle to `DrawLinks`, `DrawNodes`, `NodePalette`, and related calls. `graph`, `style`, and `options` are stored in the frame; `state` and `requests` are non-owning pointers back to the caller. Finish using the frame in the same context and frame. Do not retain it or move it between contexts.
+
+## Minimal call
+
+```cpp
+#include <imkit/node_editor.h>
+
+namespace ne = imkit::node_editor;
+
+void DrawGraph(ne::GraphView graph, ne::EditorState& state,
+               ne::RequestBuffer& requests, const ne::NodeStyle& style) {
+    auto frame = ne::BeginEditor("material-graph", graph, state, requests, style);
+    ne::DrawLinks(frame); // reserve link drawing once; EndEditor draws after rows
+    if (frame.visible) {
+        ne::DrawNodes(frame);
+    }
+    ne::EndEditor(frame);
+}
+```
+
+**Example type:** this function excerpt is called from an existing host. The caller provides `graph`, `state`, `requests`, and `style`, and calls it inside the host’s active Dear ImGui frame.
+
+<Aside type="caution" title="Paired calls">
+`EndEditor(frame)` is required even when `frame.visible == false`. If you call `BeginNode(frame, id)` directly, call `EndNode(frame)` only when `BeginNode` returns true.
+</Aside>
+
+## Ownership and lifetime
+
+`BeginEditor` does not initialize a Dear ImGui context or own the graph model. Spans, strings, callbacks, `user` data, and style storage referenced by `GraphView` are borrowed. Keep them valid through `EndEditor`; if related calls such as `NodeInspector` or `DrawDetachedPreviews` use the same view, keep them valid until those calls finish as well. Do not reallocate referenced storage from a callback.
+
+The host owns `EditorState` and passes it back to this editor on the same live context across frames. `RequestBuffer` writes only within its supplied span capacity. Never apply a partial operation: the host checks graph ID/revision and accepts or rejects each operation as a whole.
+
+## API status
+
+The current v3.1.0 contract labels the Node Editor API as under development. Compiling `BeginEditor` does not establish host-model validation, undo, native OS/IME, DPI, or installed-SDK acceptance; those belong to the host or separate verification scope.
+
+## Related pages
+
+- [Using the Node Editor](../../../features/node-editor/)
+- [Getting started](../../../getting-started/)
+- [Public header](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/node_editor.h)
+- [Node Editor API inventory](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/node-editor-api.json)

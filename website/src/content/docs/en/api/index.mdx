@@ -1,0 +1,19 @@
+---
+title: API reference
+description: API listings with their sources and scope, contract guides, and links to public headers.
+---
+
+## Find an API
+
+This section maps declarations in the public ImKit headers and explains contracts that matter when calling them. Use each public header as the source of truth for exact signatures and conditions.
+
+- [Node Editor API](./node-editor/) — includes the `BeginEditor` call example, return value, lifetimes, and paired calls.
+- [Dear ImGui native API](./native/) — declarations marked `included: true` from `<imkit/native.h>`; host lifecycle and debug APIs are omitted.
+- [Editor Suite API contracts](./editor-suite/) — contract references for selection, canvas, timeline, video, and CG surfaces.
+- [Design-system header map](./design-system/) — header/type metadata, not a complete function-signature inventory.
+- [WindowFrame API map](./window-frame/) — type and function names plus optional platform targets; consult the header for signatures.
+- [Component inventory](./widgets/) — route into the public component inventory.
+
+## Start with the integration
+
+The [Getting started guide](../getting-started/) covers CMake integration and supported configurations. The [feature catalog](../features/) connects use cases to real screens and small examples.

@@ -1,0 +1,64 @@
+---
+title: Node Editor
+description: Render a borrowed graph view and return bounded edit requests to the host.
+---
+
+import CapturePlayer from '../../../../components/CapturePlayer.astro';
+import capture from '../../../../../../docs/images/v3-node-editor.gif';
+import poster from '../../../../assets/captures/v3-node-editor-poster.png';
+
+## The screen
+
+<CapturePlayer source={capture} poster={poster} alt="Native ImKit v3.1 Node Editor Gallery screen with nodes, sockets, links, previews, and a minimap." caption="v3.1 Node Editor companion · native 960 × 540 backbuffer capture" playLabel="Play" stopLabel="Stop" playingLabel="Playing" pausedLabel="Still frame" reducedMotionLabel="Reduced motion is enabled; playback is manual" />
+
+This backbuffer capture comes from the native Node Editor companion. It opens on a still native frame and plays the original GIF on request. The Node Editor is not a graph evaluation or persistence engine.
+
+## When it fits
+
+Use it when your application already owns a graph model and needs a zoomable canvas with sockets, links, selection, and editing UI. The separate `imkit::node_editor` target draws a graph snapshot and returns typed edit requests to the host. It can sit beside Theme, ordinary ImGui widgets, and application-specific panels.
+
+The module does not replace a graph data format, undo system, evaluation engine, or file format.
+
+## Minimal draw call
+
+```cpp
+#include <imkit/node_editor.h>
+
+namespace ne = imkit::node_editor;
+
+// Compile-checked function excerpt. Call from the host's active ImGui frame.
+void DrawNodeSurface(ne::GraphView graph, ne::EditorState& state,
+                     ne::RequestBuffer& requests, const ne::NodeStyle& style) {
+    auto frame = ne::BeginEditor("material-graph", graph, state, requests, style);
+    ne::DrawLinks(frame); // schedule links once; EndEditor draws them after node rows
+    if (frame.visible) {
+        ne::DrawNodes(frame);
+    }
+    ne::EndEditor(frame); // required even when frame.visible is false
+}
+```
+
+**Example type:** this function excerpt is called from an existing host. The caller creates a `GraphView` from its host model, retains `EditorState` across frames, provides a finite `RequestBuffer`, and derives the style with `MakeNodeStyle(theme)`. Call it between the host’s `NewFrame` and `Render`.
+
+The minimum integration order is: build the view, call `BeginEditor`, schedule links once, draw nodes, call `EndEditor`, then consume requests. Use the same `EditorFrame` if you draw socket rows or node bodies yourself.
+
+## Connect it to the host model
+
+`GraphView` borrows its nodes, pins, and links through `std::span`. Strings in `NodeView`, style pointers, callbacks, and `user` data are borrowed as well. Keep that storage stable until related draw calls finish, including inspectors and detached previews.
+
+For each operation in `RequestBuffer::Requests()`, the host checks the graph ID and revision, validates all requests in the operation, then applies the full operation or rejects it without changes. Advance the revision after acceptance. Undo, copy/paste data, persistence, evaluation, workers, the context, and backend remain host responsibilities.
+
+`canConnect` can preflight type conversions and application-specific rules, but final host validation is still required. Without a callback, distinct non-zero types do not match and zero means unspecified. The host chooses whether cycles are allowed.
+
+## Keep these rules
+
+- Node, Pin, Link, and Graph IDs are distinct 64-bit types. Reserve zero and keep IDs unique within a graph.
+- Always call `EndEditor`, even when the returned frame is not visible. Call `EndNode` only after `BeginNode` returns true.
+- Keep one `EditorState` per editor and use it on the same Dear ImGui context. Do not retain the frame object or move it between contexts.
+- Do not partially persist an operation when capacity or revision checks fail. Treat Begin/Update of a continuous gesture as a draft and apply only Commit.
+
+## Related API
+
+- [BeginEditor — signature, arguments, result, and lifetime](../../api/node-editor/begin-editor/)
+- [`node_editor.h` header](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/node_editor.h)
+- [Node Editor reference with the host-owned edit contract](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/node-editor.md)

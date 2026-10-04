@@ -1,0 +1,76 @@
+---
+title: BeginEditor
+description: Begin one Node Editor surface and return its frame-scoped drawing handle.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 宣言
+
+`<imkit/node_editor.h>`で宣言されています。
+
+```cpp
+namespace imkit::node_editor {
+EditorFrame BeginEditor(const char *id, GraphView graph, EditorState &state,
+                        RequestBuffer &requests, const NodeStyle &style,
+                        EditorOptions options = {});
+}
+```
+
+これは公開ヘッダーと`docs/node-editor-api.json`の`imkit::node_editor::BeginEditor`宣言です。
+
+## 引数
+
+| 引数 | 型 | 意味と扱い |
+|---|---|---|
+| `id` | `const char*` | 同じImGui ID範囲でeditor領域を識別する文字列です。呼び出し時に読み取られます。 |
+| `graph` | `GraphView` | グラフIDとrevision、node・pin・linkの参照データ、callbackを含む値です。spanとcallbackの参照先は借用です。 |
+| `state` | `EditorState&` | 選択、表示位置、操作状態などをフレーム間で保つアプリ所有の状態です。同じeditorとContextで再利用します。 |
+| `requests` | `RequestBuffer&` | UI操作を書き込む有限容量のアプリ所有bufferです。アプリ側で読み取り、検証した後にclearします。 |
+| `style` | `const NodeStyle&` | このフレームへ適用するnode-editor styleです。`EditorFrame`へ値コピーされます。 |
+| `options` | `EditorOptions` | size、grid、snap、minimap、read-only等のフレーム設定です。省略時はdefault member valueを使います。 |
+
+## 戻り値
+
+`EditorFrame`を値で返します。`visible`で領域を描画できるか確認し、この値を`DrawLinks`、`DrawNodes`、`NodePalette`等へ渡します。`graph`、`style`、`options`も値に含まれ、`state`と`requests`は呼び出し元を指す非所有ポインターです。戻り値は同じContextの同じフレーム内で使い終え、保存したり別Contextへ移したりしません。
+
+## 最小の呼出し
+
+```cpp
+#include <imkit/node_editor.h>
+
+namespace ne = imkit::node_editor;
+
+void DrawGraph(ne::GraphView graph, ne::EditorState& state,
+               ne::RequestBuffer& requests, const ne::NodeStyle& style) {
+    auto frame = ne::BeginEditor("material-graph", graph, state, requests, style);
+    ne::DrawLinks(frame); // reserve link drawing once; EndEditor draws after rows
+    if (frame.visible) {
+        ne::DrawNodes(frame);
+    }
+    ne::EndEditor(frame);
+}
+```
+
+**例の種別:** 既存アプリから呼び出す関数です。`graph`、`state`、`requests`、`style`はアプリ側で用意し、Dear ImGuiのフレーム内から呼びます。
+
+<Aside type="caution" title="paired calls">
+`EndEditor(frame)`は`frame.visible == false`でも必須です。`BeginNode(frame, id)`を直接使う場合は、その戻り値がtrueのときだけ`EndNode(frame)`を呼んでください。
+</Aside>
+
+## 所有権と寿命
+
+`BeginEditor`はDear ImGui Contextや渡されたデータモデルを初期化しません。`GraphView`のspan、文字列、callbackと`user`データ、および参照するstyle領域は借用です。少なくとも`EndEditor`まで有効にし、`NodeInspector`や`DrawDetachedPreviews`が同じデータを使う場合は、それらの描画が終わるまで参照先を保ってください。callbackの実行中に参照先の配列などを再確保しないでください。
+
+`EditorState`はアプリ側が所有し、同じContext上のeditorへフレームをまたいで渡します。`RequestBuffer`は渡されたspanの容量まで操作を記録します。容量不足やrevision不一致で操作の一部だけが記録された場合は適用せず、グラフIDとrevisionを照合して全体を受理または拒否してください。
+
+## API範囲
+
+Node Editorはv3.1.0の開発中APIです。操作要求の検証と適用はアプリ側で行います。OS入力、IME、DPIや配布SDKの受け入れ確認はこの関数の契約外です。
+
+## 関連ページ
+
+- [Node Editorの使い方](../../../features/node-editor/)
+- [導入ガイド](../../../getting-started/)
+- [公開header](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/node_editor.h)
+- [Node Editor API inventory](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/node-editor-api.json)

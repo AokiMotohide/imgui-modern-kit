@@ -1,0 +1,65 @@
+---
+title: ImKit
+description: Add host-owned C++20 UI modules to creative tools built with Dear ImGui.
+template: splash
+hero:
+  title: "Editing tools built<br />for your Dear ImGui app."
+  tagline: "C++20 library for themes, Node Editor, Timeline, and workflow controls. Keep your app’s context and data model while adding the surfaces you need."
+  image:
+    file: ../../../assets/captures/v3-node-editor-poster.png
+    alt: "Native capture of the ImKit v3.1 Node Editor Gallery with nodes, links, and previews."
+  actions:
+    - text: "Get started"
+      link: ./getting-started/
+      icon: right-arrow
+      variant: primary
+    - text: "Explore Node Editor"
+      link: ./features/
+      icon: open-book
+      variant: secondary
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+import CapturePlayer from '../../../components/CapturePlayer.astro';
+import nodeCapture from '../../../../../docs/images/v3-node-editor.gif';
+import nodePoster from '../../../assets/captures/v3-node-editor-poster.png';
+import workflowCapture from '../../../../../docs/images/v3-workflow-progress.gif';
+import workflowPoster from '../../../assets/captures/v3-workflow-progress-poster.png';
+import timelineCapture from '../../../../../docs/images/v3-timeline.gif';
+import timelinePoster from '../../../assets/captures/v3-timeline-poster.png';
+
+<div class="imkit-home">
+
+## Add it to your application
+
+ImKit does not create a context, backend, renderer, or font atlas. Call the modules you need from your Dear ImGui application. Controls work with host values; editor surfaces borrow views and return bounded requests.
+
+<div class="home-points">
+  <div><span class="point-index">01</span><strong>Choose the modules</strong><p>Select Theme, workflow, Editor Suite, or Node Editor as separate targets.</p></div>
+  <div><span class="point-index">02</span><strong>Keep data ownership</strong><p>Controls work with host values. Editor surfaces borrow views and return bounded requests; the model stays with the host.</p></div>
+  <div><span class="point-index">03</span><strong>Work with native ImGui</strong><p>Combine public widgets with ordinary ImGui input in the frame your host begins.</p></div>
+</div>
+
+## Native Gallery captures
+
+These screens were recorded from the native backbuffers of the ImKit v3.1 Gallery and Node Editor companion. Each starts on a still native frame and loads the original capture only when you choose to play it.
+
+<div class="capture-showcase">
+  <CapturePlayer source={nodeCapture} poster={nodePoster} alt="Native ImKit Node Editor capture connecting nodes and pins on a graph owned by the host." caption="Node Editor · dynamic sockets, previews, and minimap" playLabel="Play" stopLabel="Stop" playingLabel="Playing" pausedLabel="Still frame" reducedMotionLabel="Reduced motion is enabled; playback is manual" />
+  <CapturePlayer source={workflowCapture} poster={workflowPoster} alt="Native capture of workflow progress components in the ImKit Gallery." caption="Workflow · progress and status controls" playLabel="Play" stopLabel="Stop" playingLabel="Playing" pausedLabel="Still frame" reducedMotionLabel="Reduced motion is enabled; playback is manual" />
+  <CapturePlayer source={timelineCapture} poster={timelinePoster} alt="Native capture of the Timeline editor in the ImKit Gallery." caption="Timeline · editing surface and host tools" playLabel="Play" stopLabel="Stop" playingLabel="Playing" pausedLabel="Still frame" reducedMotionLabel="Reduced motion is enabled; playback is manual" />
+</div>
+
+## Choose a starting point
+
+<CardGrid>
+  <LinkCard title="Browse the feature catalog" description="Find controls, themes, workflow, and editing surfaces by use and screen." href="./features/" />
+  <LinkCard title="Integrate the Node Editor" description="Understand graph views, edit requests, sockets, and previews." href="./features/node-editor/" />
+  <LinkCard title="Draw your first frame" description="Name the Dear ImGui target, then call ImKit and apply a theme." href="./getting-started/" />
+  <LinkCard title="BeginEditor API" description="Exact declaration, arguments, return value, lifetime, and draw order." href="./api/node-editor/begin-editor/" />
+  <LinkCard title="GitHub repository" description="Find the source, releases, and native Gallery downloads." href="https://github.com/AokiMotohide/imgui-modern-kit" />
+</CardGrid>
+
+<p class="home-footnote">Baseline: C++20 and a pinned Dear ImGui docking revision. See <a href="./getting-started/">Getting started</a> for package platforms and ABI requirements.</p>
+
+</div>

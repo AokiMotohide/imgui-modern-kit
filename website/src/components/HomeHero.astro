@@ -1,0 +1,33 @@
+---
+import poster from '../assets/captures/v3-node-editor-poster.png';
+import { LinkButton } from '@astrojs/starlight/components';
+
+const { data } = Astro.locals.starlightRoute.entry;
+const { title = data.title, tagline, image, actions = [] } = data.hero ?? {};
+---
+
+<div class="hero imkit-hero">
+	<img
+		class="imkit-hero-image"
+		src={poster.src}
+		width={poster.width}
+		height={poster.height}
+		alt={image?.alt ?? 'Native capture of the ImKit Node Editor Gallery.'}
+		loading="eager"
+		decoding="async"
+		fetchpriority="high"
+	/>
+	<div class="imkit-hero-stack">
+		<div class="imkit-hero-copy">
+			<h1 id="_top" data-page-title set:html={title} />
+			{tagline && <div class="tagline" set:html={tagline} />}
+		</div>
+		{actions.length > 0 && (
+			<div class="imkit-hero-actions">
+				{actions.map(({ icon, link: href, text, variant }) => (
+					<LinkButton {href} {variant} icon={icon?.name}>{text}</LinkButton>
+				))}
+			</div>
+		)}
+	</div>
+</div>

@@ -1,0 +1,63 @@
+---
+title: Node Editor
+description: Render a borrowed graph view and return bounded edit requests to the host.
+---
+
+import CapturePlayer from '../../../components/CapturePlayer.astro';
+import capture from '../../../../../docs/images/v3-node-editor.gif';
+import poster from '../../../assets/captures/v3-node-editor-poster.png';
+
+## 画面
+
+<CapturePlayer source={capture} poster={poster} alt="ノードの接続、プレビュー、ミニマップを備えたNode Editor画面。" caption="Node Editor — ノードの接続、プレビュー、ミニマップ" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
+
+同梱のNode Editor Galleryにある画面です。Node Editorはグラフを描画して編集操作を受け付ける部品で、データの評価や保存はアプリ側で行います。
+
+## 用途
+
+アプリ側にグラフのデータがあり、その上へズーム可能なキャンバス、入出力端子、接続線、選択や編集のUIを加える場合に使います。`imkit::node_editor` はグラフの参照データを描画し、アプリ側へ型付きの編集要求を返します。テーマやDear ImGuiの入力部品、アプリ固有のパネルと組み合わせられます。
+
+シンプルな入力欄だけで足りる場合は、通常のDear ImGui部品を使えます。ImKitは独自のグラフ形式、取り消し機能、評価処理、ファイル形式を提供しません。
+
+## 最小描画例
+
+```cpp
+#include <imkit/node_editor.h>
+
+namespace ne = imkit::node_editor;
+
+// 既存アプリのImGuiフレームから呼び出す関数例。
+void DrawNodeSurface(ne::GraphView graph, ne::EditorState& state,
+                     ne::RequestBuffer& requests, const ne::NodeStyle& style) {
+    auto frame = ne::BeginEditor("material-graph", graph, state, requests, style);
+    ne::DrawLinks(frame); // 接続線の描画を一度予約し、node rowの後に描画します。
+    if (frame.visible) {
+        ne::DrawNodes(frame);
+    }
+    ne::EndEditor(frame); // frame.visibleがfalseでも必ず呼びます。
+}
+```
+
+**例の種別:** 既存アプリから呼び出す関数です。呼び出し元でグラフから`GraphView`を作り、フレームをまたぐ`EditorState`、容量を決めておく`RequestBuffer`、`MakeNodeStyle(theme)`で作るstyleを用意します。Dear ImGuiの`NewFrame`から`Render`までの間に呼んでください。
+
+呼び出し順は、参照データの用意、`BeginEditor`、接続線の描画予約、nodeの描画、`EndEditor`、操作要求の読み取りです。接続線やnode rowを独自に描く場合も同じ`EditorFrame`を使います。
+
+## ホストモデルへ統合する
+
+`GraphView`はnode／pin／linkを`std::span`経由で参照します。`NodeView`の文字列、styleへのポインター、callbackと`user`データもアプリ側が所有します。配列や文字列を再確保せず、Inspectorや別表示など関連する描画が終わるまで参照先を保ってください。
+
+`RequestBuffer::Requests()`から読み取った操作は、アプリ側でグラフIDとrevisionを照合し、すべて検証してからまとめて適用するか、変更せず拒否します。受理後にrevisionを進めます。取り消し、コピー＆ペースト、保存、評価処理、worker、Contextとbackendはアプリ側の責務です。
+
+`canConnect`で型変換や製品固有の制約を事前に確認できますが、適用直前の検証も必要です。callbackがない場合、異なる0以外の型は接続できず、0は型未指定を表します。循環を許可するかもアプリ側で決めます。
+
+## 注意点
+
+- node／pin／link／graphのIDは種類ごとに異なる64bit値です。0は予約値として、同じグラフ内で一意にします。
+- 非表示の場合も`EndEditor`が必要です。`BeginNode`がtrueを返した場合だけ`EndNode`を呼びます。`EditorState`はeditorごとに同じDear ImGui Contextで保持し、`EditorFrame`は保存しません。
+- 容量不足やrevision不一致の操作を一部だけ適用しないでください。連続操作中のBegin／Updateは仮状態として扱い、Commit時にデータへ反映します。
+
+## 関連API
+
+- [BeginEditor — signature、引数、戻り値と寿命](../../api/node-editor/begin-editor/)
+- [`node_editor.h` header](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/node_editor.h)
+- [ホスト所有の編集契約を含むNode Editor reference](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/node-editor.ja.md)

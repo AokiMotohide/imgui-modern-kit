@@ -1,0 +1,49 @@
+---
+title: できること
+description: 実画面と用途からImKitの部品を選び、最小例とAPIへ進みます。
+---
+
+import overview from '../../../assets/captures/v3-overview-poster.png';
+import themes from '../../../assets/captures/v3-theme-comparison-poster.png';
+import workflow from '../../../assets/captures/v3-workflow-progress-poster.png';
+import nodeEditor from '../../../assets/captures/v3-node-editor-poster.png';
+import timeline from '../../../assets/captures/v3-timeline-poster.png';
+import icons from '../../../assets/captures/gallery-icons-poster.png';
+
+## 用途から選ぶ
+
+画面を見て目的に近い機能を選びます。各ページでは利用場面、最小の描画例、アプリへ組み込む方法、守る契約を確認できます。
+
+<div class="feature-grid">
+  <article class="feature-card">
+    <a class="feature-card-image" href="./components/"><img src={overview.src} width={overview.width} height={overview.height} alt="ImKit Galleryの部品一覧。設定、入力、フィードバック部品を表示。" loading="lazy" /></a>
+    <div class="feature-card-copy"><p class="eyebrow">入力 · 状態表示</p><h2><a href="./components/">UI部品とテーマ</a></h2><p>既存の設定画面へボタン、入力欄、選択、状態表示とテーマを加える。</p><p class="feature-card-links"><a href="./components/#設定画面をひとつ組み立てる">設定パネル例</a><a href="./components/">部品一覧</a><a href="../api/native/">Native API</a></p></div>
+  </article>
+  <article class="feature-card">
+    <a class="feature-card-image" href="./themes/"><img src={themes.src} width={themes.width} height={themes.height} alt="Galleryでライトとダークのテーマを比較。" loading="lazy" /></a>
+    <div class="feature-card-copy"><p class="eyebrow">テーマ · 外観</p><h2><a href="./themes/">テーマとデザイン</a></h2><p>プリセットから始め、意味のある色と寸法をアプリに合わせて調整する。</p><p class="feature-card-links"><a href="./themes/">テーマを選ぶ</a><a href="../api/design-system/">Header一覧</a></p></div>
+  </article>
+  <article class="feature-card">
+    <a class="feature-card-image" href="./workflow/"><img src={workflow.src} width={workflow.width} height={workflow.height} alt="Workflow部品で進捗と処理状態を表示。" loading="lazy" /></a>
+    <div class="feature-card-copy"><p class="eyebrow">手順 · アプリ枠</p><h2><a href="./workflow/">Workflowとアプリ枠</a></h2><p>進捗、空状態、通知、ナビゲーションとツールバーを組み合わせる。</p><p class="feature-card-links"><a href="./workflow/">Workflow部品</a><a href="./shell/">アプリ枠</a></p></div>
+  </article>
+  <article class="feature-card">
+    <a class="feature-card-image" href="./node-editor/"><img src={nodeEditor.src} width={nodeEditor.width} height={nodeEditor.height} alt="Node Editorでグラフ、接続端子、プレビューを表示。" loading="lazy" /></a>
+    <div class="feature-card-copy"><p class="eyebrow">GRAPH · EDIT REQUESTS</p><h2><a href="./node-editor/">Node Editor</a></h2><p>アプリ所有のグラフを描き、容量を決めた型付き操作要求を受け取る。</p><p class="feature-card-links"><a href="./node-editor/">統合ガイド</a><a href="../api/node-editor/">Node API</a></p></div>
+  </article>
+  <article class="feature-card">
+    <a class="feature-card-image" href="./timeline/"><img src={timeline.src} width={timeline.width} height={timeline.height} alt="Timelineにtrack、clipと編集操作を表示。" loading="lazy" /></a>
+    <div class="feature-card-copy"><p class="eyebrow">編集部品 · Timeline</p><h2><a href="./editor-suite/">Editor SuiteとTimeline</a></h2><p>選択、キャンバス、clipとtrackの編集操作をアプリのデータに重ねる。</p><p class="feature-card-links"><a href="./editor-suite/">Editor Suite</a><a href="../api/editor-suite/">API契約</a></p></div>
+  </article>
+  <article class="feature-card">
+    <a class="feature-card-image" href="./window-frame/"><img src={icons.src} width={icons.width} height={icons.height} alt="Galleryのicon一覧と名前付きボタン。" loading="lazy" /></a>
+    <div class="feature-card-copy"><p class="eyebrow">ウィンドウ · アイコン</p><h2><a href="./window-frame/">WindowFrameとIcons</a></h2><p>タイトル欄とよく使う操作アイコンを加え、OSウィンドウとGPU資源はアプリ側で管理する。</p><p class="feature-card-links"><a href="./window-frame/">WindowFrame</a><a href="./icons/">Icons</a><a href="../api/window-frame/">API一覧</a></p></div>
+  </article>
+</div>
+
+## すぐ試す
+
+- [導入ガイド](../getting-started/) — ソース組み込み、SDK条件、最初のフレーム
+- [設定パネルのレシピ](./components/) — 完結した部品例
+- [実例とレシピ](../guides/examples/) — 目的別のコードと構成
+- [API一覧](../api/) — 公開宣言と契約の入口

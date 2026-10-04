@@ -1,0 +1,37 @@
+---
+title: Theme and cross-cutting APIs
+description: Integrate themes, locale and accessibility data, and reusable patterns with a host application.
+---
+
+Use a theme to keep colors and metrics consistent, then pass locale and accessibility data or composed controls where needed. The public headers define the current APIs; this page is a short guide to choosing them.
+
+## Apply a theme
+
+A theme is a value held by the application. Apply it to a live ImGui context before starting the frame.
+
+```cpp
+#include <imkit/theme.h>
+
+void ApplyWorkbenchTheme(float scale) {
+    const auto theme = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
+    imkit::ApplyTheme(theme, scale); // live context, before NewFrame
+}
+```
+
+**Example type:** this function uses an existing ImGui context. The application manages the theme and font references, keeping them valid while drawing uses them. The host also owns the atlas and context lifetimes. See the [theme guide](../themes/) for presets, scale, and `ThemeScope`.
+
+## Locale and accessibility
+
+`ComponentOptions` accepts optional references to a `LocaleContext` and `AccessibilityFrame`. Keep callback text valid during the draw frame and accessibility strings and child lists valid until publication finishes. The host provides bounded storage and manages stable IDs, publication timing, and action handling. Locale is passed explicitly; it does not change global state.
+
+Win32 and macOS adapter headers are optional bridges to native operating-system APIs. The host remains responsible for dispatching native actions on the UI thread and keeping callbacks and application state valid for their lifetime.
+
+## Composed controls
+
+`<imkit/patterns.h>` provides draw-only controls such as command palettes, dialogs, toolbars, form fields, progress, virtual lists, and data tables. Providers return information for the requested visible range. The host applies edits and owns its model, selection, persistence, and undo. See the [workflow guide](../workflow/) and [component recipes](../components/).
+
+## APIs and contracts
+
+- [Design-system header map](../../api/design-system/) — header/type groups recorded in metadata; this is not a complete function-signature inventory.
+- [`theme.h`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/theme.h), [`components.h`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/components.h)
+- [`accessibility.h`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/accessibility.h), [`locale.h`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/locale.h), [`patterns.h`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/patterns.h)

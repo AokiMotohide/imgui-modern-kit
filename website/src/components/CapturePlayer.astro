@@ -1,0 +1,74 @@
+---
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+	source: ImageMetadata;
+	poster: ImageMetadata;
+	alt: string;
+	caption: string;
+	playLabel: string;
+	stopLabel: string;
+	playingLabel: string;
+	pausedLabel: string;
+	reducedMotionLabel: string;
+}
+
+const { source, poster, alt, caption, playLabel, stopLabel, playingLabel, pausedLabel, reducedMotionLabel } = Astro.props;
+---
+
+<figure
+	class="capture-player"
+	data-capture-player
+	data-source={source.src}
+	data-poster={poster.src}
+	data-play-label={playLabel}
+	data-stop-label={stopLabel}
+	data-playing-label={playingLabel}
+	data-paused-label={pausedLabel}
+	data-reduced-motion-label={reducedMotionLabel}
+>
+	<div class="capture-frame">
+		<img src={poster.src} width={poster.width} height={poster.height} alt={alt} loading="lazy" decoding="async" />
+	</div>
+	<figcaption>
+		<span>{caption}</span>
+		<span class="capture-controls">
+			<span class="capture-status" aria-live="polite">{pausedLabel}</span>
+			<button type="button" aria-pressed="false">{playLabel}</button>
+		</span>
+	</figcaption>
+</figure>
+
+<script>
+	function setupCapturePlayers() {
+		for (const player of document.querySelectorAll<HTMLElement>('[data-capture-player]')) {
+			if (player.dataset.initialized === 'true') continue;
+			player.dataset.initialized = 'true';
+
+			const image = player.querySelector('img');
+			const button = player.querySelector('button');
+			const status = player.querySelector('.capture-status');
+			if (!image || !button || !status) continue;
+
+			let playing = false;
+			const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+			const setPlaying = (next: boolean) => {
+				playing = next;
+				image.src = playing ? player.dataset.source! : player.dataset.poster!;
+				button.setAttribute('aria-pressed', String(playing));
+				button.textContent = playing ? player.dataset.stopLabel! : player.dataset.playLabel!;
+				status.textContent = playing
+					? player.dataset.playingLabel!
+					: motionPreference.matches
+						? player.dataset.reducedMotionLabel!
+						: player.dataset.pausedLabel!;
+			};
+			button.addEventListener('click', () => setPlaying(!playing));
+			motionPreference.addEventListener('change', () => setPlaying(false));
+			setPlaying(false);
+		}
+	}
+
+	setupCapturePlayers();
+	document.addEventListener('astro:page-load', setupCapturePlayers);
+</script>

@@ -117,6 +117,7 @@ Automated tests do not establish physical pointer/keyboard, native IME, real scr
 | v3 breaking changes | [Migration](docs/migration-v3.md) | [Migration](docs/migration-v3.md) |
 | Ownership and packaging | [Architecture](docs/architecture.md) · [Dependencies](docs/dependencies.md) | same canonical documents |
 | Verified and unverified scope | [Validation](docs/validation.md) | [Validation](docs/validation.md) |
+| Build or update the docs website | [Website maintenance](website/README.md) | [Website maintenance](website/README.md) |
 
 See [CHANGELOG.md](CHANGELOG.md) for every v3 addition and migration point.
 

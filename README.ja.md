@@ -117,6 +117,7 @@ v3のABI基準はDear ImGui docking commit `367b2c24f399988ddafc0bb4628da0106bcc
 | v3破壊的変更 | [Migration](docs/migration-v3.md) | [Migration](docs/migration-v3.md) |
 | 所有権とpackage | [Architecture](docs/architecture.md) · [Dependencies](docs/dependencies.md) | 同じ正本文書 |
 | 検証済み／未検証範囲 | [Validation](docs/validation.md) | [Validation](docs/validation.md) |
+| ドキュメントサイトのビルド・更新 | [Website maintenance](website/README.md) | [Website maintenance](website/README.md) |
 
 v3の全追加機能と移行点は[CHANGELOG.md](CHANGELOG.md)に記録しています。
 

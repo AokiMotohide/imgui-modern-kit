@@ -8,3 +8,6 @@ imgui.ini
 /assets/icons/rejected/
 /docs/precision-layers-implementation-prompt.md
 /docs/completion-plan.md
+/website/node_modules/
+/website/.astro/
+/website/dist/
