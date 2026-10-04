@@ -990,6 +990,7 @@ int main(int argc, char **argv) {
         // A focused three-node fixture keeps the actual socket and header actions readable.
         auto& data=demo->material.model.data;
         data.nodes.resize(3);
+        data.nodes[2].view.size.x=375; // Keep the full Displacement label and its three fields readable.
         std::erase_if(data.pins,[&](const auto& pin){return std::none_of(data.nodes.begin(),data.nodes.end(),[&](const auto& node){return node.view.id==pin.view.node;});});
         std::erase_if(data.links,[&](const auto& link){return !demo->material.model.Find(link.from)||!demo->material.model.Find(link.to);});
         // Initial fixture only: the new link is then created exclusively through public IO.

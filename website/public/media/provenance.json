@@ -18,6 +18,6 @@
     "tools/motion_film.py"
   ],
   "validate": "tools/check_v32_media.py",
-  "sha256": "e3ac151e3f0a24a2cb6d5a1185ca351ffe9e4a8fb577a255223a63a4aac38c80",
+  "sha256": "68e9ce75e4c510d13dac1100e61c3b5796535d552b3c945d0eaa66eb517dbc70",
   "icons": "Repository MIT icons rasterized with a consistent dark ink for the original graphics layer"
 }

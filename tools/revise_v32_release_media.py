@@ -58,7 +58,7 @@ def main():
   for path in sorted((ROOT/'out/promo').glob('review-*.jpg')):new.write(path,'media-revision/stills/'+path.name)
   for path in sorted((ROOT/'out/v3.2-native').glob('*.mkv.jsonl')):new.write(path,'media-revision/events/'+path.name)
   for path in sorted((ROOT/'docs/images').glob('v3-*.gif')):new.write(path,'media-revision/images/'+path.name)
-  for name in ['capture_v32_media.py','render_v32_film.py','motion_film.py','check_v32_media.py','revise_v32_release_media.py']:new.write(ROOT/'tools'/name,'media-revision/tools/'+name)
+  for name in ['capture_v32_media.py','render_v32_film.py','motion_film.py','check_v32_media.py','revise_v32_release_media.py','verify_v32_release_media.py']:new.write(ROOT/'tools'/name,'media-revision/tools/'+name)
  temp.replace(RELEASE/NAMES[2])
  (RELEASE/'SHA256SUMS').write_text(''.join(f'{digest(RELEASE/name)}  {name}\n' for name in sorted(sums)),encoding='utf-8')
  for name,sha in stable.items():assert digest(RELEASE/name)==sha
