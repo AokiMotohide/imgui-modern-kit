@@ -1,6 +1,6 @@
 # ImKit documentation site
 
-This directory builds the bilingual Japanese/English documentation site with Astro and Starlight. The root Japanese routes use the default locale; English routes are under `/en/`. `astro.config.mjs` sets the GitHub Pages project base to `/imgui-modern-kit/`. The repository workflow builds an artifact; publishing requires the manual `publish` input and has not been run as part of this change.
+This directory builds the bilingual Japanese/English documentation site with Astro and Starlight. The published manual is available in [Japanese](https://aokimotohide.github.io/imgui-modern-kit/) and [English](https://aokimotohide.github.io/imgui-modern-kit/en/). The root Japanese routes use the default locale; English routes are under `/en/`. `astro.config.mjs` sets the GitHub Pages project base to `/imgui-modern-kit/`. The repository workflow builds an artifact; publishing updates requires a manual dispatch with the `publish` input enabled.
 
 ## Build and update
 
@@ -44,7 +44,7 @@ The representative integration and Node Editor snippets in both locales, the ful
 
 ## Pages workflow
 
-`.github/workflows/docs-site.yml` runs on documentation changes and manual dispatch. It installs the frozen npm graph, generates the site content, validates and uploads `website/dist` as a Pages artifact. The `publish` checkbox defaults to false; deploy only occurs after an explicit manual dispatch with it enabled. Before a first deploy, configure the repository's Pages source as **GitHub Actions**. Do not describe a Pages URL as public until a deployment has actually completed.
+`.github/workflows/docs-site.yml` runs on documentation changes and manual dispatch. It installs the frozen npm graph, generates the site content, validates and uploads `website/dist` as a Pages artifact. The `publish` checkbox defaults to false; deploy only occurs after an explicit manual dispatch with it enabled. Keep the repository's Pages source set to **GitHub Actions** for future deployments.
 
 ## ドキュメントサイトの更新
 
@@ -52,4 +52,4 @@ The representative integration and Node Editor snippets in both locales, the ful
 
 画面画像は実際のGallery captureを静止画にしたものです。素材更新には任意のPillowが必要ですが、通常のnpm buildでは不要です。API宣言の出典と対象範囲は、inventoryとpublic headerを基準に保ちます。各コード例の完結した関数例とアプリ側の値を必要とする例を区別し、署名一覧を呼び出し例のように扱わないでください。
 
-Pages workflowは検証後にbuild artifactを保存し、`publish`を明示的に有効にした手動実行だけがdeployへ進みます。この変更ではworkflowを実行せず、サイトも公開していません。
+公開済みサイトの更新も、検証後にbuild artifactを保存し、`publish`を明示的に有効にしたPages workflowの手動実行で行います。

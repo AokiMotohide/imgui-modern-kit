@@ -2,6 +2,8 @@
 
 [日本語](README.ja.md) · [Documentation index](docs/README.md) · [Documentation catalog](docs/documentation-catalog.md) · [Examples and recipes](docs/examples-recipes.md) · [Getting started](docs/getting-started.md) · [Gallery](docs/gallery.md) · [Node Editor](docs/node-editor.md) · [v3 migration](docs/migration-v3.md) · [Releases](https://github.com/AokiMotohide/imgui-modern-kit/releases)
 
+**Online manual:** [English](https://aokimotohide.github.io/imgui-modern-kit/en/) · [日本語](https://aokimotohide.github.io/imgui-modern-kit/) · [Features](https://aokimotohide.github.io/imgui-modern-kit/en/features/) · [API reference](https://aokimotohide.github.io/imgui-modern-kit/en/api/) · [Documentation site maintenance](website/README.md)
+
 **Build modern native tools faster.** ImKit v3.1.0 is a C++20 static UI library for Dear ImGui. It provides themes, production controls, workflow and editor surfaces, a host-owned Node Editor, generated icons, native accessibility adapters, and optional OpenGL/Metal preview helpers—without taking ownership of your application. This release adds task-oriented bilingual documentation, module recipes and a clearer Gallery learning path.
 
 MIT licensed · Windows x64/Arm64 · macOS arm64/x86_64/Universal 2 · Dear ImGui 1.93.0 WIP docking

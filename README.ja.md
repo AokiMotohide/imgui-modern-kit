@@ -2,6 +2,8 @@
 
 [English](README.md) · [文書目次](docs/README.ja.md) · [文書カタログ](docs/documentation-catalog.ja.md) · [実例とrecipe](docs/examples-recipes.ja.md) · [導入ガイド](docs/getting-started.ja.md) · [Gallery](docs/gallery.ja.md) · [Node Editor](docs/node-editor.ja.md) · [v3移行](docs/migration-v3.ja.md) · [Releases](https://github.com/AokiMotohide/imgui-modern-kit/releases)
 
+**公開マニュアル:** [日本語](https://aokimotohide.github.io/imgui-modern-kit/) · [English](https://aokimotohide.github.io/imgui-modern-kit/en/) · [できること一覧](https://aokimotohide.github.io/imgui-modern-kit/features/) · [APIリファレンス](https://aokimotohide.github.io/imgui-modern-kit/api/) · [ドキュメントサイトの更新手順](website/README.md)
+
 **モダンなnative制作ツールを、より速く。** ImKit v3.1.0はDear ImGui向けのC++20静的UIライブラリです。Theme、制作向けcontrol、workflow／editor surface、ホスト所有のNode Editor、生成icon、native accessibility adapter、任意のOpenGL／Metal previewを、既存アプリケーションの所有権を保って利用できます。今回の更新では、目的から選べる英日文書カタログ、module別recipe、Galleryの学習案内を整えました。
 
 MIT License · Windows x64/Arm64 · macOS arm64/x86_64/Universal 2 · Dear ImGui 1.93.0 WIP docking
