@@ -82,13 +82,13 @@ Choose a toast position, pause expiry while it is being read, and return action 
 
 <img src="docs/images/v3-icon-artwork.gif" alt="Large tiled projector, projection, lighting, object, production, and editor icon artwork with a moving highlight" width="960">
 
-The animated board highlights the detailed source artwork at a readable size. Browse [all 238 source PNGs](assets/icons/originals/) or the [named 284-icon catalogue](assets/icons/catalog.json); the complete runtime catalogue appears below.
+The animated board highlights the detailed source artwork at a readable size. Browse [all 238 source PNGs](assets/icons/originals/) or the [named 288-icon catalogue](assets/icons/catalog.json); the complete runtime catalogue appears below.
 
-### Runtime icon catalogue · 284 presets
+### Runtime icon catalogue · 288 presets
 
-The C++ catalogue contains **284 named icons in 18 categories**, with seven atlas sizes from 12 to 64 px (1,988 icon-size combinations). Search by name or category, select a tile, and copy its matching C++ call.
+The C++ catalogue contains **288 named icons in 19 categories**, with seven atlas sizes from 12 to 64 px (2,016 icon-size combinations). Search by name or category, select a tile, and copy its matching C++ call.
 
-<img src="docs/images/v3-icons.gif" alt="ImKit's searchable 284-icon catalogue, with categories, size choices, and a selected icon preview" width="960">
+<img src="docs/images/v3-icons.gif" alt="ImKit's searchable icon catalogue, with categories, size choices, and a selected icon preview" width="960">
 
 The Gallery exposes every preset in a searchable tile grid and previews the selected icon with its C++ call.
 

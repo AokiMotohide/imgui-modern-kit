@@ -255,6 +255,147 @@ StableId WorkspaceTabs(const char* id,std::span<const WorkspaceTab> tabs,
     }
     ImGui::PopID();return request;
 }
+StableId ChoiceGroup(const char* id,const char* title,std::span<const ChoiceItem> items,
+                     StableId current,ChoiceGroupOptions layout,ComponentOptions o) {
+    ImGui::PushID(Safe(id));
+    const auto titleText=std::string_view(Safe(title));
+    StableId request=0;
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,{8.f,8.f});
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,ImGui::GetStyle().FrameRounding);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,1.f);
+    const bool visible=ImGui::BeginChild("choice-group-card",{0,0},
+        ImGuiChildFlags_Borders|ImGuiChildFlags_AutoResizeY|ImGuiChildFlags_AlwaysUseWindowPadding,
+        ImGuiWindowFlags_NoScrollbar);
+    if(visible) {
+        ImGui::PushTextWrapPos(0);
+        ImGui::TextUnformatted(titleText.data(),titleText.data()+titleText.size());
+        ImGui::PopTextWrapPos();
+        ImGui::Separator();
+        const StableId semanticGroupId=ImGui::GetID("##choice-group-semantics");
+        const auto available=std::max(1.f,ImGui::GetContentRegionAvail().x);
+        const auto& style=ImGui::GetStyle();
+        const float height=ImGui::GetFrameHeight();
+        const float font=ImGui::GetFontSize();
+        const float iconSize=std::min(font,std::max(1.f,height-2.f*style.FramePadding.y));
+        const float checkWidth=font*.9f;
+        float minimumCell=1.f;
+        for(const auto& item:items) {
+            const std::string_view label=Safe(item.label);
+            const auto end=label.find("##");
+            const auto visibleLabel=label.substr(0,end);
+            const float textWidth=ImGui::CalcTextSize(visibleLabel.data(),visibleLabel.data()+visibleLabel.size()).x;
+            const bool hasIcon=layout.icons&&GetIconInfo(item.icon);
+            const float iconWidth=hasIcon?iconSize+style.ItemInnerSpacing.x:0.f;
+            minimumCell=std::max(minimumCell,2.f*style.FramePadding.x+iconWidth+textWidth+
+                                 style.ItemInnerSpacing.x+checkWidth);
+        }
+        const int maximumColumns=std::clamp(layout.maximumColumns,1,3);
+        int columns=std::max(1,std::min(maximumColumns,static_cast<int>(std::min<std::size_t>(items.size(),3))));
+        while(columns>1 && (available-style.ItemSpacing.x*(columns-1))/columns<minimumCell) --columns;
+        const float cellWidth=std::max(minimumCell,(available-style.ItemSpacing.x*(columns-1))/columns);
+        const float startX=ImGui::GetCursorPosX(),startY=ImGui::GetCursorPosY();
+        ComponentOptions itemOptions=o;itemOptions.parent=semanticGroupId;
+        for(std::size_t i=0;i<items.size();++i) {
+            const auto& item=items[i];
+            const std::string_view label=Safe(item.label);
+            const auto end=label.find("##");
+            const auto visibleLabel=label.substr(0,end);
+            const bool hasIcon=layout.icons&&GetIconInfo(item.icon);
+            const int column=static_cast<int>(i%static_cast<std::size_t>(columns));
+            const int row=static_cast<int>(i/static_cast<std::size_t>(columns));
+            ImGui::SetCursorPos({startX+column*(cellWidth+style.ItemSpacing.x),
+                                 startY+row*(height+style.ItemSpacing.y)});
+            ImGui::PushID("choices");Push(item.id);
+            if(!item.id) ImGui::PushID(static_cast<int>(i));
+            const bool selected=item.id!=0&&item.id==current;
+            ImVec4 accent=item.accent.w>0?item.accent:
+                (o.theme?o.theme->semantic.accent:ImGui::GetStyleColorVec4(ImGuiCol_CheckMark));
+            const auto base=o.theme?o.theme->semantic.control.rest:ImGui::GetStyleColorVec4(ImGuiCol_Button);
+            const auto fill=selected?Mix(base,accent,.30f):base;
+            ImGui::BeginDisabled(item.disabled||!item.id);
+            ImGui::PushStyleColor(ImGuiCol_Button,fill);
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered,Mix(fill,accent,.18f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive,Mix(fill,accent,.32f));
+            ImGui::PushStyleColor(ImGuiCol_CheckMark,accent);
+            ImGui::PushStyleColor(ImGuiCol_Text,ImVec4(0,0,0,0));
+            const bool pressed=ImGui::Button(Safe(item.label),{cellWidth,height});
+            ImGui::PopStyleColor();
+            const auto minimum=ImGui::GetItemRectMin(),maximum=ImGui::GetItemRectMax();
+            const bool focused=ImGui::IsItemFocused();
+            const bool hovered=ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled);
+            const char* description=Safe(item.description);
+            const char* disabledReason=Safe(item.disabledReason);
+            const char* semanticDescription=(item.disabled||!item.id)&&*disabledReason?disabledReason:description;
+            if(focused) ImGui::SetNavCursorVisible(true);
+            if(Annotate(Safe(item.label),semanticDescription,accessibility::SemanticRole::Radio,
+                        accessibility::SemanticAction::Press,selected,itemOptions)) request=item.id;
+            if(selected) {
+                ImGui::GetWindowDrawList()->AddRect(minimum,maximum,ImGui::GetColorU32(accent),
+                    style.FrameRounding,ImDrawFlags_None,o.theme?o.theme->stroke.focus:1.5f);
+                const float cx=maximum.x-style.FramePadding.x-checkWidth*.58f;
+                const float cy=(minimum.y+maximum.y)*.5f;
+                const auto checkColor=ImGui::GetColorU32(accent);
+                ImGui::GetWindowDrawList()->AddLine({cx-checkWidth*.34f,cy},{cx-checkWidth*.08f,cy+checkWidth*.27f},checkColor,1.7f);
+                ImGui::GetWindowDrawList()->AddLine({cx-checkWidth*.08f,cy+checkWidth*.27f},{cx+checkWidth*.38f,cy-checkWidth*.28f},checkColor,1.7f);
+            }
+            const float textX=minimum.x+style.FramePadding.x+
+                (hasIcon?iconSize+style.ItemInnerSpacing.x:0.f);
+            if(hasIcon) {
+                const auto framebufferScale=ImGui::GetIO().DisplayFramebufferScale;
+                const float pixelSize=iconSize*std::max({1.f,framebufferScale.x,framebufferScale.y});
+                int atlasIndex=static_cast<int>(IconPixelSizes.size())-1;
+                for(int level=0;level<static_cast<int>(IconPixelSizes.size());++level)
+                    if(IconPixelSizes[level]>=pixelSize) {atlasIndex=level;break;}
+                const auto texture=layout.icons->textures[static_cast<std::size_t>(atlasIndex)];
+                if(texture.GetTexID()!=ImTextureID{}) {
+                    const auto uv=GetIconRegion(item.icon,IconPixelSizes[atlasIndex]);
+                    const ImVec2 pos{minimum.x+style.FramePadding.x,minimum.y+(height-iconSize)*.5f};
+                    ImGui::GetWindowDrawList()->AddImage(texture,pos,{pos.x+iconSize,pos.y+iconSize},
+                        uv.uv0,uv.uv1,ImGui::GetColorU32(accent));
+                }
+            }
+            const float textY=minimum.y+(height-font)*.5f;
+            ImGui::GetWindowDrawList()->AddText({textX,textY},ImGui::GetColorU32(ImGuiCol_Text),
+                                                 visibleLabel.data(),visibleLabel.data()+visibleLabel.size());
+            if(hovered||focused) {
+                if(!visibleLabel.empty()||*description||((item.disabled||!item.id)&&*disabledReason)) {
+                    ImGui::BeginTooltip();
+                    ImGui::PushTextWrapPos(font*32.f);
+                    if(!visibleLabel.empty()) ImGui::TextUnformatted(visibleLabel.data(),visibleLabel.data()+visibleLabel.size());
+                    if(*description) ImGui::TextWrapped("%s",description);
+                    if((item.disabled||!item.id)&&*disabledReason) ImGui::TextWrapped("%s",disabledReason);
+                    ImGui::PopTextWrapPos();
+                    ImGui::EndTooltip();
+                }
+            }
+            if(pressed&&item.id&&!item.disabled) request=item.id;
+            ImGui::PopStyleColor(4);
+            ImGui::EndDisabled();
+            if(!item.id) ImGui::PopID();
+            Pop();ImGui::PopID();
+        }
+        const std::size_t rowCount=(items.size()+static_cast<std::size_t>(columns)-1)/static_cast<std::size_t>(columns);
+        if(rowCount) {
+            const float contentHeight=rowCount*height+(rowCount-1)*style.ItemSpacing.y;
+            ImGui::SetCursorPos({startX,startY+contentHeight});
+            ImGui::Dummy({available,0});
+        }
+        ImGui::EndChild();
+        ImGui::PopStyleVar(2);
+        if(o.accessibility) {
+            accessibility::SemanticNode group;group.id=semanticGroupId;group.parent=o.parent;
+            group.name=titleText;group.role=accessibility::SemanticRole::Group;
+            group.minimum=ImGui::GetItemRectMin();group.maximum=ImGui::GetItemRectMax();
+            o.accessibility->Add(group);
+        }
+    } else {
+        ImGui::EndChild();
+        ImGui::PopStyleVar(2);
+    }
+    ImGui::PopStyleVar();
+    ImGui::PopID();
+    return request;
+}
 bool HierarchyGroupHeader(const char* id,const char* label,int count,bool* open,
                           const IconAtlas* icons,IconId icon,ComponentOptions,
                           bool* actionRequested,const char* actionLabel) {

@@ -2293,12 +2293,14 @@ int main(int argc, char **argv) {
                 h.s.design.language=2; h.s.scale=2; h.Page(14); h.Frame({},out/"rtl-200.png");
             } else if (capture) {
                 h.s.editors.japanese=captureJapanese;
+                h.s.workflow.japanese=captureJapanese;
                 if (capturePage == -2) h.s.editors.Dataset(false);
                 for (int dark = 0; dark < 2; ++dark) {
                     h.s.dark = dark != 0;
                     h.s.theme = imkit::MakePrecisionTheme(dark ? imkit::ColorScheme::Dark
                                                                : imkit::ColorScheme::Light);
-                    for (int page = 0; page < 10; ++page) {
+                    const int pageLimit=capturePage==15?16:10;
+                    for (int page = 0; page < pageLimit; ++page) {
                         if (capturePage == -2 && page < 7) continue;
                         if (capturePage >= 0 && capturePage != page)
                             continue;

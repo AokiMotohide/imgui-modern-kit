@@ -53,7 +53,7 @@ The OpenGL3 object owns its FBO, color, ID and depth textures, shaders, VAO and 
 
 ## Native Gallery
 
-Pages 7/8/9 use the public Core/Video/CG APIs and apply edits in the sample host. Context menus expose secondary actions; range endpoints and timeline track names have their own menus. Color/Inspector panes scroll when compact. The 100k toggle creates 256 tracks, 100096 clips and 100000 keys. The transition history menu demonstrates host Undo/Redo. Icons are host-uploaded atlases: 284 icons (120 stable IDs plus 164 additions).
+Pages 7/8/9 use the public Core/Video/CG APIs and apply edits in the sample host. Context menus expose secondary actions; range endpoints and timeline track names have their own menus. Color/Inspector panes scroll when compact. The 100k toggle creates 256 tracks, 100096 clips and 100000 keys. The transition history menu demonstrates host Undo/Redo. Icons are host-uploaded atlases: 288 icons (120 stable IDs plus 168 additions).
 
 `imkit_gallery.exe --list-monitors` lists displays; `--monitor N` places the native window on a selected display, including hidden capture runs. This is useful with DisplayLink/multiple-adapter desktops. It does not change system display settings.
 

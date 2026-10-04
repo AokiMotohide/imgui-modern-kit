@@ -3,6 +3,7 @@
 namespace {
 auto volatile grouped=&imkit::GroupedStepNavigator;
 auto volatile workspaceTabs=&imkit::WorkspaceTabs;
+imkit::StableId (*volatile choiceGroup)(const char*,const char*,std::span<const imkit::ChoiceItem>,imkit::StableId,imkit::ChoiceGroupOptions,imkit::ComponentOptions)=&imkit::ChoiceGroup;
 auto volatile hierarchyGroup=&imkit::HierarchyGroupHeader;
 auto volatile hierarchyRow=&imkit::HierarchyRow;
 auto volatile inspectorCard=&imkit::BeginInspectorCard;
@@ -45,5 +46,5 @@ auto volatile rightPanelHandle=&imkit::RightSidePanelHandle;
 int main() {
     imkit::StableId ids[1];imkit::RequestBuffer requests{ids};
     imkit::editor::TileEvent events[1];imkit::editor::TileEventBuffer out{events};
-    return !(grouped&&workspaceTabs&&hierarchyGroup&&hierarchyRow&&inspectorCard&&endInspectorCard&&settingToggleRow&&iconToolbar&&labeledIconToolbar&&iconAction&&step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&card&&endCard&&section&&multi&&help&&validation&&toolbar&&valid&&placement&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&appBar&&workspaceHeader&&inspectorSection&&advancedSection&&bottomActionBar&&beginDiagnostics&&endDiagnostics&&themePicker&&resolveRightPanel&&rightPanelHandle&&requests.Push(1)&&out.Push({}));
+    return !(grouped&&workspaceTabs&&choiceGroup&&hierarchyGroup&&hierarchyRow&&inspectorCard&&endInspectorCard&&settingToggleRow&&iconToolbar&&labeledIconToolbar&&iconAction&&step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&card&&endCard&&section&&multi&&help&&validation&&toolbar&&valid&&placement&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&appBar&&workspaceHeader&&inspectorSection&&advancedSection&&bottomActionBar&&beginDiagnostics&&endDiagnostics&&themePicker&&resolveRightPanel&&rightPanelHandle&&requests.Push(1)&&out.Push({}));
 }

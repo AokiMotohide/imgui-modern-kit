@@ -22,6 +22,18 @@ void WorkflowPages::Show(int page,GalleryState& host) {
         const std::array<IconToolbarItem,3> iconActions{{{1,IconId::Play,japanese?"再生":"Play","Start playback",true},{2,IconId::Pause,japanese?"一時停止":"Pause","Mixed state",false,true},{3,IconId::Stop,japanese?"停止":"Stop","Unavailable",false,false,true}}};
         IconToolbar("wrapping-icons",host.icons,iconActions,{true,true},o);
         IconActionButton("labeled-action",host.icons,IconId::Reset,japanese?"表示リセット":"Reset view","Restore the default view",ActionVariant::Secondary,o);
+        const std::array<ChoiceItem,7> sourceChoices{{
+            {701,"USB / HDMI##choice-usb",japanese?"ローカル接続":"Direct capture input",IconId::Usb,{.22f,.53f,.91f,1.f}},
+            {702,japanese?"ネットワーク##choice-network":"Network##choice-network",japanese?"LAN経由":"Camera over a network",IconId::Network,{.10f,.70f,.82f,1.f}},
+            {703,japanese?"仮想入力##choice-virtual":"Virtual##choice-virtual",japanese?"仮想デバイス":"Virtual device",IconId::WindowMaximize,{.61f,.43f,.82f,1.f}},
+            {704,japanese?"産業カメラ##choice-industrial":"Industrial##choice-industrial",japanese?"産業用デバイス":"Industrial camera",IconId::IndustrialCamera,{.86f,.57f,.17f,1.f}},
+            {705,japanese?"スマートフォン##choice-mobile":"Mobile##choice-mobile",japanese?"モバイル入力":"Mobile input",IconId::Smartphone,{.18f,.67f,.52f,1.f}},
+            {706,japanese?"テスト映像##choice-test":"Test pattern##choice-test",japanese?"テスト信号":"Test signal",IconId::TestPattern,{.52f,.57f,.64f,1.f}},
+            {707,japanese?"利用不可##choice-disabled":"Unavailable##choice-disabled",japanese?"この例では選択できません":"Unavailable in this example",IconId::Close,{.62f,.62f,.62f,1.f},true,japanese?"この入力経路は無効です":"This input path is disabled"}}};
+        ChoiceGroupOptions choiceLayout;choiceLayout.icons=&host.icons;
+        if(auto request=ChoiceGroup("connection-method",japanese?"接続方式を選択":"Choose a connection method",
+                                    sourceChoices,choiceSource,choiceLayout,o)) choiceSource=request;
+        Record(host,"workflow-choice-group");
         StepNavigatorOptions layout;layout.size={0,ImGui::GetFrameHeight()*2.6f};
         if(auto id=StepNavigator("workflow",items,selected,steps,layout,o))selected=id;
         Record(host,"workflow-steps");

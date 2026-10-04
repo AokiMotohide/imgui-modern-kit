@@ -119,6 +119,54 @@ int main(){
         Check(workspaceRequest==102,"workspace returns selection request without changing host selection");
         queue.Push({toggle.id,accessibility::SemanticAction::Toggle});frame(drawWorkspace);
         Check(toggleRequest,"setting row returns toggle request without changing host value");
+        IconAtlas choiceIcons;for(int size:IconPixelSizes)choiceIcons.SetTexture(size,ImTextureRef((ImTextureID)1));
+        const std::array<ChoiceItem,3> choices{{
+            {501,"USB##cameraInputCategory0","Direct capture input",IconId::Usb,{.22f,.53f,.91f,1.f},false,""},
+            {502,"Network##cameraInputCategory1","Camera over LAN",IconId::Network,{.10f,.70f,.82f,1.f},false,""},
+            {503,"Blocked##cameraInputCategory2","Unavailable source",IconId::IndustrialCamera,{.86f,.57f,.17f,1.f},true,"Unavailable for this provider"}}};
+        ChoiceGroupOptions choiceLayout;choiceLayout.icons=&choiceIcons;
+        StableId choiceRequest=0;
+        auto drawChoices=[&]{choiceRequest=ChoiceGroup("camera-source","Connect source",choices,501,choiceLayout,options);};
+        frame(drawChoices);
+        accessibility::SemanticNode choiceGroup{},usbChoice{},networkChoice{},blockedChoice{};
+        for(const auto& node:semantics.Tree().nodes) {
+            if(node.role==accessibility::SemanticRole::Group&&node.name=="Connect source")choiceGroup=node;
+            if(node.name=="USB")usbChoice=node;
+            if(node.name=="Network")networkChoice=node;
+            if(node.name=="Blocked")blockedChoice=node;
+        }
+        Check(semantics.Tree().nodes.size()==4&&choiceGroup.id&&usbChoice.id&&networkChoice.id&&blockedChoice.id,
+              "choice group publishes its group and all candidates");
+        Check(usbChoice.parent==choiceGroup.id&&usbChoice.role==accessibility::SemanticRole::Radio&&
+              usbChoice.state.selected&&networkChoice.parent==choiceGroup.id&&
+              blockedChoice.state.disabled&&blockedChoice.description=="Unavailable for this provider",
+              "choice semantics strip hidden suffix and preserve selected and disabled state");
+        queue.Push({networkChoice.id,accessibility::SemanticAction::Press});frame(drawChoices);
+        Check(choiceRequest==502,"choice group returns an accessibility selection request without owning state");
+        queue.Push({blockedChoice.id,accessibility::SemanticAction::Press});frame(drawChoices);
+        Check(choiceRequest==0,"disabled choice rejects semantic activation");
+        const auto clickPoint=ImVec2((networkChoice.minimum.x+networkChoice.maximum.x)*.5f,
+                                     (networkChoice.minimum.y+networkChoice.maximum.y)*.5f);
+        io.AddMousePosEvent(clickPoint.x,clickPoint.y);frame(drawChoices);
+        io.AddMouseButtonEvent(0,true);frame(drawChoices);io.AddMouseButtonEvent(0,false);frame(drawChoices);
+        Check(choiceRequest==502,"choice group returns a native mouse selection request");
+        queue.Push({usbChoice.id,accessibility::SemanticAction::Press});
+        frame([&]{ImGui::BeginDisabled();choiceRequest=ChoiceGroup("camera-source","Connect source",choices,501,choiceLayout,options);ImGui::EndDisabled();});
+        Check(choiceRequest==0,"choice group respects inherited disabled state");
+        const std::array<ChoiceItem,3> narrowChoices{{
+            {601,"USB","",IconId::Count}, {602,"NDI","",IconId::Count}, {603,"Test","",IconId::Count}}};
+        auto drawNarrowChoices=[&]{ImGui::BeginChild("narrow-choice-host",{210,220});
+            ChoiceGroupOptions narrowLayout;ChoiceGroup("narrow-choice","Sources",narrowChoices,601,narrowLayout,options);
+            ImGui::EndChild();};
+        frame(drawNarrowChoices);
+        accessibility::SemanticNode narrowUsb{},narrowNdi{},narrowTest{};
+        for(const auto& node:semantics.Tree().nodes) {
+            if(node.name=="USB")narrowUsb=node;
+            if(node.name=="NDI")narrowNdi=node;
+            if(node.name=="Test")narrowTest=node;
+        }
+        Check(narrowUsb.id&&narrowNdi.id&&narrowTest.id&&Near(narrowUsb.minimum.y,narrowNdi.minimum.y)&&
+              narrowTest.minimum.y>narrowUsb.minimum.y,"choice group wraps into two columns when width requires it");
         std::array<StepItem,4> steps{{{1,"Same","Ready"},{2,"Same","Blocked",false,true,true},{3,"Long label without collisions","Description",true,true,false,FeedbackKind::Warning},{4,"Error","Description",false,true,false,FeedbackKind::Error}}};
         {
             std::array<StepGroup,2> groups{{{10,"First",0,2,{.25f,.60f,.95f,1.f}},{11,"Second",2,2,{.85f,.45f,.70f,1.f}}}};

@@ -6,18 +6,19 @@ Include `imkit/workflow.h` (also included by `imkit/imkit.h`) and link `imkit::i
 
 ## Ownership
 
-Labels, textures, candidate views and scratch buffers are borrowed. IDs must be nonzero and unique per instance, except notifications: the last duplicate wins. State and queues belong to the host. No texture upload, worker, persistence, registry, undo engine, dependency or icon asset is added. End every scope before destroying its context. Semantic text must remain valid through host frame publication.
+Labels, textures, candidate views and scratch buffers are borrowed. IDs must be nonzero and unique per instance, except notifications: the last duplicate wins. State and queues belong to the host. `ChoiceGroup` borrows its items and optional `IconAtlas`; the returned ID is a request and never changes the host's current value. No texture upload, worker, persistence, registry, undo engine or dependency is added. End every scope before destroying its context. Semantic text must remain valid through host frame publication.
 
 Reset event buffers each frame. Full buffers set `overflow`. Keyboard tile resizing requires three slots for Begin/Update/Commit. Mouse cancellation restores both adjacent sizes; terminal events are retried if the buffer is full. Tile sizes are host-owned, ID-keyed entries. Notification sorting uses caller index scratch and limits results to the smaller of scratch capacity and requested maximum.
 
 ## API inventory
 
-`tests/workflow_api_compile.cpp` is the compile/link inventory, also built by source and relocated SDK consumers. Existing signatures and the native API inventory are retained.
+`tests/workflow_api_compile.cpp` is the workflow compile/link inventory, also built by source and relocated SDK consumers. `docs/reference/api-inventory.json` continues to list Dear ImGui aliases; workflow compositions are inventoried here.
 
 | API | Contract |
 |---|---|
 | `StepNavigator`, `NavigationRail` | Borrowed StepItem span, current ID, explicit focus state; returns a selection request |
 | `WorkspaceTabs` | Icon and label navigation; collapses to a combo when space is narrow; returns a selection request |
+| `ChoiceGroup` | Bordered heading and responsive one-to-three-column radio choices; returns the selected stable ID as a request; host owns current state |
 | `HierarchyGroupHeader`, `HierarchyRow` | Host-owned group state and stable row IDs; selection, visibility, lock and optional group action are requests; unavailable visibility or lock actions may be omitted |
 | `BeginInspectorCard`, `EndInspectorCard` | Groups related controls in an auto-height bordered card; always pair Begin/End |
 | `SettingToggleRow` | Label, description and optional disabled reason; returns a toggle request without changing host state |
@@ -41,6 +42,8 @@ Reset event buffers each frame. Full buffers set `overflow`. Keyboard tile resiz
 | `PreviewTile`, `ResizableTileStrip` | Borrowed previews/actions, horizontal/vertical scroll, minimum extents |
 | `RequestBuffer::Push`, `TileEventBuffer::Push` | Caller storage, explicit overflow |
 
+`ChoiceGroup` uses input-height buttons and eight-pixel card padding. It reduces the column count when the longest complete label, optional icon and selection mark need more room. `##` label suffixes remain available to ImGui and UI tests but are omitted from the visible text, tooltip and semantic name. Descriptions and disabled reasons appear on hover or focus.
+
 Image coordinates start at top left, x right and y down; Canvas units are image pixels. Use the existing `ToScreen`/`FromScreen` for desktop-screen conversion. Fit shows the whole image, Fill crops, and 1:1 maps one image pixel to one ImGui coordinate unit (not necessarily one physical display pixel). Clamp centers small images and limits large images to their edges. Cursor-anchored zoom is preserved until edge clamping is needed. Resizing refits non-manual modes. `CanvasSelection` handles marquee and lasso selection.
 
 `ResolveImagePlacement` uses local coordinates whose origin is the available region's top-left. Fit returns a centered destination with full UVs, Fill returns the full destination with centered crop UVs, and Stretch uses both complete regions. It owns no texture or renderer and returns `valid=false` for non-positive, non-finite or non-drawable geometry.
@@ -53,4 +56,4 @@ Pass `ComponentOptions` for theme, locale and semantic publication. Draw-only ov
 
 For colored cards with six positions, actions and progress, see [Toasts](toasts.md). Existing `ToastRegion` behavior remains unchanged.
 
-Open **Generic Workspace**, **Feedback / States**, or **Preview Tiles**. The workspace combines navigation, toolbar, image, overlays, selection, feedback and status. It uses the existing procedural texture. `--verify-workflow --output <directory>` runs public IO checks and captures 36 page/theme combinations plus two narrow Japanese/disabled examples. Native GPU captures are distinct from native OS/IME and screen-reader tests.
+Open **Generic Workspace** (page 15), **Feedback / States**, or **Preview Tiles**. Generic Workspace includes the new connection-method `ChoiceGroup` example. It combines navigation, toolbar, image, overlays, selection, feedback and status, and uses the existing procedural texture. `--verify-workflow --output <directory>` runs public IO checks and captures 36 page/theme combinations plus two narrow Japanese/disabled examples. Native GPU captures are distinct from native OS/IME and screen-reader tests.

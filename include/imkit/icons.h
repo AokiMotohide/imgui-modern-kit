@@ -294,6 +294,10 @@ enum class IconId : std::uint16_t {
     SolidColor,
     WhiteOutput,
     Blackout,
+    Usb,
+    Network,
+    Smartphone,
+    IndustrialCamera,
     Count
 };
 struct IconInfo {

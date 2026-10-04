@@ -65,6 +65,24 @@ StableId WorkspaceTabs(const char* id, std::span<const WorkspaceTab> tabs,
                        StableId selected, const IconAtlas* icons=nullptr,
                        ComponentOptions options={});
 
+struct ChoiceItem {
+    StableId id=0;
+    const char* label="";
+    const char* description="";
+    IconId icon=IconId::Count;
+    ImVec4 accent{};
+    bool disabled=false;
+    const char* disabledReason="";
+};
+struct ChoiceGroupOptions {
+    int maximumColumns=3;
+    const IconAtlas* icons=nullptr;
+};
+// Draws a bordered, responsive choice group. Returns a requested ID; the host owns current state.
+// Labels may use Dear ImGui's ## suffix for an invisible ID; only the visible prefix is rendered.
+StableId ChoiceGroup(const char* id,const char* title,std::span<const ChoiceItem> items,
+                     StableId current,ChoiceGroupOptions layout={},ComponentOptions options={});
+
 struct HierarchyRowView {
     StableId id=0;
     const char* label="";

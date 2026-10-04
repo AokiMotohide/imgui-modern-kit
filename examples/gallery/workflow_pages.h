@@ -7,6 +7,7 @@ struct GalleryState;
 struct WorkflowPages {
     StepNavigatorState steps,rail;
     StableId selected=1,tileSelected=1;
+    StableId choiceSource=701;
     StableId workspace=101;
     bool hierarchyOpen=true,settingEnabled=true;
     ToolbarState toolbar;

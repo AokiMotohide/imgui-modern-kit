@@ -8,10 +8,10 @@ The Windows-native Gallery is an onboarding application and a public-API specime
 
 1. **Start** explains the host boundary and routes directly to a focused task.
 2. **Compare** opens a movable, resizable Default Dear ImGui / ImKit window. Both columns mutate the same host-owned values, so a click in either column is visible in the other.
-3. **Components, themes and icons** provide searchable native specimens, palette editing, and all 284 runtime icon presets in seven sizes. The repository also contains 238 transparent PNG artwork masters across 16 image-backed categories; README shows these at a larger scale alongside the full runtime catalogue.
+3. **Components, themes and icons** provide searchable native specimens, palette editing, and all 288 runtime icon presets in seven sizes. The repository also contains 238 transparent PNG artwork masters across 16 image-backed categories; README shows these at a larger scale alongside the full runtime catalogue.
 4. **Workflow, timeline and Frame Lab** show optional compositional and editor-oriented surfaces without claiming that the host's scene, undo or renderer belongs to ImKit.
 
-The Start screen routes to **Components: Basic** (page 0), **Icons** (page 6; change themes from Appearance in the header), **Generic Workspace** (page 15), and **Video** (page 8). The [examples and recipes map](examples-recipes.md) connects each route to its public header, CMake target, implementation source, ownership rules and next guide. The Start card identifiers are exercised by the Gallery verifier.
+The Start screen routes to **Components: Basic** (page 0), **Icons** (page 6; change themes from Appearance in the header), **Generic Workspace** (page 15; includes a responsive ChoiceGroup), and **Video** (page 8). The [examples and recipes map](examples-recipes.md) connects each route to its public header, CMake target, implementation source, ownership rules and next guide. The Start card identifiers are exercised by the Gallery verifier.
 
 The comparison's baseline is only public Dear ImGui API (`StyleColorsDark` plus direct widgets). It is a visual and interaction-contract example, not a claim about performance, OS input or accessibility. Its ImKit column borrows the host-owned `Theme`, scale, state and animation values; no global registry or Gallery-only third-party asset is introduced.
 
