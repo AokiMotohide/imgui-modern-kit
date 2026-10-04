@@ -22,13 +22,26 @@ void WorkflowPages::Show(int page,GalleryState& host) {
         const std::array<IconToolbarItem,3> iconActions{{{1,IconId::Play,japanese?"再生":"Play","Start playback",true},{2,IconId::Pause,japanese?"一時停止":"Pause","Mixed state",false,true},{3,IconId::Stop,japanese?"停止":"Stop","Unavailable",false,false,true}}};
         IconToolbar("wrapping-icons",host.icons,iconActions,{true,true},o);
         IconActionButton("labeled-action",host.icons,IconId::Reset,japanese?"表示リセット":"Reset view","Restore the default view",ActionVariant::Secondary,o);
+        const std::array<ChoiceItem,7> sourceChoices{{
+            {701,"USB / HDMI##choice-usb",japanese?"ローカル接続":"Direct capture input",IconId::Usb,{.22f,.53f,.91f,1.f}},
+            {702,japanese?"ネットワーク##choice-network":"Network##choice-network",japanese?"LAN経由":"Camera over a network",IconId::Network,{.10f,.70f,.82f,1.f}},
+            {703,japanese?"仮想入力##choice-virtual":"Virtual##choice-virtual",japanese?"仮想デバイス":"Virtual device",IconId::WindowMaximize,{.61f,.43f,.82f,1.f}},
+            {704,japanese?"産業カメラ##choice-industrial":"Industrial##choice-industrial",japanese?"産業用デバイス":"Industrial camera",IconId::IndustrialCamera,{.86f,.57f,.17f,1.f}},
+            {705,japanese?"スマートフォン##choice-mobile":"Mobile##choice-mobile",japanese?"モバイル入力":"Mobile input",IconId::Smartphone,{.18f,.67f,.52f,1.f}},
+            {706,japanese?"テスト映像##choice-test":"Test pattern##choice-test",japanese?"テスト信号":"Test signal",IconId::TestPattern,{.52f,.57f,.64f,1.f}},
+            {707,japanese?"利用不可##choice-disabled":"Unavailable##choice-disabled",japanese?"この例では選択できません":"Unavailable in this example",IconId::Close,{.62f,.62f,.62f,1.f},true,japanese?"この入力経路は無効です":"This input path is disabled"}}};
+        ChoiceGroupOptions choiceLayout;choiceLayout.icons=&host.icons;
+        if(auto request=ChoiceGroup("connection-method",japanese?"接続方式を選択":"Choose a connection method",
+                                    sourceChoices,choiceSource,choiceLayout,o)) choiceSource=request;
+        Record(host,"workflow-choice-group");
         StepNavigatorOptions layout;layout.size={0,ImGui::GetFrameHeight()*2.6f};
         if(auto id=StepNavigator("workflow",items,selected,steps,layout,o))selected=id;
         Record(host,"workflow-steps");
         apply(ResponsiveToolbar("commands",toolbar,commands,ToolbarOptions{},o));
         if(FilterChip("filter",japanese?"選択のみ":"Selected only",chip,o))chip=!chip;Record(host,"workflow-chip");
-        if(ImGui::BeginTable("workspace",2,ImGuiTableFlags_Resizable)) {
-            ImGui::TableSetupColumn("Navigation",ImGuiTableColumnFlags_WidthFixed,180);ImGui::TableSetupColumn("Canvas",ImGuiTableColumnFlags_WidthStretch);
+        const bool workspaceWide=ImGui::GetContentRegionAvail().x>=650.f;
+        if(ImGui::BeginTable("workspace",workspaceWide?2:1,ImGuiTableFlags_SizingStretchProp)) {
+            if(workspaceWide) {ImGui::TableSetupColumn("Navigation",ImGuiTableColumnFlags_WidthFixed,180);ImGui::TableSetupColumn("Canvas",ImGuiTableColumnFlags_WidthStretch);}
             ImGui::TableNextRow();ImGui::TableNextColumn();
             if(auto id=NavigationRail("rail",items,selected,rail,{0,360},o))selected=id;
             ImGui::TableNextColumn();
@@ -121,6 +134,34 @@ void WorkflowPages::Show(int page,GalleryState& host) {
             EndDiagnosticsDrawer();
         }
     } else {
+        const std::array<WorkspaceTab,3> workspaces{{
+            {101, japanese?"編集":"Edit", "Edit items", IconId::Cube},
+            {102, japanese?"接続":"Connect", "Route sources", IconId::Connected},
+            {103, japanese?"仕上げ":"Review", "Review settings", IconId::Settings}}};
+        if(auto request=WorkspaceTabs("workspace-tabs",workspaces,workspace,&host.icons,o))workspace=request;
+        ImGui::Spacing();
+        const bool componentWide=ImGui::GetContentRegionAvail().x>=850.f;
+        if(ImGui::BeginTable("component-layout",componentWide?2:1,ImGuiTableFlags_SizingStretchProp)) {
+            if(componentWide) {
+                ImGui::TableSetupColumn("Items",ImGuiTableColumnFlags_WidthStretch,.8f);
+                ImGui::TableSetupColumn("Settings",ImGuiTableColumnFlags_WidthStretch,1.2f);
+            }
+            ImGui::TableNextRow();ImGui::TableNextColumn();
+            if(HierarchyGroupHeader("group",japanese?"項目":"Items",2,&hierarchyOpen,&host.icons,IconId::Layers,o)) {
+                HierarchyRow("first",{1,japanese?"項目 A":"Item A","Visible and editable",IconId::Cube,1,true},&host.icons,o);
+                HierarchyRow("second",{2,japanese?"項目 B":"Item B","Hidden and locked",IconId::Image,1,false,false,true},&host.icons,o);
+            }
+            ImGui::TableNextColumn();
+            if(BeginInspectorCard("settings-card",japanese?"基本設定":"Basic settings",
+                                  japanese?"関連する操作をまとめて表示":"Related controls stay together",
+                                  &host.icons,IconId::Settings,o)) {
+                if(SettingToggleRow("enabled",japanese?"有効":"Enabled",
+                                    japanese?"現在の項目を使用":"Use this item",settingEnabled,false,"",o))
+                    settingEnabled=!settingEnabled;
+                ImGui::DragFloat(japanese?"強さ":"Strength",&position[0],.01f,0.f,10.f,"%.2f");
+            }
+            EndInspectorCard();ImGui::EndTable();
+        }
         editor::PreviewTileView tiles[5];
         const char* names[]={"Preview A","Loading","Empty","Offline","Error"};
         for(int i=0;i<5;++i){tiles[i].id=i+1;tiles[i].title=names[i];tiles[i].detail="Host-owned texture and state";tiles[i].actions=commands;tiles[i].disabled=disabled;}
@@ -140,4 +181,84 @@ void WorkflowPages::Show(int page,GalleryState& host) {
     if(notice)ToastRegion("notifications",{&toast,1},ImGui::GetTime(),scratch,dismiss,{},o);
     if(dismiss.count)notice=false;
 }
+void WorkflowPages::Workbench(GalleryState& host) {
+    ComponentOptions o{&host.theme,&host.animation};
+    const WorkspaceTab tabs[]={{101,"Compose","Arrange your workspace",IconId::Layers},{102,"Inspect","Edit selected items",IconId::Settings},{103,"Deliver","Prepare output",IconId::Export}};
+    if(auto request=WorkspaceTabs("workbench-tabs",tabs,workspace,&host.icons,o)) workspace=request;
+    Record(host,"workbench-tabs");
+    const bool wide=ImGui::GetContentRegionAvail().x>=850.f*std::max(1.f,ImGui::GetStyle().FontScaleDpi);
+    if(ImGui::BeginTable("workbench",wide?3:1,ImGuiTableFlags_SizingStretchProp)) {
+        if(wide) {
+            ImGui::TableSetupColumn("Hierarchy",ImGuiTableColumnFlags_WidthStretch,.8f);
+            ImGui::TableSetupColumn("Preview",ImGuiTableColumnFlags_WidthStretch,1.4f);
+            ImGui::TableSetupColumn("Inspector",ImGuiTableColumnFlags_WidthStretch,1.f);
+        }
+        ImGui::TableNextColumn();
+        bool add=false;
+        if(HierarchyGroupHeader("scene","Workspace",3,&hierarchyOpen,&host.icons,IconId::Layers,o,&add,"Add item")) {
+            const char* names[]={"Main image","Overlay","Reference"};
+            const IconId icons[]={IconId::Image,IconId::Layers,IconId::Camera};
+            for(int i=0;i<3;++i) {
+                const auto rowStart=ImGui::GetCursorScreenPos();
+                const float rowWidth=ImGui::GetContentRegionAvail().x;
+                const auto request=HierarchyRow(names[i],{static_cast<StableId>(i+1),names[i],i==0?"1920 x 1080":"Host-owned item",icons[i],0,selected==static_cast<StableId>(i+1),visible[i],locked[i]},&host.icons,o);
+                host.probes[std::string("workbench-row-")+std::to_string(i)]={rowStart,{rowStart.x+std::max(20.f,rowWidth-ImGui::GetFrameHeight()*4),rowStart.y+ImGui::GetFrameHeight()}};
+                switch(request) {
+                case HierarchyRowAction::Select:selected=i+1;break;
+                case HierarchyRowAction::ToggleVisibility:visible[i]=!visible[i];break;
+                case HierarchyRowAction::ToggleLock:locked[i]=!locked[i];break;
+                case HierarchyRowAction::More:workSettings=true;break;
+                default:break;
+                }
+            }
+        }
+        if(add) ++actions;
+        ImGui::TextDisabled("Requests are applied by this app.");
+        ImGui::TableNextColumn();
+        if(BeginInspectorCard("preview-card",workspace==103?"Delivery preview":"Live preview","A host texture in the shared workspace",&host.icons,IconId::Image,o)) {
+            const float width=ImGui::GetContentRegionAvail().x;
+            const auto view=editor::BeginImageViewport("workbench-preview",{host.texture,{512,288}},image,{width,width*9.f/16.f},host.theme,{},o);
+            auto* draw=ImGui::GetWindowDrawList();
+            draw->AddRectFilled(view.min,view.max,IM_COL32(22,35,41,255));
+            editor::DrawGrid(view,image.canvas,{32,32},host.theme);
+            const ImVec2 center{(view.min.x+view.max.x)*.5f+position[0]*8.f,(view.min.y+view.max.y)*.5f-position[1]*8.f};
+            const float radius=(view.max.y-view.min.y)*.30f;
+            const ImVec2 shape[]={{center.x,center.y-radius},{center.x+radius,center.y-radius*.35f},{center.x+radius*.70f,center.y+radius},{center.x-radius*.65f,center.y+radius*.68f},{center.x-radius,center.y-radius*.30f}};
+            if(visible[0]) {draw->AddConvexPolyFilled(shape,5,IM_COL32(169,231,203,255));draw->AddPolyline(shape,5,IM_COL32(230,255,244,255),ImDrawFlags_Closed,2.f);}
+            if(visible[1]) {draw->AddCircle(center,radius*1.35f,IM_COL32(144,185,255,255),64,2.f);draw->AddLine({center.x-radius*1.5f,center.y},{center.x+radius*1.5f,center.y},IM_COL32(144,185,255,140),1.f);}
+            draw->AddText({view.min.x+12,view.max.y-ImGui::GetFontSize()-12},IM_COL32(169,231,203,255),"SAMPLE COMPOSITION / HOST DRAW LIST");
+            editor::EndImageViewport();
+            Record(host,"workbench-preview");
+            ImGui::TextWrapped("Select an item, edit its settings, then apply. The library returns requests; the application owns the result.");
+            CompactActionRowOptions row;
+            row.statusText=actions?"Changes applied":"Ready to apply";row.statusKind=StatusKind::Success;
+            row.primaryLabel="Apply changes";row.components=o;
+            const auto request=CompactActionRow("workbench-actions",row);
+            Record(host,"workbench-actions");
+            if(request==CompactActionRowRequest::Primary) ++actions;
+            if(request==CompactActionRowRequest::Settings) workSettings=!workSettings;
+            ImGui::Text("Applied: %d",actions);
+        }
+        EndInspectorCard();
+        ImGui::TableNextColumn();
+        if(BeginInspectorCard("item-settings","Item settings","Changes update application values",&host.icons,IconId::Settings,o)) {
+            const auto toggleStart=ImGui::GetCursorScreenPos();
+            const float toggleRight=toggleStart.x+ImGui::GetContentRegionAvail().x;
+            if(SettingToggleRow("workbench-enabled","Enable item","Include this item in output",settingEnabled,false,"",o)) settingEnabled=!settingEnabled;
+            host.probes["workbench-enabled"]={{toggleRight-ImGui::GetFrameHeight()*2.4f,toggleStart.y},{toggleRight-ImGui::GetFrameHeight()*1.4f,toggleStart.y+ImGui::GetFrameHeight()}};
+            ImGui::SetNextItemWidth(-1);
+            DragVector3WithUnit("Position",position,"m",.05f,-10.f,10.f,"%.2f");
+            Record(host,"workbench-position");
+            const ChoiceItem choices[]={{701,"USB","Direct connection",IconId::Usb},{702,"Network","Remote source",IconId::Network},{703,"Mobile","Portable source",IconId::Smartphone},{704,"Camera","Unavailable in this demo",IconId::IndustrialCamera,{},true,"Connect a device in your host app"}};
+            if(auto request=ChoiceGroup("workbench-source","Input source",choices,choiceSource,{2,&host.icons},o)) choiceSource=request;
+            Record(host,"workbench-source");
+            if(workSettings) ImGui::TextWrapped("Host settings opened. No global service or persistence is introduced.");
+        }
+        EndInspectorCard();
+        ImGui::EndTable();
+    }
+    ImGui::SeparatorText("Integration route");
+    ImGui::TextWrapped("include/imkit/workflow.h + components.h | Guide: docs/components/workflow-components.md");
+}
+
 }

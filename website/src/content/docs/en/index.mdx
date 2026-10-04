@@ -3,17 +3,17 @@ title: ImKit
 description: Add host-owned C++20 UI modules to creative tools built with Dear ImGui.
 template: splash
 hero:
-  title: "Editing tools built<br />for your Dear ImGui app."
-  tagline: "C++20 library for themes, Node Editor, Timeline, and workflow controls. Keep your app’s context and data model while adding the surfaces you need."
+  title: "Modern UI.<br />Familiar workflow."
+  tagline: "Modernize an existing Dear ImGui app with a theme. Add workspace controls, 288 icons and 13 themes, using the frame and state you already own."
   image:
-    file: ../../../assets/captures/v3-node-editor-poster.png
-    alt: "Native capture of the ImKit v3.1 Node Editor Gallery with nodes, links, and previews."
+    file: ../../../assets/captures/v3-workspace-poster.png
+    alt: "Native capture of the ImKit v3.2 Node Editor Gallery with nodes, links, and previews."
   actions:
     - text: "Get started"
       link: ./getting-started/
       icon: right-arrow
       variant: primary
-    - text: "Explore Node Editor"
+    - text: "Explore the components"
       link: ./features/
       icon: open-book
       variant: secondary
@@ -21,10 +21,10 @@ hero:
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 import CapturePlayer from '../../../components/CapturePlayer.astro';
-import nodeCapture from '../../../../../docs/images/v3-node-editor.gif';
-import nodePoster from '../../../assets/captures/v3-node-editor-poster.png';
-import workflowCapture from '../../../../../docs/images/v3-workflow-progress.gif';
-import workflowPoster from '../../../assets/captures/v3-workflow-progress-poster.png';
+import nodeCapture from '../../../../../docs/images/v3-workspace.gif';
+import nodePoster from '../../../assets/captures/v3-workspace-poster.png';
+import workflowCapture from '../../../../../docs/images/v3-comparison.gif';
+import workflowPoster from '../../../assets/captures/v3-comparison-poster.png';
 import timelineCapture from '../../../../../docs/images/v3-timeline.gif';
 import timelinePoster from '../../../assets/captures/v3-timeline-poster.png';
 
@@ -40,13 +40,13 @@ ImKit does not create a context, backend, renderer, or font atlas. Call the modu
   <div><span class="point-index">03</span><strong>Work with native ImGui</strong><p>Combine public widgets with ordinary ImGui input in the frame your host begins.</p></div>
 </div>
 
-## Native Gallery captures
+## Try the 3.2 workspace
 
-These screens were recorded from the native backbuffers of the ImKit v3.1 Gallery and Node Editor companion. Each starts on a still native frame and loads the original capture only when you choose to play it.
+These screens were recorded from the native backbuffers of the ImKit v3.2 Gallery and Node Editor companion. Each starts on a still native frame and loads the original capture only when you choose to play it.
 
 <div class="capture-showcase">
-  <CapturePlayer source={nodeCapture} poster={nodePoster} alt="Native ImKit Node Editor capture connecting nodes and pins on a graph owned by the host." caption="Node Editor · dynamic sockets, previews, and minimap" playLabel="Play" stopLabel="Stop" playingLabel="Playing" pausedLabel="Still frame" reducedMotionLabel="Reduced motion is enabled; playback is manual" />
-  <CapturePlayer source={workflowCapture} poster={workflowPoster} alt="Native capture of workflow progress components in the ImKit Gallery." caption="Workflow · progress and status controls" playLabel="Play" stopLabel="Stop" playingLabel="Playing" pausedLabel="Still frame" reducedMotionLabel="Reduced motion is enabled; playback is manual" />
+  <CapturePlayer source={nodeCapture} poster={nodePoster} alt="Native ImKit 3.2 workspace, with requests applied to host-owned values." caption="New in 3.2 · tabs, hierarchy, settings, axes and choices" playLabel="Play" stopLabel="Stop" playingLabel="Playing" pausedLabel="Still frame" reducedMotionLabel="Reduced motion is enabled; playback is manual" />
+  <CapturePlayer source={workflowCapture} poster={workflowPoster} alt="Native comparison of identical ImGui widgets under default and ImKit styles." caption="Theme only · identical ImGui calls, shared values" playLabel="Play" stopLabel="Stop" playingLabel="Playing" pausedLabel="Still frame" reducedMotionLabel="Reduced motion is enabled; playback is manual" />
   <CapturePlayer source={timelineCapture} poster={timelinePoster} alt="Native capture of the Timeline editor in the ImKit Gallery." caption="Timeline · editing surface and host tools" playLabel="Play" stopLabel="Stop" playingLabel="Playing" pausedLabel="Still frame" reducedMotionLabel="Reduced motion is enabled; playback is manual" />
 </div>
 

@@ -1134,5 +1134,21 @@
   {
     "name": "Blackout",
     "category": "Display"
+  },
+  {
+    "name": "Usb",
+    "category": "Connectivity"
+  },
+  {
+    "name": "Network",
+    "category": "Connectivity"
+  },
+  {
+    "name": "Smartphone",
+    "category": "Connectivity"
+  },
+  {
+    "name": "IndustrialCamera",
+    "category": "Connectivity"
   }
 ]

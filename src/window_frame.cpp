@@ -159,12 +159,19 @@ WindowFrameResult DrawWindowFrame(const WindowFrameStyle& style, const WindowFra
     if (style.features.icon && layout.icon.Width() > 0) {
         const ImVec2 center{(layout.icon.min.x + layout.icon.max.x) * .5f,
                             (layout.icon.min.y + layout.icon.max.y) * .5f};
-        const float d = std::min(layout.icon.Width(), layout.icon.Height()) * .2f;
-        draw->AddRect({center.x - d, center.y - d}, {center.x + d, center.y + d}, Color(style.icon),
-                      2 * layout.scale, std::max(1.f, 1.5f * layout.scale), 0);
-        draw->AddLine({center.x - d * .55f, center.y + d * .1f},
-                      {center.x + d * .55f, center.y - d * .55f}, Color(style.icon),
-                      std::max(1.f, 1.5f * layout.scale));
+        if (content.iconTexture.GetTexID() != ImTextureID_Invalid) {
+            const float size = std::min(layout.icon.Width(), layout.icon.Height()) * .625f;
+            draw->AddImage(content.iconTexture,
+                           {center.x - size * .5f, center.y - size * .5f},
+                           {center.x + size * .5f, center.y + size * .5f});
+        } else {
+            const float d = std::min(layout.icon.Width(), layout.icon.Height()) * .2f;
+            draw->AddRect({center.x - d, center.y - d}, {center.x + d, center.y + d}, Color(style.icon),
+                          2 * layout.scale, std::max(1.f, 1.5f * layout.scale), 0);
+            draw->AddLine({center.x - d * .55f, center.y + d * .1f},
+                          {center.x + d * .55f, center.y - d * .55f}, Color(style.icon),
+                          std::max(1.f, 1.5f * layout.scale));
+        }
     }
     ImFont* font = ImGui::GetFont();
     const float fontSize = std::max(1.f, std::min(14.f * layout.scale, layout.titleBar.Height() - 4.f * layout.scale));

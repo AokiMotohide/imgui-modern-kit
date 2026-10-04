@@ -2,7 +2,7 @@
 title: "Dear ImGui native API"
 ---
 
-This index is generated from [`docs/api-inventory.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/api-inventory.json). It lists every entry marked `included: true` in that source: **365 signature rows** across the pinned Dear ImGui `1.93.0 WIP docking` revision (`19297`). Rows marked `included: false` are omitted, including host lifecycle and debug APIs such as `CreateContext`, `NewFrame`, and `Render`.
+This index is generated from [`docs/reference/api-inventory.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/api-inventory.json). It lists every entry marked `included: true` in that source: **365 signature rows** across the pinned Dear ImGui `1.93.0 WIP docking` revision (`19297`). Rows marked `included: false` are omitted, including host lifecycle and debug APIs such as `CreateContext`, `NewFrame`, and `Render`.
 
 `<imkit/native.h>` imports these Dear ImGui overloads into `namespace imkit` with their original defaults and Begin/End contracts. These are declaration listings, not standalone headers or call examples. Search the page for a function name or use the section headings to find its category. The row count does not claim that every overload received a separate interactive test; see the [integration guide](../../getting-started/) and [components guide](../../features/components/) for use, and the pinned public header for the exact implementation contract.
 

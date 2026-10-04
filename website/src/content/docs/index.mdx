@@ -3,10 +3,10 @@ title: ImKit
 description: Dear ImGuiを使った制作ツールに、アプリ側の管理を保ったまま使えるC++20のUI部品を追加します。
 template: splash
 hero:
-  title: "制作ツールに、<br />使いやすいUIを。"
-  tagline: "Dear ImGui向けのC++20ライブラリ。テーマ、Node Editor、TimelineやWorkflowの部品を、アプリ側のデータと描画に組み込めます。"
+  title: "既存のImGuiに、<br />使いたくなるUIを。"
+  tagline: "テーマの適用から始め、作業画面の部品、288アイコン、13テーマを追加できます。フレームと状態の管理は既存アプリに残ります。"
   image:
-    file: ../../assets/captures/v3-node-editor-poster.png
+    file: ../../assets/captures/v3-workspace-poster.png
     alt: "Node Editorの画面。ノードの接続、プレビュー、ミニマップを表示。"
   actions:
     - text: "導入ガイド"
@@ -21,10 +21,10 @@ hero:
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 import CapturePlayer from '../../components/CapturePlayer.astro';
-import nodeCapture from '../../../../docs/images/v3-node-editor.gif';
-import nodePoster from '../../assets/captures/v3-node-editor-poster.png';
-import workflowCapture from '../../../../docs/images/v3-workflow-progress.gif';
-import workflowPoster from '../../assets/captures/v3-workflow-progress-poster.png';
+import nodeCapture from '../../../../docs/images/v3-workspace.gif';
+import nodePoster from '../../assets/captures/v3-workspace-poster.png';
+import workflowCapture from '../../../../docs/images/v3-comparison.gif';
+import workflowPoster from '../../assets/captures/v3-comparison-poster.png';
 import timelineCapture from '../../../../docs/images/v3-timeline.gif';
 import timelinePoster from '../../assets/captures/v3-timeline-poster.png';
 
@@ -45,8 +45,8 @@ import timelinePoster from '../../assets/captures/v3-timeline-poster.png';
 同梱Galleryにある機能の操作映像です。最初は静止画で表示され、再生を選ぶと動きます。
 
 <div class="capture-showcase">
-  <CapturePlayer source={nodeCapture} poster={nodePoster} alt="ノードの接続、プレビュー、ミニマップを備えたNode Editor画面。" caption="Node Editor — ノードの接続、プレビュー、ミニマップ" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
-  <CapturePlayer source={workflowCapture} poster={workflowPoster} alt="進捗、状態、次の操作を示すWorkflow部品の画面。" caption="Workflow — 進捗と状態の表示" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
+  <CapturePlayer source={nodeCapture} poster={nodePoster} alt="作業タブ、階層、設定カード、三軸入力、選択部品を操作する3.2作業画面。" caption="New in 3.2 — タブ、階層、設定、三軸入力" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
+  <CapturePlayer source={workflowCapture} poster={workflowPoster} alt="同じImGui呼び出しを標準スタイルとImKitテーマで比較する画面。" caption="Theme only — 同じ呼び出しと同じ値" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
   <CapturePlayer source={timelineCapture} poster={timelinePoster} alt="クリップ、区間、編集操作を表示するTimeline画面。" caption="Timeline — クリップと編集操作" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
 </div>
 

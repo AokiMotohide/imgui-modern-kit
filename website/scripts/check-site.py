@@ -42,8 +42,8 @@ class PageParser(HTMLParser):
             self.main_count += 1
         if tag == "a" and values.get("href"):
             self.links.append(("href", values["href"]))
-        if tag in {"img", "script", "link", "source"}:
-            for attr in ("src", "href"):
+        if tag in {"img", "script", "link", "source", "video"}:
+            for attr in ("src", "href", "poster"):
                 if values.get(attr):
                     self.links.append((attr, values[attr]))
         if tag == "img":
@@ -137,7 +137,7 @@ def main() -> None:
                 if fragment not in target_parser.ids:
                     errors.append(f"{relative}: missing fragment {value} -> #{fragment}")
 
-    native_entries = json.loads((ROOT.parent / "docs/api-inventory.json").read_text(encoding="utf-8"))
+    native_entries = json.loads((ROOT.parent / "docs/reference/api-inventory.json").read_text(encoding="utf-8"))
     included = [entry for entry in native_entries if entry.get("included") is True]
     excluded = [entry for entry in native_entries if entry.get("included") is False]
     for locale_prefix in ("", "en/"):
@@ -160,7 +160,7 @@ def main() -> None:
         if leaked:
             errors.append(f"{locale_prefix or 'ja/'}api/native: excluded API signatures appear in listing; sample {sorted(leaked)[:2]}")
 
-    node_entries = json.loads((ROOT.parent / "docs/node-editor-api.json").read_text(encoding="utf-8"))
+    node_entries = json.loads((ROOT.parent / "docs/reference/node-editor-api.json").read_text(encoding="utf-8"))
     for locale_prefix in ("", "en/"):
         node_path = DIST / f"{locale_prefix}api/node-editor/index.html"
         parser = parsed_pages.get(node_path)

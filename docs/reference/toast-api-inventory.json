@@ -1,0 +1,16 @@
+{
+  "header": "imkit/toast.h",
+  "ownership": "Host-owned state and borrowed views; request-only operations; no global registry",
+  "types": [
+    "ToastPosition", "ToastPhase", "ToastEventKind", "ToastView", "ToastEvent",
+    "ToastEventBuffer", "ToastViewportOptions", "ToastViewportState", "ToastViewportState::Entry"
+  ],
+  "signatures": [
+    "bool ToastEventBuffer::Push(ToastEvent event)",
+    "void ToastViewportState::Reset()",
+    "void UpdateToastViewport(std::span<const ToastView> items, ToastViewportState& state, double now, std::size_t maximum, ToastEventBuffer& events, std::span<const StableId> paused={})",
+    "void ToastViewport(const char* id, std::span<const ToastView> items, ToastViewportState& state, double now, ToastEventBuffer& events, ToastViewportOptions layout={}, ComponentOptions options={})"
+  ],
+  "fixtures": ["tests/toast_api_compile.cpp", "tests/toast.cpp", "tests/consumer/CMakeLists.txt"],
+  "defaults": {"position": "TopRight", "maximum": 4, "stateCapacity": 64, "successInfoSeconds": 5, "warningErrorLoading": "persistent"}
+}

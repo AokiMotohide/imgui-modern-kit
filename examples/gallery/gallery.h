@@ -8,6 +8,7 @@
 #include "editor_workspaces.h"
 #include "design_pages.h"
 #include "workflow_pages.h"
+#include "toast_page.h"
 namespace imkit::gallery {
 struct Probe {
     ImVec2 min, max;
@@ -19,7 +20,10 @@ struct Probe {
 // value, so the difference remains visual rather than a comparison of two
 // independent application models.
 struct ComparisonState {
-    bool open = true;
+    bool open = false;
+    int mode = 0;
+    bool disabled = false;
+    bool focusDefault = false;
     bool enabled = true;
     float level = .64f;
     int quality = 1;
@@ -29,6 +33,7 @@ struct ComparisonState {
 struct GalleryState {
     DesignPages design;
     WorkflowPages workflow;
+    ToastPage toasts;
     EditorWorkspaces editors;
     Theme theme = MakeTheme(ThemePreset::PrecisionLight);
     FontSet fonts{};

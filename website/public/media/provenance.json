@@ -1,0 +1,14 @@
+{
+  "version": "3.2.0",
+  "license": "MIT; repository font/icon notices retained",
+  "music": "Original 120 BPM D-minor synthesis; seed 320; no recordings or samples",
+  "visuals": "Native Gallery and Node Editor clips plus original motion graphics",
+  "duration_seconds": 60,
+  "video": "1920x1080, 60 fps, H.264",
+  "audio": "AAC stereo, 48000 Hz, -16 LUFS, -1.78 dBTP",
+  "reproduce": [
+    "tools/capture_v32_media.py",
+    "tools/render_v32_film.py"
+  ],
+  "validate": "tools/check_v32_media.py"
+}

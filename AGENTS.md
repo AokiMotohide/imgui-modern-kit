@@ -27,12 +27,14 @@
 
 ## ビルドと検証
 
-通常は構成済み `build/windows-debug/` のDebug増分ビルドを使う。
+正規のビルド親は `C:\aokiDev\imgui-modern-kit\build` 一つに固定する。`tools/Invoke-SharedBuild.ps1` は絶対パスの `C:\aokiDev\tools\build-coordination\Invoke-SharedBuild.ps1` を呼び、同じ場所の `projects.json` に登録した親をキーとする排他ロックを使う。構成・ビルド・清掃・ソース統合は主担当が同じロックで直列化し、競合時は待機する。親の中でも日時・セッション・検証別の `build-*` や `target-*` を新設しない。worktreeでは静的確認だけを行い、変更を正規チェックアウトへ統合してから共有出力で検証する。
 
-```powershell
-cmake --build --preset windows-debug --target <imkit|対象テスト|imkit_gallery> --parallel
-ctest --test-dir build/windows-debug -C Debug -R "<対象テスト>" --output-on-failure
-```
+通常は主チェックアウト C:\aokiDev\imgui-modern-kit の構成済み build/windows-debug/ を使う。worktree内から直接CMakeを実行するとsourceDir配下に別build treeができるため、共有ランチャーで主チェックアウトのbuildを使う。
+
+    & 'C:\aokiDev\imgui-modern-kit\tools\Invoke-SharedBuild.ps1' -Target '<imkit|対象テスト|imkit_gallery>'
+    & 'C:\aokiDev\imgui-modern-kit\tools\Invoke-SharedBuild.ps1' -Tests -TestRegex '<対象テスト>'
+
+構成が必要な場合はConfigureを指定する。Windows Arm64は同じ主チェックアウトの標準preset windows-arm64を-Preset windows-arm64で指定する。build出力は登録済みのbuild/windows-debugまたはbuild/windows-arm64に限り、セッション名・検証名のbuild treeを作らない。
 
 - 変更した最小targetと直接回帰だけを1回確認する。成功後のno-op再ビルド、同一テスト、全テスト、`ALL_BUILD`、`clean`、`Rebuild` は追加しない。
 - 再構成は新規build、CMake・依存変更、構成不整合時だけ行う。Release、install、package、SDK consumerは変更範囲または依頼が必要とする場合だけ実行する。

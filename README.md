@@ -1,130 +1,167 @@
 # ImKit
 
-[日本語](README.ja.md) · [Documentation index](docs/README.md) · [Documentation catalog](docs/documentation-catalog.md) · [Examples and recipes](docs/examples-recipes.md) · [Getting started](docs/getting-started.md) · [Gallery](docs/gallery.md) · [Node Editor](docs/node-editor.md) · [v3 migration](docs/migration-v3.md) · [Releases](https://github.com/AokiMotohide/imgui-modern-kit/releases)
+**Public manual:** [English](https://aokimotohide.github.io/imgui-modern-kit/en/) · [日本語](https://aokimotohide.github.io/imgui-modern-kit/) · [API reference](https://aokimotohide.github.io/imgui-modern-kit/en/api/)
 
-**Online manual:** [English](https://aokimotohide.github.io/imgui-modern-kit/en/) · [日本語](https://aokimotohide.github.io/imgui-modern-kit/) · [Features](https://aokimotohide.github.io/imgui-modern-kit/en/features/) · [API reference](https://aokimotohide.github.io/imgui-modern-kit/en/api/) · [Documentation site maintenance](website/README.md)
+**Build polished native tools with Dear ImGui.**
 
-**Build modern native tools faster.** ImKit v3.1.0 is a C++20 static UI library for Dear ImGui. It provides themes, production controls, workflow and editor surfaces, a host-owned Node Editor, generated icons, native accessibility adapters, and optional OpenGL/Metal preview helpers—without taking ownership of your application. This release adds task-oriented bilingual documentation, module recipes and a clearer Gallery learning path.
+ImKit is a C++20 static library that adds consistent themes and reusable controls to an existing Dear ImGui application. Start with the native Gallery, then integrate only the modules your tool needs.
 
-MIT licensed · Windows x64/Arm64 · macOS arm64/x86_64/Universal 2 · Dear ImGui 1.93.0 WIP docking
+[日本語](README.ja.md) · [Download the latest release](https://github.com/AokiMotohide/imgui-modern-kit/releases/latest) · [Documentation](docs/README.md) · [Releases](https://github.com/AokiMotohide/imgui-modern-kit/releases)
 
-## Try it in 30 seconds
+[![ImKit 3.2 — Modern UI. Familiar workflow.](website/public/media/imkit-3.2-poster.jpg)](https://aokimotohide.github.io/imgui-modern-kit/en/#film)
 
-Download the package for your machine from [ImKit v3.1.0](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.1.0), extract it, and run `bin/imkit_gallery.exe` or `imkit_gallery.app`. The dedicated Node Editor Gallery is included.
+**[Watch the 60-second film](https://aokimotohide.github.io/imgui-modern-kit/en/#film)** — English motion graphics, real Gallery interaction and original music.
 
-Or build the native Gallery:
+<img src="docs/images/v3-overview.gif" alt="The ImKit Gallery routes from its start page into live examples" width="960">
 
-```powershell
-cmake --preset windows-debug
-cmake --build --preset windows-debug --target imkit_gallery --parallel
-./build/windows-debug/catalog/Debug/imkit_gallery.exe
-```
+## Try the Gallery
 
-Add ImKit to an existing Dear ImGui application with one target and one theme scope:
+Download the [v3.2.0 package for your platform](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.2.0), extract it, and run:
 
-```cmake
-set(IMKIT_IMGUI_TARGET host_imgui) # your matching Dear ImGui target
-add_subdirectory(external/imgui-modern-kit)
-target_link_libraries(your_app PRIVATE imkit::imkit)
-```
+- Windows: bin/imkit_gallery.exe
+- macOS: imkit_gallery.app
 
-```cpp
-#include <imkit/imkit.h>
+The package also includes a dedicated Node Editor Gallery. The Gallery uses the same library and public components that an application links; its examples are not demo-only replacements.
 
-auto theme = imkit::MakeTheme(imkit::ThemePreset::Ocean);
+To build the Gallery from source on Windows:
 
-// Inside your existing Dear ImGui frame:
-imkit::ThemeScope themeScope(theme);
-if (imkit::Begin("Display")) {
-    static bool enabled = true;
-    imkit::Toggle("Enabled", &enabled);
-    imkit::ActionButton("Apply", imkit::ActionVariant::Primary);
-}
-imkit::End(); // always pair with Begin
-```
+    cmake --preset windows-debug
+    cmake --build --preset windows-debug --target imkit_gallery --parallel
+    ./build/windows-debug/catalog/Debug/imkit_gallery.exe
 
-Your context, backends, renderer, font atlas, values and frame loop stay exactly where they are.
+## Add ImKit to an existing app
 
-## See what v3 can do
+Point ImKit at the Dear ImGui target your application already uses:
 
-The bilingual [documentation catalog](docs/documentation-catalog.md) maps each page to its audience, API, Gallery route, source and package path. [Examples and recipes](docs/examples-recipes.md) connect module targets and frame calls to interactive Gallery specimens. The Start screen links these learning routes directly.
+    set(IMKIT_IMGUI_TARGET host_imgui)
+    add_subdirectory(external/imgui-modern-kit)
+    target_link_libraries(your_app PRIVATE imkit::imkit)
 
-Each animation is a 960×540 capture of the real native Gallery or Node Editor companion backbuffer—not a redraw or a third-party product recording. [Watch the complete native showcase (MP4)](https://github.com/AokiMotohide/imgui-modern-kit/releases/download/v3.1.0/imkit-v3.1.0-showcase.mp4).
+Apply a theme before starting the ImGui frame, then draw controls inside a normal window:
 
-### V3 overview
+    #include <imkit/imkit.h>
 
-![ImKit v3 native Gallery overview](docs/images/v3-overview.gif)
+    auto theme = imkit::MakeTheme(imkit::ThemePreset::Ocean);
+    imkit::ApplyTheme(theme, 1.0f); // before ImGui::NewFrame()
 
-The Start screen presents four task routes and a link to the recipe map, then leads into the live comparison, components, workflow and Timeline specimens.
+    if (imkit::Begin("Display")) {
+        static bool enabled = true;
+        imkit::Toggle("Enabled", &enabled);
+        imkit::ActionButton("Apply", imkit::ActionVariant::Primary);
+    }
+    imkit::End();
 
-### Host-owned Node Editor
+Your application keeps its Dear ImGui context, backends, renderer, fonts, data, undo history, persistence, and workers. ImKit draws into the current context and provides reusable UI.
 
-![ImKit v3 Node Editor with dynamic sockets, links, inline values, previews and minimap](docs/images/v3-node-editor.gif)
+## What you can build
 
-Typed connections, dynamic sockets, inline values, pan/zoom, minimap, search, layout, previews, grouping and edit requests are independent of application data. The companion is a Material Graph GUI mock; rendering and evaluation remain host responsibilities.
+- **Consistent controls and themes** — buttons, toggles, selection states, search, icons, and semantic palettes.
+- **Workflow surfaces** — task navigation, notifications, progress, and host-composed application shells.
+- **Editor building blocks** — timelines, inspectors, curves, hierarchy, preview monitors, and an optional Node Editor.
+- **Native integration points** — optional OpenGL or Metal preview paths, WindowFrame adapters, and accessibility bridges.
 
-### Workflow and circular progress
+Choose the smallest CMake target that provides the components you need. The [module recipes](docs/getting-started/examples-recipes.md) show the target, public header, Gallery page, and frame placement for each area.
 
-![ImKit workflow feedback and animated circular progress](docs/images/v3-workflow-progress.gif)
+## See the components in action
 
-Compose filters, notifications, step navigation, dialogs, states, responsive side panels and determinate/unavailable progress without adopting an application framework.
+### Gallery overview
 
-### Timeline interaction
+<img src="docs/images/v3-overview.gif" alt="Gallery start page and routes to live examples" width="960">
 
-![ImKit timeline interaction and undo](docs/images/v3-timeline.gif)
+Start with a task, open its live specimen, and follow the route to the integration guide.
 
-Optional editor modules cover scalable timeline, external-drop previews, host toolbars, Inspector, canvas, gizmo, curves, hierarchy and host-owned Undo/Redo contracts.
+### Components
 
-### Themes and live comparison
+<img src="docs/images/v3-components.gif" alt="ImKit buttons, toggles, selection controls, and input components" width="960">
 
-![ImKit themes and live Default Dear ImGui comparison](docs/images/v3-theme-comparison.gif)
+Explore common controls with enabled, toggled, and mixed-selection states.
 
-Twelve stable theme presets, semantic colors, density and contrast modes apply consistently while preserving surrounding Dear ImGui style and behavior.
+### Toast notifications
 
-## Choose only the modules you need
+<img src="docs/images/v3-toasts.gif" alt="Native toast transitioning from loading to success" width="960">
 
-| CMake target | Adds | Host still owns |
-|---|---|---|
-| `imkit::imkit` | themes, controls, icons, workflow and shell components | context, frame loop, values, fonts |
-| `imkit::node_editor` | canvas, sockets, links, layout, minimap, search and requests | graph model, validation, history, evaluation |
-| `imkit::editor_core` | canvas, selection and shared editor contracts | documents and commands |
-| `imkit::video`, `imkit::cg`, `imkit::editor_suite` | timeline, Inspector, hierarchy, curves and editing surfaces | media/scene data, Undo, persistence |
-| `imkit::preview_opengl3` | explicitly constructed OpenGL preview renderer | GL context and function table |
-| `imkit::preview_metal` | explicitly constructed Metal preview renderer | device, command buffer and texture lifetime |
-| platform WindowFrame/accessibility targets | native frame and semantic bridges | native window and published semantic tree |
+Choose a toast position, pause expiry while it is being read, and return action requests to the host application.
 
-The Gallery depends on GLFW and a renderer backend only as a development executable. Linking `imkit::imkit` does not add them to your application.
+### Production icon artwork · 238 PNG masters
 
-## The ownership boundary is the feature
+**238 transparent PNG artwork masters · 16 image-backed categories.** The collection includes `Projector`, `Projector3D`, `ProjectionSurface`, `Camera3D`, `Frustum`, and `Lens`, alongside 91 editor icons, 10 production controls, 10 3D objects, and 9 lighting icons.
 
-ImKit never creates or owns the Dear ImGui context, backend, renderer, platform windows, font atlas, textures, edited data, Undo history, persistence or workers. Public Dear ImGui IDs, focus, navigation, callbacks, clipping and text editing remain intact. This keeps ImKit reusable across tools instead of turning it into a competing framework.
+<img src="docs/images/v3-icon-artwork.gif" alt="Large tiled projector, projection, lighting, object, production, and editor icon artwork with a moving highlight" width="960">
 
-## Compatibility and validation
+The animated board highlights the detailed source artwork at a readable size. Browse [all 238 source PNGs](assets/icons/originals/) or the [named 288-icon catalogue](assets/icons/catalog.json); the complete runtime catalogue appears below.
 
-The v3 ABI baseline is Dear ImGui docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be` (1.93.0 WIP). CI builds, tests and packages Windows x64/Arm64 and macOS arm64/x86_64, and builds a Universal 2 package. The macOS arm64 gate launches the Metal Gallery smoke path. Packages are unsigned and not notarized when signing secrets are unavailable.
+### Runtime icon catalogue · 288 presets
 
-Automated tests do not establish physical pointer/keyboard, native IME, real screen-reader, mixed-DPI, external-host or notarization acceptance. See [validation scope](docs/validation.md) and [dependencies](docs/dependencies.md) before expanding those claims.
+The C++ catalogue contains **288 named icons in 19 categories**, with seven atlas sizes from 12 to 64 px (2,016 icon-size combinations). Search by name or category, select a tile, and copy its matching C++ call.
+
+<img src="docs/images/v3-icons.gif" alt="ImKit's searchable icon catalogue, with categories, size choices, and a selected icon preview" width="960">
+
+The Gallery exposes every preset in a searchable tile grid and previews the selected icon with its C++ call.
+
+### Live comparison
+
+<img src="docs/images/v3-comparison.gif" alt="Default Dear ImGui and ImKit controls updating shared values" width="960">
+
+Use Theme only for identical ImGui calls, or Components for optional ImKit controls. Both sides update the same host-owned values.
+
+### Preview placement and states
+
+<img src="docs/images/v3-preview-contract.gif" alt="Fit, Fill, and Stretch across Ready, Loading, Empty, Offline, and Error preview states" width="960">
+
+See how Fit, Fill, and Stretch present Ready, Loading, Empty, Offline, and Error states.
+
+### Workflow and progress
+
+<img src="docs/images/v3-workflow-progress.gif" alt="Workflow navigation, feedback controls, and progress" width="960">
+
+Compose task navigation, notifications, dialogs, and progress without handing application state to the library.
+
+### Timeline
+
+<img src="docs/images/v3-timeline.gif" alt="Timeline editing interaction and undo" width="960">
+
+Inspect timeline controls and editing feedback while the host retains the timeline data and history.
+
+### Node Editor
+
+<img src="docs/images/v3-node-editor.gif" alt="Node Editor with links, dynamic sockets, minimap, and previews" width="960">
+
+Use the optional graph canvas and edit requests with your own graph model, validation, evaluation, and undo.
+
+### Themes
+
+<img src="docs/images/v3-theme-comparison.gif" alt="ImKit themes and comparison with default Dear ImGui" width="960">
+
+Compare named themes and palette choices in the native Gallery.
+
+## New in 3.2
+
+<img src="docs/images/v3-workspace.gif" alt="Tabs, hierarchy actions, inspector settings, three-axis editing and choices" width="960">
+
+Workspace tabs, hierarchy actions, inspector cards, three-axis inputs, titled choices, status/action rows and Loading → Success toasts use the same immediate-mode workflow. Explore 288 icons and 13 themes. [Declarations, defaults and ownership](docs/reference/v3.2-api.md).
+
+Recompile consumers and ImKit static libraries for the extended `WindowFrameContent` structure (`iconTexture`). The Dear ImGui revision is unchanged.
+
+## Compatibility
+
+The v3 ABI targets Dear ImGui 1.93.0 WIP docking commit 367b2c24f399988ddafc0bb4628da0106bcc09be. Release packages are available for Windows x64 and Arm64, macOS arm64 and x86_64, and macOS Universal 2.
+
+The macOS packages are unsigned and not notarized. Automated checks do not establish physical input, native IME, screen-reader, mixed-DPI, or third-party host acceptance. See [validation scope](docs/reference/validation.md) and [dependencies](docs/architecture/dependencies.md).
 
 ## Documentation
 
-| Need | English | 日本語 |
-|---|---|---|
-| Browse all documentation by task | [Documentation index](docs/README.md) | [文書一覧](docs/README.ja.md) |
-| Map audiences, APIs, Gallery routes and source | [Documentation catalog](docs/documentation-catalog.md) | [文書カタログ](docs/documentation-catalog.ja.md) |
-| Find a module recipe and its frame call | [Examples and recipes](docs/examples-recipes.md) | [実例とrecipe](docs/examples-recipes.ja.md) |
-| Install and first frame | [Getting started](docs/getting-started.md) | [導入ガイド](docs/getting-started.ja.md) |
-| Native Gallery and capture | [Gallery](docs/gallery.md) | [Galleryガイド](docs/gallery.ja.md) |
-| Components and recipes | [Guide](docs/guide.md) | [ガイド](docs/guide.ja.md) |
-| Node Editor integration | [Node Editor](docs/node-editor.md) | [Node Editor](docs/node-editor.ja.md) |
-| v3 breaking changes | [Migration](docs/migration-v3.md) | [Migration](docs/migration-v3.md) |
-| Ownership and packaging | [Architecture](docs/architecture.md) · [Dependencies](docs/dependencies.md) | same canonical documents |
-| Verified and unverified scope | [Validation](docs/validation.md) | [Validation](docs/validation.md) |
-| Build or update the docs website | [Website maintenance](website/README.md) | [Website maintenance](website/README.md) |
+- [Documentation index](docs/README.md)
+- [Getting started](docs/getting-started/getting-started.md)
+- [Components and usage](docs/getting-started/guide.md)
+- [Module examples and recipes](docs/getting-started/examples-recipes.md)
+- [Gallery guide](docs/getting-started/gallery.md)
+- [Node Editor integration](docs/components/node-editor.md)
+- [v3 migration guide](docs/reference/migration-v3.md)
+- [Architecture and ownership](docs/architecture/architecture.md)
+- [Changelog](CHANGELOG.md)
 
-See [CHANGELOG.md](CHANGELOG.md) for every v3 addition and migration point.
+日本語の文書は[日本語README](README.ja.md)から参照できます。
 
-## License and provenance
+## License
 
-ImKit is developed with deep respect for [Dear ImGui](https://github.com/ocornut/imgui), and for the clarity, portability and immediate-mode philosophy established by Omar Cornut and its contributors. ImKit is an independent extension layer—not a fork or replacement—and aims to preserve the behavior and ownership boundaries that make Dear ImGui effective.
-
-ImKit is [MIT licensed](LICENSE). Dear ImGui, GLFW and optional font assets retain their own licenses; exact revisions, hashes and distribution notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Repository GIFs and the release MP4 contain only native ImKit Gallery/companion backbuffers.
+ImKit is MIT licensed. Dear ImGui, GLFW, and optional font assets retain their own licenses. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for revisions, hashes, and notices.

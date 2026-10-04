@@ -388,3 +388,10 @@ body {
 		transition-duration: 0.01ms !important;
 	}
 }
+
+.imkit-film { overflow: hidden; border: 1px solid var(--sl-color-gray-5); border-radius: 1rem; background: #162329; box-shadow: 0 18px 70px #16232924; }
+.imkit-film video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
+.imkit-film p { margin: 0; padding: .8rem 1rem; color: #a9e7cb; font-size: .9rem; line-height: 1.5; }
+
+/* Keep browser media overlays from expanding the mobile document. */
+html { overflow-x: clip; }

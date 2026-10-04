@@ -42,7 +42,7 @@ export default defineConfig({
 						{
 							label: 'UI部品とテーマ',
 							translations: { en: 'Controls and themes' },
-							items: [{ slug: 'features/components' }, { slug: 'features/themes' }, { slug: 'features/design-system' }],
+							items: [{ slug: 'features/components' }, { slug: 'features/themes' }, { slug: 'features/toasts' }, { slug: 'features/design-system' }],
 						},
 						{
 							label: 'Workflowと編集画面',
@@ -72,7 +72,7 @@ export default defineConfig({
 						{ slug: 'api' },
 						{ label: 'BeginEditor', translations: { en: 'BeginEditor' }, slug: 'api/node-editor/begin-editor' },
 						{ slug: 'api/node-editor' },
-						{ slug: 'api/native' },
+						{ slug: 'api/native' }, { slug: 'api/v3-2' },
 						{ label: 'Design-system API', translations: { en: 'Design-system API' }, slug: 'api/design-system' },
 						{ slug: 'api/editor-suite' },
 						{ slug: 'api/window-frame' },

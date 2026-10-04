@@ -7,9 +7,10 @@
 #include <cstddef>
 
 namespace imkit {
-enum class ActionVariant { Primary, Secondary, Ghost, Destructive };
+enum class ActionVariant { Primary, Secondary, Ghost, Destructive, SubtleDestructive };
 enum class CheckState { Unchecked, Checked, Mixed };
 enum class StatusKind { Neutral, Success, Warning, Error };
+enum class CompactActionRowRequest { None, Primary, Settings };
 struct ComponentOptions {
     const Theme *theme = nullptr; // Optional semantic overrides, never retained.
     AnimationState *animation = nullptr;
@@ -42,10 +43,30 @@ bool InputScalarWithUnit(const char *label, ImGuiDataType type, void *value, con
 bool DragFloatWithUnit(const char *label, float *value, const char *unit, float speed = 1, float minimum = 0,
                        float maximum = 0, const char *format = "%.3f", ImGuiSliderFlags flags = 0);
 bool InputVector3WithUnit(const char *label, float value[3], const char *unit, const char *format = "%.3f");
+// Three native drag fields with stable per-axis IDs. Narrow widths stack the axes.
+bool DragVector3WithUnit(const char *label, float value[3], const char *unit, float speed = 1.f,
+                         float minimum = 0.f, float maximum = 0.f, const char *format = "%.3f",
+                         ImGuiSliderFlags flags = 0);
 // Begin/End pair; editor is placed in second column. End only when Begin is true.
 bool BeginSettingRow(const char *id, const char *label, float labelWidth = 140);
 void EndSettingRow();
 void StatusBadge(const char *text, StatusKind kind = StatusKind::Neutral, const Theme *theme = nullptr);
+struct CompactActionRowOptions {
+    const char *statusText = nullptr;
+    StatusKind statusKind = StatusKind::Neutral;
+    const char *primaryLabel = nullptr;
+    ActionVariant primaryVariant = ActionVariant::Primary;
+    const char *settingsLabel = "Settings";
+    ActionVariant settingsVariant = ActionVariant::Ghost;
+    bool primaryEnabled = true;
+    bool settingsEnabled = true;
+    const char *primaryDisabledReason = nullptr;
+    const char *settingsDisabledReason = nullptr;
+    ComponentOptions components{};
+};
+// Draws host-owned status and actions. Returns a request; it never changes host state.
+// The row wraps its actions when the available width is too narrow for one line.
+CompactActionRowRequest CompactActionRow(const char *id, const CompactActionRowOptions &options);
 struct Notification {
     const char *id;
     const char *text;

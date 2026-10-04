@@ -5,7 +5,7 @@ description: Dear ImGui hostへのsource integrationと、最初のImKit frame�
 
 ## 必要環境
 
-ImKit v3.1.0はC++20と、Dear ImGui `1.93.0 WIP` docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be`を前提にします。CMakeは3.20以降です。配布packageはWindows x64／Arm64＋MSVCとmacOS 15以降のarm64／x86_64＋Apple Clang向けです。
+ImKit v3.2.0はC++20と、Dear ImGui `1.93.0 WIP` docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be`を前提にします。CMakeは3.20以降です。配布packageはWindows x64／Arm64＋MSVCとmacOS 15以降のarm64／x86_64＋Apple Clang向けです。
 
 Dear ImGuiのContext、backend、renderer、font atlas、frame loopはホストが用意します。ImKitはそのContextで呼び出すstatic libraryです。
 
@@ -68,7 +68,7 @@ void DrawSettingsFrame() {
 set(IMKIT_IMGUI_TARGET host_imgui)
 set(CMAKE_PREFIX_PATH "path/to/imkit-sdk" ${CMAKE_PREFIX_PATH})
 set(IMKIT_SDK_ABI_CONFIRMED ON)
-find_package(imkit 3.1 CONFIG REQUIRED)
+find_package(imkit 3.2 CONFIG REQUIRED)
 target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
 

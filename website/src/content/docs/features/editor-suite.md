@@ -44,44 +44,79 @@ void DrawTimeline(const imkit::video::TimelineProvider& provider,
 
 ---
 
-Editor Suiteは汎用的な編集UIです。media decoder/player、色管理engine、UV unwrapper、simulation、PBR renderer、file loaderではありません。
+ImKit のエディタスイートは、固定リビジョンの Dear ImGui 1.93.0 WIP docking 上で動作する、プロフェッショナルな制作ツール（DCCツール、動画編集ソフト、シーケンサ等）向けの高機能UIコンポーネント群です。
 
-## moduleとtarget
+クリップのフェードやトランジション等の個別操作仕様は [タイムライン編集](../timeline/) を参照してください。
 
-| module | header | CMake target |
+---
+
+## 提供モジュール一覧 (Modules)
+
+| CMake ターゲット | 公開ヘッダー | 主な役割とコンポーネント |
 |---|---|---|
-| Editor Core | `imkit/editor_core.h` | `imkit::editor_core` |
-| Video | `imkit/video.h` | `imkit::video` |
-| CG | `imkit/cg.h`, `imkit/preview.h` | `imkit::cg` |
-| Editor Suite集約 | 上記module header | `imkit::editor_suite` |
-| OpenGL3 preview | `imkit/preview.h` | `imkit::preview_opengl3`（任意） |
+| `imkit::imkit` | `<imkit/imkit.h>` | 基本ウィジェット、Precision Layers テーマ、アイコン |
+| `imkit::editor_core` | `<imkit/editor_core.h>` | 無限キャンバス、タイムルーラー、カーブエディタ、プロパティインスペクタ |
+| `imkit::video` | `<imkit/video.h>` | マルチトラックタイムライン、モニタオーバーレイ、オーディオミキサー、カラーカーブ |
+| `imkit::cg` | `<imkit/cg.h>`<br>`<imkit/preview.h>` | 3Dビューポートギズモ、シーングラフ階層、アニメーションドープシート、UVエディタ |
+| `imkit::editor_suite` | 上記すべて | Core + Video + CG の全機能を包括（OpenGL は任意） |
+| `imkit::preview_opengl3` | `<imkit/preview.h>` | ホスト側の OpenGL 3.3 コンテキストを借用した GPU オフスクリーンプレビュー |
 
-`imkit::editor_suite`はCore・Video・CGをまとめますが、OpenGLは必須ではありません。
+---
 
-## 所有権と時間
+## 所有モデルとイベント処理 (Ownership and events)
 
-Context、backend、font、texture、元data、provider、UI状態、selection、Undo、保存、workerはホスト所有です。spanとUTF-8 labelは各呼出し期間だけ借用します。StableIdは一意かつ非zeroの64bit値です。Tickは毎秒705600000単位のint64値、FrameRateは有理数で、負のpre-rollとdrop-frame timecodeに対応します。
+- **ホストがすべてを所有**: Dear ImGui コンテキスト、バックエンド、フォント、テクスチャ、プロジェクト生データ、Provider、UI状態、選択セット、Undo履歴、ワーカースレッドはすべてホストアプリケーションが所有します。
+- **時間の単位（Tick）**: 時間は 1秒あたり 705,600,000 Tick（`int64_t`）の有理数 `FrameRate` で高精度に管理され、29.97 / 59.94 fps のドロップフレームタイムコードや負のプリロールに対応します。
+- **プレビューコンポーネントの責務**: レイアウト計算、オーバーレイ描画、入力検出、操作リクエストの返却のみを担当します。動画のデコード・再生、3Dメッシュの評価、ファイル保存などは行いません。
 
-部品が返す編集eventをホストが検証・適用します。連続操作ではBegin/Update/Commit/Cancelとrevisionを扱い、buffer不足を明示的に処理します。selection、model、衝突policy、Undo、永続化はライブラリへ移りません。
+詳細な型定義やイベント署名は [エディタAPI](../../api/editor-suite/) を参照してください。
 
-## Editor controls
+---
 
-Coreはcanvas、ruler、selection、property、asset表示を提供します。Videoはtrack/clip編集UI、Monitor、transitionとscope表示を持ちます。CGは階層、gizmo、animation、UVとviewport操作を提供します。入力制約、provider query、request/event storageの条件は[Editor API](../../api/editor-suite/)と各公開headerに従います。
+## 主なUI機能 (Editor controls)
 
-Timelineでは選択全体のoffscreen/linked対象もproviderで解決し、移動可能性とlockを一括判定します。衝突判定とUndo適用はホストが行います。[Timeline guide](../timeline/)に具体的な操作を記載しています。
+### 1. Editor Core
+- 無限キャンバス（パン、ズーム、矩形/投げなわ選択）。
+- タイムルーラー、マーカー編集、トランスポートバー。
+- ベジェハンドル付きマルチキーフレームカーブエディタ。
+- アセットブラウザ（グリッド/リスト表示、インラインリネーム、検索）。
 
-## Previewの寿命
+### 2. Video Editor
+- マルチトラックタイムライン（可変高トラック、リップル削除、スリップ/スライド編集）。
+- ビデオモニタ（ホスト提供のテクスチャ表示、アスペクト比固定、グリッドオーバーレイ）。
+- カラーコレクション（3-wayカラーホイール、RGBカーブエディタ、スコープ表示）。
 
-DrawList previewはホストのscratch bufferを使い、depth bufferを持たないため交差geometryの順序は近似です。OpenGL3 previewはFBO等の自身のGPU資源を所有します。関数表とcurrent Contextはホストから受け取り、Context破棄前に`Shutdown()`を呼びます。GL stateの復元もホスト責務です。
+![Native Video](/imgui-modern-kit/docs-images/editor-video-1.0.png)
 
-Video Monitorは呼出し時に渡されたtextureと状態を表示します。media再生・decodeは行いません。Previewはホストのdevice/contextを使う明示的な別契約です。OpenGL3 previewのresource寿命とstate副作用は[Editor API](../../api/editor-suite/)で確認してください。
+### 3. CG Editor
+- 3Dビューポートナビゲーション（Orbit、Pan、Zoom、Frustumカリング）。
+- マルチオブジェクト変形トランスフォームギズモ（移動、回転、非均等スケール、シアー）。
+- シーングラフ階層（ドラッグ＆ドロップによる親子付け替え・並べ替え）。
+- UVエディタ（頂点/エッジ/面/アイランド選択、UDIMタイリング対応）。
 
-## Galleryで試す
+![Native CG](/imgui-modern-kit/docs-images/editor-cg-1.0.png)
 
-Galleryの **Editor Core**、**Video**、**CG** ページは公開module APIを使うsample hostです。[`editor_workspaces.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/editor_workspaces.cpp)から描画の組立を、[`editor_workspaces.h`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/editor_workspaces.h)からGallery側state/providerを辿れます。詳細なevent/query条件は[Editor API reference](../../api/editor-suite/)、Videoのgestureは[Timeline editing](../timeline/)を参照してください。
+---
 
-Galleryのsynthetic dataやUndo実装はsample hostの機能であり、実アプリのmedia engine・scene・保存contractにはなりません。自動IO/GPU確認とnative OS入力・実host統合の受入も区別してください。
+## プレビューのライフサイクル (Preview lifecycle)
 
-## 対象範囲
+- `preview_opengl3` などのオフスクリーンレンダラーを使用する場合、ホスト側で有効なOpenGLコンテキストを確立した上で初期化および破棄を行います。
+- コンテキスト破棄前には必ず `Shutdown()` を呼び出し、GPUテクスチャリソースを安全に解放してください。
 
-ImKitはediting surfaceを提供し、media decoder/player、resampler、complete color-management engine、UV unwrapper、IK/simulation runtime、PBR renderer、file loaderは提供しません。Gallery/CIの合格をnative inputや実project統合の受入と解釈しないでください。
+---
+
+## Native Gallery での検証 (Native Gallery)
+
+Gallery アプリケーションの **Editor Core**、**Video Editor**、**CG Editor** の各画面で、これらのエディタスイートの総合的な動作を検証できます：
+
+```powershell
+cmake --build --preset windows-debug --target imkit_gallery --parallel
+./build/windows-debug/catalog/Debug/imkit_gallery.exe
+```
+
+---
+
+## 適用範囲と責務境界 (Scope)
+
+エディタスイートは汎用UIフレームワークであり、特定のメディアフォーマット（MP4/H.264/ProRes等）のコーデックや3Dシーングラフの評価エンジンは含まれません。これらはすべてホスト側のビジネスロジックとして統合してください。
+過去の内部検証データや操作設計は [検証記録](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/archive/editor-validation.md) および [Editor 2.0 リフレッシュ](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/archive/editor-refresh.md) に保管されています。

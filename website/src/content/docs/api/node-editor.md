@@ -2,7 +2,7 @@
 title: "Node Editor API一覧"
 ---
 
-この生成一覧は[`docs/node-editor-api.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/node-editor-api.json)にある`<imkit/node_editor.h>`の**47宣言**を掲載します。型と正確な契約はheaderを基準にしてください。v3.1.0の開発中APIであり、グラフデータ、検証、取り消し、保存はアプリ側が管理します。
+この生成一覧は[`docs/reference/node-editor-api.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/node-editor-api.json)にある`<imkit/node_editor.h>`の**47宣言**を掲載します。型と正確な契約はheaderを基準にしてください。v3.2.0の開発中APIであり、グラフデータ、検証、取り消し、保存はアプリ側が管理します。
 
 以下は宣言一覧で、単独で使うコード例ではありません。`BeginEditor`の呼び出し、所有権、戻り値、対応する終了呼び出しは[BeginEditor詳細](begin-editor/)を参照してください。[Node Editorガイド](../../features/node-editor/)に描画順を示しています。
 

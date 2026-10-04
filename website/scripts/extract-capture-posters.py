@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "docs/images"
 DESTINATION = ROOT / "website/src/assets/captures"
 CAPTURES = (
-    "v3-overview",
+    "v3-overview", "v3-workspace", "v3-comparison", "v3-toasts", "v3-icons",
     "v3-node-editor",
     "v3-workflow-progress",
     "v3-timeline",

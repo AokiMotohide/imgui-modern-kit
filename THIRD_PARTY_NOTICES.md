@@ -118,3 +118,7 @@ assets. These project assets are distributed under the repository MIT license.
 The 42 additional design-system icons are original deterministic code drawings in
 `tools/design_icons.py`, distributed under the repository MIT license. No third-party
 icon shapes were imported. Seven raster levels (12–64px) are generated from the recorded sources.
+
+## ImKit 3.2 promotional film
+
+The motion graphics, English copy and electronic score are original project assets distributed under the repository MIT license. The score is synthesized from oscillators and deterministic noise; no music recordings or samples are used. UI footage is from the native ImKit Gallery and Node Editor companion. Rasterized Inter typography and repository icon artwork retain the provenance and licenses listed above. The film does not redistribute font binaries. Reproduction scripts: `tools/capture_v32_media.py` and `tools/render_v32_film.py`.

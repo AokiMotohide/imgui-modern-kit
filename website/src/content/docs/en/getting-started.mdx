@@ -5,7 +5,7 @@ description: Add ImKit to a Dear ImGui host and prepare your first frame.
 
 ## Requirements
 
-ImKit v3.1.0 requires C++20 and Dear ImGui `1.93.0 WIP` docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be`. CMake 3.20 or newer is required. The package matrix covers Windows x64/Arm64 with MSVC and macOS 15+ arm64/x86_64 with Apple Clang.
+ImKit v3.2.0 requires C++20 and Dear ImGui `1.93.0 WIP` docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be`. CMake 3.20 or newer is required. The package matrix covers Windows x64/Arm64 with MSVC and macOS 15+ arm64/x86_64 with Apple Clang.
 
 The host provides the Dear ImGui context, backend, renderer, font atlas, and frame loop. ImKit is a static library called on that context.
 
@@ -68,7 +68,7 @@ Use the installed target only after confirming that the compiler, CRT, architect
 set(IMKIT_IMGUI_TARGET host_imgui)
 set(CMAKE_PREFIX_PATH "path/to/imkit-sdk" ${CMAKE_PREFIX_PATH})
 set(IMKIT_SDK_ABI_CONFIRMED ON)
-find_package(imkit 3.1 CONFIG REQUIRED)
+find_package(imkit 3.2 CONFIG REQUIRED)
 target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
 

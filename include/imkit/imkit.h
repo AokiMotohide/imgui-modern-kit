@@ -9,5 +9,6 @@
 #include <imkit/locale.h>
 #include <imkit/patterns.h>
 #include <imkit/workflow.h>
+#include <imkit/toast.h>
 #include <imkit/shell.h>
 #include <imkit/window_frame.h>

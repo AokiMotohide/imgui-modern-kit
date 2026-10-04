@@ -7,6 +7,9 @@ struct GalleryState;
 struct WorkflowPages {
     StepNavigatorState steps,rail;
     StableId selected=1,tileSelected=1;
+    StableId choiceSource=701;
+    StableId workspace=101;
+    bool hierarchyOpen=true,settingEnabled=true;
     ToolbarState toolbar;
     CommandPaletteState palette;
     DialogState progressDialog;
@@ -25,7 +28,11 @@ struct WorkflowPages {
     bool notice=false,open=true,advanced=false,chip=false,vertical=false,japanese=false,disabled=false,lasso=false;
     int actions=0,toastPriority=1;
     float fraction=.4f;
+    float position[3]{};
     double expiresAt=0;
+    std::array<bool,3> visible{{true,true,true}}, locked{};
+    bool workSettings=false;
+    void Workbench(GalleryState& host);
     void Show(int page,GalleryState& host);
 };
 }

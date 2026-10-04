@@ -41,11 +41,12 @@ void DrawApplyButton() {
 
 ---
 
-ImKitのコンポーネントはDear ImGui公開動作を使った小さな合成部品です。編集値、寿命、保存はホストが所有します。以下に、既存frame内で設定画面全体を描画する例と、個別部品の短い例を示します。
+ImKit のコンポーネントは、Dear ImGui 標準の振る舞いの上に構築された軽量な合成ウィジェットです。
+編集されるデータ値、コンポーネントの寿命、および設定の永続化はすべてホストアプリケーションが所有します。
 
-## 設定画面をひとつ組み立てる
+## 完全な設定パネルの例
 
-値はアプリケーションの状態に置き、ホストが既に開始したDear ImGui frame内で画面を描画します。この関数は保存要求を返すだけで、ファイルや通知queueは所有しません。
+ホスト側の状態構造体を参照し、Dear ImGui のフレームループ内で描画する設定パネルの完全な実装例です。関数は保存リクエストを返すのみで、ファイル保存や通知キューの管理は行いません。
 
 ```cpp
 #include <imkit/imkit.h>
@@ -56,94 +57,123 @@ struct DisplaySettings {
     int quality = 1;
     char qualitySearch[64]{};
     float exposure = 0.0f;
-    char name[128] = "Main display";
+    char name[128] = "メインディスプレイ";
     bool showSavedNotice = false;
 };
 
 bool DrawDisplaySettings(DisplaySettings& settings, const imkit::Theme& theme, double now) {
-    imkit::ThemeScope themeScope(theme); // 同じ生存中Context上で使い、Context破棄前に終了する
+    imkit::ThemeScope themeScope(theme); // 同一コンテキスト上で生成し、コンテキスト破棄前に破棄
     bool saveRequested = false;
-    if (imkit::Begin("Display settings")) {
-        imkit::Toggle("Enabled", &settings.enabled, {&theme});
 
-        if (imkit::BeginSettingRow("quality", "Quality")) {
-            constexpr std::array<const char*, 3> labels{"Draft", "Balanced", "High"};
+    if (imkit::Begin("ディスプレイ設定")) {
+        imkit::Toggle("有効化", &settings.enabled, {&theme});
+
+        if (imkit::BeginSettingRow("quality", "描画品質")) {
+            constexpr std::array<const char*, 3> labels{"ドラフト", "標準", "高品質"};
             imkit::SearchableCombo("##quality", &settings.quality, labels,
                                    settings.qualitySearch, sizeof(settings.qualitySearch));
             imkit::EndSettingRow();
         }
 
-        if (imkit::BeginSettingRow("exposure", "Exposure")) {
+        if (imkit::BeginSettingRow("exposure", "露出補正")) {
             imkit::DragFloatWithUnit("##exposure", &settings.exposure, "EV", 0.01f, -8.0f, 8.0f);
             imkit::EndSettingRow();
         }
 
-        imkit::InputTextWithHint("Name", "Required", settings.name, sizeof(settings.name));
+        imkit::InputTextWithHint("名前", "必須入力", settings.name, sizeof(settings.name));
         const bool invalidName = settings.name[0] == '\0';
-        imkit::ValidationMessage("Enter a name before saving.", invalidName, &theme);
+        imkit::ValidationMessage("保存する前に名前を入力してください。", invalidName, &theme);
+
         imkit::BeginDisabled(invalidName);
-        saveRequested = imkit::ActionButton("Save", imkit::ActionVariant::Primary, {}, {&theme});
+        saveRequested = imkit::ActionButton("保存", imkit::ActionVariant::Primary, {}, {&theme});
         imkit::EndDisabled();
 
         if (settings.showSavedNotice &&
-            imkit::NotificationCard({"saved", "Settings saved", imkit::StatusKind::Success, 0}, now, &theme)) {
-            settings.showSavedNotice = false; // dismiss要求を処理するのはホスト
+            imkit::NotificationCard({"saved", "設定を保存しました", imkit::StatusKind::Success, 0}, now, &theme)) {
+            settings.showSavedNotice = false; // ホスト側で通知の消去リクエストを処理
         }
     }
-    imkit::End(); // Beginの戻り値に関係なく対にする
-    return saveRequested; // 設定の保存と通知を表示する時点はホストが決める
+    imkit::End(); // Begin が false を返した場合でも必ず End を呼ぶ
+    return saveRequested;
 }
 ```
 
-ホストの`NewFrame()`後、`Render()`前に呼びます。戻り値が`true`なら、ホスト側で`DisplaySettings`を検証・保存してから`showSavedNotice`を設定します。`Theme`、font pointer、Dear ImGui Context、画面状態もホストが保持します。
-
-## 主要action
+## 主要アクションボタン
 
 ```cpp
-if (imkit::ActionButton("Apply", imkit::ActionVariant::Primary, {}, {&theme, &animation}))
+if (imkit::ActionButton("適用", imkit::ActionVariant::Primary, {}, {&theme, &animation})) {
     SaveSettings();
+}
 ```
 
-primaryは1つの判断領域で1回だけ使います。secondary、ghost、destructiveもbuttonの標準操作を変えず、意図だけを表現します。
+Primary ボタンは決定領域ごとに1つ配置することを推奨します。Secondary、Ghost、Destructive（破壊的変更）、SubtleDestructive（停止などの控えめな危険操作）の各バリアントにより、標準のボタン動作セマンティクスを損なうことなくユーザーの意図を表現できます。
 
-## Booleanと混在状態
+## ブール値と未確定状態
 
 ```cpp
-imkit::Toggle("Enabled", &enabled, {&theme, &animation});
-imkit::IndeterminateCheckbox("Inherited", &state);
+imkit::Toggle("有効", &enabled, {&theme, &animation});
+imkit::IndeterminateCheckbox("親から継承", &state);
 ```
 
-`Toggle`は値が変わったときに`true`を返します。`IndeterminateCheckbox`は操作すると`Mixed`から`Checked`へ移ります。enum値は他のmodelと同様にホスト側へ保存してください。
+- `Toggle`: 値が変更されたときに真を返します。
+- `IndeterminateCheckbox`: クリック時に `Mixed`（未確定）から `Checked`（チェック済み）へ遷移します。状態列挙値はホスト側のモデルで管理します。
 
-## 検索とvalidation
+## 検索と入力バリデーション
 
 ```cpp
-imkit::SearchableCombo("Quality", &quality, labels, search, sizeof(search), disabled);
-imkit::InputTextWithHint("Name", "Required", name, sizeof(name));
-imkit::ValidationMessage("名前が必要です", name[0] == 0, &theme);
+imkit::SearchableCombo("品質", &quality, labels, search, sizeof(search), disabled);
+imkit::InputTextWithHint("名前", "必須入力", name, sizeof(name));
+imkit::ValidationMessage("名前は必須です", name[0] == 0, &theme);
 ```
 
-検索bufferと選択indexはホスト所有です。validationは表示だけを行い、値の拒否や保存は行いません。
+検索テキストのバッファおよび選択中インデックスはホストが所有します。`ValidationMessage` は視覚的なエラーフィードバック（赤枠やツールチップ）を描画しますが、入力値自体の拒否や修正は行いません。
 
-## 設定行と単位
+## 設定行と単位付き入力
 
 ```cpp
-if (imkit::BeginSettingRow("exposure", "Exposure")) {
-    imkit::DragFloatWithUnit("##value", &exposure, "EV", .01f, -8.f, 8.f);
+if (imkit::BeginSettingRow("exposure", "露出補正")) {
+    imkit::DragFloatWithUnit("##value", &exposure, "EV", 0.01f, -8.0f, 8.0f);
     imkit::EndSettingRow();
 }
 ```
 
-`BeginSettingRow`がtrueのときだけ`EndSettingRow`を呼びます。scalarの標準解析と精度を維持します。
+`EndSettingRow` は、`BeginSettingRow` が `true` を返したときのみ呼び出してください。Dear ImGui ネイティブの数値精度とパース処理がそのまま維持されます。
+3軸のベクトル入力には `DragVector3WithUnit("オフセット", values, "cm", 0.1f, -10.0f, 10.0f)` を使用します。幅が狭い画面では自動的に縦積みにレイアウトされます。
 
-## 状態と通知
+## ステータス表示と通知
 
 ```cpp
-imkit::StatusBadge("Ready", imkit::StatusKind::Success, &theme);
-if (imkit::NotificationCard({"saved", "保存しました", imkit::StatusKind::Success, 0}, now, &theme))
+imkit::StatusBadge("準備完了", imkit::StatusKind::Success, &theme);
+if (imkit::NotificationCard({"saved", "保存完了", imkit::StatusKind::Success, 0}, now, &theme)) {
     dismissSavedNotice = true;
+}
 ```
 
-通知の期限と削除はホスト所有です。overload単位の詳細は[API対応表](../../en/api/native/)を参照してください。
+通知カードの消滅時間およびキューの削除判定はホスト側の責務です。
+`NotificationCard` はユーザーが閉じる操作を行ったときに消去リクエスト（`true`）を返します。`expiresAt = 0` の場合はホストが消去するまで表示が持続します。
+各関数の詳細なオーバーロード仕様は [公開API一覧](../../api/native/) を参照してください。
 
-`NotificationCard`はdismiss要求を返します。`expiresAt`が0ならホストが削除するまで表示し続け、0以外ならホストから渡した`now`と比較します。
+## 状態と操作をまとめる
+
+```cpp
+imkit::CompactActionRowOptions row;
+row.statusText = streaming ? "受信中" : "停止";
+row.statusKind = streaming ? imkit::StatusKind::Success : imkit::StatusKind::Neutral;
+row.primaryLabel = streaming ? "停止" : "接続";
+row.primaryVariant = streaming ? imkit::ActionVariant::SubtleDestructive
+                               : imkit::ActionVariant::Primary;
+row.settingsLabel = "設定";
+
+switch (imkit::CompactActionRow("camera-1", row)) {
+case imkit::CompactActionRowRequest::Primary: requestConnectionChange = true; break;
+case imkit::CompactActionRowRequest::Settings: openSettings = true; break;
+case imkit::CompactActionRowRequest::None: break;
+}
+```
+
+`CompactActionRow` は状態と二つの操作を描画し、操作要求だけを返します。接続状態、コマンド実行、設定画面の寿命はホスト側で管理します。横幅が足りない場合は状態と操作を複数行に折り返します。
+各操作は個別に無効化でき、無効理由はそのボタンのツールチップに表示します。`SubtleDestructive` は停止など、取り消し可能な危険操作に使います。
+
+## ImKit 3.2の作業画面
+
+Galleryの **New in 3.2** では、WorkspaceTabs、HierarchyGroupHeader／HierarchyRow、BeginInspectorCard／EndInspectorCard、SettingToggleRow、DragVector3WithUnit、ChoiceGroup、CompactActionRowを組み合わせて操作できます。要求を受けてGallery側の値を更新する実装は、既存のImGuiフレームでも利用できます。[3.2の宣言と寿命の規則](../../api/v3-2/)を参照してください。288アイコンと13テーマを利用でき、Contextやアプリのフレーム管理は引き続きホストが担当します。

@@ -20,6 +20,8 @@ struct DesignPages {
     accessibility::AccessibilityFrame semantics{nodes,&actions};
     int density=1, contrast=0, language=0, clicks=0, queried=0, page=0;
     bool reducedMotion=false, tree=false, loading=false, error=false, toast=false;
+    bool sampleStreaming=false;
+    int settingsRequests=0;
     bool descending=false;
     std::string filter;
     void Prepare();

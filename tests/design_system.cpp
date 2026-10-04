@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <utility>
 #include <array>
 #include <limits>
 #include "../examples/gallery/allocation_probe.h"
@@ -68,6 +69,20 @@ int main() {
         gallery::CountAllocations(false);
     }
     measure=false; Check(allocations==0,"steady ImGui allocations zero");
+    float vector[3]{1.f,2.f,3.f};
+    auto vectorFrame=[&](float width) {
+        ImGui::NewFrame();ImGui::SetNextWindowSize({600,400});ImGui::Begin("vector fixture");
+        ImGui::SetNextItemWidth(width);
+        const float top=ImGui::GetCursorScreenPos().y;
+        const bool changed=DragVector3WithUnit("Offset",vector,"cm",.1f,-10.f,10.f,"%.2f");
+        const float consumed=ImGui::GetCursorScreenPos().y-top;
+        ImGui::End();ImGui::Render();
+        Check(!changed,"untouched vector returns no change");
+        return consumed;
+    };
+    const float wideHeight=vectorFrame(400.f),narrowHeight=vectorFrame(150.f);
+    Check(narrowHeight>wideHeight*1.5f,"narrow vector stacks axis drag fields");
+    Check(vector[0]==1.f&&vector[1]==2.f&&vector[2]==3.f,"vector values remain host-owned");
     DialogState dialog; bool launcherFocused=false;
     auto dialogFrame=[&](bool focus) {
         io.AddFocusEvent(true);
@@ -85,6 +100,41 @@ int main() {
     io.AddKeyEvent(ImGuiKey_Escape,true); dialogFrame(false);
     io.AddKeyEvent(ImGuiKey_Escape,false); dialogFrame(false); dialogFrame(false); dialogFrame(false);
     Check(!dialog.open && launcherFocused,"Escape closes and restores launcher focus");
+    std::array<SemanticNode,16> rowNodes{}; std::array<ActionRequest,4> rowRequests{};
+    ActionQueue rowQueue(rowRequests); AccessibilityFrame rowSemantics(rowNodes,&rowQueue);
+    CompactActionRowOptions rowOptions;
+    rowOptions.statusText="Ready"; rowOptions.statusKind=StatusKind::Success;
+    rowOptions.primaryLabel="Configure"; rowOptions.settingsLabel="Configure";
+    rowOptions.components.accessibility=&rowSemantics;
+    auto drawActionRow=[&](int generation,float windowWidth) {
+        rowSemantics.Begin(static_cast<std::uint64_t>(generation));
+        ImGui::NewFrame(); ImGui::SetNextWindowSize({windowWidth,180},ImGuiCond_Always);
+        ImGui::Begin("compact action row fixture");
+        const float before=ImGui::GetCursorScreenPos().y;
+        const auto request=CompactActionRow("camera-1",rowOptions);
+        const float height=ImGui::GetCursorScreenPos().y-before;
+        ImGui::End(); ImGui::Render();
+        return std::pair{request,height};
+    };
+    const auto [wideRequest,rowHeightWide]=drawActionRow(100,640.f);
+    Check(wideRequest==CompactActionRowRequest::None,"compact action row returns no request when idle");
+    StableId primaryId=0,settingsId=0;
+    for(const auto& item:rowSemantics.Tree().nodes) {
+        if(item.name!="Configure") continue;
+        if(!primaryId) primaryId=item.id;
+        else settingsId=item.id;
+    }
+    Check(primaryId!=0&&settingsId!=0&&primaryId!=settingsId,"compact action row keeps duplicate labels addressable");
+    Check(rowQueue.Push({primaryId,SemanticAction::Press}),"compact primary request queues");
+    Check(drawActionRow(101,640.f).first==CompactActionRowRequest::Primary,"compact action row returns primary request");
+    Check(rowQueue.Push({settingsId,SemanticAction::Press}),"compact settings request queues");
+    Check(drawActionRow(102,640.f).first==CompactActionRowRequest::Settings,"compact action row returns settings request");
+    const auto [narrowRequest,rowHeightNarrow]=drawActionRow(103,150.f);
+    Check(narrowRequest==CompactActionRowRequest::None,"narrow compact action row remains idle");
+    Check(rowHeightNarrow>rowHeightWide,"compact action row wraps when the available width is narrow");
+    rowOptions.primaryEnabled=false;
+    Check(rowQueue.Push({primaryId,SemanticAction::Press}),"disabled primary request queues");
+    Check(drawActionRow(104,640.f).first==CompactActionRowRequest::None,"disabled primary action emits no request");
     ImGui::DestroyContext(context);
     std::printf("design system failures=%d allocations=%d\n",failures,allocations); return failures?1:0;
 }

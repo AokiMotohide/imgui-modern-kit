@@ -3,7 +3,7 @@ if(POLICY CMP0141)
     cmake_policy(SET CMP0141 NEW)
 endif()
 
-project(imgui-modern-kit VERSION 3.1.0 LANGUAGES CXX)
+project(imgui-modern-kit VERSION 3.2.0 LANGUAGES CXX)
 
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(IMKIT_IS_TOP_LEVEL ON)
@@ -58,7 +58,7 @@ if(NOT TARGET "${IMKIT_IMGUI_TARGET}")
         "Create the Dear ImGui target before adding imgui-modern-kit.")
 endif()
 
-add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/components.cpp src/icons.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp src/shell.cpp src/window_frame.cpp)
+add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/components.cpp src/icons.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp src/toast.cpp src/shell.cpp src/window_frame.cpp)
 add_library(imkit::imkit ALIAS imkit)
 
 target_compile_features(imkit PUBLIC cxx_std_20)
@@ -187,6 +187,7 @@ configure_package_config_file(cmake/imkitConfig.cmake.in "${CMAKE_CURRENT_BINARY
 write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/imkitConfigVersion.cmake" VERSION ${PROJECT_VERSION} COMPATIBILITY SameMinorVersion)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/imkitConfig.cmake" "${CMAKE_CURRENT_BINARY_DIR}/imkitConfigVersion.cmake" DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/imkit)
 install(FILES README.md README.ja.md LICENSE THIRD_PARTY_NOTICES.md CHANGELOG.md DESTINATION .)
+install(FILES website/public/media/imkit-3.2-poster.jpg DESTINATION website/public/media)
 install(DIRECTORY docs/ DESTINATION docs
     PATTERN "precision-layers-implementation-prompt.md" EXCLUDE
     PATTERN "completion-plan.md" EXCLUDE
@@ -241,6 +242,7 @@ if(IMKIT_BUILD_GALLERY)
         examples/gallery/gallery.cpp
         examples/gallery/design_pages.cpp
         examples/gallery/workflow_pages.cpp
+        examples/gallery/toast_page.cpp
         examples/gallery/editor_workspaces.cpp
         examples/gallery/allocation_probe.cpp
         examples/gallery/gallery.h
@@ -297,6 +299,12 @@ endif()
 
 if(IMKIT_BUILD_TESTS)
     include(CTest)
+    add_executable(imkit_toast_test tests/toast.cpp)
+    target_link_libraries(imkit_toast_test PRIVATE imkit::imkit)
+    add_test(NAME imkit.toast COMMAND imkit_toast_test)
+    add_executable(imkit_toast_api_compile tests/toast_api_compile.cpp)
+    target_link_libraries(imkit_toast_api_compile PRIVATE imkit::imkit)
+    add_test(NAME imkit.toast_api_compile COMMAND imkit_toast_api_compile)
     add_executable(imkit_workflow_test tests/workflow.cpp examples/gallery/allocation_probe.cpp)
     target_link_libraries(imkit_workflow_test PRIVATE imkit::editor_core)
     add_test(NAME imkit.workflow COMMAND imkit_workflow_test)
