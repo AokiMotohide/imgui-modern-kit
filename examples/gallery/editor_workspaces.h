@@ -9,6 +9,8 @@
 #include <memory>
 namespace imkit::gallery {
 struct EditorWorkspaces {
+    ImVec2 motionStateMin{},motionStateMax{},motionAspectMin{},motionAspectMax{};
+    ImVec2 motionPlay{};
     const IconAtlas *icons = nullptr; // Host-owned renderer resources.
     std::vector<video::TrackView> tracks;
     std::vector<double> trackOffsets;

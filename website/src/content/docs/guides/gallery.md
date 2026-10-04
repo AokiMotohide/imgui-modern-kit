@@ -2,8 +2,8 @@
 title: "Galleryガイド"
 ---
 
-ImKit Gallery は、ImKit が提供する全機能・コンポーネントを実際に操作・体感できる公式のデスクトップショーケースアプリケーションです。
-Gallery で使われているコードは、利用者が組み込むライブラリ（`imkit::imkit`）と全く同一であり、デモ専用の特殊な実装は使用していません。
+ImKit Galleryは、公開部品の使い方を実際に試せる開発用デスクトップアプリです。
+UI部品は配布する公開APIを使い、入力要求の反映やプレビューの描画はGalleryのホストコードが担当します。
 
 ---
 
@@ -55,31 +55,21 @@ open ./build/macos-universal/catalog/Release/imkit_gallery.app
 
 ## スクリーンショット・GIF キャプチャの再生成
 
-Gallery にはヘッドレスで各画面のバックバッファを自動撮影する機能が組み込まれています：
+改訂素材は、1920×1080のnative OpenGL backbufferを60 Hzで連続撮影します。公開Dear ImGui IOでカーソル移動、押下、ドラッグ、ホイール、文字入力を送り、撮影ホストが実際の入力座標に大きなカーソルとクリックリングを描きます。比較の共有値、作業画面の要求、ノードの接続・移動は状態を検査します。この確認はnative OS入力、IME、読み上げ、物理DPIの受入を含みません。
 
 ```powershell
-$gallery = './build/windows-debug/catalog/Debug/imkit_gallery.exe'
-& $gallery --verify-comparison --output out/comparison
-& $gallery --verify-toasts --width 1440 --height 810 --output out/readme/toasts
-
-# 全デモ画面のキャプチャを一括実行
-$routes = @('overview', 'comparison', 'components', 'icons', 'icon-artwork', 'themes', 'workflow', 'preview-contract', 'timeline', 'workspace', 'toasts')
-foreach ($route in $routes) {
-    & $gallery --capture-demo $route --width 1440 --height 810 --output out/readme
-}
-
-# 独立した Node Editor Gallery のキャプチャ
-$node = './build/windows-debug/catalog/Debug/imkit_node_editor_gallery.exe'
-& $node --capture-gif out/readme/node-editor --width 1440 --height 810
+& './tools/Invoke-SharedBuild.ps1' -Target imkit_gallery,imkit_node_editor_gallery
+python tools/capture_v32_media.py
+python tools/render_v32_film.py --review-only
+python tools/render_v32_film.py
+python tools/check_v32_media.py
 ```
 
-撮影した PNG フレーム列からドキュメント用 GIF を生成する場合は `tools/build_readme_gif.py` を使用します。
+リポジトリのルートから実行してください。FFmpegをPATHに置き、映像制作にはPythonのPillowとNumPyを使います。いずれも開発用ツールで、ImKitの実行時依存ではありません。可逆圧縮動画、入力イベント、検査結果は `out/v3.2-native`、音楽とレビュー画像は `out/promo` に保存します。フレームはFFmpegへ順次渡し、PNG列を蓄積しません。
 
-トースト紹介GIFは6位置を明暗テーマで撮影した12枚を使用します：
+完成する12本のGIFは960×540、原則20 fps、6〜8秒、各2 MiB以下です。長い操作は連続したまま加速します。Node EditorのGIFはピンの接続とヘッダー移動を拡大して示し、動画ではパンとズームも紹介します。容量制限に合わせ、色数やフレームレートを下げる場合があります。Gitへ保存するのは完成素材です。
 
-```powershell
-python tools/build_readme_gif.py out/readme/toasts docs/images/v3-toasts.gif --pattern 'toasts-[0-5]-*.png' --expected-frames 12 --width 960 --height 540 --fps 6 --colors 96 --dither none --disposal 2
-```
+英語60秒動画では、実操作に動く文字とオリジナルの128 BPMエレクトロハウスを組み合わせます。既成映像、サンプル音源、ナレーションを使わず、スクリプトで映像と音楽を再生成します。形式の検査に加え、実際の再生と操作結果を確認してください。動画仕様の合格だけでは見た目の品質を判定できません。
 
 ---
 

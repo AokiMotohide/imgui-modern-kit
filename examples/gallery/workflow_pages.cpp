@@ -37,6 +37,8 @@ void WorkflowPages::Show(int page,GalleryState& host) {
         StepNavigatorOptions layout;layout.size={0,ImGui::GetFrameHeight()*2.6f};
         if(auto id=StepNavigator("workflow",items,selected,steps,layout,o))selected=id;
         Record(host,"workflow-steps");
+        for(const auto& node:semantics.Tree().nodes) if(node.name==items[2].label)
+            host.probes["workflow-review"]={node.minimum,node.maximum};
         apply(ResponsiveToolbar("commands",toolbar,commands,ToolbarOptions{},o));
         if(FilterChip("filter",japanese?"選択のみ":"Selected only",chip,o))chip=!chip;Record(host,"workflow-chip");
         const bool workspaceWide=ImGui::GetContentRegionAvail().x>=650.f;
@@ -184,8 +186,13 @@ void WorkflowPages::Show(int page,GalleryState& host) {
 void WorkflowPages::Workbench(GalleryState& host) {
     ComponentOptions o{&host.theme,&host.animation};
     const WorkspaceTab tabs[]={{101,"Compose","Arrange your workspace",IconId::Layers},{102,"Inspect","Edit selected items",IconId::Settings},{103,"Deliver","Prepare output",IconId::Export}};
-    if(auto request=WorkspaceTabs("workbench-tabs",tabs,workspace,&host.icons,o)) workspace=request;
+    std::array<accessibility::SemanticNode,16> tabNodes{};
+    accessibility::AccessibilityFrame tabSemantics{tabNodes};tabSemantics.Begin(ImGui::GetFrameCount());
+    auto tabOptions=o;tabOptions.accessibility=&tabSemantics;
+    if(auto request=WorkspaceTabs("workbench-tabs",tabs,workspace,&host.icons,tabOptions)) workspace=request;
     Record(host,"workbench-tabs");
+    for(const auto& node:tabSemantics.Tree().nodes) for(int i=0;i<3;++i)
+        if(node.name==tabs[i].label) host.probes["workbench-tab-"+std::to_string(i)]={node.minimum,node.maximum};
     const bool wide=ImGui::GetContentRegionAvail().x>=850.f*std::max(1.f,ImGui::GetStyle().FontScaleDpi);
     if(ImGui::BeginTable("workbench",wide?3:1,ImGuiTableFlags_SizingStretchProp)) {
         if(wide) {
@@ -195,7 +202,10 @@ void WorkflowPages::Workbench(GalleryState& host) {
         }
         ImGui::TableNextColumn();
         bool add=false;
-        if(HierarchyGroupHeader("scene","Workspace",3,&hierarchyOpen,&host.icons,IconId::Layers,o,&add,"Add item")) {
+        const auto hierarchyStart=ImGui::GetCursorScreenPos();
+        const bool openHierarchy=HierarchyGroupHeader("scene","Workspace",3,&hierarchyOpen,&host.icons,IconId::Layers,o,&add,"Add item");
+        host.probes["workbench-hierarchy"]={hierarchyStart,{hierarchyStart.x+ImGui::GetFrameHeight(),hierarchyStart.y+ImGui::GetFrameHeight()}};
+        if(openHierarchy) {
             const char* names[]={"Main image","Overlay","Reference"};
             const IconId icons[]={IconId::Image,IconId::Layers,IconId::Camera};
             for(int i=0;i<3;++i) {
@@ -233,8 +243,11 @@ void WorkflowPages::Workbench(GalleryState& host) {
             CompactActionRowOptions row;
             row.statusText=actions?"Changes applied":"Ready to apply";row.statusKind=StatusKind::Success;
             row.primaryLabel="Apply changes";row.components=o;
+            const auto actionStart=ImGui::GetCursorScreenPos();
+            const float primaryX=actionStart.x+ImGui::CalcTextSize(row.statusText).x+24+ImGui::GetStyle().ItemSpacing.x;
             const auto request=CompactActionRow("workbench-actions",row);
             Record(host,"workbench-actions");
+            host.probes["workbench-apply"]={{primaryX,actionStart.y},{primaryX+ImGui::CalcTextSize(row.primaryLabel).x+ImGui::GetStyle().FramePadding.x*2,actionStart.y+ImGui::GetFrameHeight()}};
             if(request==CompactActionRowRequest::Primary) ++actions;
             if(request==CompactActionRowRequest::Settings) workSettings=!workSettings;
             ImGui::Text("Applied: %d",actions);
@@ -250,7 +263,11 @@ void WorkflowPages::Workbench(GalleryState& host) {
             DragVector3WithUnit("Position",position,"m",.05f,-10.f,10.f,"%.2f");
             Record(host,"workbench-position");
             const ChoiceItem choices[]={{701,"USB","Direct connection",IconId::Usb},{702,"Network","Remote source",IconId::Network},{703,"Mobile","Portable source",IconId::Smartphone},{704,"Camera","Unavailable in this demo",IconId::IndustrialCamera,{},true,"Connect a device in your host app"}};
-            if(auto request=ChoiceGroup("workbench-source","Input source",choices,choiceSource,{2,&host.icons},o)) choiceSource=request;
+            std::array<accessibility::SemanticNode,16> choiceNodes{};
+            accessibility::AccessibilityFrame choiceSemantics{choiceNodes};choiceSemantics.Begin(ImGui::GetFrameCount());
+            auto choiceOptions=o;choiceOptions.accessibility=&choiceSemantics;
+            if(auto request=ChoiceGroup("workbench-source","Input source",choices,choiceSource,{2,&host.icons},choiceOptions)) choiceSource=request;
+            for(const auto& node:choiceSemantics.Tree().nodes) if(node.name=="Mobile") host.probes["workbench-mobile"]={node.minimum,node.maximum};
             Record(host,"workbench-source");
             if(workSettings) ImGui::TextWrapped("Host settings opened. No global service or persistence is introduced.");
         }

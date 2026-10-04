@@ -10,7 +10,7 @@ ImKit is a C++20 static library that adds consistent themes and reusable control
 
 [![ImKit 3.2 — Modern UI. Familiar workflow.](website/public/media/imkit-3.2-poster.jpg)](https://aokimotohide.github.io/imgui-modern-kit/en/#film)
 
-**[Watch the 60-second film](https://aokimotohide.github.io/imgui-modern-kit/en/#film)** — English motion graphics, real Gallery interaction and original music.
+**[Watch the 60-second film](https://aokimotohide.github.io/imgui-modern-kit/en/#film)** — Real drags, clicks and live results. English motion graphics with an original 128 BPM electro-house score.
 
 <img src="docs/images/v3-overview.gif" alt="The ImKit Gallery routes from its start page into live examples" width="960">
 

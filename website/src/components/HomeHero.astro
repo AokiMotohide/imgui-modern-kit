@@ -1,8 +1,12 @@
 ---
 import { LinkButton } from '@astrojs/starlight/components';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 const base=import.meta.env.BASE_URL.replace(/\/$/, "");
 const english=Astro.url.pathname.includes("/en/");
+const revision=createHash('sha256').update(readFileSync(resolve('public/media/imkit-3.2-film.mp4'))).digest('hex').slice(0,12);
 const { data } = Astro.locals.starlightRoute.entry;
 const { title = data.title, tagline, actions = [] } = data.hero ?? {};
 ---
@@ -10,11 +14,11 @@ const { title = data.title, tagline, actions = [] } = data.hero ?? {};
 <div class="hero imkit-hero">
 	<div class="imkit-hero-image imkit-film" id="film">
         <video controls playsinline preload="metadata"
-            poster={`${base}/media/imkit-3.2-poster.jpg`}
+            poster={`${base}/media/imkit-3.2-poster.jpg?v=${revision}`}
             aria-label={english ? 'ImKit 3.2: Modern UI. Familiar workflow. English film with original music.' : 'ImKit 3.2の英語紹介動画。オリジナルBGM付き。'}>
-            <source src={`${base}/media/imkit-3.2-film.mp4`} type="video/mp4" />
+            <source src={`${base}/media/imkit-3.2-film.mp4?v=${revision}`} type="video/mp4" />
         </video>
-        <p>{english ? 'Watch the 60-second film · English · Original music' : '60秒で見るImKit 3.2 · 英語 · オリジナルBGM'}</p>
+        <p>{english ? 'Real interaction · English · Original electro-house score' : '実操作を60秒で紹介 · 英語 · オリジナルのエレクトロハウス'}</p>
     </div>
 	<div class="imkit-hero-stack">
 		<div class="imkit-hero-copy">

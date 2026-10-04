@@ -2,6 +2,12 @@
 
 > Published release entries present English first, followed by equivalent Japanese notes. Unreleased remains a work-in-progress list.
 
+## Media revision 2 / 映像改訂2 — 2026-10-05
+
+The 60-second English film now uses continuous native operation footage, a large synchronized cursor, kinetic typography, close-ups, connected transitions and an original 128 BPM electro-house score. All twelve principal GIFs were recaptured at 960×540, 20 fps, 6–8 seconds and under 2 MiB each. README and Pages point to the revised film; Pages uses a content hash in the video URL. The v3.2.0 library tag, source archive and five SDK archives retain their original identities.
+
+英語60秒動画を連続したnative操作映像から作り直しました。大きなカーソル、動く文字、部品への寄り、場面をつなぐ切り替え、オリジナルの128 BPMエレクトロハウスを組み合わせています。主要GIF12本も撮り直し、960×540、20 fps、6〜8秒、各2 MiB以下にそろえました。READMEとPagesから改訂版を案内し、Pagesの動画URLには内容ハッシュを付けます。v3.2.0のライブラリタグ、sourceアーカイブ、5構成のSDKアーカイブの識別情報は維持します。
+
 ## 3.2.0 — 2026-10-04
 
 **Added:** WorkspaceTabs, hierarchy visibility/lock/group action requests, inspector cards, SettingToggleRow, DragVector3WithUnit, titled responsive ChoiceGroup, CompactActionRow, ToastViewport, SubtleDestructive action style, Slate (13th theme), and USB/Network/Smartphone/IndustrialCamera icons (288 total).

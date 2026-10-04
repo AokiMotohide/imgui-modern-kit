@@ -10,7 +10,7 @@ ImKitは、既存のDear ImGuiアプリにテーマと再利用できるUI部品
 
 [![ImKit 3.2紹介動画](website/public/media/imkit-3.2-poster.jpg)](https://aokimotohide.github.io/imgui-modern-kit/#film)
 
-**[Watch the 60-second film](https://aokimotohide.github.io/imgui-modern-kit/#film)** — 実際のGallery操作と英語モーショングラフィックスで紹介します。オリジナルBGM付きです。
+**[Watch the 60-second film](https://aokimotohide.github.io/imgui-modern-kit/#film)** — 大きなカーソルでドラッグ・クリックと操作結果を紹介します。英語モーショングラフィックスと、オリジナルの128 BPMエレクトロハウス付きです。
 
 <img src="docs/images/v3-overview.gif" alt="Galleryのスタート画面から実例を開く" width="960">
 

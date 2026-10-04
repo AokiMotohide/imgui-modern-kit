@@ -490,6 +490,8 @@ inline void DrawPreview(void *user, ImVec2 size, bool) {
     ImGui::Dummy(size);
 }
 struct Page {
+    // Non-owning screen probes for the development host's public-IO film capture.
+    ImVec2 filmOutput{},filmInput{},filmHeader{},filmCanvas{};
     node_gallery::AppearanceEditor appearance;
     Model model;
     ne::EditorState state;
@@ -609,6 +611,14 @@ struct Page {
                           "Host-owned example", &candidates[i], Compatible};
         }
         ne::NodePalette(f, entries);
+        filmCanvas=f.min;
+        if(!model.data.nodes.empty()) {
+            const auto& a=model.data.nodes[0];const auto& b=model.data.nodes[1];
+            ne::GetPinPosition(f,model.Socket(a.view.id,ne::PinKind::Output,1),filmOutput);
+            ne::GetPinPosition(f,model.Socket(b.view.id,ne::PinKind::Input,1),filmInput);
+            filmHeader={f.min.x+static_cast<float>((b.view.position.x-state.origin.x+70)*state.zoom),
+                        f.min.y+static_cast<float>((b.view.position.y-state.origin.y+15)*state.zoom)};
+        }
         ne::EndEditor(f);
         ImGui::SameLine();
         ImGui::BeginChild("Material inspector", {0, size.y}, ImGuiChildFlags_Borders);

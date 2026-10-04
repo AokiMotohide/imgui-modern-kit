@@ -22,6 +22,9 @@
 #include <unordered_map>
 #include <memory>
 #include "../design_gallery/capture.h"
+#ifndef IMKIT_NODE_EDITOR_METAL
+#include "../design_gallery/motion_capture.h"
+#endif
 #include "material_mock.h"
 #include "toolbar.h"
 #include "appearance.h"
@@ -881,9 +884,12 @@ int main(int argc, char **argv) {
     bool smoke = argc > 1 && std::string_view(argv[1]) == "--smoke";
     const bool verify = argc > 1 && std::string_view(argv[1]) == "--verify-node-actions";
     std::filesystem::path captureDirectory;
+    bool captureMotion=false;
     int captureWidth = 1440, captureHeight = 810;
     for (int i = 1; i < argc; ++i) {
-        if (std::string_view(argv[i]) == "--capture-gif" && i + 1 < argc)
+        if (std::string_view(argv[i]) == "--capture-motion" && i + 1 < argc) {
+            captureMotion=true;captureDirectory=argv[++i];
+        } else if (std::string_view(argv[i]) == "--capture-gif" && i + 1 < argc)
             captureDirectory = argv[++i];
         else if (std::string_view(argv[i]) == "--width" && i + 1 < argc)
             captureWidth = std::clamp(std::stoi(argv[++i]), 640, 7680);
@@ -930,7 +936,7 @@ int main(int argc, char **argv) {
         return 3;
     }
 #ifndef IMKIT_NODE_EDITOR_METAL
-    glfwMakeContextCurrent(window); glfwSwapInterval(1);
+    glfwMakeContextCurrent(window); glfwSwapInterval(capture?0:1);
 #endif
     ImGui::CreateContext();
     ImGui::GetIO().IniFilename = nullptr;
@@ -944,7 +950,9 @@ int main(int argc, char **argv) {
 #else
     const std::array<const char*,3> systemFonts{"C:/Windows/Fonts/YuGothR.ttc","C:/Windows/Fonts/meiryo.ttc","C:/Windows/Fonts/segoeui.ttf"};
 #endif
+    if(captureMotion) ImGui::GetIO().FontDefault=ImGui::GetIO().Fonts->AddFontFromFileTTF("assets/fonts/Inter-Regular.ttf",18);
     for (const char *font : systemFonts)
+        if(!captureMotion)
         if (std::filesystem::exists(font)) {
             ImGui::GetIO().FontDefault = ImGui::GetIO().Fonts->AddFontFromFileTTF(font, 18);
             break;
@@ -973,14 +981,29 @@ int main(int argc, char **argv) {
     if (capture) {
         std::filesystem::create_directories(captureDirectory);
         demo->materialPage = true;
-        demo->material.state.zoom = .72;
+        demo->material.state.zoom = captureMotion?1.1:.72;
         demo->material.state.origin = {-8, -18};
     }
+#ifndef IMKIT_NODE_EDITOR_METAL
+    imkit::design::MotionCapture motion;
+    if(captureMotion) {
+        // A focused three-node fixture keeps the actual socket and header actions readable.
+        auto& data=demo->material.model.data;
+        data.nodes.resize(3);
+        std::erase_if(data.pins,[&](const auto& pin){return std::none_of(data.nodes.begin(),data.nodes.end(),[&](const auto& node){return node.view.id==pin.view.node;});});
+        std::erase_if(data.links,[&](const auto& link){return !demo->material.model.Find(link.from)||!demo->material.model.Find(link.to);});
+        // Initial fixture only: the new link is then created exclusively through public IO.
+        demo->material.model.data.links.erase(demo->material.model.data.links.begin());
+        ++demo->material.model.revision;demo->material.model.Evaluate();
+    }
+    ImVec2 filmMouse{300,180},filmFrom{},filmTo{},filmHeader{},filmPan{};
+    ne::Point originalNode{};const auto originalLinks=demo->material.model.data.links.size();
+#endif
     int frames = 0;
     int collapseChanges = 0;
     bool collapsed = false;
     while (!glfwWindowShouldClose(window) && (!smoke || frames < 5) && (!verify || frames < 724) &&
-           (!capture || frames < 56)) {
+           (!capture || frames < (captureMotion?544:56))) {
         glfwPollEvents();
 #ifdef IMKIT_NODE_EDITOR_METAL
         @autoreleasepool {
@@ -993,7 +1016,7 @@ int main(int argc, char **argv) {
         ImGui_ImplOpenGL3_NewFrame();
 #endif
         ImGui_ImplGlfw_NewFrame();
-        if (capture) {
+        if (capture && !captureMotion) {
             const auto transition = [](int value, int first, int last) {
                 return std::clamp(static_cast<float>(value - first) / static_cast<float>(last - first), 0.f, 1.f);
             };
@@ -1034,6 +1057,35 @@ int main(int argc, char **argv) {
                 }
             }
         }
+#ifndef IMKIT_NODE_EDITOR_METAL
+        if(captureMotion) {
+            auto& io=ImGui::GetIO();io.DeltaTime=1.f/60;io.ConfigInputTrickleEventQueue=false;io.AddFocusEvent(true);
+            if(frames==4) {
+                motion.Start(captureDirectory/"node-editor-final.mkv",captureWidth,captureHeight);
+                filmFrom=demo->material.filmOutput;filmTo=demo->material.filmInput;
+                originalNode=demo->material.model.data.nodes[1].view.position;
+                motion.Mark("Move to output socket");
+            }
+            auto travel=[&](int first,int last,ImVec2 from,ImVec2 to){float u=std::clamp(float(frames-first)/float(last-first),0.f,1.f);u=u*u*(3-2*u);filmMouse={from.x+(to.x-from.x)*u,from.y+(to.y-from.y)*u};};
+            if(frames>=4&&frames<54)travel(4,54,{300,180},filmFrom);
+            if(frames==54){io.AddMouseButtonEvent(0,true);motion.Mark("Drag output to input socket");}
+            if(frames>=54&&frames<144)travel(54,144,filmFrom,filmTo);
+            if(frames==144)io.AddMouseButtonEvent(0,false);
+            if(frames==175){motion.Check("link created through public IO",demo->material.model.data.links.size()==originalLinks+1,double(demo->material.model.data.links.size()));filmHeader=demo->material.filmHeader;motion.Mark("Move node header");}
+            if(frames>=175&&frames<210)travel(175,210,filmTo,filmHeader);
+            if(frames==210)io.AddMouseButtonEvent(0,true);
+            if(frames>=210&&frames<310)travel(210,310,filmHeader,{filmHeader.x+55,filmHeader.y+90});
+            if(frames==310)io.AddMouseButtonEvent(0,false);
+            if(frames==330){motion.Check("node moved through public IO",demo->material.model.data.nodes[1].view.position.x!=originalNode.x,demo->material.model.data.nodes[1].view.position.x);filmPan={demo->material.filmCanvas.x+800,demo->material.filmCanvas.y+650};motion.Mark("Pan canvas with middle drag");}
+            if(frames>=330&&frames<370)travel(330,370,{filmHeader.x+55,filmHeader.y+90},filmPan);
+            if(frames==370)io.AddMouseButtonEvent(2,true);
+            if(frames>=370&&frames<440)travel(370,440,filmPan,{filmPan.x+80,filmPan.y+30});
+            if(frames==440)io.AddMouseButtonEvent(2,false);
+            if(frames>=460&&frames<520)travel(460,520,{filmPan.x+80,filmPan.y+30},{filmPan.x+80,filmPan.y-150});
+            if(frames>=480&&frames<512&&frames%8==0){io.AddMouseWheelEvent(0,-1);motion.Mark("Wheel zoom");}
+            io.AddMousePosEvent(filmMouse.x,filmMouse.y);
+        }
+#endif
         if (verify) {
             auto& io = ImGui::GetIO();
             io.DeltaTime = 1.f / 60;
@@ -1047,6 +1099,9 @@ int main(int argc, char **argv) {
         }
         ImGui::NewFrame();
         demo->Draw();
+#ifndef IMKIT_NODE_EDITOR_METAL
+        if(captureMotion&&motion.Active())motion.Cursor();
+#endif
         if (verify && collapsed != demo->model.data.nodes[2].view.collapsed) {
             collapsed = demo->model.data.nodes[2].view.collapsed;
             ++collapseChanges;
@@ -1069,7 +1124,8 @@ int main(int argc, char **argv) {
 #ifndef IMKIT_NODE_EDITOR_METAL
         if (smoke && frames == 4 && argc > 2)
             imkit::design::SaveBackbuffer(argv[2], w, h);
-        if (capture) {
+        if(captureMotion&&motion.Active())motion.Capture(w,h);
+        if (capture && !captureMotion) {
             char name[32];
             std::snprintf(name, sizeof(name), "frame-%03d.png", frames - 1);
             imkit::design::SaveBackbuffer(captureDirectory / name, w, h);
@@ -1080,14 +1136,14 @@ int main(int argc, char **argv) {
 #endif
     }
 #ifndef IMKIT_NODE_EDITOR_METAL
+    if(captureMotion)motion.Finish();
     if (capture) {
         int framebufferWidth=0,framebufferHeight=0;
         glfwGetFramebufferSize(window,&framebufferWidth,&framebufferHeight);
         std::ofstream metadata(captureDirectory / "capture.txt");
         metadata << "scenario=node-editor\nframes=" << frames
                  << "\nsize=" << framebufferWidth << "x" << framebufferHeight
-                 << "\nsource=native OpenGL backbuffer; deterministic host-owned "
-                    "zoom, pan, dynamic socket, link and preview state\n";
+                 << (captureMotion ? "\nsource=continuous native OpenGL backbuffer; public ImGui IO socket connection, header drag, middle-button pan and wheel zoom\n" : "\nsource=native OpenGL backbuffer; deterministic host-owned zoom, pan, dynamic socket, link and preview state\n");
     }
 #endif
 #ifdef IMKIT_NODE_EDITOR_METAL

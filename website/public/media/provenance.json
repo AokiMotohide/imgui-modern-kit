@@ -1,14 +1,23 @@
 {
   "version": "3.2.0",
   "license": "MIT; repository font/icon notices retained",
-  "music": "Original 120 BPM D-minor synthesis; seed 320; no recordings or samples",
-  "visuals": "Native Gallery and Node Editor clips plus original motion graphics",
-  "duration_seconds": 60,
-  "video": "1920x1080, 60 fps, H.264",
-  "audio": "AAC stereo, 48000 Hz, -16 LUFS, -1.78 dBTP",
-  "reproduce": [
-    "tools/capture_v32_media.py",
-    "tools/render_v32_film.py"
+  "revision": 2,
+  "duration": 60,
+  "fps": 60,
+  "resolution": [
+    1920,
+    1080
   ],
-  "validate": "tools/check_v32_media.py"
+  "shots": 25,
+  "music": "Original 128 BPM D-minor electro-house; synthesized instruments and event-synchronized effects; seed 330; no samples or narration",
+  "fonts": "Repository Inter (SIL OFL), rasterized only",
+  "visuals": "Continuous native OpenGL backbuffer; real public Dear ImGui IO and large synchronized cursor; original typography and compositing",
+  "scripts": [
+    "tools/capture_v32_media.py",
+    "tools/render_v32_film.py",
+    "tools/motion_film.py"
+  ],
+  "validate": "tools/check_v32_media.py",
+  "sha256": "736101c758ea7870ee3ce5303c463a9106702cdda387452b93a622f1cc7031b0",
+  "icons": "Repository MIT icons rasterized with a consistent dark ink for the original graphics layer"
 }
