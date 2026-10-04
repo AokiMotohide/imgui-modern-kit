@@ -37,6 +37,8 @@ jobs:
         run: ctest --test-dir build/ci -C Release --output-on-failure
       - name: Package
         run: cmake --build build/ci --config Release --target package --parallel
+      - name: Preserve UTF-8 filenames in SDK ZIP
+        run: python tools/finalize_windows_sdk.py --build-dir build/ci
       - name: Verify packaged SDK consumer
         run: python tools/verify_release_consumer.py --build-dir build/ci --generator "${{ matrix.generator }}" --arch ${{ matrix.arch }}
       - uses: actions/upload-artifact@v4
