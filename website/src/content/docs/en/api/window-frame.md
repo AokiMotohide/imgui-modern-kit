@@ -2,7 +2,7 @@
 title: "WindowFrame API map"
 ---
 
-This map reflects the named API entries in [`docs/window-frame-api-inventory.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/window-frame-api-inventory.json). The file records type and function names, not signatures; use the public header as the contract source.
+This map reflects the named API entries in [`docs/reference/window-frame-api-inventory.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/window-frame-api-inventory.json). The file records type and function names, not signatures; use the public header as the contract source.
 
 Header: [`<imkit/window_frame.h>`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/window_frame.h)
 

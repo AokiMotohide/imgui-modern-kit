@@ -21,9 +21,10 @@
       "EditorPalette",
       "Theme",
       "ThemeScope",
-      "AnimationState"
+      "AnimationState",
+      "ThemePreset"
     ],
-    "contract": "docs/design-system.md"
+    "contract": "docs/architecture/design-system.md"
   },
   {
     "header": "include/imkit/accessibility.h",
@@ -38,14 +39,15 @@
       "ActionQueue",
       "AccessibilityFrame"
     ],
-    "contract": "docs/design-system.md"
+    "contract": "docs/architecture/design-system.md"
   },
   {
     "header": "include/imkit/accessibility_win32.h",
-    "types": [
-      "Win32ActionSink"
-    ],
-    "contract": "docs/design-system.md"
+    "types": [],
+    "contract": "docs/architecture/design-system.md",
+    "functions": [
+      "CreateWin32Provider"
+    ]
   },
   {
     "header": "include/imkit/locale.h",
@@ -53,7 +55,7 @@
       "TextDirection",
       "LocaleContext"
     ],
-    "contract": "docs/design-system.md"
+    "contract": "docs/architecture/design-system.md"
   },
   {
     "header": "include/imkit/components.h",
@@ -69,7 +71,7 @@
     "functions": [
       "CompactActionRow"
     ],
-    "contract": "docs/design-system.md"
+    "contract": "docs/architecture/design-system.md"
   },
   {
     "header": "include/imkit/patterns.h",
@@ -90,6 +92,43 @@
       "DataProvider",
       "DataTableState"
     ],
-    "contract": "docs/design-system.md"
+    "contract": "docs/architecture/design-system.md"
+  },
+  {
+    "header": "include/imkit/workflow.h",
+    "types": [
+      "WorkspaceTab",
+      "ChoiceItem",
+      "ChoiceGroupOptions",
+      "HierarchyRowView",
+      "HierarchyRowAction"
+    ],
+    "functions": [
+      "WorkspaceTabs",
+      "ChoiceGroup",
+      "HierarchyGroupHeader",
+      "HierarchyRow",
+      "BeginInspectorCard",
+      "EndInspectorCard",
+      "SettingToggleRow"
+    ],
+    "contract": "docs/components/workflow-components.md"
+  },
+  {
+    "header": "include/imkit/toast.h",
+    "types": [
+      "ToastView",
+      "ToastPosition",
+      "ToastPhase",
+      "ToastViewportState",
+      "ToastViewportOptions",
+      "ToastEvent",
+      "ToastEventBuffer"
+    ],
+    "functions": [
+      "UpdateToastViewport",
+      "ToastViewport"
+    ],
+    "contract": "docs/components/toasts.md"
   }
 ]

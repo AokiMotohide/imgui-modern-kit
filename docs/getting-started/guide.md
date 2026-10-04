@@ -85,7 +85,7 @@ Release packages are produced separately for Windows x64, Windows Arm64, macOS a
 # Create the matching host_imgui target first.
 set(IMKIT_IMGUI_TARGET host_imgui)
 set(IMKIT_SDK_ABI_CONFIRMED ON) # only after checking the manifest and settings
-find_package(imkit 3.1 CONFIG REQUIRED)
+find_package(imkit 3.2 CONFIG REQUIRED)
 target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
 
@@ -108,3 +108,7 @@ See [API migration, provider ownership and current implementation boundaries](..
 See [workflow API, ownership, coordinates and Gallery](../components/workflow-components.md).
 Use Generic Workspace, Feedback / States and Preview Tiles. Keep notification
 time/queues, textures, selection and resize dimensions in host-owned state.
+
+## ImKit 3.2 workspace
+
+Open **New in 3.2** in the Gallery to use WorkspaceTabs, HierarchyGroupHeader/HierarchyRow, BeginInspectorCard/EndInspectorCard, SettingToggleRow, DragVector3WithUnit, ChoiceGroup and CompactActionRow together. Requests update Gallery-owned values; the same pattern works in an existing ImGui frame. See the [3.2 declarations and lifetime rules](../reference/v3.2-api.md). All 288 runtime icons and 13 themes are available without introducing a new context or application framework.

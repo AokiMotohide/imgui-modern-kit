@@ -39,24 +39,62 @@ Iconsはrenderer、image decoder、file検索、OS accessibility bridgeを追加
 
 ---
 
-Icon APIは公開header `<imkit/icons.h>`と`imkit::imkit` targetで利用できます。描画は現在のDear ImGui frameへ行い、font atlasまたはtextureの準備・upload・破棄はホストが担当します。
+ImKit は、280種類以上の Lucide ベクターアイコンを埋め込みアトラスとして提供しており、専用のヘッダー `<imkit/icons.h>` をインクルードすることで利用できます。
 
-## Host統合
+---
 
-Icon IDと描画関数は[`include/imkit/icons.h`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/icons.h)を参照してください。Gallery sampleのtexture登録方法を利用アプリのrenderer契約と同一視しないでください。
+## アイコンの利用方法
 
-frame内では、hostがuploadした`IconAtlas`と公開IDを使って`imkit::Icon(atlas, imkit::IconId::Search)`を呼びます。
+アイコンアトラスのテクスチャ生成および GPU への転送はホスト側で行い、描画時に `imkit::IconAtlas` を渡します：
 
-正確な型と描画overloadは公開headerと[English API behavior](../../en/features/icons/#api-behavior)を参照してください。
+```cpp
+#include <imkit/icons.h>
+#include <imkit/imkit.h>
 
-## API behavior
+// 1. 初期化時: GPU テクスチャアトラスの準備
+imkit::IconAtlas icons;
+for (int size : imkit::IconPixelSizes) {
+    const auto atlasPixels = imkit::GetIconAtlasPixels(size);
+    // ホストのグラフィックスAPI（OpenGL / Metal / DirectX）でテクスチャを作成
+    ImTextureID textureId = HostCreateTexture(atlasPixels.width, atlasPixels.height, atlasPixels.rgba.data());
+    icons.SetTexture(size, textureId);
+}
 
-`Icon`は現在のframeにatlasのspriteを描画します。`IconButton`/`IconLabelButton`はIDとaccessibility labelを受け取り、押下結果を返します。texture未設定または無効IDでは描画せず、buttonを無効にします。正確なoverloadは公開headerを参照してください。
+// 2. フレームループ内での描画
+// アイコン単体の描画
+imkit::Icon(icons, imkit::IconId::Search, 16);
 
-## Assets and reproduction
+// ツールバー向けのアイコンボタン（ツールチップ付き）
+if (imkit::IconButton("play_btn", icons, imkit::IconId::Play, "再生")) {
+    // 再生ボタンが押されたときの処理
+}
 
-生成icon dataのsource・再生成手順・license記録は英語版の[Assets and reproduction](../../en/features/icons/#assets-and-reproduction)と`THIRD_PARTY_NOTICES.md`にあります。Icon APIはhost font、GPU atlas、texture registry、保存を所有しません。配布時は同梱noticeに従ってください。
+// アイコン＋テキストラベル付きボタン
+if (imkit::IconActionButton("設定を開く", icons, imkit::IconId::Settings)) {
+    // 設定ボタンが押されたときの処理
+}
+```
 
-## Native Gallery
+---
 
-Gallery **Icons** pageでは検索、atlas表示、各IDのsymbolを操作できます。page登録と描画実装は[`gallery.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/gallery.cpp)にあります。Themeとの併用は[Theme guide](../themes/)を参照してください。
+## 主な機能と特徴
+
+- **マルチスケール対応**: 12px、16px、20px、24px、32px、48px、64px の7サイズのアトラスがあらかじめ生成されており、表示スケールや DPI に合わせて鮮明に描画されます。
+- **テクスチャ未設定時の安全性**: テクスチャがまだロードされていない場合や無効な ID が指定された場合でもクラッシュせず、安全に空白領域を確保（またはボタンを無効化）します。
+- **テーマカラーへの追従**: アイコンの色は `theme.semantic.text` やボタンの前景カラーに自動的にティントされます。
+
+---
+
+## 資産と再現手順
+
+`assets/icons/{12,16,20,24,32,48,64}` には 2,016 枚の透過 PNG が、`assets/icons/atlases` には 7 枚のアトラス画像が収録されています。
+アイコンアセットを再構築する場合は、Python 環境で `python tools/build_icons.py` を実行します。アトラス領域やハッシュ検証は `python tools/build_icons.py --check` で確認できます（C++ 利用者がビルド時に Python や Pillow を導入する必要はありません）。
+
+---
+
+## Gallery での動作確認
+
+Gallery アプリの **Icons** 画面（ページID: 6）では、全288種類のアイコンカタログをリアルタイム検索し、異なるサイズやテーマでの外観を確認できます。
+実装コードは [`examples/gallery/gallery.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/gallery.cpp) を参照してください。
+
+ライセンス条件やアセットの出典情報については [THIRD_PARTY_NOTICES.md](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/THIRD_PARTY_NOTICES.md) をご覧ください。

@@ -41,44 +41,66 @@ Themeは外観の値を適用します。Context生成やOS font読み込みは�
 
 ---
 
-## 名前付きpreset
+ImKit は、13種類の洗練された名前付きプリセットと、柔軟なカスタマイズ API を提供しています。
 
-`ThemePresets()`は固定順の12項目を返します。各`ThemePresetInfo`にはenum値、ホスト側保存用の安定した小文字ID、英語表示名、Light/Dark区分があります。
+---
 
-| Light | Dark |
-|---|---|
-| Precision Light、Warm Sand、Rose、Solar、High Contrast Light | Precision Dark、Graphite、Midnight、Ocean、Forest、Violet、High Contrast Dark |
+## 組み込みプリセット一覧
+
+`ThemePresets()` を呼び出すことで、全13種類のプリセット情報を取得できます。各プリセットには enum 値、永続化用の小文字 ID（例: `"precision-dark"`）、表示名が定義されています。
+
+| カラースキーム | プリセット名 | 特徴 |
+|---|---|---|
+| **Dark** | `PrecisionDark` | ImKit の標準ダークテーマ。落ち着いたグレーとシアンアクセント |
+| | `Graphite` | 黒に近い深いグレー基調 |
+| | `Midnight` | 深夜の青みを帯びたダークネイビー |
+| | `Ocean` | 海洋をイメージした深い青緑色 |
+| | `Forest` | 自然な深いフォレストグリーン |
+| | `Violet` | 高級感のあるダークパープル |
+| | `Slate` | スレート石のような青灰色 |
+| | `HighContrastDark` | コントラスト比を高めた視認性重視のダークテーマ |
+| **Light** | `PrecisionLight` | ImKit の標準ライトテーマ。クリーンな白と淡いグレー |
+| | `WarmSand` | 暖かみのあるサンドベージュ |
+| | `Rose` | 優しいピンクがかったペールトーン |
+| | `Solar` | 明るい太陽光のような暖色ライト |
+| | `HighContrastLight` | 視認性重視の高コントラストライトテーマ |
+
+---
+
+## コード例: テーマの選択と復元
+
+設定ファイルへ保存する際は、enum の整数値ではなく「安定した小文字 ID」を保存することを推奨します：
 
 ```cpp
+#include <imkit/theme.h>
+
+// 1. プリセットから直接生成
 auto theme = imkit::MakeTheme(imkit::ThemePreset::Forest);
+
+// 2. 保存されていた文字列IDから安全に復元（フォールバック付き）
+std::string savedId = "graphite";
+auto preset = imkit::ThemePresetFromId(savedId)
+    .value_or(imkit::ThemePreset::PrecisionDark);
+auto currentTheme = imkit::MakeTheme(preset);
 ```
 
-enum順ではなく安定IDを保存し、`ThemePresetFromId()`で復元します。未知IDや大文字小文字が異なるIDは`std::nullopt`となるため、移行とfallbackはホスト側で明示できます。
+---
+
+## 配色のカスタマイズ (`SetAccent`)
+
+ブランドカラーやプロジェクトのテーマカラーに合わせて、アクセント色を一括変更できます：
 
 ```cpp
-const auto preset = imkit::ThemePresetFromId(savedPresetId)
-    .value_or(imkit::ThemePreset::Graphite);
-auto theme = imkit::MakeTheme(preset);
+// アクセントカラーをオレンジに変更
+// ※ ボタン背景、フォーカス枠、選択ハイライトなどが連動して更新されます
+imkit::SetAccent(theme, ImVec4(1.0f, 0.5f, 0.0f, 1.0f));
 ```
 
-`MakePrecisionTheme(Light/Dark)`は互換維持され、従来と同じPrecision Light/Dark値を生成します。
+さらに細かい配色を調整したい場合は、`theme.semantic.*` または `theme.colors.*` の各フィールドを直接編集し、`imkit::ResolveTheme(theme)` を呼び出します。
 
-## 配色変更
+---
 
-`SetAccent`はaccent、focus、on-accent文字、selectionを更新します。それ以外は`Theme::colors`、`metrics`、`motion`、`editor`を明示的に編集します。任意編集した色のコントラストは自動補正しません。
+## スケール倍率と `ThemeScope`
 
-同梱presetは通常文字とcanvas・surface・input・raisedの間で4.5:1以上、muted文字で3:1以上、accentとdestructiveの前景組合せで4.5:1以上を検証します。
-
-## 所有と保存
-
-`Theme`はコピー可能なホスト所有値です。ImKitはcurrent-theme registryを持たず、ファイルへ保存しません。ホストの設定modelへpreset IDまたはカスタマイズ済み値を保存し、明示的に復元・再適用します。
-
-固定Git submoduleを通常利用しつつホストとImKitを並行開発する場合は、ホスト所有のCMake cache pathで`add_subdirectory`の入力だけを明示的に差し替えます。この絶対pathをproject fileや配布manifestへ保存せず、どちらの経路でもImKit追加前に`IMKIT_IMGUI_TARGET`を設定してください。
-
-`FontSet`は非所有参照です。frame開始前にホストのatlasへglyphを読み込んでください。OS font探索やIME callbackは提供しません。
-
-## 倍率とscope
-
-`ApplyTheme(theme, scale)`は未拡大metricsから毎回styleを作るため、繰り返し適用しても寸法は累積しません。`ThemeScope`は同じ生存中Context上で入れ子にでき、破棄時にstyleとfontを復元します。
-
-共通のアプリ倍率は50%～250%、既定値は125%です。ホストは`ThemeScaleMinimum`、`ThemeScaleDefault`、`ThemeScaleMaximum`で同じ値を参照できます。`ApplyTheme`または`ThemeScope`で倍率を省略すると125%を使い、monitor DPIへの追従は引き続きホストが担います。
+- **スケール倍率**: `ApplyTheme(theme, scale)` の `scale` 引数により、UI 全体の表示倍率を 50%～250%（既定: 125%）の範囲で調整可能です。未拡大の元トークンから毎回スタイルを再計算するため、毎フレーム呼び出してもサイズが累積することはありません。
+- **部分的なテーマ適用**: 一部のダイアログやパネルだけに異なるテーマを適用したい場合は `imkit::ThemeScope` を利用します。

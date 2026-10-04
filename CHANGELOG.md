@@ -2,26 +2,21 @@
 
 > Published release entries present English first, followed by equivalent Japanese notes. Unreleased remains a work-in-progress list.
 
-## Unreleased
+## 3.2.0 — 2026-10-04
 
-**Added**
-- `Slate` — the 13th named theme preset. Stable ID and display order are preserved, so existing consumers are unaffected.
-- `imkit::DragVector3WithUnit` — per-axis drag with a shared unit label. Each axis keeps native `DragFloat` behavior and its own stable ID scope; the three fields stack vertically when the window is narrow.
-- Workflow surface gains a generic work tab, a hierarchy listing, and a settings card.
+**Added:** WorkspaceTabs, hierarchy visibility/lock/group action requests, inspector cards, SettingToggleRow, DragVector3WithUnit, titled responsive ChoiceGroup, CompactActionRow, ToastViewport, SubtleDestructive action style, Slate (13th theme), and USB/Network/Smartphone/IndustrialCamera icons (288 total).
 
-**Changed**
-- Hierarchy headings and rows now expose auxiliary operations as selectable requests; the host decides which are available.
-- Contrast and visibility of the general dark theme and its controls were improved.
+**Gallery and documentation:** category navigation, independent Theme only / Components comparison, host-applied 3.2 workspace, refreshed native captures, bilingual public guides and declarations, and a 60-second English motion graphics film with original electronic music. Pages now includes toast documentation and the 3.2 API reference.
 
-**Breaking changes** — none. No public API or ABI changes.
+**Compatibility:** `WindowFrameContent::iconTexture` extends the structure. Recompile all consumers and ImKit static libraries against 3.2; do not mix 3.1 object files. The pinned Dear ImGui revision remains unchanged. No new library dependency is introduced.
 
 **日本語**
-- **追加**: 13番目の名前付き theme preset `Slate`。安定IDと表示順は維持され、既存 consumer に影響ありません。
-- **追加**: `imkit::DragVector3WithUnit`（単位付き三軸 drag）。各軸は標準 `DragFloat` の挙動と安定 ID 範囲を保持し、狭い幅では3欄を縦並びにします。
-- **追加**: workflow surface に汎用作業タブ、階層一覧、設定カードを追加。
-- **変更**: 階層の見出し・行が選択可能な補助操作要求を返すようになりました（利用可能か決めるのはホスト）。
-- **変更**: 汎用ダークテーマと関連コントロールのコントラスト・視認性を向上。
-- **破壊的変更**: なし（公開 API・ABI は不変）。
+
+作業タブ、階層の可視・ロック・見出し操作要求、設定カード、設定行、単位付き三軸入力、見出し付き選択、状態と操作の行、ToastViewport、SubtleDestructive、13番目のテーマSlateを追加しました。USB、Network、Smartphone、IndustrialCameraを含む288アイコンを利用できます。
+
+Galleryのカテゴリ案内、独立した2モードの比較、要求をアプリが反映する3.2作業画面を整えました。実キャプチャGIF、英日ガイドとAPI宣言、オリジナルBGM付きの約60秒英語モーショングラフィックス動画を公開します。Pagesにもトーストと3.2 API参照を含めます。
+
+`WindowFrameContent::iconTexture` の追加により構造体が拡張されています。アプリとImKit静的ライブラリを3.2のヘッダーで再コンパイルしてください。3.1のobjectは混在させないでください。Dear ImGuiの対応revisionは変更せず、新しいライブラリ依存も追加していません。
 
 ## 3.1.0 — 2026-09-26
 

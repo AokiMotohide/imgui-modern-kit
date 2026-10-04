@@ -22,23 +22,29 @@ jobs:
         include:
           - runner: windows-2022
             arch: x64
+            generator: Visual Studio 17 2022
           - runner: windows-11-arm
             arch: ARM64
+            generator: Visual Studio 18 2026
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
       - name: Configure
-        run: cmake -S . -B build/ci -G "Visual Studio 17 2022" -A ${{ matrix.arch }} -DIMKIT_BUILD_GALLERY=ON -DIMKIT_BUILD_TESTS=ON -DIMKIT_BUILD_ACCESSIBILITY_WIN32=ON
+        run: cmake -S . -B build/ci -G "${{ matrix.generator }}" -A ${{ matrix.arch }} -DIMKIT_BUILD_GALLERY=ON -DIMKIT_BUILD_TESTS=ON -DIMKIT_BUILD_ACCESSIBILITY_WIN32=ON
       - name: Build
         run: cmake --build build/ci --config Release --parallel
       - name: Test
         run: ctest --test-dir build/ci -C Release --output-on-failure
       - name: Package
         run: cmake --build build/ci --config Release --target package --parallel
+      - name: Verify packaged SDK consumer
+        run: python tools/verify_release_consumer.py --build-dir build/ci --generator "${{ matrix.generator }}" --arch ${{ matrix.arch }}
       - uses: actions/upload-artifact@v4
         with:
           name: imkit-Windows-${{ matrix.arch }}
-          path: build/ci/imgui-modern-kit-*.zip
+          path: |
+            build/ci/imgui-modern-kit-*.zip
+            build/ci/sdk-consumer-evidence.json
 
   macos:
     strategy:
@@ -69,10 +75,14 @@ jobs:
         run: .github/scripts/sign-and-notarize.sh build/ci/catalog/Release/imkit_gallery.app
       - name: Package
         run: cmake --build build/ci --config Release --target package --parallel
+      - name: Verify packaged SDK consumer
+        run: python3 tools/verify_release_consumer.py --build-dir build/ci --generator Xcode --arch ${{ matrix.arch }}
       - uses: actions/upload-artifact@v4
         with:
           name: imkit-macOS-${{ matrix.arch }}
-          path: build/ci/imgui-modern-kit-*.zip
+          path: |
+            build/ci/imgui-modern-kit-*.zip
+            build/ci/sdk-consumer-evidence.json
 
   macos-universal-package:
     runs-on: macos-15
@@ -82,15 +92,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Configure Universal 2
-        run: cmake -S . -B build/universal -G Xcode '-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64' -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DIMKIT_BUILD_GALLERY=ON -DIMKIT_BUILD_TESTS=OFF
+        run: cmake -S . -B build/universal -G Xcode '-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64' -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DIMKIT_BUILD_GALLERY=ON -DIMKIT_BUILD_TESTS=ON
       - name: Build Gallery
-        run: cmake --build build/universal --config Release --target imkit_gallery --parallel
+        run: cmake --build build/universal --config Release --parallel
+      - name: Test Universal 2 on the arm64 runner
+        run: ctest --test-dir build/universal -C Release --output-on-failure
       - name: Sign and notarize when credentials are available
         if: env.APPLE_SIGNING_IDENTITY != '' && env.APPLE_NOTARY_PROFILE != ''
         run: .github/scripts/sign-and-notarize.sh build/universal/catalog/Release/imkit_gallery.app
       - name: Package
         run: cmake --build build/universal --config Release --target package --parallel
+      - name: Verify packaged Universal 2 SDK consumer
+        run: python3 tools/verify_release_consumer.py --build-dir build/universal --generator Xcode --arch 'arm64;x86_64'
       - uses: actions/upload-artifact@v4
         with:
           name: imkit-macOS-universal2
-          path: build/universal/imgui-modern-kit-*.zip
+          path: |
+            build/universal/imgui-modern-kit-*.zip
+            build/universal/sdk-consumer-evidence.json

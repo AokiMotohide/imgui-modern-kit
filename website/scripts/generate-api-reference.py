@@ -66,7 +66,7 @@ def local_href(current_route: str, target_route: str) -> str:
 
 
 def generate_native_api() -> None:
-    entries = json.loads((DOCS / "api-inventory.json").read_text(encoding="utf-8"))
+    entries = json.loads((DOCS / "reference/api-inventory.json").read_text(encoding="utf-8"))
     included = [entry for entry in entries if entry.get("included") is True]
     revision_labels = {entry.get("version") for entry in included}
     if len(revision_labels) != 1:
@@ -83,13 +83,13 @@ def generate_native_api() -> None:
         categories[entry["category"]].append(entry)
 
     en = [
-        f"This index is generated from [`docs/api-inventory.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/api-inventory.json). It lists every entry marked `included: true` in that source: **{len(included)} signature rows** across the pinned Dear ImGui `{revision_name}` revision (`{revision_match.group(1)}`). Rows marked `included: false` are omitted, including host lifecycle and debug APIs such as `CreateContext`, `NewFrame`, and `Render`.",
+        f"This index is generated from [`docs/reference/api-inventory.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/api-inventory.json). It lists every entry marked `included: true` in that source: **{len(included)} signature rows** across the pinned Dear ImGui `{revision_name}` revision (`{revision_match.group(1)}`). Rows marked `included: false` are omitted, including host lifecycle and debug APIs such as `CreateContext`, `NewFrame`, and `Render`.",
         "",
         f"`<imkit/native.h>` imports these Dear ImGui overloads into `namespace imkit` with their original defaults and Begin/End contracts. These are declaration listings, not standalone headers or call examples. Search the page for a function name or use the section headings to find its category. The row count does not claim that every overload received a separate interactive test; see the [integration guide]({local_href('api/native', 'getting-started')}) and [components guide]({local_href('api/native', 'features/components')}) for use, and the pinned public header for the exact implementation contract.",
         "",
     ]
     ja = [
-        f"この一覧は[`docs/api-inventory.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/api-inventory.json)から生成しています。`included: true`の**{len(included)}宣言行**を掲載し、Dear ImGui `{revision_name}` revision（`{revision_match.group(1)}`）に固定しています。`included: false`のContextやフレーム管理、debug用関数（`CreateContext`、`NewFrame`、`Render`など）は含みません。",
+        f"この一覧は[`docs/reference/api-inventory.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/api-inventory.json)から生成しています。`included: true`の**{len(included)}宣言行**を掲載し、Dear ImGui `{revision_name}` revision（`{revision_match.group(1)}`）に固定しています。`included: false`のContextやフレーム管理、debug用関数（`CreateContext`、`NewFrame`、`Render`など）は含みません。",
         "",
         f"`<imkit/native.h>`はDear ImGuiのoverloadを元のdefault値とBegin/End契約のまま`namespace imkit`へ公開します。以下は宣言一覧であり、単独でincludeするheaderや呼出し例ではありません。関数名をサイト内検索するか、見出しから分類を探せます。件数は、全overloadを個別に操作検証したことを示しません。使い方は[導入ガイド]({local_href('api/native', 'getting-started')})と[コンポーネントガイド]({local_href('api/native', 'features/components')})、正確な契約は固定版public headerを確認してください。",
         "",
@@ -138,7 +138,7 @@ def generate_native_api() -> None:
 
 
 def generate_node_api() -> None:
-    entries = json.loads((DOCS / "node-editor-api.json").read_text(encoding="utf-8"))
+    entries = json.loads((DOCS / "reference/node-editor-api.json").read_text(encoding="utf-8"))
     by_name = {entry["name"].removeprefix("imkit::node_editor::"): entry for entry in entries}
     if len(by_name) != len(entries):
         raise ValueError("Node API inventory has duplicate names; group overload declarations explicitly")
@@ -155,13 +155,13 @@ def generate_node_api() -> None:
         raise ValueError(f"Node API grouping mismatch; missing={missing}, extra={extra}")
 
     en = [
-        f"This generated index contains the **{len(entries)} declarations** in [`docs/node-editor-api.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/node-editor-api.json) for `<imkit/node_editor.h>`. The header defines the exact types and contract. It is a development API in v{imkit_version}; graph data, validation, undo and persistence remain with the host.",
+        f"This generated index contains the **{len(entries)} declarations** in [`docs/reference/node-editor-api.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/node-editor-api.json) for `<imkit/node_editor.h>`. The header defines the exact types and contract. It is a development API in v{imkit_version}; graph data, validation, undo and persistence remain with the host.",
         "",
         f"Signatures below are declaration listings, not self-contained code examples. For the `BeginEditor` call contract, ownership, return value, and paired-call rules, see the [BeginEditor reference]({local_href('api/node-editor', 'api/node-editor/begin-editor')}). The [Node Editor guide]({local_href('api/node-editor', 'features/node-editor')}) shows the drawing order.",
         "",
     ]
     ja = [
-        f"この生成一覧は[`docs/node-editor-api.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/node-editor-api.json)にある`<imkit/node_editor.h>`の**{len(entries)}宣言**を掲載します。型と正確な契約はheaderを基準にしてください。v{imkit_version}の開発中APIであり、グラフデータ、検証、取り消し、保存はアプリ側が管理します。",
+        f"この生成一覧は[`docs/reference/node-editor-api.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/node-editor-api.json)にある`<imkit/node_editor.h>`の**{len(entries)}宣言**を掲載します。型と正確な契約はheaderを基準にしてください。v{imkit_version}の開発中APIであり、グラフデータ、検証、取り消し、保存はアプリ側が管理します。",
         "",
         f"以下は宣言一覧で、単独で使うコード例ではありません。`BeginEditor`の呼び出し、所有権、戻り値、対応する終了呼び出しは[BeginEditor詳細]({local_href('api/node-editor', 'api/node-editor/begin-editor')})を参照してください。[Node Editorガイド]({local_href('api/node-editor', 'features/node-editor')})に描画順を示しています。",
         "",
@@ -187,9 +187,9 @@ def generate_node_api() -> None:
 
 
 def generate_metadata_indexes() -> None:
-    design = json.loads((DOCS / "design-system-api.json").read_text(encoding="utf-8"))
+    design = json.loads((DOCS / "reference/design-system-api.json").read_text(encoding="utf-8"))
     en = [
-        f"This map is generated from [`docs/design-system-api.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/design-system-api.json). It records {len(design)} public-header/type groups and the related contract page. It is header metadata, **not a complete function-signature inventory**.",
+        f"This map is generated from [`docs/reference/design-system-api.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/design-system-api.json). It records {len(design)} public-header/type groups and the related contract page. It is header metadata, **not a complete function-signature inventory**.",
         "",
         f"Use the [design-system guide]({local_href('api/design-system', 'features/design-system')}) and each public header for behavior and declarations.",
         "",
@@ -197,7 +197,7 @@ def generate_metadata_indexes() -> None:
         "|---|---|",
     ]
     ja = [
-        f"このmapは[`docs/design-system-api.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/design-system-api.json)から生成しています。{len(design)}つの公開headerと型のまとまり、契約ガイドへの対応を示すheader metadataです。**関数signatureの完全一覧ではありません。**",
+        f"このmapは[`docs/reference/design-system-api.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/design-system-api.json)から生成しています。{len(design)}つの公開headerと型のまとまり、契約ガイドへの対応を示すheader metadataです。**関数signatureの完全一覧ではありません。**",
         "",
         f"動作と契約は[design-systemガイド]({local_href('api/design-system', 'features/design-system')})および各公開headerを確認してください。",
         "",
@@ -210,9 +210,9 @@ def generate_metadata_indexes() -> None:
         ja.append(f"| [`{entry['header']}`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/{entry['header'].removeprefix('include/')}) | {types} |")
     write_pair("api/design-system", "Design-system header map", "Design-system header一覧", "\n".join(en), "\n".join(ja))
 
-    window = json.loads((DOCS / "window-frame-api-inventory.json").read_text(encoding="utf-8"))
+    window = json.loads((DOCS / "reference/window-frame-api-inventory.json").read_text(encoding="utf-8"))
     en = [
-        "This map reflects the named API entries in [`docs/window-frame-api-inventory.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/window-frame-api-inventory.json). The file records type and function names, not signatures; use the public header as the contract source.",
+        "This map reflects the named API entries in [`docs/reference/window-frame-api-inventory.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/window-frame-api-inventory.json). The file records type and function names, not signatures; use the public header as the contract source.",
         "",
         f"Header: [`<{window['header']}>`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/{window['header']})",
         "",
@@ -225,7 +225,7 @@ def generate_metadata_indexes() -> None:
         "## Optional platform targets", "",
     ]
     ja = [
-        "このmapは[`docs/window-frame-api-inventory.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/window-frame-api-inventory.json)に記録された名前を示します。型名と関数名のみの一覧でsignatureは含みません。契約は公開headerを基準にしてください。",
+        "このmapは[`docs/reference/window-frame-api-inventory.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/window-frame-api-inventory.json)に記録された名前を示します。型名と関数名のみの一覧でsignatureは含みません。契約は公開headerを基準にしてください。",
         "",
         f"Header: [`<{window['header']}>`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/{window['header']})",
         "",

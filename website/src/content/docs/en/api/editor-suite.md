@@ -610,5 +610,5 @@ and modifier rows/types with borrowed atlas glyphs. / 両iconフィールドに�
 
 Property value context menus provide Copy/Paste through the host ImGui clipboard callbacks. Paste accepts one finite number and emits a typed Property event; invalid text leaves the model unchanged. / 値の右クリックメニューはホストのImGui clipboard callbackを使用し、有限な数値だけをPropertyイベントで貼り付けます。
 
-See [Editor 2.0 migration and interaction design](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/editor-refresh.md).
-Editor 2.0の移行と操作設計は[こちら](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/editor-refresh.md)を参照してください。
+See [Editor 2.0 migration and interaction design](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/archive/editor-refresh.md).
+Editor 2.0の移行と操作設計は[こちら](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/archive/editor-refresh.md)を参照してください。

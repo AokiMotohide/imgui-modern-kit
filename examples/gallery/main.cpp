@@ -922,29 +922,41 @@ void VerifyTimelineUI(Host &h,const std::filesystem::path &out) {
 }
 void VerifyComparison(Host &h,const std::filesystem::path &out) {
     auto require=[](bool ok,const char *message) { if(!ok) throw std::runtime_error(message); };
-    h.s.page=19;h.s.comparison.open=true;h.Settle();
-    const ImGuiStyle before=ImGui::GetStyle();
-    h.Frame();
-    require(std::memcmp(&before,&ImGui::GetStyle(),sizeof(ImGuiStyle))==0,
-            "comparison styles did not restore after a frame");
-    const int applied=h.s.comparison.applyCount;
-    h.Click("comparison-default-apply");
-    require(h.s.comparison.applyCount==applied+1,"default comparison action did not update shared state");
-    h.Click("comparison-imkit-apply");
-    require(h.s.comparison.applyCount==applied+2,"ImKit comparison action did not update shared state");
-    const bool enabled=h.s.comparison.enabled;
-    h.Click("comparison-default-enabled");
-    require(h.s.comparison.enabled!=enabled,"default comparison toggle did not update shared state");
-    h.Click("comparison-imkit-enabled");
-    require(h.s.comparison.enabled==enabled,"ImKit comparison toggle did not share the same state");
-    h.s.comparison.open=false;h.Frame();
-    require(h.s.probes.find("comparison-default-apply")==h.s.probes.end(),"closed comparison still submitted controls");
-    h.s.comparison.open=true;h.Settle();
-    require(h.s.probes.contains("comparison-default-apply") && h.s.probes.contains("comparison-imkit-apply"),
-            "comparison did not restore controls after reopening");
+    h.s.page=21;h.s.comparison.open=true;h.Settle();
+    for(int mode=0;mode<2;++mode) {
+        h.s.comparison.mode=mode;h.Settle();
+        const ImGuiStyle before=ImGui::GetStyle();h.Frame();
+        require(std::memcmp(&before,&ImGui::GetStyle(),sizeof(ImGuiStyle))==0,"comparison style restoration failed");
+        const int applied=h.s.comparison.applyCount;
+        h.Click("comparison-default-apply");h.Click("comparison-imkit-apply");
+        require(h.s.comparison.applyCount==applied+2,"both actions must update shared state");
+        const bool enabled=h.s.comparison.enabled;
+        h.Click("comparison-default-enabled");h.Click("comparison-imkit-enabled");
+        require(h.s.comparison.enabled==enabled,"both columns must edit the same value");
+        h.Replace("comparison-default-name","Shared from left");
+        require(std::string(h.s.comparison.name)=="Shared from left","left edit failed");
+        h.Replace("comparison-imkit-name","Shared from right");
+        require(std::string(h.s.comparison.name)=="Shared from right","right edit failed");
+        h.Click("comparison-default-apply");h.s.comparison.focusDefault=true;h.Settle();ImGui::SetNavCursorVisible(true);h.Key(ImGuiKey_Space);
+        require(h.s.comparison.applyCount==applied+4,"keyboard activation failed");
+        h.s.comparison.disabled=true;h.Settle();
+        const int disabledCount=h.s.comparison.applyCount;
+        h.Click("comparison-default-apply");h.Click("comparison-imkit-apply");
+        require(h.s.comparison.applyCount==disabledCount,"disabled controls changed state");
+        h.s.comparison.disabled=false;
+    }
+    h.s.comparison.open=false;h.Page(19);
+    require(!h.s.probes.contains("comparison-default-apply"),"comparison leaked into Start");
+    h.s.comparison.open=true;h.Page(21);
+    h.Frame({},out/"comparison-native.png");
+    h.s.comparison.open=false;h.Page(22);
+    const bool setting=h.s.workflow.settingEnabled;h.Click("workbench-enabled");
+    require(h.s.workflow.settingEnabled!=setting,"workbench setting request was not applied");
+    h.Click("workbench-row-1");
+    require(h.s.workflow.selected==2,"workbench selection request was not applied");
+    h.Frame({},out/"workbench-native.png");
     std::ofstream log(out/"comparison-verification.txt");
-    log<<"PASS: default and ImKit columns share host-owned state; scopes restore ImGuiStyle; close/reopen removes and restores controls.\n"
-       <<"The comparison uses public Dear ImGui IO and styles only. It is not native OS/IME, performance or accessibility validation.\n";
+    log<<"PASS: Theme only and Components; shared left/right edits, keyboard activation, disabled controls, complete style restoration, isolated pages, host-applied workbench requests.\nPublic ImGui IO and native GL backbuffer; native OS/IME input not tested.\n";
 }
 void CaptureFrames(Host &h,const std::filesystem::path &dir,int &index,int count) {
     for(int i=0;i<count;++i) {
@@ -959,12 +971,12 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
     if(demo=="overview") {
         h.s.page=19;h.s.comparison.open=false;h.Settle();
         CaptureFrames(h,dir,frame,16);
-        h.s.comparison.open=true;h.Settle();
+        h.s.page=21;h.s.comparison.open=true;h.Settle();
         CaptureFrames(h,dir,frame,24);
-        h.Click("start-components");h.s.comparison.open=false;
+        h.s.page=22;h.s.comparison.open=false;h.Settle();
         CaptureFrames(h,dir,frame,20);
     } else if(demo=="comparison") {
-        h.s.page=19;h.s.comparison.open=true;h.Settle();
+        h.s.page=21;h.s.comparison.open=true;h.Settle();
         CaptureFrames(h,dir,frame,14);
         h.Click("comparison-default-apply");
         CaptureFrames(h,dir,frame,14);
@@ -972,6 +984,18 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
         CaptureFrames(h,dir,frame,14);
         h.Click("comparison-imkit-enabled");
         CaptureFrames(h,dir,frame,14);
+    } else if(demo=="workspace") {
+        h.s.comparison.open=false;h.Page(22);
+        CaptureFrames(h,dir,frame,16);
+        h.Click("workbench-enabled");h.mouse={-100,-100};h.Settle();CaptureFrames(h,dir,frame,12);
+        h.Click("workbench-row-1");h.mouse={-100,-100};h.Settle();CaptureFrames(h,dir,frame,12);
+        h.Click("workbench-tabs");h.mouse={-100,-100};h.Settle();CaptureFrames(h,dir,frame,12);
+        h.Click("workbench-enabled");h.mouse={-100,-100};h.Settle();CaptureFrames(h,dir,frame,12);
+    } else if(demo=="toasts") {
+        h.s.comparison.open=false;h.s.toasts.initialized=true;h.s.toasts.items.clear();h.s.toasts.state.Reset();h.Page(20);
+        h.Click("toast-loading");CaptureFrames(h,dir,frame,24);
+        h.Click("toast-complete");CaptureFrames(h,dir,frame,24);
+        h.Click("toast-success");CaptureFrames(h,dir,frame,16);
     } else if(demo=="components") {
         h.s.page=0;h.s.comparison.open=false;h.Settle();
         CaptureFrames(h,dir,frame,16);
@@ -1034,7 +1058,7 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
         CaptureFrames(h,dir,frame,8);
         h.s.palette=false;h.Settle();
         CaptureFrames(h,dir,frame,8);
-        h.s.page=19;h.s.comparison.open=true;h.Settle();
+        h.s.page=21;h.s.comparison.open=true;h.Settle();
         CaptureFrames(h,dir,frame,16);
     } else if(demo=="vector") {
         h.s.page=1;h.s.comparison.open=false;h.s.floatingComparison=false;
@@ -1975,7 +1999,7 @@ int main(int argc, char **argv) {
             if(captureDemo!="overview" && captureDemo!="comparison" && captureDemo!="themes" &&
                captureDemo!="icons" && captureDemo!="icon-artwork" && captureDemo!="vector" && captureDemo!="workflow" &&
                captureDemo!="progress" && captureDemo!="timeline" && captureDemo!="components" &&
-               captureDemo!="preview-contract") return 2;
+               captureDemo!="preview-contract" && captureDemo!="workspace" && captureDemo!="toasts") return 2;
             continue;
         }
         if (a == "--verify-timeline-model") return VerifyTimelineModel();
@@ -2050,7 +2074,7 @@ int main(int argc, char **argv) {
     auto hostStorage=std::make_unique<Host>();
     auto &h=*hostStorage;
         h.automated = capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls || verifyLinkedClips || verifyNormals || verifyComparison || !captureDemo.empty();
-    h.s.floatingComparison=!h.automated && !verifyWindowFrame;
+    h.s.floatingComparison=false;
     h.windowTitle=windowTitle;
     h.window = glfwCreateWindow(captureWidth, captureHeight,windowTitle.c_str(), nullptr, nullptr);
     if (!h.window) {
@@ -2072,8 +2096,8 @@ int main(int argc, char **argv) {
     io.IniFilename = nullptr;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable;
     if(!h.automated) io.ConfigFlags|=ImGuiConfigFlags_ViewportsEnable;
-    io.ConfigDpiScaleFonts=true;
-    io.ConfigDpiScaleViewports=true;
+    io.ConfigDpiScaleFonts=!h.automated;
+    io.ConfigDpiScaleViewports=!h.automated;
     bool backend = ImGui_ImplGlfw_InitForOpenGL(h.window, true),
          renderer = backend && ImGui_ImplOpenGL3_Init("#version 130");
     if(!h.automated) {
@@ -2299,7 +2323,7 @@ int main(int argc, char **argv) {
                     h.s.dark = dark != 0;
                     h.s.theme = imkit::MakePrecisionTheme(dark ? imkit::ColorScheme::Dark
                                                                : imkit::ColorScheme::Light);
-                    const int pageLimit=capturePage==15?16:10;
+                    const int pageLimit=capturePage>=0?capturePage+1:10;
                     for (int page = 0; page < pageLimit; ++page) {
                         if (capturePage == -2 && page < 7) continue;
                         if (capturePage >= 0 && capturePage != page)
@@ -2307,7 +2331,12 @@ int main(int argc, char **argv) {
                         h.Page(page);
                         h.Frame({},
                                 out / ("page-" + std::to_string(page) + (dark ? "-dark.png" : "-light.png")));
-                        if (page == 6 || page >= 8) {
+                        if(page==22) {
+                            h.mouse={ImGui::GetIO().DisplaySize.x*.7f,ImGui::GetIO().DisplaySize.y*.7f};
+                            h.Frame([](auto& io){io.AddMouseWheelEvent(0,-100);});h.mouse={-100,-100};h.Settle();
+                            h.Frame({},out/(dark?"workbench-scrolled-dark.png":"workbench-scrolled-light.png"));
+                        }
+                        if (page == 6 || (page >= 8 && page<=15)) {
                             h.s.scale = 1.5f; h.Settle();
                             h.Frame({}, out / ("page-"+std::to_string(page)+(dark ? "-dark-150.png" : "-light-150.png")));
                             if(page==6 || page==8) {

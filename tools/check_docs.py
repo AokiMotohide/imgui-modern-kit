@@ -14,6 +14,7 @@ DOCS = ROOT / "docs"
 # (English relative path from docs/, Japanese relative path from docs/)
 PAIRS: list[tuple[str, str]] = [
     ("README.md", "目次.md"),
+    ("reference/v3.2-api.md", "reference/3.2追加API.md"),
     # getting-started
     ("getting-started/getting-started.md", "getting-started/導入ガイド.md"),
     ("getting-started/how-it-works.md", "getting-started/仕組みと設計思想.md"),
@@ -148,9 +149,9 @@ def main() -> int:
     gallery_source = (ROOT / "examples/gallery/gallery.cpp").read_text(encoding="utf-8")
     gallery_guides = [DOCS / "getting-started/gallery.md", DOCS / "getting-started/ギャラリーガイド.md"]
     for page, action, title in (
-        (0, "Open components", "Components: Basic"),
-        (6, "Open themes and icons", "Icons"),
-        (15, "Open workflow", "Generic Workspace"),
+        (21, "Compare themes", "Compare"),
+        (6, "Explore icons", "Icons"),
+        (22, "Open 3.2 workspace", "New in 3.2"),
         (8, "Open timeline", "Video"),
     ):
         if f'StartCard(s, {page},' not in gallery_source or f'"{action}"' not in gallery_source:

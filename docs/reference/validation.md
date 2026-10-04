@@ -2,9 +2,25 @@
 
 [日本語](検証記録.md) · [English](validation.md)
 
+## ImKit 3.2 release preparation / 3.2公開準備（2026-10-04）
+
+### Gallery and API
+
+Windows x64 Debug Gallery compiled using the canonical shared output. Focused `imkit.workflow`, `workflow_api_compile`, `toast`, `toast_api_compile`, `theme`, `api_compile` and `window_frame_api_compile` passed. Native public-IO verification covered both comparison modes, shared edits in both directions, keyboard activation, disabled controls, complete style restoration and host-applied workspace selection/toggle requests. `--verify-workflow` and `--verify-toasts` passed; toast evidence covers six positions in light/dark, Japanese loading, actions, dismissal and same-ID completion. Native backbuffers at 640x600 verified compact navigation and scrollable workspace settings; 1280x720 captures supplied the finished GIFs.
+
+### Media and public site
+
+Three review passes covered the first-ten-second message, timecoded film compositions/full playback, and README/Pages/GIF/API consistency. Corrections included restoring default font conditions, isolating comparison, fitting labels, compact toast controls, light icon tiles, Loading-to-Success timing and stale documentation paths/anchors. The film is 60.000 seconds, 1920x1080, 60 fps/3600 frames, H.264/AAC stereo, 6,023,496 bytes, -16.00 LUFS and -1.78 dBTP. All 12 `v3-*.gif` native captures are 960x540 and under 2 MiB; the largest is 1,877,626 bytes. Motion graphics and music are original; the film is a composition, while documentation GIFs are native captures.
+
+Pages generation, Astro type checking (zero diagnostics), static build and 61-page/4,182-link checks passed. Chrome review checked Japanese/English, light/dark, PC and approximately 384 CSS-pixel mobile width, controlled GIF playback, the complete 60-second film and Pagefind queries for `DragVector3WithUnit` and `TableGetColumnFlags`. The exact final-commit CI result and SDK package consumer evidence are stored in the release manifest/evidence archive after all five platform jobs succeed; these local checks alone do not establish the platform release gate.
+
+### Acceptance boundary
+
+Public ImGui IO and backbuffer capture do not establish physical OS input, native IME, real screen-reader, multi-monitor DPI, external-product integration or hardware acceptance. Universal 2 tests run on the arm64 CI host; the separate x86_64 job covers that CPU configuration. macOS signing/notarization remains conditional on release credentials. Recompile consumers for `WindowFrameContent::iconTexture`; the pinned Dear ImGui revision is unchanged.
+
 ## Colored toasts / 色付きトースト（2026-10-01）
 
-Windows x64 Debug: new toast and API compile tests, existing workflow regressions, and an external host-ImGui toast consumer compiled successfully. Native OpenGL Gallery `--verify-toasts --output out/toast-verification` checked mouse action/dismiss, keyboard Space action and same-ID loading completion, and captured six positions in light/dark plus Japanese indeterminate loading. `docs/images/v3-toasts.gif` is a 12-frame, 960×540, 96-color animation encoded from six-position light/dark Gallery backbuffers. The GIF encoder restores the canvas between frames so cards remain clear when they move. Host covering windows use `NoBringToFrontOnFocus` to retain notification visibility after host clicks. Native OS/IME, screen-reader, cross-monitor DPI, macOS, Arm64, Release and installed-package acceptance for this addition were not performed. See [Toasts](../components/toasts.md).
+Windows x64 Debug: new toast and API compile tests, existing workflow regressions, and an external host-ImGui toast consumer compiled successfully. Native OpenGL Gallery `--verify-toasts --output out/toast-verification` checked mouse action/dismiss, keyboard Space action and same-ID loading completion, and captured six positions in light/dark plus Japanese indeterminate loading. At that revision, `docs/images/v3-toasts.gif` was a 12-frame, 960×540, 96-color animation encoded from six-position light/dark Gallery backbuffers. The GIF encoder restores the canvas between frames so cards remain clear when they move. Host covering windows use `NoBringToFrontOnFocus` to retain notification visibility after host clicks. Native OS/IME, screen-reader, cross-monitor DPI, macOS, Arm64, Release and installed-package acceptance for this addition were not performed. See [Toasts](../components/toasts.md).
 
 ## v3.0 platform matrix / v3.0 platform matrix
 

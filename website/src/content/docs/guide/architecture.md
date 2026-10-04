@@ -2,38 +2,92 @@
 title: "アーキテクチャ"
 ---
 
-### 所有境界
+ImKit は、Dear ImGui をベースにした制作ツール向け C++20 静的UIライブラリです。
+本ドキュメントでは、ディレクトリ配置、レイヤー構成、プラットフォーム境界、テーマおよび状態の所有権モデル、そして拡張方針を定義します。
 
-ImKitはDear ImGui上で再利用できるUIを提供する静的ライブラリです。Dear ImGui Context・backend・renderer・font atlas・texture・アプリケーションdata・保存・Undo・workerを初期化・所有しません。描画APIはホストが開始したframe内で呼びます。
+---
 
-公開wrapperはDear ImGuiのBegin/End、focus、callback、disabled、clipping、ID、入力編集の契約を維持します。独自部品は標準widgetと公開DrawListで構成し、入力処理そのものを置き換えません。
+## モジュール構成と依存関係 (Layout)
 
-## v3 platform境界
+公開ヘッダーは `include/imkit/`、実装コードは `src/`、自動テストは `tests/`、サンプルおよび検証用アプリケーションは `examples/gallery/` に明確に分離されています。
 
-coreはplatform・renderer非依存です。公式Dear ImGui backendをlinkするのはGallery hostだけです。optional previewは明示的に作成し、渡されたdevice/Context上で動作します。accessibility adapterもsnapshotをコピーし、型付きactionをホストへ返します。
+```mermaid
+graph TD
+    Consumer["ホストアプリ / Consumer Target"]
 
-### module構成
+    subgraph ImKit["ImKit モジュール群 (C++20 静的ライブラリ)"]
+        Core["imkit::imkit<br/>(テーマ, 基本部品, ワークフロー)"]
+        EditorCore["imkit::editor_core<br/>(時間軸, キャンバス, ギズモ, 分割)"]
+        Video["imkit::video<br/>(タイムライン, モニター, 波形)"]
+        CG["imkit::cg<br/>(3Dビューポート, アウトライナー, UV)"]
+        NodeEditor["imkit::node_editor<br/>(グラフキャンバス, ソケット)"]
+        WindowFrame["imkit::window_frame<br/>(カスタムタイトルバー)"]
+        PreviewGL["imkit::preview_opengl3<br/>(任意: OpenGL3プレビュー)"]
+    end
 
-| module | 主な責務 | 所有者・制約 |
-|---|---|---|
-| `imkit` | Theme、native API、widget、composition | host-owned値と非所有viewを受け取る |
-| `node_editor` | graph snapshot表示と有限容量のedit request | graph保存、評価、Undo、revision受理はホスト |
-| Editor Core / Video / CG | 編集UI、provider query、event生成 | scene/media data、selection、Undo、workerはホスト |
-| Preview | 明示的に初期化するoptional offscreen描画 | GPU resourceを所有する場合もdevice、Context、submissionはホスト |
-| WindowFrame | frame配置計算、描画、型付きoperation返却 | native windowとOS操作はホスト。OS adapterは別target |
+    subgraph HostOwned["ホスト側が所有する基盤"]
+        ImGui["Dear ImGui (docking 固定コミット)"]
+        Backend["グラフィックスバックエンド (OpenGL/Metal等)"]
+        OS["ネイティブOSウィンドウ / メッセージループ"]
+    end
 
-基本`imkit`はEditor Coreへ依存しません。各moduleのtargetとheaderは[Editor Suite](../../features/editor-suite/)および[実例recipe](../../guides/examples/)を参照してください。
+    Consumer --> Core
+    Consumer --> NodeEditor
+    Consumer --> Video
+    Consumer --> CG
+    Consumer --> WindowFrame
 
-### Themeと状態
+    Video --> EditorCore
+    CG --> EditorCore
+    EditorCore --> Core
+    PreviewGL --> CG
 
-Themeは`MakeTheme()`が返す値としてホストが保持し、グローバルregistryや選択状態はありません。FontSetは非所有参照です。AnimationStateもホストが寿命を管理し、Contextより先に関連scopeを終了してください。
+    Core --> ImGui
+    NodeEditor --> ImGui
+    WindowFrame --> ImGui
+    Backend -.-> ImGui
+    OS -.-> Backend
+```
 
-## Extension policy / 拡張方針
+### レイヤー構造と責務一覧
 
-Dear ImGuiの固定版公開宣言と比較してoverload、default、戻り値、callbackの意味を維持します。新しい版への対応はversion guardを緩めるだけで完了せず、adapter・style・font契約とcompile fixtureを確認します。寸法や状態容量はboundedにし、利用アプリ固有の型やserviceをlibraryへ導入しません。
+| レイヤー / ターゲット | 公開ヘッダー | 主な責務・契約 | 依存先 |
+|---|---|---|---|
+| **コア基盤** (`imkit::imkit`) | `<imkit/imkit.h>`, `<imkit/theme.h>`, `<imkit/workflow.h>` | セマンティックテーマ、基本部品（ボタン、トグル、バッジ等）、ステップ進行、トースト通知 | Dear ImGui |
+| **エディタコア** (`imkit::editor_core`) | `<imkit/editor_core.h>` | 時間軸ルーラー（Tick）、共通キャンバス、セレクション管理、スプリッター | `imkit::imkit` |
+| **タイムライン** (`imkit::video`) | `<imkit/video.h>` | マルチトラックタイムライン、クリップ編集（トリム/ロール/スライド）、波形表示 | `imkit::editor_core` |
+| **3D / CG** (`imkit::cg`) | `<imkit/cg.h>`, `<imkit/preview.h>` | 3Dビューポート、トランスフォームギズモ、アウトライナー、UVエディタ | `imkit::editor_core` |
+| **ノードエディタ** (`imkit::node_editor`) | `<imkit/node_editor.h>` | スナップショット/リクエスト方式のノードグラフ描画、動的ソケット | Dear ImGui |
+| **ウィンドウ枠** (`imkit::window_frame`) | `<imkit/window_frame.h>` | タイトルバー描画、OS別アダプター（Win32 / macOS）連携 | `imkit::imkit` |
 
-## Editor moduleの所有権
+---
 
-Node Editorはgraph snapshotを借用して有限容量requestを返します。graph保存、評価、revision受理、Undoはホスト所有です。Editor Core・Video・CGはprovider viewからUIを構成しますが、scene/media dataやselectionを保持しません。詳細は[Editor Suite](../../features/editor-suite/)を参照してください。
+## プラットフォーム境界 (Platform boundary)
 
-履歴付きの設計記録は[保守用文書一覧](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/documentation-catalog.ja.md)から参照できます。現行契約は公開headerと英語版の[architecture](../../en/guide/architecture/)を基準にしてください。
+- **バックエンド非依存**: ImKit コアは特定の描画バックエンド（DirectX、Vulkan、Metal、OpenGL）に依存しません。公式バックエンドのコンパイルとリンクはホスト側（または Gallery サンプル）が行います。
+- **GPU リソースの借用**: 任意のプレビューターゲット（`preview_opengl3`、`preview_metal`）は、オフスクリーンGPUテクスチャの描画のみを管理し、デバイス、コンテキスト、コマンドバッファのライフサイクルはホストが所有します。
+- **OS アクセシビリティ**: `accessibility_win32` および `accessibility_macos` はセマンティックスナップショットを借用し、操作要求を `NativeActionSink` を通じてホストへ返却します。
+
+---
+
+## テーマと状態管理のルール (Theme and state)
+
+- **ホスト所有の原則**: Dear ImGui の Context、バックエンド、レンダラー、フォント、永続化（ini）、Undo履歴、バックグラウンド処理はすべてホストが管理します。
+- **値型のテーマ**: `imkit::Theme` は値型の構造体であり、グローバルシングルトンではありません。
+- **`ThemeScope` の寿命**: 一時的なテーマ適用を行う `ThemeScope` は、生成された Context と同じスレッドおよび寿命内で破棄される必要があります。
+
+---
+
+## 拡張方針 (Extension policy)
+
+- **Dear ImGui 規約の維持**: 新規オーバーロードを追加する際は、元のデフォルト値、引数順、戻り値のセマンティクスを完全に維持します。
+- **寸法の導出**: コントロールの寸法はハードコードせず、テーマのトークンとフォントサイズから動的に計算します。
+- **ホスト固有ロジックの排除**: 特定のファイル形式、通信プロトコル、ビジネスロジックはライブラリに含めず、汎用UIパーツとして設計します。
+
+---
+
+## エディタモジュールの所有権 (Editor module ownership)
+
+- **非所有ポインタの徹底**: プロバイダーが返却するデータやテキストは借用参照です。
+- **ジェスチャとリクエスト**: タイムラインやノードエディタの操作は、ドラッグ中のプレビューと確定（Commit）を明確に区別し、ホストが受理した変更のみリビジョンを更新します。
+- **固定バッファ**: イベントバッファや選択ストレージはホスト側がサイズを指定して提供し、暗黙の動的ヒープ確保を行いません。

@@ -1,0 +1,164 @@
+[
+  {
+    "header": "imkit/workflow.h",
+    "name": "WorkspaceTab",
+    "kind": "type",
+    "declaration": "struct WorkspaceTab {\n    StableId id=0;\n    const char* label=\"\";\n    const char* description=\"\";\n    IconId icon=IconId::Count;\n    bool disabled=false;\n};"
+  },
+  {
+    "header": "imkit/workflow.h",
+    "name": "ChoiceItem",
+    "kind": "type",
+    "declaration": "struct ChoiceItem {\n    StableId id=0;\n    const char* label=\"\";\n    const char* description=\"\";\n    IconId icon=IconId::Count;\n    ImVec4 accent{};\n    bool disabled=false;\n    const char* disabledReason=\"\";\n};"
+  },
+  {
+    "header": "imkit/workflow.h",
+    "name": "ChoiceGroupOptions",
+    "kind": "type",
+    "declaration": "struct ChoiceGroupOptions {\n    int maximumColumns=3;\n    const IconAtlas* icons=nullptr;\n};"
+  },
+  {
+    "header": "imkit/workflow.h",
+    "name": "HierarchyRowView",
+    "kind": "type",
+    "declaration": "struct HierarchyRowView {\n    StableId id=0;\n    const char* label=\"\";\n    const char* detail=\"\";\n    IconId icon=IconId::Count;\n    int depth=0;\n    bool selected=false, visible=true, locked=false, disabled=false;\n    const char* visibleLabel=\"Visible\";\n    const char* hiddenLabel=\"Hidden\";\n    const char* lockedLabel=\"Locked\";\n    const char* unlockedLabel=\"Unlocked\";\n    const char* moreLabel=\"More actions\";\n    bool visibilityAvailable=true, lockAvailable=true;\n};"
+  },
+  {
+    "header": "imkit/workflow.h",
+    "name": "HierarchyRowAction",
+    "kind": "type",
+    "declaration": "enum class HierarchyRowAction { None, Select, ToggleVisibility, ToggleLock, More };"
+  },
+  {
+    "header": "imkit/workflow.h",
+    "name": "WorkspaceTabs",
+    "kind": "function",
+    "declaration": "StableId WorkspaceTabs(const char* id, std::span<const WorkspaceTab> tabs,\n                       StableId selected, const IconAtlas* icons=nullptr,\n                       ComponentOptions options={});"
+  },
+  {
+    "header": "imkit/workflow.h",
+    "name": "ChoiceGroup",
+    "kind": "function",
+    "declaration": "StableId ChoiceGroup(const char* id,const char* title,std::span<const ChoiceItem> items,\n                     StableId current,ChoiceGroupOptions layout={},ComponentOptions options={});"
+  },
+  {
+    "header": "imkit/workflow.h",
+    "name": "HierarchyGroupHeader",
+    "kind": "function",
+    "declaration": "bool HierarchyGroupHeader(const char* id, const char* label, int count,\n                          bool* open, const IconAtlas* icons=nullptr,\n                          IconId icon=IconId::Count, ComponentOptions options={},\n                          bool* actionRequested=nullptr, const char* actionLabel=\"Add\");"
+  },
+  {
+    "header": "imkit/workflow.h",
+    "name": "HierarchyRow",
+    "kind": "function",
+    "declaration": "HierarchyRowAction HierarchyRow(const char* id, const HierarchyRowView& row,\n                               const IconAtlas* icons=nullptr,\n                               ComponentOptions options={});"
+  },
+  {
+    "header": "imkit/workflow.h",
+    "name": "BeginInspectorCard",
+    "kind": "function",
+    "declaration": "bool BeginInspectorCard(const char* id, const char* title, const char* description=\"\",\n                        const IconAtlas* icons=nullptr, IconId icon=IconId::Count,\n                        ComponentOptions options={});"
+  },
+  {
+    "header": "imkit/workflow.h",
+    "name": "EndInspectorCard",
+    "kind": "function",
+    "declaration": "void EndInspectorCard();"
+  },
+  {
+    "header": "imkit/workflow.h",
+    "name": "SettingToggleRow",
+    "kind": "function",
+    "declaration": "bool SettingToggleRow(const char* id, const char* label, const char* description,\n                      bool current, bool disabled=false, const char* disabledReason=\"\",\n                      ComponentOptions options={});"
+  },
+  {
+    "header": "imkit/components.h",
+    "name": "CompactActionRowOptions",
+    "kind": "type",
+    "declaration": "struct CompactActionRowOptions {\n    const char *statusText = nullptr;\n    StatusKind statusKind = StatusKind::Neutral;\n    const char *primaryLabel = nullptr;\n    ActionVariant primaryVariant = ActionVariant::Primary;\n    const char *settingsLabel = \"Settings\";\n    ActionVariant settingsVariant = ActionVariant::Ghost;\n    bool primaryEnabled = true;\n    bool settingsEnabled = true;\n    const char *primaryDisabledReason = nullptr;\n    const char *settingsDisabledReason = nullptr;\n    ComponentOptions components{};\n};"
+  },
+  {
+    "header": "imkit/components.h",
+    "name": "CompactActionRowRequest",
+    "kind": "type",
+    "declaration": "enum class CompactActionRowRequest { None, Primary, Settings };"
+  },
+  {
+    "header": "imkit/components.h",
+    "name": "DragVector3WithUnit",
+    "kind": "function",
+    "declaration": "bool DragVector3WithUnit(const char *label, float value[3], const char *unit, float speed = 1.f,\n                         float minimum = 0.f, float maximum = 0.f, const char *format = \"%.3f\",\n                         ImGuiSliderFlags flags = 0);"
+  },
+  {
+    "header": "imkit/components.h",
+    "name": "CompactActionRow",
+    "kind": "function",
+    "declaration": "CompactActionRowRequest CompactActionRow(const char *id, const CompactActionRowOptions &options);"
+  },
+  {
+    "header": "imkit/toast.h",
+    "name": "ToastPosition",
+    "kind": "type",
+    "declaration": "enum class ToastPosition { TopLeft, TopCenter, TopRight, BottomLeft, BottomCenter, BottomRight };"
+  },
+  {
+    "header": "imkit/toast.h",
+    "name": "ToastPhase",
+    "kind": "type",
+    "declaration": "enum class ToastPhase { Message, Loading };"
+  },
+  {
+    "header": "imkit/toast.h",
+    "name": "ToastEventKind",
+    "kind": "type",
+    "declaration": "enum class ToastEventKind { Dismiss, Expired, Action };"
+  },
+  {
+    "header": "imkit/toast.h",
+    "name": "ToastView",
+    "kind": "type",
+    "declaration": "struct ToastView {\n    StableId id=0;\n    const char* title=\"\";\n    const char* description=\"\";\n    FeedbackKind kind=FeedbackKind::Info;\n    // Negative selects the kind default; zero persists; positive is seconds.\n    double duration=-1;\n    bool dismissible=true;\n    const char* action=\"\";\n    bool actionDisabled=false;\n    ToastPhase phase=ToastPhase::Message;\n    // Negative or nonfinite means indeterminate. Otherwise clamped to [0,1].\n    float progress=-1;\n};"
+  },
+  {
+    "header": "imkit/toast.h",
+    "name": "ToastEvent",
+    "kind": "type",
+    "declaration": "struct ToastEvent { StableId id=0; ToastEventKind kind=ToastEventKind::Dismiss; };"
+  },
+  {
+    "header": "imkit/toast.h",
+    "name": "ToastEventBuffer",
+    "kind": "type",
+    "declaration": "struct ToastEventBuffer {\n    std::span<ToastEvent> storage{};\n    std::size_t count=0;\n    bool overflow=false;\n    bool Push(ToastEvent event);\n};"
+  },
+  {
+    "header": "imkit/toast.h",
+    "name": "ToastViewportOptions",
+    "kind": "type",
+    "declaration": "struct ToastViewportOptions {\n    ToastPosition position=ToastPosition::TopRight;\n    float width=0; // Zero uses font-relative width.\n    float margin=-1, gap=-1; // Negative uses theme/style spacing.\n    std::size_t maximum=4;\n};"
+  },
+  {
+    "header": "imkit/toast.h",
+    "name": "ToastViewportState",
+    "kind": "type",
+    "declaration": "struct ToastViewportState {\n    static constexpr std::size_t Capacity=64;\n    struct Entry {\n        StableId id=0;\n        std::uint64_t order=0;\n        FeedbackKind kind=FeedbackKind::Info;\n        ToastPhase phase=ToastPhase::Message;\n        double duration=-1, remaining=0, shownSeconds=0;\n        bool visible=false, paused=false, retired=false, pendingExpiry=false;\n    };\n    std::array<Entry,Capacity> entries{};\n    double lastTime=0;\n    std::uint64_t nextOrder=0;\n    bool hasTime=false, overflow=false;\n    void Reset();\n};"
+  },
+  {
+    "header": "imkit/toast.h",
+    "name": "UpdateToastViewport",
+    "kind": "function",
+    "declaration": "void UpdateToastViewport(std::span<const ToastView> items, ToastViewportState& state,\n                         double now, std::size_t maximum, ToastEventBuffer& events,\n                         std::span<const StableId> paused={});"
+  },
+  {
+    "header": "imkit/toast.h",
+    "name": "ToastViewport",
+    "kind": "function",
+    "declaration": "void ToastViewport(const char* id, std::span<const ToastView> items,\n                   ToastViewportState& state, double now, ToastEventBuffer& events,\n                   ToastViewportOptions layout={}, ComponentOptions options={});"
+  },
+  {
+    "header": "imkit/window_frame.h",
+    "name": "WindowFrameContent",
+    "kind": "type",
+    "declaration": "struct WindowFrameContent {\n    std::string_view applicationName{};\n    std::string_view projectName{};\n    bool unsaved = false;\n    std::span<const std::string_view> workspaces{};\n    std::size_t selectedWorkspace = 0;\n    ImTextureRef iconTexture{};\n};"
+  }
+]

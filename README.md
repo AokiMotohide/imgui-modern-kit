@@ -8,11 +8,15 @@ ImKit is a C++20 static library that adds consistent themes and reusable control
 
 [日本語](README.ja.md) · [Download the latest release](https://github.com/AokiMotohide/imgui-modern-kit/releases/latest) · [Documentation](docs/README.md) · [Releases](https://github.com/AokiMotohide/imgui-modern-kit/releases)
 
+[![ImKit 3.2 — Modern UI. Familiar workflow.](website/public/media/imkit-3.2-poster.jpg)](https://aokimotohide.github.io/imgui-modern-kit/en/#film)
+
+**[Watch the 60-second film](https://aokimotohide.github.io/imgui-modern-kit/en/#film)** — English motion graphics, real Gallery interaction and original music.
+
 <img src="docs/images/v3-overview.gif" alt="The ImKit Gallery routes from its start page into live examples" width="960">
 
 ## Try the Gallery
 
-Download the [v3.1.0 package for your platform](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.1.0), extract it, and run:
+Download the [v3.2.0 package for your platform](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.2.0), extract it, and run:
 
 - Windows: bin/imkit_gallery.exe
 - macOS: imkit_gallery.app
@@ -74,7 +78,7 @@ Explore common controls with enabled, toggled, and mixed-selection states.
 
 ### Toast notifications
 
-<img src="docs/images/v3-toasts.gif" alt="Theme-colored toast cards moving among six screen positions, including loading, success, warning, and error notifications" width="960">
+<img src="docs/images/v3-toasts.gif" alt="Native toast transitioning from loading to success" width="960">
 
 Choose a toast position, pause expiry while it is being read, and return action requests to the host application.
 
@@ -98,7 +102,7 @@ The Gallery exposes every preset in a searchable tile grid and previews the sele
 
 <img src="docs/images/v3-comparison.gif" alt="Default Dear ImGui and ImKit controls updating shared values" width="960">
 
-Compare the default Dear ImGui widgets with ImKit while both sides update the same host-owned values.
+Use Theme only for identical ImGui calls, or Components for optional ImKit controls. Both sides update the same host-owned values.
 
 ### Preview placement and states
 
@@ -129,6 +133,14 @@ Use the optional graph canvas and edit requests with your own graph model, valid
 <img src="docs/images/v3-theme-comparison.gif" alt="ImKit themes and comparison with default Dear ImGui" width="960">
 
 Compare named themes and palette choices in the native Gallery.
+
+## New in 3.2
+
+<img src="docs/images/v3-workspace.gif" alt="Tabs, hierarchy actions, inspector settings, three-axis editing and choices" width="960">
+
+Workspace tabs, hierarchy actions, inspector cards, three-axis inputs, titled choices, status/action rows and Loading → Success toasts use the same immediate-mode workflow. Explore 288 icons and 13 themes. [Declarations, defaults and ownership](docs/reference/v3.2-api.md).
+
+Recompile consumers and ImKit static libraries for the extended `WindowFrameContent` structure (`iconTexture`). The Dear ImGui revision is unchanged.
 
 ## Compatibility
 

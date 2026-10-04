@@ -57,3 +57,7 @@ Pass `ComponentOptions` for theme, locale and semantic publication. Draw-only ov
 For colored cards with six positions, actions and progress, see [Toasts](toasts.md). Existing `ToastRegion` behavior remains unchanged.
 
 Open **Generic Workspace** (page 15), **Feedback / States**, or **Preview Tiles**. Generic Workspace includes the new connection-method `ChoiceGroup` example. It combines navigation, toolbar, image, overlays, selection, feedback and status, and uses the existing procedural texture. `--verify-workflow --output <directory>` runs public IO checks and captures 36 page/theme combinations plus two narrow Japanese/disabled examples. Native GPU captures are distinct from native OS/IME and screen-reader tests.
+
+## ImKit 3.2 workspace
+
+Open **New in 3.2** in the Gallery to use WorkspaceTabs, HierarchyGroupHeader/HierarchyRow, BeginInspectorCard/EndInspectorCard, SettingToggleRow, DragVector3WithUnit, ChoiceGroup and CompactActionRow together. Requests update Gallery-owned values; the same pattern works in an existing ImGui frame. See the [3.2 declarations and lifetime rules](../reference/v3.2-api.md). All 288 runtime icons and 13 themes are available without introducing a new context or application framework.

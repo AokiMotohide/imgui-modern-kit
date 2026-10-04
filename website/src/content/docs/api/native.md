@@ -2,7 +2,7 @@
 title: "Dear ImGui native API"
 ---
 
-この一覧は[`docs/api-inventory.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/api-inventory.json)から生成しています。`included: true`の**365宣言行**を掲載し、Dear ImGui `1.93.0 WIP docking` revision（`19297`）に固定しています。`included: false`のContextやフレーム管理、debug用関数（`CreateContext`、`NewFrame`、`Render`など）は含みません。
+この一覧は[`docs/reference/api-inventory.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/api-inventory.json)から生成しています。`included: true`の**365宣言行**を掲載し、Dear ImGui `1.93.0 WIP docking` revision（`19297`）に固定しています。`included: false`のContextやフレーム管理、debug用関数（`CreateContext`、`NewFrame`、`Render`など）は含みません。
 
 `<imkit/native.h>`はDear ImGuiのoverloadを元のdefault値とBegin/End契約のまま`namespace imkit`へ公開します。以下は宣言一覧であり、単独でincludeするheaderや呼出し例ではありません。関数名をサイト内検索するか、見出しから分類を探せます。件数は、全overloadを個別に操作検証したことを示しません。使い方は[導入ガイド](../../getting-started/)と[コンポーネントガイド](../../features/components/)、正確な契約は固定版public headerを確認してください。
 

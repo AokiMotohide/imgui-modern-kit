@@ -8,11 +8,15 @@ ImKitは、既存のDear ImGuiアプリにテーマと再利用できるUI部品
 
 [English](README.md) · [最新リリースをダウンロード](https://github.com/AokiMotohide/imgui-modern-kit/releases/latest) · [文書一覧](docs/目次.md) · [Release一覧](https://github.com/AokiMotohide/imgui-modern-kit/releases)
 
+[![ImKit 3.2紹介動画](website/public/media/imkit-3.2-poster.jpg)](https://aokimotohide.github.io/imgui-modern-kit/#film)
+
+**[Watch the 60-second film](https://aokimotohide.github.io/imgui-modern-kit/#film)** — 実際のGallery操作と英語モーショングラフィックスで紹介します。オリジナルBGM付きです。
+
 <img src="docs/images/v3-overview.gif" alt="Galleryのスタート画面から実例を開く" width="960">
 
 ## まずGalleryを試す
 
-お使いの環境に合う[v3.1.0のパッケージ](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.1.0)をダウンロードして展開し、次を起動してください。
+お使いの環境に合う[v3.2.0のパッケージ](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.2.0)をダウンロードして展開し、次を起動してください。
 
 - Windows: bin/imkit_gallery.exe
 - macOS: imkit_gallery.app
@@ -74,7 +78,7 @@ Dear ImGuiのコンテキスト、描画バックエンド、レンダラー、�
 
 ### トースト通知
 
-<img src="docs/images/v3-toasts.gif" alt="読み込み中、成功、警告、エラーの通知カードが画面の6位置に切り替わる様子" width="960">
+<img src="docs/images/v3-toasts.gif" alt="実際のGalleryでLoadingからSuccessへ変わる通知" width="960">
 
 通知位置や表示時間を選び、処理ボタンの要求を受け取る例を確認できます。
 
@@ -129,6 +133,14 @@ Fit／Fill／Stretchの配置と、Ready、Loading、Empty、Offline、Errorの�
 <img src="docs/images/v3-theme-comparison.gif" alt="ImKitのThemeとDear ImGui標準表示の比較" width="960">
 
 名前付きThemeとpaletteをネイティブGalleryで見比べられます。
+
+## 3.2で追加した部品
+
+<img src="docs/images/v3-workspace.gif" alt="作業タブ、階層操作、設定カード、三軸入力、選択部品" width="960">
+
+作業タブ、階層操作、設定カード、三軸入力、見出し付き選択、状態と操作をまとめる行、LoadingからSuccessへ変わるトーストを、従来の即時モードの使い方で組み込めます。288アイコンと13テーマを利用できます。[宣言、既定値、所有権](docs/reference/3.2追加API.md)も公開しています。
+
+`WindowFrameContent` に `iconTexture` が追加されたため、アプリとImKit静的ライブラリを再コンパイルしてください。Dear ImGuiの対応revisionは変わりません。
 
 ## 対応環境
 

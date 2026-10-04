@@ -7,7 +7,7 @@ The Windows-native Gallery is an onboarding application and a public-API specime
 ## A route for a first visit
 
 1. **Start** explains the host boundary and routes directly to a focused task.
-2. **Compare** opens a movable, resizable Default Dear ImGui / ImKit window. Both columns mutate the same host-owned values, so a click in either column is visible in the other.
+2. **Compare** is an independent page with Theme only and Components modes. The first uses identical `ImGui::` calls. Both share application values, font and scale, with scoped restoration of default style metrics and colors.
 3. **Components, themes and icons** provide searchable native specimens, palette editing, and all 288 runtime icon presets in seven sizes. The repository also contains 238 transparent PNG artwork masters across 16 image-backed categories; README shows these at a larger scale alongside the full runtime catalogue.
 4. **Workflow, timeline and Frame Lab** show optional compositional and editor-oriented surfaces without claiming that the host's scene, undo or renderer belongs to ImKit.
 
@@ -33,11 +33,7 @@ cmake --build --preset macos-universal --target imkit_gallery --parallel
 
 The released Windows archive contains `imkit_gallery.exe`, the required `design-assets` directory, this project's license and third-party notices. It does not install a service, create a user configuration or add a runtime dependency to an ImKit consumer.
 
-A normal launch opens the ImKit Gallery and the official Dear ImGui Demo Window as two movable,
-resizable windows on the same canvas. They start side by side on a wide display and retain normal
-Dear ImGui docking behavior. The Gallery uses the selected ImKit theme; the official demo keeps the
-unmodified Dear ImGui style for direct comparison. Close or reopen the demo with the
-**Dear ImGui Demo** checkbox in the Gallery header.
+A normal launch opens a focused Gallery. Wide windows show category navigation; compact windows use the section selector. **Compare** (page 21) and **New in 3.2** (page 22) are separate pages. The latter combines tabs, hierarchy actions, a preview, settings, three-axis input, choices and a status/action row. Each request is applied to Gallery-owned state.
 
 ## Verification and reproducible captures
 
@@ -46,7 +42,7 @@ The Gallery runner uses public Dear ImGui IO and captures its OpenGL backbuffer.
     $gallery = './build/windows-debug/catalog/Debug/imkit_gallery.exe'
     & $gallery --verify-comparison --output out/comparison
     & $gallery --verify-toasts --width 1440 --height 810 --output out/readme/toasts
-    $routes = @('overview', 'comparison', 'components', 'icons', 'icon-artwork', 'themes', 'workflow', 'preview-contract', 'timeline')
+    $routes = @('overview', 'comparison', 'components', 'icons', 'icon-artwork', 'themes', 'workflow', 'preview-contract', 'timeline', 'workspace', 'toasts')
     foreach ($route in $routes) {
         & $gallery --capture-demo $route --width 1440 --height 810 --output out/readme
     }
@@ -77,3 +73,7 @@ The encoder requires a consistent 16:9 source, resizes it to 960×540, and rejec
 ## Provenance and distribution boundary
 
 Checked-in `docs/images/v3-*.gif` files are generated from the Gallery or Node Editor companion. The release showcase MP4 is encoded from the same native frames. No stock image, third-party product screen, icon, font, UI implementation or media asset is included. Dear ImGui, GLFW and optional fonts retain their licenses and notices in [THIRD_PARTY_NOTICES.md](../../THIRD_PARTY_NOTICES.md). See [validation](../reference/validation.md) for exact evidence and exclusions, and [public window frame](../components/gallery-window-frame.md) for Frame Lab's platform-adapter boundary.
+
+## ImKit 3.2 layout
+
+Compare (21) and New in 3.2 (22) are independent pages. Wide navigation collapses to a section selector. The sample composition is drawn by the Gallery host with the public DrawList; it does not imply a renderer or scene model owned by ImKit. The main captures use a reproducible 1.0 font DPI factor; physical monitor DPI is not an acceptance result.

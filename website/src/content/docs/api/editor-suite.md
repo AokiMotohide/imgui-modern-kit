@@ -2,30 +2,31 @@
 title: "Editor API"
 ---
 
-[English signature reference](../../en/api/editor-suite/) · [Editor Suite](../../features/editor-suite/) · [文書カタログ](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/documentation-catalog.ja.md)
+[English signature reference](../../en/api/editor-suite/) · [Editor Suite](../../features/editor-suite/) · [文書カタログ](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/文書カタログ.md)
 
-英語版には公開型、overload、event payload、provider callbackを示す詳細な署名表があります。ここでは統合契約を日本語で要約します。C++の型名・関数名・正確な宣言は共通の[英語版API reference](../../en/api/editor-suite/)を参照してください。
+英語版ドキュメントには、公開型、オーバーロード、イベントペイロード、プロバイダーコールバックを網羅した詳細なシグネチャ一覧表が掲載されています。本ページでは、ホストとの統合契約について日本語で解説します。C++の型名・関数名・正確なシグネチャ宣言については、共通の [英語版APIリファレンス (editor-api.md)](../../en/api/editor-suite/) を参照してください。
 
 ## Providerとevent
 
-- Providerが返すdataとtextは非所有viewです。draw/callbackの必要期間だけ有効にしてください。
-- 連続編集はBegin/Update/Commit/Cancelとrevision、元値、提案値で表現します。preview反映と確定を区別し、古いrevisionのgestureは破棄します。
-- event、scratch、選択配列の容量は呼出し側が提供します。容量不足はAPIのoverflow結果として処理し、暗黙の動的確保を前提にしません。
-- hostが受理した変更だけrevisionを更新します。model mutation、衝突policy、Undo、保存、workerはホスト責務です。
-- visible-range queryで通常frameの処理量を制限し、編集時には必要なoffscreen・関連対象も問い合わせます。IDはsort/filterをまたいで安定させます。
+- **非所有ビュー**: プロバイダーが返却するデータやテキストは、借用（非所有ビュー）です。描画およびコールバック呼び出しの期間中のみメモリを保持してください。
+- **編集ジェスチャー**: 連続編集は Begin / Update / Commit / Cancel のフェーズ、リビジョン番号、編集前の値、および提案値として表現されます。ドラフトプレビューと確定（Commit）を明確に区別し、古いリビジョンのジェスチャーは破棄されます。
+- **固定バッファ**: イベント、スクラッチバッファ、選択項目の配列容量はすべて呼び出し側（ホスト）が提供します。バッファ不足時はAPIがオーバーフロー状態を返し、暗黙の動的ヒープ確保は行いません。
+- **リビジョンの更新**: ホスト側で変更を受理したときのみリビジョン番号をインクリメントします。モデルの変更、衝突解決、Undo/Redo履歴、ファイル保存、バックグラウンド処理はすべてホストの責務です。
+- **可視範囲クエリ**: `visible-range` クエリによって通常フレームの処理負荷を最小化し、編集時には必要な画面外・関連オブジェクトのみを追加で問い合わせます。識別用IDはソートやフィルタリングをまたいでも不変（Stable ID）である必要があります。
 
 ## Graphics preview
 
-OpenGL3 previewを使う場合、ホストは関数表とcurrent OpenGL 3.3 Contextを渡します。明示的preview objectがFBOやtextureを所有し、Context破棄より前に`Shutdown()`を呼びます。描画後のGL state復元はホスト側です。DrawList previewにはz-bufferがなく、交差面や隠れたoutlineは近似になることがあります。
+OpenGL 3.3プレビュー機能を使用する場合、ホスト側は関数ポインタテーブルと現在の有効なOpenGL 3.3コンテキストを渡します。明示的なプレビュー管理オブジェクトがFBO（フレームバッファ）やテクスチャを所有し、コンテキストが破棄される前に必ず `Shutdown()` を呼び出します。描画後のOpenGLパイプライン状態の復元はホスト側の責任で行います。なお、Dear ImGuiのDrawListによる2D/擬似3DプレビューにはZバッファが存在しないため、交差面や隠線・輪郭線は近似描画となります。
 
 ## TimelineとMonitorの追加API
 
-Timeline providerは選択、隣接clip、offscreen対象、external dropの候補をホスト側で解決します。Monitorはホストが各frameで渡すtextureと状態を表示します。media再生、decode、capture、collision policyはAPIに含まれません。詳細な署名と制約は[英語版API表](../../en/api/editor-suite/)を参照してください。
+タイムラインのプロバイダーは、選択項目、隣接するクリップ、画面外の関連オブジェクト、外部ドラッグ＆ドロップの候補解決をホスト側で行います。モニターコンポーネントは、ホストが各フレームで渡すテクスチャと再生状態を描画します。メディアファイルの再生・デコード・キャプチャ・クリップ衝突回避ロジックはImKitには含まれません。
 
 ## Range、marker、property array
 
-range/marker/property array callbackのdataとscratch storageは呼出し側が用意します。IDをsort/filter間で維持し、容量不足時は明示的に失敗を扱います。最終決定はホストが所有し、ImKitが編集dataやUndo履歴を保持しません。
+レンジバー、マーカー、プロパティ配列のコールバックで使用するデータおよび作業用バッファは、呼び出し側が用意します。IDはソートやフィルタ処理をまたいでも永続化し、容量不足時はオーバーフローとして明示的にエラーハンドリングを行います。最終的な変更決定とUndo履歴はホストが所有し、ImKitが編集データや履歴スタックを内部保持することはありません。
 
-[Editor Suite guide](../../features/editor-suite/)はmodule選択とGallery source、[Timeline recipe](../../features/timeline/)は具体操作を説明します。[Public API coverage](../native/)はDear ImGui基礎APIの対応範囲を示します。
-
-[Editor Suite guide](../../features/editor-suite/)は用途・target・Gallery上の画面を説明し、[Timeline recipe](../../features/timeline/)は編集操作のhost責任を示します。[公開API coverage](../native/)は固定Dear ImGui APIの範囲を記載します。これらは異なるmoduleの契約なので、相互に同一の検証証拠とは扱いません。
+関連ドキュメント：
+- [エディタスイート](../../features/editor-suite/): モジュールの用途、ビルドターゲット、およびGallery上の各画面
+- [タイムライン編集](../../features/timeline/): タイムライン編集操作とホスト責務の詳細
+- [公開API対応表](../native/): 固定Dear ImGuiバージョンのAPI提供範囲

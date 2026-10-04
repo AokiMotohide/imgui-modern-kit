@@ -27,6 +27,7 @@ EXPECTED_PACKAGES = {
 }
 DOCS_PAIRS = [
     ("README.md", "目次.md"),
+    ("reference/v3.2-api.md", "reference/3.2追加API.md"),
     ("getting-started/getting-started.md", "getting-started/導入ガイド.md"),
     ("getting-started/how-it-works.md", "getting-started/仕組みと設計思想.md"),
     ("getting-started/guide.md", "getting-started/利用ガイド.md"),
@@ -42,6 +43,7 @@ DOCS_PAIRS = [
     ("architecture/themes.md", "architecture/テーマ.md"),
     ("architecture/icons.md", "architecture/アイコン.md"),
     ("architecture/dependencies.md", "architecture/依存関係.md"),
+    ("components/toasts.md", "components/トースト.md"),
     ("components/components.md", "components/基本コンポーネント.md"),
     ("components/node-editor.md", "components/ノードエディタ.md"),
     ("components/timeline-editing.md", "components/タイムライン編集.md"),
@@ -80,6 +82,7 @@ def verify_package(key: str, archive: Path) -> dict:
         "README.ja.md",
         "LICENSE",
         "THIRD_PARTY_NOTICES.md",
+        "website/public/media/imkit-3.2-poster.jpg",
     ]
     common.extend(PUBLIC_DOCS)
     missing = [name for name in common if not one_member(names, name)]
@@ -122,14 +125,21 @@ def find_packages(directory: Path) -> dict[str, Path]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--packages-dir", type=Path)
+    parser.add_argument("--ci-evidence", type=Path, required=True)
     args = parser.parse_args()
     version_match = re.search(
-        r"project\(imgui-modern-kit VERSION ([\d.]+)", (ROOT / "CMakeLists.txt").read_text()
+        r"project\(imgui-modern-kit VERSION ([\d.]+)", (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
     )
     if not version_match:
         raise RuntimeError("project version was not found")
     version = version_match.group(1)
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    ci = json.loads(args.ci_evidence.read_text(encoding="utf-8"))
+    if ci["headSha"] != commit or ci["conclusion"] != "success" or ci["event"] != "push":
+        raise RuntimeError("Release needs successful push CI at exactly HEAD")
+    platform_jobs=[job for job in ci["jobs"] if job["name"] != "documentation"]
+    if len(platform_jobs)!=5 or any(job["conclusion"]!="success" for job in platform_jobs):
+        raise RuntimeError("All five platform release jobs must succeed")
     dirty = subprocess.check_output(
         ["git", "status", "--porcelain", "--untracked-files=no"], cwd=ROOT, text=True
     ).strip()
@@ -156,6 +166,8 @@ def main() -> int:
         "version": version,
         "tag": f"v{version}",
         "source_commit": commit,
+        "ci": ci,
+        "media_validation": json.loads((ROOT/"out/promo/media-validation.json").read_text(encoding="utf-8")),
         "language": "C++20",
         "license": "MIT",
         "dear_imgui": {
@@ -196,7 +208,7 @@ def main() -> int:
             "gif_size": "960x540",
             "gif_count": len(list((ROOT / "docs/images").glob("v3-*.gif"))),
             "showcase": showcase.name,
-            "source": "native Gallery and Node Editor companion backbuffers only",
+            "source": "native Gallery/companion UI clips with original motion graphics and original electronic BGM",
         },
         "signing": {
             "macos": "unsigned and not notarized when CI release credentials are unavailable"
@@ -220,16 +232,24 @@ def main() -> int:
 
     evidence = OUT / f"imkit-v{version}-validation-evidence.zip"
     with zipfile.ZipFile(evidence, "w", zipfile.ZIP_DEFLATED) as archive:
-        archive.write(ROOT / "docs/validation.md", "validation.md")
+        archive.write(ROOT / "docs/reference/validation.md", "validation.md")
         archive.write(manifest_path, manifest_path.name)
+        archive.write(args.ci_evidence,"ci-evidence.json")
+        archive.write(ROOT/"docs/reference/検証記録.md","検証記録.md")
+        archive.write(ROOT/"out/promo/media-validation.json","media-validation.json")
+        for record in args.packages_dir.rglob("sdk-consumer-evidence.json"):
+            archive.write(record,"sdk-consumers/"+record.parent.name+".json")
         for gif in sorted((ROOT / "docs/images").glob("v3-*.gif")):
             archive.write(gif, f"images/{gif.name}")
         capture_sources = {
-            "overview": ROOT / "out/v3-native/overview/capture.txt",
-            "node-editor": ROOT / "out/v3-native/node-editor-final/capture.txt",
-            "workflow-progress": ROOT / "out/v3-native/workflow/capture.txt",
-            "timeline": ROOT / "out/v3-native/timeline/capture.txt",
-            "theme-comparison": ROOT / "out/v3-native/themes/capture.txt",
+            "comparison": ROOT / "out/v3.2-native/comparison/capture.txt",
+            "workspace": ROOT / "out/v3.2-native/workspace/capture.txt",
+            "toasts": ROOT / "out/v3.2-native/toasts/capture.txt",
+            "overview": ROOT / "out/v3.2-native/overview/capture.txt",
+            "node-editor": ROOT / "out/v3.2-native/node-editor-final/capture.txt",
+            "workflow-progress": ROOT / "out/v3.2-native/workflow/capture.txt",
+            "timeline": ROOT / "out/v3.2-native/timeline/capture.txt",
+            "theme-comparison": ROOT / "out/v3.2-native/themes/capture.txt",
         }
         for name, metadata in capture_sources.items():
             if not metadata.is_file():

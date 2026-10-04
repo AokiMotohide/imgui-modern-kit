@@ -2,30 +2,46 @@
 title: "トラブルシューティング"
 ---
 
+ImKitのビルド時や実行時に発生しやすい問題とその解決方法をまとめた逆引きガイドです。
+
 ## `IMKIT_IMGUI_TARGET is required`
 
-`add_subdirectory`より先にホストのDear ImGui CMake targetを作り、その正確なtarget名を`IMKIT_IMGUI_TARGET`へ設定します。埋め込み先へ別のImGui本体を暗黙に追加しないための制約です。
+- **原因**: CMakeスクリプトで `add_subdirectory(path/to/imkit)` を呼び出す前に、ホスト側のDear ImGuiターゲットが定義されていないか、ターゲット名が正しく渡されていません。
+- **対処法**: ホスト側の `CMakeLists.txt` において、`add_subdirectory` より前にDear ImGuiのライブラリターゲットを作成し、その正確なターゲット名を `IMKIT_IMGUI_TARGET` 変数に設定してください。ImKitはプロジェクト内に重複したImGuiインスタンスを暗黙に追加することを防ぐため、この設定を必須としています。
+
+```cmake
+# 正しい指定例
+add_library(my_imgui STATIC ${IMGUI_SOURCES})
+set(IMKIT_IMGUI_TARGET my_imgui CACHE STRING "" FORCE)
+add_subdirectory(extern/imgui-modern-kit)
+```
 
 ## ImGui版をheaderに拒否される
 
-固定した対応revisionを使ってください。style fieldと公開signatureが変わるため、guardを緩めるだけではsource互換・ABI互換の確認になりません。
+- **原因**: 組み込まれているDear ImGuiのバージョンまたはリビジョンが、ImKitが要求する固定コミット（`367b2c24f399988ddafc0bb4628da0106bcc09be`）と一致していません。
+- **対処法**: サポート対象として固定された指定リビジョンのDear ImGui（dockingブランチ）を使用してください。ヘッダーのバージョンガードマクロを無理に解除しても、内部スタイル構造体や関数シグネチャの不一致により、コンパイルエラーや未定義動作（ABI不整合）を引き起こします。
 
 ## Installed SDKをlinkできない
 
-x64、MSVC toolset、Debug/Release CRT、Dear ImGui revision、compile definition、`imconfig.h`を確認します。binary設定が1つでも異なる場合はソース導入を使います。
+- **原因**: 事前ビルドされたインストール版SDKと、ホスト側のビルド設定（アーキテクチャ、コンパイラ、ランタイムライブラリ等）が不整合を起こしています。
+- **対処法**: CPUアーキテクチャ（x64/Arm64）、MSVCツールセットのバージョン、Debug/Release CRT（`/MD` vs `/MDd`）、Dear ImGuiのコミット、および `imconfig.h` のABIマクロ設定を再確認してください。バイナリ構成が1つでも異なる場合は、SDKリンクではなくCMakeのソースコード直接組み込み（`add_subdirectory`）を使用してください。
 
 ## Themeは表示されるが日本語が欠ける
 
-Themeはfontを読み込みません。必要glyphをホストのfont atlasへ追加し、文字入力にはplatform IME callbackを用意します。Galleryのfallback fontは任意のホスト資産であり、library本体の動作ではありません。
+- **原因**: ホスト側で生成したDear ImGuiのフォントアトラスに、日本語グリフ（ひらがな・カタカナ・漢字）が含まれていません。
+- **対処法**: ImKitのテーマエンジンはUIのスタイリングのみを行い、フォントファイルの読み込みやテクスチャの生成は行いません。ホスト側の初期化コードで、`ImFontConfig` および日本語グリフレンジ（`GetGlyphRangesJapanese()`）を指定してフォントをロードしてください。日本語IME入力を行う場合はOSのIMEメッセージ連携も必要です。
 
 ## Themeを再適用すると寸法が大きくなる
 
-application倍率は`ApplyTheme`または`ThemeScope`だけへ渡し、`Theme::metrics`を事前に拡大しないでください。ImKitは保存された未拡大metricsからstyleを生成します。
+- **原因**: アプリケーションの表示倍率（DPIスケール等）を、`Theme::metrics` に事前に乗算した上で `ApplyTheme` や `ThemeScope` に渡しています。
+- **対処法**: スケール値は `ApplyTheme(theme, scale)` または `ThemeScope(theme, scale)` の引数としてのみ渡してください。元の `Theme::metrics` 自体を事前に書き換えないでください。ImKitは常に未スケーリングの基準メトリクスからスタイル構造体を再計算します。
 
 ## Gallery executableを上書きできない
 
-実行中の`imkit_gallery.exe`を閉じ、同じincremental targetを1回buildします。Windowsでは実行中のexeをlinkerが置換できません。
+- **原因**: ビルド済みの `imkit_gallery.exe` が実行中（起動したまま）の状態で、再ビルドを実行しています。
+- **対処法**: 実行中の `imkit_gallery.exe` を終了させてから、ビルドコマンドを再実行してください。Windows環境では実行中のバイナリファイルをリンカーが上書き置換できないため、ファイルロックによるアクセス拒否エラーが発生します。
 
 ## Screenshotだけで組み込み完了と判断できない
 
-[Validation](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/validation.md)でcompile/link、公開IO、GPU capture、installed consumer、native application受け入れを区別してください。
+- **原因**: 画面キャプチャの見た目だけで統合が完全であると判断し、イベント処理や入力処理の検証が不足しています。
+- **対処法**: [検証記録](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/検証記録.md) を参照し、コンパイル/リンク検証、仮想ImGui IOによる操作検証、GPUレンダリングキャプチャ、および実機OS/IME入力テストを明確に区別して検証を行ってください。

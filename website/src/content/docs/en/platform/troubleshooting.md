@@ -28,4 +28,4 @@ Close the running `imkit_gallery.exe`, then run the same incremental target once
 
 ## A screenshot is not proof of integration
 
-Use [Validation](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/validation.md) to distinguish compile/link, public-IO interaction, GPU capture, installed consumer and native application acceptance.
+Use [Validation](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/validation.md) to distinguish compile/link, public-IO interaction, GPU capture, installed consumer and native application acceptance.

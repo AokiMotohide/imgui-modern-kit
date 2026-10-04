@@ -20,7 +20,10 @@ struct Probe {
 // value, so the difference remains visual rather than a comparison of two
 // independent application models.
 struct ComparisonState {
-    bool open = true;
+    bool open = false;
+    int mode = 0;
+    bool disabled = false;
+    bool focusDefault = false;
     bool enabled = true;
     float level = .64f;
     int quality = 1;

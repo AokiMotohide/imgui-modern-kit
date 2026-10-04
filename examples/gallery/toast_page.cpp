@@ -7,11 +7,14 @@ void ToastPage::Show(GalleryState& host) {
     ImGui::Checkbox("日本語",&japanese);
     const char* positions[]={"Top left","Top center","Top right","Bottom left","Bottom center","Bottom right"};
     ImGui::Combo("Position",&position,positions,6);layout.position=static_cast<ToastPosition>(position);
-    ImGui::SliderInt("Visible maximum",&maximum,1,8);layout.maximum=maximum;
-    ImGui::SliderFloat("Width (0 = automatic)",&layout.width,0,600);
-    ImGui::SliderFloat("Margin (-1 = theme)",&layout.margin,-1,60);
-    ImGui::SliderFloat("Gap (-1 = theme)",&layout.gap,-1,30);
-    ImGui::InputDouble("Duration (-1 = default, 0 = persistent)",&duration);
+    if(ImGui::CollapsingHeader("Layout and lifetime settings")) {
+        ImGui::SliderInt("Visible maximum",&maximum,1,8);
+        ImGui::SliderFloat("Width (0 = automatic)",&layout.width,0,600);
+        ImGui::SliderFloat("Margin (-1 = theme)",&layout.margin,-1,60);
+        ImGui::SliderFloat("Gap (-1 = theme)",&layout.gap,-1,30);
+        ImGui::InputDouble("Duration (-1 = default, 0 = persistent)",&duration);
+    }
+    layout.maximum=maximum;
     ImGui::Checkbox("Indeterminate loading",&indeterminate);
     ImGui::SliderFloat("Progress",&progress,0,1);
     auto add=[&](FeedbackKind kind,bool loading=false) {
@@ -26,17 +29,17 @@ void ToastPage::Show(GalleryState& host) {
         v.progress=indeterminate?-1:progress;items.push_back(v);
     };
     if(!initialized) {add(FeedbackKind::Success);add(FeedbackKind::Warning);add(FeedbackKind::Error);add(FeedbackKind::Info,true);initialized=true;}
-    if(ImGui::Button("Success / 成功")) add(FeedbackKind::Success);Record(host,"toast-success");
-    ImGui::SameLine();if(ImGui::Button("Info / 情報")) add(FeedbackKind::Info);
-    if(ImGui::Button("Warning / 警告")) add(FeedbackKind::Warning);
-    ImGui::SameLine();if(ImGui::Button("Error / エラー")) add(FeedbackKind::Error);
-    if(ImGui::Button("Loading / 処理中")) add(FeedbackKind::Info,true);
-    ImGui::SameLine();if(ImGui::Button("Complete loading / 完了")) {
+    if(ImGui::Button(japanese?"成功":"Success")) add(FeedbackKind::Success);Record(host,"toast-success");
+    ImGui::SameLine();if(ImGui::Button(japanese?"情報":"Info")) add(FeedbackKind::Info);
+    if(ImGui::Button(japanese?"警告":"Warning")) add(FeedbackKind::Warning);
+    ImGui::SameLine();if(ImGui::Button(japanese?"エラー":"Error")) add(FeedbackKind::Error);
+    if(ImGui::Button(japanese?"処理中":"Loading")) add(FeedbackKind::Info,true);Record(host,"toast-loading");
+    ImGui::SameLine();if(ImGui::Button(japanese?"完了":"Complete loading")) {
         for(auto& v:items) if(v.phase==ToastPhase::Loading) {v.phase=ToastPhase::Message;v.kind=FeedbackKind::Success;v.title=japanese?"読み込みが完了しました":"Loading complete";v.action="";}
     }
     Record(host,"toast-complete");
-    if(ImGui::Button("Queue 8 / 8件追加")) for(int i=0;i<8;++i) add(FeedbackKind::Success);
-    ImGui::SameLine();if(ImGui::Button("Clear / すべて閉じる")) {items.clear();state.Reset();}
+    if(ImGui::Button(japanese?"8件追加":"Queue 8")) for(int i=0;i<8;++i) add(FeedbackKind::Success);
+    ImGui::SameLine();if(ImGui::Button(japanese?"すべて閉じる":"Clear")) {items.clear();state.Reset();}
     for(auto& v:items) if(v.phase==ToastPhase::Loading) v.progress=indeterminate?-1:progress;
     ImGui::Text("Host queue: %zu | actions: %d",items.size(),actionCount);
     ImGui::TextWrapped("Success/info: 5s. Warning/error/loading: persistent. Hover or keyboard focus pauses expiry. Appearance changes the theme, contrast, density and motion.");

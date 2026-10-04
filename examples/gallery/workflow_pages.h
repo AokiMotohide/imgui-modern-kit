@@ -30,6 +30,9 @@ struct WorkflowPages {
     float fraction=.4f;
     float position[3]{};
     double expiresAt=0;
+    std::array<bool,3> visible{{true,true,true}}, locked{};
+    bool workSettings=false;
+    void Workbench(GalleryState& host);
     void Show(int page,GalleryState& host);
 };
 }

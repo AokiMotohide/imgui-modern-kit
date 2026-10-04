@@ -16,6 +16,7 @@ int main() {
     style.features.workspaceSwitcher = true;
     const std::array<std::string_view, 2> workspaces{"Edit", "Output"};
     imkit::WindowFrameContent content{"Application", "Project", true, workspaces, 0};
+    content.iconTexture = ImTextureRef{}; // 3.2: rebuild consumers for the extended structure.
     imkit::WindowFrameState state{};
     const auto layout = imkit::LayoutWindowFrame(1280, style, state);
     const auto contrast = imkit::ValidateWindowFrameContrast(style);

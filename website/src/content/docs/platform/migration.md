@@ -2,13 +2,13 @@
 title: "v2からの移行"
 ---
 
-v2 consumerをv3へ移行する際は、API変更だけでなくDear ImGui ABI、renderer固有header、platform target、host ownershipを確認します。
+ImKit v2を利用している既存プロジェクトをv3へ移行する際の手順と注意点です。APIのシグネチャ変更だけでなく、Dear ImGuiのABI整合性、レンダラー固有ヘッダー、プラットフォーム別ターゲット、およびホスト側の状態所有モデルの移行を確認してください。
 
-1. 利用側Dear ImGui、対応公式backend、Test Engineをdocking commit `367b2c24f399988ddafc0bb4628da0106bcc09be`に合わせます。
-2. OpenGL型には`<imkit/preview_opengl3.h>`をincludeします。`<imkit/preview.h>`はrenderer非依存型です。macOSは`imkit::preview_metal`と借用`MTLDevice`/command bufferを使います。
-3. `Win32ActionSink`を`NativeActionSink`へ移行します。callbackは`bool`を返し、任意のUTF-8値を受け取ります。対象OSのaccessibility targetをlinkします。
-4. `IMKIT_BUILD_WINDOW_FRAME_LEGACY_IMGUI`とlegacy target参照を除き、通常のv3 targetを使います。
-5. installed SDKの`IMKIT_SDK_ABI_CONFIRMED=ON`は、記録されたOS、architecture、compiler、Dear ImGui revision、`imconfig` ABIを照合してから設定します。
-6. Node Editorを使う場合は`imkit::node_editor`を明示的にlinkします。graph data、revision検証、編集適用、Undo、評価、保存はホスト所有です。Material Graph companionをlibrary stateとして扱いません。
+1. **Dear ImGui バージョンの更新**: ホスト側のDear ImGui、対応する公式バックエンド、およびImGui Test Engineのソースコードを、固定された `docking` ブランチのコミット `367b2c24f399988ddafc0bb4628da0106bcc09be` に更新します。
+2. **OpenGL / Metal プレビューヘッダーの分離**: OpenGL関連の型定義（`GLFunctions`、`OpenGL3Renderer`）は `<imkit/preview_opengl3.h>` に分離されました。`<imkit/preview.h>` はレンダラー非依存の共通型のみを提供します。macOS環境では `imkit::preview_metal` をリンクし、借用した `MTLDevice` およびコマンドバッファを渡します。
+3. **アクセシビリティ Sink の移行**: `Win32ActionSink` をプラットフォーム非依存の `NativeActionSink` へ置き換えます。コールバック関数は `bool` を返し、任意のUTF-8文字列を受け取ります。ビルド対象のOSに合わせて `accessibility_win32` または `accessibility_macos` ターゲットをリンクしてください。
+4. **レガシー互換ターゲットの削除**: `IMKIT_BUILD_WINDOW_FRAME_LEGACY_IMGUI` オプションおよび旧ImGui 1.88向けのレガシーターゲット参照をCMakeから削除します。すべてのコンシューマは通常のv3ターゲットを使用し、固定されたDear ImGui ABIとリンクします。
+5. **インストール済みSDKのABI検証**: インストールされたSDKを利用する場合、ホスト側のOS、CPUアーキテクチャ、コンパイラ、Dear ImGuiリビジョン、および `imconfig.h` のABI定義がSDKビルド時と完全一致していることを確認した上で、`IMKIT_SDK_ABI_CONFIRMED=ON` を指定します。
+6. **ノードエディタのリンクと所有権の分離**: 新しいノードエディタを採用する場合、CMakeで `imkit::node_editor` を明示的にリンクします。ノードグラフデータ、リビジョン検証、編集適用の確定、Undo履歴、ノード評価、およびファイル永続化はすべてホスト側が所有し、GalleryのMaterial Graph companionをライブラリの内部状態として依存しないように移行します。
 
-実際のtarget/header選択は[導入ガイド](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/getting-started.ja.md)と[Dependencies](../dependencies/)を確認してください。正確なv3差分の基準は[英語migration reference](../../en/platform/migration/)です。
+詳しいCMakeターゲット構成や依存関係の要件については [導入ガイド](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/getting-started/導入ガイド.md) および [依存関係](../dependencies/) を参照してください。

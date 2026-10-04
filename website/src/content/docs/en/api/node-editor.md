@@ -2,7 +2,7 @@
 title: "Node Editor API"
 ---
 
-This generated index contains the **47 declarations** in [`docs/node-editor-api.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/node-editor-api.json) for `<imkit/node_editor.h>`. The header defines the exact types and contract. It is a development API in v3.1.0; graph data, validation, undo and persistence remain with the host.
+This generated index contains the **47 declarations** in [`docs/reference/node-editor-api.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/node-editor-api.json) for `<imkit/node_editor.h>`. The header defines the exact types and contract. It is a development API in v3.2.0; graph data, validation, undo and persistence remain with the host.
 
 Signatures below are declaration listings, not self-contained code examples. For the `BeginEditor` call contract, ownership, return value, and paired-call rules, see the [BeginEditor reference](begin-editor/). The [Node Editor guide](../../features/node-editor/) shows the drawing order.
 

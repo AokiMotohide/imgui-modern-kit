@@ -44,25 +44,39 @@ Timelineは編集UIです。再生engine、media decoder、project保存機能�
 
 ---
 
-任意の`TimelineEditingProvider`を使うと、独立fade、cut transition、矩形selection、検証付きtrack間移動が有効になります。未指定なら従来のtransition操作を利用します。provider、借用view、clipboard、Undo履歴はホスト所有です。公開APIは`<imkit/video.h>`と`imkit::video` targetから利用できます。
+`imkit::video` モジュールは、プロ向けのマルチトラックタイムラインエディタ機能を提供します。
+`TimelineEditingProvider` を実装することで、クリップのフェードイン/アウト、トランジション（Crossfade / Dissolve）、複数クリップの矩形選択、トラック間移動や並べ替えなどの高度な編集操作が有効になります。
 
-## 操作例
+---
 
-- clip上端のhandleをdragしてfadeを作成・resizeします。右clickで時間、Linear/Ease in/Ease out、削除を指定します。
-- TransitionShelfからDissolveまたはCrossfadeを隣接cutへdragします。bandをresizeし、context menuで時間変更・削除を行います。Dissolveはvideo、Crossfadeはaudio対象です。VideoにはDip to blackもあります。
-- 空白timelineをdragして交差clipを矩形選択し、Shiftで追加、Ctrlで反転します。複数選択をdragする場合、providerが全対象を同じtrack offsetで検証します。
-- track名をclickして選択し、Shift/Ctrlで複数選択します。選択名を他の名前へdragすると元順で挿入します。Tracks menuから追加・複製・削除し、空でないtrack削除は確認します。
+## 編集ジェスチャとマウス操作 (Input)
 
-Galleryの **Video** page (`8`) を操作し、[`editor_workspaces.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/editor_workspaces.cpp)のsample host実装を参照してください。より広いmodule recipeは[実例一覧](../../guides/examples/)にあります。
+| 操作対象 | マウス・キーボード操作 | 動作仕様 |
+|---|---|---|
+| **フェードイン / アウト** | クリップ上端のハンドルをドラッグ | フェード時間の調整。ハンドル右クリックでカーブ形状（Linear / EaseIn / EaseOut）を選択 |
+| **トランジション** | `TransitionShelf` から隣接クリップの境界へドラッグ | Dissolve（ビデオ向け）または Crossfade（オーディオ向け）を挿入。ドラッグで長さを調整 |
+| **クリップ選択** | 空白領域をドラッグ | ラバーバンド（矩形）選択。Shiftキーで追加選択、Ctrlキーでトグル選択 |
+| **クリップ移動** | 選択クリップをドラッグ | 選択された複数クリップの相対位置を保ったままトラック間を移動 |
+| **ズーム & パン** | `Ctrl + マウスホイール`<br>`Shift + マウスホイール`<br>`中ボタンドラッグ` | マウスポインタ位置を中心としたズーム<br>横方向スクロール<br>タイムライン全体のパン操作 |
+| **トラックの並べ替え** | トラックヘッダーをドラッグ | 行の前後へトラックを挿入・並べ替え |
 
-### ホスト契約
+---
 
-media decode・playback・capture、clip data、selection、collision policy、revision、event buffer、Undo、保存、workerはホスト所有です。Providerは画面外対象や関連clipを含め、要求された完全な結果を返す必要があります。容量不足、lock、stale revisionを成功扱いせず、編集全体を検証してから適用してください。正確なoverloadとcallbackの寿命は[English API contract](../../en/features/timeline/)と[Editor API](../../api/editor-suite/)を参照してください。
+## イベント契約仕様 (Event contract)
 
-## Event contract / Event契約
+タイムライン操作が発生すると、以下の `editor::Event` が発行されます：
 
-編集要求はホスト提供bufferへ出力されます。容量、revision、lock、選択全体を検証してからmodelへ適用します。overflow時に部分成功を仮定しません。
+- **`ClipFades`**: クリップのフェードイン／アウト長さ、およびイージングカーブ。
+- **`CutTransition`**: 隣接クリップ間のトランジション種別と継続時間。
+- **`TrackEdit`**: トラックの追加、削除、複製、順序変更。
+- **`Clipboard`**: クリップのコピー・カット・ペースト要求（再生ヘッド位置を基準にペースト）。
 
-## Verification / 検証
+> [!IMPORTANT]
+> タイムラインは描画と操作イベントの生成のみを行います。実際の音声/映像の合成処理、メディアデコード、ファイルへの保存、および Undo/Redo のスタック管理はホストアプリケーション側で行ってください。
 
-Galleryと自動testはsample provider、公開ImGui IO、合成データを対象にします。native OS入力、実media、利用host側の衝突・Undo統合は個別に受け入れてください。証拠baselineは[Validation](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/validation.ja.md)にあります。
+---
+
+## 検証とGallery (Verification)
+
+Gallery の **Video** 画面（ページID: 8）で対話的に動作を検証できます。また、コマンドラインオプション `--verify-timeline-ui` を指定して起動することで、フェード作成、プレビュー/確定、Undo、マルチトラック選択、10万クリップ時の可視範囲クエリの負荷検証を自動実行できます。
+実機メディアの再生・デコードやOSネイティブIME連携はホスト側の検証対象です。

@@ -58,34 +58,39 @@ void StartCard(GalleryState &s, int page, const char *eyebrow, const char *title
     PopID();
 }
 void Start(GalleryState &s) {
-    Heading(s, "Build native tools people enjoy using");
-    TextWrapped("Explore the same Dear ImGui interaction model as a focused production interface. "
-                "Start with a live comparison, then follow a concrete workflow into the Gallery.");
+    Heading(s, "Modern UI. Familiar workflow.");
+    TextWrapped("Modernize your existing Dear ImGui app with a theme. Add useful controls as your tool grows. "
+                "Your context, values and frame loop stay yours.");
     if (ActionButton("Open live comparison", ActionVariant::Primary, {}, {&s.theme, &s.animation}))
-        s.comparison.open = true;
+        { s.page = 21; s.comparison.open = true; }
     Record(s, "start-comparison");
-    SameLine();
+    if(GetContentRegionAvail().x > 650.f) SameLine();
     if (Button("Explore components"))
         s.page = 0;
     Record(s, "start-components");
-    SameLine();
+    if(GetContentRegionAvail().x > 650.f) SameLine();
     if (Button("Circular progress"))
         s.page = 16;
     Record(s, "start-circular-progress");
     SeparatorText("Choose a route");
-    if (BeginTable("start-routes", 2, ImGuiTableFlags_SizingStretchSame)) {
+    if (BeginTable("start-routes", GetContentRegionAvail().x < 680.f ? 1 : 2, ImGuiTableFlags_SizingStretchSame)) {
         TableNextRow();
         TableNextColumn();
-        StartCard(s, 0, "01 / FOUNDATION", "Keep the interaction contract", "Try ActionButton, stable IDs, focus and keyboard navigation.", "Open components");
+        StartCard(s, 21, "01 / THEME ONLY", "Modernize an existing UI", "The same ImGui calls, the same values. Compare a theme with the default style.", "Compare themes");
         TableNextColumn();
-        StartCard(s, 6, "02 / VISUAL SYSTEM", "Make states easier to read", "Inspect icons and Theme. Change the scheme in Appearance.", "Open themes and icons");
+        StartCard(s, 6, "02 / ICON LIBRARY", "Find your next icon", "288 icons, 19 categories and seven sizes. Search, select and copy the C++ call.", "Explore icons");
         TableNextRow();
         TableNextColumn();
-        StartCard(s, 15, "03 / WORKFLOW", "Guide a real task", "Try step navigation and the image workspace. The host applies each request.", "Open workflow");
+        StartCard(s, 22, "03 / NEW IN 3.2", "Build a useful workspace", "Tabs, hierarchy actions, settings, three-axis editing and choices in one live screen.", "Open 3.2 workspace");
         TableNextColumn();
         StartCard(s, 8, "04 / EDITING", "Scale into timelines", "Explore Video editing UI. Media, project data and Undo stay in the host.", "Open timeline");
         EndTable();
     }
+    SeparatorText("Try it here");
+    Toggle("Enable preview", &s.toggle, {&s.theme, &s.animation});
+    SameLine();
+    if(ActionButton("Apply settings", ActionVariant::Primary)) ++s.clicks;
+    SameLine(); Text("Applied %d times", s.clicks);
     TextDisabled("Learning map: docs/getting-started/examples-recipes.md (English) / docs/getting-started/実例とレシピ.md (日本語)");
     SeparatorText("What remains yours");
     TextWrapped("Your Dear ImGui context, renderer, font atlas, data, undo history and persistence stay in the host. "
@@ -97,7 +102,13 @@ void Start(GalleryState &s) {
 class DefaultStyleScope {
   public:
     DefaultStyleScope() : previous_(ImGui::GetStyle()) {
+        ImGui::GetStyle() = ImGuiStyle{};
         ImGui::StyleColorsDark(&ImGui::GetStyle());
+        ImGui::GetStyle().FontSizeBase=previous_.FontSizeBase;
+        ImGui::GetStyle().FontScaleMain=previous_.FontScaleMain;
+        ImGui::GetStyle().FontScaleDpi=previous_.FontScaleDpi;
+        ImGui::GetStyle().ScaleAllSizes(ImGui::GetIO().DisplayFramebufferScale.x);
+        ImGui::GetStyle().Colors[ImGuiCol_ChildBg].w = 1.f;
     }
     ~DefaultStyleScope() { ImGui::GetStyle() = previous_; }
     DefaultStyleScope(const DefaultStyleScope &) = delete;
@@ -106,29 +117,33 @@ class DefaultStyleScope {
   private:
     ImGuiStyle previous_;
 };
-void DefaultComparisonSpecimen(GalleryState &s) {
-    TextUnformatted("Default Dear ImGui");
-    TextDisabled("StyleColorsDark + direct widgets");
+void DefaultComparisonSpecimen(GalleryState &s, bool modern=false) {
+    TextUnformatted(modern ? "ImKit theme" : "Dear ImGui default");
+    TextDisabled("Identical ImGui:: calls / shared application values");
+    ImGui::BeginDisabled(s.comparison.disabled);
     Separator();
+    if(!modern && s.comparison.focusDefault) { ImGui::SetKeyboardFocusHere(); s.comparison.focusDefault=false; }
     if (ImGui::Button("Apply"))
         ++s.comparison.applyCount;
-    Record(s, "comparison-default-apply");
+    Record(s, modern ? "comparison-imkit-apply" : "comparison-default-apply");
     ImGui::SameLine();
     ImGui::Text("Applied: %d", s.comparison.applyCount);
     ImGui::Checkbox("Enabled", &s.comparison.enabled);
-    Record(s, "comparison-default-enabled");
-    ImGui::SetNextItemWidth(-1);
-    ImGui::SliderFloat("Level", &s.comparison.level, 0, 1, "%.0f%%");
-    Record(s, "comparison-default-level");
+    Record(s, modern ? "comparison-imkit-enabled" : "comparison-default-enabled");
+    ImGui::SetNextItemWidth(-ImGui::CalcTextSize("Level").x-ImGui::GetStyle().ItemInnerSpacing.x);
+    ImGui::SliderFloat("Level", &s.comparison.level, 0, 1, "%.2f");
+    Record(s, modern ? "comparison-imkit-level" : "comparison-default-level");
     ImGui::InputText("Name", s.comparison.name, sizeof(s.comparison.name));
-    Record(s, "comparison-default-name");
+    Record(s, modern ? "comparison-imkit-name" : "comparison-default-name");
     const char *quality[] = {"Draft", "Balanced", "Final"};
     ImGui::Combo("Quality", &s.comparison.quality, quality, 3);
-    Record(s, "comparison-default-quality");
+    Record(s, modern ? "comparison-imkit-quality" : "comparison-default-quality");
+    ImGui::EndDisabled();
 }
 void ImKitComparisonSpecimen(GalleryState &s) {
     TextUnformatted("ImKit");
-    TextDisabled("Same state + theme-aware components");
+    TextDisabled("Additional components / shared application values");
+    ImGui::BeginDisabled(s.comparison.disabled);
     Separator();
     if (ActionButton("Apply", ActionVariant::Primary, {}, {&s.theme, &s.animation}))
         ++s.comparison.applyCount;
@@ -137,14 +152,15 @@ void ImKitComparisonSpecimen(GalleryState &s) {
     Text("Applied: %d", s.comparison.applyCount);
     Toggle("Enabled", &s.comparison.enabled, {&s.theme, &s.animation});
     Record(s, "comparison-imkit-enabled");
-    SetNextItemWidth(-1);
-    SliderFloat("Level", &s.comparison.level, 0, 1, "%.0f%%");
+    SetNextItemWidth(-ImGui::CalcTextSize("Level").x-ImGui::GetStyle().ItemInnerSpacing.x);
+    SliderFloat("Level", &s.comparison.level, 0, 1, "%.2f");
     Record(s, "comparison-imkit-level");
     InputText("Name", s.comparison.name, sizeof(s.comparison.name));
     Record(s, "comparison-imkit-name");
     const char *quality[] = {"Draft", "Balanced", "Final"};
     Combo("Quality", &s.comparison.quality, quality, 3);
     Record(s, "comparison-imkit-quality");
+    ImGui::EndDisabled();
 }
 void Icons(GalleryState &s) {
     char heading[64];
@@ -640,6 +656,43 @@ void FrameLab(GalleryState& s) {
     if(Button("Copy C++ snippet")) SetClipboardText(snippet.c_str());
 }
 } // namespace
+void DrawComparison(GalleryState &s) {
+    if(!s.comparison.open) return;
+    const char* modes[]={"Theme only", "Components"};
+    Segmented("comparison-mode", &s.comparison.mode, modes);
+    Record(s,"comparison-mode");
+    SameLine(); Checkbox("Disabled", &s.comparison.disabled);
+    Record(s,"comparison-disabled");
+    TextWrapped(s.comparison.mode==0
+        ? "One theme. The same ImGui:: calls. Both sides edit the same application-owned values."
+        : "Familiar immediate-mode controls plus optional ImKit components. Both sides edit the same values.");
+    TextDisabled("Same host font and scale. Default colors AND metrics restored; style is scoped to each specimen.");
+    const bool narrow=GetContentRegionAvail().x<720.f;
+    if(BeginTable("comparison-columns",narrow?1:2,ImGuiTableFlags_SizingStretchSame)) {
+        for(int i=0;i<2;++i) {
+            TableNextColumn(); PushID(i);
+            if(i==0) {
+                DefaultStyleScope style;
+                ImGui::GetStyle().ScaleAllSizes(s.scale / ImGui::GetIO().DisplayFramebufferScale.x);
+                if(BeginChild("specimen",{0,330*s.scale},ImGuiChildFlags_Borders)) DefaultComparisonSpecimen(s);
+                EndChild();
+            } else {
+                ThemeScope style(s.theme,s.scale);
+                PushStyleColor(ImGuiCol_ChildBg,s.theme.colors.surface);
+                if(BeginChild("specimen",{0,330*s.scale},ImGuiChildFlags_Borders)) {
+                    if(s.comparison.mode==0) DefaultComparisonSpecimen(s,true);
+                    else ImKitComparisonSpecimen(s);
+                }
+                EndChild(); PopStyleColor();
+            }
+            PopID();
+        }
+        EndTable();
+    }
+    SeparatorText("Try the integration");
+    TextUnformatted("auto theme = imkit::MakeTheme(imkit::ThemePreset::PrecisionLight);\nimkit::ApplyTheme(theme, 1.0f); // before ImGui::NewFrame()\n// Keep drawing your existing ImGui:: widgets.");
+    TextWrapped("Guide: docs/getting-started/getting-started.md | Components: docs/components/components.md");
+}
 void Show(GalleryState &s) {
     s.probes.clear();
     s.theme.fonts = s.fonts;
@@ -670,18 +723,21 @@ void Show(GalleryState &s) {
         s.floatingCatalogSize=GetWindowSize();
     }
     if(visible) {
-        static constexpr int pageIds[]={19,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,20};
-        const char* pages[]={"Start","Components: Basic","Numeric / Units","Input / Media","Hierarchy / Table","Overlay / Layout","Composites","Icons","Editor Core","Video","CG","Foundations","Components","Patterns","Accessibility","Responsive","Generic Workspace","Feedback / States","Preview Tiles","Frame Lab","Toasts"};
+        static constexpr int pageIds[]={19,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,20,21,22};
+        const char* pages[]={"Start","Components: Basic","Numeric / Units","Input / Media","Hierarchy / Table","Overlay / Layout","Composites","Icons","Editor Core","Video","CG","Foundations","Components","Patterns","Accessibility","Responsive","Generic Workspace","Feedback / States","Preview Tiles","Frame Lab","Toasts","Compare","New in 3.2"};
         int pageIndex=0;
         for(int i=0;i<static_cast<int>(std::size(pageIds));++i) if(pageIds[i]==s.page) {pageIndex=i;break;}
-        SetNextItemWidth(std::min(260.f,GetContentRegionAvail().x*.5f));
+        const bool wide=GetContentRegionAvail().x>=1100.f*std::max(1.f,ImGui::GetStyle().FontScaleDpi);
+        TextUnformatted("IMKIT / GALLERY"); SameLine(); TextDisabled("3.2   |   13 themes   |   288 icons");
+        Separator();
+        SetNextItemWidth(std::min(260.f,GetContentRegionAvail().x*.45f));
         if(Combo("##section",&pageIndex,pages,static_cast<int>(std::size(pages)))) s.page=pageIds[pageIndex];
         SameLine(); if(Button("Appearance")) OpenPopup("appearance");
         Record(s,"appearance");
-        SameLine(); if(Button("Compare")) s.comparison.open=true;
+        if(GetContentRegionAvail().x>280.f) SameLine(); if(Button("Compare")) {s.page=21;s.comparison.open=true;}
         Record(s,"comparison-open");
         static NodeLauncher nodeLauncher;
-        SameLine();
+        if(GetContentRegionAvail().x>160.f) SameLine();
         if(Button("Node Editor")) nodeLauncher.Open();
         Record(s,"node-editor-open");
         if(nodeLauncher.error) TextWrapped("Cannot open Node Editor (Windows error %lu). Place imkit_node_editor_gallery.exe beside this Gallery.", nodeLauncher.error);
@@ -712,11 +768,30 @@ void Show(GalleryState &s) {
             EndPopup();
         }
         Spacing();
+        if(wide) {
+            BeginChild("categories",{192*s.scale*std::max(1.f,ImGui::GetStyle().FontScaleDpi),0},ImGuiChildFlags_Borders);
+            const char* groups[]={"GET STARTED","CONTROLS","WORKSPACES","REFERENCE"};
+            for(int g=0;g<4;++g) {
+                SeparatorText(groups[g]);
+                for(int i=0;i<static_cast<int>(std::size(pageIds));++i) {
+                    const int id=pageIds[i];
+                    const int category=(id==19||id==21||id==22)?0:(id<=6||id==16||id==20)?1:(id==7||id==8||id==9||id==15||id==17)?2:3;
+                    if(category!=g) continue;
+                    if(Selectable(pages[i],s.page==id)) {s.page=id;if(id==21)s.comparison.open=true;}
+                }
+            }
+            EndChild(); SameLine();
+        }
         BeginChild("Component panel", {s.page >= 6 ? GetContentRegionAvail().x
                                                   : std::min(GetContentRegionAvail().x, 1120 * s.scale), 0},
                    ImGuiChildFlags_Borders, s.page == 4 ? ImGuiWindowFlags_MenuBar : 0);
-        PushItemWidth(420 * s.scale);
+        int active=0;
+        for(int i=0;i<static_cast<int>(std::size(pageIds));++i) if(pageIds[i]==s.page) active=i;
+        if(s.page!=19) { Heading(s,pages[active]); TextDisabled("LIVE SPECIMEN / public API / application-owned state"); Separator(); }
+        PushItemWidth(std::min(420 * s.scale,GetContentRegionAvail().x*.70f));
         switch (s.page) {
+        case 21: s.comparison.open=true; DrawComparison(s); break;
+        case 22: s.workflow.Workbench(s); break;
         case 20: s.toasts.Show(s); break;
         case 19: Start(s); break;
         case 18: FrameLab(s); break;
@@ -794,37 +869,7 @@ void Show(GalleryState &s) {
         End();
     }
 }
-void ShowComparison(GalleryState &s) {
-    if(!s.comparison.open) return;
-    const auto display=ImGui::GetIO().DisplaySize;
-    const float width=std::min(860.f,std::max(560.f,display.x-48.f));
-    const float height=std::min(520.f,std::max(360.f,display.y-s.windowFrameHeight-64.f));
-    const float initialX=display.x>=1180.f ? display.x-width-24.f : 24.f;
-    SetNextWindowPos({initialX,s.windowFrameHeight+24.f},ImGuiCond_FirstUseEver);
-    SetNextWindowSize({width,height},ImGuiCond_FirstUseEver);
-    if(Begin("Compare: Default Dear ImGui vs ImKit###live-comparison",&s.comparison.open,
-             ImGuiWindowFlags_NoCollapse)) {
-        TextWrapped("The columns share one host-owned value. This is a visual and interaction-contract comparison, not a performance, OS-input or accessibility benchmark.");
-        const bool vertical=GetContentRegionAvail().x<720.f;
-        if(vertical) {
-            PushID("comparison-default");
-            { DefaultStyleScope defaultStyle; if(BeginChild("default",{0,205},ImGuiChildFlags_Borders)) DefaultComparisonSpecimen(s); EndChild(); }
-            PopID();
-            PushID("comparison-imkit");
-            { ThemeScope themeScope(s.theme,s.scale); if(BeginChild("imkit",{0,205},ImGuiChildFlags_Borders)) ImKitComparisonSpecimen(s); EndChild(); }
-            PopID();
-        } else if(BeginTable("comparison-columns",2,ImGuiTableFlags_SizingStretchSame)) {
-            TableNextColumn();
-            PushID("comparison-default");
-            { DefaultStyleScope defaultStyle; if(BeginChild("default",{0,0},ImGuiChildFlags_Borders)) DefaultComparisonSpecimen(s); EndChild(); }
-            PopID();
-            TableNextColumn();
-            PushID("comparison-imkit");
-            { ThemeScope themeScope(s.theme,s.scale); if(BeginChild("imkit",{0,0},ImGuiChildFlags_Borders)) ImKitComparisonSpecimen(s); EndChild(); }
-            PopID();
-            EndTable();
-        }
-    }
-    End();
+void ShowComparison(GalleryState &) {
+    // Comparison is rendered once inside the Gallery page, never over another UI.
 }
 } // namespace imkit::gallery

@@ -8,9 +8,9 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "docs:generate": "python3 scripts/import-docs.py && python3 scripts/generate-api-reference.py",
-    "posters:extract": "python3 scripts/extract-capture-posters.py",
-    "check:site": "python3 scripts/check-site.py",
+    "docs:generate": "python scripts/import-docs.py && python scripts/generate-api-reference.py",
+    "posters:extract": "python scripts/extract-capture-posters.py",
+    "check:site": "python scripts/check-site.py",
     "verify": "npm run docs:generate && npm run check && npm run build && npm run check:site"
   },
   "dependencies": {

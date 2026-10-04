@@ -2,66 +2,98 @@
 title: "Galleryガイド"
 ---
 
-Windows native Galleryは、初見向けの案内アプリと公開APIの実例を兼ねます。consumerがlinkするImKitと同じlibraryを使い、demoだけに存在する代替widgetを隠しません。
+ImKit Gallery は、ImKit が提供する全機能・コンポーネントを実際に操作・体感できる公式のデスクトップショーケースアプリケーションです。
+Gallery で使われているコードは、利用者が組み込むライブラリ（`imkit::imkit`）と全く同一であり、デモ専用の特殊な実装は使用していません。
 
-## 初回訪問のための導線
+---
 
-1. **Start** でホスト所有権の境界を説明し、目的別の画面へ直接案内します。
-2. **Compare** で、移動・resize可能なDefault Dear ImGui / ImKit windowを開きます。両列は同じホスト所有値を更新するため、片方の操作がもう片方にも反映されます。
-3. **Components、themes、icons** で、検索可能なnative specimen、palette編集、生成iconを確認できます。
-4. **Workflow、timeline、Frame Lab** では、任意の合成部品とEditor向けsurfaceを扱います。ただしホストのscene、Undo、rendererをImKitが所有するとは主張しません。
+## Gallery の構成と画面案内
 
-Start画面から **Components: Basic** (page 0)、**Icons** (page 6、ThemeはheaderのAppearanceで変更)、**Generic Workspace** (page 15)、**Video** (page 8)へ直接移動します。[実例とrecipe](../examples/)は画面と公開header、CMake target、実装source、所有権、次に読むguideを対応付けています。Start routeのIDはGallery verifierで操作確認されます。
+起動すると、目的別に整理された各画面へ遷移できます：
 
-比較のbaselineは公開Dear ImGui APIだけです（`StyleColorsDark`と直接widget）。視覚と操作契約の実例であり、性能、OS入力、accessibilityを比較するものではありません。ImKit列はホスト所有の`Theme`、scale、状態、animationを借用します。global registryやGallery専用の第三者assetは導入していません。
+1. **Start**: ホストとの責務境界を説明し、各作業タスクへ直接誘導します。
+2. **Compare**: Dear ImGui 標準スタイルと ImKit テーマのリアルタイム比較（同じ値を連動操作）を行います。
+3. **Components, themes and icons**: 検索可能なネイティブ標本、パレット編集、および7サイズ展開の全288個のアイコンプリセットを提供します。
+4. **Workflow, timeline and Frame Lab**: ホスト側のシーンやUndo、レンダラーを奪うことなく、ツール向けの高度なレイアウトとエディタ操作面を提示します。
 
-## Buildと実行
+| 画面名 | ページID | 主な内容・確認できること | 実装ソース |
+|---|---|---|---|
+| **Start** | 19 | ImKit の概要、ホストとの責務分担、各機能へのショートカット | [`gallery.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/gallery.cpp) |
+| **Compare** | 21 | Dear ImGui 標準スタイルと ImKit テーマのリアルタイム比較（同じ値を連動操作） | [`gallery.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/gallery.cpp) |
+| **Components: Basic** | 0 | ボタン、トグル、チェックボックス、入力欄、バッジ等の基本UI | [`gallery.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/gallery.cpp) |
+| **Icons** | 6 | 288種類のカタログ（検索・サイズ切替・プレビュー） | [`gallery.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/gallery.cpp) |
+| **Generic Workspace** | 15 | ChoiceGroupによる方式選択と、ワークフローナビゲーション、プレビュータイル | [`workflow_pages.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/workflow_pages.cpp) |
+| **Video** | 8 | マルチトラックタイムラインエディタ、クリップ編集、シーク操作 | [`editor_workspaces.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/editor_workspaces.cpp) |
+| **Frame Lab** | 18 | カスタムウィンドウタイトルバーおよび OS ネイティブ統合の挙動 | [`gallery.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/gallery.cpp) |
 
+各画面に対応する公開ヘッダーや CMake ターゲットの詳細は [実例とレシピ](../examples/) を参照してください。
+
+---
+
+## ビルドと起動方法
+
+### Windows (Visual Studio 2022 / Ninja)
 ```powershell
+# デバッグビルドの構成と実行
 cmake --preset windows-debug
 cmake --build --preset windows-debug --target imkit_gallery --parallel
 ./build/windows-debug/catalog/Debug/imkit_gallery.exe
 ```
 
-公開するWindows archiveには`imkit_gallery.exe`、必要な`design-assets` directory、本プロジェクトのlicense、第三者noticeを含めます。serviceをinstallせず、ユーザー設定も作成せず、ImKit consumerへruntime依存を追加しません。
+### macOS (Xcode / Apple Clang)
+```bash
+# Universal 2 (Apple Silicon & Intel) ビルド
+cmake --preset macos-universal
+cmake --build --preset macos-universal --target imkit_gallery --parallel
+open ./build/macos-universal/catalog/Release/imkit_gallery.app
+```
 
-通常起動では、ImKit GalleryとDear ImGui公式Demo Windowを同じキャンバス上の可動・リサイズ可能な
-2つのウィンドウとして表示します。広い画面では左右に初期配置し、通常のDear ImGui docking操作を
-維持します。Galleryには選択中のImKit themeを適用し、公式Demoは比較のためDear ImGui標準styleの
-まま描画します。公式DemoはGallery headerの**Dear ImGui Demo**チェックから閉じる・再表示できます。
+> [!TIP]
+> 通常起動時、Gallery ウィンドウの隣に **Dear ImGui 公式デモウィンドウ** が並んで表示されます。ImKit テーマの適用効果と素の ImGui の外観差を直接見比べることができます。公式デモは上部の「Dear ImGui Demo」チェックボックスでいつでも開閉可能です。
 
-## 検証と再生成可能なcapture
+---
 
-Gallery runnerは公開Dear ImGui IOと実OpenGL backbufferを使用します。決定的なwidget契約と文書用の外観確認には使えますが、native OS/IME、screen reader、実機DPIのautomationでは**ありません**。
+## スクリーンショット・GIF キャプチャの再生成
+
+Gallery にはヘッドレスで各画面のバックバッファを自動撮影する機能が組み込まれています：
 
 ```powershell
 $gallery = './build/windows-debug/catalog/Debug/imkit_gallery.exe'
 & $gallery --verify-comparison --output out/comparison
-& $gallery --capture-readme --width 960 --height 540 --output out/readme
-foreach ($demo in 'comparison', 'themes', 'icons', 'workflow', 'timeline') {
-    & $gallery --capture-demo $demo --width 960 --height 540 --output out/gifs
+& $gallery --verify-toasts --width 1440 --height 810 --output out/readme/toasts
+
+# 全デモ画面のキャプチャを一括実行
+$routes = @('overview', 'comparison', 'components', 'icons', 'icon-artwork', 'themes', 'workflow', 'preview-contract', 'timeline', 'workspace', 'toasts')
+foreach ($route in $routes) {
+    & $gallery --capture-demo $route --width 1440 --height 810 --output out/readme
 }
+
+# 独立した Node Editor Gallery のキャプチャ
 $node = './build/windows-debug/catalog/Debug/imkit_node_editor_gallery.exe'
-& $node --capture-gif out/gifs/node-editor
+& $node --capture-gif out/readme/node-editor --width 1440 --height 810
 ```
 
-`--verify-comparison`は、DefaultとImKitのcontrolが共有ホスト所有状態を更新すること、一時styleがframe後に復元されること、close/reopen時にcontrolが消え、再表示されることを確認します。
-公開Dear ImGui IOと実OpenGL backbufferを使用します。native OS/IME automationではありません。
-captureと検証modeは、従来の決定的な全キャンバスGallery配置を維持し、Dear ImGui公式Demo Windowを
-表示しません。
+撮影した PNG フレーム列からドキュメント用 GIF を生成する場合は `tools/build_readme_gif.py` を使用します。
 
-`--capture-readme`は120 frameを出力します。v3 README用routeはworkflow／progress 120、timeline 80、theme／comparison 120、Node Editor 80 frameです。Node Editor captureはホスト所有の決定的状態でzoom、pan、動的socket、新しい接続、inline値、preview、minimapを示します。すべてnative `960×540` backbufferです。
+トースト紹介GIFは6位置を明暗テーマで撮影した12枚を使用します：
 
 ```powershell
-python tools/build_readme_gif.py out/readme/readme-frames docs/images/v3-overview.gif
-python tools/build_readme_gif.py out/gifs/node-editor docs/images/v3-node-editor.gif --expected-frames 80
-python tools/build_readme_gif.py out/gifs/workflow docs/images/v3-workflow-progress.gif
-python tools/build_readme_gif.py out/gifs/timeline docs/images/v3-timeline.gif --expected-frames 80
-python tools/build_readme_gif.py out/gifs/themes docs/images/v3-theme-comparison.gif
+python tools/build_readme_gif.py out/readme/toasts docs/images/v3-toasts.gif --pattern 'toasts-[0-5]-*.png' --expected-frames 12 --width 960 --height 540 --fps 6 --colors 96 --dither none --disposal 2
 ```
 
-encoderはframe数・寸法の不一致、8MiBを超えるGIFを拒否します。Pillowは文書生成専用であり、ImKitからlink・installしません。
+---
 
-## 出典と配布境界
+## 配布とライセンス境界
 
-commitした`docs/images/v3-*.gif`はGalleryまたはNode Editor companionから生成します。release showcase MP4も同じnative frame列からencodeします。stock image、第三者製品画面、icon・font・UI実装・media assetは含みません。Dear ImGui、GLFW、任意fontには既存のlicenseが適用され、noticeは[THIRD_PARTY_NOTICES.md](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/THIRD_PARTY_NOTICES.md)にあります。証拠と対象外は[検証記録](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/validation.md)、Frame Labのplatform adapter境界は[公開window frame](../../en/features/window-frame/)を参照してください。
+ドキュメントおよび README に掲載されている GIF/画像ファイルは、すべてこの Gallery から直接撮影したものです。第三者の製品画面、外部の市販アイコン、追加の有料アセットなどは一切含んでいません。
+
+Dear ImGui、GLFW、および付属フォントのライセンス条件については [THIRD_PARTY_NOTICES.md](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/THIRD_PARTY_NOTICES.md) をご覧ください。
+CI やテストでの検証記録は [検証記録](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/検証記録.md)、タイトルバー連携の仕様は [ウィンドウフレーム](../../features/window-frame/) を参照してください。
+
+## 3.2の画面構成
+
+**Compare**（page 21）は独立ページです。Theme onlyでは左右に同じ `ImGui::` 呼び出しを使い、Componentsでは標準部品と追加部品を比較します。値、フォント、倍率をそろえ、標準側では色と寸法を復元します。
+
+**New in 3.2**（page 22）は作業タブ、階層の操作、プレビュー、設定カード、三軸入力、選択部品、状態と操作の行を組み合わせた画面です。操作要求をGalleryが受け取り、アプリ側の状態を更新します。広い画面ではカテゴリナビゲーションを表示し、狭い画面ではセクション選択に折りたたみます。Appearanceから13テーマを選べます。
+
+作業画面のサンプル図形はGalleryが公開DrawListで描画します。ImKitがrendererやシーンモデルを管理する例ではありません。主要素材は再現用のフォントDPI倍率1.0で撮影し、物理画面のDPI受入を示すものではありません。

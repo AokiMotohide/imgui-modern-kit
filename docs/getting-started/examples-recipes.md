@@ -30,3 +30,7 @@ ImGui::Render();
 ```
 
 For exact overloads, defaults and ABI requirements use [Public API coverage](../reference/api-coverage.md) and [Dependencies](../architecture/dependencies.md). For buildable consumer integration use [Getting started](getting-started.md) and [`examples/consumer`](../../examples/consumer/CMakeLists.txt). The consumer target is a compile/link smoke example; the Gallery is the interactive learning example.
+
+## ImKit 3.2 workspace
+
+Open **New in 3.2** in the Gallery to use WorkspaceTabs, HierarchyGroupHeader/HierarchyRow, BeginInspectorCard/EndInspectorCard, SettingToggleRow, DragVector3WithUnit, ChoiceGroup and CompactActionRow together. Requests update Gallery-owned values; the same pattern works in an existing ImGui frame. See the [3.2 declarations and lifetime rules](../reference/v3.2-api.md). All 288 runtime icons and 13 themes are available without introducing a new context or application framework.

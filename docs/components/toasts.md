@@ -52,6 +52,6 @@ Colors derive from semantic surface/status tokens. Text contrast is checked agai
 
 Open **Toasts** (page 20): six positions, timing overrides, queue bursts, loading completion, determinate/indeterminate progress and English/Japanese examples. **Appearance** changes theme, density, contrast and reduced motion.
 
-<img src="../../images/v3-toasts.gif" alt="Theme-colored toast cards move between six screen positions" width="960">
+<img src="../images/v3-toasts.gif" alt="Native Loading to Success toast interaction" width="960">
 
 `imkit.toast` covers timing, pauses, queues, updates, buffer bounds, duplicate IDs, layout and public mouse requests. `imkit.toast_api_compile` and the external consumer cover public signatures. Gallery GPU capture is separate from native OS/IME, screen-reader, multi-monitor DPI and macOS acceptance.
