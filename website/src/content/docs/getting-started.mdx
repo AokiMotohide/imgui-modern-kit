@@ -1,0 +1,81 @@
+---
+title: 導入ガイド
+description: Dear ImGui hostへのsource integrationと、最初のImKit frameを準備する。
+---
+
+## 必要環境
+
+ImKit v3.1.0はC++20と、Dear ImGui `1.93.0 WIP` docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be`を前提にします。CMakeは3.20以降です。配布packageはWindows x64／Arm64＋MSVCとmacOS 15以降のarm64／x86_64＋Apple Clang向けです。
+
+Dear ImGuiのContext、backend、renderer、font atlas、frame loopはホストが用意します。ImKitはそのContextで呼び出すstatic libraryです。
+
+## Sourceから組み込む
+
+まずホスト側にDear ImGui targetを作り、ImKitを追加する前に`IMKIT_IMGUI_TARGET`へtarget名を指定します。
+
+```cmake
+# CMake fragment — Dear ImGui sources and your_app target are provided by the host.
+add_library(host_imgui STATIC
+    ${IMGUI_SOURCE_DIR}/imgui.cpp
+    ${IMGUI_SOURCE_DIR}/imgui_draw.cpp
+    ${IMGUI_SOURCE_DIR}/imgui_tables.cpp
+    ${IMGUI_SOURCE_DIR}/imgui_widgets.cpp)
+target_include_directories(host_imgui PUBLIC ${IMGUI_SOURCE_DIR})
+
+set(IMKIT_IMGUI_TARGET host_imgui)
+set(IMKIT_BUILD_GALLERY OFF)
+set(IMKIT_BUILD_DESIGN_GALLERY OFF)
+set(IMKIT_BUILD_TESTS OFF)
+add_subdirectory(external/imgui-modern-kit)
+target_link_libraries(your_app PRIVATE imkit::imkit)
+```
+
+この例は既存projectへ足すCMake fragmentです。`your_app`、`IMGUI_SOURCE_DIR`とsource checkoutはホスト側で用意します。フォントcopy helperは任意です。ホストがフォントをatlasへ読み込み、描画で参照する間有効に保ちます。atlasとContextの寿命もホストが管理します。
+
+## 最初のframe
+
+```cpp
+#include <imkit/imkit.h>
+
+void ConfigureImKit(ImFont* regularFont, ImFont* emphasisFont, float scale) {
+    auto theme = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
+    theme.fonts = {regularFont, emphasisFont}; // borrowed font pointers
+    imkit::ApplyTheme(theme, scale);           // on the live context, before NewFrame
+}
+
+void DrawSettingsFrame() {
+    // The host has initialized its backend and calls this within its frame loop.
+    ImGui::NewFrame();
+    if (imkit::Begin("Settings")) {
+        imkit::TextUnformatted("Ready");
+    }
+    imkit::End();
+    ImGui::Render();
+    // The host backend submits ImGui::GetDrawData().
+}
+```
+
+**例の種別:** 既存hostへ組み込む2つの関数fragmentです。backend初期化、platform event、rendererへのsubmissionはホストが行います。フォントが不要なら`theme.fonts`への代入を省けます。ThemeとFontSetはfontを所有しません。
+
+`ApplyTheme`は現在の生存中Contextへ適用し、`NewFrame`より前に呼びます。`ThemeScope`をframe内で使うときは、作成時と同じContext上でContextの破棄より前に終了させます。
+
+## SDK packageを使う
+
+対応compiler、CRT、architecture、Dear ImGui revisionと`imconfig.h`が一致すると確認した場合に限り、ABI一致を明示してinstalled targetを利用します。`CMAKE_PREFIX_PATH`へSDKをinstallしたprefixを指定します。
+
+```cmake
+# CMake fragment — host_imgui and the SDK prefix already exist.
+set(IMKIT_IMGUI_TARGET host_imgui)
+set(CMAKE_PREFIX_PATH "path/to/imkit-sdk" ${CMAKE_PREFIX_PATH})
+set(IMKIT_SDK_ABI_CONFIRMED ON)
+find_package(imkit 3.1 CONFIG REQUIRED)
+target_link_libraries(your_app PRIVATE imkit::imkit)
+```
+
+条件が異なる場合はsource integrationを使います。archiveにDear ImGui本体は含まれません。
+
+## 次に読む
+
+- [できること: Node Editor](../features/node-editor/) — graph view、描画順、ホスト編集
+- [BeginEditor API](../api/node-editor/begin-editor/) — exact signature、戻り値、寿命
+- v2から更新する場合はrepositoryの[移行ガイド](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/migration-v3.ja.md)を参照

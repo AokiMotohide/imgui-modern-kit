@@ -1,0 +1,21 @@
+{
+	"skipLink.label": "本文へスキップ",
+	"search.label": "サイト内検索",
+	"languageSelect.accessibleLabel": "表示言語を選択",
+	"themeSelect.accessibleLabel": "表示テーマを選択",
+	"tableOfContents.onThisPage": "このページの目次",
+	"page.previousLink": "前のページ",
+	"page.nextLink": "次のページ",
+	"pagefind.clear_search": "入力を消去",
+	"pagefind.load_more": "さらに検索結果を表示",
+	"pagefind.search_label": "サイト内を検索",
+	"pagefind.filters_label": "絞り込み",
+	"pagefind.zero_results": "[SEARCH_TERM] の検索結果はありません",
+	"pagefind.many_results": "[SEARCH_TERM] の検索結果: [COUNT] 件",
+	"pagefind.one_result": "[SEARCH_TERM] の検索結果: [COUNT] 件",
+	"pagefind.alt_search": "[SEARCH_TERM] の検索結果はありません。[DIFFERENT_TERM] の結果を表示します",
+	"pagefind.search_suggestion": "[SEARCH_TERM] の検索結果はありません。次の検索語を試してください:",
+	"pagefind.searching": "[SEARCH_TERM] を検索中...",
+	"expressiveCode.copyButtonTooltip": "コードをコピー",
+	"expressiveCode.copyButtonCopied": "コピーしました"
+}

@@ -1,0 +1,76 @@
+name: Documentation site
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/docs-site.yml'
+      - 'docs/**'
+      - 'include/imkit/**'
+      - 'CMakeLists.txt'
+      - 'website/**'
+  push:
+    paths:
+      - '.github/workflows/docs-site.yml'
+      - 'docs/**'
+      - 'include/imkit/**'
+      - 'CMakeLists.txt'
+      - 'website/**'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish this build to GitHub Pages
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: documentation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.14.0
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - name: Pin npm used by the lockfile
+        run: npm install --global npm@11.9.0
+      - name: Install locked website dependencies
+        run: npm ci
+        working-directory: website
+      - name: Generate imported and API reference pages
+        run: npm run docs:generate
+        working-directory: website
+      - name: Check Astro content and components
+        run: npm run check
+        working-directory: website
+      - name: Build static Pages artifact
+        run: npm run build
+        working-directory: website
+      - name: Check routes, anchors, media, and API inclusion
+        run: npm run check:site
+        working-directory: website
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: website/dist
+
+  deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish }}
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

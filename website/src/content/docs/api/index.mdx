@@ -1,0 +1,19 @@
+---
+title: APIリファレンス
+description: 生成元と公開範囲を明示したAPI宣言一覧、契約説明、ヘッダーへの入口。
+---
+
+## APIを探す
+
+ImKitの公開ヘッダーにある宣言と、利用時に重要な契約をまとめています。正確なsignatureと条件の一次資料は各公開headerです。
+
+- [Node Editor API](./node-editor/) — `BeginEditor`の呼び出し例、戻り値、寿命、終了呼び出しの詳細も掲載。
+- [Dear ImGui native API](./native/) — `<imkit/native.h>`が公開する`included: true`の宣言。host lifecycle/debug APIは除外。
+- [Editor SuiteのAPI契約](./editor-suite/) — 選択、Canvas、Timeline、Video、CGの契約資料への導線。
+- [Design-system header一覧](./design-system/) — header/type metadata。完全な関数signature一覧ではありません。
+- [WindowFrame API map](./window-frame/) — type/function名とoptional platform target。signatureはheaderを参照。
+- [部品一覧](./widgets/) — 公開component inventoryへの導線。
+
+## 使い始める
+
+[導入ガイド](../getting-started/)ではCMake統合と対応条件を、[できること一覧](../features/)では利用場面、実画面、最小例を確認できます。

@@ -1,0 +1,37 @@
+---
+title: Themeと横断API
+description: Theme、言語情報、アクセシビリティ情報、再利用部品をアプリへ組み込む。
+---
+
+Themeで色と寸法をそろえ、必要に応じて言語・アクセシビリティ情報や複合部品を渡します。現在の各APIは公開headerにあります。このページは使い分けを示す短い案内です。
+
+## Themeを適用する
+
+Themeはアプリが保持する値です。有効なImGui Contextに対し、フレーム開始前に適用します。
+
+```cpp
+#include <imkit/theme.h>
+
+void ApplyWorkbenchTheme(float scale) {
+    const auto theme = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
+    imkit::ApplyTheme(theme, scale); // live context, before NewFrame
+}
+```
+
+**例の種別:** 既存のImGui Contextを使う関数例です。Themeとfont参照はアプリが管理し、描画で参照する間有効に保ちます。atlasとContextの寿命もアプリ側が管理します。[テーマガイド](../themes/)ではプリセット、scale、ThemeScopeを説明しています。
+
+## 言語とアクセシビリティ
+
+`ComponentOptions`には`LocaleContext`と`AccessibilityFrame`への任意の参照を渡せます。callbackが返す文字列は描画フレーム中、アクセシビリティ情報の文字列と子一覧はpublishが終わるまで有効に保ちます。固定容量の領域、ID、publishのタイミング、要求をアプリ側で管理します。localeは明示して渡すためglobal stateを変えません。
+
+Win32とmacOSのadapter headerはOS機能へつなぐための任意APIです。native actionを受けた場合のUI threadへの処理、callbackとアプリ状態の寿命もアプリ側で管理します。
+
+## 複合部品
+
+`<imkit/patterns.h>`はcommand palette、dialog、toolbar、form field、進捗、仮想一覧、data table等の描画部品を提供します。providerは求められた可視範囲の表示情報を返し、編集結果の適用、モデル、選択、保存、取り消しはアプリ側で扱います。詳細は[Workflowガイド](../workflow/)と[部品レシピ](../components/)を参照してください。
+
+## APIと契約
+
+- [Design-system header一覧](../../api/design-system/) — metadataに登録されたheader/type group。関数signatureの完全一覧ではありません。
+- [`theme.h`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/theme.h)、[`components.h`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/components.h)
+- [`accessibility.h`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/accessibility.h)、[`locale.h`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/locale.h)、[`patterns.h`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/patterns.h)

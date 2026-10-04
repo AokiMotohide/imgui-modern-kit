@@ -1,5 +1,7 @@
 # ImKit
 
+**Public manual:** [English](https://aokimotohide.github.io/imgui-modern-kit/en/) · [日本語](https://aokimotohide.github.io/imgui-modern-kit/) · [API reference](https://aokimotohide.github.io/imgui-modern-kit/en/api/)
+
 **Build polished native tools with Dear ImGui.**
 
 ImKit is a C++20 static library that adds consistent themes and reusable controls to an existing Dear ImGui application. Start with the native Gallery, then integrate only the modules your tool needs.

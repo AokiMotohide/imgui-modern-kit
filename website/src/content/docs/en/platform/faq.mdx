@@ -1,0 +1,34 @@
+---
+title: FAQ
+description: Common questions about Dear ImGui, fonts, themes, SDKs, and the Gallery.
+---
+
+## Does ImKit provide Dear ImGui?
+
+No. The application owns its Dear ImGui context, backend, renderer, font atlas, and frame loop. For source integration, set `IMKIT_IMGUI_TARGET` to the existing Dear ImGui target. See [dependencies](../dependencies/).
+
+## Can I use the packaged SDK?
+
+Use it only when compiler, architecture, CRT, Dear ImGui revision, compile definitions, and `imconfig.h` match the package. Otherwise use source integration. See the [SDK steps and ABI conditions](../../getting-started/).
+
+## Japanese glyphs or IME input are missing
+
+Themes do not load fonts. Add the needed glyph ranges to the application's font atlas and provide platform IME callbacks when text entry requires them.
+
+## Theme sizes grow after repeated application
+
+Pass scale to `ApplyTheme` or `ThemeScope`; do not pre-scale `Theme::metrics` separately. The theme derives style from its unscaled metrics.
+
+## Can I build the Gallery in an embedded project?
+
+For a subdirectory build with Gallery disabled, provide the existing Dear ImGui target. A standalone build with Gallery enabled fetches the pinned Dear ImGui and GLFW revisions. See [dependencies](../dependencies/) for requirements and target setup.
+
+## Do the API row counts mean every function was individually tested?
+
+No. Counts refer to public declaration rows in the inventories. Signature listings are not call examples and do not represent per-row interactive tests. Check the usage guides and public headers for the contract.
+
+## Related pages
+
+- [Troubleshooting](../troubleshooting/)
+- [Dependencies and supported configurations](../dependencies/)
+- [Migration from v2](../migration/)

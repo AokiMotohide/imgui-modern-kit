@@ -1,0 +1,24 @@
+{
+  "name": "imgui-modern-kit-docs",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@11.9.0",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "docs:generate": "python3 scripts/import-docs.py && python3 scripts/generate-api-reference.py",
+    "posters:extract": "python3 scripts/extract-capture-posters.py",
+    "check:site": "python3 scripts/check-site.py",
+    "verify": "npm run docs:generate && npm run check && npm run build && npm run check:site"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "0.42.5",
+    "astro": "7.3.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "typescript": "5.9.3"
+  }
+}

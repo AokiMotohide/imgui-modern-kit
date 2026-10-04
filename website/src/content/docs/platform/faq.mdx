@@ -1,0 +1,34 @@
+---
+title: よくある質問
+description: Dear ImGui、font、Theme、SDKとGalleryに関する導入時の確認事項。
+---
+
+## Dear ImGuiはImKitが用意しますか？
+
+いいえ。Dear ImGuiのContext、backend、renderer、font atlas、フレームループはアプリ側が用意します。source integrationでは既存のDear ImGui targetを`IMKIT_IMGUI_TARGET`に設定します。詳細は[依存関係](../dependencies/)を参照してください。
+
+## 配布SDKを使えますか？
+
+compiler、architecture、CRT、Dear ImGui revision、compile definitions、`imconfig.h`がSDKと一致すると確認できる場合に利用できます。不一致ならsource integrationを選びます。[導入ガイド](../../getting-started/)のSDK手順とABI条件を確認してください。
+
+## 日本語の文字やIMEが動きません
+
+Themeはfontを読み込みません。必要なglyph rangeをアプリのfont atlasへ追加し、文字入力に必要なplatform IME callbackをアプリ側で用意します。
+
+## Themeを何度も適用すると寸法が大きくなります
+
+scaleは`ApplyTheme`または`ThemeScope`へ渡し、`Theme::metrics`を別に事前scaleしないでください。Themeは未scaleの寸法からstyleを導出します。
+
+## Galleryを組み込みビルドで起動できますか？
+
+Galleryを無効にするsubdirectory buildでは、既存のDear ImGui targetを指定します。Galleryを含むstandalone buildは固定したDear ImGuiとGLFW revisionを取得します。必要条件とtarget構成は[依存関係](../dependencies/)を参照してください。
+
+## API宣言の件数は個別に動作確認した関数数ですか？
+
+いいえ。件数はinventoryにある公開宣言行です。signature一覧は呼び出し例ではなく、Dear ImGui API行ごとの操作確認数も表しません。利用ガイドと各公開headerで契約を確認してください。
+
+## 関連ページ
+
+- [トラブルシューティング](../troubleshooting/)
+- [依存関係と対応環境](../dependencies/)
+- [v2からの移行](../migration/)

@@ -1,5 +1,7 @@
 # ImKit
 
+**公開マニュアル:** [日本語](https://aokimotohide.github.io/imgui-modern-kit/) · [English](https://aokimotohide.github.io/imgui-modern-kit/en/) · [API参照](https://aokimotohide.github.io/imgui-modern-kit/api/)
+
 **Dear ImGuiで、使い心地まで整ったネイティブ制作ツールを。**
 
 ImKitは、既存のDear ImGuiアプリにテーマと再利用できるUI部品を追加するC++20の静的ライブラリです。まずGalleryで動作を確かめ、必要な部品だけをアプリに組み込めます。

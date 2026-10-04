@@ -1,0 +1,81 @@
+---
+title: Getting started
+description: Add ImKit to a Dear ImGui host and prepare your first frame.
+---
+
+## Requirements
+
+ImKit v3.1.0 requires C++20 and Dear ImGui `1.93.0 WIP` docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be`. CMake 3.20 or newer is required. The package matrix covers Windows x64/Arm64 with MSVC and macOS 15+ arm64/x86_64 with Apple Clang.
+
+The host provides the Dear ImGui context, backend, renderer, font atlas, and frame loop. ImKit is a static library called on that context.
+
+## Integrate from source
+
+Create the host Dear ImGui target first, then set its name in `IMKIT_IMGUI_TARGET` before adding ImKit.
+
+```cmake
+# CMake fragment — Dear ImGui sources and your_app target are provided by the host.
+add_library(host_imgui STATIC
+    ${IMGUI_SOURCE_DIR}/imgui.cpp
+    ${IMGUI_SOURCE_DIR}/imgui_draw.cpp
+    ${IMGUI_SOURCE_DIR}/imgui_tables.cpp
+    ${IMGUI_SOURCE_DIR}/imgui_widgets.cpp)
+target_include_directories(host_imgui PUBLIC ${IMGUI_SOURCE_DIR})
+
+set(IMKIT_IMGUI_TARGET host_imgui)
+set(IMKIT_BUILD_GALLERY OFF)
+set(IMKIT_BUILD_DESIGN_GALLERY OFF)
+set(IMKIT_BUILD_TESTS OFF)
+add_subdirectory(external/imgui-modern-kit)
+target_link_libraries(your_app PRIVATE imkit::imkit)
+```
+
+This is a CMake fragment for an existing project. The host provides `your_app`, `IMGUI_SOURCE_DIR`, and the source checkout. The optional font-copy helper only stages assets. The host loads fonts into its atlas and keeps them valid while drawing references them. The host manages atlas and context lifetimes.
+
+## Draw the first frame
+
+```cpp
+#include <imkit/imkit.h>
+
+void ConfigureImKit(ImFont* regularFont, ImFont* emphasisFont, float scale) {
+    auto theme = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
+    theme.fonts = {regularFont, emphasisFont}; // borrowed font pointers
+    imkit::ApplyTheme(theme, scale);           // on the live context, before NewFrame
+}
+
+void DrawSettingsFrame() {
+    // The host has initialized its backend and calls this within its frame loop.
+    ImGui::NewFrame();
+    if (imkit::Begin("Settings")) {
+        imkit::TextUnformatted("Ready");
+    }
+    imkit::End();
+    ImGui::Render();
+    // The host backend submits ImGui::GetDrawData().
+}
+```
+
+**Example type:** these are two function excerpts for an existing host. The host handles backend initialization, platform events, and renderer submission. Omit the `theme.fonts` assignment if no fonts are needed. Theme and FontSet do not own font objects.
+
+Call `ApplyTheme` on the current live context before `NewFrame`. A `ThemeScope` used inside a frame must end on the same context before that context is destroyed.
+
+## Use an installed SDK
+
+Use the installed target only after confirming that the compiler, CRT, architecture, Dear ImGui revision, and `imconfig.h` match the documented ABI. Set `CMAKE_PREFIX_PATH` to the SDK installation prefix.
+
+```cmake
+# CMake fragment — host_imgui and the SDK prefix already exist.
+set(IMKIT_IMGUI_TARGET host_imgui)
+set(CMAKE_PREFIX_PATH "path/to/imkit-sdk" ${CMAKE_PREFIX_PATH})
+set(IMKIT_SDK_ABI_CONFIRMED ON)
+find_package(imkit 3.1 CONFIG REQUIRED)
+target_link_libraries(your_app PRIVATE imkit::imkit)
+```
+
+Use source integration when those conditions differ. The archive does not contain Dear ImGui core.
+
+## Continue
+
+- [Explore Node Editor](../features/node-editor/) — graph views, draw order, and host edits
+- [BeginEditor API](../api/node-editor/begin-editor/) — exact signature, return value, and lifetime
+- When upgrading from v2, see the repository’s [migration guide](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/migration-v3.md)

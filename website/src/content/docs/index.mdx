@@ -1,0 +1,65 @@
+---
+title: ImKit
+description: Dear ImGuiを使った制作ツールに、アプリ側の管理を保ったまま使えるC++20のUI部品を追加します。
+template: splash
+hero:
+  title: "制作ツールに、<br />使いやすいUIを。"
+  tagline: "Dear ImGui向けのC++20ライブラリ。テーマ、Node Editor、TimelineやWorkflowの部品を、アプリ側のデータと描画に組み込めます。"
+  image:
+    file: ../../assets/captures/v3-node-editor-poster.png
+    alt: "Node Editorの画面。ノードの接続、プレビュー、ミニマップを表示。"
+  actions:
+    - text: "導入ガイド"
+      link: ./getting-started/
+      icon: right-arrow
+      variant: primary
+    - text: "できることを見る"
+      link: ./features/
+      icon: open-book
+      variant: secondary
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+import CapturePlayer from '../../components/CapturePlayer.astro';
+import nodeCapture from '../../../../docs/images/v3-node-editor.gif';
+import nodePoster from '../../assets/captures/v3-node-editor-poster.png';
+import workflowCapture from '../../../../docs/images/v3-workflow-progress.gif';
+import workflowPoster from '../../assets/captures/v3-workflow-progress-poster.png';
+import timelineCapture from '../../../../docs/images/v3-timeline.gif';
+import timelinePoster from '../../assets/captures/v3-timeline-poster.png';
+
+<div class="imkit-home">
+
+## 既存アプリに組み込む
+
+通常の入力部品はアプリ側の値を読み書きし、Node Editorなどの編集画面は参照データを受け取って操作要求を返します。テーマ、保存状態、Dear ImGuiのContextと描画処理はアプリ側が管理します。
+
+<div class="home-points">
+  <div><span class="point-index">01</span><strong>使う部品を選ぶ</strong><p>テーマ、Workflow、Editor Suite、Node Editorを必要に応じて組み合わせます。</p></div>
+  <div><span class="point-index">02</span><strong>データと状態はアプリ側に</strong><p>入力部品はアプリの値を読み書きし、編集画面は参照データと容量付きの操作要求で連携します。</p></div>
+  <div><span class="point-index">03</span><strong>Dear ImGuiと共存</strong><p>ImKitの部品を既存のDear ImGui操作と組み合わせ、アプリのフレーム内で描画します。</p></div>
+</div>
+
+## 動きで見る機能
+
+同梱Galleryにある機能の操作映像です。最初は静止画で表示され、再生を選ぶと動きます。
+
+<div class="capture-showcase">
+  <CapturePlayer source={nodeCapture} poster={nodePoster} alt="ノードの接続、プレビュー、ミニマップを備えたNode Editor画面。" caption="Node Editor — ノードの接続、プレビュー、ミニマップ" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
+  <CapturePlayer source={workflowCapture} poster={workflowPoster} alt="進捗、状態、次の操作を示すWorkflow部品の画面。" caption="Workflow — 進捗と状態の表示" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
+  <CapturePlayer source={timelineCapture} poster={timelinePoster} alt="クリップ、区間、編集操作を表示するTimeline画面。" caption="Timeline — クリップと編集操作" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
+</div>
+
+## 目的から読む
+
+<CardGrid>
+  <LinkCard title="機能カタログを見る" description="部品、テーマ、Workflow、編集画面を用途と実画面から探す。" href="./features/" />
+  <LinkCard title="Node Editorを統合する" description="グラフの参照データ、編集要求、接続端子、プレビューを確認。" href="./features/node-editor/" />
+  <LinkCard title="最初の画面を描く" description="Dear ImGuiのビルド先を指定し、テーマとImKitを呼び出す。" href="./getting-started/" />
+  <LinkCard title="BeginEditor API" description="正確な宣言、引数、戻り値、寿命と描画順序。" href="./api/node-editor/begin-editor/" />
+  <LinkCard title="GitHubリポジトリ" description="ソース、リリース、実際に動作するGalleryはこちら。" href="https://github.com/AokiMotohide/imgui-modern-kit" />
+</CardGrid>
+
+<p class="home-footnote">C++20と、指定バージョンのDear ImGui docking版に対応します。対応OSとABI条件は<a href="./getting-started/">導入ガイド</a>で確認できます。</p>
+
+</div>
