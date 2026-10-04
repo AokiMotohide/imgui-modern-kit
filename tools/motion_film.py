@@ -140,12 +140,13 @@ class Film:
     text(im,(x,922),label,22,MUTED,True)
   elif t<35:
    native_t=(t-20)*1.1
-   titles=['Tabs that organize.','Select. Inspect.','Edit with familiar inputs.','See changes as you drag.','Choose your source.','Apply. Keep ownership.']
-   k=min(5,int((t-20)/2.6));self.heading(im,'03 / BUILD YOUR TOOL',titles[k],local)
+   stages=[(0,'Tabs that organize.'),(1.35,'Select. Inspect.'),(2.3,'Inspect your data.'),(4.2,'See changes as you drag.'),(6.3,'Choose your source.'),(8.2,'Apply. Keep ownership.'),(9.15,'Compose. Inspect. Deliver.'),(12,'Organize your workspace.')]
+   _,title=max((s,title) for s,title in stages if s<=native_t)
+   self.heading(im,'03 / BUILD YOUR TOOL',title,local)
    # Camera is driven by the real cursor, bounded to keep context and results visible.
    crop=(265,155,1918,855)
-   if 25.2<=t<30.5:
-    u=ease((t-25.2)/.8)*(1-ease((t-29.8)/.7));crop=mix(crop,(680,205,1918,780),u)
+   if 23.8<=t<28:
+    u=ease((t-23.8)/.8)*(1-ease((t-27.3)/.7));crop=mix(crop,(680,205,1918,780),u)
    content=self.native('workspace',native_t,crop,(1740,int(1740*(crop[3]-crop[1])/(crop[2]-crop[0]))))
    y=258;self.card(im,content,(90,y),tilt=.06*(1-ease(local/.4)))
   elif t<39:

@@ -41,6 +41,11 @@ def main():
  manifest=dict(original);manifest['media_validation']=measured
  manifest['media_revision']={'revision':2,'production_commit':args.production_commit,'updated_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'film_file':NAMES[0],'film_sha256':measured['film']['sha256'],'original_film_sha256':original['media_validation']['film']['sha256'],'evidence_file':NAMES[2],'stable_archives':stable,'scope':'Presentation media and development capture tools only; original library tag/source/SDK/CI identities retained','provenance':json.loads((ROOT/'website/public/media/provenance.json').read_text())}
  manifest['documentation_media']={**original['documentation_media'],'gif_fps':20,'gif_duration_seconds':'6–8','source':'Continuous native public-IO captures with original motion graphics and 128 BPM electro-house'}
+ ci_path=ROOT/'out/promo/media-ci-evidence.json'
+ if ci_path.exists():
+  media_ci=json.loads(ci_path.read_text(encoding='utf-8'))
+  if media_ci['headSha']!=args.production_commit or media_ci['conclusion']!='success':raise ValueError('Media CI must identify the successful production commit')
+  manifest['media_revision']['ci']=media_ci
  manifest_bytes=(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n').encode('utf-8')
  (RELEASE/NAMES[1]).write_bytes(manifest_bytes)
  temp=RELEASE/'media-revision-evidence.tmp'
@@ -48,6 +53,7 @@ def main():
   # Preserve original evidence entries; distinguish every new revision entry.
   for entry in old.infolist():new.writestr(entry,old.read(entry.filename))
   new.writestr('media-revision/manifest.json',manifest_bytes)
+  if ci_path.exists():new.write(ci_path,'media-revision/ci-evidence.json')
   for source,arc in [('out/promo/media-validation.json','media-validation.json'),('out/promo/review.md','review.md'),('website/public/media/provenance.json','provenance.json'),('docs/reference/validation.md','validation.md'),('docs/reference/検証記録.md','validation-ja.md')]:new.write(ROOT/source,'media-revision/'+arc)
   for path in sorted((ROOT/'out/promo').glob('review-*.jpg')):new.write(path,'media-revision/stills/'+path.name)
   for path in sorted((ROOT/'out/v3.2-native').glob('*.mkv.jsonl')):new.write(path,'media-revision/events/'+path.name)
