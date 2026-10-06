@@ -5,6 +5,7 @@
     "ToastPosition", "ToastPhase", "ToastEventKind", "ToastView", "ToastEvent",
     "ToastEventBuffer", "ToastViewportOptions", "ToastViewportState", "ToastViewportState::Entry"
   ],
+  "appendedFields": ["ToastView::stage", "ToastView::progressText", "ToastView::status"],
   "signatures": [
     "bool ToastEventBuffer::Push(ToastEvent event)",
     "void ToastViewportState::Reset()",

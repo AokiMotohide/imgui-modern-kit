@@ -28,6 +28,9 @@ Reset event buffers each frame. Full buffers set `overflow`. Keyboard tile resiz
 | `ToastRegion(id, ...)` | Host queue/time/scratch, work-area-clamped stack, no focus stealing |
 | `EmptyState(id, StateView)`, `UnavailableState`, `RetryState` | Heading, description, optional icon/action; returns a request |
 | `Progress(ProgressView, ...)` | Inline, child overlay, modal; negative fraction means indeterminate; cancel request |
+| `ProgressTrack(ProgressTrackView)` | Shared thin rounded bar with label, status, percentage or host value, and supplemental text; negative or nonfinite fraction is indeterminate |
+| `StageProgress(StageProgressView)` | Display-only ordered stage statuses; narrow layouts show the current stage and `n/total` |
+| `TaskProgressCard(TaskProgressCardView)` | Regular or compact task summary; returns a stable operation ID for the host to handle |
 | `CircularProgress(CircularProgressView, ...)` | Borrowed fraction/value/label; negative or non-finite fraction means unavailable; no threshold or state ownership |
 | `BeginCard`, `EndCard` | Always paired, even when Begin returns false |
 | `MultiSelectionBar`, `HelpCallout`, `ValidationSummary` | Host count, commands or issues; no validation engine |
@@ -51,6 +54,21 @@ Image coordinates start at top left, x right and y down; Canvas units are image 
 Pass `ComponentOptions` for theme, locale and semantic publication. Draw-only overlays do not create interactive object nodes; the host describes edited objects. Step arrows skip disabled items; native Tab/Shift-Tab and activation remain intact. Splitter additionally supports arrow-key resizing. Reduced motion uses existing static indicators; no new transitions are introduced.
 
 `ResolveRightSidePanelLayout` returns widths for content, the always-visible edge handle and the optional panel. Draw those regions in that order and pass the same available extent to `RightSidePanelHandle`. The host decides whether an `N` key or another shortcut becomes `toggleRequested`; this prevents the library from stealing text input or shortcuts from unrelated editors. The handle remains visible while collapsed, and the panel reduces content width instead of covering it.
+
+## Progress views
+
+`ProgressTrackView` is the shared source for the stage label, status text, determinate percentage (unless `valueText` supplies a host value), rounded bar and supplemental text. `Progress` and `TaskProgressCard` reuse it; cards and toasts do not assemble a second percentage or status line. `ProgressStatus` supports `Queued`, `Running`, `Paused`, `Succeeded`, `Failed` and `Cancelled`. Negative or non-finite fractions are indeterminate. Only an indeterminate `Running` track moves a short segment; `Theme.motion.enabled`, `reducedMotion` and the host `AnimationState` control motion.
+
+`StageProgress` only displays the supplied stages and current ID. When the available width is too small, it shows the current stage and `n/total`. `TaskProgressCardView` borrows its strings and operation span for the frame; `TaskProgressCard` returns the clicked `Command.id` (zero means no request), and the host updates any values. Set `TaskProgressCardOptions::compact` to omit the description and tighten actions.
+
+```cpp
+imkit::ProgressTrackView progress;
+progress.fraction = fraction; // Negative or non-finite means indeterminate.
+progress.status = imkit::ProgressStatus::Running;
+progress.label = "Inspecting files";
+progress.supplemental = "The host owns progress updates.";
+imkit::ProgressTrack("import-progress", progress, {&theme, &animation});
+```
 
 ## Gallery
 

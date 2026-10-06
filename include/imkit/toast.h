@@ -19,6 +19,9 @@ struct ToastView {
     ToastPhase phase=ToastPhase::Message;
     // Negative or nonfinite means indeterminate. Otherwise clamped to [0,1].
     float progress=-1;
+    const char* stage="";
+    const char* progressText="";
+    ProgressStatus status=ProgressStatus::Running;
 };
 struct ToastEvent { StableId id=0; ToastEventKind kind=ToastEventKind::Dismiss; };
 struct ToastEventBuffer {

@@ -1,4 +1,5 @@
 #include <imkit/toast.h>
+#include "progress_internal.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -19,6 +20,11 @@ ImVec4 Mix(ImVec4 a,ImVec4 b,float t) {
     return {a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,a.z+(b.z-a.z)*t,1};
 }
 float Positive(float n,float fallback) { return std::isfinite(n)&&n>=0?n:fallback; }
+bool HasProgress(const ToastView& view) {
+    return view.phase==ToastPhase::Loading||
+           (std::isfinite(view.progress)&&view.progress>=0.f)||
+           view.status!=ProgressStatus::Running||*Safe(view.stage)||*Safe(view.progressText);
+}
 const char* CloseLabel(ComponentOptions o) {
     return o.locale?o.locale->Text("dismiss","Dismiss"):"Dismiss";
 }
@@ -111,7 +117,11 @@ void ToastViewport(const char* id,std::span<const ToastView> items,ToastViewport
                      std::max(1.f,textWidth-ImGui::GetFontSize()-ImGui::GetFrameHeight()-style.ItemSpacing.x*2)).y;
         h=std::max(h,padding.y*2+ImGui::GetFrameHeight());
         if(*Safe(v.description)) h+=style.ItemSpacing.y+ImGui::CalcTextSize(v.description,nullptr,false,textWidth).y;
-        if(v.phase==ToastPhase::Loading) h+=style.ItemSpacing.y+ImGui::GetFrameHeight();
+        if(HasProgress(v)) {
+            ProgressTrackView progress;progress.fraction=v.progress;progress.status=v.status;
+            progress.label=v.stage;progress.valueText=v.progressText;
+            h+=style.ItemSpacing.y+detail::ProgressTrackContentHeight(progress,textWidth,o);
+        }
         if(*Safe(v.action)) h+=style.ItemSpacing.y+ImGui::GetFrameHeight();
         return h;
     };
@@ -185,18 +195,21 @@ void ToastViewport(const char* id,std::span<const ToastView> items,ToastViewport
             }
             ImGui::SetCursorPos({padding.x,std::max(afterTitle,top+ImGui::GetFrameHeight()+style.ItemSpacing.y)});
             if(*Safe(v.description)) ImGui::TextWrapped("%s",v.description);
-            if(v.phase==ToastPhase::Loading) {
-                if(std::isfinite(v.progress)&&v.progress>=0) {
-                    char percent[20];std::snprintf(percent,sizeof(percent),"%.0f%%",std::clamp(v.progress,0.f,1.f)*100);
-                    ImGui::ProgressBar(std::clamp(v.progress,0.f,1.f),{-1,0},percent);
-                    if(o.accessibility) {
-                        accessibility::SemanticNode n;n.id=ImGui::GetID("progress");n.parent=nodeId;
-                        n.name=Safe(v.title);n.role=accessibility::SemanticRole::Progress;
-                        n.numericValue=std::clamp(v.progress,0.f,1.f);n.state.busy=true;
-                        accessibility::AnnotateLastItem(*o.accessibility,n);
-                    }
-                } else {
-                    Spinner("loading",cardOptions);
+            if(HasProgress(v)) {
+                ProgressTrackView progress;progress.fraction=v.progress;progress.status=v.status;
+                progress.label=v.stage;progress.valueText=v.progressText;
+                const ImGuiID progressSemanticId=ImGui::GetID("progress");
+                const ImVec2 progressMinimum=ImGui::GetCursorScreenPos();
+                auto progressOptions=cardOptions;progressOptions.accessibility=nullptr;
+                ProgressTrack("progress",progress,progressOptions);
+                if(o.accessibility) {
+                    accessibility::SemanticNode n;n.id=progressSemanticId;n.parent=nodeId;
+                    n.name=Safe(v.title);n.description=Safe(v.stage);n.value=detail::ProgressStatusLabel(v.status,cardOptions);
+                    n.role=accessibility::SemanticRole::Progress;n.state.readOnly=true;
+                    n.state.busy=v.phase==ToastPhase::Loading&&v.status==ProgressStatus::Running;
+                    n.state.invalid=v.status==ProgressStatus::Failed;
+                    if(std::isfinite(v.progress)&&v.progress>=0.f) {n.numericValue=std::clamp(v.progress,0.f,1.f);n.minimumValue=0;n.maximumValue=1;}
+                    n.minimum=progressMinimum;n.maximum=ImGui::GetItemRectMax();o.accessibility->Add(n);
                 }
             }
             if(*Safe(v.action)) {
