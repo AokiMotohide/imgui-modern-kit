@@ -109,6 +109,15 @@ int main() {
     Check(!Entry(s,7).retired,"draw path hover pauses expiry");
     io.DisplaySize={160,100};options.width=1000;options.margin=50;s.Reset();frame(30);frame(30.1);
     node=noticeNode();Check(node&&node->maximum.x<=160&&node->maximum.y<=100,"narrow oversized card remains bounded");
+    io.DisplaySize={640,480};options.width=300;options.margin=10;s.Reset();
+    v={7,"Saved","A description",FeedbackKind::Success,0};v.phase=ToastPhase::Loading;v.duration=0;v.progress=.5f;v.stage="Inspecting";v.progressText="";v.status=ProgressStatus::Running;v.action="Details";
+    frame(31);
+    const accessibility::SemanticNode* progressNode=nullptr;
+    for(const auto& semantic:semantics.Tree().nodes)if(semantic.role==accessibility::SemanticRole::Progress)progressNode=&semantic;
+    Check(progressNode&&progressNode->name=="Saved"&&progressNode->value=="Running"&&progressNode->description=="Inspecting"&&std::abs(progressNode->numericValue-.5)<.001&&progressNode->state.busy,"loading toast exposes shared progress semantics");
+    v.progress=-1;v.status=ProgressStatus::Paused;frame(32);
+    progressNode=nullptr;for(const auto& semantic:semantics.Tree().nodes)if(semantic.role==accessibility::SemanticRole::Progress)progressNode=&semantic;
+    Check(progressNode&&!progressNode->state.busy&&!progressNode->state.invalid,"paused unknown toast progress stays static");
     ImGui::DestroyContext();
     std::printf("Toast failures: %d\n",failures);return failures?1:0;
 }

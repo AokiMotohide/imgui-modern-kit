@@ -1,4 +1,5 @@
 #include <imkit/patterns.h>
+#include "progress_internal.h"
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -180,16 +181,137 @@ bool BeginFormField(const char* id,const FormFieldInfo& f,ComponentOptions o) {
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x); (void)o; return true;
 }
 void EndFormField() { ImGui::EndGroup(); ImGui::PopID(); }
+namespace {
+ImVec4 ProgressStatusColor(ProgressStatus status,ComponentOptions o) {
+    if(o.theme) {
+        switch(status) {
+        case ProgressStatus::Succeeded:return o.theme->semantic.success;
+        case ProgressStatus::Failed:return o.theme->semantic.error;
+        case ProgressStatus::Paused:return o.theme->semantic.warning;
+        case ProgressStatus::Cancelled:return o.theme->semantic.textDisabled;
+        case ProgressStatus::Queued:return o.theme->semantic.textSecondary;
+        default:return o.theme->semantic.accent;
+        }
+    }
+    switch(status) {
+    case ProgressStatus::Failed:return ImGui::GetStyleColorVec4(ImGuiCol_PlotHistogram);
+    case ProgressStatus::Paused:return ImGui::GetStyleColorVec4(ImGuiCol_NavHighlight);
+    case ProgressStatus::Cancelled:
+    case ProgressStatus::Queued:return ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);
+    default:return ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
+    }
+}
+}
+void ProgressTrack(const char* id,float fraction,ProgressStatus status,ComponentOptions o) {
+    const bool available=std::isfinite(fraction)&&fraction>=0.f;
+    const float value=available?std::clamp(fraction,0.f,1.f):0.f;
+    const float width=std::max(1.f,ImGui::GetContentRegionAvail().x);
+    const float height=std::clamp(ImGui::GetFrameHeight()*.18f,4.f,8.f);
+    const float radius=std::min(height*.5f,o.theme?o.theme->radius.control:ImGui::GetStyle().FrameRounding);
+    const ImVec2 position=ImGui::GetCursorScreenPos();
+    ImGui::PushID(id);
+    ImGui::Dummy({width,height});
+    auto* draw=ImGui::GetWindowDrawList();
+    const ImVec4 track=o.theme?o.theme->semantic.border:ImGui::GetStyleColorVec4(ImGuiCol_FrameBg);
+    const ImVec4 foreground=ProgressStatusColor(status,o);
+    draw->AddRectFilled(position,{position.x+width,position.y+height},ImGui::GetColorU32(track),radius,ImDrawFlags_RoundCornersAll);
+    if(available) {
+        const float fill=width*value;
+        if(fill>0.f) draw->AddRectFilled(position,{position.x+fill,position.y+height},ImGui::GetColorU32(foreground),radius,ImDrawFlags_RoundCornersAll);
+    } else if(status==ProgressStatus::Running) {
+        const Motion motion=o.theme?o.theme->motion:Motion{};
+        const bool animate=motion.enabled&&!motion.reducedMotion;
+        const float segment=std::min(width,std::max(height*2.f,width*.22f));
+        float phase=animate?static_cast<float>(std::fmod(std::max(0.0,ImGui::GetTime()),1.6)/1.6):.5f;
+        if(o.animation) {
+            const ImGuiID animationId=ImGui::GetID("progress-indeterminate");
+            phase=o.animation->Update(animationId,phase,ImGui::GetIO().DeltaTime,.08f,
+                                       ImGui::GetFrameCount(),animate,motion.easing);
+        }
+        const float start=position.x-segment+static_cast<float>(phase)*(width+segment);
+        const float left=std::max(position.x,start);
+        const float right=std::min(position.x+width,start+segment);
+        if(right>left) draw->AddRectFilled({left,position.y},{right,position.y+height},ImGui::GetColorU32(foreground),radius,ImDrawFlags_RoundCornersAll);
+    }
+    if(o.accessibility) {
+        accessibility::SemanticNode node;
+        node.id=ImGui::GetID("progress-track");node.parent=o.parent;
+        node.name=Text(o,"progress","Progress");node.value=detail::ProgressStatusLabel(status,o);
+        node.role=accessibility::SemanticRole::Progress;
+        node.state.readOnly=true;node.state.busy=status==ProgressStatus::Running&&!available;
+        node.state.invalid=status==ProgressStatus::Failed;
+        if(available) node.numericValue=value;
+        node.minimumValue=0;node.maximumValue=1;
+        accessibility::AnnotateLastItem(*o.accessibility,node);
+    }
+    ImGui::PopID();
+}
+void ProgressTrack(const char* id,const ProgressTrackView& view,ComponentOptions o) {
+    const bool available=std::isfinite(view.fraction)&&view.fraction>=0.f;
+    char valueBuffer[32]{};
+    const char* value=detail::ProgressValueText(view,valueBuffer,sizeof(valueBuffer));
+    const char* status=detail::ProgressStatusLabel(view.status,o);
+
+    const ImVec2 top=ImGui::GetCursorScreenPos();
+    ImGui::PushID(id);ImGui::BeginGroup();
+    if(*detail::SafeProgressText(view.label)) ImGui::TextWrapped("%s",view.label);
+    ImGui::PushStyleColor(ImGuiCol_Text,o.theme?o.theme->semantic.textSecondary:ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+    ImGui::TextWrapped("%s",status);ImGui::PopStyleColor();
+    if(*value) {
+        ImGui::PushStyleColor(ImGuiCol_Text,o.theme?o.theme->semantic.textDisabled:ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+        ImGui::TextWrapped("%s",value);ImGui::PopStyleColor();
+    }
+    auto trackOptions=o;trackOptions.accessibility=nullptr;
+    ProgressTrack("track",view.fraction,view.status,trackOptions);
+    if(*detail::SafeProgressText(view.supplemental)) ImGui::TextWrapped("%s",view.supplemental);
+    ImGui::EndGroup();
+    const ImVec2 bottom=ImGui::GetItemRectMax();
+    if(o.accessibility) {
+        accessibility::SemanticNode node;
+        node.id=ImGui::GetID("progress");node.parent=o.parent;node.name=detail::SafeProgressText(view.label);
+        node.description=detail::SafeProgressText(view.supplemental);node.value=status;
+        node.role=accessibility::SemanticRole::Progress;node.state.readOnly=true;
+        node.state.busy=view.status==ProgressStatus::Running&&!available;
+        node.state.invalid=view.status==ProgressStatus::Failed;
+        if(available){node.numericValue=std::clamp(view.fraction,0.f,1.f);node.minimumValue=0;node.maximumValue=1;}
+        node.minimum=top;node.maximum=bottom;
+        o.accessibility->Add(node);
+    }
+    ImGui::PopID();
+}
 void Progress(const char* id,float fraction,const char* label,ComponentOptions o) {
-    ImGui::PushID(id); float value=fraction;
-    if(value<0) value=o.theme && o.theme->motion.reducedMotion?.5f:static_cast<float>(std::fmod(ImGui::GetTime(),1.));
-    ImGui::ProgressBar(std::clamp(value,0.f,1.f),{-1,0},label); Node(o,label,accessibility::SemanticRole::Progress,ImGui::GetID(id)); ImGui::PopID();
+    ProgressTrackView view;view.fraction=fraction;view.status=ProgressStatus::Running;view.label=label?label:"";
+    ImGui::PushID(id);const StableId semanticId=ImGui::GetID(id);ImGui::PopID();
+    const ImVec2 minimum=ImGui::GetCursorScreenPos();
+    auto trackOptions=o;trackOptions.accessibility=nullptr;
+    ProgressTrack(id,view,trackOptions);
+    if(o.accessibility) {
+        accessibility::SemanticNode node;node.id=semanticId;node.parent=o.parent;node.name=view.label;
+        node.role=accessibility::SemanticRole::Progress;node.state.readOnly=true;
+        node.state.busy=!std::isfinite(fraction)||fraction<0.f;
+        if(std::isfinite(fraction)&&fraction>=0.f) {node.numericValue=std::clamp(fraction,0.f,1.f);node.minimumValue=0;node.maximumValue=1;}
+        node.minimum=minimum;node.maximum=ImGui::GetItemRectMax();
+        o.accessibility->Add(node);
+    }
 }
 void Spinner(const char* id,ComponentOptions o) {
-    float h=ImGui::GetFrameHeight(); auto p=ImGui::GetCursorScreenPos(); ImGui::Dummy({h,h});
-    auto* draw=ImGui::GetWindowDrawList(); float phase=o.theme && o.theme->motion.reducedMotion?0.f:static_cast<float>(ImGui::GetTime()*4);
-    draw->PathArcTo({p.x+h/2,p.y+h/2},h*.3f,phase,phase+4.7f,20); draw->PathStroke(ImGui::GetColorU32(ImGuiCol_Text),2.f,0);
-    Node(o,Text(o,"loading","Loading"),accessibility::SemanticRole::Status,ImGui::GetID(id));
+    const float size=ImGui::GetFrameHeight();const ImVec2 p=ImGui::GetCursorScreenPos();
+    const ImGuiID semanticId=ImGui::GetID(id);
+    ImGui::PushID(id);ImGui::Dummy({size,size});
+    const Motion motion=o.theme?o.theme->motion:Motion{};
+    float phase=motion.enabled&&!motion.reducedMotion?static_cast<float>(std::fmod(std::max(0.0,ImGui::GetTime()*4.0),6.283185307179586)):0.f;
+    if(o.animation) {
+        const bool animate=motion.enabled&&!motion.reducedMotion;
+        phase=o.animation->Update(ImGui::GetID("spinner-rotation"),phase,ImGui::GetIO().DeltaTime,
+                                  .08f,ImGui::GetFrameCount(),animate,motion.easing);
+    }
+    auto* draw=ImGui::GetWindowDrawList();
+    const ImVec4 color=o.theme?o.theme->semantic.accent:ImGui::GetStyleColorVec4(ImGuiCol_Text);
+    const float stroke=o.theme?std::max(1.f,o.theme->stroke.focus):2.f;
+    draw->PathArcTo({p.x+size*.5f,p.y+size*.5f},size*.3f,phase,phase+4.7f,20);
+    draw->PathStroke(ImGui::GetColorU32(color),0,stroke);
+    Node(o,Text(o,"loading","Loading"),accessibility::SemanticRole::Status,semanticId);
+    ImGui::PopID();
 }
 void Skeleton(const char* id,ImVec2 size,ComponentOptions o) {
     auto p=ImGui::GetCursorScreenPos(); ImGui::Dummy(size);

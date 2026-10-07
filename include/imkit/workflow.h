@@ -163,6 +163,28 @@ struct ProgressView {
     const char* description="";
     bool cancellable=false;
 };
+struct StageProgressItem {
+    StableId id=0;
+    const char* label="";
+    ProgressStatus status=ProgressStatus::Queued;
+};
+struct StageProgressView {
+    std::span<const StageProgressItem> stages{};
+    StableId current=0;
+};
+struct TaskProgressCardView {
+    StableId id=0;
+    const char* title="";
+    const char* stage="";
+    const char* description="";
+    float fraction=-1;
+    ProgressStatus status=ProgressStatus::Running;
+    const char* supplemental="";
+    std::span<const Command> operations{};
+};
+struct TaskProgressCardOptions {
+    bool compact=false;
+};
 struct CircularProgressView {
     // Negative or non-finite values render as unavailable. Finite values are clamped to [0, 1].
     float fraction=-1;
@@ -181,6 +203,11 @@ void CircularProgress(const char* id, const CircularProgressView& view,
 // Modal open state is explicit. Overlay occupies/clips to the requested child region.
 bool Progress(const char* id, const ProgressView& view, ProgressPresentation presentation,
               DialogState& state, ImVec2 size={}, ComponentOptions options={});
+// Draws status steps without changing the host's current stage.
+void StageProgress(const char* id, const StageProgressView& view, ComponentOptions options={});
+// Returns the requested operation ID, or zero. The host performs the operation.
+StableId TaskProgressCard(const char* id, const TaskProgressCardView& view,
+                          TaskProgressCardOptions layout={}, ComponentOptions options={});
 // Always pair EndCard, including a false return (same contract as BeginChild).
 bool BeginCard(const char* id, ImVec2 size={}, ComponentOptions options={});
 void EndCard();

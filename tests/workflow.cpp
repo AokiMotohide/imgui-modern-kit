@@ -1,5 +1,6 @@
 #include <imkit/editor_canvas.h>
 #include <imkit/shell.h>
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstdio>
@@ -256,6 +257,40 @@ int main(){
         progressState.open=true;
         auto modal=[&]{imkit::Progress("modal",ProgressView{.5f,"Stage","Working",true},ProgressPresentation::Modal,progressState,{},options);};
         frame(modal);frame(modal);progressState.open=false;frame(modal);frame(modal);
+        ImGuiID legacyProgressSemanticId=0;
+        auto legacyProgress=[&]{ImGui::PushID("legacy-progress");legacyProgressSemanticId=ImGui::GetID("legacy-progress");ImGui::PopID();imkit::Progress("legacy-progress",.4f,"Legacy progress",options);};
+        frame(legacyProgress);
+        Check(std::any_of(semantics.Tree().nodes.begin(),semantics.Tree().nodes.end(),[&](const auto& node){return node.id==legacyProgressSemanticId&&node.name=="Legacy progress"&&node.role==accessibility::SemanticRole::Progress;}),"existing Progress semantic ID remains stable");
+        AnimationState progressAnimation;progressAnimation.Reset(static_cast<std::uint64_t>(generation)+1);
+        auto progressOptions=options;progressOptions.animation=&progressAnimation;
+        std::array<StageProgressItem,4> taskStages{{{41,"Prepare",ProgressStatus::Succeeded},{42,"Inspect",ProgressStatus::Running},{43,"Pause",ProgressStatus::Paused},{44,"Queue",ProgressStatus::Queued}}};
+        std::array<imkit::Command,1> taskOperations{{{501,"Details"}}};
+        TaskProgressCardView task;task.id=500;task.title="Inspecting files";task.stage="A deliberately long stage label wraps at narrow widths";
+        task.description="A deliberately long description wraps inside the narrow task card and remains visible to assistive technology.";
+        task.fraction=std::numeric_limits<float>::quiet_NaN();task.status=ProgressStatus::Running;
+        task.supplemental="The host owns progress updates.";task.operations=taskOperations;
+        StableId operationRequest=0;
+        auto progressFamily=[&]{
+            ImGui::BeginChild("narrow-progress-regression",{275,400},ImGuiChildFlags_Borders);
+            StageProgress("task-stages",StageProgressView{taskStages,42},progressOptions);
+            ProgressTrackView indeterminate;indeterminate.fraction=task.fraction;indeterminate.status=task.status;indeterminate.label="Active item";
+            ProgressTrack("indeterminate",indeterminate,progressOptions);
+            ProgressTrackView paused;paused.status=ProgressStatus::Paused;paused.label="Paused item";
+            ProgressTrack("paused",paused,progressOptions);
+            operationRequest=TaskProgressCard("task-card",task,{},progressOptions);
+            ImGui::EndChild();
+        };
+        frame(progressFamily);
+        bool sawActiveProgress=false,sawPausedProgress=false;
+        accessibility::SemanticNode detailsNode{};
+        for(const auto& node:semantics.Tree().nodes) {
+            if(node.role==accessibility::SemanticRole::Progress&&node.name=="Active item") sawActiveProgress=node.state.busy&&!node.state.invalid;
+            if(node.role==accessibility::SemanticRole::Progress&&node.name=="Paused item") sawPausedProgress=!node.state.busy&&!node.state.invalid;
+            if(node.role==accessibility::SemanticRole::Button&&node.name=="Details") detailsNode=node;
+        }
+        Check(sawActiveProgress&&sawPausedProgress,"unknown progress semantics follow active and paused status");
+        queue.Push({detailsNode.id,accessibility::SemanticAction::Press});frame(progressFamily);
+        Check(operationRequest==taskOperations[0].id,"task card returns the stable operation request");
         frame([&]{CircularProgress("known",CircularProgressView{.5f,"5/10","Coverage"},{72,5},options);ImGui::SameLine();CircularProgress("complete",CircularProgressView{1.f,"10/10","Complete",FeedbackKind::Success},{54,0},options);ImGui::SameLine();CircularProgress("unknown",CircularProgressView{-1.f,"","Unknown"},{54,0},options);});
         int circularNodes=0;bool sawKnown=false,sawUnknown=false;
         for(const auto& node:semantics.Tree().nodes)if(node.role==accessibility::SemanticRole::Progress){++circularNodes;sawKnown=sawKnown||(node.name=="Coverage"&&node.value=="5/10"&&!node.state.invalid);sawUnknown=sawUnknown||(node.name=="Unknown"&&node.value=="\xE2\x80\x94"&&node.state.invalid);}
