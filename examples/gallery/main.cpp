@@ -1201,12 +1201,16 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
         }
     } else if(demo=="progress") {
         h.s.page=16;h.s.comparison.open=false;h.Settle();
-        for(int i=0;i<80;++i) {
-            const float phase=static_cast<float>(i)/79.f;
-            h.s.workflow.fraction=phase<.82f?phase/.82f:1.f;
-            char name[32];std::snprintf(name,sizeof(name),"frame-%03d.png",frame++);
-            h.Frame({},dir/name);
+        h.s.workflow.taskFraction=0.f;
+        h.mouse={1700,800};
+        h.Frame([](ImGuiIO& io){io.AddMouseWheelEvent(0,-5);});h.Settle();
+        CaptureFrames(h,dir,frame,10);
+        for(int step=0;step<6;++step) {
+            h.Click("progress-advance");
+            CaptureFrames(h,dir,frame,10);
         }
+        if(h.s.workflow.taskFraction<1.f) throw std::runtime_error("progress operation did not complete the host task");
+        CaptureFrames(h,dir,frame,10);
     } else if(demo=="timeline") {
         auto &s=h.s.editors;s.Dataset(false);h.s.page=8;h.s.comparison.open=false;h.Settle();
         CaptureFrames(h,dir,frame,16);

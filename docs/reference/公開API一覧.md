@@ -1,5 +1,7 @@
 # 公開API対応表
 
+
+[3.3追加API：進捗トラック・段階表示・タスクカード](3.3追加API.md)
 [English (Generated Table)](api-coverage.md) · [API Inventory JSON](api-inventory.json) · [文書カタログ](文書カタログ.md)
 
 このドキュメントでは、ImKitが提供するDear ImGui公開APIの対応状況、ラッパーの提供方針、および適用範囲について説明します。

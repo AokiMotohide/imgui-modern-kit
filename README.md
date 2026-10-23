@@ -8,6 +8,8 @@ ImKit is a C++20 static library that adds consistent themes and reusable control
 
 [日本語](README.ja.md) · [Download the latest release](https://github.com/AokiMotohide/imgui-modern-kit/releases/latest) · [Documentation](docs/README.md) · [Releases](https://github.com/AokiMotohide/imgui-modern-kit/releases)
 
+**New in 3.3:** [progress tracks, stages and task cards](docs/reference/v3.3-api.md), plus stage and progress information in toasts.
+
 [![ImKit 3.2 — Modern UI. Familiar workflow.](website/public/media/imkit-3.2-poster.jpg)](https://aokimotohide.github.io/imgui-modern-kit/en/#film)
 
 **[Watch the 60-second film](https://aokimotohide.github.io/imgui-modern-kit/en/#film)** — Real drags, clicks and live results. English motion graphics with an original 128 BPM electro-house score.
@@ -16,7 +18,7 @@ ImKit is a C++20 static library that adds consistent themes and reusable control
 
 ## Try the Gallery
 
-Download the [v3.2.0 package for your platform](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.2.0), extract it, and run:
+Download the [v3.3.0 package for your platform](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.3.0), extract it, and run:
 
 - Windows: bin/imkit_gallery.exe
 - macOS: imkit_gallery.app
@@ -133,6 +135,19 @@ Use the optional graph canvas and edit requests with your own graph model, valid
 <img src="docs/images/v3-theme-comparison.gif" alt="ImKit themes and comparison with default Dear ImGui" width="960">
 
 Compare named themes and palette choices in the native Gallery.
+
+## New in 3.3 — progress that explains the work
+
+Show how far a task has progressed, which stage is active, and what the user can do next. The application owns the work and supplies the state each frame.
+
+![Native Gallery: task progress and stages](docs/images/v3-progress.gif)
+
+- **ProgressTrack:** one shared track for known or indeterminate progress, labels and all six task states.
+- **StageProgress:** show completed, current and queued stages without changing application state.
+- **TaskProgressCard:** combine a title, stage, progress and operation buttons; handle the returned command ID in your application.
+- **Toast progress:** update the same notification with `stage`, `progressText` and `status`.
+
+[Examples, exact API and compatibility](docs/reference/v3.3-api.md). `ToastView` has new fields: rebuild your application and linked ImKit libraries with the 3.3 headers. Do not mix 3.2 objects and 3.3 structures. The film above demonstrates 3.2; the capture here demonstrates 3.3.
 
 ## New in 3.2
 

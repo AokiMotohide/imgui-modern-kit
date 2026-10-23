@@ -15,6 +15,7 @@ DOCS = ROOT / "docs"
 PAIRS: list[tuple[str, str]] = [
     ("README.md", "目次.md"),
     ("reference/v3.2-api.md", "reference/3.2追加API.md"),
+    ("reference/v3.3-api.md", "reference/3.3追加API.md"),
     # getting-started
     ("getting-started/getting-started.md", "getting-started/導入ガイド.md"),
     ("getting-started/how-it-works.md", "getting-started/仕組みと設計思想.md"),

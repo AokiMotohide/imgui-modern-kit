@@ -117,7 +117,7 @@ void WorkflowPages::Show(int page,GalleryState& host) {
             const bool done=taskFraction>=1.f;
             const std::array<StageProgressItem,4> stages{{
                 {0x5101,japanese?"準備":"Prepare",ProgressStatus::Succeeded},
-                {0x5102,japanese?(done?"完了":"読み込み中"):(taskUpdates%2?"検証中":"読み込み中"),done?ProgressStatus::Succeeded:ProgressStatus::Running},
+                {0x5102,japanese?(done?"完了":"読み込み中"):(done?"Complete":(taskUpdates%2?"Verifying":"Reading")),done?ProgressStatus::Succeeded:ProgressStatus::Running},
                 {0x5103,japanese?"次の項目":"Next item",ProgressStatus::Queued},
                 {0x5104,japanese?"公開待ち":"Waiting to publish",ProgressStatus::Queued}}};
             StageProgress("sample-stages",StageProgressView{stages,0x5102ull},o);
@@ -136,7 +136,8 @@ void WorkflowPages::Show(int page,GalleryState& host) {
             if(ActionButton(japanese?"更新例を進める":"Advance update example",ActionVariant::Secondary,{},o)) {
                 taskFraction=taskFraction>=1.f?0.f:std::min(1.f,taskFraction+.18f);++taskUpdates;
             }
-            ImGui::TextDisabled(japanese?"タスク 1/2: 処理中":"Task 1/2: running");
+            Record(host,"progress-advance");
+            ImGui::TextDisabled(japanese?(done?"タスク 1/2: 完了":"タスク 1/2: 処理中"):(done?"Task 1/2: succeeded":"Task 1/2: running"));
             const float narrowWidth=std::min(300.f,std::max(1.f,ImGui::GetContentRegionAvail().x));
             ImGui::BeginChild("narrow-progress-demo",{narrowWidth,214},ImGuiChildFlags_Borders);
             const std::array<StageProgressItem,5> narrowStages{{

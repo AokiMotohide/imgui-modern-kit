@@ -1,5 +1,7 @@
 # ImKit documentation
 
+
+[3.3 additions: progress tracks, stages and task cards](reference/v3.3-api.md)
 [日本語](目次.md) · [Project overview](../README.md)
 
 ImKit's documentation is organized in structured categories to help Dear ImGui developers quickly find what they need:

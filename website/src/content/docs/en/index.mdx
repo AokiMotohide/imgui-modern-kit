@@ -21,6 +21,8 @@ hero:
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 import CapturePlayer from '../../../components/CapturePlayer.astro';
+import progressCapture from '../../../../../docs/images/v3-progress.gif';
+import progressPoster from '../../../assets/captures/v3-progress-poster.png';
 import nodeCapture from '../../../../../docs/images/v3-workspace.gif';
 import nodePoster from '../../../assets/captures/v3-workspace-poster.png';
 import workflowCapture from '../../../../../docs/images/v3-comparison.gif';
@@ -29,6 +31,17 @@ import timelineCapture from '../../../../../docs/images/v3-timeline.gif';
 import timelinePoster from '../../../assets/captures/v3-timeline-poster.png';
 
 <div class="imkit-home">
+
+## New in 3.3: show how work progresses
+
+Shared progress tracks, stage lists, operation-enabled task cards and richer loading toasts explain long-running work. Your application owns the work and state. [Examples and recompilation requirements](./api/v3-3/).
+
+<CapturePlayer source={progressCapture} poster={progressPoster} alt="Native Gallery task progress and stages" caption="New in 3.3 — progress, stages and operations" />
+
+[v3.3.0 SDK](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.3.0)
+
+The introductory film demonstrates the 3.2 release.
+
 
 ## Add it to your application
 
