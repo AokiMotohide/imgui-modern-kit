@@ -3,7 +3,7 @@
 #include <algorithm>
 namespace imkit::gallery {
 void ToastPage::Show(GalleryState& host) {
-    ImGui::Checkbox("日本語",&japanese);
+    imkit::Checkbox("日本語",&japanese);
     const char* positions[]={"Top left","Top center","Top right","Bottom left","Bottom center","Bottom right"};
     ImGui::Combo("Position",&position,positions,6);layout.position=static_cast<ToastPosition>(position);
     if(ImGui::CollapsingHeader("Layout and lifetime settings")) {
@@ -14,7 +14,7 @@ void ToastPage::Show(GalleryState& host) {
         ImGui::InputDouble("Duration (-1 = default, 0 = persistent)",&duration);
     }
     layout.maximum=maximum;
-    ImGui::Checkbox("Indeterminate loading",&indeterminate);
+    imkit::Checkbox("Indeterminate loading",&indeterminate);
     ImGui::SliderFloat("Progress",&progress,0,1);
     auto add=[&](FeedbackKind kind,bool loading=false) {
         ToastView v;v.id=++nextId;v.kind=kind;v.duration=duration;

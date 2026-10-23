@@ -1,4 +1,7 @@
+#include "draw_internal.h"
 #include <imkit/video.h>
+#include <imkit/components.h>
+#include <imkit/widgets.h>
 #include "transaction_support.h"
 #include <algorithm>
 #include <cmath>
@@ -337,6 +340,14 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             for (int i=0;i<7;++i) if (toolVisible(i)) {s.tool=static_cast<Tool>(i);break;}
     }
     bool firstTool=true;
+    auto *toolDraw=ImGui::GetWindowDrawList();
+    const ImVec2 toolGroupStart=ImGui::GetCursorScreenPos();
+    ImVec2 toolGroupEnd=toolGroupStart;
+    // Tools share one tonal container (background channel) with a raised thumb on the active tool.
+    toolDraw->ChannelsSplit(2);
+    toolDraw->ChannelsSetCurrent(1);
+    ImGui::PushStyleColor(ImGuiCol_Button,ImVec4(0,0,0,0));
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize,0.f);
     for (int i = 0; i < 7; ++i) {
         if (!toolVisible(i)) continue;
         if (!firstTool)
@@ -346,13 +357,13 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             const IconId glyphs[]={IconId::SelectPointer,IconId::Razor,IconId::RippleEdit,IconId::RollingEdit,IconId::SlipEdit,IconId::SlideEdit,IconId::HandPan};
             const auto &tips=s.labels.tooltips;
             const bool active=static_cast<int>(s.tool)==i;
-            if (active) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+            if (active) ImGui::PushStyleColor(ImGuiCol_Button,theme.colors.raised);
             if (IconButton(tools[i],*s.icons,glyphs[i],tips[i])) s.tool=static_cast<Tool>(i);
             if (active) {
                 const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
-                ImGui::GetWindowDrawList()->AddLine({a.x+4,b.y-2},{b.x-4,b.y-2},ImGui::GetColorU32(theme.colors.text),2);
+                ImGui::GetWindowDrawList()->AddRect(a,b,ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.text,.12f)),ImGui::GetStyle().FrameRounding);
+                ImGui::PopStyleColor();
             }
-            if (active) ImGui::PopStyleColor();
         } else if (ImGui::Selectable(tools[i], static_cast<int>(s.tool) == i, 0, {56, 24}))
             s.tool = static_cast<Tool>(i);
         if (ImGui::IsItemHovered() || ImGui::IsItemFocused()) {
@@ -367,31 +378,39 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             }
         }
     }
+    toolGroupEnd=ImGui::GetItemRectMax();
+    ImGui::PopStyleVar();
+    ImGui::PopStyleColor();
+    toolDraw->ChannelsSetCurrent(0);
+    if (!firstTool)
+        toolDraw->AddRectFilled({toolGroupStart.x-3,toolGroupStart.y-3},{toolGroupEnd.x+3,toolGroupEnd.y+3},
+                                ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.text,.07f)),ImGui::GetStyle().FrameRounding+3);
+    toolDraw->ChannelsMerge();
     if (!firstTool) ImGui::SameLine();
-    ImGui::Checkbox(s.labels.snap, &s.snapping);
+    imkit::Toggle(s.labels.snap, &s.snapping, {&theme});
     ImGui::SameLine();
     if (s.icons) {
         const bool active=s.magnet;
-        if (active) ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+        if (active) ImGui::PushStyleColor(ImGuiCol_Button, ::imkit::detail::WithAlpha(theme.colors.accent,.28f));
         if (IconButton("magnet", *s.icons, IconId::Magnet, s.labels.magnetTooltip)) s.magnet=!s.magnet;
         if (active) ImGui::PopStyleColor();
-    } else ImGui::Checkbox(s.labels.magnet, &s.magnet);
+    } else imkit::Checkbox(s.labels.magnet, &s.magnet);
     ImGui::SameLine();
     if (ImGui::Button(s.labels.options)) ImGui::OpenPopup("snap-options");
     if (ImGui::BeginPopup("snap-options")) {
-        ImGui::Checkbox("Stereo waveforms",&s.waveformOptions.stereo);
+        imkit::Checkbox("Stereo waveforms",&s.waveformOptions.stereo);
         ImGui::SliderFloat("Waveform display gain",&s.waveformOptions.gain,.25f,4.f);
         int follow=static_cast<int>(s.autoScroll);
         if (ImGui::Combo(s.labels.follow,&follow,s.labels.followModes.data(),static_cast<int>(s.labels.followModes.size())))
             s.autoScroll=static_cast<editor::AutoScroll>(follow);
         if(s.icons) {Icon(*s.icons,IconId::SnapToFrame,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
-        ImGui::Checkbox(s.labels.frameGrid, &s.snapToFrame);
+        imkit::Checkbox(s.labels.frameGrid, &s.snapToFrame);
         const auto &names=s.labels.snapKinds;
         for (unsigned i=1;i<7;++i) {
             constexpr IconId glyphs[]{IconId::SnapToFrame,IconId::Timecode,IconId::Marker,IconId::SnapToClipEdge,IconId::Keyframe,IconId::WorkRange,IconId::SnapToSelection};
             if(s.icons) {Icon(*s.icons,glyphs[i],{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
             bool enabled=(s.snapKinds & (1u<<i))!=0;
-            if (ImGui::Checkbox(names[i],&enabled)) s.snapKinds ^= 1u<<i;
+            if (imkit::Checkbox(names[i],&enabled)) s.snapKinds ^= 1u<<i;
         }
         ImGui::EndPopup();
     }
@@ -465,10 +484,14 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         }
         if(ImGui::IsItemHovered()) ImGui::SetTooltip("Drag: navigate / Ctrl+wheel: zoom");
         auto *d=ImGui::GetWindowDrawList();const auto lo=ImGui::GetItemRectMin(),hi=ImGui::GetItemRectMax();
-        d->AddRectFilled(lo,hi,ImGui::GetColorU32(theme.colors.input),3);
+        const float stripRound=(hi.y-lo.y)*.5f;
+        d->AddRectFilled(lo,hi,ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.text,.07f)),stripRound);
         const float left=lo.x+float(std::clamp((s.canvas.origin.x-first)/length,0.,1.)*width);
-        const float right=lo.x+float(std::clamp((s.canvas.origin.x+width/s.canvas.scale.x-first)/length,0.,1.)*width);
-        d->AddRectFilled({left,lo.y+2},{std::max(left+3,right),hi.y-2},ImGui::GetColorU32(theme.colors.selection),2);
+        const float right=std::max(left+8,lo.x+float(std::clamp((s.canvas.origin.x+width/s.canvas.scale.x-first)/length,0.,1.)*width));
+        d->AddRectFilled({left,lo.y+1},{right,hi.y-1},ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.accent,.30f)),stripRound-1);
+        d->AddRect({left,lo.y+1},{right,hi.y-1},ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.accent,.75f)),stripRound-1);
+        for (const float grip:{left+4.f,right-4.f})
+            d->AddLine({grip,lo.y+4},{grip,hi.y-4},ImGui::GetColorU32(theme.colors.accent),1.5f);
     }
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + s.headerWidth);
     s.time.icons=s.icons;
@@ -612,10 +635,24 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
            io.MousePos.y>=y && io.MousePos.y<y+rowHeight) s.hoveredTrack=track.id;
         draw->AddRectFilled({view.min.x, y}, {view.max.x, y + rowHeight - 2},
                             ImGui::GetColorU32(theme.editor.trackHeader));
+        // The header cell is a slightly stronger tone with a hairline on its right edge.
+        draw->AddRectFilled({view.min.x, y}, {view.min.x + s.headerWidth, y + rowHeight - 2},
+                            ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.text,.045f)),theme.radius.control,ImDrawFlags_RoundCornersLeft);
+        draw->AddLine({view.min.x + s.headerWidth, y + 2}, {view.min.x + s.headerWidth, y + rowHeight - 4},
+                      ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.text,.10f)));
         ImGui::SetCursorScreenPos({view.min.x + 4, y + 3});
         ImGui::PushID(reinterpret_cast<void *>(static_cast<std::uintptr_t>(track.id)));
-        if (ImGui::SmallButton(track.expanded ? "v" : ">"))
+        // Compact hit area: the old text button grew with FramePadding and pushed the track name rightwards.
+        const ImVec2 chevronSize{ImGui::GetFontSize()*1.2f,ImGui::GetFontSize()};
+        if (ImGui::InvisibleButton("expand",chevronSize))
             Toggle(out,track,p.revision,static_cast<int>(TrackControl::Expanded),track.expanded);
+        {
+            const auto ca=ImGui::GetItemRectMin(),cb=ImGui::GetItemRectMax();
+            if (ImGui::IsItemHovered())
+                draw->AddRectFilled(ca,cb,ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.text,.08f)),4);
+            ::imkit::detail::DrawChevron(draw,{(ca.x+cb.x)*.5f,(ca.y+cb.y)*.5f},ImGui::GetFontSize()*.55f,
+                                         ImGui::GetColorU32(theme.colors.muted),track.expanded?ImGuiDir_Down:ImGuiDir_Right,1.5f);
+        }
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s",track.expanded ? s.trackLabels.collapse : s.trackLabels.expand);
         ImGui::SameLine(0,4);
         if (s.icons) {
@@ -702,7 +739,10 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         for (int f=0;f<7;++f) controlsWidth+=(s.icons && controlIcons[f]!=IconId::Count ? controlIconSize :
             ImGui::CalcTextSize(labels[f]).x)+2*ImGui::GetStyle().FramePadding.x;
         if (controlsWidth>s.headerWidth-8) {
-            if (ImGui::SmallButton(s.trackLabels.controls)) ImGui::OpenPopup("track controls");
+            ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding,ImGui::GetFontSize()*.7f);
+            const bool controlsClicked=ImGui::SmallButton(s.trackLabels.controls);
+            ImGui::PopStyleVar();
+            if (controlsClicked) ImGui::OpenPopup("track controls");
             if (ImGui::BeginPopup("track controls")) {
                 for (int f=0;f<7;++f) {
                     ImGui::PushID(f);
@@ -719,18 +759,14 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         } else for (int f = 0; f < 7; ++f) {
             if (f)
                 ImGui::SameLine(0, 2);
-            if (values[f]) ImGui::PushStyleColor(ImGuiCol_Button,theme.colors.accent);
+            if (values[f]) ImGui::PushStyleColor(ImGuiCol_Button,::imkit::detail::WithAlpha(theme.colors.accent,.30f));
             ImGui::PushID(f);
             const bool pressed=s.icons && controlIcons[f]!=IconId::Count ?
                 IconButton("control",*s.icons,controlIcons[f],tooltips[f],{controlIconSize}) :
                 s.icons ? ImGui::Button(labels[f],{0,controlIconSize+2*ImGui::GetStyle().FramePadding.y}) : ImGui::SmallButton(labels[f]);
             if (pressed) Toggle(out,track,p.revision,f,values[f]);
             ImGui::PopID();
-            if (values[f]) {
-                auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
-                draw->AddLine({a.x+2,b.y-1},{b.x-2,b.y-1},ImGui::GetColorU32(theme.colors.text),2);
-                ImGui::PopStyleColor();
-            }
+            if (values[f]) ImGui::PopStyleColor();
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s: %s",tooltips[f],values[f] ? s.trackLabels.on : s.trackLabels.off);
         }
         }
@@ -765,25 +801,33 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                          : track.kind == TrackKind::Adjustment ? theme.editor.adjustmentClip
                          : track.kind == TrackKind::Group ? theme.editor.groupClip
                                                             : theme.editor.videoClip;
-            color.w *= selected ? .9f : bodyHovered ? .62f : .38f;
-            draw->AddRectFilled(a, b, ImGui::GetColorU32(color), 4);
+            const float fillAlpha = selected ? .92f : bodyHovered ? .72f : .56f;
+            const ImVec4 composite = ::imkit::detail::MixColor(theme.editor.trackHeader, color, fillAlpha * color.w);
+            color.w *= fillAlpha;
+            // Text colour follows the clip's actual tone so selected (saturated) clips stay readable.
+            const ImVec4 white{1,1,1,1}, black{0,0,0,1};
+            const ImVec4 ink = ContrastRatio(theme.colors.text, composite) >= 4.5f ? theme.colors.text
+                             : ContrastRatio(white, composite) >= ContrastRatio(black, composite) ? white : black;
+            const ImU32 inkColor = ImGui::GetColorU32(ink);
+            const float clipRadius = std::min(6.f, theme.radius.control);
+            if (selected)
+                draw->AddRect({a.x-2,a.y-2}, {b.x+2,b.y+2}, ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.focus,.30f)),
+                              clipRadius + 2, ImDrawFlags_None, 3.f);
+            draw->AddRectFilled(a, b, ImGui::GetColorU32(color), clipRadius);
             if (p.drawClipOverlay) p.drawClipOverlay(p.user,clip.id,value,a,b);
             draw->AddRect(a, b,
-                          ImGui::GetColorU32(selected ? theme.colors.focus
-                                                     : theme.colors.border),
-                          4, ImDrawFlags_None, selected ? 2.f : 1.f);
+                          selected ? ImGui::GetColorU32(theme.colors.focus) : ImGui::GetColorU32(ImVec4(0,0,0,.20f)),
+                          clipRadius, ImDrawFlags_None, selected ? 2.f : 1.f);
             const float edgeHit=std::min(10.f,std::max(6.f,(b.x-a.x)*.22f));
             const bool leftEdge=bodyHovered && io.MousePos.x-a.x<=edgeHit;
             const bool rightEdge=bodyHovered && b.x-io.MousePos.x<=edgeHit;
             if (s.tool==Tool::Select && (selected || leftEdge || rightEdge)) {
-                const auto handleColor=ImGui::GetColorU32((leftEdge||rightEdge) ? theme.colors.accent : theme.colors.text);
+                const auto handleColor=ImGui::GetColorU32((leftEdge||rightEdge) ? theme.colors.accent : ::imkit::detail::WithAlpha(ink,.65f));
                 const float gripTop=a.y+std::max(4.f,(b.y-a.y-18.f)*.5f);
                 const float gripBottom=std::min(b.y-4.f,gripTop+18.f);
-                for(const float edge:{a.x+3.f,b.x-3.f}) {
-                    draw->AddLine({edge,gripTop},{edge,gripBottom},handleColor,2.f);
-                    draw->AddLine({edge+(edge<a.x+(b.x-a.x)*.5f?3.f:-3.f),gripTop},
-                                  {edge+(edge<a.x+(b.x-a.x)*.5f?3.f:-3.f),gripBottom},handleColor,1.f);
-                }
+                // One rounded bar per edge: reads as a handle rather than a pair of hairlines.
+                draw->AddRectFilled({a.x+3.f,gripTop},{a.x+6.f,gripBottom},handleColor,1.5f);
+                draw->AddRectFilled({b.x-6.f,gripTop},{b.x-3.f,gripBottom},handleColor,1.5f);
             }
             const bool editBand=clip.transitionIn || clip.transitionOut || p.editing.fades || p.editing.cut;
             const float nameY=y+4+(editBand ? ImGui::GetFontSize()+3.f : 3.f);
@@ -812,7 +856,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     if (nameLeft+iconSize+12>nameRight || !s.icons->textures[level].GetTexID()) return;
                     const auto region=GetIconRegion(id,IconPixelSizes[level]);
                     draw->AddImage(s.icons->textures[level],{nameLeft,nameY},{nameLeft+iconSize,nameY+iconSize},
-                        region.uv0,region.uv1,ImGui::GetColorU32(theme.colors.text));
+                        region.uv0,region.uv1,inkColor);
                     nameLeft+=iconSize+3;
                 };
                 if (clip.linked) badge(IconId::Link);
@@ -835,8 +879,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     if (accept) {s.captionDrag.draft.proposedText=update.proposedText;s.captionDrag.Commit(p.revision,out);}
                 }
             } else {
-                text({nameLeft,nameY},ImGui::GetColorU32(theme.colors.text),clip.label,nameRight);
-                if (showMetadata) text({metadataRight-metadataWidth,nameY},ImGui::GetColorU32(theme.colors.muted),metadata,metadataRight);
+                text({nameLeft,nameY},inkColor,clip.label,nameRight);
+                if (showMetadata) text({metadataRight-metadataWidth,nameY},ImGui::GetColorU32(::imkit::detail::WithAlpha(ink,.70f)),metadata,metadataRight);
             }
             if (clip.missing || clip.offline)
                 draw->AddLine(a, b, ImGui::GetColorU32(clip.offline ? theme.editor.error : theme.editor.missing), 2);
@@ -845,7 +889,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             if (clip.proxy)
                 text({end-ImGui::GetFontSize()-8,y+7},ImGui::GetColorU32(theme.editor.proxy),"P",end-8);
             if (clip.linked || clip.group)
-                draw->AddLine({x + 3, b.y - 3}, {end - 3, b.y - 3}, ImGui::GetColorU32(theme.colors.text));
+                draw->AddLine({x + 3, b.y - 3}, {end - 3, b.y - 3}, ImGui::GetColorU32(::imkit::detail::WithAlpha(ink,.55f)));
             const float waveformTop=std::min(b.y-2,a.y+((clip.transitionIn || clip.transitionOut) ? 2.f : 1.f)*ImGui::GetFontSize()+7);
             const float waveformCenter=(waveformTop+b.y)*.5f;
             const float waveformAmplitude=std::max(0.f,(b.y-waveformTop)*.5f);
@@ -1681,7 +1725,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             float x =
                 view.min.x + s.headerWidth +
                 static_cast<float>((editor::Seconds(s.guide.candidate.tick) - s.canvas.origin.x) * s.canvas.scale.x);
-            draw->AddLine({x, view.min.y}, {x, view.max.y}, ImGui::GetColorU32(theme.editor.snapGuide), 2);
+            for (float dashY = view.min.y; dashY < view.max.y; dashY += 9.f)
+                draw->AddLine({x, dashY}, {x, std::min(dashY + 5.f, view.max.y)}, ImGui::GetColorU32(theme.editor.snapGuide), 1.5f);
         }
     }
     if (s.drag.active && !ImGui::IsMouseDown(0))
@@ -1689,7 +1734,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     float playhead =
         view.min.x + s.headerWidth +
         static_cast<float>((editor::Seconds(s.time.playhead) - s.canvas.origin.x) * s.canvas.scale.x);
-    draw->AddLine({playhead, view.min.y}, {playhead, view.max.y}, ImGui::GetColorU32(theme.colors.accent), 2);
+    draw->AddLine({playhead, view.min.y}, {playhead, view.max.y}, ImGui::GetColorU32(theme.colors.accent), 1.5f);
     if(s.drag.active && ImGui::IsMouseDown(0)) {
         ImGui::BeginTooltip();
         ImGui::Text("%+.3f s / %.3f s",editor::Seconds(s.drag.draft.proposed.first-s.drag.draft.original.first),
@@ -1703,7 +1748,9 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         const float buttonWidth=ImGui::GetFrameHeight();
         const float width=sliderWidth+buttonWidth*3+ImGui::GetStyle().ItemSpacing.x*3+12;
         const ImVec2 panelMin{std::max(view.min.x+s.headerWidth,view.max.x-width-6),view.max.y-height-6};
-        draw->AddRectFilled(panelMin,{view.max.x-6,view.max.y-6},ImGui::GetColorU32(theme.colors.surface),4);
+        ::imkit::detail::DrawSoftShadow(draw,panelMin,{view.max.x-6,view.max.y-6},theme.radius.control+2,6.f,.14f);
+        draw->AddRectFilled(panelMin,{view.max.x-6,view.max.y-6},ImGui::GetColorU32(theme.colors.raised),theme.radius.control+2);
+        draw->AddRect(panelMin,{view.max.x-6,view.max.y-6},ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.text,.10f)),theme.radius.control+2);
         ImGui::SetCursorScreenPos({panelMin.x+6,panelMin.y+4});
         const auto button=[&](const char *widget,IconId icon,const char *tooltip) {
             const bool pressed=s.icons ? IconButton(widget,*s.icons,icon,tooltip,{ImGui::GetFontSize()}) : ImGui::SmallButton(widget);
@@ -1785,11 +1832,11 @@ void MonitorControls(const char *id,MonitorOptions &options,const IconAtlas *ico
     ImGui::PushID(id);
     auto toggle=[&](IconId icon,const char *label,bool &value) {
         if (icons) {Icon(*icons,icon,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
-        ImGui::Checkbox(label,&value);
+        imkit::Checkbox(label,&value);
     };
     toggle(IconId::SafeArea,labels.safeArea,options.safeArea);
     toggle(IconId::Guides,labels.guides,options.guides);
-    ImGui::Checkbox(labels.timecode,&options.showTimecode);
+    imkit::Checkbox(labels.timecode,&options.showTimecode);
     toggle(IconId::TransformBounds,labels.bounds,options.transform);
     bool anchor=options.showAnchor.value_or(options.transform);
     const bool before=anchor;toggle(IconId::AnchorPoint,labels.anchor,anchor);
@@ -2154,7 +2201,7 @@ void AudioStrip(const AudioStripView &v, std::uint64_t revision, editor::Propert
         bool value=flags[i];
         ImGui::PushID(i);
         if(s.icons) {const IconId icons[]{IconId::Mute,IconId::Solo,IconId::Microphone};Icon(*s.icons,icons[i],{ImGui::GetFontSize()});ImGui::SameLine();}
-        if (ImGui::Checkbox(labels[i],&value))
+        if (imkit::Checkbox(labels[i],&value))
             out.Push({v.id,revision,editor::Phase::Commit,editor::EditKind::Toggle,
                       {0,0,0,0,static_cast<double>(controls[i]),flags[i] ? 1. : 0.},
                       {0,0,0,0,static_cast<double>(controls[i]),value ? 1. : 0.},editor::CurrentModifiers()});

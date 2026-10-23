@@ -503,6 +503,9 @@ void TimeRuler(const char *id, TimeState &s, CanvasState &canvas, std::span<cons
     ImGui::InvisibleButton(id, {width, height});
     auto *d = ImGui::GetWindowDrawList();
     d->PushClipRect(p, {p.x + width, p.y + height}, true);
+    // Quiet band behind the scale, closed by a hairline, so the ruler reads as its own strip.
+    d->AddRectFilled(p, {p.x + width, p.y + height}, ImGui::GetColorU32(ImVec4(t.colors.text.x, t.colors.text.y, t.colors.text.z, .035f)));
+    d->AddLine({p.x, p.y + height - .5f}, {p.x + width, p.y + height - .5f}, ImGui::GetColorU32(ImVec4(t.colors.text.x, t.colors.text.y, t.colors.text.z, .12f)));
     if (!std::isfinite(canvas.scale.x) || canvas.scale.x<=0 || !std::isfinite(canvas.origin.x)) {
         d->PopClipRect();
         return;
@@ -524,7 +527,9 @@ void TimeRuler(const char *id, TimeState &s, CanvasState &canvas, std::span<cons
         if (second>=right) break;
         float x=p.x+static_cast<float>((second-canvas.origin.x)*canvas.scale.x);
         const bool major=std::abs(second/step-std::round(second/step))<1e-6;
-        d->AddLine({x,p.y+height-(major?8:4)},{x,p.y+height},ImGui::GetColorU32(t.editor.ruler));
+        ImVec4 tick = t.editor.ruler;
+        tick.w *= major ? .9f : .45f;
+        d->AddLine({x,p.y+height-(major?8:4)},{x,p.y+height},ImGui::GetColorU32(tick));
         if (major) {
             char label[32];
             FormatTimecode(FromSeconds(second),s.rate,s.dropFrame,label);
@@ -551,7 +556,9 @@ void TimeRuler(const char *id, TimeState &s, CanvasState &canvas, std::span<cons
         d->AddLine({screen(value.last),y-3},{screen(value.last),y+2},color,2);
     }
     float x=screen(s.playhead);
-    d->AddLine({x,p.y},{x,p.y+height},ImGui::GetColorU32(t.colors.accent),2);
+    d->AddLine({x,p.y},{x,p.y+height},ImGui::GetColorU32(t.colors.accent),1.5f);
+    // A small head on the ruler marks the current time.
+    d->AddTriangleFilled({x-5.f,p.y+1.f},{x+5.f,p.y+1.f},{x,p.y+9.f},ImGui::GetColorU32(t.colors.accent));
     d->PopClipRect();
     const bool editingAtFrameStart=s.markerDrag.active || s.rangeHandle;
     detail::ResumeTerminal(s.markerDrag,rev,out);

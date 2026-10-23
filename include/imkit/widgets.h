@@ -9,6 +9,9 @@ namespace imkit {
 bool Button(const char *label, const ImVec2 &size = ImVec2(0, 0));
 
 bool Checkbox(const char *label, bool *value);
+// Compact check mark and radio: the square follows the font, not the 30 px control height.
+bool RadioButton(const char *label, bool active);
+bool RadioButton(const char *label, int *value, int buttonValue);
 
 bool SliderFloat(const char *label, float *value, float minimum, float maximum, const char *format = "%.3f",
                  ImGuiSliderFlags flags = 0);

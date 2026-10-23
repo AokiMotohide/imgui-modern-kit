@@ -5,8 +5,8 @@ namespace imkit::gallery {
 void WorkflowPages::Show(int page,GalleryState& host) {
     auto& theme=host.theme;semantics.Begin(ImGui::GetFrameCount());
     ComponentOptions o{&theme,nullptr,&semantics};
-    ImGui::Checkbox("日本語",&japanese);ImGui::SameLine();ImGui::Checkbox("Disabled",&disabled);
-    ImGui::SameLine();ImGui::Checkbox("Vertical",&vertical);
+    imkit::Checkbox("日本語",&japanese);ImGui::SameLine();imkit::Checkbox("Disabled",&disabled);
+    ImGui::SameLine();imkit::Checkbox("Vertical",&vertical);
     ImGui::TextWrapped("Host-owned state and request events. Tab / arrows / Space; middle-drag and wheel in the image.");
     StepItem items[]={{1,japanese?"準備":"Prepare","Available",true},{2,japanese?"編集":"Edit","Warning is informational",false,true,false,FeedbackKind::Warning},{3,japanese?"確認":"Review","Inspect the result",false,true,false,FeedbackKind::Error},{4,japanese?"実行不可":"Unavailable","The host disabled this action",false,true,true}};
     imkit::Command commands[]={{1,japanese?"通知を表示":"Notify"},{2,japanese?"コマンド検索":"Search commands"},{3,japanese?"実行不可":"Unavailable","",true,"The host disabled this action"}};
@@ -49,7 +49,7 @@ void WorkflowPages::Show(int page,GalleryState& host) {
             ImGui::TableNextColumn();
             editor::ZoomToolbar("zoom",image,o);Record(host,"workflow-zoom");
             image.canvas.selectionPath=lassoScratch;
-            ImGui::Checkbox("Lasso",&lasso);
+            imkit::Checkbox("Lasso",&lasso);
             auto view=editor::BeginImageViewport("image",{host.texture,{512,288}},image,{0,360},theme,{true,true,disabled},o);
             host.probes["workflow-canvas"]={view.min,view.max};
             editor::Point box[]={{50,50},{350,220}},dot[]={{180,120}},line[]={{50,240},{230,180},{420,240}};

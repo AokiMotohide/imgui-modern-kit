@@ -1,3 +1,4 @@
+#include <imkit/widgets.h>
 #include "editor_workspaces.h"
 #include <algorithm>
 #include <cmath>
@@ -222,8 +223,8 @@ void Divider(const char *id,float &ratio,float total) {
 void Options(EditorWorkspaces &s) {
     if(ImGui::SmallButton(s.japanese ? "サンプル設定" : "Sample settings")) ImGui::OpenPopup("sample-settings");
     if(ImGui::BeginPopup("sample-settings")) {
-        bool large=s.large;if(ImGui::Checkbox("100k dataset",&large)) s.Dataset(large);
-        ImGui::Checkbox("日本語",&s.japanese);ImGui::Checkbox("Narrow panes",&s.narrow);
+        bool large=s.large;if(imkit::Checkbox("100k dataset",&large)) s.Dataset(large);
+        imkit::Checkbox("日本語",&s.japanese);imkit::Checkbox("Narrow panes",&s.narrow);
         ImGui::Text("%zu queries / %zu clips / %zu commits",s.queryCount,s.queriedClips,s.commits);
         ImGui::EndPopup();
     }
@@ -261,7 +262,7 @@ void Options(EditorWorkspaces &s) {
             for (const auto modifier: {ImGuiMod_Ctrl,ImGuiMod_Shift,ImGuiMod_Alt,ImGuiMod_Super}) {
                 ImGui::SameLine();bool enabled=(b.chord & modifier)!=0;
                 const char *label=modifier==ImGuiMod_Ctrl ? "Ctrl" : modifier==ImGuiMod_Shift ? "Shift" : modifier==ImGuiMod_Alt ? "Alt" : "Super";
-                if (ImGui::Checkbox(label,&enabled) && (b.chord & ~ImGuiMod_Mask_))
+                if (imkit::Checkbox(label,&enabled) && (b.chord & ~ImGuiMod_Mask_))
                     b.chord=enabled ? b.chord | modifier : b.chord & ~modifier;
             }
             const bool conflict=b.chord && std::any_of(s.bindings.begin(),s.bindings.begin()+s.bindingCount,[&](const auto &other){return &other!=&b && other.chord==b.chord;});
@@ -1626,7 +1627,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     float available = ImGui::GetContentRegionAvail().x;
     float side = (s.narrow ? 180 : s.videoSide) * ImGui::GetFontSize()/14;
     const bool compact=available<1000*ImGui::GetFontSize()/14;
-    if(compact) {ImGui::Checkbox(s.japanese?"素材":"Media",&s.showMedia);ImGui::SameLine();ImGui::Checkbox("Inspector",&s.showInspector);}
+    if(compact) {imkit::Checkbox(s.japanese?"素材":"Media",&s.showMedia);ImGui::SameLine();imkit::Checkbox("Inspector",&s.showInspector);}
     const bool mediaVisible=!compact || s.showMedia,inspectorVisible=!compact || s.showInspector;
     const float workspaceHeight=ImGui::GetContentRegionAvail().y;
     const float ratioScale=ImGui::GetIO().DisplaySize.y<900 ? .72f : 1.f;
@@ -1800,7 +1801,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     }
     Divider("video-divider",displayedRatio,workspaceHeight);
     s.videoTopRatio=displayedRatio/ratioScale;
-    ImGui::Checkbox(s.japanese ? "詳細パネル" : "Details",&s.showDetails);
+    imkit::Checkbox(s.japanese ? "詳細パネル" : "Details",&s.showDetails);
     ImGui::SameLine();ImGui::SetNextItemWidth(120);
     const auto selectedTrack=std::find_if(s.tracks.begin(),s.tracks.end(),[&](const auto &t){return t.id==s.placementTrack;});
     if(ImGui::BeginCombo("##destination",selectedTrack==s.tracks.end()?"Track":selectedTrack->label)) {
@@ -2120,7 +2121,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     float width = ImGui::GetContentRegionAvail().x, side = (s.narrow ? 180 : s.cgSide)*ImGui::GetFontSize()/14,
           top = ImGui::GetContentRegionAvail().y * s.cgTopRatio;
     const bool compact=width<1000*ImGui::GetFontSize()/14;
-    if(compact) {ImGui::Checkbox("Inspector",&s.showInspector);top=ImGui::GetContentRegionAvail().y*s.cgTopRatio;}
+    if(compact) {imkit::Checkbox("Inspector",&s.showInspector);top=ImGui::GetContentRegionAvail().y*s.cgTopRatio;}
     const bool inspectorVisible=!compact || s.showInspector;
     const float workspaceHeight=ImGui::GetContentRegionAvail().y;
     side=std::min(side,width*.28f);
@@ -2134,7 +2135,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     s.viewport.icons=s.icons;
     if(s.icons) {Icon(*s.icons,IconId::Monitor,{ImGui::GetFontSize()});ImGui::SameLine();}
     s.previewHelpers=true;
-    ImGui::Checkbox("OpenGL preview", &s.useGL);
+    imkit::Checkbox("OpenGL preview", &s.useGL);
     if (s.viewport.pivot==cg::Pivot::Cursor) {
         double cursor[]={s.cursorPivot.x,s.cursorPivot.y,s.cursorPivot.z};
         ImGui::BeginDisabled(s.viewport.drag.active);

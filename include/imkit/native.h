@@ -222,7 +222,6 @@ using ImGui::PushStyleVar;
 using ImGui::PushStyleVarX;
 using ImGui::PushStyleVarY;
 using ImGui::PushTextWrapPos;
-using ImGui::RadioButton;
 using ImGui::ResetMouseDragDelta;
 using ImGui::SameLine;
 using ImGui::Separator;

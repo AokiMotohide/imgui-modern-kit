@@ -68,6 +68,7 @@ struct GalleryState {
     double precise = .125;
     char name[128] = "Display / 表示", notes[512] = "Line one\n日本語の入力例", search[96] = "",
          validation[64] = "";
+    bool qualityOpen = true;
     bool treeOpen = false, tabOpen = true, modalVisible = false, popupVisible = false, notice = true;
     int selectedRow = 1, inlineActions = 0, tab = 0, callbackCount = 0;
     std::array<int, 3> rows = {24, 64, 96};

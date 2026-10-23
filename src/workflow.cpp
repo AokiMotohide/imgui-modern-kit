@@ -108,7 +108,7 @@ StableId GroupedStepNavigator(const char* id, std::span<const StepGroup> groups,
         const auto& first=items[group.first];
         const auto accent=Accent(group,o);
         const auto base=o.theme?o.theme->semantic.control.rest:ImGui::GetStyleColorVec4(ImGuiCol_Button);
-        const auto fill=Mix(base,accent,active?.34f:.13f);
+        const auto fill=Mix(base,accent,active?.18f:.07f);
         ImGui::SetCursorPos({x+cell*group.first,y});Push(group.id);
         ImGui::BeginDisabled(!first.id || first.disabled || !first.available);
         ImGui::PushStyleColor(ImGuiCol_Button,fill);
@@ -130,7 +130,7 @@ StableId GroupedStepNavigator(const char* id, std::span<const StepGroup> groups,
         for(const auto& group:groups) if(i>=group.first && i<group.first+group.count) {accent=Accent(group,o);break;}
         const bool currentStep=item.id==current;
         const auto base=o.theme?o.theme->semantic.control.rest:ImGui::GetStyleColorVec4(ImGuiCol_Button);
-        const auto fill=currentStep?Mix(base,accent,.32f):base;
+        const auto fill=currentStep?Mix(base,accent,.16f):base;
         ImGui::SetCursorPos({x+cell*i,y+h+ImGui::GetStyle().ItemSpacing.y});
         ImGui::BeginDisabled(!item.id || item.disabled || !item.available);
         ImGui::PushStyleColor(ImGuiCol_Button,fill);

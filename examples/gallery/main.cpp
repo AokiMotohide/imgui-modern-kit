@@ -1233,7 +1233,8 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
 }
 void VerifyTrackControls(Host &h,const std::filesystem::path &out) {
     using namespace imkit;
-    auto &s=h.s.editors;s.japanese=false;s.timeline.headerWidth=340;
+    // 420 px: seven icon buttons stay inline only while the header is wider than their padded width at 125% scale.
+    auto &s=h.s.editors;s.japanese=false;s.timeline.headerWidth=420;
     s.tracks.front().label="Picture / a long production track name / 映像トラックの長い名前";h.Page(8);
     std::ofstream log(out/"track-controls.txt");
     auto require=[&](bool ok,const char *label) {
@@ -2250,7 +2251,7 @@ int main(int argc, char **argv) {
             config.GlyphExcludeRanges = exclude;
             auto jp = assets / "NotoSansJP-Regular.otf";
             if (!std::filesystem::exists(jp) ||
-                !io.Fonts->AddFontFromFileTTF(jp.string().c_str(), 14, &config))
+                !io.Fonts->AddFontFromFileTTF(jp.string().c_str(), 15.4f, &config))
                 throw std::runtime_error("Japanese fallback missing");
             return font;
         };

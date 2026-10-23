@@ -31,7 +31,7 @@ void DesignPages::Show(int section,GalleryState& host) {
                 if(ImGui::Combo("Density",&density,densities,3)) SetDensity(theme,static_cast<Density>(density));
                 const char* contrasts[]={"Standard","High contrast"};
                 if(ImGui::Combo("Contrast",&contrast,contrasts,2)) { auto fonts=theme.fonts; theme=MakeTheme(theme.scheme,static_cast<ContrastMode>(contrast),static_cast<Density>(density)); theme.fonts=fonts; }
-                ImGui::Checkbox("Reduced motion",&theme.motion.reducedMotion);
+                imkit::Checkbox("Reduced motion",&theme.motion.reducedMotion);
                 ImGui::Text("Contrast: %s",ValidateContrast(theme)?"PASS (text 4.5:1 / controls 3:1)":"FAIL");
             }
             EndSection(tokens);
@@ -59,9 +59,25 @@ void DesignPages::Show(int section,GalleryState& host) {
                     const ImVec2 a{origin.x+i*unit*1.8f,origin.y},b{a.x+unit*1.5f,a.y+unit*1.2f};
                     draw->AddRectFilled(a,b,ImGui::GetColorU32(theme.semantic.surfaceRaised),tiers[i]);
                     draw->AddRect(a,b,ImGui::GetColorU32(ImGuiCol_Border),tiers[i]);
-                    draw->AddText({a.x+8,a.y+unit*.35f},ImGui::GetColorU32(ImGuiCol_Text),names[i]);
+                    const ImVec2 labelSize=ImGui::CalcTextSize(names[i]);
+                    draw->AddText({(a.x+b.x-labelSize.x)*.5f,(a.y+b.y-labelSize.y)*.5f},ImGui::GetColorU32(ImGuiCol_Text),names[i]);
                 }
-                ImGui::TextDisabled("Radius %.0f / %.0f / %.0f px  ·  shadow %.0f px",tiers[0],tiers[1],tiers[2],theme.elevation.overlay);
+                ImGui::TextDisabled("Radius %.0f / %.0f / %.0f px",tiers[0],tiers[1],tiers[2]);
+                ImGui::Spacing();
+                // An overlay surface next to a flat card: the shadow is what separates them.
+                ImGui::Dummy({0,theme.elevation.overlay*.5f});
+                ImGui::SetCursorPosX(ImGui::GetCursorPosX()+theme.elevation.overlay*.5f);
+                ImGui::PushStyleColor(ImGuiCol_ChildBg,theme.semantic.surfaceRaised);
+                ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,theme.radius.overlay);
+                if(ImGui::BeginChild("overlay-sample",{unit*4.f,unit*1.1f},ImGuiChildFlags_Borders)) {
+                    OverlayDecoration(theme,&host.animation);
+                    ImGui::TextUnformatted("Overlay surface");
+                    ImGui::TextDisabled("Shadow %.0f px",theme.elevation.overlay);
+                }
+                ImGui::EndChild();
+                ImGui::PopStyleVar();
+                ImGui::PopStyleColor();
+                ImGui::Dummy({0,theme.elevation.overlay*.5f});
             }
             EndSection(radii);
             EndGrid();
@@ -145,7 +161,7 @@ void DesignPages::Show(int section,GalleryState& host) {
         }
         const bool data=BeginSection(host,"Data table","100,000 host rows; only the visible range is queried");
         if(data) {
-            ImGui::Checkbox("Loading",&loading); ImGui::SameLine(); ImGui::Checkbox("Error",&error); ImGui::SameLine(); if(ImGui::Checkbox("Tree",&tree)) Reindex();
+            imkit::Checkbox("Loading",&loading); ImGui::SameLine(); imkit::Checkbox("Error",&error); ImGui::SameLine(); if(imkit::Checkbox("Tree",&tree)) Reindex();
             if(loading) LoadingState("Preparing records",options);
             else if(error) { if(ErrorState("The host could not load the records.",options)) error=false; }
             else {

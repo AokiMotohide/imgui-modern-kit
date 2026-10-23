@@ -21,6 +21,18 @@ void SelectionMark(bool selected, bool underline = false) {
         draw->AddRectFilled({a.x - 6, a.y + height * .22f}, {a.x - 3, b.y - height * .22f}, color, 1.5f);
     }
 }
+// Shrinks the frame height for check marks only, leaving inputs and buttons at the control height.
+struct CompactFrame {
+    CompactFrame() {
+        const auto &style = ImGui::GetStyle();
+        const float pad = std::max(1.f, ImGui::GetFontSize() * .225f);
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {style.FramePadding.x, pad});
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, std::min(style.FrameRounding, 6.f));
+    }
+    ~CompactFrame() { ImGui::PopStyleVar(2); }
+    CompactFrame(const CompactFrame &) = delete;
+    CompactFrame &operator=(const CompactFrame &) = delete;
+};
 } // namespace
 
 bool Button(const char *label, const ImVec2 &size) {
@@ -28,7 +40,18 @@ bool Button(const char *label, const ImVec2 &size) {
 }
 
 bool Checkbox(const char *label, bool *value) {
+    CompactFrame compact;
     return ImGui::Checkbox(label, value);
+}
+
+bool RadioButton(const char *label, bool active) {
+    CompactFrame compact;
+    return ImGui::RadioButton(label, active);
+}
+
+bool RadioButton(const char *label, int *value, int buttonValue) {
+    CompactFrame compact;
+    return ImGui::RadioButton(label, value, buttonValue);
 }
 
 bool SliderFloat(const char *label, float *value, float minimum, float maximum, const char *format,

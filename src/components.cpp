@@ -224,13 +224,16 @@ bool Toggle(const char *label, bool *value, ComponentOptions options) {
                                ImGuiCol_CheckMark,     ImGuiCol_Border};
     for (auto color : hidden)
         ImGui::PushStyleColor(color, ImVec4(0, 0, 0, 0));
+    // The hit square is 1.75 font heights: a switch needs less height than a 30 px control.
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {ImGui::GetStyle().FramePadding.x, ImGui::GetFontSize() * .375f});
     bool changed = ImGui::Checkbox(label, value);
+    ImGui::PopStyleVar();
     if(SemanticItem(options,label,accessibility::SemanticRole::Toggle,accessibility::SemanticAction::Toggle,*value)) {
         *value=!*value; changed=true;
     }
     ImGui::PopStyleColor(6);
     auto min = ImGui::GetItemRectMin();
-    float h = ImGui::GetFrameHeight(), round = h * .5f;
+    float h = ImGui::GetItemRectSize().y, round = h * .5f;
     auto &style = ImGui::GetStyle();
     float position = *value ? 1.f : 0.f;
     if (options.animation) {
@@ -259,13 +262,13 @@ bool Toggle(const char *label, bool *value, ComponentOptions options) {
 bool IndeterminateCheckbox(const char *label, CheckState *value) {
     bool checked = *value == CheckState::Checked;
     bool mixed = *value == CheckState::Mixed;
-    bool changed = ImGui::Checkbox(label, &checked);
+    bool changed = imkit::Checkbox(label, &checked);
     if (changed)
         *value = mixed ? CheckState::Checked : checked ? CheckState::Checked : CheckState::Unchecked;
     if (mixed && !changed) {
         auto p = ImGui::GetItemRectMin();
-        float h = ImGui::GetFrameHeight();
-        ImGui::GetWindowDrawList()->AddLine({p.x + h * .25f, p.y + h * .5f}, {p.x + h * .75f, p.y + h * .5f},
+        float h = ImGui::GetItemRectSize().y;
+        ImGui::GetWindowDrawList()->AddLine({p.x + h * .27f, p.y + h * .5f}, {p.x + h * .73f, p.y + h * .5f},
                                             ImGui::GetColorU32(ImGuiCol_CheckMark), 2);
     }
     return changed;
@@ -493,7 +496,7 @@ void StatusBadge(const char *text, StatusKind kind, const Theme *theme) {
                              ImGui::GetColorU32(color));
     else
         d->AddCircleFilled(m, u * .8f, ImGui::GetColorU32(color));
-    d->AddText({m.x + u * 1.6f, p.y + 4}, ImGui::GetColorU32(color), text);
+    d->AddText({m.x + u * 1.6f, p.y + (size.y - ImGui::GetTextLineHeight()) * .5f}, ImGui::GetColorU32(color), text);
 }
 CompactActionRowRequest CompactActionRow(const char *id,
                                          const CompactActionRowOptions &options) {
@@ -571,7 +574,8 @@ bool NotificationCard(const Notification &n, double now, const Theme *t) {
     d->AddRectFilled(origin, {origin.x + width, origin.y + height}, ImGui::GetColorU32(detail::WithAlpha(color, .10f)),
                      style.FrameRounding);
     d->AddRectFilled({origin.x + 5, origin.y + 8}, {origin.x + 8, origin.y + height - 8}, ImGui::GetColorU32(color), 1.5f);
-    d->AddText(ImGui::GetFont(), ImGui::GetFontSize(), {origin.x + pad + 6, origin.y + style.FramePadding.y},
+    const float textHeight = ImGui::CalcTextSize(n.text, nullptr, false, textWidth).y;
+    d->AddText(ImGui::GetFont(), ImGui::GetFontSize(), {origin.x + pad + 6, origin.y + (height - textHeight) * .5f},
                ImGui::GetColorU32(ImGuiCol_Text), n.text, nullptr, textWidth);
     ImGui::Dummy({width, height});
     ImGui::SetCursorScreenPos({origin.x + width - close - 4, origin.y + (height - close) * .5f});
@@ -589,13 +593,15 @@ bool NotificationCard(const Notification &n, double now, const Theme *t) {
 }
 bool BeginToolbar(const char *id, const ImVec2 &size) {
     ImVec2 actual = size;
+    const float padding = ImGui::GetStyle().ItemSpacing.y + 2.f;
     if (actual.y == 0)
-        actual.y = ImGui::GetFrameHeight() + 2 * ImGui::GetStyle().WindowPadding.y;
+        actual.y = ImGui::GetFrameHeight() + 2 * padding;
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetStyleColorVec4(ImGuiCol_Button));
     ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, ImGui::GetStyle().FrameRounding + 2.f);
-    const bool visible = ImGui::BeginChild(id, actual, ImGuiChildFlags_Borders,
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {ImGui::GetStyle().WindowPadding.x, padding});
+    const bool visible = ImGui::BeginChild(id, actual, ImGuiChildFlags_Borders | ImGuiChildFlags_AlwaysUseWindowPadding,
                                            ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-    ImGui::PopStyleVar();
+    ImGui::PopStyleVar(2);
     ImGui::PopStyleColor();
     return visible;
 }

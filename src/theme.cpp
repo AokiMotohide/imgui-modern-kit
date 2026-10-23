@@ -38,7 +38,7 @@ ImGuiStyle Style(const Theme &t, float scale) {
     s.IndentSpacing = 18;
     s.ScrollbarSize = 10;
     s.GrabMinSize = 14;
-    s.TabRounding = t.radius.control;
+    s.TabRounding = t.radius.control + 2;
     s.TabBorderSize = 0;
     s.TabBarBorderSize = 1;
     s.TabBarOverlineSize = 0;
@@ -73,7 +73,7 @@ ImGuiStyle Style(const Theme &t, float scale) {
     c[ImGuiCol_TitleBg] = p.surface;
     c[ImGuiCol_TitleBgActive] = p.raised;
     c[ImGuiCol_TitleBgCollapsed] = p.surface;
-    c[ImGuiCol_MenuBarBg] = p.surface;
+    c[ImGuiCol_MenuBarBg] = Alpha(p.text, .04f);
     c[ImGuiCol_ScrollbarBg] = {0, 0, 0, 0};
     c[ImGuiCol_ScrollbarGrab] = highContrast ? p.border : Alpha(p.muted, .38f);
     c[ImGuiCol_ScrollbarGrabHovered] = highContrast ? p.muted : Alpha(p.muted, .62f);
@@ -97,8 +97,8 @@ ImGuiStyle Style(const Theme &t, float scale) {
     c[ImGuiCol_ResizeGripHovered] = p.focus;
     c[ImGuiCol_ResizeGripActive] = p.accent;
     c[ImGuiCol_InputTextCursor] = p.focus;
-    c[ImGuiCol_Tab] = p.surface;
-    c[ImGuiCol_TabHovered] = p.selection;
+    c[ImGuiCol_Tab] = {0, 0, 0, 0};
+    c[ImGuiCol_TabHovered] = Alpha(p.text, .07f);
     c[ImGuiCol_TabSelected] = p.raised;
     c[ImGuiCol_TabSelectedOverline] = p.accent;
     c[ImGuiCol_TabDimmed] = p.surface;

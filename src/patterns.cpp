@@ -563,7 +563,9 @@ void DataTable(const char* id,DataTableState& s,const DataProvider& p,std::span<
                             ImGui::SetKeyboardFocusHere(); ImGui::SetScrollHereY(); s.focusPending=false;
                         }
                         char label[1024]; std::snprintf(label,sizeof(label),"%s###cell",text);
+                        ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign,{0,.5f}); // Centre cell text in the row.
                         bool hit=ImGui::Selectable(label,selected,ImGuiSelectableFlags_AllowDoubleClick,{0,ImGui::GetFrameHeight()});
+                        ImGui::PopStyleVar();
                         bool focused=ImGui::IsItemFocused();
                         if(hit || focused) { s.focusedRow=row; s.focusedColumn=c; }
                         if(hit) { auto& io=ImGui::GetIO(); if(!io.KeyShift) s.anchor=row;

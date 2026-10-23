@@ -554,7 +554,7 @@ void Hierarchy(GalleryState &s) {
                 TreeNodeEx("Display", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen);
                 TreePop();
             }
-            if (CollapsingHeader("Quality options", ImGuiTreeNodeFlags_DefaultOpen))
+            if (SectionHeader("quality-options", "Quality options", s.qualityOpen, {&s.theme, &s.animation}))
                 Checkbox("Enabled in hierarchy", &s.checked);
             if (BeginTabBar("Tabs", ImGuiTabBarFlags_Reorderable)) {
                 if (BeginTabItem("Display")) {
@@ -740,8 +740,26 @@ void Overlay(GalleryState &s) {
         }
         EndSection(scroll);
         const bool dock = BeginSection(s, "Docking surface", "The host owns the layout");
-        if (dock)
-            DockSpace(GetID("CatalogDock"), {0, 180 * s.scale}, ImGuiDockNodeFlags_None);
+        if (dock) {
+            const ImVec2 origin = GetCursorScreenPos();
+            const ImVec2 extent{GetContentRegionAvail().x, 180 * s.scale};
+            DockSpace(GetID("CatalogDock"), {0, extent.y}, ImGuiDockNodeFlags_None);
+            // A dashed outline marks the region the host hands to its docking layout.
+            auto *draw = GetWindowDrawList();
+            const ImU32 dash = GetColorU32(ImGuiCol_TextDisabled);
+            const ImVec2 corner{origin.x + extent.x, origin.y + extent.y};
+            for (float x = origin.x; x < corner.x; x += 12.f) {
+                draw->AddLine({x, origin.y}, {std::min(x + 6.f, corner.x), origin.y}, dash, 1.f);
+                draw->AddLine({x, corner.y}, {std::min(x + 6.f, corner.x), corner.y}, dash, 1.f);
+            }
+            for (float y = origin.y; y < corner.y; y += 12.f) {
+                draw->AddLine({origin.x, y}, {origin.x, std::min(y + 6.f, corner.y)}, dash, 1.f);
+                draw->AddLine({corner.x, y}, {corner.x, std::min(y + 6.f, corner.y)}, dash, 1.f);
+            }
+            const char *label = "Dock host area";
+            const ImVec2 labelSize = CalcTextSize(label);
+            draw->AddText({origin.x + (extent.x - labelSize.x) * .5f, origin.y + (extent.y - labelSize.y) * .5f}, dash, label);
+        }
         EndSection(dock);
         EndGrid();
     }
@@ -830,15 +848,16 @@ void FrameLab(GalleryState& s) {
         }
         EndSection(featureCard);
         const bool colorCard=BeginSection(s,"Colors","Alpha is editable");
-        if(colorCard) for(auto& entry:colors) ColorEdit4(entry.name,&entry.value->x);
+        if(colorCard) for(auto& entry:colors) ColorEdit4(entry.name,&entry.value->x,ImGuiColorEditFlags_NoInputs|ImGuiColorEditFlags_AlphaBar);
         EndSection(colorCard);
         const bool codeCard=BeginSection(s,"Contrast and code","Validated against the active theme");
         if(codeCard) {
             const auto contrast=ValidateWindowFrameContrast(s.frameStyle);
-            TextColored(contrast.valid?s.theme.colors.success:s.theme.colors.warning,
-                        "%s (title %.2f, inactive %.2f, auxiliary %.2f, icon %.2f, buttons %.2f, close %.2f)",
+            PushStyleColor(ImGuiCol_Text,contrast.valid?s.theme.colors.success:s.theme.colors.warning);
+            TextWrapped("%s (title %.2f, inactive %.2f, auxiliary %.2f, icon %.2f, buttons %.2f, close %.2f)",
                         contrast.valid?"PASS":"WARNING: one or more colors are below the threshold",
                         contrast.activeTitle,contrast.inactiveTitle,contrast.auxiliary,contrast.icon,contrast.button,contrast.closeButton);
+            PopStyleColor();
             std::ostringstream code;
             code<<std::fixed<<std::setprecision(3);
             code<<"auto style = imkit::MakeWindowFrameStyle(imkit::WindowFramePreset::"<<presets[preset]<<", theme);\n";
@@ -977,9 +996,10 @@ void Show(GalleryState &s) {
         Spacing();
         if(wide) {
             BeginChild("categories",{192*s.scale*std::max(1.f,ImGui::GetStyle().FontScaleDpi),0},ImGuiChildFlags_Borders);
-            const char* groups[]={"GET STARTED","CONTROLS","WORKSPACES","REFERENCE"};
+            const char* groups[]={"Get started","Controls","Workspaces","Reference"};
             for(int g=0;g<4;++g) {
-                SeparatorText(groups[g]);
+                if(g) Spacing();
+                TextDisabled("%s",groups[g]);
                 for(int i=0;i<static_cast<int>(std::size(pageIds));++i) {
                     const int id=pageIds[i];
                     const int category=(id==19||id==21||id==22)?0:(id<=6||id==16||id==20||id==23)?1:(id==7||id==8||id==9||id==15||id==17)?2:3;
