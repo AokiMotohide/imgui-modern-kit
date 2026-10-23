@@ -380,14 +380,14 @@ void Verify(Host &h, const std::filesystem::path &out) {
             throw std::runtime_error(name);
     };
     h.Page(19);
-    h.Click("start-Open components");
+    h.Click("start-components");
     check(h.s.page == 0, ("Start route: components (page " + std::to_string(h.s.page) + ")").c_str());
     h.Page(19);
-    h.Click("start-Open themes and icons");
+    h.Click("start-Explore icons");
     check(h.s.page == 6, "Start route: visual system");
     h.Page(19);
-    h.Click("start-Open workflow");
-    check(h.s.page == 15, "Start route: workflow");
+    h.Click("start-circular-progress");
+    check(h.s.page == 16, "Start route: feedback and progress");
     h.Page(19);
     h.Click("start-Open timeline");
     check(h.s.page == 8, "Start route: timeline");
@@ -2401,6 +2401,10 @@ int main(int argc, char **argv) {
                 auto check=[&](bool ok,const char* text){log<<(ok?"PASS ":"FAIL ")<<text<<'\n';if(!ok)throw std::runtime_error(text);};
                 h.Page(15);h.s.workflow.notice=false;h.Settle();
                 bool before=h.s.workflow.chip;h.Click("workflow-chip");check(h.s.workflow.chip!=before,"filter chip click");
+                // The workspace page is taller than the window; scroll until the canvas centre is on screen.
+                for(int i=0;i<12&&h.s.probes.at("workflow-canvas").Center().y>ImGui::GetIO().DisplaySize.y-160;++i) {
+                    h.mouse={620,500};h.Frame([](auto& io){io.AddMouseWheelEvent(0,-3);});h.Settle();
+                }
                 auto bounds=h.s.probes.at("workflow-canvas");h.mouse=bounds.Center();h.Frame();
                 auto scale=h.s.workflow.image.canvas.scale.x;
                 h.Frame([](auto& io){io.AddMouseWheelEvent(0,1);});h.Settle();

@@ -1,4 +1,4 @@
-#include "gallery.h"
+﻿#include "gallery.h"
 #include "node_launcher.h"
 #include <algorithm>
 #include <cstdio>
@@ -693,6 +693,25 @@ void Overlay(GalleryState &s) {
                 TextUnformatted("A raised, compact tooltip.");
                 EndTooltip();
             }
+        // The modal must live in the same ID scope as the OpenPopup call above.
+        bool modalOpen = true;
+        s.modalVisible = BeginPopupModal("Apply settings?", &modalOpen, ImGuiWindowFlags_AlwaysAutoResize);
+        if (s.modalVisible) {
+            OverlayDecoration(s.theme, &s.animation);
+            TextUnformatted("Apply the current display settings?");
+            const char *values[] = {"Low", "Medium", "High"};
+            Combo("Quality##modal", &s.combo, values, 3);
+            Record(s, "modal-combo");
+            if (ActionButton("Apply##modal", ActionVariant::Primary, {}, {&s.theme})) {
+                ++s.clicks;
+                CloseCurrentPopup();
+            }
+            SameLine();
+            if (Button("Cancel") || IsKeyPressed(ImGuiKey_Escape))
+                CloseCurrentPopup();
+            Record(s, "cancel");
+            EndPopup();
+        }
         }
         EndSection(popups);
         const bool toolbar = BeginSection(s, "Toolbar and settings row", "Compact chrome around related controls");
@@ -725,24 +744,6 @@ void Overlay(GalleryState &s) {
             DockSpace(GetID("CatalogDock"), {0, 180 * s.scale}, ImGuiDockNodeFlags_None);
         EndSection(dock);
         EndGrid();
-    }
-    bool modalOpen = true;
-    s.modalVisible = BeginPopupModal("Apply settings?", &modalOpen, ImGuiWindowFlags_AlwaysAutoResize);
-    if (s.modalVisible) {
-        OverlayDecoration(s.theme, &s.animation);
-        TextUnformatted("Apply the current display settings?");
-        const char *values[] = {"Low", "Medium", "High"};
-        Combo("Quality##modal", &s.combo, values, 3);
-        Record(s, "modal-combo");
-        if (ActionButton("Apply##modal", ActionVariant::Primary, {}, {&s.theme})) {
-            ++s.clicks;
-            CloseCurrentPopup();
-        }
-        SameLine();
-        if (Button("Cancel") || IsKeyPressed(ImGuiKey_Escape))
-            CloseCurrentPopup();
-        Record(s, "cancel");
-        EndPopup();
     }
 }
 void Composites(GalleryState &s) {
