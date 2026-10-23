@@ -4,6 +4,15 @@
 
 namespace imkit {
 using StableId=accessibility::StableId;
+
+enum class ProgressStatus { Queued, Running, Paused, Succeeded, Failed, Cancelled };
+struct ProgressTrackView {
+    float fraction=-1; // Negative or nonfinite values are indeterminate.
+    ProgressStatus status=ProgressStatus::Running;
+    const char* label="";
+    const char* supplemental="";
+    const char* valueText=""; // Optional host-formatted value; otherwise a percentage is shown when determinate.
+};
 struct Command { StableId id; const char* label; const char* shortcut=""; bool disabled=false; const char* disabledReason=""; };
 struct CommandPaletteState { bool open=false; char search[256]{}; int focused=0; };
 // Returns the stable command ID to execute, or zero. Host applies the command.
@@ -27,6 +36,10 @@ StableId Menu(const char* id, std::span<const Command> commands, ComponentOption
 struct FormFieldInfo { const char* label; const char* hint=""; const char* validation=""; bool required=false; };
 bool BeginFormField(const char* id, const FormFieldInfo& field, ComponentOptions options={});
 void EndFormField();
+void ProgressTrack(const char* id, float fraction,
+                   ProgressStatus status=ProgressStatus::Running, ComponentOptions options={});
+// Draws the shared track with its label, status, value and supplemental text.
+void ProgressTrack(const char* id, const ProgressTrackView& view, ComponentOptions options={});
 void Progress(const char* id, float fraction, const char* label, ComponentOptions options={}); // negative = indeterminate
 void Spinner(const char* id, ComponentOptions options={});
 void Skeleton(const char* id, ImVec2 size, ComponentOptions options={});

@@ -20,13 +20,18 @@ void ToastPage::Show(GalleryState& host) {
     auto add=[&](FeedbackKind kind,bool loading=false) {
         ToastView v;v.id=++nextId;v.kind=kind;v.duration=duration;
         v.phase=loading?ToastPhase::Loading:ToastPhase::Message;
-        if(loading) {v.title=japanese?"ファイルを読み込んでいます":"Loading files";v.action=japanese?"キャンセル":"Cancel";}
+        if(loading) {
+            v.title=japanese?"ファイルを読み込んでいます":"Loading files";
+            v.action=japanese?"詳細を表示":"View details";
+            v.stage=japanese?"内容を確認しています":"Inspecting contents";
+            v.status=ProgressStatus::Running;v.progress=indeterminate?-1:progress;
+        }
         else if(kind==FeedbackKind::Success) v.title=japanese?"読み込みが完了しました":"Files loaded successfully";
         else if(kind==FeedbackKind::Warning) {v.title=japanese?"設定を確認してください":"Review your settings";v.action=japanese?"設定を開く":"Open settings";}
         else if(kind==FeedbackKind::Error) {v.title=japanese?"保存できませんでした":"Unable to save";v.action=japanese?"再試行":"Retry";}
         else v.title=japanese?"情報を更新しました":"Information updated";
         v.description=japanese?"通知の内容と操作はホストが管理します。":"The host owns content and applies every action request.";
-        v.progress=indeterminate?-1:progress;items.push_back(v);
+        items.push_back(v);
     };
     if(!initialized) {add(FeedbackKind::Success);add(FeedbackKind::Warning);add(FeedbackKind::Error);add(FeedbackKind::Info,true);initialized=true;}
     if(ImGui::Button(japanese?"成功":"Success")) add(FeedbackKind::Success);Record(host,"toast-success");
@@ -35,9 +40,21 @@ void ToastPage::Show(GalleryState& host) {
     ImGui::SameLine();if(ImGui::Button(japanese?"エラー":"Error")) add(FeedbackKind::Error);
     if(ImGui::Button(japanese?"処理中":"Loading")) add(FeedbackKind::Info,true);Record(host,"toast-loading");
     ImGui::SameLine();if(ImGui::Button(japanese?"完了":"Complete loading")) {
-        for(auto& v:items) if(v.phase==ToastPhase::Loading) {v.phase=ToastPhase::Message;v.kind=FeedbackKind::Success;v.title=japanese?"読み込みが完了しました":"Loading complete";v.action="";}
+        for(auto& v:items) if(v.phase==ToastPhase::Loading) {
+            v.phase=ToastPhase::Message;v.kind=FeedbackKind::Success;
+            v.title=japanese?"読み込みが完了しました":"Loading complete";
+            v.stage=japanese?"完了":"Complete";v.status=ProgressStatus::Succeeded;v.progress=1.f;v.action="";
+        }
     }
     Record(host,"toast-complete");
+    ImGui::SameLine();if(ImGui::Button(japanese?"失敗に更新":"Fail loading")) {
+        for(auto& v:items) if(v.phase==ToastPhase::Loading) {
+            v.phase=ToastPhase::Message;v.kind=FeedbackKind::Error;
+            v.title=japanese?"読み込みに失敗しました":"Loading failed";
+            v.stage=japanese?"入力を確認してください":"Check the source";
+            v.status=ProgressStatus::Failed;v.action=japanese?"詳しく見る":"View details";
+        }
+    }
     if(ImGui::Button(japanese?"8件追加":"Queue 8")) for(int i=0;i<8;++i) add(FeedbackKind::Success);
     ImGui::SameLine();if(ImGui::Button(japanese?"すべて閉じる":"Clear")) {items.clear();state.Reset();}
     for(auto& v:items) if(v.phase==ToastPhase::Loading) v.progress=indeterminate?-1:progress;

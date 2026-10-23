@@ -1,5 +1,7 @@
 # Public API coverage
 
+
+[3.3 additions: progress tracks, stages and task cards](v3.3-api.md)
 [日本語](公開API一覧.md) · [English](api-coverage.md)
 
 ImKit-owned window-frame values and optional platform adapters are inventoried separately in [window-frame-api-inventory.json](window-frame-api-inventory.json) and compiled by `tests/window_frame_api_compile.cpp`.

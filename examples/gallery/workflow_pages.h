@@ -28,6 +28,8 @@ struct WorkflowPages {
     bool notice=false,open=true,advanced=false,chip=false,vertical=false,japanese=false,disabled=false,lasso=false;
     int actions=0,toastPriority=1;
     float fraction=.4f;
+    float taskFraction=.28f;
+    int taskUpdates=0;
     float position[3]{};
     double expiresAt=0;
     std::array<bool,3> visible{{true,true,true}}, locked{};

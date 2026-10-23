@@ -1,4 +1,5 @@
 #include <imkit/workflow.h>
+#include "progress_internal.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -19,6 +20,16 @@ ImVec4 Color(FeedbackKind kind,ComponentOptions o) {
         }
     }
     return ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
+}
+ImVec4 ProgressStatusColor(ProgressStatus status,ComponentOptions o) {
+    switch(status) {
+    case ProgressStatus::Succeeded:return Color(FeedbackKind::Success,o);
+    case ProgressStatus::Failed:return Color(FeedbackKind::Error,o);
+    case ProgressStatus::Paused:return Color(FeedbackKind::Warning,o);
+    case ProgressStatus::Cancelled:return o.theme?o.theme->semantic.textDisabled:ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);
+    case ProgressStatus::Queued:return o.theme?o.theme->semantic.textSecondary:ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);
+    default:return Color(FeedbackKind::Info,o);
+    }
 }
 ImVec4 Mix(ImVec4 a,ImVec4 b,float t) {
     return {a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,a.z+(b.z-a.z)*t,a.w+(b.w-a.w)*t};
@@ -682,6 +693,173 @@ bool Progress(const char* id,const ProgressView& view,ProgressPresentation prese
         if(modal) ImGui::PopItemWidth();
     }
     if(modal && visible) ImGui::EndPopup();if(child) ImGui::EndChild();ImGui::PopID();return cancel;
+}
+void StageProgress(const char* id,const StageProgressView& view,ComponentOptions o) {
+    const auto stages=view.stages;
+    if(stages.empty()) return;
+    int current=-1;
+    for(std::size_t i=0;i<stages.size();++i) if(view.current&&stages[i].id==view.current){current=static_cast<int>(i);break;}
+    if(current<0) for(std::size_t i=0;i<stages.size();++i)
+        if(stages[i].status==ProgressStatus::Running||stages[i].status==ProgressStatus::Paused){current=static_cast<int>(i);break;}
+    if(current<0) for(std::size_t i=0;i<stages.size();++i)
+        if(stages[i].status!=ProgressStatus::Succeeded){current=static_cast<int>(i);break;}
+    if(current<0) current=static_cast<int>(stages.size()-1);
+    ImGui::PushID(id);ImGui::BeginGroup();
+    const float width=std::max(1.f,ImGui::GetContentRegionAvail().x);
+    const bool compact=stages.size()>8||width<ImGui::GetFontSize()*5.5f*static_cast<float>(stages.size());
+    if(compact) {
+        const auto& stage=stages[static_cast<std::size_t>(current)];
+        ImGui::PushStyleColor(ImGuiCol_Text,ProgressStatusColor(stage.status,o));
+        ImGui::TextWrapped("%s",Safe(stage.label));ImGui::PopStyleColor();
+        if(o.accessibility) {
+            accessibility::SemanticNode node;node.id=stage.id?stage.id:ImGui::GetItemID();
+            node.parent=o.parent;node.name=Safe(stage.label);node.role=accessibility::SemanticRole::Status;
+            node.state.selected=true;node.state.busy=stage.status==ProgressStatus::Running;
+            node.state.invalid=stage.status==ProgressStatus::Failed;
+            accessibility::AnnotateLastItem(*o.accessibility,node);
+        }
+        ImGui::TextDisabled("%d / %zu",current+1,stages.size());
+    } else {
+        const ImVec2 origin=ImGui::GetCursorScreenPos();
+        const float markerHeight=std::max(12.f,ImGui::GetFrameHeight()*.75f);
+        ImGui::Dummy({width,markerHeight});
+        auto* draw=ImGui::GetWindowDrawList();
+        const float step=width/static_cast<float>(stages.size());
+        const float radius=std::min(markerHeight*.28f,ImGui::GetFontSize()*.32f);
+        const float centerY=origin.y+markerHeight*.5f;
+        const ImVec4 connector=o.theme?o.theme->semantic.border:ImGui::GetStyleColorVec4(ImGuiCol_Border);
+        for(std::size_t i=0;i+1<stages.size();++i) {
+            const float x1=origin.x+step*(static_cast<float>(i)+.5f)+radius;
+            const float x2=origin.x+step*(static_cast<float>(i)+1.5f)-radius;
+            const ImVec4 line=stages[i].status==ProgressStatus::Succeeded?ProgressStatusColor(stages[i].status,o):connector;
+            draw->AddLine({x1,centerY},{x2,centerY},ImGui::GetColorU32(line),2.f);
+        }
+        for(std::size_t i=0;i<stages.size();++i) {
+            const auto& stage=stages[i];const float x=origin.x+step*(static_cast<float>(i)+.5f);
+            const ImVec4 color=ProgressStatusColor(stage.status,o);
+            if(stage.status==ProgressStatus::Queued) draw->AddCircle({x,centerY},radius,ImGui::GetColorU32(color),20,2.f);
+            else draw->AddCircleFilled({x,centerY},radius,ImGui::GetColorU32(color),20);
+            if(static_cast<int>(i)==current) draw->AddCircle({x,centerY},radius+3.f,ImGui::GetColorU32(color),20,1.5f);
+        }
+        if(ImGui::BeginTable("stage-labels",static_cast<int>(stages.size()),ImGuiTableFlags_SizingStretchSame)) {
+            for(std::size_t i=0;i<stages.size();++i) {
+                ImGui::TableNextColumn();
+                const auto& stage=stages[i];
+                ImGui::PushStyleColor(ImGuiCol_Text,ProgressStatusColor(stage.status,o));
+                ImGui::TextWrapped("%s",Safe(stage.label));
+                ImGui::PopStyleColor();
+                if(o.accessibility) {
+                    accessibility::SemanticNode node;node.id=stage.id?stage.id:ImGui::GetItemID();
+                    node.parent=o.parent;node.name=Safe(stage.label);node.role=accessibility::SemanticRole::Status;
+                    node.state.selected=static_cast<int>(i)==current;
+                    node.state.busy=stage.status==ProgressStatus::Running;
+                    node.state.invalid=stage.status==ProgressStatus::Failed;
+                    accessibility::AnnotateLastItem(*o.accessibility,node);
+                }
+            }
+            ImGui::EndTable();
+        }
+    }
+    ImGui::EndGroup();ImGui::PopID();
+}
+StableId TaskProgressCard(const char* id,const TaskProgressCardView& view,TaskProgressCardOptions layout,ComponentOptions o) {
+    const auto& style=ImGui::GetStyle();
+    const float width=std::max(1.f,ImGui::GetContentRegionAvail().x);
+    const float innerWidth=std::max(1.f,width-style.WindowPadding.x*2.f-style.ChildBorderSize*2.f);
+    const float titleWidth=std::max(1.f,innerWidth-ImGui::GetFrameHeight()*.55f-style.ItemSpacing.x);
+    float contentHeight=0.f;
+    const auto addTextHeight=[&](const char* text,float textWidth) {
+        if(*Safe(text)) {
+            if(contentHeight>0.f) contentHeight+=style.ItemSpacing.y;
+            contentHeight+=ImGui::CalcTextSize(text,nullptr,false,textWidth).y;
+        }
+    };
+    addTextHeight(view.title,titleWidth);
+    if(!layout.compact) addTextHeight(view.description,innerWidth);
+    ProgressTrackView progress;progress.fraction=view.fraction;progress.status=view.status;
+    progress.label=view.stage;progress.supplemental=view.supplemental;
+    if(contentHeight>0.f) contentHeight+=style.ItemSpacing.y;
+    contentHeight+=detail::ProgressTrackContentHeight(progress,innerWidth,o);
+    const bool available=std::isfinite(view.fraction)&&view.fraction>=0.f;
+    int operationRows=0;float rowWidth=0.f;
+    for(const auto& command:view.operations) {
+        if(!command.id||!*Safe(command.label)) continue;
+        const float buttonWidth=std::min(innerWidth,ImGui::CalcTextSize(Safe(command.label)).x+style.FramePadding.x*2.f);
+        if(rowWidth>0.f&&rowWidth+style.ItemSpacing.x+buttonWidth>innerWidth) {++operationRows;rowWidth=0.f;}
+        if(rowWidth>0.f) rowWidth+=style.ItemSpacing.x;
+        rowWidth+=buttonWidth;
+    }
+    if(rowWidth>0.f) ++operationRows;
+    if(operationRows) contentHeight+=style.ItemSpacing.y+operationRows*ImGui::GetFrameHeight();
+    const float cardHeight=std::max(ImGui::GetFrameHeight()*2.f,contentHeight+style.WindowPadding.y*2.f+style.ChildBorderSize*2.f);
+    ImGui::PushID(id);if(view.id) Push(view.id);
+    const StableId taskNodeId=view.id?view.id:ImGui::GetID("task-root");
+    StableId requested=0;
+    const bool visible=BeginCard("card",{0,cardHeight},o);
+    if(visible) {
+        const ImVec2 cardMinimum=ImGui::GetWindowPos();
+        const ImVec2 cardMaximum{cardMinimum.x+ImGui::GetWindowSize().x,cardMinimum.y+ImGui::GetWindowSize().y};
+        ImGui::BeginGroup();
+        const float marker=std::max(4.f,ImGui::GetFrameHeight()*.28f);
+        const ImVec2 markerPosition=ImGui::GetCursorScreenPos();
+        ImGui::Dummy({marker,ImGui::GetFontSize()});
+        ImGui::GetWindowDrawList()->AddCircleFilled({markerPosition.x+marker*.5f,markerPosition.y+ImGui::GetFontSize()*.5f},
+                                                    marker*.5f,ImGui::GetColorU32(ProgressStatusColor(view.status,o)),16);
+        ImGui::SameLine();
+        ImGui::TextWrapped("%s",Safe(view.title));
+        if(!layout.compact&&*Safe(view.description)) ImGui::TextWrapped("%s",view.description);
+        auto progressOptions=o;progressOptions.parent=taskNodeId;
+        ProgressTrack("progress",progress,progressOptions);
+        if(operationRows) {
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,layout.compact?ImVec2(4.f,2.f):style.FramePadding);
+            float used=0.f;
+            for(const auto& command:view.operations) {
+                if(!command.id||!*Safe(command.label)) continue;
+                const float buttonWidth=std::min(innerWidth,ImGui::CalcTextSize(Safe(command.label)).x+ImGui::GetStyle().FramePadding.x*2.f);
+                if(used>0.f&&used+style.ItemSpacing.x+buttonWidth>innerWidth) used=0.f;
+                else if(used>0.f) {ImGui::SameLine();used+=style.ItemSpacing.x;}
+                Push(command.id);
+                ImGui::BeginDisabled(command.disabled);
+                const ImVec2 buttonSize{buttonWidth,0};
+                const bool hit=ImGui::Button("###task-action",buttonSize);
+                const ImVec2 minimum=ImGui::GetItemRectMin(),maximum=ImGui::GetItemRectMax();
+                const ImVec2 textPosition{minimum.x+ImGui::GetStyle().FramePadding.x,minimum.y+ImGui::GetStyle().FramePadding.y};
+                const ImVec2 clipMinimum{minimum.x+ImGui::GetStyle().FramePadding.x,minimum.y};
+                const ImVec2 clipMaximum{std::max(clipMinimum.x,maximum.x-ImGui::GetStyle().FramePadding.x),maximum.y};
+                auto* draw=ImGui::GetWindowDrawList();
+                draw->PushClipRect(clipMinimum,clipMaximum,true);
+                draw->AddText(textPosition,ImGui::GetColorU32(command.disabled?ImGuiCol_TextDisabled:ImGuiCol_Text),Safe(command.label));
+                draw->PopClipRect();
+                if(command.disabled&&ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)&&*Safe(command.disabledReason))
+                    ImGui::SetTooltip("%s",command.disabledReason);
+                if(hit&&!command.disabled) requested=command.id;
+                if(o.accessibility) {
+                    accessibility::SemanticNode node;node.id=ImGui::GetItemID();node.parent=taskNodeId;
+                    node.name=Safe(command.label);node.description=command.disabled?Safe(command.disabledReason):Safe(command.shortcut);
+                    node.role=accessibility::SemanticRole::Button;node.actions=accessibility::SemanticAction::Press;
+                    node.state.disabled=command.disabled;
+                    if(!command.disabled&&o.accessibility->Take(node.id,accessibility::SemanticAction::Press)) requested=command.id;
+                    accessibility::AnnotateLastItem(*o.accessibility,node);
+                }
+                ImGui::EndDisabled();Pop();
+                used+=buttonWidth;
+            }
+            ImGui::PopStyleVar();
+        }
+        if(o.accessibility) {
+            accessibility::SemanticNode node;node.id=taskNodeId;node.parent=o.parent;
+            node.name=Safe(view.title);node.description=Safe(view.description);node.value=Safe(view.stage);
+            node.role=accessibility::SemanticRole::Group;
+            node.state.busy=view.status==ProgressStatus::Running;
+            node.state.invalid=view.status==ProgressStatus::Failed;
+            if(available){node.numericValue=std::clamp(view.fraction,0.f,1.f);node.minimumValue=0;node.maximumValue=1;}
+            node.minimum=cardMinimum;node.maximum=cardMaximum;
+            o.accessibility->Add(node);
+        }
+        ImGui::EndGroup();
+    }
+    EndCard();if(view.id) Pop();ImGui::PopID();
+    return requested;
 }
 bool BeginCard(const char* id,ImVec2 size,ComponentOptions o) {
     ImGui::PushStyleColor(ImGuiCol_ChildBg,o.theme?o.theme->semantic.surfaceRaised:ImGui::GetStyleColorVec4(ImGuiCol_FrameBg));

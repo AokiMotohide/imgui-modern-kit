@@ -29,6 +29,7 @@ class PageParser(HTMLParser):
         self.current_code: list[str] | None = None
         self.code_blocks: list[str] = []
         self.feature_cards = 0
+        self.capture_players: list[dict[str, str]] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         values = {key: value or "" for key, value in attrs}
@@ -44,6 +45,11 @@ class PageParser(HTMLParser):
             self.links.append(("href", values["href"]))
         if tag in {"img", "script", "link", "source", "video"}:
             for attr in ("src", "href", "poster"):
+                if values.get(attr):
+                    self.links.append((attr, values[attr]))
+        if tag == "figure" and "data-capture-player" in values:
+            self.capture_players.append(values)
+            for attr in ("data-source", "data-poster"):
                 if values.get(attr):
                     self.links.append((attr, values[attr]))
         if tag == "img":
@@ -110,6 +116,11 @@ def main() -> None:
             errors.append(f"{relative}: expected lang=ja, found {parser.lang!r}")
         if parser.main_count != 1:
             errors.append(f"{relative}: expected one main landmark, found {parser.main_count}")
+        for player in parser.capture_players:
+            for attr in ("data-source", "data-poster", "data-play-label", "data-stop-label",
+                         "data-playing-label", "data-paused-label", "data-reduced-motion-label"):
+                if not player.get(attr, "").strip():
+                    errors.append(f"{relative}: capture player is missing {attr}")
         for image in parser.images:
             if not image.get("alt", "").strip():
                 errors.append(f"{relative}: image is missing alternative text")

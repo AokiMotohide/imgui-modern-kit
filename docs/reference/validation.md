@@ -2,6 +2,16 @@
 
 [日本語](検証記録.md) · [English](validation.md)
 
+## 3.3 release validation — 2026-10-23
+
+Windows x64 Debug Gallery and four focused targets built in `build/windows-debug` through the shared build lock. `imkit.workflow`, `imkit.workflow_api_compile`, `imkit.toast` and `imkit.toast_api_compile` passed (4/4). Workflow covers indeterminate/running/paused semantics and task operation ID dispatch. Toast regression covers timing, focus, loading completion and existing API behavior.
+
+The native Gallery toast verifier passed mouse action/dismiss, keyboard Space, same-ID loading completion, six positions in light/dark and Japanese indeterminate loading. The new progress GIF records 80 native OpenGL backbuffer frames, including six public-IO clicks that advance the host-owned task to completion. This is an 8-second, 960×540 demonstration at 10 fps; it is not physical OS input automation. The 3.2 film remains a labeled historical demonstration.
+
+Release publication requires successful push CI at the exact release source commit: Windows x64/Arm64 and macOS arm64/x86_64/Universal 2 build, test, package and packaged SDK consumer. The release manifest and evidence ZIP record the actual run, per-SDK source commit and native evidence hashes. Historical sections below describe earlier revisions, not new 3.3 acceptance.
+
+Physical OS input, native IME, real screen readers, mixed-DPI/multi-monitor and external-host/hardware acceptance were not performed. macOS signing/notarization depends on CI credentials; Universal 2 executes on arm64, with Intel executed in its separate job.
+
 ## Media revision 2 / 映像改訂2（2026-10-05）
 
 ### Native operation footage / native操作素材

@@ -24,6 +24,10 @@ bool (*volatile empty)(const char*,const imkit::StateView&,imkit::ComponentOptio
 auto volatile unavailable=&imkit::UnavailableState;
 auto volatile retry=&imkit::RetryState;
 bool (*volatile progress)(const char*,const imkit::ProgressView&,imkit::ProgressPresentation,imkit::DialogState&,ImVec2,imkit::ComponentOptions)=&imkit::Progress;
+void (*volatile progressTrackView)(const char*,const imkit::ProgressTrackView&,imkit::ComponentOptions)=&imkit::ProgressTrack;
+void (*volatile progressTrackValue)(const char*,float,imkit::ProgressStatus,imkit::ComponentOptions)=&imkit::ProgressTrack;
+void (*volatile stageProgress)(const char*,const imkit::StageProgressView&,imkit::ComponentOptions)=&imkit::StageProgress;
+imkit::StableId (*volatile taskProgressCard)(const char*,const imkit::TaskProgressCardView&,imkit::TaskProgressCardOptions,imkit::ComponentOptions)=&imkit::TaskProgressCard;
 void (*volatile circularProgress)(const char*,const imkit::CircularProgressView&,imkit::CircularProgressOptions,imkit::ComponentOptions)=&imkit::CircularProgress;
 auto volatile card=&imkit::BeginCard;auto volatile endCard=&imkit::EndCard;
 auto volatile section=&imkit::SectionHeader;auto volatile multi=&imkit::MultiSelectionBar;
@@ -46,5 +50,5 @@ auto volatile rightPanelHandle=&imkit::RightSidePanelHandle;
 int main() {
     imkit::StableId ids[1];imkit::RequestBuffer requests{ids};
     imkit::editor::TileEvent events[1];imkit::editor::TileEventBuffer out{events};
-    return !(grouped&&workspaceTabs&&choiceGroup&&hierarchyGroup&&hierarchyRow&&inspectorCard&&endInspectorCard&&settingToggleRow&&iconToolbar&&labeledIconToolbar&&iconAction&&step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&card&&endCard&&section&&multi&&help&&validation&&toolbar&&valid&&placement&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&appBar&&workspaceHeader&&inspectorSection&&advancedSection&&bottomActionBar&&beginDiagnostics&&endDiagnostics&&themePicker&&resolveRightPanel&&rightPanelHandle&&requests.Push(1)&&out.Push({}));
+    return !(grouped&&workspaceTabs&&choiceGroup&&hierarchyGroup&&hierarchyRow&&inspectorCard&&endInspectorCard&&settingToggleRow&&iconToolbar&&labeledIconToolbar&&iconAction&&step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&progressTrackView&&progressTrackValue&&stageProgress&&taskProgressCard&&card&&endCard&&section&&multi&&help&&validation&&toolbar&&valid&&placement&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&appBar&&workspaceHeader&&inspectorSection&&advancedSection&&bottomActionBar&&beginDiagnostics&&endDiagnostics&&themePicker&&resolveRightPanel&&rightPanelHandle&&requests.Push(1)&&out.Push({}));
 }

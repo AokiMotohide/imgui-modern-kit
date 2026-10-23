@@ -729,7 +729,7 @@ void Show(GalleryState &s) {
         int pageIndex=0;
         for(int i=0;i<static_cast<int>(std::size(pageIds));++i) if(pageIds[i]==s.page) {pageIndex=i;break;}
         const bool wide=GetContentRegionAvail().x>=1100.f*std::max(1.f,ImGui::GetStyle().FontScaleDpi);
-        TextUnformatted("IMKIT / GALLERY"); SameLine(); TextDisabled("3.2   |   13 themes   |   288 icons");
+        TextUnformatted("IMKIT / GALLERY"); SameLine(); TextDisabled("3.3   |   13 themes   |   288 icons");
         Separator();
         SetNextItemWidth(std::min(260.f,GetContentRegionAvail().x*.45f));
         if(Combo("##section",&pageIndex,pages,static_cast<int>(std::size(pages)))) s.page=pageIds[pageIndex];

@@ -15,6 +15,7 @@ DOCS = ROOT / "docs"
 PAIRS: list[tuple[str, str]] = [
     ("README.md", "目次.md"),
     ("reference/v3.2-api.md", "reference/3.2追加API.md"),
+    ("reference/v3.3-api.md", "reference/3.3追加API.md"),
     # getting-started
     ("getting-started/getting-started.md", "getting-started/導入ガイド.md"),
     ("getting-started/how-it-works.md", "getting-started/仕組みと設計思想.md"),
@@ -159,6 +160,17 @@ def main() -> int:
         for guide in gallery_guides:
             if title not in guide.read_text(encoding="utf-8"):
                 errors.append(f"{guide.relative_to(ROOT)} does not describe Gallery route {title}")
+    # SameMinorVersion intentionally rejects a consumer requesting an older minor.
+    project = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
+    release_minor = re.search(r"project\(imgui-modern-kit VERSION (\d+\.\d+)\.", project).group(1)
+    consumer_sources = [ROOT / "tests/consumer/CMakeLists.txt", ROOT / "examples/consumer/CMakeLists.txt"]
+    consumer_sources += list((DOCS / "getting-started").glob("*.md"))
+    consumer_sources += [ROOT / "website/src/content/docs/getting-started.mdx",
+                         ROOT / "website/src/content/docs/en/getting-started.mdx"]
+    for source in consumer_sources:
+        for requested in re.findall(r"find_package\(imkit (\d+\.\d+)", source.read_text(encoding="utf-8")):
+            if requested != release_minor:
+                errors.append(f"{source.relative_to(ROOT)} requests imkit {requested}; current SDK requires {release_minor}")
     if errors:
         print("Documentation check failed:", file=sys.stderr)
         print("\n".join(f"- {error}" for error in errors), file=sys.stderr)

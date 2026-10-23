@@ -8,6 +8,8 @@ ImKitは、既存のDear ImGuiアプリにテーマと再利用できるUI部品
 
 [English](README.md) · [最新リリースをダウンロード](https://github.com/AokiMotohide/imgui-modern-kit/releases/latest) · [文書一覧](docs/目次.md) · [Release一覧](https://github.com/AokiMotohide/imgui-modern-kit/releases)
 
+**3.3の新機能:** [進捗トラック・段階表示・操作付きタスクカード](docs/reference/3.3追加API.md)。トーストにも工程と進捗情報を表示できます。
+
 [![ImKit 3.2紹介動画](website/public/media/imkit-3.2-poster.jpg)](https://aokimotohide.github.io/imgui-modern-kit/#film)
 
 **[Watch the 60-second film](https://aokimotohide.github.io/imgui-modern-kit/#film)** — 大きなカーソルでドラッグ・クリックと操作結果を紹介します。英語モーショングラフィックスと、オリジナルの128 BPMエレクトロハウス付きです。
@@ -16,7 +18,7 @@ ImKitは、既存のDear ImGuiアプリにテーマと再利用できるUI部品
 
 ## まずGalleryを試す
 
-お使いの環境に合う[v3.2.0のパッケージ](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.2.0)をダウンロードして展開し、次を起動してください。
+お使いの環境に合う[v3.3.0のパッケージ](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.3.0)をダウンロードして展開し、次を起動してください。
 
 - Windows: bin/imkit_gallery.exe
 - macOS: imkit_gallery.app
@@ -133,6 +135,19 @@ Fit／Fill／Stretchの配置と、Ready、Loading、Empty、Offline、Errorの�
 <img src="docs/images/v3-theme-comparison.gif" alt="ImKitのThemeとDear ImGui標準表示の比較" width="960">
 
 名前付きThemeとpaletteをネイティブGalleryで見比べられます。
+
+## 3.3の新機能 — 処理の進み方を伝える
+
+処理がどこまで進んだか、どの工程にいるか、次に何を操作できるかを表示できます。処理の実行と状態管理はアプリ側に残し、毎フレームの値を渡します。
+
+![native Galleryのタスク進捗と段階表示](docs/images/v3-progress.gif)
+
+- **ProgressTrack:** 確定値・未確定の進捗、ラベル、6種類の処理状態を共通のトラックで表示します。
+- **StageProgress:** 完了・現在・待機中の工程を表示します。アプリの工程は変更しません。
+- **TaskProgressCard:** タイトル、工程、進捗、操作ボタンをまとめます。返された操作IDをアプリ側で処理します。
+- **トーストの進捗:** 同じ通知の`stage`・`progressText`・`status`を更新できます。
+
+[コード例・API・互換性](docs/reference/3.3追加API.md)。`ToastView`にフィールドが追加されたため、アプリとリンクするImKitライブラリを3.3ヘッダーで再コンパイルしてください。3.2のobjectと3.3の構造体は混在させないでください。上の紹介動画は3.2、ここに掲載した画面は3.3です。
 
 ## 3.2で追加した部品
 

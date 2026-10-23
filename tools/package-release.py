@@ -3,7 +3,8 @@
 
 This tool does not build or publish. Run it from the committed release commit.
 Pass --packages-dir after downloading and extracting the five GitHub Actions
-artifacts. The native showcase must already exist in out/release.
+artifacts. Supply --native-evidence with current native capture/verification records.
+Historical films are linked with their original version, never relabeled.
 """
 
 import argparse
@@ -28,6 +29,7 @@ EXPECTED_PACKAGES = {
 DOCS_PAIRS = [
     ("README.md", "目次.md"),
     ("reference/v3.2-api.md", "reference/3.2追加API.md"),
+    ("reference/v3.3-api.md", "reference/3.3追加API.md"),
     ("getting-started/getting-started.md", "getting-started/導入ガイド.md"),
     ("getting-started/how-it-works.md", "getting-started/仕組みと設計思想.md"),
     ("getting-started/guide.md", "getting-started/利用ガイド.md"),
@@ -124,7 +126,8 @@ def find_packages(directory: Path) -> dict[str, Path]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--packages-dir", type=Path)
+    parser.add_argument("--packages-dir", type=Path, required=True)
+    parser.add_argument("--native-evidence", type=Path, required=True)
     parser.add_argument("--ci-evidence", type=Path, required=True)
     args = parser.parse_args()
     version_match = re.search(
@@ -147,9 +150,15 @@ def main() -> int:
         raise RuntimeError("commit the intended source tree before assembling the release")
 
     OUT.mkdir(parents=True, exist_ok=True)
-    showcase = OUT / f"imkit-v{version}-showcase.mp4"
-    if not showcase.is_file():
-        raise RuntimeError(f"missing native showcase: {showcase}")
+    native = json.loads(args.native_evidence.read_text(encoding="utf-8"))
+    if native.get("version") != version or native.get("result") != "pass":
+        raise RuntimeError("Native evidence must pass and match the release version")
+    native_files = []
+    for record in native["files"]:
+        path = ROOT / record["path"]
+        if not path.resolve().is_relative_to(ROOT) or sha256(path) != record["sha256"]:
+            raise RuntimeError(f"Native evidence hash/path mismatch: {path}")
+        native_files.append(path)
 
     package_records = {}
     package_files: list[Path] = []
@@ -159,7 +168,27 @@ def main() -> int:
             destination = OUT / source.name
             if source.resolve() != destination.resolve():
                 shutil.copy2(source, destination)
+            if f"-{version}-" not in destination.name:
+                raise RuntimeError(f"SDK version mismatch: {destination.name}")
             package_records[key] = verify_package(key, destination)
+            records = [path for path in package_dir.rglob("sdk-consumer-evidence.json")
+                       if json.loads(path.read_text(encoding="utf-8")).get("archive") == source.name]
+            if len(records) != 1:
+                raise RuntimeError(f"Missing/ambiguous SDK consumer evidence: {source.name}")
+            consumer = json.loads(records[0].read_text(encoding="utf-8"))
+            if consumer.get("source_commit") != commit or "PASS" not in consumer.get("result", ""):
+                raise RuntimeError(f"SDK consumer source/result mismatch: {source.name}")
+            with zipfile.ZipFile(destination) as package:
+                for header in (ROOT / "include/imkit").rglob("*.h"):
+                    suffix = "include/imkit/" + header.relative_to(ROOT / "include/imkit").as_posix()
+                    members = [name for name in package.namelist() if name.endswith(suffix)]
+                    # Optional platform headers may be omitted by their CMake option.
+                    if not members and header.name in {"window_frame_win32.h", "window_frame_macos.h",
+                                                      "accessibility_win32.h", "accessibility_macos.h"}:
+                        continue
+                    if len(members) != 1 or package.read(members[0]).replace(b"\r\n", b"\n") != header.read_bytes().replace(b"\r\n", b"\n"):
+                        raise RuntimeError(f"SDK header differs from release source: {suffix}")
+            package_records[key]["source_commit"] = consumer["source_commit"]
             package_files.append(destination)
 
     manifest = {
@@ -167,7 +196,7 @@ def main() -> int:
         "tag": f"v{version}",
         "source_commit": commit,
         "ci": ci,
-        "media_validation": json.loads((ROOT/"out/promo/media-validation.json").read_text(encoding="utf-8")),
+        "native_validation": native,
         "language": "C++20",
         "license": "MIT",
         "dear_imgui": {
@@ -207,8 +236,13 @@ def main() -> int:
         "documentation_media": {
             "gif_size": "960x540",
             "gif_count": len(list((ROOT / "docs/images").glob("v3-*.gif"))),
-            "showcase": showcase.name,
-            "source": "native Gallery/companion UI clips with original motion graphics and original electronic BGM",
+            "current_capture": "docs/images/v3-progress.gif",
+            "source": "native Gallery OpenGL backbuffer; public Dear ImGui IO",
+            "historical_film": {
+                "version": "3.2.0",
+                "url": "https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.2.0",
+                "boundary": "Historical demonstration; not 3.3 validation evidence",
+            },
         },
         "signing": {
             "macos": "unsigned and not notarized when CI release credentials are unavailable"
@@ -236,28 +270,16 @@ def main() -> int:
         archive.write(manifest_path, manifest_path.name)
         archive.write(args.ci_evidence,"ci-evidence.json")
         archive.write(ROOT/"docs/reference/検証記録.md","検証記録.md")
-        archive.write(ROOT/"out/promo/media-validation.json","media-validation.json")
+        archive.write(args.native_evidence,"native-evidence.json")
         for record in args.packages_dir.rglob("sdk-consumer-evidence.json"):
             archive.write(record,"sdk-consumers/"+record.parent.name+".json")
         for gif in sorted((ROOT / "docs/images").glob("v3-*.gif")):
             archive.write(gif, f"images/{gif.name}")
-        capture_sources = {
-            "comparison": ROOT / "out/v3.2-native/comparison/capture.txt",
-            "workspace": ROOT / "out/v3.2-native/workspace/capture.txt",
-            "toasts": ROOT / "out/v3.2-native/toasts/capture.txt",
-            "overview": ROOT / "out/v3.2-native/overview/capture.txt",
-            "node-editor": ROOT / "out/v3.2-native/node-editor-final/capture.txt",
-            "workflow-progress": ROOT / "out/v3.2-native/workflow/capture.txt",
-            "timeline": ROOT / "out/v3.2-native/timeline/capture.txt",
-            "theme-comparison": ROOT / "out/v3.2-native/themes/capture.txt",
-        }
-        for name, metadata in capture_sources.items():
-            if not metadata.is_file():
-                raise RuntimeError(f"missing capture metadata: {metadata}")
-            archive.write(metadata, f"captures/{name}.txt")
+        for path in native_files:
+            archive.write(path, "native/" + path.name)
 
     artifacts = sorted(
-        {source, evidence, manifest_path, showcase, *package_files}, key=lambda path: path.name.lower()
+        {source, evidence, manifest_path, *package_files}, key=lambda path: path.name.lower()
     )
     checksums = "".join(f"{sha256(path)}  {path.name}\n" for path in artifacts)
     (OUT / "SHA256SUMS").write_text(checksums, encoding="ascii")

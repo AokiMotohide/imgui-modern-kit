@@ -2,6 +2,12 @@
 
 > Published release entries present English first, followed by equivalent Japanese notes. Unreleased remains a work-in-progress list.
 
+## 3.3.0 — 2026-10-23
+
+Shared progress tracks, stage lists, task progress cards and richer loading toasts make long-running work easier to follow. `ProgressTrack`, `StageProgress` and `TaskProgressCard` take borrowed views; the host owns values and handles operation IDs. `ToastView` adds `stage`, `progressText` and `status`. Recompile applications and static libraries with matching 3.3 headers; do not mix 3.2 objects with 3.3 structures. Dependencies and the Dear ImGui baseline are unchanged. See [the 3.3 guide](docs/reference/v3.3-api.md).
+
+共通の進捗トラック、工程一覧、操作付きタスクカード、進捗情報を持つトーストを追加しました。`ProgressTrack`・`StageProgress`・`TaskProgressCard`は表示用の参照を受け取り、値の管理と操作IDの処理はホストが行います。`ToastView`に`stage`・`progressText`・`status`を追加したため、アプリと静的ライブラリを同じ3.3ヘッダーで再コンパイルしてください。3.2のobjectと3.3の構造体は混在させないでください。依存とDear ImGuiの基準revisionは変更していません。[3.3追加API](docs/reference/3.3追加API.md)を参照してください。
+
 ## Media revision 2 / 映像改訂2 — 2026-10-05
 
 The 60-second English film now uses continuous native operation footage, a large synchronized cursor, kinetic typography, close-ups, connected transitions and an original 128 BPM electro-house score. All twelve principal GIFs were recaptured at 960×540, 20 fps, 6–8 seconds and under 2 MiB each. README and Pages point to the revised film; Pages uses a content hash in the video URL. The v3.2.0 library tag, source archive and five SDK archives retain their original identities.

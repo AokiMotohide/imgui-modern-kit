@@ -21,6 +21,8 @@ hero:
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 import CapturePlayer from '../../components/CapturePlayer.astro';
+import progressCapture from '../../../../docs/images/v3-progress.gif';
+import progressPoster from '../../assets/captures/v3-progress-poster.png';
 import nodeCapture from '../../../../docs/images/v3-workspace.gif';
 import nodePoster from '../../assets/captures/v3-workspace-poster.png';
 import workflowCapture from '../../../../docs/images/v3-comparison.gif';
@@ -29,6 +31,17 @@ import timelineCapture from '../../../../docs/images/v3-timeline.gif';
 import timelinePoster from '../../assets/captures/v3-timeline-poster.png';
 
 <div class="imkit-home">
+
+## 3.3の新機能：処理の進み方を伝える
+
+共通の進捗トラック、段階表示、操作付きタスクカード、トーストの進捗情報を追加しました。処理と状態はアプリ側で管理します。[コード例と再コンパイルの案内](./api/v3-3/)。
+
+<CapturePlayer source={progressCapture} poster={progressPoster} alt="native Galleryの進捗と段階表示" caption="3.3の新機能 — 進捗・工程・操作" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
+
+[v3.3.0 SDK](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.3.0)
+
+冒頭の紹介動画は3.2の機能を紹介しています。
+
 
 ## 既存アプリに組み込む
 
