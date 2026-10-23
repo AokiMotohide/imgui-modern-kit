@@ -107,78 +107,98 @@ void WorkflowPages::Show(int page,GalleryState& host) {
         RightSidePanelHandle("right-panel-handle",rightPanel,panelAvailable,panelOptions,o);
         if(panelLayout.panelVisible){ImGui::SameLine(0,0);ImGui::BeginChild("right-panel-body",{panelLayout.panelWidth,panelAvailable.y},ImGuiChildFlags_Borders);ImGui::TextUnformatted(japanese?"インスペクター":"Inspector");ImGui::TextDisabled(japanese?"状態と幅はホストが所有します":"The host owns open state and width");ImGui::EndChild();}
     } else if(page==16) {
-        ImGui::SliderFloat("Progress",&fraction,-1,1);ImGui::SameLine();if(ActionButton("Modal progress",ActionVariant::Secondary,{},o))progressDialog.open=true;
-        Record(host,"workflow-modal");
-        ProgressView progress{fraction,japanese?"処理中":"Processing",japanese?"ホストが進捗を管理します":"The host owns progress and cancellation",true};
-        if(imkit::Progress("inline",progress,ProgressPresentation::Inline,progressDialog,{},o))++actions;
-        if(imkit::Progress("overlay",progress,ProgressPresentation::Overlay,progressDialog,{0,130},o))++actions;
-        if(imkit::Progress("modal",progress,ProgressPresentation::Modal,progressDialog,{},o)){progressDialog.open=false;++actions;}
-        if(ImGui::CollapsingHeader(japanese?"段階別・複数処理の進捗":"Stages and multiple tasks",ImGuiTreeNodeFlags_DefaultOpen)) {
-            const bool done=taskFraction>=1.f;
-            const std::array<StageProgressItem,4> stages{{
-                {0x5101,japanese?"準備":"Prepare",ProgressStatus::Succeeded},
-                {0x5102,japanese?(done?"完了":"読み込み中"):(done?"Complete":(taskUpdates%2?"Verifying":"Reading")),done?ProgressStatus::Succeeded:ProgressStatus::Running},
-                {0x5103,japanese?"次の項目":"Next item",ProgressStatus::Queued},
-                {0x5104,japanese?"公開待ち":"Waiting to publish",ProgressStatus::Queued}}};
-            StageProgress("sample-stages",StageProgressView{stages,0x5102ull},o);
-            const Command detailOperation{0x5201,japanese?"詳細を表示":"Show details"};
-            const char* longDescription=japanese?
-                "複数の入力を順に確認しています。各段階の状態と進み方はホストが所有し、この部品は表示と操作要求だけを受け持ちます。":
-                "Reviewing several inputs in order. The host owns each stage and progress value; this card only presents them and returns operation requests.";
-            TaskProgressCardView activeTask;activeTask.id=0x5200;
-            activeTask.title=japanese?"素材を確認しています":"Reviewing source files";
-            activeTask.stage=japanese?(done?"確認完了":"内容を読み込んでいます"):(done?"Review complete":"Reading contents");
-            activeTask.description=longDescription;activeTask.fraction=taskFraction;
-            activeTask.status=done?ProgressStatus::Succeeded:ProgressStatus::Running;
-            activeTask.supplemental=japanese?"更新例: ホストが進捗を進め、同じカードへ次の値を渡します。":"Update example: the host advances progress and supplies the next value to this card.";
-            activeTask.operations={&detailOperation,1};
-            if(TaskProgressCard("active-task",activeTask,{},o)==detailOperation.id) ++actions;
-            if(ActionButton(japanese?"更新例を進める":"Advance update example",ActionVariant::Secondary,{},o)) {
-                taskFraction=taskFraction>=1.f?0.f:std::min(1.f,taskFraction+.18f);++taskUpdates;
+        if(BeginGrid(host,"feedback-grid")) {
+            const bool track=BeginSection(host,japanese?"進捗":"Progress","Inline, overlay and modal presentations share one track");
+            if(track) {
+                ImGui::SliderFloat("Progress",&fraction,-1,1);ImGui::SameLine();if(ActionButton("Modal progress",ActionVariant::Secondary,{},o))progressDialog.open=true;
+                Record(host,"workflow-modal");
+                ProgressView progress{fraction,japanese?"処理中":"Processing",japanese?"ホストが進捗を管理します":"The host owns progress and cancellation",true};
+                if(imkit::Progress("inline",progress,ProgressPresentation::Inline,progressDialog,{},o))++actions;
+                if(imkit::Progress("overlay",progress,ProgressPresentation::Overlay,progressDialog,{0,130},o))++actions;
+                if(imkit::Progress("modal",progress,ProgressPresentation::Modal,progressDialog,{},o)){progressDialog.open=false;++actions;}
             }
-            Record(host,"progress-advance");
-            ImGui::TextDisabled(japanese?(done?"タスク 1/2: 完了":"タスク 1/2: 処理中"):(done?"Task 1/2: succeeded":"Task 1/2: running"));
-            const float narrowWidth=std::min(300.f,std::max(1.f,ImGui::GetContentRegionAvail().x));
-            ImGui::BeginChild("narrow-progress-demo",{narrowWidth,214},ImGuiChildFlags_Borders);
-            const std::array<StageProgressItem,5> narrowStages{{
-                {0x5301,japanese?"受付":"Queue",ProgressStatus::Succeeded},
-                {0x5302,japanese?"書き出し":"Export",ProgressStatus::Paused},
-                {0x5303,japanese?"検証":"Verify",ProgressStatus::Queued},
-                {0x5304,japanese?"完了":"Finish",ProgressStatus::Queued},
-                {0x5305,japanese?"通知":"Notify",ProgressStatus::Queued}}};
-            StageProgress("narrow-stages",StageProgressView{narrowStages,0x5302},o);
-            const Command resumeOperation{0x5306,japanese?"再開":"Resume"};
-            TaskProgressCardView pausedTask;pausedTask.id=0x5310;
-            pausedTask.title=japanese?"一覧を書き出しています":"Exporting the list";
-            pausedTask.stage=japanese?"一時停止中":"Paused";
-            pausedTask.description=japanese?"幅が狭い領域では現在の工程と件数を短く表示します。長い説明は通常表示で確認できます。":"At narrow widths, the current stage and count stay compact. The regular card shows the full description.";
-            pausedTask.fraction=-1.f;pausedTask.status=ProgressStatus::Paused;
-            pausedTask.supplemental=japanese?"再開するとホスト側の値が更新されます。":"The host updates the view after resuming.";
-            pausedTask.operations={&resumeOperation,1};
-            if(TaskProgressCard("paused-task",pausedTask,{true},o)==resumeOperation.id) ++actions;
-            ImGui::EndChild();
-        }
-        ImGui::SeparatorText(japanese?"円形進捗":"Circular progress");
-        ImGui::TextDisabled(japanese?"値、完了、未測定を同じコンポーネントで表示します。":"Known, complete, and unavailable states use the same component.");
-        CircularProgress("coverage-total",CircularProgressView{.82f,"41/50",japanese?"全体":"Overall"},{96,7},o);ImGui::SameLine();
-        CircularProgress("coverage-one",CircularProgressView{1.f,"10/10","PJ1",FeedbackKind::Success},{58,0},o);ImGui::SameLine();
-        CircularProgress("coverage-two",CircularProgressView{.7f,"7/10","PJ2"},{58,0},o);ImGui::SameLine();
-        CircularProgress("coverage-unknown",CircularProgressView{-1.f,"","PJ3"},{58,0},o);
-        FeedbackView info{10,japanese?"設定を更新しました":"Settings updated","Inline feedback",FeedbackKind::Success,0,0,false};
-        InlineAlert("inline-alert",info,o);PersistentBanner("banner",{11,"Review required","Persistent warning",FeedbackKind::Warning,0,0,false},o);
-        if(BeginCard("states",{0,260},o)) {
-            if(SectionHeader("section",japanese?"状態表示":"States",open,o)) {
-                if(EmptyState("empty",StateView{"No items","Add the first item","Create",FeedbackKind::Info,IconId::Folder,&host.icons},o))++actions;
-                UnavailableState("offline",StateView{"Unavailable","The host is offline"},o);
-                if(RetryState("retry",StateView{"Unable to load","Retry when ready","Retry",FeedbackKind::Error},o))++actions;
+            EndSection(track);
+            const bool stagesCard=BeginSection(host,japanese?"段階別・複数処理の進捗":"Stages and multiple tasks","The host owns each stage and value");
+            if(stagesCard) {
+                const bool done=taskFraction>=1.f;
+                const std::array<StageProgressItem,4> stages{{
+                    {0x5101,japanese?"準備":"Prepare",ProgressStatus::Succeeded},
+                    {0x5102,japanese?(done?"完了":"読み込み中"):(done?"Complete":(taskUpdates%2?"Verifying":"Reading")),done?ProgressStatus::Succeeded:ProgressStatus::Running},
+                    {0x5103,japanese?"次の項目":"Next item",ProgressStatus::Queued},
+                    {0x5104,japanese?"公開待ち":"Waiting to publish",ProgressStatus::Queued}}};
+                StageProgress("sample-stages",StageProgressView{stages,0x5102ull},o);
+                const Command detailOperation{0x5201,japanese?"詳細を表示":"Show details"};
+                const char* longDescription=japanese?
+                    "複数の入力を順に確認しています。各段階の状態と進み方はホストが所有し、この部品は表示と操作要求だけを受け持ちます。":
+                    "Reviewing several inputs in order. The host owns each stage and progress value; this card only presents them and returns operation requests.";
+                TaskProgressCardView activeTask;activeTask.id=0x5200;
+                activeTask.title=japanese?"素材を確認しています":"Reviewing source files";
+                activeTask.stage=japanese?(done?"確認完了":"内容を読み込んでいます"):(done?"Review complete":"Reading contents");
+                activeTask.description=longDescription;activeTask.fraction=taskFraction;
+                activeTask.status=done?ProgressStatus::Succeeded:ProgressStatus::Running;
+                activeTask.supplemental=japanese?"更新例: ホストが進捗を進め、同じカードへ次の値を渡します。":"Update example: the host advances progress and supplies the next value to this card.";
+                activeTask.operations={&detailOperation,1};
+                if(TaskProgressCard("active-task",activeTask,{},o)==detailOperation.id) ++actions;
+                if(ActionButton(japanese?"更新例を進める":"Advance update example",ActionVariant::Secondary,{},o)) {
+                    taskFraction=taskFraction>=1.f?0.f:std::min(1.f,taskFraction+.18f);++taskUpdates;
+                }
+                Record(host,"progress-advance");
+                ImGui::TextDisabled(japanese?(done?"タスク 1/2: 完了":"タスク 1/2: 処理中"):(done?"Task 1/2: succeeded":"Task 1/2: running"));
+                const float narrowWidth=std::min(300.f,std::max(1.f,ImGui::GetContentRegionAvail().x));
+                ImGui::BeginChild("narrow-progress-demo",{narrowWidth,214},ImGuiChildFlags_Borders);
+                const std::array<StageProgressItem,5> narrowStages{{
+                    {0x5301,japanese?"受付":"Queue",ProgressStatus::Succeeded},
+                    {0x5302,japanese?"書き出し":"Export",ProgressStatus::Paused},
+                    {0x5303,japanese?"検証":"Verify",ProgressStatus::Queued},
+                    {0x5304,japanese?"完了":"Finish",ProgressStatus::Queued},
+                    {0x5305,japanese?"通知":"Notify",ProgressStatus::Queued}}};
+                StageProgress("narrow-stages",StageProgressView{narrowStages,0x5302},o);
+                const Command resumeOperation{0x5306,japanese?"再開":"Resume"};
+                TaskProgressCardView pausedTask;pausedTask.id=0x5310;
+                pausedTask.title=japanese?"一覧を書き出しています":"Exporting the list";
+                pausedTask.stage=japanese?"一時停止中":"Paused";
+                pausedTask.description=japanese?"幅が狭い領域では現在の工程と件数を短く表示します。長い説明は通常表示で確認できます。":"At narrow widths, the current stage and count stay compact. The regular card shows the full description.";
+                pausedTask.fraction=-1.f;pausedTask.status=ProgressStatus::Paused;
+                pausedTask.supplemental=japanese?"再開するとホスト側の値が更新されます。":"The host updates the view after resuming.";
+                pausedTask.operations={&resumeOperation,1};
+                if(TaskProgressCard("paused-task",pausedTask,{true},o)==resumeOperation.id) ++actions;
+                ImGui::EndChild();
             }
-        }EndCard();
-        HelpCallout("help",StateView{"Help","Use keyboard focus to inspect and activate actions"},o);
-        if(ValidationSummary("validation",std::span(items).subspan(1,2),o))++actions;
-        if(ActionButton("Diagnostics",ActionVariant::Secondary,{},o)){diagnostics.open=true;diagnostics.focusPending=true;}
-        if(BeginDiagnosticsDrawer("drawer",japanese?"診断":"Diagnostics",diagnostics,{0,120},o)){
-            ImGui::TextUnformatted(japanese?"問題はありません":"No issues");
-            EndDiagnosticsDrawer();
+            EndSection(stagesCard);
+            const bool rings=BeginSection(host,japanese?"円形進捗":"Circular progress",japanese?"値、完了、未測定を同じコンポーネントで表示します。":"Known, complete, and unavailable states use the same component.");
+            if(rings) {
+                CircularProgress("coverage-total",CircularProgressView{.82f,"41/50",japanese?"全体":"Overall"},{96,0},o);ImGui::SameLine();
+                CircularProgress("coverage-one",CircularProgressView{1.f,"10/10","PJ1",FeedbackKind::Success},{58,0},o);ImGui::SameLine();
+                CircularProgress("coverage-two",CircularProgressView{.7f,"7/10","PJ2"},{58,0},o);ImGui::SameLine();
+                CircularProgress("coverage-unknown",CircularProgressView{-1.f,"","PJ3"},{58,0},o);
+                ImGui::TextDisabled("See the Charts page for donut, bar, gauge and sparkline components.");
+            }
+            EndSection(rings);
+            const bool alerts=BeginSection(host,japanese?"通知と状態":"Alerts and states","Inline feedback, banners, empty and error states");
+            if(alerts) {
+                FeedbackView info{10,japanese?"設定を更新しました":"Settings updated","Inline feedback",FeedbackKind::Success,0,0,false};
+                InlineAlert("inline-alert",info,o);
+                PersistentBanner("banner",{11,"Review required","Persistent warning",FeedbackKind::Warning,0,0,false},o);
+                ImGui::Spacing();
+                if(BeginCard("states",{0,300},o)) {
+                    if(SectionHeader("section",japanese?"状態表示":"States",open,o)) {
+                        if(EmptyState("empty",StateView{"No items","Add the first item","Create",FeedbackKind::Info,IconId::Folder,&host.icons},o))++actions;
+                        ImGui::Spacing();
+                        UnavailableState("offline",StateView{"Unavailable","The host is offline"},o);
+                        ImGui::Spacing();
+                        if(RetryState("retry",StateView{"Unable to load","Retry when ready","Retry",FeedbackKind::Error},o))++actions;
+                    }
+                }EndCard();
+                HelpCallout("help",StateView{"Help","Use keyboard focus to inspect and activate actions"},o);
+                if(ValidationSummary("validation",std::span(items).subspan(1,2),o))++actions;
+                if(ActionButton("Diagnostics",ActionVariant::Secondary,{},o)){diagnostics.open=true;diagnostics.focusPending=true;}
+                if(BeginDiagnosticsDrawer("drawer",japanese?"診断":"Diagnostics",diagnostics,{0,120},o)){
+                    ImGui::TextUnformatted(japanese?"問題はありません":"No issues");
+                    EndDiagnosticsDrawer();
+                }
+            }
+            EndSection(alerts);
+            EndGrid();
         }
     } else {
         const std::array<WorkspaceTab,3> workspaces{{

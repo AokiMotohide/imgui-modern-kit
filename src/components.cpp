@@ -1,5 +1,6 @@
 #include <imkit/components.h>
 #include <imkit/widgets.h>
+#include "draw_internal.h"
 #include <algorithm>
 #include <array>
 #include <cctype>
@@ -83,7 +84,9 @@ bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, 
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Mix(fill, subtleDestructive ? destructive : Accent(t), .18f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, Mix(fill, subtleDestructive ? destructive : Accent(t), .32f));
     ImGui::PushStyleColor(ImGuiCol_Text, text);
-    if (variant == ActionVariant::Ghost)
+    const bool solid = variant == ActionVariant::Primary || variant == ActionVariant::Destructive;
+    const bool borderless = solid || variant == ActionVariant::Ghost;
+    if (borderless)
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
     else if (subtleDestructive) {
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, std::max(1.f, style.FrameBorderSize));
@@ -94,25 +97,22 @@ bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, 
     const auto id = ImGui::GetID(label);
     bool pressed = ImGui::Button(label, size);
     if(ImGui::IsItemFocused()) ImGui::SetNavCursorVisible(true);
-    if((ImGui::GetItemFlags()&ImGuiItemFlags_Disabled)!=0) {
-        const auto p=ImGui::GetItemRectMax();
-        ImGui::GetWindowDrawList()->AddLine({p.x-7,p.y-3},{p.x-3,p.y-7},ImGui::GetColorU32(ImGuiCol_Text),1.f);
-        if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-            ImGui::SetTooltip("%s",options.disabledReason?options.disabledReason:"Unavailable");
-    }
+    if((ImGui::GetItemFlags()&ImGuiItemFlags_Disabled)!=0 &&
+       ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+        ImGui::SetTooltip("%s",options.disabledReason?options.disabledReason:"Unavailable");
     pressed = SemanticItem(options,label,accessibility::SemanticRole::Button,accessibility::SemanticAction::Press) || pressed;
     if (options.animation) {
         const auto motion = t ? t->motion : Motion{};
         float a = options.animation->Update(id, ImGui::IsItemHovered() ? 1.f : 0.f, ImGui::GetIO().DeltaTime,
                                             motion.controlSeconds, ImGui::GetFrameCount(), motion.enabled && !motion.reducedMotion, motion.easing);
-        auto color = Accent(t);
-        color.w *= a;
+        // Hover is a soft tonal wash that fades in; no outline.
+        auto color = solid ? ImVec4(1, 1, 1, 1) : Accent(t);
+        color.w = (solid ? .10f : .08f) * a;
         if (a > 0)
-            ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
-                                                ImGui::GetColorU32(color), style.FrameRounding,
-                                                t ? t->metrics.focusWidth : 1.5f, ImDrawFlags_None);
+            ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
+                                                      ImGui::GetColorU32(color), style.FrameRounding);
     }
-    if (variant == ActionVariant::Ghost || subtleDestructive)
+    if (borderless || subtleDestructive)
         ImGui::PopStyleVar();
     ImGui::PopStyleColor(subtleDestructive ? 5 : 4);
     return pressed;
@@ -155,7 +155,8 @@ bool IconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Mix(fill, subtleDestructive ? destructive : Accent(t), .18f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, Mix(fill, subtleDestructive ? destructive : Accent(t), .32f));
     ImGui::PushStyleColor(ImGuiCol_Text, text);
-    if (variant == ActionVariant::Ghost)
+    const bool borderless = variant != ActionVariant::Secondary && !subtleDestructive;
+    if (borderless)
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
     else if (subtleDestructive) {
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, std::max(1.f, style.FrameBorderSize));
@@ -199,13 +200,18 @@ bool IconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
         ImGui::PopTextWrapPos();
         ImGui::EndTooltip();
     }
-    if (variant == ActionVariant::Ghost || subtleDestructive)
+    if (borderless || subtleDestructive)
         ImGui::PopStyleVar();
     ImGui::PopStyleColor(subtleDestructive ? 5 : 4);
     return pressed;
 }
 bool IconButton(const char *id, ImGuiDir direction, const char *accessibleLabel, ComponentOptions options) {
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0, 0, 0, 0)); // The stock arrow is replaced below.
     bool pressed = ImGui::ArrowButton(id, direction);
+    ImGui::PopStyleColor();
+    const auto a = ImGui::GetItemRectMin(), b = ImGui::GetItemRectMax();
+    detail::DrawChevron(ImGui::GetWindowDrawList(), {(a.x + b.x) * .5f, (a.y + b.y) * .5f}, (b.y - a.y) * .36f,
+                        ImGui::GetColorU32(ImGui::GetStyleColorVec4(ImGuiCol_Text)), direction);
     pressed = SemanticItem(options,accessibleLabel,accessibility::SemanticRole::Button,accessibility::SemanticAction::Press) || pressed;
     if (ImGui::IsItemHovered() || ImGui::IsItemFocused())
         ImGui::SetTooltip("%s", accessibleLabel);
@@ -233,19 +239,21 @@ bool Toggle(const char *label, bool *value, ComponentOptions options) {
                                              ImGui::GetFrameCount(), motion.enabled && !motion.reducedMotion, motion.easing);
     }
     auto *d = ImGui::GetWindowDrawList();
-    auto fill = Mix(style.Colors[ImGuiCol_FrameBg], Accent(options.theme), position);
-    auto thumb = Mix(style.Colors[ImGuiCol_Text],
-                     options.theme ? options.theme->colors.onAccent : ImVec4(1,1,1,1), position);
+    const ImVec4 off = detail::WithAlpha(style.Colors[ImGuiCol_Text], .22f);
+    auto fill = Mix(off, Accent(options.theme), position);
+    auto thumb = Mix(ImVec4(1, 1, 1, 1), options.theme ? options.theme->colors.onAccent : ImVec4(1, 1, 1, 1), position);
     // Fit in native checkbox's square so label layout and hit target remain native.
-    float y = min.y + h * .19f;
-    d->AddRectFilled({min.x, y}, {min.x + h, y + h * .62f}, ImGui::GetColorU32(fill), round);
-    d->AddRect({min.x, y}, {min.x + h, y + h * .62f}, ImGui::GetColorU32(style.Colors[ImGuiCol_Border]),
-               round);
-    d->AddCircleFilled({min.x + h * (.29f + .42f * position), min.y + h * .5f}, h * .235f,
-                       ImGui::GetColorU32(thumb));
+    const float trackHeight = h * .6f, trackWidth = std::min(h, trackHeight * 1.8f);
+    const float y = min.y + (h - trackHeight) * .5f;
+    const float thumbRadius = trackHeight * .5f - 2.5f;
+    d->AddRectFilled({min.x, y}, {min.x + trackWidth, y + trackHeight}, ImGui::GetColorU32(fill), trackHeight * .5f);
+    // The thumb overshoots slightly mid-travel, then settles.
+    const float travel = position + std::sin(position * 3.14159265f) * .06f;
+    const float left = min.x + trackHeight * .5f, right = min.x + trackWidth - trackHeight * .5f;
+    d->AddCircleFilled({left + (right - left) * travel, y + trackHeight * .5f}, thumbRadius, ImGui::GetColorU32(thumb));
     if (ImGui::IsItemFocused())
-        d->AddRect(min, {min.x + h, min.y + h}, ImGui::GetColorU32(ImGuiCol_NavCursor), style.FrameRounding,
-                   1.5f, ImDrawFlags_None);
+        d->AddRect({min.x - 2, y - 2}, {min.x + trackWidth + 2, y + trackHeight + 2}, ImGui::GetColorU32(ImGuiCol_NavCursor),
+                   trackHeight * .5f + 2, ImDrawFlags_None, 1.5f);
     return changed;
 }
 bool IndeterminateCheckbox(const char *label, CheckState *value) {
@@ -264,21 +272,68 @@ bool IndeterminateCheckbox(const char *label, CheckState *value) {
 }
 bool Segmented(const char *id, int *selected, std::span<const char *const> labels, ComponentOptions options) {
     bool changed = false;
+    if (labels.empty())
+        return false;
+    const auto &style = ImGui::GetStyle();
+    const float inset = 3.f, height = ImGui::GetFrameHeight();
+    const int count = static_cast<int>(labels.size());
+    std::array<float, 32> widths{}, lefts{};
+    float total = 0;
+    for (int i = 0; i < std::min(count, 32); ++i) {
+        widths[i] = ImGui::CalcTextSize(labels[i], nullptr, true).x + style.FramePadding.x * 2;
+        lefts[i] = total;
+        total += widths[i];
+    }
+    const int shown = std::min(count, 32);
     ImGui::PushID(id);
-    ImGui::BeginGroup();
-    for (int i = 0; i < static_cast<int>(labels.size()); ++i) {
-        if (i)
-            ImGui::SameLine(0, 2);
+    const ImVec2 origin = ImGui::GetCursorScreenPos();
+    // Submit the whole control first so a preceding SameLine() applies to it, not to the first segment.
+    ImGui::Dummy({total + inset * 2, height});
+    const ImVec2 after = ImGui::GetCursorScreenPos();
+    auto *draw = ImGui::GetWindowDrawList();
+    const float rounding = style.FrameRounding;
+    draw->AddRectFilled(origin, {origin.x + total + inset * 2, origin.y + height},
+                        ImGui::GetColorU32(detail::WithAlpha(style.Colors[ImGuiCol_Text], .08f)), rounding + 2.f);
+    // The raised thumb glides between segments (fractional index while animating).
+    float index = static_cast<float>(std::clamp(*selected, 0, shown - 1));
+    if (options.animation) {
+        const auto motion = options.theme ? options.theme->motion : Motion{};
+        index = options.animation->Update(ImGui::GetID("##segment-thumb"), index, ImGui::GetIO().DeltaTime,
+                                          motion.controlSeconds, ImGui::GetFrameCount(),
+                                          motion.enabled && !motion.reducedMotion, motion.easing);
+    }
+    const int lower = std::clamp(static_cast<int>(std::floor(index)), 0, shown - 1);
+    const int upper = std::min(lower + 1, shown - 1);
+    const float blend = index - static_cast<float>(lower);
+    const float thumbLeft = lefts[lower] + (lefts[upper] - lefts[lower]) * blend;
+    const float thumbWidth = widths[lower] + (widths[upper] - widths[lower]) * blend;
+    const ImVec2 thumbMin{origin.x + inset + thumbLeft, origin.y + inset},
+        thumbMax{origin.x + inset + thumbLeft + thumbWidth, origin.y + height - inset};
+    draw->AddRectFilled({thumbMin.x, thumbMin.y + 1}, {thumbMax.x, thumbMax.y + 1}, IM_COL32(0, 0, 0, 26), rounding);
+    draw->AddRectFilled(thumbMin, thumbMax, ImGui::GetColorU32(options.theme ? options.theme->colors.raised : style.Colors[ImGuiCol_PopupBg]), rounding);
+    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0, 0, 0, 0));
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, detail::WithAlpha(style.Colors[ImGuiCol_Text], .06f));
+    ImGui::PushStyleColor(ImGuiCol_HeaderActive, detail::WithAlpha(style.Colors[ImGuiCol_Text], .10f));
+    ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, {.5f, .5f});
+    for (int i = 0; i < shown; ++i) {
+        ImGui::SetCursorScreenPos({origin.x + inset + lefts[i], origin.y + inset});
         ImGui::PushID(i);
-        if (imkit::Selectable(labels[i], *selected == i, 0,
-                              {ImGui::CalcTextSize(labels[i]).x + 20, ImGui::GetFrameHeight()}) |
-            SemanticItem(options,labels[i],accessibility::SemanticRole::Radio,accessibility::SemanticAction::Select,*selected==i)) {
+        const bool active = *selected == i;
+        if (!active)
+            ImGui::PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]);
+        const bool hit = ImGui::Selectable(labels[i], false, 0, {widths[i], height - inset * 2});
+        if (!active)
+            ImGui::PopStyleColor();
+        if (hit | SemanticItem(options, labels[i], accessibility::SemanticRole::Radio,
+                               accessibility::SemanticAction::Select, active)) {
             changed = *selected != i;
             *selected = i;
         }
         ImGui::PopID();
     }
-    ImGui::EndGroup();
+    ImGui::PopStyleVar();
+    ImGui::PopStyleColor(3);
+    ImGui::SetCursorScreenPos(after);
     ImGui::PopID();
     return changed;
 }
@@ -415,27 +470,30 @@ bool BeginSettingRow(const char *id, const char *label, float width) {
 void EndSettingRow() {
     ImGui::EndTable();
 }
+static ImVec2 StatusBadgeSize(const char *text) {
+    const float pad = ImGui::GetFontSize() * .75f;
+    return {ImGui::CalcTextSize(text).x + pad * 2 + ImGui::GetFontSize() * .55f, ImGui::GetFontSize() + 8};
+}
 void StatusBadge(const char *text, StatusKind kind, const Theme *theme) {
-    auto p = ImGui::GetCursorScreenPos(), size = ImGui::CalcTextSize(text);
-    size.x += 24;
-    size.y += 8;
+    auto p = ImGui::GetCursorScreenPos();
+    const auto size = StatusBadgeSize(text);
     ImGui::Dummy(size);
     auto color = Status(kind, theme);
     auto *d = ImGui::GetWindowDrawList();
     auto fill = color;
-    fill.w = .12f;
-    d->AddRectFilled(p, {p.x + size.x, p.y + size.y}, ImGui::GetColorU32(fill),
-                     ImGui::GetStyle().FrameRounding);
+    fill.w = .14f;
+    d->AddRectFilled(p, {p.x + size.x, p.y + size.y}, ImGui::GetColorU32(fill), size.y * .5f);
     // Marker shape and text carry meaning in addition to color.
+    const float u = ImGui::GetFontSize() * .3f;
+    const ImVec2 m{p.x + size.y * .5f + u * .4f, p.y + size.y * .5f};
     if (kind == StatusKind::Error)
-        d->AddRectFilled({p.x + 5, p.y + size.y / 2 - 3}, {p.x + 11, p.y + size.y / 2 + 3},
-                         ImGui::GetColorU32(color));
+        d->AddRectFilled({m.x - u * .8f, m.y - u * .8f}, {m.x + u * .8f, m.y + u * .8f}, ImGui::GetColorU32(color), 1.5f);
     else if (kind == StatusKind::Warning)
-        d->AddTriangleFilled({p.x + 8, p.y + size.y / 2 - 4}, {p.x + 4, p.y + size.y / 2 + 3},
-                             {p.x + 12, p.y + size.y / 2 + 3}, ImGui::GetColorU32(color));
+        d->AddTriangleFilled({m.x, m.y - u}, {m.x - u * 1.05f, m.y + u * .8f}, {m.x + u * 1.05f, m.y + u * .8f},
+                             ImGui::GetColorU32(color));
     else
-        d->AddCircleFilled({p.x + 8, p.y + size.y / 2}, 3, ImGui::GetColorU32(color));
-    d->AddText({p.x + 17, p.y + 4}, ImGui::GetColorU32(color), text);
+        d->AddCircleFilled(m, u * .8f, ImGui::GetColorU32(color));
+    d->AddText({m.x + u * 1.6f, p.y + 4}, ImGui::GetColorU32(color), text);
 }
 CompactActionRowRequest CompactActionRow(const char *id,
                                          const CompactActionRowOptions &options) {
@@ -448,7 +506,7 @@ CompactActionRowRequest CompactActionRow(const char *id,
         return ImGui::CalcTextSize(label, nullptr, true).x +
                ImGui::GetStyle().FramePadding.x * 2.0f;
     };
-    const float statusWidth = hasStatus ? ImGui::CalcTextSize(options.statusText).x + 24.0f : 0.0f;
+    const float statusWidth = hasStatus ? StatusBadgeSize(options.statusText).x : 0.0f;
     const float primaryWidth = hasPrimary ? textWidth(options.primaryLabel) : 0.0f;
     const float settingsWidth = hasSettings ? textWidth(options.settingsLabel) : 0.0f;
     const float available = ImGui::GetContentRegionAvail().x;
@@ -502,11 +560,30 @@ bool NotificationCard(const Notification &n, double now, const Theme *t) {
     if (n.expiresAt > 0 && now >= n.expiresAt)
         return false;
     ImGui::PushID(n.id);
-    ImGui::BeginGroup();
-    StatusBadge(n.text, n.kind, t);
-    ImGui::SameLine();
-    bool dismiss = ImGui::SmallButton("Dismiss");
-    ImGui::EndGroup();
+    const auto &style = ImGui::GetStyle();
+    const float width = std::max(1.f, ImGui::GetContentRegionAvail().x);
+    const float pad = style.FramePadding.x, close = ImGui::GetFrameHeight() * .8f;
+    const float textWidth = std::max(1.f, width - pad * 2 - close - 6.f);
+    const float height = std::max(close, ImGui::CalcTextSize(n.text, nullptr, false, textWidth).y) + style.FramePadding.y * 2;
+    const ImVec2 origin = ImGui::GetCursorScreenPos();
+    auto *d = ImGui::GetWindowDrawList();
+    const auto color = Status(n.kind, t);
+    d->AddRectFilled(origin, {origin.x + width, origin.y + height}, ImGui::GetColorU32(detail::WithAlpha(color, .10f)),
+                     style.FrameRounding);
+    d->AddRectFilled({origin.x + 5, origin.y + 8}, {origin.x + 8, origin.y + height - 8}, ImGui::GetColorU32(color), 1.5f);
+    d->AddText(ImGui::GetFont(), ImGui::GetFontSize(), {origin.x + pad + 6, origin.y + style.FramePadding.y},
+               ImGui::GetColorU32(ImGuiCol_Text), n.text, nullptr, textWidth);
+    ImGui::Dummy({width, height});
+    ImGui::SetCursorScreenPos({origin.x + width - close - 4, origin.y + (height - close) * .5f});
+    const bool dismiss = ImGui::InvisibleButton("##dismiss", {close, close});
+    const ImVec2 c{origin.x + width - close * .5f - 4, origin.y + height * .5f};
+    if (ImGui::IsItemHovered())
+        d->AddCircleFilled(c, close * .5f, ImGui::GetColorU32(detail::WithAlpha(ImGui::GetStyleColorVec4(ImGuiCol_Text), .10f)));
+    detail::DrawCross(d, c, close * .32f, ImGui::GetColorU32(ImGuiCol_TextDisabled));
+    if (ImGui::IsItemHovered() || ImGui::IsItemFocused())
+        ImGui::SetTooltip("Dismiss");
+    ImGui::SetCursorScreenPos({origin.x, origin.y + height});
+    ImGui::Dummy({0, 0});
     ImGui::PopID();
     return dismiss;
 }
@@ -514,8 +591,13 @@ bool BeginToolbar(const char *id, const ImVec2 &size) {
     ImVec2 actual = size;
     if (actual.y == 0)
         actual.y = ImGui::GetFrameHeight() + 2 * ImGui::GetStyle().WindowPadding.y;
-    return ImGui::BeginChild(id, actual, ImGuiChildFlags_Borders,
-                             ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetStyleColorVec4(ImGuiCol_Button));
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, ImGui::GetStyle().FrameRounding + 2.f);
+    const bool visible = ImGui::BeginChild(id, actual, ImGuiChildFlags_Borders,
+                                           ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+    ImGui::PopStyleVar();
+    ImGui::PopStyleColor();
+    return visible;
 }
 void EndToolbar() {
     ImGui::EndChild();
@@ -526,7 +608,7 @@ void ValidationMessage(const char *message, bool invalid, const Theme *t) {
     auto p = ImGui::GetItemRectMin(), q = ImGui::GetItemRectMax();
     auto color = t ? t->colors.destructive : ImVec4(.8f, .2f, .25f, 1);
     ImGui::GetWindowDrawList()->AddRect(p, q, ImGui::GetColorU32(color), ImGui::GetStyle().FrameRounding,
-                                        1.5f, ImDrawFlags_None);
+                                        ImDrawFlags_None, 1.5f);
     if (ImGui::IsItemHovered() || ImGui::IsItemFocused())
         ImGui::SetTooltip("%s", message);
 }
@@ -539,12 +621,14 @@ void OverlayDecoration(const Theme &t, AnimationState *state) {
             state->Update(id, 0, 0, t.motion.overlaySeconds, frame, t.motion.enabled && !t.motion.reducedMotion, t.motion.easing);
         a = state->Update(id, 1, ImGui::GetIO().DeltaTime, t.motion.overlaySeconds, frame, t.motion.enabled && !t.motion.reducedMotion, t.motion.easing);
     }
-    auto p = ImGui::GetWindowPos(), size = ImGui::GetWindowSize();
+    if (t.metrics.elevation <= 0)
+        return;
+    const auto p = ImGui::GetWindowPos(), size = ImGui::GetWindowSize();
     auto *d = ImGui::GetWindowDrawList();
-    for (int i = 1; i <= static_cast<int>(t.metrics.elevation); ++i) {
-        ImVec4 c = {0, 0, 0, .025f * a};
-        d->AddRect({p.x + i, p.y + i}, {p.x + size.x - i, p.y + size.y - i}, ImGui::GetColorU32(c),
-                   t.metrics.radius);
-    }
+    const float peak = (t.scheme == ColorScheme::Dark ? .34f : .16f) * a;
+    // Rings extend outside the window, so allow drawing beyond its clip rectangle.
+    d->PushClipRectFullScreen();
+    detail::DrawSoftShadow(d, p, {p.x + size.x, p.y + size.y}, t.radius.overlay, t.metrics.elevation, peak);
+    d->PopClipRect();
 }
 } // namespace imkit

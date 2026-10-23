@@ -9,6 +9,7 @@
 #include "design_pages.h"
 #include "workflow_pages.h"
 #include "toast_page.h"
+#include "charts_page.h"
 namespace imkit::gallery {
 struct Probe {
     ImVec2 min, max;
@@ -34,6 +35,7 @@ struct GalleryState {
     DesignPages design;
     WorkflowPages workflow;
     ToastPage toasts;
+    ChartsPage charts;
     EditorWorkspaces editors;
     Theme theme = MakeTheme(ThemePreset::PrecisionLight);
     FontSet fonts{};
@@ -83,6 +85,11 @@ struct GalleryState {
     ComparisonState comparison;
     std::map<std::string, Probe> probes;
 };
+// Layout helpers shared by the Gallery pages: a responsive card grid and titled cards.
+bool BeginGrid(GalleryState &s, const char *id, int maxColumns = 2);
+void EndGrid();
+bool BeginSection(GalleryState &s, const char *title, const char *hint = nullptr);
+void EndSection(bool visible);
 void Show(GalleryState &s);
 void ShowComparison(GalleryState &s);
 void Record(GalleryState &s, const char *name);

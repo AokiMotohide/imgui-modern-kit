@@ -27,7 +27,7 @@ auto saved = theme;
 theme = saved; // host-owned preset, no implicit persistence
 ```
 
-Base values: control height 28, gap 6, radius 4, body 14, heading 18 logical pixels. Native controls include current font height plus padding, so larger fonts increase control height. Inline buttons, menu rows, tables and multiline text follow their native layout rather than forcing every item to 28 px. Use the `scale` argument as the application scale; avoid also multiplying geometry outside ImKit. Monitor DPI remains the host's responsibility.
+Base values: control height 30, gap 6, radius 8 (controls) and 12 (cards and overlays), body 14, heading 18 logical pixels. Native controls include current font height plus padding, so larger fonts increase control height. Inline buttons, menu rows, tables and multiline text follow their native layout rather than forcing every item to 30 px. Use the `scale` argument as the application scale; avoid also multiplying geometry outside ImKit. Monitor DPI remains the host's responsibility.
 
 `SetAccent` updates accent, contrasting on-accent, focus and derived selection. Other colors are independent. Palette values include canvas, surface, input, raised, text, muted, border, destructive/on-destructive, success and warning. Arbitrary edits are not a blanket contrast guarantee.
 

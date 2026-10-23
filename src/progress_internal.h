@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstring>
 
 namespace imkit::detail {
 inline const char* SafeProgressText(const char* text) { return text?text:""; }
@@ -27,23 +28,50 @@ inline const char* ProgressValueText(const ProgressTrackView& view,char* buffer,
     return buffer;
 }
 inline float ProgressTrackBarHeight() {
-    return std::clamp(ImGui::GetFrameHeight()*.18f,4.f,8.f);
+    return std::clamp(ImGui::GetFrameHeight()*.2f,4.f,8.f);
+}
+// One-line header above the track: the label on the left, status and value on the
+// right. Status is spelled out only when it is not the default Running state.
+struct ProgressHeader {
+    const char* left="";
+    char right[96]{};
+    bool any=false;
+};
+inline ProgressHeader MakeProgressHeader(const ProgressTrackView& view,ComponentOptions options) {
+    ProgressHeader header;
+    char valueBuffer[32]{};
+    const char* value=ProgressValueText(view,valueBuffer,sizeof(valueBuffer));
+    const char* status=ProgressStatusLabel(view.status,options);
+    const bool showStatus=view.status!=ProgressStatus::Running;
+    const bool hasLabel=*SafeProgressText(view.label)!=0;
+    header.left=hasLabel?view.label:(showStatus?status:"");
+    // A label that already says the status (for example "Paused") is not repeated on the right.
+    const bool statusOnRight=hasLabel&&showStatus&&std::strcmp(view.label,status)!=0;
+    if(statusOnRight&&*value) std::snprintf(header.right,sizeof(header.right),"%s \xC2\xB7 %s",status,value);
+    else if(statusOnRight) std::snprintf(header.right,sizeof(header.right),"%s",status);
+    else std::snprintf(header.right,sizeof(header.right),"%s",value);
+    header.any=*header.left||*header.right;
+    return header;
+}
+inline float ProgressHeaderGap() { return std::max(3.f,ImGui::GetStyle().ItemSpacing.y*.67f); }
+// Width available to the left text once the right text has been reserved.
+inline float ProgressHeaderLeftWidth(const ProgressHeader& header,float width) {
+    const float right=*header.right?ImGui::CalcTextSize(header.right).x+ImGui::GetStyle().ItemSpacing.x:0.f;
+    return std::max(1.f,width-right);
+}
+inline float ProgressHeaderHeight(const ProgressHeader& header,float width) {
+    if(!header.any) return 0.f;
+    const float left=*header.left?ImGui::CalcTextSize(header.left,nullptr,false,ProgressHeaderLeftWidth(header,width)).y:0.f;
+    return std::max(left,ImGui::GetTextLineHeight());
 }
 inline float ProgressTrackContentHeight(const ProgressTrackView& view,float width,ComponentOptions options) {
     width=std::max(1.f,width);
-    float height=0.f;bool hasItem=false;
-    const auto addText=[&](const char* text) {
-        if(!*SafeProgressText(text)) return;
-        if(hasItem) height+=ImGui::GetStyle().ItemSpacing.y;
-        height+=ImGui::CalcTextSize(text,nullptr,false,width).y;hasItem=true;
-    };
-    char valueBuffer[32]{};
-    addText(view.label);
-    addText(ProgressStatusLabel(view.status,options));
-    addText(ProgressValueText(view,valueBuffer,sizeof(valueBuffer)));
-    if(hasItem) height+=ImGui::GetStyle().ItemSpacing.y;
-    height+=ProgressTrackBarHeight();hasItem=true;
-    addText(view.supplemental);
+    const auto header=MakeProgressHeader(view,options);
+    float height=ProgressHeaderHeight(header,width);
+    if(header.any) height+=ProgressHeaderGap();
+    height+=ProgressTrackBarHeight();
+    if(*SafeProgressText(view.supplemental))
+        height+=ProgressHeaderGap()+ImGui::CalcTextSize(view.supplemental,nullptr,false,width).y;
     return height;
 }
 } // namespace imkit::detail

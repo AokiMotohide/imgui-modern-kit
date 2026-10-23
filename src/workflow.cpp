@@ -1,5 +1,6 @@
 #include <imkit/workflow.h>
 #include "progress_internal.h"
+#include "draw_internal.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -74,8 +75,11 @@ bool LabeledButton(const char* label,const char* description,ImVec2 size,bool se
     d->AddText(pos,ImGui::GetColorU32(ImGuiCol_Text),text.data(),text.data()+text.size());
     if(ellipsis)d->AddText({pos.x+ImGui::CalcTextSize(text.data(),text.data()+text.size()).x,pos.y},ImGui::GetColorU32(ImGuiCol_Text),"...");
     d->PopClipRect();
-    if(selected) d->AddRect(a,b,ImGui::GetColorU32(ImGuiCol_CheckMark),ImGui::GetStyle().FrameRounding,o.theme?o.theme->stroke.focus:2,ImDrawFlags_None);
-    if((ImGui::GetItemFlags()&ImGuiItemFlags_Disabled)!=0)d->AddLine({b.x-pad.x,b.y-pad.y},{b.x-pad.x-ImGui::GetFontSize()*.4f,b.y-pad.y-ImGui::GetFontSize()*.4f},ImGui::GetColorU32(ImGuiCol_TextDisabled));
+    if(selected) {
+        const ImVec4 accent=ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
+        d->AddRectFilled(a,b,ImGui::GetColorU32(detail::WithAlpha(accent,.14f)),ImGui::GetStyle().FrameRounding);
+        d->AddRect(a,b,ImGui::GetColorU32(detail::WithAlpha(accent,.55f)),ImGui::GetStyle().FrameRounding,ImDrawFlags_None,1.f);
+    }
     if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)||ImGui::IsItemFocused()) {
         if(!ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))ImGui::SetNextWindowPos({a.x,b.y});
         ImGui::BeginTooltip();ImGui::PushTextWrapPos(ImGui::GetFontSize()*32.f);ImGui::TextUnformatted(Safe(label));
@@ -477,7 +481,7 @@ HierarchyRowAction HierarchyRow(const char* id,const HierarchyRowView& row,
 }
 bool BeginInspectorCard(const char* id,const char* title,const char* description,
                         const IconAtlas* icons,IconId icon,ComponentOptions) {
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,ImGui::GetStyle().FrameRounding);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,ImGui::GetStyle().FrameRounding+4.f);
     const bool visible=ImGui::BeginChild(id,{0,0},
         ImGuiChildFlags_Borders|ImGuiChildFlags_AutoResizeY,ImGuiWindowFlags_NoScrollbar);
     if(visible) {
@@ -546,13 +550,21 @@ StableId StepNavigator(const char* id,std::span<const StepItem> items,StableId c
                 ImGui::SetScrollHereX(); ImGui::SetScrollHereY();
             }
             auto* draw=ImGui::GetWindowDrawList();
-            const float radius=h*.28f;
+            const float radius=h*.3f;
             ImVec2 center{a.x+pad.x+h*.5f,a.y+h*.5f};
-            auto color=ImGui::GetColorU32(Color(item.status,o));
-            draw->AddCircle(center,radius,color,0,o.theme?o.theme->stroke.border:1);
-            char number[24];std::snprintf(number,sizeof(number),"%zu",i+1);
-            const char* mark=item.completed?"+":item.status==FeedbackKind::Error?"!":item.status==FeedbackKind::Warning?"!":layout.numbers?number:"";
-            auto ts=ImGui::CalcTextSize(mark);draw->AddText({center.x-ts.x*.5f,center.y-ts.y*.5f},ImGui::GetColorU32(ImGuiCol_Text),mark);
+            const ImVec4 tone=Color(item.status,o);
+            auto color=ImGui::GetColorU32(tone);
+            const bool filled=item.completed||item.id==current;
+            const ImVec4 ink=ContrastRatio({1,1,1,1},tone)>=ContrastRatio({0,0,0,1},tone)?ImVec4{1,1,1,1}:ImVec4{0,0,0,1};
+            if(filled) draw->AddCircleFilled(center,radius,color,24);
+            else draw->AddCircle(center,radius,color,24,o.theme?o.theme->stroke.border:1);
+            const auto markColor=filled?ImGui::GetColorU32(ink):ImGui::GetColorU32(ImGuiCol_Text);
+            if(item.completed) detail::DrawCheck(draw,center,radius*1.05f,markColor,1.7f);
+            else {
+                char number[24];std::snprintf(number,sizeof(number),"%zu",i+1);
+                const char* mark=item.status==FeedbackKind::Error?"!":item.status==FeedbackKind::Warning?"!":layout.numbers?number:"";
+                auto ts=ImGui::CalcTextSize(mark);draw->AddText({center.x-ts.x*.5f,center.y-ts.y*.5f},markColor,mark);
+            }
             if(layout.icons && item.icon!=IconId::Count) {
                 auto cursor=ImGui::GetCursorScreenPos();ImGui::SetCursorScreenPos({center.x-radius,center.y-radius});
                 Icon(*layout.icons,item.icon,{radius*2});ImGui::SetCursorScreenPos(cursor);
@@ -567,7 +579,18 @@ StableId NavigationRail(const char* id,std::span<const StepItem> items,StableId 
     return StepNavigator(id,items,current,state,layout,o);
 }
 bool FilterChip(const char* id,const char* label,bool selected,ComponentOptions o) {
-    ImGui::PushID(id);bool hit=LabeledButton(label,"",{ImGui::CalcTextSize(Safe(label)).x+ImGui::GetStyle().FramePadding.x*2,0},selected,o);ImGui::PopID();return hit;
+    ImGui::PushID(id);
+    const auto pad=ImGui::GetStyle().FramePadding;
+    const float check=selected?ImGui::GetFontSize()*1.1f:0.f;
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding,ImGui::GetFrameHeight()*.5f);
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,{pad.x+check*.5f,pad.y});
+    bool hit=LabeledButton(label,"",{ImGui::CalcTextSize(Safe(label)).x+(pad.x+check*.5f)*2+check*.5f,0},selected,o);
+    ImGui::PopStyleVar(2);
+    if(selected) {
+        const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
+        detail::DrawCheck(ImGui::GetWindowDrawList(),{a.x+pad.x*.6f+check*.55f,(a.y+b.y)*.5f},ImGui::GetFontSize()*.8f,ImGui::GetColorU32(ImGuiCol_CheckMark),1.7f);
+    }
+    ImGui::PopID();return hit;
 }
 bool RequestBuffer::Push(StableId id) {
     if(count>=storage.size()) {overflow=true;return false;} storage[count++]=id;return true;
@@ -586,12 +609,50 @@ std::size_t SelectNotifications(std::span<const FeedbackView> items,double now,s
 }
 bool NotificationCard(const FeedbackView& n,double now,ComponentOptions o) {
     if(!n.id || (n.expiresAt>0 && now>=n.expiresAt)) return false;
-    Push(n.id);ImGui::BeginGroup();
-    auto start=ImGui::GetCursorScreenPos();
-    ImGui::PushStyleColor(ImGuiCol_Text,Color(n.kind,o));ImGui::TextWrapped("%s",Safe(n.title));ImGui::PopStyleColor();
-    if(*Safe(n.description)) ImGui::TextWrapped("%s",n.description);
+    Push(n.id);
+    const auto& style=ImGui::GetStyle();
+    const float width=std::max(1.f,ImGui::GetContentRegionAvail().x);
+    const float pad=style.FramePadding.x,icon=ImGui::GetFontSize()*1.25f,close=n.dismissible?ImGui::GetFrameHeight()*.75f:0.f;
+    const float textWidth=std::max(1.f,width-pad*2-icon-style.ItemInnerSpacing.x-close-6.f);
+    const float titleHeight=ImGui::CalcTextSize(Safe(n.title),nullptr,false,textWidth).y;
+    const float descriptionHeight=*Safe(n.description)?ImGui::CalcTextSize(n.description,nullptr,false,textWidth).y:0.f;
+    const float height=std::max({icon,close,titleHeight+descriptionHeight})+style.FramePadding.y*2+(descriptionHeight>0?2.f:0.f);
+    const ImVec2 start=ImGui::GetCursorScreenPos();
+    ImGui::BeginGroup();
+    auto* d=ImGui::GetWindowDrawList();
+    const ImVec4 accent=Color(n.kind,o);
+    d->AddRectFilled(start,{start.x+width,start.y+height},ImGui::GetColorU32(detail::WithAlpha(accent,.10f)),style.FrameRounding);
+    d->AddRectFilled({start.x+5,start.y+8},{start.x+8,start.y+height-8},ImGui::GetColorU32(accent),1.5f);
+    const ImVec2 c{start.x+pad+6+icon*.5f,start.y+style.FramePadding.y+icon*.5f};
+    d->AddCircleFilled(c,icon*.5f,ImGui::GetColorU32(accent),24);
+    const ImVec4 ink=ContrastRatio({1,1,1,1},accent)>=ContrastRatio({0,0,0,1},accent)?ImVec4{1,1,1,1}:ImVec4{0,0,0,1};
+    const ImU32 glyph=ImGui::GetColorU32(ink);
+    if(n.kind==FeedbackKind::Success) detail::DrawCheck(d,c,icon*.5f,glyph,1.8f);
+    else if(n.kind==FeedbackKind::Error) detail::DrawCross(d,c,icon*.34f,glyph,1.8f);
+    else {
+        const float direction=n.kind==FeedbackKind::Warning?1.f:-1.f;
+        d->AddLine({c.x,c.y-icon*.25f*direction},{c.x,c.y+icon*.06f*direction},glyph,1.8f);
+        d->AddCircleFilled({c.x,c.y+icon*.25f*direction},1.3f,glyph);
+    }
+    const float textX=start.x+pad+6+icon+style.ItemInnerSpacing.x;
+    d->AddText(ImGui::GetFont(),ImGui::GetFontSize(),{textX,start.y+style.FramePadding.y},ImGui::GetColorU32(ImGuiCol_Text),Safe(n.title),nullptr,textWidth);
+    if(descriptionHeight>0)
+        d->AddText(ImGui::GetFont(),ImGui::GetFontSize(),{textX,start.y+style.FramePadding.y+titleHeight+2.f},
+                   ImGui::GetColorU32(o.theme?o.theme->semantic.textSecondary:ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled)),n.description,nullptr,textWidth);
+    ImGui::Dummy({width,height});
     bool dismiss=false;
-    if(n.dismissible) dismiss=LabeledButton(Text(o,"dismiss","Dismiss"),"",{},false,o);
+    if(n.dismissible) {
+        ImGui::SetCursorScreenPos({start.x+width-close-4,start.y+(height-close)*.5f});
+        dismiss=ImGui::InvisibleButton("##dismiss",{close,close});
+        const ImVec2 cc{start.x+width-close*.5f-4,start.y+height*.5f};
+        if(ImGui::IsItemHovered()) d->AddCircleFilled(cc,close*.5f,ImGui::GetColorU32(detail::WithAlpha(ImGui::GetStyleColorVec4(ImGuiCol_Text),.10f)));
+        if(ImGui::IsItemFocused()) d->AddCircle(cc,close*.5f,ImGui::GetColorU32(ImGuiCol_NavCursor),24,1.5f);
+        detail::DrawCross(d,cc,close*.32f,ImGui::GetColorU32(ImGui::IsItemHovered()?ImGuiCol_Text:ImGuiCol_TextDisabled));
+        if(ImGui::IsItemHovered()||ImGui::IsItemFocused()) ImGui::SetTooltip("%s",Text(o,"dismiss","Dismiss"));
+        dismiss=Annotate(Text(o,"dismiss","Dismiss"),"",accessibility::SemanticRole::Button,accessibility::SemanticAction::Press,false,o)||dismiss;
+    }
+    ImGui::SetCursorScreenPos({start.x,start.y+height});
+    ImGui::Dummy({0,0});
     ImGui::EndGroup();
     if(o.accessibility) {
         accessibility::SemanticNode node;node.id=ImGui::GetID("feedback");node.parent=o.parent;
@@ -614,19 +675,43 @@ void ToastRegion(const char* id,std::span<const FeedbackView> items,double now,s
     ImGui::PushID(id);auto scope=ImGui::GetID("toast-window");ImGui::PopID();
     char name[40];std::snprintf(name,sizeof(name),"###imkit-toast-%08x",scope);
     if(ImGui::Begin(name,nullptr,ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoCollapse|ImGuiWindowFlags_NoSavedSettings|ImGuiWindowFlags_NoFocusOnAppearing)) {
-        for(std::size_t i=0;i<count;++i) {if(i) ImGui::Separator();if(NotificationCard(items[scratch[i]],now,o)) dismiss.Push(items[scratch[i]].id);}
+        for(std::size_t i=0;i<count;++i) {if(NotificationCard(items[scratch[i]],now,o)) dismiss.Push(items[scratch[i]].id);}
     }ImGui::End();
 }
 bool InlineAlert(const char* id,const FeedbackView& item,ComponentOptions o) {ImGui::PushID(id);bool result=NotificationCard(item,0,o);ImGui::PopID();return result;}
 bool PersistentBanner(const char* id,const FeedbackView& item,ComponentOptions o) {auto persistent=item;persistent.expiresAt=0;return InlineAlert(id,persistent,o);}
 bool EmptyState(const char* id,const StateView& v,ComponentOptions o) {
     ImGui::PushID(id);ImGui::BeginGroup();
-    if(v.icons && v.icon!=IconId::Count) {Icon(*v.icons,v.icon,{ImGui::GetFrameHeight()});ImGui::SameLine();}
-    ImGui::TextColored(Color(v.kind,o),"%s",Safe(v.heading));
+    const float available=std::max(1.f,ImGui::GetContentRegionAvail().x);
+    const float block=std::min(available,ImGui::GetFontSize()*26.f);
+    const float offset=(available-block)*.5f;
+    const float originX=ImGui::GetCursorPosX();
+    auto centred=[&](float width) {ImGui::SetCursorPosX(originX+offset+std::max(0.f,(block-std::min(width,block))*.5f));};
+    const ImVec4 accent=Color(v.kind,o);
+    if(v.icons && v.icon!=IconId::Count) {
+        const float tile=ImGui::GetFontSize()*2.6f;
+        centred(tile);const auto p=ImGui::GetCursorScreenPos();ImGui::Dummy({tile,tile});
+        ImGui::GetWindowDrawList()->AddRectFilled(p,{p.x+tile,p.y+tile},ImGui::GetColorU32(detail::WithAlpha(accent,.14f)),tile*.3f);
+        const float glyph=tile*.54f;
+        ImGui::SetCursorScreenPos({p.x+(tile-glyph)*.5f,p.y+(tile-glyph)*.5f});
+        ImGui::PushStyleColor(ImGuiCol_Text,accent);Icon(*v.icons,v.icon,{glyph});ImGui::PopStyleColor();
+        ImGui::SetCursorScreenPos({p.x,p.y+tile});ImGui::Dummy({0,0});
+    }
+    centred(ImGui::CalcTextSize(Safe(v.heading),nullptr,false,block).x);
+    ImGui::PushTextWrapPos(ImGui::GetCursorPosX()+std::max(1.f,block-(ImGui::GetCursorPosX()-originX-offset)));
+    ImGui::TextUnformatted(Safe(v.heading));ImGui::PopTextWrapPos();
     if(o.accessibility) {accessibility::SemanticNode n;n.id=ImGui::GetID("state");n.parent=o.parent;n.name=Safe(v.heading);n.description=Safe(v.description);n.role=accessibility::SemanticRole::Status;accessibility::AnnotateLastItem(*o.accessibility,n);}
-    if(*Safe(v.description)) ImGui::TextWrapped("%s",v.description);
+    if(*Safe(v.description)) {
+        centred(ImGui::CalcTextSize(v.description,nullptr,false,block).x);
+        ImGui::PushStyleColor(ImGuiCol_Text,o.theme?o.theme->semantic.textSecondary:ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+        ImGui::PushTextWrapPos(ImGui::GetCursorPosX()+std::max(1.f,block-(ImGui::GetCursorPosX()-originX-offset)));
+        ImGui::TextUnformatted(v.description);ImGui::PopTextWrapPos();ImGui::PopStyleColor();
+    }
     bool result=false;ImGui::BeginDisabled(v.disabled);
-    if(*Safe(v.action)) result=LabeledButton(v.action,"",{},false,o);
+    if(*Safe(v.action)) {
+        centred(ImGui::CalcTextSize(v.action).x+ImGui::GetStyle().FramePadding.x*2);
+        result=LabeledButton(v.action,"",{},false,o);
+    }
     ImGui::EndDisabled();ImGui::EndGroup();ImGui::PopID();return result;
 }
 bool UnavailableState(const char* id,const StateView& view,ComponentOptions o) {return EmptyState(id,view,o);}
@@ -635,28 +720,29 @@ void CircularProgress(const char* id,const CircularProgressView& view,CircularPr
     constexpr float pi=3.14159265358979323846f;
     constexpr const char* unavailable="\xE2\x80\x94";
     const float diameter=std::max(12.f,layout.diameter>0?layout.diameter:ImGui::GetFrameHeight()*3.f);
-    const float stroke=std::clamp(layout.strokeWidth>0?layout.strokeWidth:diameter*.06f,1.f,diameter*.24f);
+    const float stroke=std::clamp(layout.strokeWidth>0?layout.strokeWidth:diameter*.1f,1.f,diameter*.24f);
     const bool available=std::isfinite(view.fraction)&&view.fraction>=0.f;
-    const float fraction=available?std::clamp(view.fraction,0.f,1.f):0.f;
+    float fraction=available?std::clamp(view.fraction,0.f,1.f):0.f;
     const char* value=*Safe(view.value)?view.value:(available?"":unavailable);
-    const ImVec4 track=o.theme?o.theme->semantic.border:ImGui::GetStyleColorVec4(ImGuiCol_Border);
+    const ImVec4 text=o.theme?o.theme->semantic.text:ImGui::GetStyleColorVec4(ImGuiCol_Text);
     const ImVec4 foreground=available?Color(view.kind,o):(o.theme?o.theme->semantic.textDisabled:ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+    const bool animate=!o.theme||(o.theme->motion.enabled&&!o.theme->motion.reducedMotion);
     ImGui::PushID(id);ImGui::BeginGroup();
+    // Values tween so that coarse host updates do not look like jumps.
+    if(available&&o.animation) {
+        const Motion motion=o.theme?o.theme->motion:Motion{};
+        fraction=o.animation->Update(ImGui::GetID("circular-value"),fraction,ImGui::GetIO().DeltaTime,
+                                     std::max(motion.controlSeconds*2.f,.05f),ImGui::GetFrameCount(),animate,motion.easing);
+    }
     const ImVec2 top=ImGui::GetCursorScreenPos();ImGui::Dummy({diameter,diameter});
     const ImVec2 center{top.x+diameter*.5f,top.y+diameter*.5f};
     const float radius=std::max(1.f,diameter*.5f-stroke*.5f-1.f);
     auto* draw=ImGui::GetWindowDrawList();const int segments=std::clamp(static_cast<int>(diameter*.75f),24,96);
-    draw->AddCircle(center,radius,ImGui::GetColorU32(track),segments,stroke);
+    draw->AddCircle(center,radius,ImGui::GetColorU32(detail::WithAlpha(text,.11f)),segments,stroke);
     if(available&&fraction>0.f) {
         const float start=-pi*.5f;
         if(fraction>=.9999f) draw->AddCircle(center,radius,ImGui::GetColorU32(foreground),segments,stroke);
-        else {
-            const float end=start+2.f*pi*fraction;
-            draw->PathArcTo(center,radius,start,end,std::max(2,static_cast<int>(segments*fraction)));
-            draw->PathStroke(ImGui::GetColorU32(foreground),stroke,0);
-            for(float angle:{start,end})
-                draw->AddCircleFilled({center.x+std::cos(angle)*radius,center.y+std::sin(angle)*radius},stroke*.5f,ImGui::GetColorU32(foreground));
-        }
+        else detail::DrawRingArc(draw,center,radius,stroke,start,start+2.f*pi*fraction,ImGui::GetColorU32(foreground));
     }
     const ImVec2 valueSize=ImGui::CalcTextSize(value);
     const float innerWidth=std::max(1.f,(radius-stroke*.5f)*1.55f);
@@ -665,11 +751,11 @@ void CircularProgress(const char* id,const CircularProgressView& view,CircularPr
                                   innerWidth/std::max(1.f,valueSize.y)});
     draw->AddText(ImGui::GetFont(),ImGui::GetFontSize()*textScale,
                   {center.x-valueSize.x*textScale*.5f,center.y-valueSize.y*textScale*.5f},
-                  ImGui::GetColorU32(available?(o.theme?o.theme->semantic.text:ImGui::GetStyleColorVec4(ImGuiCol_Text)):foreground),value);
+                  ImGui::GetColorU32(available?text:foreground),value);
     if(*Safe(view.label)) {
         const float width=ImGui::CalcTextSize(view.label).x;
         ImGui::SetCursorPosX(ImGui::GetCursorPosX()+std::max(0.f,(diameter-width)*.5f));
-        ImGui::PushStyleColor(ImGuiCol_Text,o.theme?o.theme->semantic.textDisabled:ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+        ImGui::PushStyleColor(ImGuiCol_Text,o.theme?o.theme->semantic.textSecondary:ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
         ImGui::TextUnformatted(view.label);ImGui::PopStyleColor();
     }
     ImGui::EndGroup();
@@ -725,21 +811,25 @@ void StageProgress(const char* id,const StageProgressView& view,ComponentOptions
         ImGui::Dummy({width,markerHeight});
         auto* draw=ImGui::GetWindowDrawList();
         const float step=width/static_cast<float>(stages.size());
-        const float radius=std::min(markerHeight*.28f,ImGui::GetFontSize()*.32f);
+        const float radius=std::min(markerHeight*.4f,ImGui::GetFontSize()*.5f);
         const float centerY=origin.y+markerHeight*.5f;
         const ImVec4 connector=o.theme?o.theme->semantic.border:ImGui::GetStyleColorVec4(ImGuiCol_Border);
         for(std::size_t i=0;i+1<stages.size();++i) {
             const float x1=origin.x+step*(static_cast<float>(i)+.5f)+radius;
             const float x2=origin.x+step*(static_cast<float>(i)+1.5f)-radius;
             const ImVec4 line=stages[i].status==ProgressStatus::Succeeded?ProgressStatusColor(stages[i].status,o):connector;
-            draw->AddLine({x1,centerY},{x2,centerY},ImGui::GetColorU32(line),2.f);
+            draw->AddLine({x1,centerY},{x2,centerY},ImGui::GetColorU32(line),3.f);
         }
         for(std::size_t i=0;i<stages.size();++i) {
             const auto& stage=stages[i];const float x=origin.x+step*(static_cast<float>(i)+.5f);
             const ImVec4 color=ProgressStatusColor(stage.status,o);
-            if(stage.status==ProgressStatus::Queued) draw->AddCircle({x,centerY},radius,ImGui::GetColorU32(color),20,2.f);
-            else draw->AddCircleFilled({x,centerY},radius,ImGui::GetColorU32(color),20);
-            if(static_cast<int>(i)==current) draw->AddCircle({x,centerY},radius+3.f,ImGui::GetColorU32(color),20,1.5f);
+            if(stage.status==ProgressStatus::Queued) draw->AddCircle({x,centerY},radius,ImGui::GetColorU32(color),24,2.f);
+            else draw->AddCircleFilled({x,centerY},radius,ImGui::GetColorU32(color),24);
+            if(stage.status==ProgressStatus::Succeeded) {
+                const ImVec4 ink=ContrastRatio({1,1,1,1},color)>=ContrastRatio({0,0,0,1},color)?ImVec4{1,1,1,1}:ImVec4{0,0,0,1};
+                detail::DrawCheck(draw,{x,centerY},radius*1.1f,ImGui::GetColorU32(ink),1.7f);
+            }
+            if(static_cast<int>(i)==current) draw->AddCircle({x,centerY},radius+3.5f,ImGui::GetColorU32(detail::WithAlpha(color,.5f)),24,2.f);
         }
         if(ImGui::BeginTable("stage-labels",static_cast<int>(stages.size()),ImGuiTableFlags_SizingStretchSame)) {
             for(std::size_t i=0;i<stages.size();++i) {
@@ -864,12 +954,21 @@ StableId TaskProgressCard(const char* id,const TaskProgressCardView& view,TaskPr
 bool BeginCard(const char* id,ImVec2 size,ComponentOptions o) {
     ImGui::PushStyleColor(ImGuiCol_ChildBg,o.theme?o.theme->semantic.surfaceRaised:ImGui::GetStyleColorVec4(ImGuiCol_FrameBg));
     ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize,o.theme?o.theme->stroke.border:1.f);
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,o.theme?o.theme->radius.control:ImGui::GetStyle().FrameRounding);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,o.theme?o.theme->radius.overlay:ImGui::GetStyle().FrameRounding+4.f);
     return ImGui::BeginChild(id,size,ImGuiChildFlags_Borders);
 }
 void EndCard() {ImGui::EndChild();ImGui::PopStyleVar(2);ImGui::PopStyleColor();}
 bool SectionHeader(const char* id,const char* label,bool& open,ComponentOptions o) {
-    ImGui::PushID(id);if(LabeledButton(label,Text(o,"toggle_section","Expand or collapse"),{std::max(1.f,ImGui::GetContentRegionAvail().x),0},open,o)) open=!open;ImGui::PopID();return open;
+    ImGui::PushID(id);
+    const auto pad=ImGui::GetStyle().FramePadding;const float lead=ImGui::GetFontSize()*1.1f;
+    ImGui::PushStyleColor(ImGuiCol_Button,{0,0,0,0});ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize,0.f);
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,{pad.x+lead,pad.y});
+    const bool hit=LabeledButton(label,Text(o,"toggle_section","Expand or collapse"),{std::max(1.f,ImGui::GetContentRegionAvail().x),0},false,o);
+    ImGui::PopStyleVar(2);ImGui::PopStyleColor();
+    const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
+    detail::DrawChevron(ImGui::GetWindowDrawList(),{a.x+pad.x+lead*.35f,(a.y+b.y)*.5f},ImGui::GetFontSize()*.6f,ImGui::GetColorU32(ImGuiCol_TextDisabled),open?ImGuiDir_Down:ImGuiDir_Right,1.5f);
+    if(hit) open=!open;
+    ImGui::PopID();return open;
 }
 StableId MultiSelectionBar(const char* id,std::size_t count,std::span<const Command> actions,ToolbarState& state,ComponentOptions o) {
     if(!count) return 0;ImGui::PushID(id);ImGui::Text("%zu %s",count,Text(o,"selected","selected"));

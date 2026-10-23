@@ -3,7 +3,6 @@
 #include <algorithm>
 namespace imkit::gallery {
 void ToastPage::Show(GalleryState& host) {
-    ImGui::SeparatorText("Toasts / トースト");
     ImGui::Checkbox("日本語",&japanese);
     const char* positions[]={"Top left","Top center","Top right","Bottom left","Bottom center","Bottom right"};
     ImGui::Combo("Position",&position,positions,6);layout.position=static_cast<ToastPosition>(position);

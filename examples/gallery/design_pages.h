@@ -4,6 +4,7 @@
 #include <array>
 #include <string>
 namespace imkit::gallery {
+struct GalleryState;
 struct DesignPages {
     struct Row { std::array<char,64> name{}, value{}; bool selected=false; };
     std::vector<Row> rows;
@@ -24,8 +25,11 @@ struct DesignPages {
     int settingsRequests=0;
     bool descending=false;
     std::string filter;
+    std::array<char,128> searchText{};
+    std::array<char,64> formValue{};
+    int pageNumber=2;
     void Prepare();
     void Reindex();
-    void Show(int section,Theme& theme);
+    void Show(int section,GalleryState& host);
 };
 }

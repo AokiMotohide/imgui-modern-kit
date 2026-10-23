@@ -2,6 +2,12 @@
 
 > Published release entries present English first, followed by equivalent Japanese notes. Unreleased remains a work-in-progress list.
 
+## Unreleased / 未リリース
+
+**Modern refresh.** New default tokens: radius 4/8/12 (subtle, control, overlay), control height 30 in Comfortable density, softer hairline borders, tonal buttons, a real outer overlay shadow and 0.14 s control motion. Segmented controls glide a raised thumb, chips and badges are pills, selected rows get a leading accent bar, scrollbars are slim pills, and sliders use pill grabs. Progress tracks, `ProgressBar`, circular progress, toasts, alerts, empty/error states, pagination, search and split buttons were redrawn. Node editor, histogram, meters, waveform and colour wheel received matching visuals. **Added:** `imkit/charts.h` with `DonutChart`, `BarChart`, `Gauge`, `Sparkline` and `ChartColor`. Public signatures are unchanged; `Theme::radius`, `Theme::elevation`, `Theme::opacity::disabled` and `Theme::motion` defaults changed, so hosts that relied on the old values should set them explicitly. The Gallery uses full-width pages with card layouts and gains a Charts page.
+
+**日本語.** 既定のトークンを更新しました。角丸は4/8/12（小・コントロール・オーバーレイ）、Comfortableの高さは30、枠線は控えめな細線、ボタンは色調塗り、オーバーレイには外側の影、コントロールの動きは0.14秒です。セグメントは浮き上がるサムが滑り、チップとバッジはピル形、選択行は先頭にアクセントバー、スクロールバーは細いピル、スライダーのつまみもピル形です。進捗トラック、`ProgressBar`、円形進捗、トースト、通知、空・エラー状態、ページ送り、検索欄、分割ボタンを描き直しました。ノードエディタ、ヒストグラム、メーター、波形、色相環も合わせています。`imkit/charts.h`に`DonutChart`・`BarChart`・`Gauge`・`Sparkline`・`ChartColor`を追加しました。公開シグネチャは変わりませんが、`Theme::radius`・`Theme::elevation`・`Theme::opacity::disabled`・`Theme::motion`の既定値が変わっています。従来値に依存するホストは明示してください。Galleryは全幅のカード配置になり、Chartsページを追加しました。
+
 ## 3.3.0 — 2026-10-23
 
 Shared progress tracks, stage lists, task progress cards and richer loading toasts make long-running work easier to follow. `ProgressTrack`, `StageProgress` and `TaskProgressCard` take borrowed views; the host owns values and handles operation IDs. `ToastView` adds `stage`, `progressText` and `status`. Recompile applications and static libraries with matching 3.3 headers; do not mix 3.2 objects with 3.3 structures. Dependencies and the Dear ImGui baseline are unchanged. See [the 3.3 guide](docs/reference/v3.3-api.md).

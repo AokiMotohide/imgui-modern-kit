@@ -10,5 +10,6 @@
 #include <imkit/patterns.h>
 #include <imkit/workflow.h>
 #include <imkit/toast.h>
+#include <imkit/charts.h>
 #include <imkit/shell.h>
 #include <imkit/window_frame.h>

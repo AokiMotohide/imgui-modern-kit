@@ -44,7 +44,13 @@ void Heading(GalleryState &s, const char *text) {
 void StartCard(GalleryState &s, int page, const char *eyebrow, const char *title,
                const char *description, const char *action) {
     PushID(page);
-    if (BeginChild("route", {0, 190}, ImGuiChildFlags_Borders)) {
+    PushStyleColor(ImGuiCol_ChildBg, s.theme.semantic.surfaceRaised);
+    PushStyleVar(ImGuiStyleVar_ChildRounding, s.theme.radius.overlay);
+    PushStyleVar(ImGuiStyleVar_WindowPadding, {16.f * s.scale, 14.f * s.scale});
+    const bool routeVisible = BeginChild("route", {0, 150 * s.scale}, ImGuiChildFlags_Borders | ImGuiChildFlags_AlwaysUseWindowPadding);
+    PopStyleVar(2);
+    PopStyleColor();
+    if (routeVisible) {
         TextDisabled("%s", eyebrow);
         PushFont(s.fonts.emphasis, s.theme.metrics.headingSize);
         TextUnformatted(title);
@@ -56,6 +62,48 @@ void StartCard(GalleryState &s, int page, const char *eyebrow, const char *title
     }
     EndChild();
     PopID();
+}
+// One heading per page: the title, then a single line saying what the page demonstrates.
+void PageHeader(GalleryState &s, const char *title, const char *summary, bool compact = false) {
+    PushFont(s.fonts.emphasis, s.theme.metrics.headingSize * (compact ? 1.f : 1.15f));
+    TextUnformatted(title);
+    PopFont();
+    if (summary && *summary) {
+        // Dense editor workspaces keep the summary on the title line to save vertical room.
+        if (compact)
+            SameLine();
+        TextDisabled("%s", summary);
+    }
+    if (!compact)
+        Spacing();
+}
+const char *PageSummary(int page) {
+    switch (page) {
+    case 0: return "Buttons, selection controls and text. Standard Dear ImGui behaviour with a modern look.";
+    case 1: return "Scalar, vector and unit-bearing numeric input.";
+    case 2: return "Text, colour, image and plot widgets.";
+    case 3: return "Trees, tabs, tables and drag and drop.";
+    case 4: return "Popups, modals, toolbars, scroll regions and docking.";
+    case 5: return "Segmented controls, badges, notifications and Japanese text.";
+    case 6: return "Searchable icon catalogue with copyable C++ calls.";
+    case 7: return "Timeline ruler, transport and curve editing.";
+    case 8: return "Media bin, monitors and inspector for video editing.";
+    case 9: return "Views, scene properties and gizmos for CG editing.";
+    case 10: return "Density, contrast, typography and motion tokens.";
+    case 11: return "Rows, toolbars, command palette, dialogs and a 100,000 row data table.";
+    case 12: return "Navigation, command and data patterns.";
+    case 13: return "The semantic tree published for assistive technology.";
+    case 14: return "Layouts that adapt from narrow to wide.";
+    case 15: return "A full workspace assembled from public components.";
+    case 16: return "Progress, stages, alerts and empty, error and retry states.";
+    case 17: return "Resizable preview tiles with host-owned state.";
+    case 18: return "Window frame presets with live colour and metric editing.";
+    case 20: return "Stacked notifications with progress, actions and timers.";
+    case 21: return "The same ImGui calls with and without an ImKit theme.";
+    case 22: return "Tabs, hierarchy actions, settings and choices in one screen.";
+    case 23: return "Donut, bar, gauge, sparkline and progress components.";
+    default: return "";
+    }
 }
 void Start(GalleryState &s) {
     Heading(s, "Modern UI. Familiar workflow.");
@@ -163,9 +211,6 @@ void ImKitComparisonSpecimen(GalleryState &s) {
     ImGui::EndDisabled();
 }
 void Icons(GalleryState &s) {
-    char heading[64];
-    std::snprintf(heading, sizeof(heading), "Icons / %d preset icons", static_cast<int>(GetIconCatalog().size()));
-    Heading(s, heading);
     TextDisabled("%d preset icons · %d atlas sizes · searchable catalog",
                  static_cast<int>(GetIconCatalog().size()), static_cast<int>(IconPixelSizes.size()));
     SetNextItemWidth(210);
@@ -250,113 +295,198 @@ void Icons(GalleryState &s) {
         EndTable();
     }
 }
-void Basic(GalleryState &s) {
-    Heading(s, "Actions / Selection");
-    if (s.focusApply) {
-        SetKeyboardFocusHere();
-        s.focusApply = false;
-    }
-    if (ActionButton("Apply", ActionVariant::Primary, {}, {&s.theme, &s.animation}))
-        ++s.clicks;
-    Record(s, "apply");
-    s.applyFocused = IsItemFocused();
-    SameLine();
-    ActionButton("Secondary", ActionVariant::Secondary);
-    SameLine();
-    ActionButton("Ghost", ActionVariant::Ghost);
-    SameLine();
-    ActionButton("Delete", ActionVariant::Destructive, {}, {&s.theme});
-    BeginDisabled();
-    if (Button("Disabled"))
-        ++s.clicks;
-    Record(s, "disabled");
-    EndDisabled();
-    SameLine();
-    SmallButton("Inline");
-    SameLine();
-    ArrowButton("Next", ImGuiDir_Right);
-    SameLine();
-    IconButton("Up", ImGuiDir_Up, "Move up");
-    Text("Applied: %d", s.clicks);
-    Checkbox("Enabled", &s.checked);
-    Record(s, "checkbox");
-    SameLine();
-    Toggle("Switch", &s.toggle, {&s.theme, &s.animation});
-    Record(s, "toggle");
-    IndeterminateCheckbox("Mixed selection", &s.mixed);
-    Record(s, "mixed");
-    RadioButton("Low", &s.radio, 0);
-    SameLine();
-    RadioButton("High", &s.radio, 1);
-    Record(s, "radio");
-    Selectable("Selected row has an underline", &s.selected);
-    Record(s, "selectable");
-    static const char *items[] = {"Low", "Medium", "High"};
-    Combo("Quality", &s.combo, items, 3);
-    Record(s, "combo");
-    if (BeginListBox("List", {0, 110})) {
-        for (int i = 0; i < 3; ++i) {
-            PushID(i);
-            if (Selectable(items[i], s.combo == i))
-                s.combo = i;
-            PopID();
-        }
-        EndListBox();
-    }
-    SeparatorText("Text and links");
-    TextUnformatted("Precision Layers / 表示設定");
-    TextColored(s.theme.colors.success, "Ready");
-    TextDisabled("Unavailable");
-    TextWrapped("A neutral palette separates the canvas, panels, inputs and overlays. Standard Dear ImGui "
-                "behavior is retained.");
-    LabelText("Version", "%s", IMKIT_VERSION);
-    BulletText("Keyboard focus and selection are different states.");
-    TextLink("Local link action");
-    PushID("first");
-    if (Button("Same label"))
-        ++s.clicks;
-    Record(s, "same-first");
-    PopID();
-    SameLine();
-    PushID("second");
-    if (Button("Same label"))
-        s.clicks += 10;
-    Record(s, "same-second");
+} // namespace
+// Responsive masonry of cards: each card goes into the currently shortest column.
+namespace {
+struct GridLayout {
+    ImVec2 origin{};
+    float columnWidth = 0, gap = 0, width = 0;
+    int columns = 1, current = 0;
+    std::array<float, 4> bottom{};
+} grid;
+} // namespace
+bool BeginGrid(GalleryState &s, const char *id, int maxColumns) {
+    grid.gap = 12.f * s.scale;
+    grid.width = std::max(1.f, GetContentRegionAvail().x);
+    const float minimum = 440.f * s.scale;
+    grid.columns = std::clamp(static_cast<int>((grid.width + grid.gap) / (minimum + grid.gap)), 1, std::min(maxColumns, 4));
+    grid.columnWidth = (grid.width - grid.gap * static_cast<float>(grid.columns - 1)) / static_cast<float>(grid.columns);
+    grid.origin = GetCursorScreenPos();
+    grid.bottom.fill(grid.origin.y);
+    PushID(id);
+    return true;
+}
+void EndGrid() {
+    const float bottom = *std::max_element(grid.bottom.begin(), grid.bottom.begin() + grid.columns);
+    SetCursorScreenPos({grid.origin.x, bottom});
+    Dummy({grid.width, 0});
     PopID();
 }
+// One titled card in the grid. Always pair with EndSection, including a false return.
+bool BeginSection(GalleryState &s, const char *title, const char *hint) {
+    grid.current = static_cast<int>(std::min_element(grid.bottom.begin(), grid.bottom.begin() + grid.columns) - grid.bottom.begin());
+    SetCursorScreenPos({grid.origin.x + static_cast<float>(grid.current) * (grid.columnWidth + grid.gap), grid.bottom[grid.current]});
+    PushStyleColor(ImGuiCol_ChildBg, s.theme.semantic.surfaceRaised);
+    PushStyleVar(ImGuiStyleVar_ChildRounding, s.theme.radius.overlay);
+    PushStyleVar(ImGuiStyleVar_WindowPadding, {16.f * s.scale, 14.f * s.scale});
+    const bool visible = BeginChild(title, {grid.columnWidth, 0}, ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding,
+                                    ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+    PopStyleVar(2);
+    PopStyleColor();
+    if (visible) {
+        PushFont(s.fonts.emphasis, s.theme.metrics.bodySize * 1.08f);
+        TextUnformatted(title);
+        PopFont();
+        if (hint)
+            TextDisabled("%s", hint);
+        Spacing();
+        PushItemWidth(std::min(GetContentRegionAvail().x * .62f, 380.f * s.scale));
+    }
+    return visible;
+}
+void EndSection(bool visible) {
+    if (visible)
+        PopItemWidth();
+    EndChild();
+    grid.bottom[grid.current] = GetItemRectMax().y + grid.gap;
+}
+namespace {
+void Basic(GalleryState &s) {
+    if (BeginGrid(s, "basic-grid")) {
+        const bool actions = BeginSection(s, "Actions", "Variants, states and icon buttons");
+        if (actions) {
+            if (s.focusApply) {
+                SetKeyboardFocusHere();
+                s.focusApply = false;
+            }
+            if (ActionButton("Apply", ActionVariant::Primary, {}, {&s.theme, &s.animation}))
+                ++s.clicks;
+            Record(s, "apply");
+            s.applyFocused = IsItemFocused();
+            SameLine();
+            ActionButton("Secondary", ActionVariant::Secondary, {}, {&s.theme, &s.animation});
+            SameLine();
+            ActionButton("Ghost", ActionVariant::Ghost, {}, {&s.theme, &s.animation});
+            SameLine();
+            ActionButton("Delete", ActionVariant::Destructive, {}, {&s.theme, &s.animation});
+            BeginDisabled();
+            if (Button("Disabled"))
+                ++s.clicks;
+            Record(s, "disabled");
+            EndDisabled();
+            SameLine();
+            SmallButton("Inline");
+            SameLine();
+            ArrowButton("Next", ImGuiDir_Right);
+            SameLine();
+            IconButton("Up", ImGuiDir_Up, "Move up");
+            TextDisabled("Applied: %d", s.clicks);
+        }
+        EndSection(actions);
+        const bool selection = BeginSection(s, "Selection", "Checks, switches, choices and lists");
+        if (selection) {
+            Checkbox("Enabled", &s.checked);
+            Record(s, "checkbox");
+            SameLine();
+            Toggle("Switch", &s.toggle, {&s.theme, &s.animation});
+            Record(s, "toggle");
+            IndeterminateCheckbox("Mixed selection", &s.mixed);
+            Record(s, "mixed");
+            RadioButton("Low", &s.radio, 0);
+            SameLine();
+            RadioButton("High", &s.radio, 1);
+            Record(s, "radio");
+            Selectable("Selected row marks its leading edge", &s.selected);
+            Record(s, "selectable");
+            static const char *items[] = {"Low", "Medium", "High"};
+            Combo("Quality", &s.combo, items, 3);
+            Record(s, "combo");
+            if (BeginListBox("List", {0, 96 * s.scale})) {
+                for (int i = 0; i < 3; ++i) {
+                    PushID(i);
+                    if (Selectable(items[i], s.combo == i))
+                        s.combo = i;
+                    PopID();
+                }
+                EndListBox();
+            }
+        }
+        EndSection(selection);
+        const bool text = BeginSection(s, "Text and links", "Hierarchy comes from size, colour and weight");
+        if (text) {
+            TextUnformatted("Precision Layers / 表示設定");
+            TextColored(s.theme.colors.success, "Ready");
+            TextDisabled("Unavailable");
+            TextWrapped("A neutral palette separates the canvas, panels, inputs and overlays. Standard Dear ImGui "
+                        "behavior is retained.");
+            LabelText("Version", "%s", IMKIT_VERSION);
+            BulletText("Keyboard focus and selection are different states.");
+            TextLink("Local link action");
+        }
+        EndSection(text);
+        const bool identity = BeginSection(s, "ID stack check", "Identical labels stay distinct under PushID");
+        if (identity) {
+            PushID("first");
+            if (Button("Same label"))
+                ++s.clicks;
+            Record(s, "same-first");
+            PopID();
+            SameLine();
+            PushID("second");
+            if (Button("Same label"))
+                s.clicks += 10;
+            Record(s, "same-second");
+            PopID();
+        }
+        EndSection(identity);
+        EndGrid();
+    }
+}
 void Numeric(GalleryState &s) {
-    Heading(s, "Numeric / Units");
-    SetNextItemWidth(420);
-    DragFloat("Value", &s.scalar, .01f, 0, 1);
-    Record(s, "drag");
-    SetNextItemWidth(420);
-    SliderFloat("Level", &s.scalar, 0, 1);
-    Record(s, "slider");
-    DragFloatRange2("Range", &s.lower, &s.upper, 1, 0, 100);
-    Record(s, "range");
-    InputScalar("64-bit integer", ImGuiDataType_S64, &s.integer64);
-    Record(s, "int64");
-    InputDouble("Precision", &s.precise);
-    InputFloat("Float", &s.scalar);
-    InputInt("Count", &s.integers[0]);
-    DragFloat2("Drag 2", s.vector);
-    DragFloat3("Drag 3", s.vector);
-    DragFloat4("Drag 4", s.vector);
-    SliderInt4("Int 4", s.integers, 0, 100);
-    InputInt3("Input 3", s.integers);
-    SetNextItemWidth(300);
-    InputScalarWithUnit("Distance", ImGuiDataType_Double, &s.precise, "mm");
-    SetNextItemWidth(400);
-    InputVector3WithUnit("Position", s.vector, "mm");
-    SetNextItemWidth(400);
-    DragVector3WithUnit("Offset", s.vector, "mm", .1f, -100.f, 100.f, "%.2f");
-    SetNextItemWidth(160);
-    DragVector3WithUnit("Narrow offset", s.vector, "mm", .1f, -100.f, 100.f, "%.2f");
-    SetNextItemWidth(300);
-    DragFloatWithUnit("Angle", &s.vector[0], "deg", .1f, -180, 180);
-    VSliderFloat("##vertical", {56, 90}, &s.scalar, 0, 1, "%.2f");
-    SameLine();
-    ProgressBar(s.scalar, {340, 28}, "Level");
+    if (BeginGrid(s, "numeric-grid")) {
+        const bool scalars = BeginSection(s, "Scalars", "Drag, slide and type values");
+        if (scalars) {
+            DragFloat("Value", &s.scalar, .01f, 0, 1);
+            Record(s, "drag");
+            SliderFloat("Level", &s.scalar, 0, 1);
+            Record(s, "slider");
+            DragFloatRange2("Range", &s.lower, &s.upper, 1, 0, 100);
+            Record(s, "range");
+            InputScalar("64-bit integer", ImGuiDataType_S64, &s.integer64);
+            Record(s, "int64");
+            InputDouble("Precision", &s.precise);
+            InputFloat("Float", &s.scalar);
+            InputInt("Count", &s.integers[0]);
+        }
+        EndSection(scalars);
+        const bool vectors = BeginSection(s, "Vectors", "Two to four components");
+        if (vectors) {
+            DragFloat2("Drag 2", s.vector);
+            DragFloat3("Drag 3", s.vector);
+            DragFloat4("Drag 4", s.vector);
+            SliderInt4("Int 4", s.integers, 0, 100);
+            InputInt3("Input 3", s.integers);
+        }
+        EndSection(vectors);
+        const bool units = BeginSection(s, "Units", "Values with a visible unit; narrow widths stack the axes");
+        if (units) {
+            InputScalarWithUnit("Distance", ImGuiDataType_Double, &s.precise, "mm");
+            InputVector3WithUnit("Position", s.vector, "mm");
+            DragVector3WithUnit("Offset", s.vector, "mm", .1f, -100.f, 100.f, "%.2f");
+            SetNextItemWidth(160 * s.scale);
+            DragVector3WithUnit("Narrow offset", s.vector, "mm", .1f, -100.f, 100.f, "%.2f");
+            DragFloatWithUnit("Angle", &s.vector[0], "deg", .1f, -180, 180);
+        }
+        EndSection(units);
+        const bool level = BeginSection(s, "Level", "Vertical slider and progress share the value");
+        if (level) {
+            VSliderFloat("##vertical", {44 * s.scale, 96 * s.scale}, &s.scalar, 0, 1, "%.2f");
+            SameLine();
+            ProgressBar(s.scalar, {GetContentRegionAvail().x, 0}, "Level");
+        }
+        EndSection(level);
+        EndGrid();
+    }
 }
 int TextCallback(ImGuiInputTextCallbackData *data) {
     if (data->EventFlag == ImGuiInputTextFlags_CallbackEdit)
@@ -372,131 +502,154 @@ int ResizeCallback(ImGuiInputTextCallbackData *data) {
     return 0;
 }
 void InputColor(GalleryState &s) {
-    Heading(s, "Input / Color / Image / Plot");
-    InputText("Name / 名前", s.name, sizeof(s.name), ImGuiInputTextFlags_CallbackEdit, TextCallback, &s);
-    Record(s, "text");
-    InputText("Resizable", s.growing.data(), s.growing.size(), ImGuiInputTextFlags_CallbackResize,
-              ResizeCallback, &s);
-    Record(s, "resize-text");
-    InputTextWithHint("Required", "Enter a name", s.validation, sizeof(s.validation));
-    Record(s, "validation");
-    ValidationMessage("A name is required", s.validation[0] == 0, &s.theme);
-    InputTextMultiline("Notes", s.notes, sizeof(s.notes), {460, 90});
-    Record(s, "multiline");
-    ColorEdit4("Tint", &s.color.x);
-    Record(s, "color");
-    SetNextItemWidth(180);
-    ColorPicker4("Picker", &s.color.x, ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs);
-    Record(s, "picker");
-    SameLine();
-    BeginGroup();
-    Image(s.texture, {180, 100});
-    ImageWithBg(s.texture, {180, 48}, {0, 0}, {1, 1}, s.theme.colors.input, s.color);
-    s.imageActivated = ImageButton("Texture action", s.texture, {40, 40}) || s.imageActivated;
-    Record(s, "image-button");
-    EndGroup();
-    const float values[] = {.1f, .4f, .8f, .5f, .3f, .9f, .65f};
-    PlotLines("Signal", values, 7, 0, nullptr, 0, 1, {420, 70});
-    PlotHistogram("Histogram", values, 7, 0, nullptr, 0, 1, {420, 70});
+    if (BeginGrid(s, "input-grid")) {
+        const bool inputs = BeginSection(s, "Text input", "Native editing with validation");
+        if (inputs) {
+            InputText("Name / 名前", s.name, sizeof(s.name), ImGuiInputTextFlags_CallbackEdit, TextCallback, &s);
+            Record(s, "text");
+            InputText("Resizable", s.growing.data(), s.growing.size(), ImGuiInputTextFlags_CallbackResize,
+                      ResizeCallback, &s);
+            Record(s, "resize-text");
+            InputTextWithHint("Required", "Enter a name", s.validation, sizeof(s.validation));
+            Record(s, "validation");
+            ValidationMessage("A name is required", s.validation[0] == 0, &s.theme);
+            InputTextMultiline("Notes", s.notes, sizeof(s.notes), {0, 90 * s.scale});
+            Record(s, "multiline");
+        }
+        EndSection(inputs);
+        const bool color = BeginSection(s, "Colour", "Edit and pick");
+        if (color) {
+            ColorEdit4("Tint", &s.color.x);
+            Record(s, "color");
+            ColorPicker4("Picker", &s.color.x, ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs);
+            Record(s, "picker");
+        }
+        EndSection(color);
+        const bool image = BeginSection(s, "Image", "Host-owned texture");
+        if (image) {
+            Image(s.texture, {180 * s.scale, 100 * s.scale});
+            ImageWithBg(s.texture, {180 * s.scale, 48 * s.scale}, {0, 0}, {1, 1}, s.theme.colors.input, s.color);
+            s.imageActivated = ImageButton("Texture action", s.texture, {40 * s.scale, 40 * s.scale}) || s.imageActivated;
+            Record(s, "image-button");
+        }
+        EndSection(image);
+        const bool plots = BeginSection(s, "Plots", "Dear ImGui plots; see Charts for ImKit chart components");
+        if (plots) {
+            const float values[] = {.1f, .4f, .8f, .5f, .3f, .9f, .65f};
+            PlotLines("Signal", values, 7, 0, nullptr, 0, 1, {GetContentRegionAvail().x * .7f, 70 * s.scale});
+            PlotHistogram("Histogram", values, 7, 0, nullptr, 0, 1, {GetContentRegionAvail().x * .7f, 70 * s.scale});
+        }
+        EndSection(plots);
+        EndGrid();
+    }
 }
 void Hierarchy(GalleryState &s) {
-    Heading(s, "Hierarchy / Tabs / Tables");
-    bool open = TreeNode("Settings");
-    Record(s, "tree");
-    s.treeOpen = open;
-    if (open) {
-        TreeNodeEx("Display", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen);
-        TreePop();
-    }
-    if (CollapsingHeader("Quality options", ImGuiTreeNodeFlags_DefaultOpen))
-        Checkbox("Enabled in hierarchy", &s.checked);
-    if (BeginTabBar("Tabs", ImGuiTabBarFlags_Reorderable)) {
-        if (BeginTabItem("Display")) {
-            Record(s, "tab-display");
-            s.tab = 0;
-            TextUnformatted("Display content");
-            EndTabItem();
-        } else
-            Record(s, "tab-display");
-        if (BeginTabItem("Quality")) {
-            Record(s, "tab-quality");
-            s.tab = 1;
-            TextUnformatted("Quality content");
-            EndTabItem();
-        } else
-            Record(s, "tab-quality");
-        if (s.tabOpen) {
-            bool active = BeginTabItem("Closable", &s.tabOpen);
-            Record(s, "tab-close");
-            if (active) {
-                TextUnformatted("Close with the tab x");
-                EndTabItem();
+    if (BeginGrid(s, "hierarchy-grid")) {
+        const bool tree = BeginSection(s, "Tree and tabs", "Hierarchy, headers and drag and drop");
+        if (tree) {
+            bool open = TreeNode("Settings");
+            Record(s, "tree");
+            s.treeOpen = open;
+            if (open) {
+                TreeNodeEx("Display", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen);
+                TreePop();
+            }
+            if (CollapsingHeader("Quality options", ImGuiTreeNodeFlags_DefaultOpen))
+                Checkbox("Enabled in hierarchy", &s.checked);
+            if (BeginTabBar("Tabs", ImGuiTabBarFlags_Reorderable)) {
+                if (BeginTabItem("Display")) {
+                    Record(s, "tab-display");
+                    s.tab = 0;
+                    TextUnformatted("Display content");
+                    EndTabItem();
+                } else
+                    Record(s, "tab-display");
+                if (BeginTabItem("Quality")) {
+                    Record(s, "tab-quality");
+                    s.tab = 1;
+                    TextUnformatted("Quality content");
+                    EndTabItem();
+                } else
+                    Record(s, "tab-quality");
+                if (s.tabOpen) {
+                    bool active = BeginTabItem("Closable", &s.tabOpen);
+                    Record(s, "tab-close");
+                    if (active) {
+                        TextUnformatted("Close with the tab x");
+                        EndTabItem();
+                    }
+                }
+                TabItemButton("+");
+                EndTabBar();
+            }
+            Button("Drag source");
+            if (BeginDragDropSource()) {
+                SetDragDropPayload("IMKIT_SAMPLE", &s.selectedRow, sizeof(s.selectedRow));
+                TextUnformatted("Display");
+                EndDragDropSource();
+            }
+            SameLine();
+            Button("Drop target");
+            if (BeginDragDropTarget()) {
+                if (auto *p = AcceptDragDropPayload("IMKIT_SAMPLE"))
+                    s.selectedRow = *static_cast<const int *>(p->Data);
+                EndDragDropTarget();
+            }
+            TextDisabled("Selected %d / inline actions %d", s.selectedRow + 1, s.inlineActions);
+        }
+        EndSection(tree);
+        const bool table = BeginSection(s, "Table", "Sortable, resizable and scrollable");
+        if (table) {
+            if (BeginTable("Items", 3,
+                           ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Sortable |
+                               ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_ScrollY,
+                           {0, 280 * s.scale})) {
+                TableSetupColumn("Name", ImGuiTableColumnFlags_DefaultSort);
+                TableSetupColumn("Quality");
+                TableSetupColumn("Action", ImGuiTableColumnFlags_NoSort);
+                TableSetupScrollFreeze(0, 1);
+                TableNextRow(ImGuiTableRowFlags_Headers);
+                TableSetColumnIndex(0);
+                TableHeader("Name");
+                Record(s, "header-name");
+                TableSetColumnIndex(1);
+                TableHeader("Quality");
+                Record(s, "sort-quality");
+                TableSetColumnIndex(2);
+                TableHeader("Action");
+                Record(s, "header-action");
+                if (auto *sort = TableGetSortSpecs(); sort && sort->SpecsDirty) {
+                    std::sort(s.rows.begin(), s.rows.end());
+                    if (sort->SpecsCount && sort->Specs[0].SortDirection == ImGuiSortDirection_Descending)
+                        std::reverse(s.rows.begin(), s.rows.end());
+                    sort->SpecsDirty = false;
+                }
+                for (int i = 0; i < 30; ++i) {
+                    PushID(i);
+                    TableNextRow();
+                    TableNextColumn();
+                    char name[32];
+                    std::snprintf(name, sizeof(name), "Display %d", i + 1);
+                    if (Selectable(name, s.selectedRow == i))
+                        s.selectedRow = i;
+                    Record(s, ("row-" + std::to_string(i)).c_str());
+                    TableNextColumn();
+                    Text("%d", s.rows[i % s.rows.size()]);
+                    TableNextColumn();
+                    if (SmallButton("Edit"))
+                        ++s.inlineActions;
+                    Record(s, ("edit-" + std::to_string(i)).c_str());
+                    PopID();
+                }
+                s.tableScroll = GetScrollY();
+                EndTable();
             }
         }
-        TabItemButton("+");
-        EndTabBar();
-    }
-    if (BeginTable("Items", 3,
-                   ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Sortable |
-                       ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_ScrollY,
-                   {620, 280})) {
-        TableSetupColumn("Name", ImGuiTableColumnFlags_DefaultSort);
-        TableSetupColumn("Quality");
-        TableSetupColumn("Action", ImGuiTableColumnFlags_NoSort);
-        TableSetupScrollFreeze(0, 1);
-        TableNextRow(ImGuiTableRowFlags_Headers);
-        TableSetColumnIndex(0);
-        TableHeader("Name");
-        Record(s, "header-name");
-        TableSetColumnIndex(1);
-        TableHeader("Quality");
-        Record(s, "sort-quality");
-        TableSetColumnIndex(2);
-        TableHeader("Action");
-        Record(s, "header-action");
-        if (auto *sort = TableGetSortSpecs(); sort && sort->SpecsDirty) {
-            std::sort(s.rows.begin(), s.rows.end());
-            if (sort->SpecsCount && sort->Specs[0].SortDirection == ImGuiSortDirection_Descending)
-                std::reverse(s.rows.begin(), s.rows.end());
-            sort->SpecsDirty = false;
-        }
-        for (int i = 0; i < 30; ++i) {
-            PushID(i);
-            TableNextRow();
-            TableNextColumn();
-            char name[32];
-            std::snprintf(name, sizeof(name), "Display %d", i + 1);
-            if (Selectable(name, s.selectedRow == i))
-                s.selectedRow = i;
-            Record(s, ("row-" + std::to_string(i)).c_str());
-            TableNextColumn();
-            Text("%d", s.rows[i % s.rows.size()]);
-            TableNextColumn();
-            if (SmallButton("Edit"))
-                ++s.inlineActions;
-            Record(s, ("edit-" + std::to_string(i)).c_str());
-            PopID();
-        }
-        s.tableScroll = GetScrollY();
-        EndTable();
-    }
-    Text("Selected %d / inline actions %d", s.selectedRow + 1, s.inlineActions);
-    Button("Drag source");
-    if (BeginDragDropSource()) {
-        SetDragDropPayload("IMKIT_SAMPLE", &s.selectedRow, sizeof(s.selectedRow));
-        TextUnformatted("Display");
-        EndDragDropSource();
-    }
-    SameLine();
-    Button("Drop target");
-    if (BeginDragDropTarget()) {
-        if (auto *p = AcceptDragDropPayload("IMKIT_SAMPLE"))
-            s.selectedRow = *static_cast<const int *>(p->Data);
-        EndDragDropTarget();
+        EndSection(table);
+        EndGrid();
     }
 }
 void Overlay(GalleryState &s) {
-    Heading(s, "Overlay / Layout / Docking");
     if (BeginMenuBar()) {
         if (BeginMenu("Settings")) {
             MenuItem("Enabled", nullptr, &s.checked);
@@ -508,54 +661,71 @@ void Overlay(GalleryState &s) {
         }
         EndMenuBar();
     }
-    if (Button("Open popup"))
-        OpenPopup("Actions");
-    Record(s, "popup");
-    s.popupVisible = BeginPopup("Actions");
-    if (s.popupVisible) {
-        OverlayDecoration(s.theme, &s.animation);
-        if (MenuItem("Apply"))
-            ++s.clicks;
-        Record(s, "popup-apply");
-        BeginDisabled();
-        MenuItem("Unavailable");
-        EndDisabled();
-        EndPopup();
+    if (BeginGrid(s, "overlay-grid")) {
+        const bool popups = BeginSection(s, "Popups and modal", "Overlays carry a soft shadow");
+        if (popups) {
+            if (Button("Open popup"))
+                OpenPopup("Actions");
+            Record(s, "popup");
+            s.popupVisible = BeginPopup("Actions");
+            if (s.popupVisible) {
+                OverlayDecoration(s.theme, &s.animation);
+                if (MenuItem("Apply"))
+                    ++s.clicks;
+                Record(s, "popup-apply");
+                BeginDisabled();
+                MenuItem("Unavailable");
+                EndDisabled();
+                EndPopup();
+            }
+            SameLine();
+            if (Button("Open modal"))
+                OpenPopup("Apply settings?");
+            Record(s, "modal");
+            s.modalLauncherFocused = IsItemFocused();
+            Button("Context menu (right click)");
+            if (BeginPopupContextItem()) {
+                MenuItem("Reset");
+                EndPopup();
+            }
+            Button("Hover for tooltip");
+            if (BeginItemTooltip()) {
+                TextUnformatted("A raised, compact tooltip.");
+                EndTooltip();
+            }
+        }
+        EndSection(popups);
+        const bool toolbar = BeginSection(s, "Toolbar and settings row", "Compact chrome around related controls");
+        if (toolbar) {
+            if (BeginToolbar("Toolbar")) {
+                Button("New");
+                SameLine();
+                Button("Save");
+                SameLine();
+                TextDisabled("Session only");
+            }
+            EndToolbar();
+            if (BeginSettingRow("setting", "Display")) {
+                Checkbox("Enabled##setting", &s.checked);
+                EndSettingRow();
+            }
+        }
+        EndSection(toolbar);
+        const bool scroll = BeginSection(s, "Scroll region", "A bordered child with its own scroll");
+        if (scroll) {
+            if (BeginChild("Scroll", {0, 140 * s.scale}, ImGuiChildFlags_Borders)) {
+                for (int i = 0; i < 12; ++i)
+                    Text("Scrollable content %02d", i);
+            }
+            EndChild();
+        }
+        EndSection(scroll);
+        const bool dock = BeginSection(s, "Docking surface", "The host owns the layout");
+        if (dock)
+            DockSpace(GetID("CatalogDock"), {0, 180 * s.scale}, ImGuiDockNodeFlags_None);
+        EndSection(dock);
+        EndGrid();
     }
-    SameLine();
-    if (Button("Open modal"))
-        OpenPopup("Apply settings?");
-    Record(s, "modal");
-    s.modalLauncherFocused = IsItemFocused();
-    Button("Context menu (right click)");
-    if (BeginPopupContextItem()) {
-        MenuItem("Reset");
-        EndPopup();
-    }
-    Button("Hover for tooltip");
-    if (BeginItemTooltip()) {
-        TextUnformatted("A raised, compact tooltip.");
-        EndTooltip();
-    }
-    if (BeginToolbar("Toolbar")) {
-        Button("New");
-        SameLine();
-        Button("Save");
-        SameLine();
-        TextDisabled("Session only");
-    }
-    EndToolbar();
-    if (BeginSettingRow("setting", "Display")) {
-        Checkbox("Enabled##setting", &s.checked);
-        EndSettingRow();
-    }
-    if (BeginChild("Scroll", {500, 140}, ImGuiChildFlags_Borders)) {
-        for (int i = 0; i < 12; ++i)
-            Text("Scrollable content %02d", i);
-    }
-    EndChild();
-    SeparatorText("Docking surface (host owns layout)");
-    DockSpace(GetID("CatalogDock"), {620, 180}, ImGuiDockNodeFlags_None);
     bool modalOpen = true;
     s.modalVisible = BeginPopupModal("Apply settings?", &modalOpen, ImGuiWindowFlags_AlwaysAutoResize);
     if (s.modalVisible) {
@@ -576,44 +746,55 @@ void Overlay(GalleryState &s) {
     }
 }
 void Composites(GalleryState &s) {
-    Heading(s, "Composite controls / 日本語");
-    TextUnformatted("表示設定 — ひらがな・カタカナ・漢字・半角ｶﾅ。");
-    InputText("名前 / Name", s.name, sizeof(s.name));
-    Toggle("表示を有効にする / Enabled", &s.toggle, {&s.theme, &s.animation});
-    static const char *labels[] = {"Low", "Medium", "High"};
-    Segmented("segments", &s.segment, labels);
-    Record(s, "segments");
-    static const bool disabled[] = {false, true, false};
-    SearchableCombo("Search quality", &s.combo, labels, s.search, sizeof(s.search), disabled);
-    Record(s, "search-combo");
-    StatusBadge("Ready / 準備完了", StatusKind::Success, &s.theme);
-    SameLine();
-    StatusBadge("Warning / 注意", StatusKind::Warning, &s.theme);
-    SameLine();
-    StatusBadge("Error / エラー", StatusKind::Error, &s.theme);
-    if (s.notice &&
-        NotificationCard({"notice", "Settings saved / 設定を保存しました", StatusKind::Success, 0}, GetTime(),
-                         &s.theme))
-        s.notice = false;
-    InputScalarWithUnit("位置", ImGuiDataType_Double, &s.precise, "mm");
-    ActionButton("適用 / Apply", ActionVariant::Primary, {}, {&s.theme, &s.animation});
-    SameLine();
-    BeginDisabled();
-    ActionButton("削除できません", ActionVariant::Destructive, {}, {&s.theme});
-    EndDisabled();
-    TextWrapped("Values and notifications belong to the host. Font files are optional catalog assets. No "
-                "operating-system font discovery or hidden context is used.");
+    if (BeginGrid(s, "composites-grid")) {
+        const bool choices = BeginSection(s, "Choices", "Segmented control and searchable combo");
+        if (choices) {
+            static const char *labels[] = {"Low", "Medium", "High"};
+            Segmented("segments", &s.segment, labels, {&s.theme, &s.animation});
+            Record(s, "segments");
+            static const bool disabled[] = {false, true, false};
+            SearchableCombo("Search quality", &s.combo, labels, s.search, sizeof(s.search), disabled);
+            Record(s, "search-combo");
+        }
+        EndSection(choices);
+        const bool status = BeginSection(s, "Status", "Badges and notification cards");
+        if (status) {
+            StatusBadge("Ready / 準備完了", StatusKind::Success, &s.theme);
+            SameLine();
+            StatusBadge("Warning / 注意", StatusKind::Warning, &s.theme);
+            SameLine();
+            StatusBadge("Error / エラー", StatusKind::Error, &s.theme);
+            if (s.notice &&
+                NotificationCard({"notice", "Settings saved / 設定を保存しました", StatusKind::Success, 0}, GetTime(),
+                                 &s.theme))
+                s.notice = false;
+        }
+        EndSection(status);
+        const bool japanese = BeginSection(s, "Japanese text", "Fallback font coverage and mixed scripts");
+        if (japanese) {
+            TextUnformatted("表示設定 — ひらがな・カタカナ・漢字・半角ｶﾅ。");
+            InputText("名前 / Name", s.name, sizeof(s.name));
+            Toggle("表示を有効にする / Enabled", &s.toggle, {&s.theme, &s.animation});
+            InputScalarWithUnit("位置", ImGuiDataType_Double, &s.precise, "mm");
+        }
+        EndSection(japanese);
+        const bool actions = BeginSection(s, "Actions", "Localised labels");
+        if (actions) {
+            ActionButton("適用 / Apply", ActionVariant::Primary, {}, {&s.theme, &s.animation});
+            SameLine();
+            BeginDisabled();
+            ActionButton("削除できません", ActionVariant::Destructive, {}, {&s.theme});
+            EndDisabled();
+            TextWrapped("Values and notifications belong to the host. Font files are optional catalog assets. No "
+                        "operating-system font discovery or hidden context is used.");
+        }
+        EndSection(actions);
+        EndGrid();
+    }
 }
 void FrameLab(GalleryState& s) {
-    Heading(s,"Frame Lab / Public window frame");
     const char* presets[]={"Native","Studio","Workspace","Tool"};
     int preset=static_cast<int>(s.framePreset);
-    if(Combo("Preset",&preset,presets,4)) SelectFramePreset(s,static_cast<WindowFramePreset>(preset));
-    TextWrapped("Preset selection does not overwrite edited values. Native detaches the OS adapter; other presets use the public drawing API.");
-    if(Button("Regenerate colors from selected Theme")) RegenerateFrameColors(s);
-    SameLine();
-    if(Button("Reset selected preset")) ResetFramePreset(s);
-    SeparatorText("Colors");
     struct ColorEntry { const char* name; const char* field; ImVec4* value; };
     ColorEntry colors[]={{"Active background","activeBackground",&s.frameStyle.activeBackground},
         {"Inactive background","inactiveBackground",&s.frameStyle.inactiveBackground},{"Border","border",&s.frameStyle.border},
@@ -621,40 +802,58 @@ void FrameLab(GalleryState& s) {
         {"Icon","icon",&s.frameStyle.icon},{"Button text","buttonText",&s.frameStyle.buttonText},
         {"Button hover","buttonHover",&s.frameStyle.buttonHover},{"Button pressed","buttonPressed",&s.frameStyle.buttonPressed},
         {"Close hover","closeButtonHover",&s.frameStyle.closeButtonHover},{"Close pressed","closeButtonPressed",&s.frameStyle.closeButtonPressed}};
-    for(auto& entry:colors) ColorEdit4(entry.name,&entry.value->x);
-    SeparatorText("Metrics / DIP");
     auto& m=s.frameStyle.metrics;
-    DragFloat("Height",&m.height,.25f,0,96,"%.2f");
-    DragFloat("Icon area width",&m.iconAreaWidth,.25f,0,160,"%.2f");
-    DragFloat("Title left padding",&m.titlePaddingLeft,.25f,0,80,"%.2f");
-    DragFloat("Title right padding",&m.titlePaddingRight,.25f,0,80,"%.2f");
-    DragFloat("Button width",&m.buttonWidth,.25f,0,160,"%.2f");
-    DragFloat("Border width",&m.borderWidth,.1f,0,8,"%.2f");
-    SeparatorText("Features");
     auto& f=s.frameStyle.features;
-    Checkbox("Icon",&f.icon);Checkbox("Application name",&f.applicationName);
-    Checkbox("Project name",&f.projectName);Checkbox("Unsaved indicator",&f.unsavedIndicator);
-    Checkbox("Workspace switcher",&f.workspaceSwitcher);Checkbox("Minimize",&f.minimize);
-    Checkbox("Maximize / restore",&f.maximizeRestore);Checkbox("Close",&f.close);
-    Checkbox("Unsaved state",&s.frameUnsaved);
-    const auto contrast=ValidateWindowFrameContrast(s.frameStyle);
-    SeparatorText("Contrast validation");
-    TextColored(contrast.valid?ImVec4{.2f,.75f,.35f,1}:ImVec4{1.f,.45f,.25f,1},
-                "%s (title %.2f, inactive %.2f, auxiliary %.2f, icon %.2f, buttons %.2f, close %.2f)",
-                contrast.valid?"PASS":"WARNING: one or more colors are below the threshold",
-                contrast.activeTitle,contrast.inactiveTitle,contrast.auxiliary,contrast.icon,contrast.button,contrast.closeButton);
-    std::ostringstream code;
-    code<<std::fixed<<std::setprecision(3);
-    code<<"auto style = imkit::MakeWindowFrameStyle(imkit::WindowFramePreset::"<<presets[preset]<<", theme);\n";
-    for(const auto& entry:colors) code<<"style."<<entry.field<<" = {"<<entry.value->x<<"f, "<<entry.value->y<<"f, "<<entry.value->z<<"f, "<<entry.value->w<<"f};\n";
-    code<<"style.metrics = {"<<m.height<<"f, "<<m.iconAreaWidth<<"f, "<<m.titlePaddingLeft<<"f, "
-        <<m.titlePaddingRight<<"f, "<<m.buttonWidth<<"f, "<<m.borderWidth<<"f};\n";
-    code<<"style.features = {"<<f.icon<<", "<<f.applicationName<<", "<<f.projectName<<", "
-        <<f.unsavedIndicator<<", "<<f.workspaceSwitcher<<", "<<f.minimize<<", "
-        <<f.maximizeRestore<<", "<<f.close<<"};\n";
-    const auto snippet=code.str();
-    BeginChild("##frame-snippet",{0,150},ImGuiChildFlags_Borders);TextUnformatted(snippet.c_str());EndChild();
-    if(Button("Copy C++ snippet")) SetClipboardText(snippet.c_str());
+    if(BeginGrid(s,"frame-grid")) {
+        const bool presetCard=BeginSection(s,"Preset","Selecting a preset does not overwrite edited values");
+        if(presetCard) {
+            if(Combo("Preset",&preset,presets,4)) SelectFramePreset(s,static_cast<WindowFramePreset>(preset));
+            TextWrapped("Native detaches the OS adapter; other presets use the public drawing API.");
+            if(Button("Regenerate colors from selected Theme")) RegenerateFrameColors(s);
+            if(Button("Reset selected preset")) ResetFramePreset(s);
+        }
+        EndSection(presetCard);
+        const bool featureCard=BeginSection(s,"Metrics and features","Sizes are in DIP");
+        if(featureCard) {
+            DragFloat("Height",&m.height,.25f,0,96,"%.2f");
+            DragFloat("Icon area width",&m.iconAreaWidth,.25f,0,160,"%.2f");
+            DragFloat("Title left padding",&m.titlePaddingLeft,.25f,0,80,"%.2f");
+            DragFloat("Title right padding",&m.titlePaddingRight,.25f,0,80,"%.2f");
+            DragFloat("Button width",&m.buttonWidth,.25f,0,160,"%.2f");
+            DragFloat("Border width",&m.borderWidth,.1f,0,8,"%.2f");
+            Checkbox("Icon",&f.icon);SameLine();Checkbox("Application name",&f.applicationName);
+            Checkbox("Project name",&f.projectName);SameLine();Checkbox("Unsaved indicator",&f.unsavedIndicator);
+            Checkbox("Workspace switcher",&f.workspaceSwitcher);SameLine();Checkbox("Minimize",&f.minimize);
+            Checkbox("Maximize / restore",&f.maximizeRestore);SameLine();Checkbox("Close",&f.close);
+            Checkbox("Unsaved state",&s.frameUnsaved);
+        }
+        EndSection(featureCard);
+        const bool colorCard=BeginSection(s,"Colors","Alpha is editable");
+        if(colorCard) for(auto& entry:colors) ColorEdit4(entry.name,&entry.value->x);
+        EndSection(colorCard);
+        const bool codeCard=BeginSection(s,"Contrast and code","Validated against the active theme");
+        if(codeCard) {
+            const auto contrast=ValidateWindowFrameContrast(s.frameStyle);
+            TextColored(contrast.valid?s.theme.colors.success:s.theme.colors.warning,
+                        "%s (title %.2f, inactive %.2f, auxiliary %.2f, icon %.2f, buttons %.2f, close %.2f)",
+                        contrast.valid?"PASS":"WARNING: one or more colors are below the threshold",
+                        contrast.activeTitle,contrast.inactiveTitle,contrast.auxiliary,contrast.icon,contrast.button,contrast.closeButton);
+            std::ostringstream code;
+            code<<std::fixed<<std::setprecision(3);
+            code<<"auto style = imkit::MakeWindowFrameStyle(imkit::WindowFramePreset::"<<presets[preset]<<", theme);\n";
+            for(const auto& entry:colors) code<<"style."<<entry.field<<" = {"<<entry.value->x<<"f, "<<entry.value->y<<"f, "<<entry.value->z<<"f, "<<entry.value->w<<"f};\n";
+            code<<"style.metrics = {"<<m.height<<"f, "<<m.iconAreaWidth<<"f, "<<m.titlePaddingLeft<<"f, "
+                <<m.titlePaddingRight<<"f, "<<m.buttonWidth<<"f, "<<m.borderWidth<<"f};\n";
+            code<<"style.features = {"<<f.icon<<", "<<f.applicationName<<", "<<f.projectName<<", "
+                <<f.unsavedIndicator<<", "<<f.workspaceSwitcher<<", "<<f.minimize<<", "
+                <<f.maximizeRestore<<", "<<f.close<<"};\n";
+            const auto snippet=code.str();
+            BeginChild("##frame-snippet",{0,150*s.scale},ImGuiChildFlags_Borders);TextUnformatted(snippet.c_str());EndChild();
+            if(Button("Copy C++ snippet")) SetClipboardText(snippet.c_str());
+        }
+        EndSection(codeCard);
+        EndGrid();
+    }
 }
 } // namespace
 void DrawComparison(GalleryState &s) {
@@ -724,19 +923,23 @@ void Show(GalleryState &s) {
         s.floatingCatalogSize=GetWindowSize();
     }
     if(visible) {
-        static constexpr int pageIds[]={19,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,20,21,22};
-        const char* pages[]={"Start","Components: Basic","Numeric / Units","Input / Media","Hierarchy / Table","Overlay / Layout","Composites","Icons","Editor Core","Video","CG","Foundations","Components","Patterns","Accessibility","Responsive","Generic Workspace","Feedback / States","Preview Tiles","Frame Lab","Toasts","Compare","New in 3.2"};
+        static constexpr int pageIds[]={19,0,1,2,3,4,5,6,23,7,8,9,10,11,12,13,14,15,16,17,18,20,21,22};
+        const char* pages[]={"Start","Components: Basic","Numeric / Units","Input / Media","Hierarchy / Table","Overlay / Layout","Composites","Icons","Charts","Editor Core","Video","CG","Foundations","Components","Patterns","Accessibility","Responsive","Generic Workspace","Feedback / States","Preview Tiles","Frame Lab","Toasts","Compare","New in 3.2"};
         int pageIndex=0;
         for(int i=0;i<static_cast<int>(std::size(pageIds));++i) if(pageIds[i]==s.page) {pageIndex=i;break;}
         const bool wide=GetContentRegionAvail().x>=1100.f*std::max(1.f,ImGui::GetStyle().FontScaleDpi);
-        TextUnformatted("IMKIT / GALLERY"); SameLine(); TextDisabled("3.3   |   13 themes   |   288 icons");
-        Separator();
-        SetNextItemWidth(std::min(260.f,GetContentRegionAvail().x*.45f));
-        if(Combo("##section",&pageIndex,pages,static_cast<int>(std::size(pages)))) s.page=pageIds[pageIndex];
-        Record(s,"gallery-section");
-        SameLine(); if(Button("Appearance")) OpenPopup("appearance");
+        PushFont(s.fonts.emphasis,s.theme.metrics.bodySize*1.1f); TextUnformatted("ImKit Gallery"); PopFont();
+        SameLine(); TextDisabled("3.3   |   %d themes   |   %d icons",static_cast<int>(ThemePresets().size()),static_cast<int>(GetIconCatalog().size()));
+        if(!wide) {
+            SetNextItemWidth(std::min(260.f,GetContentRegionAvail().x*.45f));
+            if(Combo("##section",&pageIndex,pages,static_cast<int>(std::size(pages)))) s.page=pageIds[pageIndex];
+            Record(s,"gallery-section");
+            SameLine();
+        }
+        if(Button("Appearance")) OpenPopup("appearance");
         Record(s,"appearance");
-        if(GetContentRegionAvail().x>280.f) SameLine(); if(Button("Compare")) {s.page=21;s.comparison.open=true;}
+        if(GetContentRegionAvail().x>280.f) SameLine();
+        if(Button("Compare")) {s.page=21;s.comparison.open=true;}
         Record(s,"comparison-open");
         static NodeLauncher nodeLauncher;
         if(GetContentRegionAvail().x>160.f) SameLine();
@@ -778,29 +981,29 @@ void Show(GalleryState &s) {
                 SeparatorText(groups[g]);
                 for(int i=0;i<static_cast<int>(std::size(pageIds));++i) {
                     const int id=pageIds[i];
-                    const int category=(id==19||id==21||id==22)?0:(id<=6||id==16||id==20)?1:(id==7||id==8||id==9||id==15||id==17)?2:3;
+                    const int category=(id==19||id==21||id==22)?0:(id<=6||id==16||id==20||id==23)?1:(id==7||id==8||id==9||id==15||id==17)?2:3;
                     if(category!=g) continue;
                     if(Selectable(pages[i],s.page==id)) {s.page=id;if(id==21)s.comparison.open=true;}
                 }
             }
             EndChild(); SameLine();
         }
-        BeginChild("Component panel", {s.page >= 6 ? GetContentRegionAvail().x
-                                                  : std::min(GetContentRegionAvail().x, 1120 * s.scale), 0},
-                   ImGuiChildFlags_Borders, s.page == 4 ? ImGuiWindowFlags_MenuBar : 0);
+        BeginChild("Component panel", {GetContentRegionAvail().x, 0}, ImGuiChildFlags_AlwaysUseWindowPadding,
+                   s.page == 4 ? ImGuiWindowFlags_MenuBar : 0);
         int active=0;
         for(int i=0;i<static_cast<int>(std::size(pageIds));++i) if(pageIds[i]==s.page) active=i;
-        if(s.page!=19) { Heading(s,pages[active]); TextDisabled("LIVE SPECIMEN / public API / application-owned state"); Separator(); }
+        if(s.page!=19) PageHeader(s,pages[active],PageSummary(s.page),s.page>=7&&s.page<=9);
         PushItemWidth(std::min(420 * s.scale,GetContentRegionAvail().x*.70f));
         switch (s.page) {
         case 21: s.comparison.open=true; DrawComparison(s); break;
+        case 23: s.charts.Show(s); break;
         case 22: s.workflow.Workbench(s); break;
         case 20: s.toasts.Show(s); break;
         case 19: Start(s); break;
         case 18: FrameLab(s); break;
         case 15: case 16: case 17: s.workflow.Show(s.page,s); break;
         case 10: case 11: case 12: case 13: case 14:
-            s.design.Show(s.page,s.theme); break;
+            s.design.Show(s.page,s); break;
         case 0:
             Basic(s);
             break;

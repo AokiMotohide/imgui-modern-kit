@@ -1,5 +1,6 @@
 #include <imkit/toast.h>
 #include "progress_internal.h"
+#include "draw_internal.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -28,22 +29,30 @@ bool HasProgress(const ToastView& view) {
 const char* CloseLabel(ComponentOptions o) {
     return o.locale?o.locale->Text("dismiss","Dismiss"):"Dismiss";
 }
-void StatusIcon(FeedbackKind kind) {
-    const float size=ImGui::GetFontSize();const auto p=ImGui::GetCursorScreenPos();
+float IconSize() { return ImGui::GetFontSize() * 1.25f; }
+float CloseSize() { return ImGui::GetFrameHeight() * .75f; }
+// Extra room on the leading edge for the accent bar.
+float Lead() { return ImGui::GetFontSize() * .6f; }
+void StatusIcon(FeedbackKind kind,ImVec4 accent,bool loading,bool animate) {
+    const float size=IconSize();const auto p=ImGui::GetCursorScreenPos();
     ImGui::Dummy({size,size});auto* d=ImGui::GetWindowDrawList();
-    const ImVec2 c{p.x+size*.5f,p.y+size*.5f};const float r=size*.4f;
-    const auto color=ImGui::GetColorU32(ImGuiCol_Text);
-    d->AddCircle(c,r,color,20,1.4f);
-    if(kind==FeedbackKind::Success) {
-        d->AddLine({c.x-r*.55f,c.y},{c.x-r*.1f,c.y+r*.4f},color,1.6f);
-        d->AddLine({c.x-r*.1f,c.y+r*.4f},{c.x+r*.6f,c.y-r*.4f},color,1.6f);
-    } else if(kind==FeedbackKind::Error) {
-        d->AddLine({c.x-r*.4f,c.y-r*.4f},{c.x+r*.4f,c.y+r*.4f},color,1.6f);
-        d->AddLine({c.x+r*.4f,c.y-r*.4f},{c.x-r*.4f,c.y+r*.4f},color,1.6f);
-    } else {
-        const float direction=kind==FeedbackKind::Warning?1.f:-1.f;
-        d->AddLine({c.x,c.y-r*.5f*direction},{c.x,c.y+r*.1f*direction},color,1.6f);
-        d->AddCircleFilled({c.x,c.y+r*.5f*direction},1.f,color);
+    const ImVec2 c{p.x+size*.5f,p.y+size*.5f};const float r=size*.5f;
+    if(loading) {
+        const float t=animate?static_cast<float>(std::fmod(std::max(0.0,ImGui::GetTime()),1000.0)):0.f;
+        const float start=t*5.2f,sweep=animate?1.1f+3.4f*(.5f+.5f*std::sin(t*3.1f)):4.2f,stroke=std::max(2.f,size*.12f),radius=r-stroke*.5f;
+        d->AddCircle(c,radius,ImGui::GetColorU32(detail::WithAlpha(accent,.2f)),32,stroke);
+        d->PathArcTo(c,radius,start,start+sweep,24);d->PathStroke(ImGui::GetColorU32(accent),ImDrawFlags_None,stroke);
+        return;
+    }
+    d->AddCircleFilled(c,r,ImGui::GetColorU32(accent),24);
+    const ImVec4 ink=ContrastRatio({1,1,1,1},accent)>=ContrastRatio({0,0,0,1},accent)?ImVec4{1,1,1,1}:ImVec4{0,0,0,1};
+    const auto color=ImGui::GetColorU32(ink);
+    if(kind==FeedbackKind::Success) detail::DrawCheck(d,c,size*.5f,color,1.8f);
+    else if(kind==FeedbackKind::Error) detail::DrawCross(d,c,size*.34f,color,1.8f);
+    else {
+        const float direction=kind==FeedbackKind::Warning?1.f:-1.f; // Warning: "!", Info: "i".
+        d->AddLine({c.x,c.y-r*.5f*direction},{c.x,c.y+r*.12f*direction},color,1.8f);
+        d->AddCircleFilled({c.x,c.y+r*.5f*direction},1.3f,color);
     }
 }
 }
@@ -111,11 +120,11 @@ void ToastViewport(const char* id,std::span<const ToastView> items,ToastViewport
     const float width=std::min(Positive(layout.width,0)>0?layout.width:ImGui::GetFontSize()*25,
                              std::max(1.f,viewport->WorkSize.x-std::min(margin*2,viewport->WorkSize.x-1)));
     const ImVec2 padding{style.WindowPadding.x,style.WindowPadding.y};
-    const float textWidth=std::max(1.f,width-padding.x*2);
+    const float textWidth=std::max(1.f,width-padding.x*2-Lead());
     auto height=[&](const ToastView& v) {
         float h=padding.y*2+ImGui::CalcTextSize(Safe(v.title),nullptr,false,
-                     std::max(1.f,textWidth-ImGui::GetFontSize()-ImGui::GetFrameHeight()-style.ItemSpacing.x*2)).y;
-        h=std::max(h,padding.y*2+ImGui::GetFrameHeight());
+                     std::max(1.f,textWidth-IconSize()-CloseSize()-style.ItemSpacing.x*2)).y;
+        h=std::max(h,padding.y*2+std::max(IconSize(),CloseSize()));
         if(*Safe(v.description)) h+=style.ItemSpacing.y+ImGui::CalcTextSize(v.description,nullptr,false,textWidth).y;
         if(HasProgress(v)) {
             ProgressTrackView progress;progress.fraction=v.progress;progress.status=v.status;
@@ -154,36 +163,48 @@ void ToastViewport(const char* id,std::span<const ToastView> items,ToastViewport
         const float y=bottom?viewport->WorkPos.y+viewport->WorkSize.y-std::min(margin,viewport->WorkSize.y*.5f)-offset-heights[i]:
                               viewport->WorkPos.y+std::min(margin,viewport->WorkSize.y*.5f)+offset;
         char name[80];std::snprintf(name,sizeof(name),"###imkit-toast-card-%08x-%llu",scope,static_cast<unsigned long long>(e.id));
-        ImGui::SetNextWindowViewport(viewport->ID);ImGui::SetNextWindowPos({x,y});ImGui::SetNextWindowSize({width,heights[i]});
+        ImGui::SetNextWindowViewport(viewport->ID);ImGui::SetNextWindowSize({width,heights[i]});
         ImVec4 accent=o.theme?o.theme->semantic.accent:style.Colors[ImGuiCol_CheckMark];
         if(o.theme&&v.phase!=ToastPhase::Loading) {
             if(v.kind==FeedbackKind::Success) accent=o.theme->semantic.success;
             if(v.kind==FeedbackKind::Warning) accent=o.theme->semantic.warning;
             if(v.kind==FeedbackKind::Error) accent=o.theme->semantic.error;
         }
-        const ImVec4 bg=Mix(o.theme?o.theme->semantic.surfaceRaised:style.Colors[ImGuiCol_WindowBg],accent,.32f);
-        ImVec4 foreground=o.theme?o.theme->semantic.text:style.Colors[ImGuiCol_Text];
-        if(ContrastRatio(foreground,bg)<4.5f) foreground=ContrastRatio({0,0,0,1},bg)>ContrastRatio({1,1,1,1},bg)?ImVec4{0,0,0,1}:ImVec4{1,1,1,1};
-        ImGui::PushStyleColor(ImGuiCol_WindowBg,bg);ImGui::PushStyleColor(ImGuiCol_Text,foreground);
-        ImGui::PushStyleColor(ImGuiCol_Border,accent);ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding,o.theme?o.theme->radius.overlay:style.WindowRounding);
+        const ImVec4 bg=o.theme?o.theme->semantic.surfaceRaised:style.Colors[ImGuiCol_PopupBg];
+        ImGui::PushStyleColor(ImGuiCol_WindowBg,bg);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding,o.theme?o.theme->radius.overlay:style.WindowRounding);
         const bool motion=o.theme&&o.theme->motion.enabled&&!o.theme->motion.reducedMotion;
         const float seconds=o.theme?o.theme->motion.overlaySeconds:0;
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha,style.Alpha*(motion&&seconds>0?std::clamp(static_cast<float>((e.shownSeconds+ImGui::GetIO().DeltaTime)/seconds),.15f,1.f):1.f));
+        // Entrance: fade and a short slide towards the anchored edge.
+        float enter=1.f;
+        if(motion&&seconds>0) enter=std::clamp(static_cast<float>((e.shownSeconds+ImGui::GetIO().DeltaTime)/seconds),0.f,1.f);
+        const float eased=1.f-(1.f-enter)*(1.f-enter);
+        ImGui::SetNextWindowPos({x,y+(1.f-eased)*10.f*(bottom?1.f:-1.f)});
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha,style.Alpha*std::max(.15f,eased));
         if(ImGui::Begin(name,nullptr,ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|
                         ImGuiWindowFlags_NoCollapse|ImGuiWindowFlags_NoSavedSettings|ImGuiWindowFlags_NoFocusOnAppearing)) {
             const auto nodeId=ImGui::GetID("toast-feedback");
             auto cardOptions=o;cardOptions.parent=nodeId;
             if(o.theme) OverlayDecoration(*o.theme,o.animation);
             if(ImGui::IsWindowHovered()||ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) paused[pauseCount++]=e.id;
-            StatusIcon(v.kind);ImGui::SameLine();
-            const float startX=ImGui::GetCursorPosX();const float top=ImGui::GetCursorPosY();
-            ImGui::PushTextWrapPos(std::max(startX+1,width-padding.x-ImGui::GetFrameHeight()-style.ItemSpacing.x));
+            auto* draw=ImGui::GetWindowDrawList();const ImVec2 origin=ImGui::GetWindowPos();
+            draw->AddRectFilled({origin.x+8,origin.y+10},{origin.x+11,origin.y+heights[i]-10},ImGui::GetColorU32(accent),1.5f);
+            ImGui::SetCursorPos({padding.x+Lead(),padding.y});
+            StatusIcon(v.kind,accent,v.phase==ToastPhase::Loading,motion);ImGui::SameLine();
+            const float startX=ImGui::GetCursorPosX();const float top=padding.y;
+            ImGui::SetCursorPosY(top+(IconSize()-ImGui::GetFontSize())*.5f);
+            ImGui::PushTextWrapPos(std::max(startX+1,width-padding.x-CloseSize()-style.ItemSpacing.x));
             ImGui::TextUnformatted(Safe(v.title));ImGui::PopTextWrapPos();
             const float afterTitle=ImGui::GetCursorPosY();
             bool dismiss=false;
             if(v.dismissible) {
-                ImGui::SetCursorPos({std::max(startX,width-padding.x-ImGui::GetFrameHeight()),top});
-                dismiss=ImGui::Button("x##dismiss",{ImGui::GetFrameHeight(),ImGui::GetFrameHeight()});
+                ImGui::SetCursorPos({std::max(startX,width-padding.x-CloseSize()),top+(IconSize()-CloseSize())*.5f});
+                dismiss=ImGui::InvisibleButton("dismiss",{CloseSize(),CloseSize()});
+                const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();const ImVec2 c{(a.x+b.x)*.5f,(a.y+b.y)*.5f};
+                if(ImGui::IsItemHovered()||ImGui::IsItemActive())
+                    draw->AddCircleFilled(c,CloseSize()*.5f,ImGui::GetColorU32(detail::WithAlpha(ImGui::GetStyleColorVec4(ImGuiCol_Text),ImGui::IsItemActive()?.16f:.09f)));
+                detail::DrawCross(draw,c,CloseSize()*.3f,ImGui::GetColorU32(ImGui::IsItemHovered()?ImGuiCol_Text:ImGuiCol_TextDisabled));
+                if(ImGui::IsItemFocused()) draw->AddCircle(c,CloseSize()*.5f,ImGui::GetColorU32(ImGuiCol_NavCursor),24,1.5f);
                 if(ImGui::IsItemHovered()) ImGui::SetTooltip("%s",CloseLabel(o));
                 if(o.accessibility) {
                     accessibility::SemanticNode n;n.id=ImGui::GetID("dismiss");n.parent=nodeId;n.role=accessibility::SemanticRole::Button;
@@ -193,8 +214,11 @@ void ToastViewport(const char* id,std::span<const ToastView> items,ToastViewport
                     accessibility::AnnotateLastItem(*o.accessibility,n);
                 }
             }
-            ImGui::SetCursorPos({padding.x,std::max(afterTitle,top+ImGui::GetFrameHeight()+style.ItemSpacing.y)});
-            if(*Safe(v.description)) ImGui::TextWrapped("%s",v.description);
+            ImGui::SetCursorPos({padding.x+Lead(),std::max(afterTitle,top+std::max(IconSize(),CloseSize())+style.ItemSpacing.y)});
+            if(*Safe(v.description)) {
+                ImGui::PushStyleColor(ImGuiCol_Text,o.theme?o.theme->semantic.textSecondary:style.Colors[ImGuiCol_TextDisabled]);
+                ImGui::PushTextWrapPos(width-padding.x);ImGui::TextUnformatted(v.description);ImGui::PopTextWrapPos();ImGui::PopStyleColor();
+            }
             if(HasProgress(v)) {
                 ProgressTrackView progress;progress.fraction=v.progress;progress.status=v.status;
                 progress.label=v.stage;progress.valueText=v.progressText;
@@ -226,9 +250,18 @@ void ToastViewport(const char* id,std::span<const ToastView> items,ToastViewport
                 if(v.dismissible&&!n.state.disabled) dismiss|=o.accessibility->Take(n.id,accessibility::SemanticAction::Dismiss);
                 o.accessibility->Add(n);
             }
+            // Remaining display time as a hairline along the bottom edge.
+            const double total=Duration(v);
+            if(total>0&&!e.retired) {
+                const float radius=o.theme?o.theme->radius.overlay:style.WindowRounding;
+                const float fraction=static_cast<float>(std::clamp(e.remaining/total,0.0,1.0));
+                const float left=origin.x+radius,right=origin.x+width-radius;
+                draw->AddRectFilled({left,origin.y+heights[i]-4},{left+(right-left)*fraction,origin.y+heights[i]-2.5f},
+                                    ImGui::GetColorU32(detail::WithAlpha(accent,.55f)),1.f);
+            }
             if(dismiss&&events.Push({e.id,ToastEventKind::Dismiss})) e.retired=true;
         }
-        ImGui::End();ImGui::PopStyleVar(2);ImGui::PopStyleColor(3);
+        ImGui::End();ImGui::PopStyleVar(2);ImGui::PopStyleColor();
         offset+=heights[i]+gap;
     }
     UpdateToastViewport(items,state,now,visible,events,{paused.data(),pauseCount});

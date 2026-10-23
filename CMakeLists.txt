@@ -58,7 +58,7 @@ if(NOT TARGET "${IMKIT_IMGUI_TARGET}")
         "Create the Dear ImGui target before adding imgui-modern-kit.")
 endif()
 
-add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/components.cpp src/icons.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp src/toast.cpp src/shell.cpp src/window_frame.cpp)
+add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/components.cpp src/icons.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp src/toast.cpp src/charts.cpp src/shell.cpp src/window_frame.cpp)
 add_library(imkit::imkit ALIAS imkit)
 
 target_compile_features(imkit PUBLIC cxx_std_20)
@@ -243,6 +243,7 @@ if(IMKIT_BUILD_GALLERY)
         examples/gallery/design_pages.cpp
         examples/gallery/workflow_pages.cpp
         examples/gallery/toast_page.cpp
+        examples/gallery/charts_page.cpp
         examples/gallery/editor_workspaces.cpp
         examples/gallery/allocation_probe.cpp
         examples/gallery/gallery.h
@@ -305,6 +306,12 @@ if(IMKIT_BUILD_TESTS)
     add_executable(imkit_toast_api_compile tests/toast_api_compile.cpp)
     target_link_libraries(imkit_toast_api_compile PRIVATE imkit::imkit)
     add_test(NAME imkit.toast_api_compile COMMAND imkit_toast_api_compile)
+    add_executable(imkit_charts_test tests/charts.cpp)
+    target_link_libraries(imkit_charts_test PRIVATE imkit::imkit)
+    add_test(NAME imkit.charts COMMAND imkit_charts_test)
+    add_executable(imkit_charts_api_compile tests/charts_api_compile.cpp)
+    target_link_libraries(imkit_charts_api_compile PRIVATE imkit::imkit)
+    add_test(NAME imkit.charts_api_compile COMMAND imkit_charts_api_compile)
     add_executable(imkit_workflow_test tests/workflow.cpp examples/gallery/allocation_probe.cpp)
     target_link_libraries(imkit_workflow_test PRIVATE imkit::editor_core)
     add_test(NAME imkit.workflow COMMAND imkit_workflow_test)

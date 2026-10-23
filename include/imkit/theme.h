@@ -28,10 +28,12 @@ struct Typography {
     float caption=12, body=14, label=14, heading=18, title=26, monospace=13;
 };
 struct SpacingTokens { std::array<float,8> steps{2,4,6,8,12,16,24,32}; };
-struct Radius { float subtle=2, control=4, overlay=6; };
+// subtle: tags and small marks, control: frames and buttons, overlay: cards, popups and dialogs.
+struct Radius { float subtle=4, control=8, overlay=12; };
 struct Stroke { float border=1, focus=2; };
-struct Elevation { float surface=0, raised=2, overlay=5; };
-struct Opacity { float disabled=1, scrim=.5f; };
+// Shadow extent in pixels. Only OverlayDecoration draws overlay; raised is available to hosts.
+struct Elevation { float surface=0, raised=4, overlay=14; };
+struct Opacity { float disabled=.55f, scrim=.5f; };
 struct StateColors { ImVec4 rest{}, hover{}, pressed{}, focused{}, selected{}, disabled{}; };
 struct SemanticColors {
     ImVec4 canvas{}, surface{}, surfaceRaised{}, overlay{}, text{}, textSecondary{}, textDisabled{};
@@ -44,12 +46,12 @@ struct Palette {
     ImVec4 success, warning;
 };
 struct Metrics {
-    float controlHeight = 28, spacing = 6, radius = 4, border = 1;
-    float bodySize = 14, headingSize = 18, focusWidth = 1.5f, elevation = 5;
-    float horizontalPadding = 10;
+    float controlHeight = 30, spacing = 6, radius = 8, border = 1;
+    float bodySize = 14, headingSize = 18, focusWidth = 1.5f, elevation = 14;
+    float horizontalPadding = 12;
 };
 struct Motion {
-    float controlSeconds = .06f, overlaySeconds = .10f;
+    float controlSeconds = .14f, overlaySeconds = .20f;
     bool enabled = true;
     bool reducedMotion = false;
     Easing easing = Easing::EaseOut;

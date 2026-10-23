@@ -2054,8 +2054,15 @@ void DrawWaveform(const WaveformView &view, editor::Range range, ImVec2 min, ImV
         for (int i=0;i<pixels;++i) {
             const auto v=WaveformPixel(view,{time(i),time(i+1)});
             const float low=std::clamp(v.minimum*gain,-1.f,1.f), high=std::clamp(v.maximum*gain,-1.f,1.f);
-            if (low!=0 || high!=0) d->AddRectFilled({min.x+i,center-high*amplitude},
-                {min.x+i+1, std::max(center-low*amplitude,center-high*amplitude+1)},ImGui::GetColorU32(theme.colors.text));
+            if (low!=0 || high!=0) {
+                const float top=center-high*amplitude, bottom=std::max(center-low*amplitude,top+1);
+                auto envelope=theme.colors.text; envelope.w*=.38f;
+                d->AddRectFilled({min.x+i,top},{min.x+i+1,bottom},ImGui::GetColorU32(envelope));
+                // RMS core: the perceived loudness sits inside the peak envelope.
+                const float core=std::clamp(v.rms*gain,0.f,1.f)*amplitude;
+                if (core>.5f) d->AddRectFilled({min.x+i,std::max(top,center-core)},{min.x+i+1,std::min(bottom,center+core)},
+                                               ImGui::GetColorU32(theme.colors.text));
+            }
         }
     }
     d->PopClipRect();
@@ -2071,17 +2078,38 @@ void LevelMeter(const char *id, const MeterState &left, const MeterState &right,
     auto p = ImGui::GetCursorScreenPos();
     ImGui::InvisibleButton(id, size);
     auto *d = ImGui::GetWindowDrawList();
+    const auto level = [](float value) {
+        return std::clamp((20 * std::log10((std::max)(value, 1e-6f)) + 60) / 60, 0.f, 1.f);
+    };
+    const float gap = std::max(3.f, size.x * .1f), w = std::max(4.f, (size.x - gap) * .5f), round = std::min(w * .4f, 4.f);
+    // Zone boundaries in dB: green up to -18, amber up to -6, red above.
+    const float zoneLow = level(std::pow(10.f, -18.f / 20.f)), zoneHigh = level(std::pow(10.f, -6.f / 20.f));
+    const ImVec4 zones[3] = {t.colors.success, t.colors.warning, t.colors.destructive};
+    const float bounds[4] = {0.f, zoneLow, zoneHigh, 1.f};
     int i = 0;
     for (auto s : {left, right}) {
-        float x = p.x + i++ * size.x * .5f, w = size.x * .45f;
-        auto level = [](float value) {
-            return std::clamp((20 * std::log10((std::max)(value, 1e-6f)) + 60) / 60, 0.f, 1.f);
-        };
-        d->AddRectFilled({x, p.y}, {x + w, p.y + size.y}, ImGui::GetColorU32(t.colors.input));
-        d->AddRectFilled({x, p.y + size.y * (1 - level(s.rms))}, {x + w, p.y + size.y},
-                         ImGui::GetColorU32(s.peak >= 1 ? t.colors.destructive : t.colors.success));
-        float hold = p.y + size.y * (1 - level(s.heldPeak));
-        d->AddLine({x, hold}, {x + w, hold}, ImGui::GetColorU32(t.colors.warning), 2);
+        const float x = p.x + i++ * (w + gap);
+        const float bottom = p.y + size.y, top = p.y;
+        auto at = [&](float fraction) { return bottom - (bottom - top) * fraction; };
+        auto track = t.colors.text; track.w = .09f;
+        d->AddRectFilled({x, top}, {x + w, bottom}, ImGui::GetColorU32(track), round);
+        const float fill = level(s.rms);
+        for (int zone = 0; zone < 3; ++zone) {
+            const float from = bounds[zone], to = std::min(bounds[zone + 1], fill);
+            if (to <= from) continue;
+            const ImDrawFlags corners = (zone == 0 ? ImDrawFlags_RoundCornersBottom : 0) |
+                                        (to >= fill ? ImDrawFlags_RoundCornersTop : 0);
+            d->AddRectFilled({x, at(to)}, {x + w, at(from)}, ImGui::GetColorU32(zones[zone]), corners ? round : 0.f,
+                             corners ? corners : ImDrawFlags_RoundCornersNone);
+        }
+        for (float tick : {zoneLow, zoneHigh}) {
+            auto line = t.colors.canvas; line.w = .8f;
+            d->AddLine({x, at(tick)}, {x + w, at(tick)}, ImGui::GetColorU32(line));
+        }
+        const float hold = at(level(s.heldPeak));
+        d->AddRectFilled({x - 1, hold - 1}, {x + w + 1, hold + 1}, ImGui::GetColorU32(s.peak >= 1 ? t.colors.destructive : t.colors.text), 1.f);
+        if (s.peak >= 1)
+            d->AddRectFilled({x, top}, {x + w, top + 3}, ImGui::GetColorU32(t.colors.destructive), round, ImDrawFlags_RoundCornersTop);
     }
 }
 void AudioStrip(const AudioStripView &v, std::uint64_t revision, editor::PropertyState &s,
@@ -2176,27 +2204,52 @@ bool BuildScopes(std::span<const Rgba> pixels, int w, int h, ScopeBuffers out) {
 void Histogram(const char *id, std::span<const std::uint32_t> bins, ImVec2 size, const Theme &t) {
     auto p = ImGui::GetCursorScreenPos();
     ImGui::InvisibleButton(id, size);
-    if (bins.empty())
-        return;
-    float maximum = static_cast<float>((std::max)(1u, *std::max_element(bins.begin(), bins.end())));
     auto *d = ImGui::GetWindowDrawList();
-    for (std::size_t i = 0; i < bins.size(); ++i) {
-        float x = p.x + size.x * i / bins.size();
-        d->AddLine({x, p.y + size.y}, {x, p.y + size.y * (1 - bins[i] / maximum)},
-                   ImGui::GetColorU32(t.colors.accent));
+    auto panel = t.colors.text; panel.w = .06f;
+    d->AddRectFilled(p, {p.x + size.x, p.y + size.y}, ImGui::GetColorU32(panel), t.radius.control);
+    if (bins.empty() || size.x < 4 || size.y < 4)
+        return;
+    auto grid = t.colors.text; grid.w = .08f;
+    for (int i = 1; i < 4; ++i) {
+        const float x = p.x + size.x * i / 4;
+        d->AddLine({x, p.y + 2}, {x, p.y + size.y - 2}, ImGui::GetColorU32(grid));
     }
+    const float maximum = static_cast<float>((std::max)(1u, *std::max_element(bins.begin(), bins.end())));
+    // One sample per two pixels, taking the tallest bin that falls in the column.
+    constexpr int MaxColumns = 512;
+    const int columns = std::clamp(static_cast<int>(size.x * .5f), 2, MaxColumns);
+    std::array<ImVec2, MaxColumns> points{};
+    const float baseline = p.y + size.y - 1;
+    for (int c = 0; c < columns; ++c) {
+        const std::size_t first = bins.size() * c / columns;
+        const std::size_t last = (std::max)(first + 1, bins.size() * (c + 1) / columns);
+        std::uint32_t peak = 0;
+        for (std::size_t i = first; i < last && i < bins.size(); ++i) peak = (std::max)(peak, bins[i]);
+        // Square-root scaling keeps small populations visible next to a dominant bin.
+        const float height = std::sqrt(peak / maximum) * (size.y - 4);
+        points[c] = {p.x + size.x * c / (columns - 1), baseline - height};
+    }
+    auto fill = t.colors.accent; fill.w = .28f;
+    for (int c = 0; c + 1 < columns; ++c)
+        d->AddQuadFilled(points[c], points[c + 1], {points[c + 1].x, baseline}, {points[c].x, baseline}, ImGui::GetColorU32(fill));
+    d->AddPolyline(points.data(), columns, ImGui::GetColorU32(t.colors.accent), ImDrawFlags_None, 1.5f);
 }
 void ScopeImage(const char *id, std::span<const std::uint32_t> bins, int w, int h, ImVec2 size,
                 const Theme &t) {
     ScopeImage(id, bins, w, h, size, t, t.colors.success);
 }
 void ScopeImage(const char *id, std::span<const std::uint32_t> bins, int w, int h, ImVec2 size,
-                const Theme &, ImVec4 tint) {
+                const Theme &t, ImVec4 tint) {
     auto p = ImGui::GetCursorScreenPos();
     ImGui::InvisibleButton(id, size);
+    auto *d = ImGui::GetWindowDrawList();
+    auto panel = t.colors.canvas; panel.w = .7f;
+    d->AddRectFilled(p, {p.x + size.x, p.y + size.y}, ImGui::GetColorU32(panel), t.radius.control);
+    auto graticule = t.colors.text; graticule.w = .10f;
+    for (int i = 1; i < 4; ++i)
+        d->AddLine({p.x, p.y + size.y * i / 4}, {p.x + size.x, p.y + size.y * i / 4}, ImGui::GetColorU32(graticule));
     if (w <= 0 || h <= 0 || bins.size() != static_cast<std::size_t>(w) * h)
         return;
-    auto *d = ImGui::GetWindowDrawList();
     auto max = *std::max_element(bins.begin(), bins.end());
     if (!max)
         return;
@@ -2250,22 +2303,29 @@ bool Wheel(float *rgb, float diameter, ImVec2 &center) {
         }
     }
     auto *draw = ImGui::GetWindowDrawList();
-    for (int ring=0; ring<8; ++ring)
-        for (int sector=0; sector<48; ++sector) {
-            float a = sector * 2*pi/48, b = (sector+1) * 2*pi/48;
-            float inner = radius*ring/8, outer = radius*(ring+1)/8;
-            float hue = (sector+.5f)/48, saturation = (ring+.5f)/8;
-            ImVec4 color;
-            ImGui::ColorConvertHSVtoRGB(hue,saturation,.85f,color.x,color.y,color.z);
-            color.w = 1;
-            auto point = [&](float angle, float r) {
-                return ImVec2{center.x+std::cos(angle)*r, center.y-std::sin(angle)*r};
-            };
-            draw->AddQuadFilled(point(a,inner),point(a,outer),point(b,outer),point(b,inner),
-                                ImGui::GetColorU32(color));
-        }
+    {
+        // Smooth hue/saturation disc from one indexed mesh: no seams between sectors.
+        constexpr int rings = 14, sectors = 90;
+        draw->PrimReserve(rings * sectors * 6, (rings + 1) * (sectors + 1));
+        const ImDrawIdx base = static_cast<ImDrawIdx>(draw->_VtxCurrentIdx);
+        const ImVec2 white = ImGui::GetFontTexUvWhitePixel();
+        for (int ring = 0; ring <= rings; ++ring)
+            for (int sector = 0; sector <= sectors; ++sector) {
+                const float angle = sector * 2 * pi / sectors, r = radius * ring / rings;
+                float cr, cg, cb;
+                ImGui::ColorConvertHSVtoRGB(static_cast<float>(sector % sectors) / sectors, static_cast<float>(ring) / rings, .85f, cr, cg, cb);
+                draw->PrimWriteVtx({center.x + std::cos(angle) * r, center.y - std::sin(angle) * r}, white,
+                                   ImGui::GetColorU32(ImVec4(cr, cg, cb, 1)));
+            }
+        for (int ring = 0; ring < rings; ++ring)
+            for (int sector = 0; sector < sectors; ++sector) {
+                const ImDrawIdx a = base + static_cast<ImDrawIdx>(ring * (sectors + 1) + sector), b = a + 1,
+                                c = a + static_cast<ImDrawIdx>(sectors + 1), e = c + 1;
+                for (ImDrawIdx index : {a, b, e, a, e, c}) draw->PrimWriteIdx(index);
+            }
+    }
     const auto border = ImGui::GetColorU32(ImGuiCol_Border);
-    draw->AddCircle(center,radius,border,64,1.5f);
+    draw->AddCircle(center,radius,border,64,1.f);
     draw->AddLine({center.x-4,center.y},{center.x+4,center.y},border);
     draw->AddLine({center.x,center.y-4},{center.x,center.y+4},border);
     float length = std::hypot(x,y);

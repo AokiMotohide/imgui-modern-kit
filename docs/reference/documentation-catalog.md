@@ -57,6 +57,7 @@ Documentation is organized into five structured categories based on development 
 | [Editor Suite](../components/editor-suite.md) / [JA](../components/エディタスイート.md) | 3D viewports, transform gizmos, outliners, and UV editor | `imkit/cg.h`, `imkit/preview.h` |
 | [Workflow Components](../components/workflow-components.md) / [JA](../components/ワークフローコンポーネント.md) | Wizards, breadcrumbs, inspector cards, and side panels | `imkit/workflow.h` |
 | [Toasts](../components/toasts.md) / [JA](../components/トースト.md) | Colored notification cards, positions, actions, timing and progress | `imkit/toast.h` |
+| [Charts](../components/charts.md) / [JA](../components/チャート.md) | Donut, bar, gauge and sparkline charts with a colour-blind-safe palette | `imkit/charts.h` |
 | [Shell Components](../components/shell-components.md) / [JA](../components/シェルコンポーネント.md) | App bars, workspace headers, action bars, and drawers | `imkit/shell.h` |
 | [Window Frame](../components/gallery-window-frame.md) / [JA](../components/ウィンドウフレーム.md) | Custom title bars, snap layouts, and OS window adapters | `imkit/window_frame.h` |
 

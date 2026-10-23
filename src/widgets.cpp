@@ -1,14 +1,25 @@
 #include <imkit/widgets.h>
+#include <imkit/patterns.h>
+#include <algorithm>
 #include <cstdarg>
 
 namespace imkit {
 namespace {
-void SelectionMark(bool selected) {
+// Selected rows get an accent bar on the leading edge; tabs get an inset pill underneath.
+void SelectionMark(bool selected, bool underline = false) {
     if (!selected)
         return;
-    auto a = ImGui::GetItemRectMin(), b = ImGui::GetItemRectMax();
-    ImGui::GetWindowDrawList()->AddLine({a.x, b.y - 1}, {b.x, b.y - 1},
-                                        ImGui::GetColorU32(ImGuiCol_CheckMark), 2);
+    const auto a = ImGui::GetItemRectMin(), b = ImGui::GetItemRectMax();
+    const float height = b.y - a.y;
+    auto *draw = ImGui::GetWindowDrawList();
+    const ImU32 color = ImGui::GetColorU32(ImGuiCol_CheckMark);
+    if (underline) {
+        const float inset = std::min(10.f, (b.x - a.x) * .2f);
+        draw->AddRectFilled({a.x + inset, b.y - 3}, {b.x - inset, b.y - 1}, color, 1.f);
+    } else {
+        // Drawn in the padding to the left of the row so it never overlaps the label.
+        draw->AddRectFilled({a.x - 6, a.y + height * .22f}, {a.x - 3, b.y - height * .22f}, color, 1.5f);
+    }
 }
 } // namespace
 
@@ -43,7 +54,7 @@ bool Selectable(const char *label, bool *selected, ImGuiSelectableFlags flags, c
 }
 bool BeginTabItem(const char *label, bool *open, ImGuiTabItemFlags flags) {
     bool active = ImGui::BeginTabItem(label, open, flags);
-    SelectionMark(active);
+    SelectionMark(active, true);
     return active;
 }
 bool TreeNodeEx(const char *label, ImGuiTreeNodeFlags flags) {
@@ -77,7 +88,16 @@ bool TreeNodeEx(const void *id, ImGuiTreeNodeFlags flags, const char *format, ..
 }
 
 void ProgressBar(float fraction, const ImVec2 &size, const char *overlay) {
-    ImGui::ProgressBar(fraction, size, overlay);
+    ProgressTrackView view;
+    view.fraction = fraction;
+    view.label = overlay ? overlay : "";
+    const bool fixedWidth = size.x > 0;
+    if (fixedWidth) {
+        ImGui::BeginChild("##imkit-progress", {size.x, 0}, ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_NoScrollbar);
+    }
+    ProgressTrack("##imkit-progress-track", view);
+    if (fixedWidth)
+        ImGui::EndChild();
 }
 
 } // namespace imkit
