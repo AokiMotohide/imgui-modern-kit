@@ -44,39 +44,17 @@ struct Model {
 // Announces one handle to the host's accessibility frame and returns -1, 0 or +1 for a requested step.
 int AnnotateHandle(const ComponentOptions& o, const char* label, const char* which, double value, const Model& m,
                    bool disabled) {
-    using namespace accessibility;
-    if (!o.accessibility)
-        return 0;
-    const ImGuiID id = ImGui::GetItemID();
-    if (o.accessibility->Take(id, SemanticAction::Focus) && !disabled) {
-        ImGui::SetKeyboardFocusHere(-1);
-        ImGui::SetNavCursorVisible(true);
-    }
-    int direction = 0;
-    if (!disabled) {
-        if (o.accessibility->Take(id, SemanticAction::Increment))
-            direction = 1;
-        else if (o.accessibility->Take(id, SemanticAction::Decrement))
-            direction = -1;
-    }
     const double unit = m.Unit() > 0 ? m.Unit() : (m.maximum - m.minimum) / 100.;
-    SemanticNode node;
-    node.id = id;
-    node.parent = o.parent;
-    node.role = SemanticRole::Group;
+    detail::ValueNode node;
     node.name = label;
-    if (const auto end = node.name.find("##"); end != std::string_view::npos)
-        node.name = node.name.substr(0, end);
     node.description = which;
-    node.state.disabled = disabled;
-    node.numericValue = value;
-    node.minimumValue = m.minimum;
-    node.maximumValue = m.maximum;
+    node.value = value;
+    node.minimum = m.minimum;
+    node.maximum = m.maximum;
     node.smallChange = unit;
     node.largeChange = unit * 10;
-    node.actions = SemanticAction::Increment | SemanticAction::Decrement | SemanticAction::Focus;
-    AnnotateLastItem(*o.accessibility, node);
-    return direction;
+    node.disabled = disabled;
+    return detail::AnnotateValue(o, node);
 }
 
 bool RangeCore(const char* label, double* lowValue, double* highValue, double minimum, double maximum,

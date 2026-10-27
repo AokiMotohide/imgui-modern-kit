@@ -57,6 +57,8 @@ NSString *Role(SemanticRole role) {
     case SemanticRole::Cell:return NSAccessibilityCellRole;
     case SemanticRole::Status:return NSAccessibilityStaticTextRole;
     case SemanticRole::Progress:return NSAccessibilityProgressIndicatorRole;
+    case SemanticRole::Slider:return NSAccessibilitySliderRole;
+    case SemanticRole::Meter:return NSAccessibilityLevelIndicatorRole;
     case SemanticRole::Menu:return NSAccessibilityMenuRole;
     case SemanticRole::MenuItem:return NSAccessibilityMenuItemRole;
     case SemanticRole::Text:return NSAccessibilityStaticTextRole;

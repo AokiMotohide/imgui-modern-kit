@@ -65,4 +65,27 @@ inline void DrawSoftShadow(ImDrawList* draw, ImVec2 minimum, ImVec2 maximum, flo
                       ImDrawFlags_None, step + .5f);
     }
 }
+// Rounded rectangle outline made of dashes; corners stay solid so the shape still reads as rounded.
+inline void DrawDashedRect(ImDrawList* draw, ImVec2 a, ImVec2 b, float rounding, ImU32 color, float thickness, float dash) {
+    constexpr float pi = 3.14159265358979323846f;
+    rounding = std::min(rounding, std::min(b.x - a.x, b.y - a.y) * .5f);
+    const ImVec2 corners[4] = {{a.x + rounding, a.y + rounding}, {b.x - rounding, a.y + rounding},
+                               {b.x - rounding, b.y - rounding}, {a.x + rounding, b.y - rounding}};
+    for (int i = 0; i < 4; ++i) {
+        draw->PathArcTo(corners[i], rounding, pi + static_cast<float>(i) * pi * .5f, pi * 1.5f + static_cast<float>(i) * pi * .5f, 6);
+        draw->PathStroke(color, 0, thickness);
+    }
+    auto edge = [&](ImVec2 from, ImVec2 to) {
+        const float length = std::hypot(to.x - from.x, to.y - from.y);
+        for (float t = 0; t < length; t += dash * 2) {
+            const float e = std::min(length, t + dash);
+            draw->AddLine({from.x + (to.x - from.x) * t / length, from.y + (to.y - from.y) * t / length},
+                          {from.x + (to.x - from.x) * e / length, from.y + (to.y - from.y) * e / length}, color, thickness);
+        }
+    };
+    edge({a.x + rounding, a.y}, {b.x - rounding, a.y});
+    edge({b.x, a.y + rounding}, {b.x, b.y - rounding});
+    edge({b.x - rounding, b.y}, {a.x + rounding, b.y});
+    edge({a.x, b.y - rounding}, {a.x, a.y + rounding});
+}
 } // namespace imkit::detail

@@ -27,9 +27,6 @@ struct PtzView {
 };
 struct PtzState {
     float speed = .5f; // 0..1 scale applied to pad and zoom velocity. Edited by the speed slider.
-    // Internal bookkeeping for the move in progress; hosts only need to keep the struct alive.
-    int held = 0;
-    bool padValid = false;
 };
 struct PtzOptions {
     // Zero derives the pad diameter from the frame height (about 6.5 frame heights, 4.2 when compact).

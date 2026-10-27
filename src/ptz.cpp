@@ -48,21 +48,8 @@ const char* PresetName(int index) {
     return index >= 0 && index < static_cast<int>(names.size()) ? names[static_cast<std::size_t>(index)].data() : "Preset";
 }
 
-// 0..1 transition toward `target`; immediate when motion is off or no animation state is supplied.
-float Ease(const ComponentOptions& o, ImGuiID id, float target) {
-    if (!o.animation || !detail::MotionAllowed(o))
-        return target;
-    const auto motion = o.theme ? o.theme->motion : Motion{};
-    return o.animation->Update(id, target, ImGui::GetIO().DeltaTime, motion.controlSeconds, ImGui::GetFrameCount(), true,
-                               motion.easing);
-}
-ImVec4 Accent(const ComponentOptions& o) {
-    return o.theme ? o.theme->semantic.accent : ImGui::GetStyleColorVec4(ImGuiCol_SliderGrab);
-}
-ImU32 Col(ImVec4 c, float alpha = 1.f) {
-    c.w *= alpha;
-    return ImGui::GetColorU32(c);
-}
+using detail::Col;
+using detail::Ease;
 ImVec4 StyleColor(ImGuiCol c) { return ImGui::GetStyleColorVec4(c); }
 
 // Chevron pointing along `unit` (screen axes), centred on p.
@@ -85,28 +72,6 @@ void DrawHome(ImDrawList* draw, ImVec2 c, float size, ImU32 color, float thickne
     draw->PathLineTo({c.x + h * .68f, c.y + h * .85f});
     draw->PathLineTo({c.x + h * .68f, c.y + h * .06f});
     draw->PathStroke(color, ImDrawFlags_RoundCornersAll, thickness);
-}
-// Rounded rectangle outline made of dashes; corners stay solid so the shape still reads as rounded.
-void DrawDashedRect(ImDrawList* draw, ImVec2 a, ImVec2 b, float rounding, ImU32 color, float thickness, float dash) {
-    rounding = std::min(rounding, std::min(b.x - a.x, b.y - a.y) * .5f);
-    const ImVec2 corners[4] = {{a.x + rounding, a.y + rounding}, {b.x - rounding, a.y + rounding},
-                               {b.x - rounding, b.y - rounding}, {a.x + rounding, b.y - rounding}};
-    for (int i = 0; i < 4; ++i) {
-        draw->PathArcTo(corners[i], rounding, Pi + static_cast<float>(i) * Pi * .5f, Pi * 1.5f + static_cast<float>(i) * Pi * .5f, 6);
-        draw->PathStroke(color, 0, thickness);
-    }
-    auto edge = [&](ImVec2 from, ImVec2 to) {
-        const float length = std::hypot(to.x - from.x, to.y - from.y);
-        for (float t = 0; t < length; t += dash * 2) {
-            const float e = std::min(length, t + dash);
-            draw->AddLine({from.x + (to.x - from.x) * t / length, from.y + (to.y - from.y) * t / length},
-                          {from.x + (to.x - from.x) * e / length, from.y + (to.y - from.y) * e / length}, color, thickness);
-        }
-    };
-    edge({a.x + rounding, a.y}, {b.x - rounding, a.y});
-    edge({b.x, a.y + rounding}, {b.x, b.y - rounding});
-    edge({b.x - rounding, b.y}, {a.x + rounding, b.y});
-    edge({a.x, b.y - rounding}, {a.x, a.y + rounding});
 }
 // Draws "label value" chips for the readout row; returns the width used.
 float DrawChip(ImDrawList* draw, ImVec2 p, float height, const char* letter, const char* value, ImU32 fill, ImU32 letterColor,
@@ -148,10 +113,12 @@ PtzRequest PtzControl(const char* id, const PtzView& view, PtzState& state, PtzO
 
     ImGui::PushID(id);
     ImGui::BeginGroup();
+    ImGuiStorage* storage = ImGui::GetStateStorage();
+    const ImGuiID heldKey = ImGui::GetID("##held"), padValidKey = ImGui::GetID("##padValid");
     if (!connected)
         ImGui::BeginDisabled();
     const ImVec2 origin = ImGui::GetCursorScreenPos();
-    const ImVec4 accent = Accent(options);
+    const ImVec4 accent = detail::AccentColor(options);
     const ImU32 text = Col(StyleColor(ImGuiCol_Text)), dim = Col(StyleColor(ImGuiCol_TextDisabled)),
                 hairline = Col(StyleColor(ImGuiCol_Border), .8f);
     ImVec4 success = options.theme ? options.theme->semantic.success : ImVec4(.30f, .78f, .50f, 1);
@@ -215,13 +182,13 @@ PtzRequest PtzControl(const char* id, const PtzView& view, PtzState& state, PtzO
     const bool padActive = ImGui::IsItemActive();
     const ImVec2 mouse = ImGui::GetIO().MousePos;
     if (ImGui::IsItemActivated())
-        state.padValid = std::hypot(mouse.x - centre.x, mouse.y - centre.y) <= radius;
+        storage->SetBool(padValidKey, std::hypot(mouse.x - centre.x, mouse.y - centre.y) <= radius);
     detail::SemanticItem(options, Label(options, "ptz.pad", "Pan and tilt pad"), accessibility::SemanticRole::Group,
                          accessibility::SemanticAction::None);
 
     ImVec2 velocity{};
     int held = HeldNone;
-    if (padActive && state.padValid && connected) {
+    if (padActive && storage->GetBool(padValidKey) && connected) {
         const ImVec2 v = PtzPadVector(mouse, centre, radius, PadDeadZone);
         velocity = {v.x, -v.y};
         held = HeldPad;
@@ -384,7 +351,7 @@ PtzRequest PtzControl(const char* id, const PtzView& view, PtzState& state, PtzO
                 draw->AddRect(a, b, current ? Col(accent) : hairline, r, 0, current ? 1.6f : 1.f);
             } else {
                 draw->AddRectFilled(a, b, Col(accent, .10f * wash), r);
-                DrawDashedRect(draw, a, b, r, Col(StyleColor(ImGuiCol_Border), .9f), 1.f, std::max(2.5f, u * .1f));
+                detail::DrawDashedRect(draw, a, b, r, Col(StyleColor(ImGuiCol_Border), .9f), 1.f, std::max(2.5f, u * .1f));
             }
             if (active && holdTime > .12f && !storage->GetBool(cellId, false)) {
                 const float f = std::min(1.f, holdTime / StoreHoldSeconds);
@@ -419,8 +386,8 @@ PtzRequest PtzControl(const char* id, const PtzView& view, PtzState& state, PtzO
     request.velocity = {velocity.x * scale, velocity.y * scale};
     request.zoom *= scale;
     request.moving = request.velocity.x != 0 || request.velocity.y != 0 || request.zoom != 0;
-    request.stop = state.held != HeldNone && held == HeldNone;
-    state.held = held;
+    request.stop = storage->GetInt(heldKey) != HeldNone && held == HeldNone;
+    storage->SetInt(heldKey, held);
 
     ImGui::SetCursorScreenPos(origin);
     ImGui::Dummy({totalWidth, bottom - origin.y});

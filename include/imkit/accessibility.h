@@ -7,7 +7,8 @@
 namespace imkit::accessibility {
 using StableId = std::uint64_t;
 enum class SemanticRole { Group, Button, Toggle, Radio, ComboBox, TextField, Dialog, Toolbar,
-    TabList, Tab, Tree, TreeItem, Grid, Row, Cell, Status, Alert, Progress, Menu, MenuItem, Text };
+    TabList, Tab, Tree, TreeItem, Grid, Row, Cell, Status, Alert, Progress, Menu, MenuItem, Text,
+    Slider, Meter };
 enum class SemanticAction : unsigned { None=0, Press=1, Toggle=2, Increment=4, Decrement=8,
     Focus=16, Expand=32, Collapse=64, SetValue=128, Select=256, Dismiss=512 };
 constexpr SemanticAction operator|(SemanticAction a, SemanticAction b) {
