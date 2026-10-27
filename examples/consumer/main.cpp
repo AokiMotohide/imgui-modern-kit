@@ -31,7 +31,7 @@ int main() {
         if (imkit::Begin("Settings")) {
             bool enabled = true;
             imkit::Toggle("Enabled", &enabled, {&theme});
-            imkit::StatusBadge("Ready", imkit::StatusKind::Success, &theme);
+            imkit::StatusBadge("Ready", imkit::StatusKind::Success, imkit::ComponentOptions{&theme});
             imkit::Icon(icons, imkit::IconId::Settings); // Reserved space until host binds texture.
         }
         imkit::End();

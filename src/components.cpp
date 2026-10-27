@@ -1,3 +1,5 @@
+// This file implements or exercises the deprecated spellings on purpose.
+#define IMKIT_DEPRECATED(message)
 #include <imkit/components.h>
 #include <imkit/widgets.h>
 #include "component_internal.h"
@@ -624,4 +626,7 @@ void OverlayDecoration(const Theme &t, AnimationState *state) {
     detail::DrawSoftShadow(d, p, {p.x + size.x, p.y + size.y}, t.radius.overlay, t.metrics.elevation, peak);
     d->PopClipRect();
 }
+void StatusBadge(const char *text, StatusKind kind, ComponentOptions options) { StatusBadge(text, kind, options.theme); }
+bool NotificationCard(const Notification &n, double now, ComponentOptions options) { return NotificationCard(n, now, options.theme); }
+void ValidationMessage(const char *message, bool invalid, ComponentOptions options) { ValidationMessage(message, invalid, options.theme); }
 } // namespace imkit

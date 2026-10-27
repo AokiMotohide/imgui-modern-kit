@@ -38,11 +38,11 @@ void DrawPadCell(ImDrawList* draw, const ShowColors& c, const ComponentOptions& 
                  int index, bool hovered, bool held, bool focused, float round);
 
 // Formatted text that stays valid for the rest of the frame (accessibility nodes borrow strings until the host
-// publishes the tree). A ring of slots; one frame should not need more than the ring holds.
+// publishes the tree). A ring of 4096 slots; one frame should not need more than the ring holds.
 inline const char* FrameText(const char* format, ...) {
-    static char ring[768][64];
+    static char ring[4096][64];
     static unsigned next = 0;
-    char* slot = ring[next++ % 768];
+    char* slot = ring[next++ % 4096];
     va_list args;
     va_start(args, format);
     std::vsnprintf(slot, 64, format, args);

@@ -31,6 +31,12 @@ void ShowPages::Show(int page, GalleryState& host) {
         Live(host);
     else if (page == 27)
         Rules(host);
+    else if (page == 28)
+        Schedule(host);
+    else if (page == 29)
+        Beat(host);
+    else if (page == 30)
+        Script(host);
 }
 
 void ShowPages::Controls(GalleryState& host) {

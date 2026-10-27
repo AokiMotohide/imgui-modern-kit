@@ -106,6 +106,9 @@ const char *PageSummary(int page) {
     case 25: return "Faders, knobs, pads, meters, clocks and hold-to-confirm controls for a live operator.";
     case 26: return "Cue list, clip launcher, mixer, transition, effects, modulator, mappings and device health.";
     case 27: return "Build if / then / else rules without code, explain them in a sentence and test them against live values.";
+    case 28: return "Calendar, resource timeline, recurrence, cron, sunrise triggers and weekly on-air hours with conflict detection.";
+    case 29: return "Beat clock, decks, scrolling waveforms, hot cues, channel strips, pitch, step sequencer and spectrum.";
+    case 30: return "Paste a script, see the problems line by line, get controls for its parameters, and import a pasted table.";
     default: return "";
     }
 }
@@ -516,7 +519,7 @@ void InputColor(GalleryState &s) {
             Record(s, "resize-text");
             InputTextWithHint("Required", "Enter a name", s.validation, sizeof(s.validation));
             Record(s, "validation");
-            ValidationMessage("A name is required", s.validation[0] == 0, &s.theme);
+            ValidationMessage("A name is required", s.validation[0] == 0, ComponentOptions{&s.theme});
             InputTextMultiline("Notes", s.notes, sizeof(s.notes), {0, 90 * s.scale});
             Record(s, "multiline");
         }
@@ -782,14 +785,14 @@ void Composites(GalleryState &s) {
         EndSection(choices);
         const bool status = BeginSection(s, "Status", "Badges and notification cards");
         if (status) {
-            StatusBadge("Ready / 準備完了", StatusKind::Success, &s.theme);
+            StatusBadge("Ready / 準備完了", StatusKind::Success, ComponentOptions{&s.theme});
             SameLine();
-            StatusBadge("Warning / 注意", StatusKind::Warning, &s.theme);
+            StatusBadge("Warning / 注意", StatusKind::Warning, ComponentOptions{&s.theme});
             SameLine();
-            StatusBadge("Error / エラー", StatusKind::Error, &s.theme);
+            StatusBadge("Error / エラー", StatusKind::Error, ComponentOptions{&s.theme});
             if (s.notice &&
                 NotificationCard({"notice", "Settings saved / 設定を保存しました", StatusKind::Success, 0}, GetTime(),
-                                 &s.theme))
+                                 ComponentOptions{&s.theme}))
                 s.notice = false;
         }
         EndSection(status);
@@ -955,7 +958,7 @@ void Show(GalleryState &s) {
             {7,"Editor Core",2},{8,"Video",2},{9,"CG",2},{10,"Foundations",3},{11,"Components",3},{12,"Patterns",3},
             {13,"Accessibility",3},{14,"Responsive",3},{15,"Generic Workspace",2},{16,"Feedback / States",1},
             {17,"Preview Tiles",2},{18,"Frame Lab",3},{20,"Toasts",1},{21,"Compare",0},{22,"New in 3.2",0},
-            {25,"Show: Controls",4},{26,"Show: Live",4},{27,"Show: Rules",4}};
+            {25,"Show: Controls",4},{26,"Show: Live",4},{27,"Show: Rules",4},{28,"Show: Schedule",4},{29,"Show: Beat",4},{30,"Show: Script",4}};
         constexpr int pageCount=static_cast<int>(std::size(table));
         int pageIds[pageCount]; const char* pages[pageCount];
         for(int i=0;i<pageCount;++i) {pageIds[i]=table[i].id; pages[i]=table[i].name;}
@@ -1032,7 +1035,7 @@ void Show(GalleryState &s) {
         case 21: s.comparison.open=true; DrawComparison(s); break;
         case 23: s.charts.Show(s); break;
         case 24: s.ptz.Show(s); break;
-        case 25: case 26: case 27: s.show.Show(s.page,s); break;
+        case 25: case 26: case 27: case 28: case 29: case 30: s.show.Show(s.page,s); break;
         case 22: s.workflow.Workbench(s); break;
         case 20: s.toasts.Show(s); break;
         case 19: Start(s); break;

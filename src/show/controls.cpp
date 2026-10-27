@@ -607,6 +607,9 @@ void MeterBar(const char* id, std::span<const float> levelsDb, std::span<const f
     const ShowColors c = MakeShowColors(options);
     auto* draw = ImGui::GetWindowDrawList();
     const float u = Unit();
+    static const float silent[1] = {-120.f};
+    if (levelsDb.empty())
+        levelsDb = silent; // An empty span draws one silent channel instead of reading past the end.
     const std::size_t channels = std::clamp<std::size_t>(levelsDb.size(), 1, 8);
     const float lo = o.minimumDb, hi = o.maximumDb > o.minimumDb ? o.maximumDb : o.minimumDb + 1;
     const float scaleW = !o.scaleDb.empty() && o.vertical ? u * 1.5f : 0.f;

@@ -44,6 +44,16 @@ Repository license files were checked on 2026-09-09. These repository licenses a
 | Radix Themes | [MIT](https://raw.githubusercontent.com/radix-ui/themes/main/LICENSE) | Consistent variants, spacing, radius, and elevation tokens |
 | React Aria | [Apache-2.0](https://raw.githubusercontent.com/adobe/react-spectrum/main/LICENSE) | Distinguishing hover, press, focus, and disabled states |
 | Mantine | [MIT](https://raw.githubusercontent.com/mantinedev/mantine/master/LICENSE) | Shared theme values across input and overlay families |
+| imgui-knobs | [MIT](https://github.com/altschuler/imgui-knobs/blob/main/LICENSE) | Knob interaction feel (no code used) |
+| ImGuizmo / ImSequencer | [MIT](https://github.com/CedricGuillemet/ImGuizmo/blob/master/LICENSE) | Sequencer interaction ideas (no code used) |
+| Bitfocus Companion | [MIT (core)](https://raw.githubusercontent.com/bitfocus/companion/main/LICENSE.md) | Button grid, feedback and trigger concepts |
+| Home Assistant frontend | [Apache-2.0](https://github.com/home-assistant/frontend/blob/dev/LICENSE.md) | Trigger, condition and action structure of rules |
+| Node-RED | [Apache-2.0](https://github.com/node-red/node-red/blob/main/LICENSE) | Flow concepts for rules |
+| Blockly | [Apache-2.0](https://github.com/RaspberryPiFoundation/blockly/blob/main/LICENSE) | Condition block concepts |
+| react-awesome-query-builder | [MIT](https://github.com/ukrbublik/react-awesome-query-builder/blob/master/LICENSE.txt) | AND/OR/NOT groups and type-specific operators |
+| FullCalendar (core) | [MIT](https://github.com/fullcalendar/fullcalendar/blob/main/LICENSE.md) | Month, week, day and agenda views (premium plugins are separately licensed and were not referenced) |
+
+Functional references for the Show module (licences checked 2026-10-27, no code, screens, icons or wording incorporated): the vocabulary of commercial media-server, VJ, cue-list and DJ products (for example Resolume, disguise, Pixera, QLab, MadMapper, Ableton Live, Traktor) comes from their public manuals only; the products are not dependencies and no affiliation is implied. GPL projects (Mixxx, OBS Studio) and projects with source-available licences were not consulted for code. Recurrence follows RFC 5545, solar times follow the public NOAA approximation.
 
 For any future source or asset reuse, review the exact file's license and preserve required notices before incorporation. Current benchmark references do not add runtime or production dependencies.
 

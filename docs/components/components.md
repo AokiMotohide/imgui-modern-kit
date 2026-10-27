@@ -41,13 +41,13 @@ bool DrawDisplaySettings(DisplaySettings& settings, const imkit::Theme& theme, d
 
         imkit::InputTextWithHint("Name", "Required", settings.name, sizeof(settings.name));
         const bool invalidName = settings.name[0] == '\0';
-        imkit::ValidationMessage("Enter a name before saving.", invalidName, &theme);
+        imkit::ValidationMessage("Enter a name before saving.", invalidName, imkit::ComponentOptions{&theme});
         imkit::BeginDisabled(invalidName);
         saveRequested = imkit::ActionButton("Save", imkit::ActionVariant::Primary, {}, {&theme});
         imkit::EndDisabled();
 
         if (settings.showSavedNotice &&
-            imkit::NotificationCard({"saved", "Settings saved", imkit::StatusKind::Success, 0}, now, &theme)) {
+            imkit::NotificationCard({"saved", "Settings saved", imkit::StatusKind::Success, 0}, now, imkit::ComponentOptions{&theme})) {
             settings.showSavedNotice = false; // The host handles the dismiss request.
         }
     }
@@ -81,7 +81,7 @@ imkit::IndeterminateCheckbox("Inherited", &state);
 ```cpp
 imkit::SearchableCombo("Quality", &quality, labels, search, sizeof(search), disabled);
 imkit::InputTextWithHint("Name", "Required", name, sizeof(name));
-imkit::ValidationMessage("A name is required", name[0] == 0, &theme);
+imkit::ValidationMessage("A name is required", name[0] == 0, imkit::ComponentOptions{&theme});
 ```
 
 Search buffers and selected indexes are host-owned. Validation draws feedback but does not reject or store values.
@@ -102,8 +102,8 @@ For a three-axis drag value, use `DragVector3WithUnit("Offset", values, "cm", .1
 ## Status and notification
 
 ```cpp
-imkit::StatusBadge("Ready", imkit::StatusKind::Success, &theme);
-if (imkit::NotificationCard({"saved", "Settings saved", imkit::StatusKind::Success, 0}, now, &theme))
+imkit::StatusBadge("Ready", imkit::StatusKind::Success, imkit::ComponentOptions{&theme});
+if (imkit::NotificationCard({"saved", "Settings saved", imkit::StatusKind::Success, 0}, now, imkit::ComponentOptions{&theme}))
     dismissSavedNotice = true;
 ```
 

@@ -1,3 +1,5 @@
+// Shows the legacy ToastRegion next to its replacement on purpose.
+#define IMKIT_DEPRECATED(message)
 #include "design_pages.h"
 #include "gallery.h"
 #include <algorithm>

@@ -1,3 +1,5 @@
+// This file implements or exercises the deprecated spellings on purpose.
+#define IMKIT_DEPRECATED(message)
 #include <imkit/patterns.h>
 #include "progress_internal.h"
 #include "draw_internal.h"
@@ -456,7 +458,7 @@ bool ErrorState(const char* message,ComponentOptions o) {
     return ActionButton(Text(o,"retry","Retry"),ActionVariant::Secondary,{},o);
 }
 const char* ToastRegion(std::span<const Notification> notifications,double now,ComponentOptions o) {
-    const char* result=nullptr; for(auto& n:notifications) if(NotificationCard(n,now,o.theme)) result=n.id; return result;
+    const char* result=nullptr; for(auto& n:notifications) if(NotificationCard(n,now,o)) result=n.id; return result;
 }
 bool Pagination(const char* id,int& page,int count,ComponentOptions o) {
     ImGui::PushID(id);int before=page;count=std::max(0,count);page=std::clamp(page,0,std::max(0,count-1));

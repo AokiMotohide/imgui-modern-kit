@@ -384,6 +384,44 @@ RuleDocument::RuleDocument() {
     conditions_.push_back(root);
     Refresh();
 }
+RuleDocument::RuleDocument(const RuleDocument& other)
+    : name_(other.name_), enabled_(other.enabled_), hasElse_(other.hasElse_), nextId_(other.nextId_), triggers_(other.triggers_),
+      conditions_(other.conditions_), actions_(other.actions_) {
+    Refresh();
+}
+RuleDocument& RuleDocument::operator=(const RuleDocument& other) {
+    if (this != &other) {
+        name_ = other.name_;
+        enabled_ = other.enabled_;
+        hasElse_ = other.hasElse_;
+        nextId_ = other.nextId_;
+        triggers_ = other.triggers_;
+        conditions_ = other.conditions_;
+        actions_ = other.actions_;
+        Refresh();
+    }
+    return *this;
+}
+RuleDocument::RuleDocument(RuleDocument&& other) noexcept
+    : name_(std::move(other.name_)), enabled_(other.enabled_), hasElse_(other.hasElse_), nextId_(other.nextId_), triggers_(std::move(other.triggers_)),
+      conditions_(std::move(other.conditions_)), actions_(std::move(other.actions_)) {
+    Refresh();
+    other.Refresh();
+}
+RuleDocument& RuleDocument::operator=(RuleDocument&& other) noexcept {
+    if (this != &other) {
+        name_ = std::move(other.name_);
+        enabled_ = other.enabled_;
+        hasElse_ = other.hasElse_;
+        nextId_ = other.nextId_;
+        triggers_ = std::move(other.triggers_);
+        conditions_ = std::move(other.conditions_);
+        actions_ = std::move(other.actions_);
+        Refresh();
+        other.Refresh();
+    }
+    return *this;
+}
 void RuleDocument::SetName(std::string name) {
     name_ = std::move(name);
     Refresh();

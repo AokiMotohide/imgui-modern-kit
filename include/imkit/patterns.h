@@ -40,12 +40,15 @@ void ProgressTrack(const char* id, float fraction,
                    ProgressStatus status=ProgressStatus::Running, ComponentOptions options={});
 // Draws the shared track with its label, status, value and supplemental text.
 void ProgressTrack(const char* id, const ProgressTrackView& view, ComponentOptions options={});
+IMKIT_DEPRECATED("use Progress(id, ProgressView, ProgressPresentation, ...) or ProgressTrack")
 void Progress(const char* id, float fraction, const char* label, ComponentOptions options={}); // negative = indeterminate
 void Spinner(const char* id, ComponentOptions options={});
 void Skeleton(const char* id, ImVec2 size, ComponentOptions options={});
+IMKIT_DEPRECATED("use EmptyState(id, StateView, options)")
 void EmptyState(const char* message);
 void LoadingState(const char* message, ComponentOptions options={});
 bool ErrorState(const char* message, ComponentOptions options={}); // retry request
+IMKIT_DEPRECATED("use ToastViewport")
 const char* ToastRegion(std::span<const Notification> notifications, double now, ComponentOptions options={});
 bool Pagination(const char* id, int& page, int pageCount, ComponentOptions options={});
 // Host draws the first pane, calls Next, draws the second pane, then End.

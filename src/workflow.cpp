@@ -1,3 +1,5 @@
+// This file implements or exercises the deprecated spellings on purpose.
+#define IMKIT_DEPRECATED(message)
 #include <imkit/workflow.h>
 #include <imkit/widgets.h>
 #include "progress_internal.h"

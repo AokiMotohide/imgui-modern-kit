@@ -5,3 +5,6 @@
 #include <imkit/show/controls.h>
 #include <imkit/show/live.h>
 #include <imkit/show/rules.h>
+#include <imkit/show/schedule.h>
+#include <imkit/show/beat.h>
+#include <imkit/show/script.h>

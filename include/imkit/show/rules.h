@@ -203,6 +203,11 @@ void RuleTrace(const char* id, const RuleView& rule, const RuleContext& context,
 class RuleDocument {
   public:
     RuleDocument();
+    // The view borrows this object's storage, so copies and moves rebuild their own view.
+    RuleDocument(const RuleDocument& other);
+    RuleDocument& operator=(const RuleDocument& other);
+    RuleDocument(RuleDocument&& other) noexcept;
+    RuleDocument& operator=(RuleDocument&& other) noexcept;
     void Apply(const RuleEdit& edit, const RuleContext& context);
     void ApplyAll(std::span<const RuleEdit> edits, const RuleContext& context);
     const RuleView& View() const { return view_; }

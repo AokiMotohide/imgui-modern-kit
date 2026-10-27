@@ -1,3 +1,5 @@
+// This file implements or exercises the deprecated spellings on purpose.
+#define IMKIT_DEPRECATED(message)
 #include <imkit/editor_canvas.h>
 #include <imkit/shell.h>
 #include <algorithm>

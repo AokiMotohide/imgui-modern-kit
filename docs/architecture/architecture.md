@@ -43,3 +43,7 @@ The Node Editor is an independent optional target. It borrows a graph snapshot f
 Editor Core, Video and CG consume non-owning provider views and emit fixed-buffer events. They do not own edited scene/media data, selection, Undo, workers or context. The explicitly constructed optional OpenGL3 preview object owns its own graphics resources only; its context and GL function table originate from the host. See [Editor Suite contracts](../components/editor-suite.md).
 
 CG transforms retain rotation, scale and upper-triangular shear for oriented non-uniform scaling. Scale events carry the affine terms explicitly; the host applies them atomically with scale. Both preview paths use the same full linear map and inverse-transpose normals.
+
+## Show module ownership
+
+The optional `imkit::show` target (`imkit/show.h`) sits beside Editor Core. It depends on `imkit::imkit` and, for timecode, `imkit::editor_core`; nothing depends on it. Components draw and return requests: continuous values as `ValueEdit`, rule and sequencer edits through fixed-capacity buffers, calendar moves as request structs. The host owns every value, the clock (UTC seconds plus a time-zone callback), MIDI/OSC/DMX devices, media playback, script analysis and persistence. Pure functions (`EvaluateRule`, `NextOccurrences`, `ParseCron`, `SolarEvents`, `FindConflicts`, `DetectDelimiter` and others) carry the logic so it can be tested without a context. Colours derive from semantic theme tokens; there is no Show-specific theme field. See [Show module](../components/show.md).

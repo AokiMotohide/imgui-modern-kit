@@ -6,6 +6,11 @@
 #include <span>
 #include <cstddef>
 
+// Marks a spelling that a newer overload replaces. Define IMKIT_DEPRECATED(message) as nothing to silence it.
+#ifndef IMKIT_DEPRECATED
+#define IMKIT_DEPRECATED(message) [[deprecated(message)]]
+#endif
+
 namespace imkit {
 enum class ActionVariant { Primary, Secondary, Ghost, Destructive, SubtleDestructive };
 enum class CheckState { Unchecked, Checked, Mixed };
@@ -50,7 +55,9 @@ bool DragVector3WithUnit(const char *label, float value[3], const char *unit, fl
 // Begin/End pair; editor is placed in second column. End only when Begin is true.
 bool BeginSettingRow(const char *id, const char *label, float labelWidth = 140);
 void EndSettingRow();
-void StatusBadge(const char *text, StatusKind kind = StatusKind::Neutral, const Theme *theme = nullptr);
+void StatusBadge(const char *text, StatusKind kind = StatusKind::Neutral, ComponentOptions options = {});
+IMKIT_DEPRECATED("pass ComponentOptions instead of a bare Theme pointer")
+void StatusBadge(const char *text, StatusKind kind, const Theme *theme);
 struct CompactActionRowOptions {
     const char *statusText = nullptr;
     StatusKind statusKind = StatusKind::Neutral;
@@ -74,11 +81,15 @@ struct Notification {
     double expiresAt = 0;
 };
 // Returns dismiss request. Host owns removal and lifetime. expiresAt==0 persists.
-bool NotificationCard(const Notification &notification, double now, const Theme *theme = nullptr);
+bool NotificationCard(const Notification &notification, double now, ComponentOptions options = {});
+IMKIT_DEPRECATED("pass ComponentOptions instead of a bare Theme pointer")
+bool NotificationCard(const Notification &notification, double now, const Theme *theme);
 bool BeginToolbar(const char *id, const ImVec2 &size = ImVec2(0, 0));
 void EndToolbar(); // Always, like EndChild().
 // Draw-only decoration: no extra item submission; safe after InputText etc.
-void ValidationMessage(const char *message, bool invalid, const Theme *theme = nullptr);
+void ValidationMessage(const char *message, bool invalid, ComponentOptions options = {});
+IMKIT_DEPRECATED("pass ComponentOptions instead of a bare Theme pointer")
+void ValidationMessage(const char *message, bool invalid, const Theme *theme);
 // Optional inset elevation for the CURRENT popup window. Clip stays inside it.
 void OverlayDecoration(const Theme &theme, AnimationState *animation = nullptr);
 } // namespace imkit

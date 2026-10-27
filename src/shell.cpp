@@ -28,7 +28,7 @@ bool Contains(const char* text,const char* query) {
 }
 
 void DrawStatus(const char* status,FeedbackKind kind,const Theme* theme) {
-    if(status&&*status)StatusBadge(status,ToStatusKind(kind),theme);
+    if(status&&*status)StatusBadge(status,ToStatusKind(kind),ComponentOptions{theme});
 }
 
 float FiniteOr(float value,float fallback) {
@@ -64,7 +64,7 @@ StableId AppBar(const char* id,const AppBarView& view,ToolbarState& state,Compon
     if(ImGui::BeginChild("app-bar",{0,height},ImGuiChildFlags_None,ImGuiWindowFlags_NoScrollbar)) {
         if(view.product&&*view.product)ImGui::TextUnformatted(view.product);
         if(view.document&&*view.document){ImGui::SameLine();ImGui::TextDisabled("/");ImGui::SameLine();ImGui::TextUnformatted(view.document);}
-        if(view.dirty){ImGui::SameLine();StatusBadge("Modified",StatusKind::Warning,options.theme);}
+        if(view.dirty){ImGui::SameLine();StatusBadge("Modified",StatusKind::Warning,ComponentOptions{options.theme});}
         if(view.context&&*view.context){ImGui::SameLine();ImGui::TextDisabled("%s",view.context);}
         if(view.status&&*view.status){ImGui::SameLine();DrawStatus(view.status,view.statusKind,options.theme);}
         if(!view.actions.empty()){
