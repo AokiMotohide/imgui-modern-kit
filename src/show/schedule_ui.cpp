@@ -49,31 +49,12 @@ std::int32_t AddMonths(std::int32_t day, int months) {
     return DaysFromCivil(ny, nm, std::min(d, DaysInMonth(ny, nm)));
 }
 
-// Pill button used by several editors.
+// Binds the colours and options so the editors' pill buttons read as `pill(id, text, ink, tone)`.
 struct Pill {
     const ShowColors& c;
     const ComponentOptions& o;
-    float u;
     bool operator()(const char* id, const char* text, ImVec4 ink, ImVec4 tone = {}, bool dashed = false) const {
-        auto* draw = ImGui::GetWindowDrawList();
-        ImGui::PushID(id);
-        const ImVec2 ts = ImGui::CalcTextSize(text, nullptr, true);
-        const ImVec2 size{ts.x + u * .9f, u * 1.0f};
-        const ImVec2 a = ImGui::GetCursorScreenPos(), b{a.x + size.x, a.y + size.y};
-        ImGui::InvisibleButton("##pill", size);
-        const bool hovered = ImGui::IsItemHovered(), clicked = ImGui::IsItemClicked(), focused = ImGui::IsItemFocused();
-        const ImVec4 fill = tone.w > 0 ? Mix(c.input, tone, .2f + (hovered ? .08f : 0.f)) : Mix(c.input, c.text, hovered ? .09f : .03f);
-        draw->AddRectFilled(a, b, U32(fill), size.y * .4f);
-        if (dashed)
-            detail::DrawDashedRect(draw, a, b, size.y * .4f, U32(c.muted, .7f), 1.f, 3.f);
-        else
-            draw->AddRect(a, b, U32(tone.w > 0 ? Mix(c.border, tone, .6f) : c.border, .8f), size.y * .4f, 0, 1.f);
-        draw->AddText({a.x + u * .45f, a.y + (size.y - ts.y) * .5f}, U32(ink), text);
-        if (focused && ImGui::GetIO().NavVisible)
-            draw->AddRect({a.x - 2, a.y - 2}, {b.x + 2, b.y + 2}, U32(c.focus), size.y * .4f + 2.f, 0, 2.f);
-        SemanticItem(o, text, accessibility::SemanticRole::Button, accessibility::SemanticAction::Press);
-        ImGui::PopID();
-        return clicked;
+        return PillButton(id, text, c, o, ink, tone, {}, dashed);
     }
 };
 } // namespace
@@ -370,7 +351,7 @@ bool RecurrenceEditor(const char* id, Recurrence* rule, RecurrenceEditorOptions 
         return false;
     const ShowColors c = MakeShowColors(options);
     const float u = Unit();
-    const Pill pill{c, options, u};
+    const Pill pill{c, options};
     bool changed = false;
     ImGui::PushID(id);
     ImGui::BeginGroup();
@@ -531,7 +512,7 @@ bool CronEditor(const char* id, char* text, std::size_t capacity, CronEditorOpti
     const ShowColors c = MakeShowColors(options);
     auto* draw = ImGui::GetWindowDrawList();
     const float u = Unit();
-    const Pill pill{c, options, u};
+    const Pill pill{c, options};
     bool changed = false;
     ImGui::PushID(id);
     ImGui::BeginGroup();
@@ -737,7 +718,7 @@ CalendarRequest Calendar(const char* id, std::span<const CalendarEvent> events, 
     auto* draw = ImGui::GetWindowDrawList();
     const auto& io = ImGui::GetIO();
     const float u = Unit();
-    const Pill pill{c, options, u};
+    const Pill pill{c, options};
     const float round = options.theme ? options.theme->radius.control : u * .3f;
     const std::int32_t today = o.today ? o.today : LocalDay(o.now, o.zone);
     if (state.anchorDay == 0)

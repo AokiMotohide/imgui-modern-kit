@@ -70,27 +70,8 @@ struct Ui {
                 return &i;
         return nullptr;
     }
-    // Pill-shaped button at the cursor. `tone.w <= 0` uses the neutral fill.
     bool Chip(const char* id, const char* text, ImVec4 ink, ImVec4 tone = {}, bool dashed = false) const {
-        ImGui::PushID(id);
-        const ImVec2 ts = ImGui::CalcTextSize(text, nullptr, true);
-        const ImVec2 size{ts.x + u * .9f, u * 1.0f};
-        const ImVec2 a = ImGui::GetCursorScreenPos(), b{a.x + size.x, a.y + size.y};
-        ImGui::InvisibleButton("##chip", size);
-        const bool hovered = ImGui::IsItemHovered(), focused = ImGui::IsItemFocused();
-        const bool clicked = ImGui::IsItemClicked();
-        ImVec4 fill = tone.w > 0 ? Mix(c.input, tone, .16f + (hovered ? .08f : 0.f)) : Mix(c.input, c.text, hovered ? .09f : .03f);
-        draw->AddRectFilled(a, b, U32(fill), size.y * .4f);
-        if (dashed)
-            detail::DrawDashedRect(draw, a, b, size.y * .4f, U32(c.muted, .7f), 1.f, 3.f);
-        else
-            draw->AddRect(a, b, U32(tone.w > 0 ? Mix(c.border, tone, .5f) : c.border, .8f), size.y * .4f, 0, 1.f);
-        draw->AddText({a.x + u * .45f, a.y + (size.y - ts.y) * .5f}, U32(ink), text);
-        if (focused && ImGui::GetIO().NavVisible)
-            draw->AddRect({a.x - 2, a.y - 2}, {b.x + 2, b.y + 2}, U32(c.focus), size.y * .4f + 2.f, 0, 2.f);
-        SemanticItem(o, text, accessibility::SemanticRole::Button, accessibility::SemanticAction::Press);
-        ImGui::PopID();
-        return clicked;
+        return PillButton(id, text, c, o, ink, tone, {}, dashed);
     }
     bool IconButton(const char* id, int glyph, ImVec4 ink, const char* accessibleName) const {
         ImGui::PushID(id);

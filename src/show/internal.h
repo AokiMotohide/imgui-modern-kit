@@ -36,6 +36,11 @@ inline float Unit() { return ImGui::GetFrameHeight(); }
 // Draws one pad face (shared by PadGrid and ClipLauncher). The caller owns the item and its hit area.
 void DrawPadCell(ImDrawList* draw, const ShowColors& c, const ComponentOptions& options, ImVec2 a, ImVec2 b, const PadView& pad,
                  int index, bool hovered, bool held, bool focused, float round);
+// Pill-shaped button at the cursor, drawn into the window draw list. `tone.w <= 0` uses the neutral fill; `dashed`
+// swaps the border for a dashed outline (an "add new" affordance). A `size` component <= 0 takes the default: text
+// width plus padding by one frame height. The text is centred. Returns true on click.
+bool PillButton(const char* id, const char* text, const ShowColors& c, const ComponentOptions& o, ImVec4 ink, ImVec4 tone = {},
+                ImVec2 size = {}, bool dashed = false);
 
 // Formatted text that stays valid for the rest of the frame (accessibility nodes borrow strings until the host
 // publishes the tree). A ring of 4096 slots; one frame should not need more than the ring holds.

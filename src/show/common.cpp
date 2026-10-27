@@ -1,4 +1,5 @@
 #include <imkit/show/common.h>
+#include "internal.h"
 #include <imkit/charts.h>
 
 namespace imkit::show {
@@ -45,4 +46,34 @@ ShowColors MakeShowColors(const ComponentOptions& options) {
     c.done = c.success;
     return c;
 }
+
+namespace impl {
+bool PillButton(const char* id, const char* text, const ShowColors& c, const ComponentOptions& o, ImVec4 ink, ImVec4 tone, ImVec2 size,
+                bool dashed) {
+    auto* draw = ImGui::GetWindowDrawList();
+    const float u = Unit();
+    ImGui::PushID(id);
+    const ImVec2 ts = ImGui::CalcTextSize(text, nullptr, true);
+    if (size.x <= 0)
+        size.x = ts.x + u * .9f;
+    if (size.y <= 0)
+        size.y = u;
+    const ImVec2 a = ImGui::GetCursorScreenPos(), b{a.x + size.x, a.y + size.y};
+    const float round = size.y * .4f;
+    ImGui::InvisibleButton("##pill", size);
+    const bool hovered = ImGui::IsItemHovered(), held = ImGui::IsItemActive(), clicked = ImGui::IsItemClicked(), focused = ImGui::IsItemFocused();
+    const ImVec4 fill = tone.w > 0 ? Mix(c.input, tone, held ? .45f : hovered ? .28f : .2f) : Mix(c.input, c.text, held ? .14f : hovered ? .09f : .03f);
+    draw->AddRectFilled(a, b, U32(fill), round);
+    if (dashed)
+        detail::DrawDashedRect(draw, a, b, round, U32(c.muted, .7f), 1.f, 3.f);
+    else
+        draw->AddRect(a, b, U32(tone.w > 0 ? Mix(c.border, tone, .6f) : c.border, .8f), round, 0, 1.f);
+    DrawTextCentered(draw, a, b, U32(ink), text);
+    if (focused && ImGui::GetIO().NavVisible)
+        draw->AddRect({a.x - 2, a.y - 2}, {b.x + 2, b.y + 2}, U32(c.focus), round + 2.f, 0, 2.f);
+    SemanticItem(o, text, accessibility::SemanticRole::Button, accessibility::SemanticAction::Press);
+    ImGui::PopID();
+    return clicked;
+}
+} // namespace impl
 } // namespace imkit::show

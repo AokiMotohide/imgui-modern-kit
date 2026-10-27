@@ -12,29 +12,6 @@ using namespace impl;
 namespace {
 constexpr float Pi = 3.14159265358979323846f;
 
-// Small pill button; returns true on click.
-bool Button(const char* id, const char* text, const ShowColors& c, const ComponentOptions& o, ImVec4 ink, ImVec4 tone = {}, ImVec2 size = {}) {
-    auto* draw = ImGui::GetWindowDrawList();
-    const float u = Unit();
-    ImGui::PushID(id);
-    const ImVec2 ts = ImGui::CalcTextSize(text, nullptr, true);
-    if (size.x <= 0)
-        size.x = ts.x + u * 1.0f;
-    if (size.y <= 0)
-        size.y = u * 1.05f;
-    const ImVec2 a = ImGui::GetCursorScreenPos(), b{a.x + size.x, a.y + size.y};
-    ImGui::InvisibleButton("##btn", size);
-    const bool hovered = ImGui::IsItemHovered(), held = ImGui::IsItemActive(), clicked = ImGui::IsItemClicked(), focused = ImGui::IsItemFocused();
-    const ImVec4 fill = tone.w > 0 ? Mix(c.input, tone, held ? .45f : hovered ? .3f : .2f) : Mix(c.input, c.text, held ? .14f : hovered ? .09f : .03f);
-    draw->AddRectFilled(a, b, U32(fill), size.y * .4f);
-    draw->AddRect(a, b, U32(tone.w > 0 ? Mix(c.border, tone, .6f) : c.border, .8f), size.y * .4f, 0, 1.f);
-    DrawTextCentered(draw, a, b, U32(ink), text);
-    if (focused && ImGui::GetIO().NavVisible)
-        draw->AddRect({a.x - 2, a.y - 2}, {b.x + 2, b.y + 2}, U32(c.focus), size.y * .4f + 2.f, 0, 2.f);
-    SemanticItem(o, text, accessibility::SemanticRole::Button, accessibility::SemanticAction::Press);
-    ImGui::PopID();
-    return clicked;
-}
 const char* Clock(double seconds) {
     const int t = static_cast<int>(std::max(0.0, seconds));
     return FrameText("%d:%02d", t / 60, t % 60);
@@ -131,23 +108,23 @@ BeatClockRequest BeatClock(const char* id, const BeatClockView& view, ComponentO
     // Controls.
     ImGui::BeginGroup();
     const bool shift = ImGui::GetIO().KeyShift;
-    if (Button("tap", Str(options, "show.tap", "TAP"), c, options, c.text, c.accent, {u * 3.4f, u * 1.4f}))
+    if (PillButton("tap", Str(options, "show.tap", "TAP"), c, options, c.text, c.accent, {u * 3.4f, u * 1.4f}))
         request.tap = true;
     ImGui::SameLine();
-    if (Button("down", shift ? "-1" : "-0.1", c, options, c.text))
+    if (PillButton("down", shift ? "-1" : "-0.1", c, options, c.text))
         request.bpmStep = shift ? -1.0 : -.1;
     ImGui::SameLine(0, 3.f);
-    if (Button("up", shift ? "+1" : "+0.1", c, options, c.text))
+    if (PillButton("up", shift ? "+1" : "+0.1", c, options, c.text))
         request.bpmStep = shift ? 1.0 : .1;
-    if (Button("resync", Str(options, "show.resync", "Resync"), c, options, c.text))
+    if (PillButton("resync", Str(options, "show.resync", "Resync"), c, options, c.text))
         request.resync = true;
     ImGui::SameLine();
-    if (Button("run", view.running ? Str(options, "show.stop", "Stop") : Str(options, "show.start", "Start"), c, options, c.text))
+    if (PillButton("run", view.running ? Str(options, "show.stop", "Stop") : Str(options, "show.start", "Start"), c, options, c.text))
         request.toggleRunning = true;
     ImGui::SameLine();
     if (!view.sources.empty()) {
         const char* label = view.source >= 0 && view.source < static_cast<int>(view.sources.size()) ? view.sources[static_cast<std::size_t>(view.source)] : "Source";
-        if (Button("source", label, c, options, view.synced ? c.text : c.warning, view.synced ? ImVec4{} : c.warning))
+        if (PillButton("source", label, c, options, view.synced ? c.text : c.warning, view.synced ? ImVec4{} : c.warning))
             ImGui::OpenPopup("##sources");
         if (ImGui::IsPopupOpen("##sources"))
             ImGui::SetNextWindowPos({ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y + 2.f});
@@ -430,15 +407,15 @@ DeckRequest Deck(const char* id, const DeckView& view, float diameter, Component
 
     // Buttons.
     const float bw = (d - u * .5f) / 3.f;
-    if (Button("cue", Str(options, "show.cue", "CUE"), c, options, view.cueHeld ? c.onAccent : c.text, view.cueHeld ? tone : ImVec4{}, {bw, u * 1.5f})) {
+    if (PillButton("cue", Str(options, "show.cue", "CUE"), c, options, view.cueHeld ? c.onAccent : c.text, view.cueHeld ? tone : ImVec4{}, {bw, u * 1.5f})) {
         request.cuePressed = true;
     }
     request.cueReleased = ImGui::IsItemDeactivated();
     ImGui::SameLine(0, u * .25f);
-    if (Button("play", view.playing ? Str(options, "show.pause", "PAUSE") : Str(options, "show.play", "PLAY"), c, options, view.playing ? c.onAccent : c.text, view.playing ? tone : ImVec4{}, {bw, u * 1.5f}))
+    if (PillButton("play", view.playing ? Str(options, "show.pause", "PAUSE") : Str(options, "show.play", "PLAY"), c, options, view.playing ? c.onAccent : c.text, view.playing ? tone : ImVec4{}, {bw, u * 1.5f}))
         request.play = true;
     ImGui::SameLine(0, u * .25f);
-    if (Button("sync", Str(options, "show.sync", "SYNC"), c, options, view.sync ? c.onAccent : c.text, view.sync ? c.success : ImVec4{}, {bw, u * 1.5f}))
+    if (PillButton("sync", Str(options, "show.sync", "SYNC"), c, options, view.sync ? c.onAccent : c.text, view.sync ? c.success : ImVec4{}, {bw, u * 1.5f}))
         request.syncToggled = true;
     if (view.key && view.key[0])
         ImGui::TextColored(c.muted, "%s %s", Str(options, "show.key", "Key"), view.key);
@@ -564,7 +541,7 @@ DjChannelRequest DjChannelStrip(const char* id, const DjChannel& ch, float fader
     }
     if (ch.cue) {
         bool on = *ch.cue;
-        if (Button("cue", Str(options, "show.pfl", "CUE"), c, options, on ? c.onAccent : c.text, on ? c.warning : ImVec4{}, {width, u * 1.1f})) {
+        if (PillButton("cue", Str(options, "show.pfl", "CUE"), c, options, on ? c.onAccent : c.text, on ? c.warning : ImVec4{}, {width, u * 1.1f})) {
             *ch.cue = !on;
             request.toggled = true;
             request.control = 6;
@@ -605,7 +582,7 @@ ValueEdit PitchFader(const char* id, float* percent, PitchFaderOptions o, Compon
     edit = Fader(Str(options, "show.pitch", "Pitch"), percent, fo, options);
     if (keyLock) {
         bool on = *keyLock;
-        if (Button("keylock", Str(options, "show.keyLock", "KEY"), c, options, on ? c.onAccent : c.text, on ? c.accent : ImVec4{}, {u * 2.4f, u * 1.05f}))
+        if (PillButton("keylock", Str(options, "show.keyLock", "KEY"), c, options, on ? c.onAccent : c.text, on ? c.accent : ImVec4{}, {u * 2.4f, u * 1.05f}))
             *keyLock = !on;
     }
     ImGui::EndGroup();
