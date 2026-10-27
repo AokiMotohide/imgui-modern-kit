@@ -103,6 +103,9 @@ const char *PageSummary(int page) {
     case 22: return "Tabs, hierarchy actions, settings and choices in one screen.";
     case 23: return "Donut, bar, gauge, sparkline and progress components.";
     case 24: return "Pan, tilt and zoom control with presets, driven against a simulated camera.";
+    case 25: return "Faders, knobs, pads, meters, clocks and hold-to-confirm controls for a live operator.";
+    case 26: return "Cue list, clip launcher, mixer, transition, effects, modulator, mappings and device health.";
+    case 27: return "Build if / then / else rules without code, explain them in a sentence and test them against live values.";
     default: return "";
     }
 }
@@ -944,16 +947,26 @@ void Show(GalleryState &s) {
         s.floatingCatalogSize=GetWindowSize();
     }
     if(visible) {
-        static constexpr int pageIds[]={19,0,1,2,3,4,5,6,23,24,7,8,9,10,11,12,13,14,15,16,17,18,20,21,22};
-        const char* pages[]={"Start","Components: Basic","Numeric / Units","Input / Media","Hierarchy / Table","Overlay / Layout","Composites","Icons","Charts","PTZ Camera","Editor Core","Video","CG","Foundations","Components","Patterns","Accessibility","Responsive","Generic Workspace","Feedback / States","Preview Tiles","Frame Lab","Toasts","Compare","New in 3.2"};
+        // One table drives the sidebar, the narrow-width combo and the category groups.
+        struct PageEntry {int id; const char* name; int group;};
+        static constexpr PageEntry table[]={
+            {19,"Start",0},{0,"Components: Basic",1},{1,"Numeric / Units",1},{2,"Input / Media",1},{3,"Hierarchy / Table",1},
+            {4,"Overlay / Layout",1},{5,"Composites",1},{6,"Icons",1},{23,"Charts",1},{24,"PTZ Camera",1},
+            {7,"Editor Core",2},{8,"Video",2},{9,"CG",2},{10,"Foundations",3},{11,"Components",3},{12,"Patterns",3},
+            {13,"Accessibility",3},{14,"Responsive",3},{15,"Generic Workspace",2},{16,"Feedback / States",1},
+            {17,"Preview Tiles",2},{18,"Frame Lab",3},{20,"Toasts",1},{21,"Compare",0},{22,"New in 3.2",0},
+            {25,"Show: Controls",4},{26,"Show: Live",4},{27,"Show: Rules",4}};
+        constexpr int pageCount=static_cast<int>(std::size(table));
+        int pageIds[pageCount]; const char* pages[pageCount];
+        for(int i=0;i<pageCount;++i) {pageIds[i]=table[i].id; pages[i]=table[i].name;}
         int pageIndex=0;
-        for(int i=0;i<static_cast<int>(std::size(pageIds));++i) if(pageIds[i]==s.page) {pageIndex=i;break;}
+        for(int i=0;i<pageCount;++i) if(pageIds[i]==s.page) {pageIndex=i;break;}
         const bool wide=GetContentRegionAvail().x>=1100.f*std::max(1.f,ImGui::GetStyle().FontScaleDpi);
         PushFont(s.fonts.emphasis,s.theme.metrics.bodySize*1.1f); TextUnformatted("ImKit Gallery"); PopFont();
         SameLine(); TextDisabled("3.3   |   %d themes   |   %d icons",static_cast<int>(ThemePresets().size()),static_cast<int>(GetIconCatalog().size()));
         if(!wide) {
             SetNextItemWidth(std::min(260.f,GetContentRegionAvail().x*.45f));
-            if(Combo("##section",&pageIndex,pages,static_cast<int>(std::size(pages)))) s.page=pageIds[pageIndex];
+            if(Combo("##section",&pageIndex,pages,pageCount)) s.page=pageIds[pageIndex];
             Record(s,"gallery-section");
             SameLine();
         }
@@ -997,14 +1010,13 @@ void Show(GalleryState &s) {
         Spacing();
         if(wide) {
             BeginChild("categories",{192*s.scale*std::max(1.f,ImGui::GetStyle().FontScaleDpi),0},ImGuiChildFlags_Borders);
-            const char* groups[]={"Get started","Controls","Workspaces","Reference"};
-            for(int g=0;g<4;++g) {
+            const char* groups[]={"Get started","Controls","Workspaces","Reference","Show"};
+            for(int g=0;g<5;++g) {
                 if(g) Spacing();
                 TextDisabled("%s",groups[g]);
-                for(int i=0;i<static_cast<int>(std::size(pageIds));++i) {
+                for(int i=0;i<pageCount;++i) {
                     const int id=pageIds[i];
-                    const int category=(id==19||id==21||id==22)?0:(id<=6||id==16||id==20||id==23||id==24)?1:(id==7||id==8||id==9||id==15||id==17)?2:3;
-                    if(category!=g) continue;
+                    if(table[i].group!=g) continue;
                     if(Selectable(pages[i],s.page==id)) {s.page=id;if(id==21)s.comparison.open=true;}
                 }
             }
@@ -1013,13 +1025,14 @@ void Show(GalleryState &s) {
         BeginChild("Component panel", {GetContentRegionAvail().x, 0}, ImGuiChildFlags_AlwaysUseWindowPadding,
                    s.page == 4 ? ImGuiWindowFlags_MenuBar : 0);
         int active=0;
-        for(int i=0;i<static_cast<int>(std::size(pageIds));++i) if(pageIds[i]==s.page) active=i;
+        for(int i=0;i<pageCount;++i) if(pageIds[i]==s.page) active=i;
         if(s.page!=19) PageHeader(s,pages[active],PageSummary(s.page),s.page>=7&&s.page<=9);
         PushItemWidth(std::min(420 * s.scale,GetContentRegionAvail().x*.70f));
         switch (s.page) {
         case 21: s.comparison.open=true; DrawComparison(s); break;
         case 23: s.charts.Show(s); break;
         case 24: s.ptz.Show(s); break;
+        case 25: case 26: case 27: s.show.Show(s.page,s); break;
         case 22: s.workflow.Workbench(s); break;
         case 20: s.toasts.Show(s); break;
         case 19: Start(s); break;

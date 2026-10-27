@@ -11,6 +11,7 @@
 #include "toast_page.h"
 #include "charts_page.h"
 #include "ptz_page.h"
+#include "show_pages.h"
 namespace imkit::gallery {
 struct Probe {
     ImVec2 min, max;
@@ -38,6 +39,7 @@ struct GalleryState {
     ToastPage toasts;
     ChartsPage charts;
     PtzPage ptz;
+    ShowPages show;
     EditorWorkspaces editors;
     Theme theme = MakeTheme(ThemePreset::PrecisionLight);
     FontSet fonts{};
