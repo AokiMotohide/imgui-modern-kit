@@ -10,6 +10,7 @@
 #include "workflow_pages.h"
 #include "toast_page.h"
 #include "charts_page.h"
+#include "ptz_page.h"
 namespace imkit::gallery {
 struct Probe {
     ImVec2 min, max;
@@ -36,6 +37,7 @@ struct GalleryState {
     WorkflowPages workflow;
     ToastPage toasts;
     ChartsPage charts;
+    PtzPage ptz;
     EditorWorkspaces editors;
     Theme theme = MakeTheme(ThemePreset::PrecisionLight);
     FontSet fonts{};

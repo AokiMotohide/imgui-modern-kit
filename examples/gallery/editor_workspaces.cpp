@@ -243,7 +243,7 @@ void Options(EditorWorkspaces &s) {
     if (ImGui::SmallButton(s.japanese ? "ショートカット" : "Shortcuts")) ImGui::OpenPopup("editor-shortcuts");
     if (ImGui::BeginPopup("editor-shortcuts")) {
         const char *presets[]={"CapCut","Premiere","Blender"};
-        if (ImGui::Combo(s.japanese ? "基本設定" : "Preset",&s.shortcutPreset,presets,3))
+        if (imkit::Combo(s.japanese ? "基本設定" : "Preset",&s.shortcutPreset,presets,3))
             s.bindingCount=editor::MakeBindings(static_cast<editor::ShortcutPreset>(s.shortcutPreset),s.bindings);
         ImGui::TextUnformatted(s.japanese ? "キーと修飾キーを変更できます。同じ割当は赤で表示します。" : "Choose a key and modifiers. Conflicting bindings are red.");
         const char *names[]={"Play / Pause","Stop","Previous frame","Next frame","Set In","Set Out","Loop","Split","Delete","Duplicate","Select all","Fit","Add key","Previous key","Next key","Undo","Redo","Play reverse","Play forward","Pause","Select tool","Razor tool","Ripple tool","Roll tool","Slip tool","Slide tool","Hand tool","Go to start","Go to end","Clear In / Out","Insert source","Overwrite source","Append source","Copy clips","Cut clips","Paste clips"};
@@ -253,11 +253,11 @@ void Options(EditorWorkspaces &s) {
             ImGui::TextUnformatted(names[static_cast<int>(b.command)]);
             const auto key=static_cast<ImGuiKey>(b.chord & ~ImGuiMod_Mask_);
             ImGui::SetNextItemWidth(180);
-            if (ImGui::BeginCombo("##key",key==ImGuiKey_None ? "None" : ImGui::GetKeyName(key))) {
+            if (imkit::BeginCombo("##key",key==ImGuiKey_None ? "None" : ImGui::GetKeyName(key))) {
                 if (ImGui::Selectable("None",!b.chord)) b.chord=0;
                 for (int k=ImGuiKey_NamedKey_BEGIN;k<=ImGuiKey_F24;++k)
                     if (ImGui::Selectable(ImGui::GetKeyName(static_cast<ImGuiKey>(k)),key==k)) b.chord=(b.chord & ImGuiMod_Mask_) | k;
-                ImGui::EndCombo();
+                imkit::EndCombo();
             }
             for (const auto modifier: {ImGuiMod_Ctrl,ImGuiMod_Shift,ImGuiMod_Alt,ImGuiMod_Super}) {
                 ImGui::SameLine();bool enabled=(b.chord & modifier)!=0;
@@ -1651,7 +1651,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     const char *modesEN[]={"Program","Source","Compare","Preview contract"};
     const char *modesJP[]={"プログラム","ソース","比較","Preview契約"};
     ImGui::SetNextItemWidth(std::min(width,160.f));
-    ImGui::Combo("##monitors",&s.monitorMode,s.japanese?modesJP:modesEN,4);
+    imkit::Combo("##monitors",&s.monitorMode,s.japanese?modesJP:modesEN,4);
     float monitorHeight = std::max(40.f,top-2*ImGui::GetFrameHeightWithSpacing()-ImGui::GetFontSize()-32-(s.monitorMode==1 ? ImGui::GetFrameHeightWithSpacing():0));
     video::MonitorLabels monitorLabels;
     if (s.japanese) {
@@ -1667,11 +1667,11 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
         s.monitorContractSource=std::clamp(s.monitorContractSource,0,2);
         ImGui::SameLine();
         const char *aspects[]={"4:3","16:9","1:1","9:16"};
-        ImGui::SetNextItemWidth(90);ImGui::Combo("Aspect",&s.monitorContractAspect,aspects,4);
+        ImGui::SetNextItemWidth(90);imkit::Combo("Aspect",&s.monitorContractAspect,aspects,4);
         s.motionAspectMin=ImGui::GetItemRectMin();s.motionAspectMax=ImGui::GetItemRectMax();
         ImGui::SameLine();
         const char *statuses[]={"Ready","Loading","Empty","Offline","Error"};
-        ImGui::SetNextItemWidth(110);ImGui::Combo("State",&s.monitorContractStatus,statuses,5);
+        ImGui::SetNextItemWidth(110);imkit::Combo("State",&s.monitorContractStatus,statuses,5);
         s.motionStateMin=ImGui::GetItemRectMin();s.motionStateMax=ImGui::GetItemRectMax();
         ImGui::TextDisabled("Stable source ID: %llu",static_cast<unsigned long long>(sourceIds[s.monitorContractSource]));
         const float aspectValues[]={4.f/3,16.f/9,1.f,9.f/16};
@@ -1804,11 +1804,11 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
     imkit::Checkbox(s.japanese ? "詳細パネル" : "Details",&s.showDetails);
     ImGui::SameLine();ImGui::SetNextItemWidth(120);
     const auto selectedTrack=std::find_if(s.tracks.begin(),s.tracks.end(),[&](const auto &t){return t.id==s.placementTrack;});
-    if(ImGui::BeginCombo("##destination",selectedTrack==s.tracks.end()?"Track":selectedTrack->label)) {
+    if(imkit::BeginCombo("##destination",selectedTrack==s.tracks.end()?"Track":selectedTrack->label)) {
         for(const auto &t:s.tracks) if(t.kind==video::TrackKind::Audio || t.kind==video::TrackKind::Video) {
             ImGui::BeginDisabled(t.locked);if(ImGui::Selectable(t.label,t.id==s.placementTrack)) s.placementTrack=t.id;ImGui::EndDisabled();
         }
-        ImGui::EndCombo();
+        imkit::EndCombo();
     }
     constexpr editor::Command placementCommands[]={editor::Command::InsertSource,editor::Command::OverwriteSource,editor::Command::AppendSource};
     const char *placementNames[]= {s.japanese?"挿入":"Insert",s.japanese?"上書き":"Overwrite",s.japanese?"末尾追加":"Append"};
@@ -1949,13 +1949,13 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
             auto mixer=std::find_if(s.audioStrips.begin(),s.audioStrips.end(),
                                    [&](const auto &v){return v.id==s.mixerTrack;});
             ImGui::SetNextItemWidth(220);
-            if (ImGui::BeginCombo("Channel",mixer==s.audioStrips.end() ? "" : mixer->label)) {
+            if (imkit::BeginCombo("Channel",mixer==s.audioStrips.end() ? "" : mixer->label)) {
                 for (const auto &channel:s.audioStrips) {
                     ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(channel.id)));
                     if (ImGui::Selectable(channel.label,channel.id==s.mixerTrack)) s.mixerTrack=channel.id;
                     ImGui::PopID();
                 }
-                ImGui::EndCombo();
+                imkit::EndCombo();
             }
             if (mixer!=s.audioStrips.end()) {
                 auto view=*mixer;
@@ -1995,7 +1995,7 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
             video::Histogram("hist", s.luma, {scopeWidth, 80}, theme);
             ImGui::SameLine();
             video::ScopeImage("vectorscope", s.scopeVector, 256, 256, {scopeWidth, 80}, theme);
-            const ImVec4 tints[] = {{1,.25f,.25f,1},{.25f,1,.25f,1},{.3f,.5f,1,1}};
+            const ImVec4 tints[] = {theme.editor.axisX,theme.editor.axisY,theme.editor.axisZ};
             for (int channel=0; channel<3; ++channel) {
                 ImGui::SameLine();
                 ImGui::PushID(channel);
@@ -2010,11 +2010,11 @@ void VideoWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef textur
             if(s.icons) {Icon(*s.icons,IconId::CurveEditor,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
             ImGui::BeginDisabled(s.colorCurve.drag.active);
             const char *channelsEn[]={"Red","Green","Blue"},*channelsJa[]={"赤","緑","青"};
-            if(ImGui::Combo(s.japanese?"色補正カーブ":"Color curves",&s.colorCurveChannel,s.japanese?channelsJa:channelsEn,3)) {
+            if(imkit::Combo(s.japanese?"色補正カーブ":"Color curves",&s.colorCurveChannel,s.japanese?channelsJa:channelsEn,3)) {
                 s.colorCurveSelection.Clear();s.colorCurve.activeChannel=s.colorCurveChannels[s.colorCurveChannel];s.colorCurve.fitRequested=true;
             }
             float input=static_cast<float>(editor::Seconds(s.colorCurve.time));
-            if(ImGui::SliderFloat(s.japanese?"入力値":"Input",&input,0,1)) s.colorCurve.time=editor::FromSeconds(input);
+            if(imkit::SliderFloat(s.japanese?"入力値":"Input",&input,0,1)) s.colorCurve.time=editor::FromSeconds(input);
             ImGui::EndDisabled();
             editor::CurveEditor("color curve",ColorCurves(s),s.colorCurve,s.colorCurveSelection,s.events,theme,{0,180});
             ImGui::EndTabItem();
@@ -2126,7 +2126,7 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     const float workspaceHeight=ImGui::GetContentRegionAvail().y;
     side=std::min(side,width*.28f);
     const char *aspectNames[]={"4:3","16:9","1:1","9:16"};
-    ImGui::SetNextItemWidth(100);ImGui::Combo(s.japanese?"Viewport比率":"Viewport aspect",&s.cgPreviewAspect,aspectNames,4);
+    ImGui::SetNextItemWidth(100);imkit::Combo(s.japanese?"Viewport比率":"Viewport aspect",&s.cgPreviewAspect,aspectNames,4);
     const float aspectValues[]={4.f/3,16.f/9,1.f,9.f/16};
     const float maximumViewWidth=width-(inspectorVisible?side+10:0);
     const float estimatedCanvasHeight=std::max(100.f,top-2*ImGui::GetFrameHeightWithSpacing()-ImGui::GetStyle().WindowPadding.y*2);
@@ -2231,14 +2231,14 @@ void CGWorkspace(EditorWorkspaces &s, const Theme &theme, ImTextureRef texture) 
     if (object != s.objects.end() && ImGui::BeginTabBar("Inspector pages")) {
         if (ImGui::BeginTabItem("Transform")) {
             ImGui::SetNextItemWidth(-1);
-            if(ImGui::BeginCombo("##curve-channel",s.japanese ? "アニメーション編集チャンネル" : "Animation channel")) {
+            if(imkit::BeginCombo("##curve-channel",s.japanese ? "アニメーション編集チャンネル" : "Animation channel")) {
                 const char *names[]={"Position X","Position Y","Position Z","Rotation X","Rotation Y","Rotation Z","Scale X","Scale Y","Scale Z"};
                 for(int i=0;i<9;++i) if(ImGui::Selectable(names[i],s.propertyCurveChannel==ObjectPropertyId(s,object->id,i))) {
                     s.propertyCurveChannel=ObjectPropertyId(s,object->id,i);s.curve.activeChannel=s.propertyCurveChannel;
                     s.curve.fitRequested=true;s.keySelection.Clear();s.animationPage=0;
                 }
                 if(ImGui::Selectable(s.japanese?"全体":"All channels",s.propertyCurveChannel==0)) s.propertyCurveChannel=0;
-                ImGui::EndCombo();
+                imkit::EndCombo();
             }
             const auto displayTransform=cg::PreviewTransform(*object,s.viewport);
             editor::PropertyView rows[] = {

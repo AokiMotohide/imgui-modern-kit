@@ -28,9 +28,9 @@ void DesignPages::Show(int section,GalleryState& host) {
             const bool tokens=BeginSection(host,"Tokens","Density, contrast and motion");
             if(tokens) {
                 const char* densities[]={"Compact 24px","Comfortable 30px","Touch 44px"};
-                if(ImGui::Combo("Density",&density,densities,3)) SetDensity(theme,static_cast<Density>(density));
+                if(imkit::Combo("Density",&density,densities,3)) SetDensity(theme,static_cast<Density>(density));
                 const char* contrasts[]={"Standard","High contrast"};
-                if(ImGui::Combo("Contrast",&contrast,contrasts,2)) { auto fonts=theme.fonts; theme=MakeTheme(theme.scheme,static_cast<ContrastMode>(contrast),static_cast<Density>(density)); theme.fonts=fonts; }
+                if(imkit::Combo("Contrast",&contrast,contrasts,2)) { auto fonts=theme.fonts; theme=MakeTheme(theme.scheme,static_cast<ContrastMode>(contrast),static_cast<Density>(density)); theme.fonts=fonts; }
                 imkit::Checkbox("Reduced motion",&theme.motion.reducedMotion);
                 ImGui::Text("Contrast: %s",ValidateContrast(theme)?"PASS (text 4.5:1 / controls 3:1)":"FAIL");
             }
@@ -123,7 +123,7 @@ void DesignPages::Show(int section,GalleryState& host) {
                 }
                 if(settingsRequests) ImGui::TextDisabled(ja?"設定要求: %d":"Settings requests: %d",settingsRequests);
                 ImGui::Spacing();
-                const char* languages[]={"English","日本語","Pseudo RTL"}; ImGui::Combo("Language",&language,languages,3);
+                const char* languages[]={"English","日本語","Pseudo RTL"}; imkit::Combo("Language",&language,languages,3);
             }
             EndSection(status);
             const bool inputs=BeginSection(host,"Inputs","Search, form field, split button and pagination");
@@ -141,7 +141,7 @@ void DesignPages::Show(int section,GalleryState& host) {
         } else {
             const bool navigation=BeginSection(host,"Navigation and commands","Breadcrumbs and toolbars");
             if(navigation) {
-                const char* languages[]={"English","日本語","Pseudo RTL"}; ImGui::Combo("Language",&language,languages,3);
+                const char* languages[]={"English","日本語","Pseudo RTL"}; imkit::Combo("Language",&language,languages,3);
                 const char* crumbs[]={"Workspace","Documents","Current record"}; Breadcrumbs("path",crumbs,options);
                 const Command commands[]={{1,"New record","Ctrl+N"},{2,"Command palette","Ctrl+K"},{3,"Show notification"},{4,"Unavailable","",true,"Waiting for host data"}};
                 auto action=section==14?ResponsiveToolbar("commands",toolbar,commands,options):Toolbar("commands",toolbar,commands,options);

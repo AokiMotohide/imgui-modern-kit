@@ -1,4 +1,6 @@
 #include <imkit/editor_core.h>
+#include <imkit/widgets.h>
+#include <imkit/charts.h>
 #include "transaction_support.h"
 #include <algorithm>
 #include <cmath>
@@ -26,6 +28,11 @@ ImVec2 Screen(Point p, const CanvasState &s, ImVec2 origin) {
 }
 void Diamond(ImDrawList *d, ImVec2 p, ImU32 color, float r = 5) {
     d->AddQuadFilled({p.x, p.y - r}, {p.x + r, p.y}, {p.x, p.y + r}, {p.x - r, p.y}, color);
+}
+// Key diamond with a thin canvas-coloured halo so keys stay legible over curves and grid lines.
+void KeyDiamond(ImDrawList *d, ImVec2 p, ImU32 fill, ImU32 halo, float r) {
+    d->AddQuadFilled({p.x, p.y - r - 1.5f}, {p.x + r + 1.5f, p.y}, {p.x, p.y + r + 1.5f}, {p.x - r - 1.5f, p.y}, halo);
+    Diamond(d, p, fill, r);
 }
 bool Flag(PropertyFlags f, PropertyFlags bit) {
     return (static_cast<unsigned>(f) & static_cast<unsigned>(bit)) != 0;
@@ -330,8 +337,12 @@ void CanvasSelection(const CanvasView &v, CanvasState &s, const SelectionProvide
             bounds.max.x = (std::max)(bounds.max.x, a.x);
             bounds.max.y = (std::max)(bounds.max.y, a.y);
         }
-    } else
-        d->AddRect(Screen(bounds.min, s, v.min), Screen(bounds.max, s, v.min), color);
+    } else {
+        auto fill = theme.colors.focus;
+        fill.w *= .14f;
+        d->AddRectFilled(Screen(bounds.min, s, v.min), Screen(bounds.max, s, v.min), ImGui::GetColorU32(fill), 3.f);
+        d->AddRect(Screen(bounds.min, s, v.min), Screen(bounds.max, s, v.min), color, 3.f, 0, 1.25f);
+    }
     if (ImGui::IsMouseReleased(0)) {
         auto points = p.query ? p.query(p.user, bounds) : std::span<const SelectablePoint>{};
         const bool additive=io.KeyCtrl || io.KeyShift;
@@ -353,19 +364,74 @@ void CanvasSelection(const CanvasView &v, CanvasState &s, const SelectionProvide
         s.selecting = false;
     }
 }
+// Grid step per axis in canvas units, widened by factors of ten until lines are at least 20 px apart.
+static Point GridStep(const CanvasState &s, Point spacing) {
+    Point step = spacing;
+    for (int axis = 0; axis < 2; ++axis) {
+        double &value = axis ? step.y : step.x;
+        const double scale = axis ? s.scale.y : s.scale.x;
+        if (value <= 0 || !std::isfinite(value) || !(scale > 0))
+            continue;
+        while (value * scale < 20)
+            value *= 10;
+    }
+    return step;
+}
+// Minor lines are faint, every fifth is stronger and the zero axes are the strongest, so the grid
+// reads as structure rather than a uniform net.
 void DrawGrid(const CanvasView &v, const CanvasState &s, Point spacing, const Theme &t) {
     auto *d = ImGui::GetWindowDrawList();
-    auto color = ImGui::GetColorU32(t.editor.grid);
+    const auto line = [&](float alpha) {
+        auto c = t.editor.grid;
+        c.w *= alpha;
+        return ImGui::GetColorU32(c);
+    };
+    const Point steps = GridStep(s, spacing);
     for (int axis = 0; axis < 2; ++axis) {
-        double step = axis ? spacing.y : spacing.x, scale = axis ? s.scale.y : s.scale.x;
+        const double step = axis ? steps.y : steps.x;
         if (step <= 0 || !std::isfinite(step))
             continue;
-        while (step * scale < 20)
-            step *= 10;
-        double lo = axis ? v.visible.min.y : v.visible.min.x, hi = axis ? v.visible.max.y : v.visible.max.x;
-        for (double p = std::ceil(lo / step) * step; p <= hi; p += step) {
+        const double lo = axis ? v.visible.min.y : v.visible.min.x, hi = axis ? v.visible.max.y : v.visible.max.x;
+        if (!std::isfinite(lo) || !std::isfinite(hi) || (hi - lo) / step > 4096)
+            continue; // Non-finite or absurdly dense ranges would not draw a readable grid.
+        for (long long i = static_cast<long long>(std::ceil(lo / step)); static_cast<double>(i) * step <= hi; ++i) {
+            const double p = static_cast<double>(i) * step;
             auto q = Screen(axis ? Point{v.visible.min.x, p} : Point{p, v.visible.min.y}, s, v.min);
-            d->AddLine(q, axis ? ImVec2{v.max.x, q.y} : ImVec2{q.x, v.max.y}, color);
+            const bool zero = i == 0;
+            d->AddLine(q, axis ? ImVec2{v.max.x, q.y} : ImVec2{q.x, v.max.y}, line(zero ? .8f : i % 5 == 0 ? .38f : .16f),
+                       zero ? 1.5f : 1.f);
+        }
+    }
+}
+// Small value labels along the top (time) and left (value) edges, drawn inside the canvas so the
+// canvas-to-screen mapping stays untouched.
+static void DrawGridLabels(const CanvasView &v, const CanvasState &s, Point spacing, const Theme &t) {
+    auto *d = ImGui::GetWindowDrawList();
+    const Point steps = GridStep(s, spacing);
+    auto color = t.colors.muted;
+    color.w *= .85f;
+    const ImU32 ink = ImGui::GetColorU32(color);
+    ImFont *font = ImGui::GetFont();
+    const float size = ImGui::GetFontSize() * .8f;
+    for (int axis = 0; axis < 2; ++axis) {
+        const double step = axis ? steps.y : steps.x, scale = axis ? s.scale.y : s.scale.x;
+        if (step <= 0 || !std::isfinite(step) || !(scale > 0))
+            continue;
+        const long long every = std::max<long long>(1, static_cast<long long>(std::ceil((axis ? 30. : 56.) / (step * scale))));
+        const double lo = axis ? v.visible.min.y : v.visible.min.x, hi = axis ? v.visible.max.y : v.visible.max.x;
+        if (!std::isfinite(lo) || !std::isfinite(hi) || (hi - lo) / step > 4096)
+            continue; // Non-finite or absurdly dense ranges would not draw a readable grid.
+        for (long long i = static_cast<long long>(std::ceil(lo / step)); static_cast<double>(i) * step <= hi; ++i) {
+            if (i % every)
+                continue;
+            const double p = static_cast<double>(i) * step;
+            char text[24];
+            std::snprintf(text, sizeof(text), axis ? "%g" : "%gs", axis ? (p == 0 ? 0. : -p) : p);
+            auto q = Screen(axis ? Point{v.visible.min.x, p} : Point{p, v.visible.min.y}, s, v.min);
+            if (axis)
+                d->AddText(font, size, {v.min.x + 5, q.y - size - 2}, ink, text);
+            else
+                d->AddText(font, size, {q.x + 4, v.min.y + 4}, ink, text);
         }
     }
 }
@@ -451,7 +517,17 @@ void Transport(TimeState &s, std::span<const Binding> bindings, const IconAtlas 
             s.playing = true;
         }
     }
-    if (button("play-pause", s.playing ? IconId::Pause : IconId::Play, s.playing ? s.labels.pause : s.labels.play) || CommandPressed(Command::PlayPause, bindings, focused))
+    // Quiet transport: no outline, narrower buttons, and a tinted Play button as the one emphasis.
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {ImGui::GetStyle().FramePadding.x * .62f, ImGui::GetStyle().FramePadding.y});
+    const ImVec4 accent = ImGui::GetStyleColorVec4(ImGuiCol_SliderGrab);
+    auto tint = [&](float alpha) { auto c = accent; c.w = alpha; return c; };
+    ImGui::PushStyleColor(ImGuiCol_Button, tint(.24f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, tint(.36f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, tint(.48f));
+    const bool togglePlay = button("play-pause", s.playing ? IconId::Pause : IconId::Play, s.playing ? s.labels.pause : s.labels.play);
+    ImGui::PopStyleColor(3);
+    if (togglePlay || CommandPressed(Command::PlayPause, bindings, focused))
         s.playing = !s.playing;
     ImGui::SameLine();
     if (button("stop", IconId::Stop, s.labels.stop) || CommandPressed(Command::Stop, bindings, focused)) {
@@ -470,10 +546,11 @@ void Transport(TimeState &s, std::span<const Binding> bindings, const IconAtlas 
     ImGui::SameLine();
     if (button("set-out",IconId::SetOutPoint,s.labels.out) || CommandPressed(Command::SetOut, bindings, focused))
         s.inOut.last = (std::max)(s.playhead, s.inOut.first);
+    ImGui::PopStyleVar(2);
     ImGui::SameLine();
     if (CommandPressed(Command::Pause, bindings, focused)) s.playing = false;
     if (CommandPressed(Command::Loop, bindings, focused)) s.loop = !s.loop;
-    ImGui::Checkbox(s.labels.loop, &s.loop);
+    imkit::Checkbox(s.labels.loop, &s.loop);
     if (CommandPressed(Command::GoToStart,bindings,focused)) s.playhead=s.work.first;
     if (CommandPressed(Command::GoToEnd,bindings,focused)) s.playhead=s.work.last;
     if (CommandPressed(Command::ClearInOut,bindings,focused)) s.inOut=s.work;
@@ -754,6 +831,7 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
         s.drag.draft.phase==Phase::Cancel || s.drag.draft.phase==Phase::Commit))
         FinishCurve(s,provider.revision,provider.revision!=s.drag.draft.revision || ImGui::IsKeyPressed(ImGuiKey_Escape),out);
     DrawGrid(view, s.canvas, {1, 1}, t);
+    DrawGridLabels(view, s.canvas, {1, 1}, t);
     auto keys = provider.query
                     ? provider.query(provider.user,
                                      {{FromSeconds(view.visible.min.x), FromSeconds(view.visible.max.x)},
@@ -799,6 +877,7 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
     Value initial{};
     if (!s.activeChannel && !keys.empty()) s.activeChannel=keys.front().channel;
     std::size_t channelBegin = 0, channelEnd = 0;
+    const ImU32 halo = ImGui::GetColorU32(t.editor.canvas);
     for (std::size_t i = 0; i < keys.size(); ++i) {
         if (i == channelEnd) {
             channelBegin = i;
@@ -809,7 +888,7 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
         const auto channelKeys = keys.subspan(channelBegin, channelEnd - channelBegin);
         const auto &k = keys[i];
         const bool ghost=s.ghostOtherChannels && s.activeChannel && k.channel!=s.activeChannel;
-        auto curveColor=t.colors.accent;
+        auto curveColor=ChartColor(&t,static_cast<std::size_t>(k.channel%8));
         if (ghost) curveColor.w*=.4f;
         const auto resolved = ResolveHandles(channelKeys, i - channelBegin);
         Point v{Seconds(k.tick), -k.value};
@@ -824,7 +903,7 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
                 const double value=provider.sample(provider.user,k.channel,tick,s.extrapolation);
                 auto point=Screen({Seconds(tick),-value},s.canvas,view.min);
                 if (sample && std::isfinite(point.y) && std::isfinite(previous.y) && (!ghost || sample%2))
-                    d->AddLine(previous,point,ImGui::GetColorU32(curveColor),ghost?1.f:1.5f);
+                    d->AddLine(previous,point,ImGui::GetColorU32(curveColor),ghost?1.f:2.f);
                 previous=point;
             }
         }
@@ -835,7 +914,7 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
                 Tick tick = prev.tick + (k.tick - prev.tick) * j / 32;
                 auto next =
                     Screen({Seconds(tick), -Evaluate(channelKeys, tick)}, s.canvas, view.min);
-                if (!ghost || (j%2)) d->AddLine(old,next,ImGui::GetColorU32(curveColor),ghost?1.f:1.5f);
+                if (!ghost || (j%2)) d->AddLine(old,next,ImGui::GetColorU32(curveColor),ghost?1.f:2.f);
                 old = next;
             }
         }
@@ -844,8 +923,11 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
             for (int h = -1; h <= 1; h += 2) {
                 auto offset = h < 0 ? resolved.left : resolved.right;
                 auto hp = Screen({v.x + offset.x, v.y - offset.y}, s.canvas, view.min);
-                d->AddLine(p, hp, ImGui::GetColorU32(t.colors.muted));
-                d->AddCircleFilled(hp, 4, ImGui::GetColorU32(t.colors.text));
+                auto stem = curveColor;
+                stem.w *= .7f;
+                d->AddLine(p, hp, ImGui::GetColorU32(stem), 1.25f);
+                d->AddCircleFilled(hp, 4.5f, halo);
+                d->AddCircle(hp, 3.5f, ImGui::GetColorU32(curveColor), 16, 1.75f);
                 if (!k.locked && std::hypot(mouse.x - hp.x, mouse.y - hp.y) < 7) {
                     hit = k.id;
                     side = h;
@@ -853,8 +935,10 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
                 }
             }
         }
+        const bool keyHovered = !k.locked && std::hypot(mouse.x - p.x, mouse.y - p.y) < 7;
         if (ghost) d->AddQuad({p.x,p.y-5},{p.x+5,p.y},{p.x,p.y+5},{p.x-5,p.y},ImGui::GetColorU32(curveColor));
-        else Diamond(d, p, ImGui::GetColorU32(selection.Contains(k.id) ? t.colors.warning : t.colors.text));
+        else KeyDiamond(d, p, ImGui::GetColorU32(selection.Contains(k.id) ? t.editor.selectedKey : t.editor.key), halo,
+                        keyHovered ? 6.f : 5.f);
         if (!k.locked && std::hypot(mouse.x - p.x, mouse.y - p.y) < 7) {
             hit = k.id;
             side = 0;
@@ -881,9 +965,9 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
         glyph(IconId::FitView);
         if (ImGui::MenuItem(s.labels.fit,nullptr,false,provider.bounds.has_value())) s.fitRequested=true;
         glyph(s.ghostOtherChannels ? IconId::Eye : IconId::EyeOff);
-        ImGui::Checkbox(s.labels.ghost,&s.ghostOtherChannels);
-        ImGui::Checkbox(s.labels.snap,&s.snapToFrame);
-        glyph(IconId::Scale);ImGui::Checkbox(s.labels.scale,&s.scaleTime);
+        imkit::Checkbox(s.labels.ghost,&s.ghostOtherChannels);
+        imkit::Checkbox(s.labels.snap,&s.snapToFrame);
+        glyph(IconId::Scale);imkit::Checkbox(s.labels.scale,&s.scaleTime);
         if (s.icons) {
             ImGui::BeginDisabled(s.drag.active || s.canvas.selecting);
             for (int mode=0;mode<2;++mode) {
@@ -901,10 +985,10 @@ void CurveEditor(const char *id, const CurveProvider &provider, CurveState &s, S
                 }
             }
             ImGui::EndDisabled();
-        } else ImGui::Checkbox(s.labels.lasso,&s.lassoSelect);
+        } else imkit::Checkbox(s.labels.lasso,&s.lassoSelect);
         if (provider.sample) {
             int mode=static_cast<int>(s.extrapolation);
-            if (ImGui::Combo(s.labels.extrapolation,&mode,s.labels.extrapolations.data(),3))
+            if (imkit::Combo(s.labels.extrapolation,&mode,s.labels.extrapolations.data(),3))
                 s.extrapolation=static_cast<Extrapolation>(mode);
         }
         auto key=std::find_if(keys.begin(),keys.end(),[&](const auto &value){return value.id==s.contextKey;});
@@ -1159,14 +1243,15 @@ void AssetBrowser(const char *id, const AssetProvider &p, AssetState &s, Selecti
                 ImGui::GetWindowDrawList()->AddLine({a.x+3,b.y-2},{b.x-3,b.y-2},ImGui::GetColorU32(ImGuiCol_Text),2);
             }
         }
-    } else ImGui::Checkbox(s.labels.grid,&s.grid);
+    } else imkit::Checkbox(s.labels.grid,&s.grid);
     if (p.filteredCount) {
         if (ImGui::GetContentRegionAvail().x<250) ImGui::NewLine();else ImGui::SameLine();
         glyph(IconId::Tag);ImGui::SetNextItemWidth(100);
         ImGui::InputTextWithHint("##tag",s.labels.tag,s.tag,sizeof(s.tag));
-        ImGui::SameLine();glyph(IconId::Filter);ImGui::SetNextItemWidth(100);
+        ImGui::SameLine();glyph(IconId::Filter);
+        ImGui::SetNextItemWidth((std::max)(100.f,ImGui::CalcTextSize(s.labels.statuses[0]).x+ImGui::GetFrameHeight()+2*ImGui::GetStyle().FramePadding.x));
         int status=s.status+1;
-        if (ImGui::Combo("##status",&status,s.labels.statuses.data(),6)) s.status=status-1;
+        if (imkit::Combo("##status",&status,s.labels.statuses.data(),6)) s.status=status-1;
     }
     const int count=p.filteredCount ? (std::max)(0,p.filteredCount(p.user,s.search)) : p.count;
     int columns = s.grid ? (std::max)(1, static_cast<int>(ImGui::GetContentRegionAvail().x / 120)) : 1;
@@ -1187,10 +1272,21 @@ void AssetBrowser(const char *id, const AssetProvider &p, AssetState &s, Selecti
                 if (s.grid && a.thumbnail.GetTexID())
                     ImGui::Image(a.thumbnail, {104, 70});
                 else if (s.grid) {
+                    // Placeholder tile: a quiet filled card with a media glyph instead of an empty outline.
                     auto pos = ImGui::GetCursorScreenPos();
+                    const float rounding = ImGui::GetStyle().FrameRounding;
+                    auto *tile = ImGui::GetWindowDrawList();
+                    tile->AddRectFilled(pos, {pos.x + 104, pos.y + 70}, ImGui::GetColorU32(ImGuiCol_FrameBg), rounding);
+                    tile->AddRect(pos, {pos.x + 104, pos.y + 70}, ImGui::GetColorU32(ImGuiCol_Border, .6f), rounding);
+                    if (s.icons) {
+                        const float size = 24 * ImGui::GetFontSize() / 14;
+                        ImVec4 tint = ImGui::GetStyleColorVec4(ImGuiCol_Text);
+                        tint.w *= .4f;
+                        ImGui::SetCursorScreenPos({pos.x + (104 - size) * .5f, pos.y + (70 - size) * .5f});
+                        Icon(*s.icons, IconId::Image, {size, tint});
+                        ImGui::SetCursorScreenPos(pos);
+                    }
                     ImGui::Dummy({104, 70});
-                    ImGui::GetWindowDrawList()->AddRect(pos, {pos.x + 104, pos.y + 70},
-                                                        ImGui::GetColorU32(ImGuiCol_Border));
                 }
                 auto beginRename=[&] {
                     if (s.renameTransaction.active) return;

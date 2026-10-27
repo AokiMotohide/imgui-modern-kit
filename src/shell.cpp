@@ -1,4 +1,5 @@
 #include <imkit/shell.h>
+#include <imkit/widgets.h>
 
 #include <algorithm>
 #include <cctype>
@@ -204,7 +205,7 @@ bool ThemePicker(const char* id,ThemePreset* selected,ThemePickerState& state,Co
     const char* preview=current<presets.size()?presets[current].displayName.data():"";
     bool changed=false;
     ImGui::PushID(id);
-    if(ImGui::BeginCombo("Theme",preview)){
+    if(imkit::BeginCombo("Theme",preview)){
         ImGui::InputTextWithHint("##search",options.locale?options.locale->Text("search","Search..."):"Search...",state.search,sizeof(state.search));
         for(std::size_t i=0;i<presets.size();++i){
             if(!Contains(presets[i].displayName.data(),state.search)&&!Contains(presets[i].id.data(),state.search))continue;
@@ -216,7 +217,7 @@ bool ThemePicker(const char* id,ThemePreset* selected,ThemePickerState& state,Co
             if(active)ImGui::SetItemDefaultFocus();
             ImGui::PopID();
         }
-        ImGui::EndCombo();
+        imkit::EndCombo();
     }
     ImGui::PopID();
     return changed;

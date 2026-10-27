@@ -23,7 +23,7 @@ void ChartsPage::Show(GalleryState& host) {
             series.back() = std::clamp(series[series.size() - 2] + 12.f * std::sin(clock * 3.7f), 12.f, 88.f);
         }
     }
-    ImGui::Checkbox("Animate sample data", &livePlay);
+    imkit::Checkbox("Animate sample data", &livePlay);
     ImGui::SameLine();
     const char* periods[] = {"Day", "Week", "Month"};
     Segmented("period", &period, periods, o);
@@ -60,7 +60,7 @@ void ChartsPage::Show(GalleryState& host) {
         { const bool visible = BeginSection(host, "GPU load", "Zones colour the ring: calm, busy, saturated.");
         if (visible) {
             Gauge("gpu", {gauge, gaugeValue, "Utilisation", zones}, {}, o);
-            ImGui::SliderFloat("##gauge", &gauge, 0.f, 1.f, "%.2f");
+            imkit::SliderFloat("##gauge", &gauge, 0.f, 1.f, "%.2f");
         }
         EndSection(visible); }
         { const bool visible = BeginSection(host, "Trends", "Sparklines read at a glance; hover for a value.");

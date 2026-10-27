@@ -1,4 +1,5 @@
 #include <imkit/node_editor.h>
+#include <imkit/widgets.h>
 #include "draw_internal.h"
 #include <algorithm>
 #include <cmath>
@@ -871,7 +872,7 @@ void PinActions(EditorFrame &f, const PinView &pin) {
         if (t.id == pin.type)
             current = &t;
     ImGui::BeginDisabled(!pin.capabilities.changeType);
-    if (ImGui::BeginCombo("Type", current ? std::string(current->name).c_str() : "Custom")) {
+    if (imkit::BeginCombo("Type", current ? std::string(current->name).c_str() : "Custom")) {
         for (auto &t : f.graph.socketTypes) {
             ImGui::PushID(std::to_string(t.id).c_str());
             if (ImGui::Selectable(std::string(t.name).c_str(), t.id == pin.type)) {
@@ -887,11 +888,11 @@ void PinActions(EditorFrame &f, const PinView &pin) {
             }
             ImGui::PopID();
         }
-        ImGui::EndCombo();
+        imkit::EndCombo();
     }
     ImGui::EndDisabled();
     bool shown = !pin.hidden;
-    if (ImGui::Checkbox("Visible", &shown)) {
+    if (imkit::Checkbox("Visible", &shown)) {
         EditRequest r;
         r.kind = EditKind::HidePin;
         r.index = !shown;
@@ -899,7 +900,7 @@ void PinActions(EditorFrame &f, const PinView &pin) {
     }
     bool multiple = pin.multiple;
     ImGui::BeginDisabled(!pin.capabilities.changeMultiplicity);
-    if (ImGui::Checkbox("Multiple connections", &multiple)) {
+    if (imkit::Checkbox("Multiple connections", &multiple)) {
         EditRequest r;
         r.kind = EditKind::SetPinMultiplicity;
         r.index = multiple;
@@ -1050,7 +1051,7 @@ void PinRow(EditorFrame &f, PinId id, PinRowOptions options) {
             changed = ImGui::ColorEdit4("##value", value.number.data(), ImGuiColorEditFlags_NoInputs);
             break;
         case ValueKind::Float:
-            changed = ImGui::SliderFloat("##value", value.number.data(), options.minimum, options.maximum);
+            changed = imkit::SliderFloat("##value", value.number.data(), options.minimum, options.maximum);
             break;
         case ValueKind::Vector: {
             auto padding = ImGui::GetStyle().FramePadding;
@@ -1067,13 +1068,13 @@ void PinRow(EditorFrame &f, PinId id, PinRowOptions options) {
             changed = ImGui::InputInt("##value", &value.integer);
             break;
         case ValueKind::Boolean:
-            changed = ImGui::Checkbox("##value", &value.boolean);
+            changed = imkit::Checkbox("##value", &value.boolean);
             break;
         case ValueKind::Text:
             changed = ImGui::InputText("##value", value.text.data(), value.text.size());
             break;
         case ValueKind::Enum:
-            if (ImGui::BeginCombo("##value", value.integer >= 0 && value.integer < int(options.choices.size())
+            if (imkit::BeginCombo("##value", value.integer >= 0 && value.integer < int(options.choices.size())
                                                  ? std::string(options.choices[value.integer]).c_str()
                                                  : "Choose")) {
                 for (int i = 0; i < int(options.choices.size()); ++i)
@@ -1082,7 +1083,7 @@ void PinRow(EditorFrame &f, PinId id, PinRowOptions options) {
                         changed = true;
                         customPhase = Phase::Commit;
                     }
-                ImGui::EndCombo();
+                imkit::EndCombo();
             }
             break;
         case ValueKind::Custom:
@@ -1450,7 +1451,7 @@ void ExposedProperties(EditorFrame &f, NodeId node, std::span<const PropertyView
         auto &property = properties[i];
         ImGui::PushID(int(i));
         bool exposed = property.exposed;
-        if (ImGui::Checkbox(std::string(property.label).c_str(), &exposed)) {
+        if (imkit::Checkbox(std::string(property.label).c_str(), &exposed)) {
             auto r = Request(f, EditKind::ExposeProperty, node);
             r.type = property.id;
             r.index = exposed ? 1 : 0;
@@ -1681,11 +1682,11 @@ void Preview(EditorFrame &f, std::span<const PreviewOutput> outputs,
         return;
     p.output = std::clamp(p.output, 0, int(outputs.size()) - 1);
     if (outputs.size() > 1) {
-        if (ImGui::BeginCombo("##preview-output", std::string(outputs[p.output].title).c_str())) {
+        if (imkit::BeginCombo("##preview-output", std::string(outputs[p.output].title).c_str())) {
             for (int i = 0; i < int(outputs.size()); ++i)
                 if (ImGui::Selectable(std::string(outputs[i].title).c_str(), i == p.output))
                     p.output = i;
-            ImGui::EndCombo();
+            imkit::EndCombo();
         }
     }
     ImVec2 size{std::max(1.f, ImGui::GetContentRegionAvail().x), std::max(24.f, p.height * z)};
@@ -1717,11 +1718,11 @@ void DrawDetachedPreviews(EditorFrame &f, NodeId node, std::span<const PreviewOu
     bool open = true;
     ImGui::SetNextWindowSize({500, 380}, ImGuiCond_FirstUseEver);
     if (ImGui::Begin(label.c_str(), &open)) {
-        ImGui::Checkbox("Interact", &p.interactive);
+        imkit::Checkbox("Interact", &p.interactive);
         ImGui::SameLine();
-        ImGui::Checkbox("Pinned", &p.pinned);
+        imkit::Checkbox("Pinned", &p.pinned);
         if (outputs.size() > 1 &&
-            ImGui::BeginCombo(
+            imkit::BeginCombo(
                 "Compare",
                 p.compare < 0
                     ? "None"
@@ -1731,7 +1732,7 @@ void DrawDetachedPreviews(EditorFrame &f, NodeId node, std::span<const PreviewOu
             for (int i = 0; i < int(outputs.size()); ++i)
                 if (ImGui::Selectable(std::string(outputs[i].title).c_str(), i == p.compare))
                     p.compare = i;
-            ImGui::EndCombo();
+            imkit::EndCombo();
         }
         auto size = ImGui::GetContentRegionAvail();
         if (p.compare >= int(outputs.size()))

@@ -1,5 +1,6 @@
 #include <imkit/components.h>
 #include <imkit/widgets.h>
+#include "component_internal.h"
 #include "draw_internal.h"
 #include <algorithm>
 #include <array>
@@ -12,21 +13,7 @@
 
 namespace imkit {
 namespace {
-bool SemanticItem(ComponentOptions options, const char* label, accessibility::SemanticRole role,
-                  accessibility::SemanticAction action, bool checked=false) {
-    using namespace accessibility;
-    if(!options.accessibility) return false;
-    auto id=ImGui::GetItemID();
-    bool disabled=(ImGui::GetItemFlags()&ImGuiItemFlags_Disabled)!=0;
-    bool focus=options.accessibility->Take(id,SemanticAction::Focus);
-    if(focus && !disabled) { ImGui::SetKeyboardFocusHere(-1); ImGui::SetNavCursorVisible(true); }
-    bool requested=options.accessibility->Take(id,action);
-    SemanticNode node; node.id=id; node.parent=options.parent; node.role=role;
-    node.name=label; if(auto end=node.name.find("##");end!=std::string_view::npos) node.name=node.name.substr(0,end);
-    node.state.checked=checked; node.actions=action|SemanticAction::Focus;
-    AnnotateLastItem(*options.accessibility,node);
-    return requested && !disabled;
-}
+using detail::SemanticItem;
 ImVec4 Mix(ImVec4 a, ImVec4 b, float t) {
     return {a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t, a.w + (b.w - a.w) * t};
 }
@@ -226,7 +213,7 @@ bool Toggle(const char *label, bool *value, ComponentOptions options) {
         ImGui::PushStyleColor(color, ImVec4(0, 0, 0, 0));
     // The hit square is 1.75 font heights: a switch needs less height than a 30 px control.
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {ImGui::GetStyle().FramePadding.x, ImGui::GetFontSize() * .375f});
-    bool changed = ImGui::Checkbox(label, value);
+    bool changed = imkit::Checkbox(label, value);
     ImGui::PopStyleVar();
     if(SemanticItem(options,label,accessibility::SemanticRole::Toggle,accessibility::SemanticAction::Toggle,*value)) {
         *value=!*value; changed=true;
@@ -345,7 +332,7 @@ bool SearchableCombo(const char *label, int *selected, std::span<const char *con
     const char *preview =
         *selected >= 0 && *selected < static_cast<int>(labels.size()) ? labels[*selected] : "";
     bool changed = false;
-    if (ImGui::BeginCombo(label, preview)) {
+    if (imkit::BeginCombo(label, preview)) {
         if (ImGui::IsWindowAppearing())
             ImGui::SetKeyboardFocusHere();
         ImGui::InputTextWithHint("##search", options.locale?options.locale->Text("search","Search..."):"Search...", search, capacity);
@@ -361,7 +348,7 @@ bool SearchableCombo(const char *label, int *selected, std::span<const char *con
                 ImGui::EndDisabled();
                 ImGui::PopID();
             }
-        ImGui::EndCombo();
+        imkit::EndCombo();
     }
     return changed;
 }

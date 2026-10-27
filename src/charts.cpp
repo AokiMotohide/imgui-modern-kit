@@ -1,4 +1,5 @@
 #include <imkit/charts.h>
+#include "component_internal.h"
 #include "draw_internal.h"
 #include <algorithm>
 #include <array>
@@ -11,9 +12,7 @@ namespace {
 constexpr float Pi = 3.14159265358979323846f;
 const char* Safe(const char* s) { return s ? s : ""; }
 bool Finite(float v) { return std::isfinite(v); }
-bool MotionAllowed(const ComponentOptions& o) {
-    return !o.theme || (o.theme->motion.enabled && !o.theme->motion.reducedMotion);
-}
+using detail::MotionAllowed;
 ImVec4 TextColor(const ComponentOptions& o) {
     return o.theme ? o.theme->semantic.text : ImGui::GetStyleColorVec4(ImGuiCol_Text);
 }
@@ -44,26 +43,6 @@ void Describe(const ComponentOptions& o, accessibility::SemanticRole role, const
     node.role = role;
     node.state.readOnly = true;
     accessibility::AnnotateLastItem(*o.accessibility, node);
-}
-// Accepts one float conversion such as "%.0f" or "%.1f%%"; anything else falls back so a bad host format cannot read the wrong type.
-const char* SafeFormat(const char* format) {
-    int conversions = 0;
-    for (const char* c = format ? format : ""; *c; ++c) {
-        if (*c != '%')
-            continue;
-        if (c[1] == '%') {
-            ++c;
-            continue;
-        }
-        const char* end = c + 1;
-        while (*end == '.' || (*end >= '0' && *end <= '9'))
-            ++end;
-        if (*end != 'f' && *end != 'g' && *end != 'e')
-            return "%.0f";
-        ++conversions;
-        c = end;
-    }
-    return conversions == 1 ? format : "%.0f";
 }
 } // namespace
 
@@ -350,7 +329,7 @@ int BarChart(const char* id, const BarChartView& view, BarChartOptions layout, C
                     draw->AddRectFilled(a, c, ImGui::GetColorU32(color), std::min(barWidth * .3f, 6.f), ImDrawFlags_RoundCornersTop);
                 if (layout.values && Finite(b.value)) {
                     char text[32];
-                    std::snprintf(text, sizeof(text), SafeFormat(layout.format), b.value);
+                    std::snprintf(text, sizeof(text), detail::SafeFormat(layout.format, "fge", "%.0f"), b.value);
                     const float w = ImGui::CalcTextSize(text).x;
                     draw->AddText({cx - w * .5f, std::max(origin.y, barTop - lineHeight - 2.f)}, ImGui::GetColorU32(TextColor(o)), text);
                 }
@@ -392,7 +371,7 @@ int BarChart(const char* id, const BarChartView& view, BarChartOptions layout, C
                 draw->PopClipRect();
                 if (layout.values && Finite(b.value)) {
                     char text[32];
-                    std::snprintf(text, sizeof(text), SafeFormat(layout.format), b.value);
+                    std::snprintf(text, sizeof(text), detail::SafeFormat(layout.format, "fge", "%.0f"), b.value);
                     draw->AddText({barEnd + 6.f, cy - lineHeight * .5f}, ImGui::GetColorU32(TextColor(o)), text);
                 }
             }
@@ -402,7 +381,7 @@ int BarChart(const char* id, const BarChartView& view, BarChartOptions layout, C
     if (hovered >= 0) {
         const auto& b = view.bars[static_cast<std::size_t>(hovered)];
         char text[32];
-        std::snprintf(text, sizeof(text), SafeFormat(layout.format), b.value);
+        std::snprintf(text, sizeof(text), detail::SafeFormat(layout.format, "fge", "%.0f"), b.value);
         ImGui::SetTooltip("%s: %s", Safe(b.label), text);
         if (clickedItem)
             clicked = hovered;

@@ -102,6 +102,7 @@ const char *PageSummary(int page) {
     case 21: return "The same ImGui calls with and without an ImKit theme.";
     case 22: return "Tabs, hierarchy actions, settings and choices in one screen.";
     case 23: return "Donut, bar, gauge, sparkline and progress components.";
+    case 24: return "Pan, tilt and zoom control with presets, driven against a simulated camera.";
     default: return "";
     }
 }
@@ -176,15 +177,15 @@ void DefaultComparisonSpecimen(GalleryState &s, bool modern=false) {
     Record(s, modern ? "comparison-imkit-apply" : "comparison-default-apply");
     ImGui::SameLine();
     ImGui::Text("Applied: %d", s.comparison.applyCount);
-    ImGui::Checkbox("Enabled", &s.comparison.enabled);
+    imkit::Checkbox("Enabled", &s.comparison.enabled);
     Record(s, modern ? "comparison-imkit-enabled" : "comparison-default-enabled");
     ImGui::SetNextItemWidth(-ImGui::CalcTextSize("Level").x-ImGui::GetStyle().ItemInnerSpacing.x);
-    ImGui::SliderFloat("Level", &s.comparison.level, 0, 1, "%.2f");
+    imkit::SliderFloat("Level", &s.comparison.level, 0, 1, "%.2f");
     Record(s, modern ? "comparison-imkit-level" : "comparison-default-level");
     ImGui::InputText("Name", s.comparison.name, sizeof(s.comparison.name));
     Record(s, modern ? "comparison-imkit-name" : "comparison-default-name");
     const char *quality[] = {"Draft", "Balanced", "Final"};
-    ImGui::Combo("Quality", &s.comparison.quality, quality, 3);
+    imkit::Combo("Quality", &s.comparison.quality, quality, 3);
     Record(s, modern ? "comparison-imkit-quality" : "comparison-default-quality");
     ImGui::EndDisabled();
 }
@@ -450,7 +451,7 @@ void Numeric(GalleryState &s) {
             Record(s, "drag");
             SliderFloat("Level", &s.scalar, 0, 1);
             Record(s, "slider");
-            DragFloatRange2("Range", &s.lower, &s.upper, 1, 0, 100);
+            RangeSlider("Range", &s.lower, &s.upper, 0, 100, "%.0f", {}, {&s.theme, &s.animation});
             Record(s, "range");
             InputScalar("64-bit integer", ImGuiDataType_S64, &s.integer64);
             Record(s, "int64");
@@ -943,8 +944,8 @@ void Show(GalleryState &s) {
         s.floatingCatalogSize=GetWindowSize();
     }
     if(visible) {
-        static constexpr int pageIds[]={19,0,1,2,3,4,5,6,23,7,8,9,10,11,12,13,14,15,16,17,18,20,21,22};
-        const char* pages[]={"Start","Components: Basic","Numeric / Units","Input / Media","Hierarchy / Table","Overlay / Layout","Composites","Icons","Charts","Editor Core","Video","CG","Foundations","Components","Patterns","Accessibility","Responsive","Generic Workspace","Feedback / States","Preview Tiles","Frame Lab","Toasts","Compare","New in 3.2"};
+        static constexpr int pageIds[]={19,0,1,2,3,4,5,6,23,24,7,8,9,10,11,12,13,14,15,16,17,18,20,21,22};
+        const char* pages[]={"Start","Components: Basic","Numeric / Units","Input / Media","Hierarchy / Table","Overlay / Layout","Composites","Icons","Charts","PTZ Camera","Editor Core","Video","CG","Foundations","Components","Patterns","Accessibility","Responsive","Generic Workspace","Feedback / States","Preview Tiles","Frame Lab","Toasts","Compare","New in 3.2"};
         int pageIndex=0;
         for(int i=0;i<static_cast<int>(std::size(pageIds));++i) if(pageIds[i]==s.page) {pageIndex=i;break;}
         const bool wide=GetContentRegionAvail().x>=1100.f*std::max(1.f,ImGui::GetStyle().FontScaleDpi);
@@ -1002,7 +1003,7 @@ void Show(GalleryState &s) {
                 TextDisabled("%s",groups[g]);
                 for(int i=0;i<static_cast<int>(std::size(pageIds));++i) {
                     const int id=pageIds[i];
-                    const int category=(id==19||id==21||id==22)?0:(id<=6||id==16||id==20||id==23)?1:(id==7||id==8||id==9||id==15||id==17)?2:3;
+                    const int category=(id==19||id==21||id==22)?0:(id<=6||id==16||id==20||id==23||id==24)?1:(id==7||id==8||id==9||id==15||id==17)?2:3;
                     if(category!=g) continue;
                     if(Selectable(pages[i],s.page==id)) {s.page=id;if(id==21)s.comparison.open=true;}
                 }
@@ -1018,6 +1019,7 @@ void Show(GalleryState &s) {
         switch (s.page) {
         case 21: s.comparison.open=true; DrawComparison(s); break;
         case 23: s.charts.Show(s); break;
+        case 24: s.ptz.Show(s); break;
         case 22: s.workflow.Workbench(s); break;
         case 20: s.toasts.Show(s); break;
         case 19: Start(s); break;

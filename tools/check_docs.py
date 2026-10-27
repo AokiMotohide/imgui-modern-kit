@@ -37,6 +37,7 @@ PAIRS: list[tuple[str, str]] = [
     # components
     ("components/toasts.md", "components/トースト.md"),
     ("components/charts.md", "components/チャート.md"),
+    ("components/ptz.md", "components/PTZ操作と範囲スライダー.md"),
     ("components/components.md", "components/基本コンポーネント.md"),
     ("components/node-editor.md", "components/ノードエディタ.md"),
     ("components/timeline-editing.md", "components/タイムライン編集.md"),

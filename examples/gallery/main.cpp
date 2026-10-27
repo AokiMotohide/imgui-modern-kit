@@ -436,7 +436,7 @@ void Verify(Host &h, const std::filesystem::path &out) {
     h.mouse = {range.min.x + 60, range.Center().y};
     h.Frame();
     h.Frame([](auto &io) { io.AddMouseButtonEvent(0, true); });
-    h.mouse.x += 25;
+    h.mouse.x += 170;
     h.Frame();
     h.Frame([](auto &io) { io.AddMouseButtonEvent(0, false); });
     h.Settle();

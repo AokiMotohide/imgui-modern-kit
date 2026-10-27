@@ -399,9 +399,9 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     if (ImGui::Button(s.labels.options)) ImGui::OpenPopup("snap-options");
     if (ImGui::BeginPopup("snap-options")) {
         imkit::Checkbox("Stereo waveforms",&s.waveformOptions.stereo);
-        ImGui::SliderFloat("Waveform display gain",&s.waveformOptions.gain,.25f,4.f);
+        imkit::SliderFloat("Waveform display gain",&s.waveformOptions.gain,.25f,4.f);
         int follow=static_cast<int>(s.autoScroll);
-        if (ImGui::Combo(s.labels.follow,&follow,s.labels.followModes.data(),static_cast<int>(s.labels.followModes.size())))
+        if (imkit::Combo(s.labels.follow,&follow,s.labels.followModes.data(),static_cast<int>(s.labels.followModes.size())))
             s.autoScroll=static_cast<editor::AutoScroll>(follow);
         if(s.icons) {Icon(*s.icons,IconId::SnapToFrame,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
         imkit::Checkbox(s.labels.frameGrid, &s.snapToFrame);
@@ -714,7 +714,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             float height=s.heightDrag.active && s.heightDrag.draft.target==track.id ?
                          static_cast<float>(s.heightDrag.draft.proposed.x) : track.height;
             if(s.icons) {Icon(*s.icons,IconId::TrackHeight,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
-            bool edited=ImGui::SliderFloat(s.trackLabels.height,&height,64,240,"%.0f px");
+            bool edited=imkit::SliderFloat(s.trackLabels.height,&height,64,240,"%.0f px");
             if (ImGui::IsItemActivated())
                 s.heightDrag.Begin(track.id,p.revision,editor::EditKind::TrackHeight,
                                    {0,0,0,0,track.height},editor::CurrentModifiers(),out);
@@ -1762,7 +1762,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         if(button("-##bottom-zoom",IconId::ZoomOut,s.labels.zoomOut)) zoomAt(s.canvas.scale.x/1.25,(view.max.x-view.min.x-s.headerWidth)*.5);
         ImGui::SameLine();ImGui::SetNextItemWidth(sliderWidth);
         float normalized=maximumZoom>minimumZoom ? static_cast<float>(std::log(s.canvas.scale.x/minimumZoom)/std::log(maximumZoom/minimumZoom)) : 0;
-        if(ImGui::SliderFloat("##timeline-zoom",&normalized,0,1,"",ImGuiSliderFlags_AlwaysClamp))
+        if(imkit::SliderFloat("##timeline-zoom",&normalized,0,1,"",ImGuiSliderFlags_AlwaysClamp))
             zoomAt(minimumZoom*std::pow(maximumZoom/minimumZoom,normalized),(view.max.x-view.min.x-s.headerWidth)*.5);
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s: %.0f px/s",s.labels.zoom,s.canvas.scale.x);
         ImGui::SameLine();
@@ -1806,14 +1806,14 @@ void TransitionPicker(const char *id,const ClipView &clip,std::uint64_t revision
     for (int side=0;side<2;++side) {
         int selected=static_cast<int>(side ? clip.transitionOutKind : clip.transitionInKind);
         bool changed=false;
-        if (ImGui::BeginCombo(side ? options.labels.out : options.labels.in,names[selected])) {
+        if (imkit::BeginCombo(side ? options.labels.out : options.labels.in,names[selected])) {
             const IconId icons[]{IconId::Transition,IconId::Dissolve,side ? IconId::FadeOut : IconId::FadeIn,IconId::Crossfade};
             for (int i=0;i<4;++i) {
                 if (options.icons && i) {Icon(*options.icons,icons[i],{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
                 if (ImGui::Selectable(names[i],selected==i)) {selected=i;changed=true;}
                 if (selected==i) ImGui::SetItemDefaultFocus();
             }
-            ImGui::EndCombo();
+            imkit::EndCombo();
         }
         if (changed) {
             if (events.storage.size()-events.count<2) events.overflow=true;
@@ -1843,7 +1843,7 @@ void MonitorControls(const char *id,MonitorOptions &options,const IconAtlas *ico
     if (anchor!=before) options.showAnchor=anchor;
     if (icons) {Icon(*icons,IconId::MetadataOverlay,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
     int preset=static_cast<int>(options.metadataPreset);
-    if (ImGui::Combo(labels.metadata,&preset,labels.presets.data(),3)) options.metadataPreset=static_cast<MonitorMetadataPreset>(preset);
+    if (imkit::Combo(labels.metadata,&preset,labels.presets.data(),3)) options.metadataPreset=static_cast<MonitorMetadataPreset>(preset);
     ImGui::PopID();
 }
 void Monitor(const char *id, ImTextureRef texture, ImVec2 size, const editor::TimeState &time,
@@ -2261,6 +2261,16 @@ void Histogram(const char *id, std::span<const std::uint32_t> bins, ImVec2 size,
         const float x = p.x + size.x * i / 4;
         d->AddLine({x, p.y + 2}, {x, p.y + size.y - 2}, ImGui::GetColorU32(grid));
     }
+    if (size.x > 90 && size.y > 36) {
+        // Level marks at the black point, mid grey and white point.
+        auto mark = t.colors.muted; mark.w *= .8f;
+        ImFont *font = ImGui::GetFont();
+        const float small = ImGui::GetFontSize() * .78f;
+        const ImU32 ink = ImGui::GetColorU32(mark);
+        d->AddText(font, small, {p.x + 4, p.y + size.y - small - 2}, ink, "0");
+        d->AddText(font, small, {p.x + size.x * .5f - small * .7f, p.y + size.y - small - 2}, ink, "128");
+        d->AddText(font, small, {p.x + size.x - small * 1.6f - 3, p.y + size.y - small - 2}, ink, "255");
+    }
     const float maximum = static_cast<float>((std::max)(1u, *std::max_element(bins.begin(), bins.end())));
     // One sample per two pixels, taking the tallest bin that falls in the column.
     constexpr int MaxColumns = 512;
@@ -2279,7 +2289,7 @@ void Histogram(const char *id, std::span<const std::uint32_t> bins, ImVec2 size,
     auto fill = t.colors.accent; fill.w = .28f;
     for (int c = 0; c + 1 < columns; ++c)
         d->AddQuadFilled(points[c], points[c + 1], {points[c + 1].x, baseline}, {points[c].x, baseline}, ImGui::GetColorU32(fill));
-    d->AddPolyline(points.data(), columns, ImGui::GetColorU32(t.colors.accent), ImDrawFlags_None, 1.5f);
+    d->AddPolyline(points.data(), columns, ImGui::GetColorU32(t.colors.accent), ImDrawFlags_None, 1.75f);
 }
 void ScopeImage(const char *id, std::span<const std::uint32_t> bins, int w, int h, ImVec2 size,
                 const Theme &t) {
@@ -2408,7 +2418,7 @@ bool ColorPanel(const char *id, ColorValues &draft, const ColorValues &original,
             if (state) { state->wheelCenters[i]=center; state->wheelRadius=diameter*.5f-4; }
             ImGui::SetNextItemWidth(diameter);
             float mean = (rgb[i][0]+rgb[i][1]+rgb[i][2])/3, before = mean;
-            edited = ImGui::SliderFloat(labels.level,&mean,i==0 ? -1.f : .01f,i==0 ? 1.f : 4.f);
+            edited = imkit::SliderFloat(labels.level,&mean,i==0 ? -1.f : .01f,i==0 ? 1.f : 4.f);
             if (edited) for (int c=0;c<3;++c) rgb[i][c] += mean-before;
             ColorEvent(targets[i],ColorValue(source[i]),ColorValue(rgb[i]),edited,revision,state,events);
             changed |= edited;
@@ -2424,7 +2434,7 @@ bool ColorPanel(const char *id, ColorValues &draft, const ColorValues &original,
     for (int i=0; i<3; ++i) {
         ImGui::PushID(i+3);
         ImGui::BeginDisabled(state && !scalarIds[i]);
-        bool edited = ImGui::SliderFloat(scalarNames[i],scalars[i],i==2 ? -10.f : -1.f,i==2 ? 10.f : 1.f);
+        bool edited = imkit::SliderFloat(scalarNames[i],scalars[i],i==2 ? -10.f : -1.f,i==2 ? 10.f : 1.f);
         ColorEvent(scalarIds[i],{0,0,0,0,values[i]},{0,0,0,0,*scalars[i]},edited,revision,state,events);
         changed |= edited;
         ImGui::EndDisabled();

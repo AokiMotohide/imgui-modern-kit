@@ -110,7 +110,7 @@ void WorkflowPages::Show(int page,GalleryState& host) {
         if(BeginGrid(host,"feedback-grid")) {
             const bool track=BeginSection(host,japanese?"進捗":"Progress","Inline, overlay and modal presentations share one track");
             if(track) {
-                ImGui::SliderFloat("Progress",&fraction,-1,1);ImGui::SameLine();if(ActionButton("Modal progress",ActionVariant::Secondary,{},o))progressDialog.open=true;
+                imkit::SliderFloat("Progress",&fraction,-1,1);ImGui::SameLine();if(ActionButton("Modal progress",ActionVariant::Secondary,{},o))progressDialog.open=true;
                 Record(host,"workflow-modal");
                 ProgressView progress{fraction,japanese?"処理中":"Processing",japanese?"ホストが進捗を管理します":"The host owns progress and cancellation",true};
                 if(imkit::Progress("inline",progress,ProgressPresentation::Inline,progressDialog,{},o))++actions;

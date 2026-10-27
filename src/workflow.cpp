@@ -1,4 +1,5 @@
 #include <imkit/workflow.h>
+#include <imkit/widgets.h>
 #include "progress_internal.h"
 #include "draw_internal.h"
 #include <algorithm>
@@ -223,7 +224,7 @@ StableId WorkspaceTabs(const char* id,std::span<const WorkspaceTab> tabs,
     if(required>ImGui::GetContentRegionAvail().x && tabs.size()>1) {
         const char* preview="";
         for(const auto& tab:tabs)if(tab.id==selected)preview=Safe(tab.label);
-        if(ImGui::BeginCombo("##workspaces",preview)) {
+        if(imkit::BeginCombo("##workspaces",preview)) {
             for(const auto& tab:tabs) {
                 Push(tab.id);ImGui::BeginDisabled(tab.disabled||!tab.id);
                 if(ImGui::Selectable(Safe(tab.label),tab.id==selected))request=tab.id;
@@ -231,7 +232,7 @@ StableId WorkspaceTabs(const char* id,std::span<const WorkspaceTab> tabs,
                          accessibility::SemanticAction::Select,tab.id==selected,o);
                 ImGui::EndDisabled();Pop();
             }
-            ImGui::EndCombo();
+            imkit::EndCombo();
         }
     } else {
         for(std::size_t i=0;i<tabs.size();++i) {

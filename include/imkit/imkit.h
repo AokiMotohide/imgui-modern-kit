@@ -11,5 +11,7 @@
 #include <imkit/workflow.h>
 #include <imkit/toast.h>
 #include <imkit/charts.h>
+#include <imkit/range_slider.h>
+#include <imkit/ptz.h>
 #include <imkit/shell.h>
 #include <imkit/window_frame.h>
