@@ -34,6 +34,7 @@ struct CueListOptions {
     ImVec2 size{0, 0};          // Zero fills the available width and uses eight rows of height.
     float rowHeight = 0;        // Zero uses about 1.4 frame heights.
     bool showTimes = true;
+    bool showHeader = true;     // Column titles above the rows (number, name, time).
 };
 struct CueRequest {
     StableId select = 0;        // A row was clicked or reached with the keyboard.
@@ -54,6 +55,8 @@ struct GoBarView {
     bool running = false;       // Anything is playing.
     bool paused = false;
     double remainingSeconds = -1; // Time left on the current cue; negative hides it.
+    const char* nextNumber = "";  // Number of the cue GO will fire, shown before its label.
+    double totalSeconds = -1;     // Length of the current cue; with `remainingSeconds` it draws a progress line.
 };
 struct GoBarRequest {
     bool go = false;
@@ -83,6 +86,8 @@ struct ClipLauncherOptions {
     float cellWidth = 0;        // Zero uses about 5 frame heights.
     float cellHeight = 0;       // Zero uses about 2.4 frame heights.
     float headerWidth = 0;      // Zero uses about 9 frame heights.
+    bool fitColumns = false;    // Stretch the cell width so every column fits without horizontal scrolling.
+    float aspect = 0;           // Cell width / height; above zero it overrides `cellHeight` (16:9 thumbnails use 1.78).
 };
 enum class LayerToggle { None, Mute, Solo, Bypass, BusA, BusB };
 struct ClipLauncherRequest {
@@ -229,6 +234,22 @@ struct MessageMonitorRequest {
 };
 MessageMonitorRequest MessageMonitor(const char* id, std::span<const MessageView> messages, MessageMonitorState& state,
                                      ImVec2 size = {0, 0}, ComponentOptions options = {});
+
+// ---- Master bar ---------------------------------------------------------------------------------------------
+// One strip for the controls an operator reaches for first: grand master, blackout, freeze, flash and strobe.
+struct MasterBarView {
+    float* master = nullptr;    // 0..1 grand master, edited by the fader when set.
+    bool blackout = false;      // Output is black; the Blackout key shows it and releases on a plain press.
+    bool freeze = false;        // Output is held on the current frame.
+};
+struct MasterBarRequest {
+    ValueEdit master{};
+    bool blackout = false;      // Hold completed (engage) or the lit key was pressed (release): the host toggles blackout.
+    bool freeze = false;        // Freeze key flipped: the host toggles freeze.
+    bool flash = false;         // True while the Flash key is held (full output).
+    bool strobe = false;        // True while the Strobe key is held.
+};
+MasterBarRequest MasterBar(const char* id, const MasterBarView& view, ComponentOptions options = {});
 
 // ---- Device health ------------------------------------------------------------------------------------------
 struct DeviceView {

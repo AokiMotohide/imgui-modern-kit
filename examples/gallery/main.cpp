@@ -21,6 +21,8 @@
 #include <chrono>
 #include "allocation_probe.h"
 #include <algorithm>
+#include <cmath>
+#include <vector>
 #include <array>
 #include <set>
 namespace {
@@ -2232,6 +2234,7 @@ int main(int argc, char **argv) {
     int result = 0;
     GLuint texture = 0;
     std::array<GLuint, 7> iconTextures{};
+    std::array<GLuint, 6> imageTextures{};
     try {
         if (!renderer)
             throw std::runtime_error("Backend initialization failed");
@@ -2264,6 +2267,62 @@ int main(int argc, char **argv) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2, 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
         h.s.texture = ImTextureRef(static_cast<ImTextureID>(texture));
+        // Six generated pictures (no third-party artwork) for the picture-button pages.
+        glGenTextures(6, imageTextures.data());
+        for (int kind = 0; kind < 6; ++kind) {
+            constexpr int N = 96;
+            std::vector<unsigned char> px(static_cast<std::size_t>(N * N * 4));
+            for (int y = 0; y < N; ++y)
+                for (int x = 0; x < N; ++x) {
+                    const float fx = static_cast<float>(x) / (N - 1), fy = static_cast<float>(y) / (N - 1);
+                    const float dx = fx - .5f, dy = fy - .5f, d = std::sqrt(dx * dx + dy * dy);
+                    float r = 0, g = 0, b = 0;
+                    switch (kind) {
+                    case 0: { // Sunset
+                        r = .98f - .6f * fy; g = .66f - .5f * fy; b = .31f + .25f * fy;
+                        const float sun = std::sqrt(dx * dx + (fy - .62f) * (fy - .62f));
+                        if (sun < .17f) { r = 1.f; g = .93f; b = .6f; }
+                        break;
+                    }
+                    case 1: { // Waves
+                        const float wave = .5f + .5f * std::sin(fx * 18.f + fy * 9.f);
+                        r = .05f + .1f * wave; g = .35f + .3f * wave * (1.f - fy * .5f); b = .55f + .3f * wave;
+                        break;
+                    }
+                    case 2: { // Neon grid
+                        const bool line = (x % 12 == 0) || (y % 12 == 0);
+                        r = line ? .95f : .06f; g = line ? .25f : .05f; b = line ? .85f : .16f;
+                        break;
+                    }
+                    case 3: { // Stripes
+                        const bool stripe = ((x + y) / 8) % 2 == 0;
+                        r = stripe ? .25f : .75f; g = stripe ? .75f : .95f; b = stripe ? .3f : .45f;
+                        break;
+                    }
+                    case 4: { // Radial
+                        const float t = std::min(1.f, d * 2.f);
+                        r = 1.f - .15f * t; g = .95f - .85f * t; b = .85f - .8f * t;
+                        break;
+                    }
+                    default: { // Checker with a disc
+                        const bool check = ((x / 12) + (y / 12)) % 2 == 0;
+                        r = check ? .95f : .45f; g = check ? .55f : .2f; b = check ? .15f : .75f;
+                        if (d < .22f) { r = .98f; g = .98f; b = .98f; }
+                        break;
+                    }
+                    }
+                    const std::size_t o = static_cast<std::size_t>((y * N + x) * 4);
+                    px[o] = static_cast<unsigned char>(std::clamp(r, 0.f, 1.f) * 255.f);
+                    px[o + 1] = static_cast<unsigned char>(std::clamp(g, 0.f, 1.f) * 255.f);
+                    px[o + 2] = static_cast<unsigned char>(std::clamp(b, 0.f, 1.f) * 255.f);
+                    px[o + 3] = 255;
+                }
+            glBindTexture(GL_TEXTURE_2D, imageTextures[static_cast<std::size_t>(kind)]);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, N, N, 0, GL_RGBA, GL_UNSIGNED_BYTE, px.data());
+            h.s.sampleImages[static_cast<std::size_t>(kind)] = ImTextureRef(static_cast<ImTextureID>(imageTextures[static_cast<std::size_t>(kind)]));
+        }
         glGenTextures(7, iconTextures.data());
         for (int i = 0; i < 7; ++i) {
             const auto atlas = imkit::GetIconAtlasPixels(imkit::IconPixelSizes[i]);
@@ -2515,6 +2574,7 @@ int main(int argc, char **argv) {
         glDeleteTextures(1, &texture);
     h.s.icons.Clear();
     glDeleteTextures(7, iconTextures.data());
+    glDeleteTextures(6, imageTextures.data());
     if (renderer)
         ImGui_ImplOpenGL3_Shutdown();
     h.windowFrame.Detach();

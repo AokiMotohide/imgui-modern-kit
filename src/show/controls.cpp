@@ -11,7 +11,10 @@ constexpr float Pi = 3.14159265358979323846f;
 float Finite(float v, float fallback) { return std::isfinite(v) ? v : fallback; }
 bool Visible(const char* label) { return label && label[0] && !(label[0] == '#' && label[1] == '#'); }
 
-// Binding indicator in a control's top-right corner: a dot, ringed while the host waits for Learn.
+float Step(float step, float minimum, float maximum) { return step > 0 ? step : (maximum - minimum) / 100.f; }
+} // namespace
+
+namespace impl {
 void DrawBindingDot(ImDrawList* draw, const ShowColors& c, const BindingInfo* b, ImVec2 at, float radius, const ComponentOptions& o) {
     if (!b || b->kind == BindingKind::None)
         return;
@@ -22,8 +25,7 @@ void DrawBindingDot(ImDrawList* draw, const ShowColors& c, const BindingInfo* b,
         draw->AddCircle(at, radius * (1.6f + .6f * pulse), U32(col, .8f - .4f * pulse), 16, 1.5f);
     }
 }
-float Step(float step, float minimum, float maximum) { return step > 0 ? step : (maximum - minimum) / 100.f; }
-} // namespace
+} // namespace impl
 
 // ---- Fader ----------------------------------------------------------------------------------------------------
 float FaderPosition(float value, float minimum, float maximum, FaderScale scale) {
@@ -476,7 +478,23 @@ void DrawPadCell(ImDrawList* draw, const ShowColors& c, const ComponentOptions& 
             case PadState::Error: fill = Mix(c.input, c.error, .2f + .1f * emph); border = c.error; break;
             default: break;
             }
-            draw->AddRectFilled(ia, ib, U32(fill), round);
+            if (HasImage(pad.image)) {
+                // Picture cell: the artwork fills the cell, dimmed unless it is the live one; a scrim keeps the label readable.
+                const float dim = pad.state == PadState::Playing ? 1.f : pad.state == PadState::Idle ? .72f : .88f;
+                draw->AddRectFilled(ia, ib, U32(c.input), round);
+                draw->AddImageRounded(pad.image, ia, ib, pad.uv0, pad.uv1, ImGui::ColorConvertFloat4ToU32({dim, dim, dim, 1.f}), round);
+                const float band = u * 1.25f;
+                draw->PushClipRect({ia.x, ib.y - band}, ib, true);
+                draw->AddRectFilled(ia, ib, IM_COL32(0, 0, 0, 150), round);
+                draw->PopClipRect();
+                if (pad.state == PadState::Error)
+                    draw->AddRectFilled(ia, ib, U32(c.error, .3f), round);
+                ink = {1.f, 1.f, 1.f, 1.f};
+                if (pad.state == PadState::Playing)
+                    border = base;
+            } else {
+                draw->AddRectFilled(ia, ib, U32(fill), round);
+            }
             if (pad.state == PadState::Queued)
                 detail::DrawDashedRect(draw, ia, ib, round, U32(border), 1.5f, std::max(3.f, u * .12f));
             else
@@ -507,12 +525,87 @@ void DrawPadCell(ImDrawList* draw, const ShowColors& c, const ComponentOptions& 
             draw->AddRect({a.x - 3, a.y - 3}, {b.x + 3, b.y + 3}, U32(c.focus), round + 3.f, 0, 2.f);
         if (pad.state != PadState::Empty) {
             draw->PushClipRect(ia, ib, true);
-            DrawTextFit(draw, {ia.x + u * .4f, ia.y + u * .3f}, padW - u * 1.4f, U32(ink), Safe(pad.label));
-            if (pad.caption && pad.caption[0])
-                draw->AddText(ImGui::GetFont(), ImGui::GetFontSize() * .82f, {ia.x + u * .4f, ib.y - u * .3f - ImGui::GetTextLineHeight() * .82f},
-                              U32(ink, .7f), pad.caption);
+            if (HasImage(pad.image)) {
+                // Label and caption share the bottom band; the picture keeps the rest of the cell.
+                const float line = ImGui::GetTextLineHeight();
+                const float y = ib.y - u * .3f - line;
+                DrawTextFit(draw, {ia.x + u * .4f, y}, padW - u * .8f - (pad.caption && pad.caption[0] ? ImGui::CalcTextSize(pad.caption).x * .82f + u * .3f : 0.f),
+                            U32(ink), Safe(pad.label));
+                if (pad.caption && pad.caption[0]) {
+                    const ImVec2 cs = ImGui::CalcTextSize(pad.caption);
+                    draw->AddText(ImGui::GetFont(), ImGui::GetFontSize() * .82f, {ib.x - u * .4f - cs.x * .82f, y + line * .09f}, U32(ink, .75f), pad.caption);
+                }
+            } else {
+                DrawTextFit(draw, {ia.x + u * .4f, ia.y + u * .3f}, padW - u * 1.4f, U32(ink), Safe(pad.label));
+                if (pad.caption && pad.caption[0])
+                    draw->AddText(ImGui::GetFont(), ImGui::GetFontSize() * .82f, {ia.x + u * .4f, ib.y - u * .3f - ImGui::GetTextLineHeight() * .82f},
+                                  U32(ink, .7f), pad.caption);
+            }
             draw->PopClipRect();
         }
+}
+
+void DrawConsoleKey(ImDrawList* draw, const ShowColors& c, ImVec2 a, ImVec2 b, const char* label, const KeyLook& k, bool hovered, bool held,
+                    bool focused, float round) {
+    const float u = Unit();
+    const float w = b.x - a.x, h = b.y - a.y;
+    const ImVec4 tone = k.tone.w > 0 ? k.tone : c.accent;
+    const ImVec2 ia{a.x, a.y + (held && k.enabled ? 1.5f : 0.f)};
+    ImVec4 fill = Mix(c.input, c.text, held ? .1f : hovered ? .06f : .025f);
+    if (!k.enabled)
+        fill = Mix(c.input, c.muted, .05f);
+    else if (k.lit)
+        fill = Mix(c.input, tone, k.solid ? (held ? .96f : hovered ? .9f : .84f) : .2f + (hovered ? .06f : 0.f));
+    draw->AddRectFilled(ia, b, U32(fill), round);
+    if (k.progress > 0) {
+        draw->PushClipRect({ia.x, b.y - h * Clamp01(k.progress)}, b, true);
+        draw->AddRectFilled(ia, b, U32(tone, .5f), round);
+        draw->PopClipRect();
+    }
+    draw->AddRect(ia, b, U32(k.lit && k.enabled ? tone : c.border, k.enabled ? .85f : .5f), round, 0, 1.f);
+    // Lamp bar along the top edge: lit keys glow, unlit keys keep a dim slot.
+    const float lampW = w * .46f, lampH = std::max(2.5f, u * .09f);
+    const ImVec2 la{ia.x + (w - lampW) * .5f, ia.y + std::max(3.f, u * .12f)}, lb{la.x + lampW, la.y + lampH};
+    if (k.lit && k.enabled) {
+        draw->AddRectFilled({la.x - 3, la.y - 2}, {lb.x + 3, lb.y + 3}, U32(tone, k.solid ? .0f : .2f), lampH + 2.f);
+        draw->AddRectFilled(la, lb, U32(k.solid ? InkFor(c, fill) : tone), lampH * .5f);
+    } else {
+        draw->AddRectFilled(la, lb, U32(c.muted, .3f), lampH * .5f);
+    }
+    ImVec4 ink = !k.enabled ? c.muted : (k.lit && k.solid) ? InkFor(c, fill) : c.text;
+    if (!k.enabled)
+        ink.w *= .7f;
+    const float cx = (ia.x + b.x) * .5f;
+    ImFont* font = ImGui::GetFont();
+    const bool hasLabel = label && label[0];
+    float fs = ImGui::GetFontSize() * k.labelScale;
+    if (k.glyph != ConsoleGlyph::None) {
+        const float s = std::min(u * .9f, h * .38f);
+        const ImVec2 g{cx, ia.y + h * (hasLabel ? .42f : .52f)};
+        const ImU32 col = U32(ink);
+        switch (k.glyph) {
+        case ConsoleGlyph::Lock: GlyphLock(draw, g, s, col, !k.lit); break;
+        case ConsoleGlyph::Play: GlyphPlay(draw, g, s, col); break;
+        case ConsoleGlyph::Pause: GlyphPause(draw, g, s, col); break;
+        case ConsoleGlyph::Stop: GlyphStop(draw, g, s, col); break;
+        default: break;
+        }
+        fs *= .82f;
+    }
+    if (hasLabel) {
+        const ImVec2 ts = font->CalcTextSizeA(fs, FLT_MAX, 0.f, label);
+        const float ty = k.glyph != ConsoleGlyph::None ? ia.y + h * .62f : ia.y + (h - ts.y) * .5f + lampH * .5f;
+        draw->PushClipRect({ia.x + 2.f, ia.y}, {b.x - 2.f, b.y}, true);
+        draw->AddText(font, fs, {cx - ts.x * .5f, ty}, U32(ink), label);
+        draw->PopClipRect();
+    }
+    if (k.hint && k.hint[0]) {
+        const float hs = ImGui::GetFontSize() * .7f;
+        const ImVec2 ts = font->CalcTextSizeA(hs, FLT_MAX, 0.f, k.hint);
+        draw->AddText(font, hs, {b.x - ts.x - u * .3f, b.y - ts.y - u * .15f}, U32(ink, .6f), k.hint);
+    }
+    if (focused && ImGui::GetIO().NavVisible)
+        draw->AddRect({a.x - 3, a.y - 3}, {b.x + 3, b.y + 3}, U32(c.focus), round + 3.f, 0, 2.f);
 }
 } // namespace impl
 
@@ -779,9 +872,9 @@ bool HoldButton(const char* label, HoldButtonOptions o, ComponentOptions options
     const float u = Unit();
     ImVec2 size = o.size;
     if (size.x <= 0)
-        size.x = ImGui::CalcTextSize(label, nullptr, true).x + u * 1.6f;
+        size.x = ImGui::CalcTextSize(label, nullptr, true).x + u * (o.key ? 2.6f : 1.6f);
     if (size.y <= 0)
-        size.y = u * 1.1f;
+        size.y = u * (o.key ? 2.f : 1.1f);
     ImGui::PushID(label);
     const ImVec2 a = ImGui::GetCursorScreenPos(), b{a.x + size.x, a.y + size.y};
     ImGui::InvisibleButton("##hold", size);
@@ -802,18 +895,26 @@ bool HoldButton(const char* label, HoldButtonOptions o, ComponentOptions options
         fired = true;
     const float progress = Clamp01(held / seconds);
     const ImVec4 tone = o.destructive ? c.error : c.accent;
-    const float round = size.y * .5f;
-    draw->AddRectFilled(a, b, U32(Mix(c.input, tone, hovered ? .2f : .12f)), round);
-    if (progress > 0) {
-        draw->PushClipRect(a, {a.x + size.x * progress, b.y}, true);
-        draw->AddRectFilled(a, b, U32(tone, .5f), round);
-        draw->PopClipRect();
+    if (o.key) {
+        KeyLook look;
+        look.tone = tone;
+        look.lit = progress > 0;
+        look.progress = progress;
+        look.hint = Safe(o.hint);
+        DrawConsoleKey(draw, c, a, b, label, look, hovered, active, focused, ControlRound(options));
+    } else {
+        const float round = size.y * .5f;
+        draw->AddRectFilled(a, b, U32(Mix(c.input, tone, hovered ? .2f : .12f)), round);
+        if (progress > 0) {
+            draw->PushClipRect(a, {a.x + size.x * progress, b.y}, true);
+            draw->AddRectFilled(a, b, U32(tone, .5f), round);
+            draw->PopClipRect();
+        }
+        draw->AddRect(a, b, U32(tone, .65f), round, 0, 1.f);
+        if (focused && io.NavVisible)
+            draw->AddRect({a.x - 3, a.y - 3}, {b.x + 3, b.y + 3}, U32(c.focus), round + 3.f, 0, 2.f);
+        DrawTextCentered(draw, a, b, U32(c.text), label);
     }
-    draw->AddRect(a, b, U32(tone, .65f), round, 0, 1.f);
-    if (focused && io.NavVisible)
-        draw->AddRect({a.x - 3, a.y - 3}, {b.x + 3, b.y + 3}, U32(c.focus), round + 3.f, 0, 2.f);
-    const char* shown = label;
-    DrawTextCentered(draw, a, b, U32(c.text), shown);
     if (hovered && !active)
         ImGui::SetTooltip("%s", Str(options, "show.holdToConfirm", "Hold to confirm"));
     ImGui::PopID();
@@ -881,6 +982,79 @@ void StatusLed(const char* id, LedState state, const char* label, ComponentOptio
         draw->AddText({a.x + u * .9f, a.y + (u * .9f - ImGui::GetTextLineHeight()) * .5f}, U32(state == LedState::Off ? c.muted : c.text), label);
     const char* word = state == LedState::Live ? "live" : state == LedState::On ? "on" : state == LedState::Warning ? "warning" : state == LedState::Error ? "error" : "off";
     AnnotateText(options, named ? label : id, word, accessibility::SemanticRole::Status);
+    ImGui::PopID();
+}
+
+// ---- Console keys ---------------------------------------------------------------------------------------------
+ConsoleEvent ConsoleButton(const char* label, bool* on, ConsoleButtonOptions o, ComponentOptions options) {
+    ConsoleEvent event;
+    const ShowColors c = MakeShowColors(options);
+    auto* draw = ImGui::GetWindowDrawList();
+    const float u = Unit();
+    ImVec2 size = o.size;
+    if (size.x <= 0)
+        size.x = u * 2.6f;
+    if (size.y <= 0)
+        size.y = u * 2.f;
+    const bool toggle = o.mode == ConsoleMode::Toggle && on;
+    ImGui::PushID(label);
+    const ImVec2 a = ImGui::GetCursorScreenPos(), b{a.x + size.x, a.y + size.y};
+    ImGui::InvisibleButton("##key", size);
+    const bool hovered = ImGui::IsItemHovered(), held = ImGui::IsItemActive(), focused = ImGui::IsItemFocused();
+    if (ImGui::IsItemActivated()) {
+        event.pressed = true;
+        if (toggle) {
+            *on = !*on;
+            event.changed = true;
+        }
+    }
+    if (ImGui::IsItemDeactivated())
+        event.released = true;
+    const bool pressedByTool =
+        toggle ? SemanticItem(options, label, accessibility::SemanticRole::Toggle, accessibility::SemanticAction::Toggle, *on)
+               : SemanticItem(options, label, accessibility::SemanticRole::Button, accessibility::SemanticAction::Press);
+    if (pressedByTool) {
+        event.pressed = event.released = true;
+        if (toggle) {
+            *on = !*on;
+            event.changed = true;
+        }
+    }
+    KeyLook look;
+    look.tone = o.tone;
+    look.lit = toggle ? *on : held;
+    look.solid = o.solid;
+    look.glyph = o.glyph;
+    look.labelScale = o.labelScale;
+    look.hint = Safe(o.hint);
+    DrawConsoleKey(draw, c, a, b, label, look, hovered, held, focused, ControlRound(options));
+    DrawBindingDot(draw, c, o.binding, {b.x - u * .3f, a.y + u * .3f}, u * .08f, options);
+    ImGui::PopID();
+    return event;
+}
+
+void ScribbleStrip(const char* id, const char* name, const char* value, ImVec4 color, float width, ComponentOptions options) {
+    const ShowColors c = MakeShowColors(options);
+    auto* draw = ImGui::GetWindowDrawList();
+    const float u = Unit();
+    const float w = width > 0 ? width : u * 4.5f, h = u * 1.6f;
+    ImGui::PushID(id);
+    const ImVec2 a = ImGui::GetCursorScreenPos(), b{a.x + w, a.y + h};
+    ReadoutItem({w, h});
+    const float round = ControlRound(options) * .8f;
+    draw->AddRectFilled(a, b, U32(Recessed(c, .45f)), round);
+    draw->AddRect(a, b, U32(c.border, .7f), round, 0, 1.f);
+    const ImVec4 tone = color.w > 0 ? color : c.accent;
+    draw->PushClipRect(a, b, true);
+    draw->AddRectFilled(a, {b.x, a.y + std::max(3.f, u * .14f)}, U32(tone));
+    draw->PopClipRect();
+    const bool hasValue = value && value[0];
+    const float pad = u * .35f;
+    const float nameY = a.y + (hasValue ? u * .3f : (h - ImGui::GetTextLineHeight()) * .5f + u * .08f);
+    DrawTextFit(draw, {a.x + pad, nameY}, w - pad * 2.f, U32(c.text), Safe(name));
+    if (hasValue)
+        draw->AddText(ImGui::GetFont(), ImGui::GetFontSize() * .82f, {a.x + pad, b.y - u * .2f - ImGui::GetTextLineHeight() * .82f}, U32(c.muted), value);
+    AnnotateText(options, name, value ? value : "", accessibility::SemanticRole::Status);
     ImGui::PopID();
 }
 } // namespace imkit::show

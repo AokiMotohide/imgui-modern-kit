@@ -81,6 +81,7 @@ void ShowPages::Live(GalleryState& host) {
                 PadView& pad = launcher.cells[l * 6 + c];
                 pad.label = cellNames[(c + l) % 6];
                 pad.state = (l + c) % 5 == 4 ? PadState::Empty : (l + c) % 4 == 0 ? PadState::Loaded : PadState::Idle;
+                pad.image = host.sampleImages[(l * 2 + c) % host.sampleImages.size()];
             }
         }
         launcher.cells[1].state = PadState::Playing;
@@ -188,11 +189,14 @@ void ShowPages::Live(GalleryState& host) {
         if (s1) {
             GoBarView view;
             for (const CueView& c : cue.views) {
-                if (c.id == cue.state.standby)
+                if (c.id == cue.state.standby) {
                     view.next = c.name;
+                    view.nextNumber = c.number;
+                }
                 if (c.state == CueState::Running) {
                     view.running = true;
                     view.remainingSeconds = std::max<double>(view.remainingSeconds, c.duration - c.elapsed);
+                    view.totalSeconds = std::max<double>(view.totalSeconds, c.duration);
                 }
             }
             view.paused = cue.paused;
@@ -240,6 +244,25 @@ void ShowPages::Live(GalleryState& host) {
         }
         EndSection(s1);
 
+        const bool sm = BeginSection(host, "Master", "Grand master, blackout (hold to engage), freeze, and momentary flash and strobe keys.");
+        if (sm) {
+            static float master = 1.f;
+            static bool blackout = false, freeze = false;
+            MasterBarView mv;
+            mv.master = &master;
+            mv.blackout = blackout;
+            mv.freeze = freeze;
+            const MasterBarRequest mr = MasterBar("master", mv, o);
+            Record(host, "show-masterbar");
+            if (mr.blackout)
+                blackout = !blackout;
+            if (mr.freeze)
+                freeze = !freeze;
+            ImGui::TextDisabled("Master %.2f   blackout: %s   freeze: %s   flash: %s   strobe: %s", static_cast<double>(master), blackout ? "on" : "off",
+                                freeze ? "on" : "off", mr.flash ? "held" : "-", mr.strobe ? "held" : "-");
+        }
+        EndSection(sm);
+
         const bool s2 = BeginSection(host, "Clip launcher", "Press a cell to play it on its layer. Column titles launch a whole scene.");
         if (s2) {
             const char* columns[6] = {"Scene 1", "Scene 2", "Scene 3", "Scene 4", "Scene 5", "Scene 6"};
@@ -248,7 +271,9 @@ void ShowPages::Live(GalleryState& host) {
             view.columns = columns;
             view.cells = launcher.cells;
             ClipLauncherOptions lo;
-            lo.cellWidth = ImGui::GetFrameHeight() * 4.6f;
+            lo.fitColumns = true;
+            lo.headerWidth = ImGui::GetFrameHeight() * 7.5f;
+            lo.aspect = 1.78f;
             const ClipLauncherRequest r = ClipLauncher("launcher", view, lo, o);
             Record(host, "show-launcher");
             auto play = [&](int layer, int column) {

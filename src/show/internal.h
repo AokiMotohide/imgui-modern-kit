@@ -33,6 +33,30 @@ inline ImVec4 InkFor(const ShowColors& c, ImVec4 background) {
     return ContrastRatio(dark, background) >= ContrastRatio(light, background) ? dark : light;
 }
 inline float Unit() { return ImGui::GetFrameHeight(); }
+// Corner radius of keys, pads and cells.
+inline float ControlRound(const ComponentOptions& o) { return o.theme ? o.theme->radius.control + 2.f : Unit() * .4f; }
+// Fill of a recessed well (displays, tracks, previews): darker than the surface in dark themes, slightly darker in light ones.
+// `depth` is 0..1.
+inline ImVec4 Recessed(const ShowColors& c, float depth = .5f) {
+    const float lum = .3f * c.surface.x + .59f * c.surface.y + .11f * c.surface.z;
+    return lum > .5f ? Mix(c.surface, c.text, .05f + .14f * depth) : Mix(c.surface, ImVec4{0, 0, 0, 1}, .2f + .5f * depth);
+}
+// True when an item `width` wide fits after the previous item on the same line, up to the screen x `rightEdge`.
+inline bool FitsOnLine(float rightEdge, float width, float spacing) { return ImGui::GetItemRectMax().x + spacing + width <= rightEdge; }
+inline bool HasImage(const ImTextureRef& t) { return t._TexData != nullptr || t._TexID != ImTextureID_Invalid; }
+
+// How a console key looks. `progress` fills the body from the bottom (hold-to-confirm).
+struct KeyLook {
+    ImVec4 tone{};
+    bool lit = false, solid = false, enabled = true;
+    ConsoleGlyph glyph = ConsoleGlyph::None;
+    float labelScale = 1.f, progress = 0.f;
+    const char* hint = "";
+};
+void DrawConsoleKey(ImDrawList* draw, const ShowColors& c, ImVec2 a, ImVec2 b, const char* label, const KeyLook& look, bool hovered,
+                    bool held, bool focused, float round);
+// Binding indicator in a control's top-right corner: a dot, ringed while the host waits for Learn.
+void DrawBindingDot(ImDrawList* draw, const ShowColors& c, const BindingInfo* b, ImVec2 at, float radius, const ComponentOptions& o);
 // Draws one pad face (shared by PadGrid and ClipLauncher). The caller owns the item and its hit area.
 void DrawPadCell(ImDrawList* draw, const ShowColors& c, const ComponentOptions& options, ImVec2 a, ImVec2 b, const PadView& pad,
                  int index, bool hovered, bool held, bool focused, float round);

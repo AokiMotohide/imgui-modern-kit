@@ -90,11 +90,11 @@ Choose a toast position, pause expiry while it is being read, and return action 
 
 <img src="docs/images/v3-icon-artwork.gif" alt="Large tiled projector, projection, lighting, object, production, and editor icon artwork with a moving highlight" width="960">
 
-The animated board highlights the detailed source artwork at a readable size. Browse [all 238 source PNGs](assets/icons/originals/) or the [named 288-icon catalogue](assets/icons/catalog.json); the complete runtime catalogue appears below.
+The animated board highlights the detailed source artwork at a readable size. Browse [all 238 source PNGs](assets/icons/originals/) or the [named 320-icon catalogue](assets/icons/catalog.json); the complete runtime catalogue appears below.
 
-### Runtime icon catalogue · 288 presets
+### Runtime icon catalogue · 320 presets
 
-The C++ catalogue contains **288 named icons in 19 categories**, with seven atlas sizes from 12 to 64 px (2,016 icon-size combinations). Search by name or category, select a tile, and copy its matching C++ call.
+The C++ catalogue contains **320 named icons in 21 categories**, with seven atlas sizes from 12 to 64 px (2,240 icon-size combinations). Search by name or category, select a tile, and copy its matching C++ call.
 
 <img src="docs/images/v3-icons.gif" alt="ImKit's searchable icon catalogue, with categories, size choices, and a selected icon preview" width="960">
 
@@ -153,7 +153,7 @@ Show how far a task has progressed, which stage is active, and what the user can
 
 <img src="docs/images/v3-workspace.gif" alt="Tabs, hierarchy actions, inspector settings, three-axis editing and choices" width="960">
 
-Workspace tabs, hierarchy actions, inspector cards, three-axis inputs, titled choices, status/action rows and Loading → Success toasts use the same immediate-mode workflow. Explore 288 icons and 13 themes. [Declarations, defaults and ownership](docs/reference/v3.2-api.md).
+Workspace tabs, hierarchy actions, inspector cards, three-axis inputs, titled choices, status/action rows and Loading → Success toasts use the same immediate-mode workflow. Explore 320 icons and 13 themes. [Declarations, defaults and ownership](docs/reference/v3.2-api.md).
 
 Recompile consumers and ImKit static libraries for the extended `WindowFrameContent` structure (`iconTexture`). The Dear ImGui revision is unchanged.
 

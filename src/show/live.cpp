@@ -85,6 +85,21 @@ CueRequest CueList(const char* id, std::span<const CueView> cues, CueListState& 
     if (open) {
         auto* draw = ImGui::GetWindowDrawList();
         const float width = ImGui::GetContentRegionAvail().x;
+        if (o.showHeader) {
+            // Column titles: number and name on the left, time on the right.
+            const float hh = u * 1.1f;
+            const ImVec2 a = ImGui::GetCursorScreenPos();
+            const float fs = ImGui::GetFontSize() * .78f;
+            const float ty = a.y + (hh - fs) * .5f;
+            draw->AddText(ImGui::GetFont(), fs, {a.x + u * .75f, ty}, U32(c.muted), Str(options, "show.colNumber", "#"));
+            draw->AddText(ImGui::GetFont(), fs, {a.x + u * 3.15f, ty}, U32(c.muted), Str(options, "show.colName", "Name"));
+            if (o.showTimes) {
+                const char* t = Str(options, "show.colTime", "Time");
+                draw->AddText(ImGui::GetFont(), fs, {a.x + width - u * .6f - ImGui::GetFont()->CalcTextSizeA(fs, FLT_MAX, 0.f, t).x, ty}, U32(c.muted), t);
+            }
+            draw->AddLine({a.x, a.y + hh}, {a.x + width, a.y + hh}, U32(c.border, .6f), 1.f);
+            ImGui::Dummy({width, hh + 2.f});
+        }
         ImGuiListClipper clipper;
         clipper.Begin(static_cast<int>(visible.size()), rowH);
         while (clipper.Step()) {
@@ -138,17 +153,25 @@ CueRequest CueList(const char* id, std::span<const CueView> cues, CueListState& 
                 if (selected)
                     fill = Mix(c.surface, c.accent, .16f);
                 else if (cue.state == CueState::Running)
-                    fill = Mix(c.surface, c.running, .1f);
+                    fill = Mix(c.surface, c.running, .16f);
                 else if (standby)
-                    fill = Mix(c.surface, c.armed, .08f);
+                    fill = Mix(c.surface, c.armed, .1f);
                 else if (hovered)
                     fill = Mix(c.surface, c.text, .05f);
                 draw->AddRectFilled(a, b, U32(fill), 4.f);
+                if (!selected && !standby && !hovered && cue.state != CueState::Running)
+                    draw->AddLine({a.x + u * .5f, b.y - .5f}, {b.x - u * .5f, b.y - .5f}, U32(c.border, .3f), 1.f);
                 if (cue.state != CueState::Idle)
-                    draw->AddRectFilled(a, {a.x + 3.f, b.y}, U32(tone), 2.f);
+                    draw->AddRectFilled(a, {a.x + 4.f, b.y}, U32(tone), 2.f);
                 if (standby) {
-                    const ImVec2 m{a.x + 8.f, a.y + rowH * .5f};
+                    // Next to fire: bracketed row and a playhead marker.
+                    draw->AddRect({a.x + 1.f, a.y + 1.f}, {b.x - 1.f, b.y - 1.f}, U32(c.armed, .85f), 4.f, 0, 1.5f);
+                    const ImVec2 m{a.x + 9.f, a.y + rowH * .5f};
                     draw->AddTriangleFilled({m.x - 3, m.y - 5}, {m.x - 3, m.y + 5}, {m.x + 5, m.y}, U32(c.armed));
+                }
+                for (int d = 1; d <= cue.depth; ++d) {
+                    const float gx = a.x + u * .75f + static_cast<float>(d - 1) * u * .8f + u * .25f;
+                    draw->AddLine({gx, a.y}, {gx, b.y}, U32(c.border, .5f), 1.f);
                 }
                 if (focused && ImGui::GetIO().NavVisible)
                     draw->AddRect(a, b, U32(c.focus), 4.f, 0, 2.f);
@@ -233,7 +256,7 @@ CueRequest CueList(const char* id, std::span<const CueView> cues, CueListState& 
                 }
                 draw->PopClipRect();
                 if (cue.elapsed >= 0 && cue.duration > 0)
-                    draw->AddRectFilled({a.x, b.y - 2.f}, {a.x + width * Clamp01(cue.elapsed / cue.duration), b.y}, U32(c.running));
+                    draw->AddRectFilled({a.x, b.y - 3.f}, {a.x + width * Clamp01(cue.elapsed / cue.duration), b.y}, U32(c.running));
 
                 SemanticItem(options, FrameText("%s %s", Safe(cue.number), Safe(cue.name)), accessibility::SemanticRole::Row,
                              accessibility::SemanticAction::Select, selected);
@@ -264,86 +287,124 @@ GoBarRequest GoBar(const char* id, const GoBarView& view, bool* armed, Component
     const ShowColors c = MakeShowColors(options);
     auto* draw = ImGui::GetWindowDrawList();
     const float u = Unit();
+    const float h = u * 2.1f, gap = u * .45f;
+    const float round = ControlRound(options);
+    const float rightEdge = ImGui::GetCursorScreenPos().x + ImGui::GetContentRegionAvail().x;
     ImGui::PushID(id);
     bool localArmed = true;
     bool* arm = armed ? armed : &localArmed;
-    if (view.requireArm)
-        ArmSwitch(Str(options, "show.armGo", "Arm GO"), arm, options);
-    else
+    if (view.requireArm) {
+        ConsoleButtonOptions ao;
+        ao.mode = ConsoleMode::Toggle;
+        ao.glyph = ConsoleGlyph::Lock;
+        ao.tone = c.armed;
+        ao.size = {u * 2.6f, h};
+        ConsoleButton(Str(options, "show.arm", "ARM"), arm, ao, options);
+        ImGui::SameLine(0, gap);
+    } else
         *arm = true;
-    if (view.requireArm)
-        ImGui::SameLine(0, u * .8f);
 
-    // GO.
+    // GO: the hero key. Dim and inert until armed.
     const bool canGo = *arm;
-    const ImVec2 size{u * 3.6f, u * 1.7f};
-    const ImVec2 a = ImGui::GetCursorScreenPos(), b{a.x + size.x, a.y + size.y};
-    ImGui::InvisibleButton("##go", size);
-    const bool hovered = ImGui::IsItemHovered() && canGo, held = ImGui::IsItemActive() && canGo;
-    bool go = ImGui::IsItemClicked() && canGo;
-    if (SemanticItem(options, Str(options, "show.go", "GO"), accessibility::SemanticRole::Button, accessibility::SemanticAction::Press) && canGo)
-        go = true;
-    if (canGo && ImGui::IsItemFocused() && ImGui::IsKeyPressed(ImGuiKey_Space, false))
-        go = true;
-    request.go = go;
-    const ImVec4 fill = canGo ? Mix(c.accent, c.text, held ? .15f : hovered ? .08f : 0.f) : Mix(c.input, c.muted, .08f);
-    draw->AddRectFilled(a, b, U32(fill), size.y * .3f);
-    if (!canGo)
-        draw->AddRect(a, b, U32(c.border), size.y * .3f, 0, 1.f);
-    if (ImGui::IsItemFocused() && ImGui::GetIO().NavVisible)
-        draw->AddRect({a.x - 3, a.y - 3}, {b.x + 3, b.y + 3}, U32(c.focus), size.y * .3f + 3.f, 0, 2.f);
     {
-        const char* text = Str(options, "show.go", "GO");
-        ImFont* font = ImGui::GetFont();
-        const float fs = ImGui::GetFontSize() * 1.45f;
-        const ImVec2 ts = font->CalcTextSizeA(fs, FLT_MAX, 0.f, text);
-        draw->AddText(font, fs, {a.x + (size.x - ts.x) * .5f, a.y + (size.y - ts.y) * .5f}, U32(canGo ? c.onAccent : c.muted), text);
+        const ImVec2 size{u * 5.4f, h};
+        const ImVec2 a = ImGui::GetCursorScreenPos(), b{a.x + size.x, a.y + size.y};
+        ImGui::InvisibleButton("##go", size);
+        const bool hovered = ImGui::IsItemHovered() && canGo, held = ImGui::IsItemActive() && canGo, focused = ImGui::IsItemFocused();
+        bool go = ImGui::IsItemClicked() && canGo;
+        if (SemanticItem(options, Str(options, "show.go", "GO"), accessibility::SemanticRole::Button, accessibility::SemanticAction::Press) && canGo)
+            go = true;
+        if (canGo && focused && ImGui::IsKeyPressed(ImGuiKey_Space, false))
+            go = true;
+        request.go = go;
+        KeyLook look;
+        look.tone = c.accent;
+        look.lit = canGo;
+        look.solid = true;
+        look.enabled = canGo;
+        look.labelScale = 1.9f;
+        look.hint = canGo ? Str(options, "show.goHint", "Space") : Str(options, "show.armFirst", "Arm first");
+        DrawConsoleKey(draw, c, a, b, Str(options, "show.go", "GO"), look, hovered, held, focused, round);
+        if (canGo)
+            draw->AddRect({a.x - 2, a.y - 2}, {b.x + 2, b.y + 2}, U32(c.accent, .28f), round + 2.f, 0, 2.f);
     }
-    ImGui::SameLine(0, u * .6f);
+    ImGui::SameLine(0, gap);
 
-    // Pause / resume.
+    // Pause / resume: lit while paused.
     {
-        const ImVec2 ps{u * 1.7f, u * 1.7f};
-        const ImVec2 pa = ImGui::GetCursorScreenPos(), pb{pa.x + ps.x, pa.y + ps.y};
-        ImGui::InvisibleButton("##pause", ps);
-        const bool ph = ImGui::IsItemHovered();
-        bool pressed = ImGui::IsItemClicked();
-        const char* name = view.paused ? Str(options, "show.resume", "Resume") : Str(options, "show.pause", "Pause");
-        if (SemanticItem(options, name, accessibility::SemanticRole::Button, accessibility::SemanticAction::Press))
-            pressed = true;
-        request.pause = pressed;
-        draw->AddRectFilled(pa, pb, U32(Mix(c.input, c.text, ph ? .1f : .03f)), ps.y * .3f);
-        draw->AddRect(pa, pb, U32(view.paused ? c.queued : c.border), ps.y * .3f, 0, 1.f);
-        const ImVec2 mid{(pa.x + pb.x) * .5f, (pa.y + pb.y) * .5f};
-        if (view.paused)
-            GlyphPlay(draw, mid, u * .9f, U32(c.queued));
-        else
-            GlyphPause(draw, mid, u * .9f, U32(c.text));
+        bool paused = view.paused;
+        ConsoleButtonOptions po;
+        po.mode = ConsoleMode::Toggle;
+        po.glyph = view.paused ? ConsoleGlyph::Play : ConsoleGlyph::Pause;
+        po.tone = c.queued;
+        po.size = {u * 2.6f, h};
+        if (ConsoleButton(view.paused ? Str(options, "show.resume", "Resume") : Str(options, "show.pause", "Pause"), &paused, po, options).changed)
+            request.pause = true;
     }
-    ImGui::SameLine(0, u * .6f);
+    ImGui::SameLine(0, gap);
     HoldButtonOptions stop;
     stop.destructive = false;
-    stop.size = {0, u * 1.7f};
+    stop.key = true;
+    stop.hint = Str(options, "show.hold", "hold");
+    stop.size = {u * 3.6f, h};
     if (HoldButton(Str(options, "show.stopAll", "Stop all"), stop, options))
         request.stopAll = true;
-    ImGui::SameLine(0, u * .4f);
+    ImGui::SameLine(0, gap * .5f);
     HoldButtonOptions panic;
-    panic.size = {0, u * 1.7f};
+    panic.key = true;
+    panic.hint = Str(options, "show.hold", "hold");
+    panic.size = {u * 3.6f, h};
     panic.seconds = 1.0f;
     if (HoldButton(Str(options, "show.panic", "Panic"), panic, options))
         request.panic = true;
-    ImGui::SameLine(0, u * .9f);
-    ImGui::BeginGroup();
-    ImGui::TextDisabled("%s", Str(options, "show.next", "Next"));
-    ImGui::TextUnformatted(view.next && view.next[0] ? view.next : "-");
-    ImGui::EndGroup();
-    if (view.remainingSeconds >= 0) {
-        ImGui::SameLine(0, u);
-        ImGui::BeginGroup();
-        ImGui::TextDisabled("%s", Str(options, "show.remaining", "Remaining"));
-        const int t = static_cast<int>(view.remainingSeconds);
-        ImGui::Text("%d:%02d", t / 60, t % 60);
-        ImGui::EndGroup();
+
+    // Next cue card: number and name, time left and a progress line. It moves to its own line when the keys leave no room.
+    {
+        const bool sameLine = FitsOnLine(rightEdge, u * 7.f, gap);
+        if (sameLine)
+            ImGui::SameLine(0, gap);
+        else
+            ImGui::Dummy({0, u * .2f});
+        const float avail = rightEdge - ImGui::GetCursorScreenPos().x;
+        const float w = std::max(u * 7.f, std::min(sameLine ? u * 14.f : u * 24.f, avail));
+        const ImVec2 a = ImGui::GetCursorScreenPos(), b{a.x + w, a.y + h};
+        ReadoutItem({w, h});
+        draw->AddRectFilled(a, b, U32(Mix(c.input, c.text, .02f)), round);
+        draw->AddRect(a, b, U32(c.border, .7f), round, 0, 1.f);
+        draw->AddRectFilled({a.x + 1.f, a.y + u * .3f}, {a.x + 4.f, b.y - u * .3f}, U32(c.armed), 2.f);
+        const float small = ImGui::GetFontSize() * .78f;
+        ImFont* font = ImGui::GetFont();
+        draw->AddText(font, small, {a.x + u * .6f, a.y + u * .2f}, U32(c.muted), Str(options, "show.next", "Next"));
+        const char* number = Safe(view.nextNumber);
+        const char* name = view.next && view.next[0] ? view.next : "-";
+        float x = a.x + u * .6f;
+        const float y2 = a.y + h - u * .25f - ImGui::GetTextLineHeight() * 1.15f;
+        if (number[0]) {
+            const ImVec2 ns = font->CalcTextSizeA(ImGui::GetFontSize() * 1.15f, FLT_MAX, 0.f, number);
+            draw->AddText(font, ImGui::GetFontSize() * 1.15f, {x, y2}, U32(c.muted), number);
+            x += ns.x + u * .4f;
+        }
+        const bool timed = view.remainingSeconds >= 0;
+        char left[24] = "";
+        float timeW = 0.f;
+        if (timed) {
+            const int t = static_cast<int>(view.remainingSeconds);
+            std::snprintf(left, sizeof left, "%d:%02d", t / 60, t % 60);
+            timeW = font->CalcTextSizeA(ImGui::GetFontSize() * 1.3f, FLT_MAX, 0.f, left).x + u * .5f;
+            draw->AddText(font, ImGui::GetFontSize() * 1.3f, {b.x - timeW, a.y + h * .5f - ImGui::GetTextLineHeight() * .65f},
+                          U32(view.paused ? c.queued : c.running), left);
+            draw->AddText(font, small, {b.x - timeW, a.y + u * .2f}, U32(c.muted), Str(options, "show.remaining", "Remaining"));
+        }
+        draw->PushClipRect(a, {b.x - timeW - u * .3f, b.y}, true);
+        draw->AddText(font, ImGui::GetFontSize() * 1.15f, {x, y2}, U32(c.text), name);
+        draw->PopClipRect();
+        if (timed && view.totalSeconds > 0) {
+            const float t = Clamp01(static_cast<float>(1.0 - view.remainingSeconds / view.totalSeconds));
+            draw->PushClipRect({a.x, b.y - 3.f}, b, true);
+            draw->AddRectFilled(a, {a.x + w * t, b.y}, U32(view.paused ? c.queued : c.running), round);
+            draw->PopClipRect();
+        }
+        AnnotateText(options, Str(options, "show.next", "Next"), FrameText("%s %s", number, name), accessibility::SemanticRole::Status);
     }
     ImGui::PopID();
     return request;
@@ -358,8 +419,15 @@ ClipLauncherRequest ClipLauncher(const char* id, const ClipLauncherView& view, C
     const ShowColors c = MakeShowColors(options);
     const float u = Unit();
     const float gap = std::max(3.f, u * .14f);
-    const float cellW = o.cellWidth > 0 ? o.cellWidth : u * 5.f, cellH = o.cellHeight > 0 ? o.cellHeight : u * 2.4f;
     const float headW = o.headerWidth > 0 ? o.headerWidth : u * 9.f, titleH = u * 1.3f;
+    float cellW = o.cellWidth > 0 ? o.cellWidth : u * 5.f;
+    if (o.fitColumns) {
+        const float availW = o.size.x > 0 ? o.size.x : ImGui::GetContentRegionAvail().x;
+        cellW = std::max(u * 2.2f, (availW - ImGui::GetStyle().WindowPadding.x * 2.f - headW - gap * static_cast<float>(cols + 1)) / static_cast<float>(cols));
+    }
+    float cellH = o.cellHeight > 0 ? o.cellHeight : u * 2.4f;
+    if (o.aspect > 0)
+        cellH = std::max(u * 2.4f, cellW / o.aspect);
     const float round = options.theme ? options.theme->radius.control + 2.f : u * .4f;
     ImVec2 size = o.size;
     if (size.y <= 0)
@@ -416,7 +484,10 @@ ClipLauncherRequest ClipLauncher(const char* id, const ClipLauncherView& view, C
                 if (ImGui::IsItemClicked())
                     request.stopLayer = layer;
                 SemanticItem(options, FrameText("Stop %s", Safe(lv.name)), accessibility::SemanticRole::Button, accessibility::SemanticAction::Press);
-                GlyphStop(draw, {la.x + u * .4f + s * .5f, la.y + u * .25f + s * .5f}, s * .8f, U32(ImGui::IsItemHovered() ? c.text : c.muted));
+                const ImVec2 sc{la.x + u * .4f + s * .5f, la.y + u * .25f + s * .5f};
+                const bool sh = ImGui::IsItemHovered();
+                draw->AddCircleFilled(sc, s * .5f, U32(Mix(c.input, c.text, sh ? .16f : .07f)), 20);
+                GlyphStop(draw, sc, s * .62f, U32(sh ? c.text : c.muted));
             }
             DrawTextFit(draw, {la.x + u * 1.4f, la.y + u * .25f + (u * .8f - ImGui::GetTextLineHeight()) * .5f}, headW - u * 1.4f - u * 3.0f,
                         U32(c.text), Safe(lv.name));
@@ -1065,6 +1136,76 @@ MessageMonitorRequest MessageMonitor(const char* id, std::span<const MessageView
     }
     ImGui::EndChild();
     ImGui::PopStyleColor();
+    ImGui::PopID();
+    return request;
+}
+
+// ---- Master bar -----------------------------------------------------------------------------------------------
+MasterBarRequest MasterBar(const char* id, const MasterBarView& view, ComponentOptions options) {
+    MasterBarRequest request;
+    const ShowColors c = MakeShowColors(options);
+    const float u = Unit();
+    const float h = u * 2.f, gap = u * .45f;
+    const float rightEdge = ImGui::GetCursorScreenPos().x + ImGui::GetContentRegionAvail().x;
+    ImGui::PushID(id);
+    if (view.master) {
+        FaderOptions fo;
+        fo.vertical = false;
+        fo.defaultValue = 1.f;
+        fo.format = "%.2f";
+        fo.size = {u * 8.f, h};
+        request.master = Fader(Str(options, "show.master", "Master"), view.master, fo, options);
+    }
+    // The keys follow on the same line while they fit and wrap to the next line otherwise.
+    bool placed = view.master != nullptr;
+    auto follow = [&](float width) {
+        if (placed && FitsOnLine(rightEdge, width, gap))
+            ImGui::SameLine(0, gap);
+        placed = true;
+    };
+    follow(u * 4.2f);
+    if (view.blackout) {
+        bool on = true;
+        ConsoleButtonOptions bo;
+        bo.mode = ConsoleMode::Toggle;
+        bo.tone = c.error;
+        bo.solid = true;
+        bo.size = {u * 4.2f, h};
+        bo.hint = Str(options, "show.release", "release");
+        if (ConsoleButton(Str(options, "show.blackout", "Blackout"), &on, bo, options).changed)
+            request.blackout = true;
+    } else {
+        HoldButtonOptions ho;
+        ho.key = true;
+        ho.seconds = .6f;
+        ho.size = {u * 4.2f, h};
+        ho.hint = Str(options, "show.hold", "hold");
+        if (HoldButton(Str(options, "show.blackout", "Blackout"), ho, options))
+            request.blackout = true;
+    }
+    follow(u * 3.f);
+    {
+        bool on = view.freeze;
+        ConsoleButtonOptions fo;
+        fo.mode = ConsoleMode::Toggle;
+        fo.tone = c.queued;
+        fo.size = {u * 3.f, h};
+        if (ConsoleButton(Str(options, "show.freeze", "Freeze"), &on, fo, options).changed)
+            request.freeze = true;
+    }
+    follow(u * 3.f);
+    {
+        ConsoleButtonOptions fo;
+        fo.mode = ConsoleMode::Flash;
+        fo.tone = c.accent;
+        fo.size = {u * 3.f, h};
+        const ConsoleEvent e = ConsoleButton(Str(options, "show.flash", "Flash"), nullptr, fo, options);
+        request.flash = ImGui::IsItemActive() || e.pressed;
+        follow(u * 3.f);
+        fo.tone = c.warning;
+        const ConsoleEvent s = ConsoleButton(Str(options, "show.strobe", "Strobe"), nullptr, fo, options);
+        request.strobe = ImGui::IsItemActive() || s.pressed;
+    }
     ImGui::PopID();
     return request;
 }

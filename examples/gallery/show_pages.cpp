@@ -37,6 +37,12 @@ void ShowPages::Show(int page, GalleryState& host) {
         Beat(host);
     else if (page == 30)
         Script(host);
+    else if (page == 31)
+        Surface(host);
+    else if (page == 32)
+        Led(host);
+    else if (page == 33)
+        Images(host);
 }
 
 void ShowPages::Controls(GalleryState& host) {
@@ -224,6 +230,56 @@ void ShowPages::Controls(GalleryState& host) {
                                 lastEdit.changed ? "changed " : "", lastEdit.finished ? "finished " : "", lastEdit.cancelled ? "cancelled" : "");
         }
         EndSection(section4);
+
+        const bool section5 = BeginSection(host, "Console keys", "Momentary, toggle and flash keys with a lamp bar, scribble strips and a hold-to-confirm key.");
+        if (section5) {
+            static bool toggles[3]{true, false, false};
+            static int momentary = 0, flashes = 0, holds = 0;
+            ConsoleButtonOptions mo;
+            mo.size = {ImGui::GetFrameHeight() * 3.2f, ImGui::GetFrameHeight() * 2.2f};
+            mo.tone = host.theme.semantic.accent;
+            mo.hint = "F1";
+            if (ConsoleButton("Cue A", nullptr, mo, o).pressed)
+                ++momentary;
+            Record(host, "show-key-momentary");
+            ImGui::SameLine();
+            ConsoleButtonOptions to = mo;
+            to.mode = ConsoleMode::Toggle;
+            to.tone = host.theme.semantic.success;
+            to.hint = "";
+            ConsoleButton("Loop", &toggles[0], to, o);
+            Record(host, "show-key-toggle");
+            ImGui::SameLine();
+            ConsoleButtonOptions fo = mo;
+            fo.mode = ConsoleMode::Flash;
+            fo.tone = host.theme.semantic.warning;
+            fo.hint = "hold";
+            if (ConsoleButton("Flash", nullptr, fo, o).pressed)
+                ++flashes;
+            ImGui::SameLine();
+            ConsoleButtonOptions lo = mo;
+            lo.mode = ConsoleMode::Toggle;
+            lo.glyph = ConsoleGlyph::Lock;
+            lo.tone = host.theme.semantic.warning;
+            lo.hint = "";
+            ConsoleButton("Lock", &toggles[1], lo, o);
+            ImGui::SameLine();
+            HoldButtonOptions hb;
+            hb.key = true;
+            hb.hint = "hold";
+            hb.size = {ImGui::GetFrameHeight() * 3.2f, ImGui::GetFrameHeight() * 2.2f};
+            if (HoldButton("Reset", hb, o))
+                ++holds;
+            Record(host, "show-key-hold");
+            ImGui::Spacing();
+            ScribbleStrip("scribble1", "Layer 1", "-6.0 dB", host.theme.semantic.accent, ImGui::GetFrameHeight() * 4.5f, o);
+            ImGui::SameLine();
+            ScribbleStrip("scribble2", "Bus A", "Armed", host.theme.semantic.warning, ImGui::GetFrameHeight() * 4.5f, o);
+            ImGui::SameLine();
+            ScribbleStrip("scribble3", "Master", "", host.theme.semantic.success, ImGui::GetFrameHeight() * 4.5f, o);
+            ImGui::TextDisabled("Cue A: %d   Flash: %d   Reset: %d", momentary, flashes, holds);
+        }
+        EndSection(section5);
         EndGrid();
     }
 }

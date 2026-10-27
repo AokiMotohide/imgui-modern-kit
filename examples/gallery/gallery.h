@@ -82,6 +82,7 @@ struct GalleryState {
     float tableScroll = 0;
     ImVec4 color{.42f, .32f, .72f, 1};
     ImTextureRef texture{};
+    std::array<ImTextureRef, 6> sampleImages{}; // Generated pictures for the picture-button pages.
     IconAtlas icons;
     char iconSearch[96]{};
     int iconCategory = 0, iconSizeIndex = 1, selectedIcon = 0, iconClicks = 0;

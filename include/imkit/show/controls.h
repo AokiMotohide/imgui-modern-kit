@@ -66,6 +66,8 @@ struct PadView {
     ImVec4 color{};             // Alpha <= 0 picks a layer colour from the index.
     float progress = -1;        // 0..1 playback progress; negative hides it.
     bool latched = false;       // Toggle pads that are on.
+    ImTextureRef image{};       // Optional thumbnail; the pad then shows the picture with its label on a bottom band.
+    ImVec2 uv0{0, 0}, uv1{1, 1}; // Part of `image` to show.
 };
 struct PadGridOptions {
     int columns = 4;
@@ -132,12 +134,40 @@ struct HoldButtonOptions {
     float seconds = .8f;        // How long the button must be held.
     bool destructive = true;    // Error-coloured progress ring.
     ImVec2 size{0, 0};
+    bool key = false;           // Console-key look (square-ish body, lamp bar, progress rising from the bottom) instead of a pill.
+    const char* hint = "";      // Key look only: small caption in the corner.
 };
 // Returns true on the frame the hold completes. Keyboard: hold Space or Enter. The accessibility Press action
 // completes immediately, because assistive technology cannot hold. Returns false while disconnected/disabled.
 bool HoldButton(const char* label, HoldButtonOptions layout = {}, ComponentOptions options = {});
 // Lock-style toggle that arms a dangerous action (GO, Panic). Returns true on change.
 bool ArmSwitch(const char* label, bool* armed, ComponentOptions options = {});
+
+// ---- Console keys ---------------------------------------------------------------------------------------------
+// Hardware-console style key: a body with a lamp bar along the top edge that lights while the key is on.
+enum class ConsoleMode { Momentary, Toggle, Flash };
+enum class ConsoleGlyph { None, Lock, Play, Pause, Stop };
+struct ConsoleButtonOptions {
+    ImVec2 size{0, 0};          // Zero uses about 2.6 x 2 frame heights.
+    ConsoleMode mode = ConsoleMode::Momentary;
+    ConsoleGlyph glyph = ConsoleGlyph::None;
+    ImVec4 tone{};              // Lamp colour; alpha <= 0 uses the accent.
+    const char* hint = "";      // Small caption in the bottom-right corner, for example "Space".
+    bool solid = false;         // Filled with the tone while lit (a hero key such as GO).
+    float labelScale = 1.f;
+    const BindingInfo* binding = nullptr;
+};
+struct ConsoleEvent {
+    bool pressed = false;       // Primary press this frame.
+    bool released = false;      // Primary release this frame (Momentary and Flash).
+    bool changed = false;       // Toggle flipped this frame; `*on` holds the new state.
+};
+// Momentary and Flash keys are lit while held; Toggle keys flip `*on` and are lit while it is true. Space and Enter
+// press a focused key. A null `on` is allowed for Momentary and Flash.
+ConsoleEvent ConsoleButton(const char* label, bool* on, ConsoleButtonOptions layout = {}, ComponentOptions options = {});
+
+// Small label window of a console channel: a colour band, a name and an optional value line.
+void ScribbleStrip(const char* id, const char* name, const char* value, ImVec4 color, float width = 0, ComponentOptions options = {});
 
 enum class LedState { Off, On, Warning, Error, Live };
 // Light with shape and text so state never relies on colour alone: Live is a filled disc ("ON AIR"), Warning a

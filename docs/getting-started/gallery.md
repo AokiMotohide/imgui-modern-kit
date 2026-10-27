@@ -8,7 +8,7 @@ The Windows-native Gallery is an onboarding application and a public-API specime
 
 1. **Start** explains the host boundary and routes directly to a focused task.
 2. **Compare** is an independent page with Theme only and Components modes. The first uses identical `ImGui::` calls. Both share application values, font and scale, with scoped restoration of default style metrics and colors.
-3. **Components, themes and icons** provide searchable native specimens, palette editing, and all 288 runtime icon presets in seven sizes. The repository also contains 238 transparent PNG artwork masters across 16 image-backed categories; README shows these at a larger scale alongside the full runtime catalogue.
+3. **Components, themes and icons** provide searchable native specimens, palette editing, and all 320 runtime icon presets in seven sizes. The repository also contains 238 transparent PNG artwork masters across 16 image-backed categories; README shows these at a larger scale alongside the full runtime catalogue.
 4. **Workflow, timeline and Frame Lab** show optional compositional and editor-oriented surfaces without claiming that the host's scene, undo or renderer belongs to ImKit.
 
 The Start screen routes to **Components: Basic** (page 0), **Icons** (page 6; change themes from Appearance in the header), **Generic Workspace** (page 15; includes a responsive ChoiceGroup), and **Video** (page 8). The [examples and recipes map](examples-recipes.md) connects each route to its public header, CMake target, implementation source, ownership rules and next guide. The Start card identifiers are exercised by the Gallery verifier.

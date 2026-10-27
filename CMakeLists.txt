@@ -158,7 +158,7 @@ set_target_properties(imkit_editor_suite PROPERTIES EXPORT_NAME editor_suite)
 target_link_libraries(imkit_editor_suite INTERFACE imkit::editor_core imkit::video imkit::cg)
 install(TARGETS imkit_cg imkit_editor_suite EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 # Optional Show module: live, schedule, rule, beat and script components for media servers and show control.
-add_library(imkit_show STATIC src/show/common.cpp src/show/controls.cpp src/show/live.cpp src/show/rules.cpp src/show/rules_ui.cpp src/show/schedule.cpp src/show/schedule_ui.cpp src/show/beat.cpp src/show/script.cpp)
+add_library(imkit_show STATIC src/show/common.cpp src/show/controls.cpp src/show/live.cpp src/show/rules.cpp src/show/rules_ui.cpp src/show/schedule.cpp src/show/schedule_ui.cpp src/show/beat.cpp src/show/script.cpp src/show/image.cpp src/show/surface.cpp src/show/led_color.cpp src/show/led_view.cpp src/show/address.cpp)
 add_library(imkit::show ALIAS imkit_show)
 set_target_properties(imkit_show PROPERTIES EXPORT_NAME show DEBUG_POSTFIX d)
 target_link_libraries(imkit_show PUBLIC imkit::editor_core)
@@ -259,6 +259,9 @@ if(IMKIT_BUILD_GALLERY)
         examples/gallery/show_schedule_page.cpp
         examples/gallery/show_beat_page.cpp
         examples/gallery/show_script_page.cpp
+        examples/gallery/show_surface_page.cpp
+        examples/gallery/show_led_page.cpp
+        examples/gallery/show_images_page.cpp
         examples/gallery/editor_workspaces.cpp
         examples/gallery/allocation_probe.cpp
         examples/gallery/gallery.h
@@ -352,6 +355,15 @@ if(IMKIT_BUILD_TESTS)
     add_executable(imkit_show_script_test tests/show_script.cpp)
     target_link_libraries(imkit_show_script_test PRIVATE imkit::show)
     add_test(NAME imkit.show_script COMMAND imkit_show_script_test)
+    add_executable(imkit_show_surface_test tests/show_surface.cpp)
+    target_link_libraries(imkit_show_surface_test PRIVATE imkit::show)
+    add_test(NAME imkit.show_surface COMMAND imkit_show_surface_test)
+    add_executable(imkit_show_image_test tests/show_image.cpp)
+    target_link_libraries(imkit_show_image_test PRIVATE imkit::show)
+    add_test(NAME imkit.show_image COMMAND imkit_show_image_test)
+    add_executable(imkit_show_led_test tests/show_led.cpp)
+    target_link_libraries(imkit_show_led_test PRIVATE imkit::show)
+    add_test(NAME imkit.show_led COMMAND imkit_show_led_test)
     add_executable(imkit_ptz_api_compile tests/ptz_api_compile.cpp)
     target_link_libraries(imkit_ptz_api_compile PRIVATE imkit::imkit)
     add_test(NAME imkit.ptz_api_compile COMMAND imkit_ptz_api_compile)

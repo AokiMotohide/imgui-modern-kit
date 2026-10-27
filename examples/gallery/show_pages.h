@@ -2,6 +2,9 @@
 #include <imkit/imkit.h>
 #include <imkit/show.h>
 #include <imkit/show/script.h>
+#include <imkit/show/surface.h>
+#include <imkit/show/led.h>
+#include <imkit/show/address.h>
 #include <array>
 #include <bitset>
 #include <string>
@@ -152,9 +155,62 @@ struct ShowPages {
         int lastRevision = -1;
     } script;
 
+    // Page 31: surface.
+    struct SurfaceSim {
+        std::vector<show::SurfaceItem> items;
+        show::SurfaceState state;
+        std::array<float, 40> values{};     // Fader, knob and meter values for the items (and room for added ones).
+        std::array<bool, 16> keys{};
+        std::array<char, 32> clock{};
+        show::StableId nextId = 100;
+        int spareValue = 12, spareKey = 4;
+        int edits = 0, operated = 0;
+        std::string last = "-";
+        bool initialized = false;
+    } surface;
+
+    // Page 32: LED.
+    struct LedSim {
+        show::LightColor color{1.f, .42f, .1f, 0.f, 0.f, 0.f, 1.f};
+        float kelvin = 3200.f;
+        std::array<show::GradientStop, 8> stops{};
+        int stopCount = 3, selectedStop = 0;
+        std::array<ImVec4, 300> pixels{};
+        int selectedPixel = -1;
+        std::vector<show::AddressBlock> blocks;
+        std::vector<std::string> blockNames;
+        show::AddressMapState address;
+        show::ChannelMonitorState channelState;
+        std::array<unsigned char, 512> channels{};
+        char order[5] = "GRB";
+        bool orderWhite = false;
+        show::TestPattern pattern = show::TestPattern::Off;
+        float brightness = .35f;
+        std::array<show::PortView, 8> ports{};
+        int selectedPort = 0;
+        std::string last = "-";
+        bool initialized = false;
+    } led;
+
+    // Page 33: pictures as buttons.
+    struct ImagesSim {
+        std::array<show::ImageButtonView, 6> views{};
+        std::array<bool, 6> on{};
+        std::array<int, 6> presses{};
+        std::array<bool, 6> assigned{true, true, true, true, true, true};
+        int adjusting = -1;
+        show::ImageCrop crop{};
+        std::array<const char*, 6> names{"Sunset", "Waves", "Neon", "Stripes", "Radial", "Checker"};
+        std::string last = "-";
+        bool initialized = false;
+    } images;
+
     void Show(int page, GalleryState& host);
 
   private:
+    void Surface(GalleryState& host);
+    void Led(GalleryState& host);
+    void Images(GalleryState& host);
     void Script(GalleryState& host);
     void Beat(GalleryState& host);
     void Schedule(GalleryState& host);

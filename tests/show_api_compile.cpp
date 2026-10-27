@@ -53,6 +53,37 @@ int main() {
     ImportRequest (*wizard)(const char*, ImportState&, std::span<const ImportColumn>, imkit::ComponentOptions) = &PasteImportWizard;
     char (*delimiter)(std::string_view) = &DetectDelimiter;
 
+    // Console, image, surface, LED and address parts.
+    ConsoleEvent (*key)(const char*, bool*, ConsoleButtonOptions, imkit::ComponentOptions) = &ConsoleButton;
+    void (*scribble)(const char*, const char*, const char*, ImVec4, float, imkit::ComponentOptions) = &ScribbleStrip;
+    MasterBarRequest (*masterBar)(const char*, const MasterBarView&, imkit::ComponentOptions) = &MasterBar;
+    ImageButtonRequest (*imageButton)(const char*, const ImageButtonView&, ImageButtonOptions, imkit::ComponentOptions) = &ImageButton;
+    ValueEdit (*cropEditor)(const char*, const ImageButtonView&, ImageCrop*, ImVec2, imkit::ComponentOptions) = &ImageCropEditor;
+    ImageViewport (*fitImage)(ImVec2, ImVec2, ImageFit, ImageCrop) = &FitImage;
+    SurfaceRequest (*surface)(const char*, std::span<const SurfaceItem>, SurfaceState&, SurfaceOptions, imkit::ComponentOptions) = &ControlSurface;
+    void (*palette)(const char*, imkit::ComponentOptions) = &SurfacePalette;
+    SurfaceRect (*snapRect)(SurfaceRect, float, int, int, float) = &SnapRect;
+    SurfaceRect (*resizeRect)(SurfaceRect, SurfaceHandle, ImVec2, float, float, int, int) = &ResizeRect;
+    int (*hitHandle)(ImVec2, ImVec2, ImVec2, float) = &HitHandle;
+    SurfaceGuides (*guides)(SurfaceRect, std::span<const SurfaceRect>, float) = &AlignGuides;
+    LedColorRequest (*ledColor)(const char*, LightColor*, float*, LedColorOptions, imkit::ComponentOptions) = &LedColorPicker;
+    ImVec4 (*kelvin)(float) = &KelvinToRgb;
+    LightColor (*rgbw)(float, float, float) = &RgbToRgbw;
+    ImVec4 (*mixLight)(const LightColor&) = &MixLightColor;
+    GradientRequest (*gradient)(const char*, const GradientEditorView&, int*, GradientEditorOptions, imkit::ComponentOptions) = &GradientEditor;
+    ImVec4 (*sample)(std::span<const GradientStop>, float, GradientInterpolation) = &SampleGradient;
+    PixelPreviewRequest (*pixelPreview)(const char*, const PixelPreviewView&, int*, PixelPreviewOptions, imkit::ComponentOptions) = &PixelPreview;
+    BudgetStatus (*budget)(const char*, const BudgetBarView&, BudgetBarOptions, imkit::ComponentOptions) = &BudgetBar;
+    float (*current)(int, float, float, float) = &EstimateLedCurrent;
+    ColorOrderRequest (*orderPicker)(const char*, char*, bool, imkit::ComponentOptions) = &ColorOrderPicker;
+    TestPatternRequest (*patterns)(const char*, TestPattern, TestPatternOptions, imkit::ComponentOptions) = &TestPatternBar;
+    int (*portStrip)(const char*, std::span<const PortView>, int*, PortStripOptions, imkit::ComponentOptions) = &PortStrip;
+    AddressMapRequest (*addressMap)(const char*, const AddressMapView&, AddressMapState&, AddressMapOptions, imkit::ComponentOptions) = &AddressMap;
+    ChannelMonitorRequest (*channelMonitor)(const char*, const ChannelMonitorView&, ChannelMonitorState&, ChannelMonitorOptions, imkit::ComponentOptions) = &ChannelMonitor;
+    std::size_t (*overlaps)(std::span<const AddressBlock>, std::span<AddressOverlap>) = &FindOverlaps;
+    int (*freeRange)(std::span<const AddressBlock>, int, int, int) = &FirstFreeRange;
+    int (*perUniverse)(int, int) = &PixelsPerUniverse;
+
     static_assert(std::is_aggregate_v<ValueEdit> && std::is_trivially_copyable_v<ValueEdit>);
     static_assert(std::is_same_v<StableId, imkit::accessibility::StableId>);
     const void* all[] = {reinterpret_cast<const void*>(fader), reinterpret_cast<const void*>(knob), reinterpret_cast<const void*>(xy), reinterpret_cast<const void*>(pads),
@@ -64,7 +95,8 @@ int main() {
                          reinterpret_cast<const void*>(occurrences), reinterpret_cast<const void*>(cron), reinterpret_cast<const void*>(solar), reinterpret_cast<const void*>(conflicts),
                          reinterpret_cast<const void*>(calendar), reinterpret_cast<const void*>(date), reinterpret_cast<const void*>(week), reinterpret_cast<const void*>(clock),
                          reinterpret_cast<const void*>(deck), reinterpret_cast<const void*>(scroll), reinterpret_cast<const void*>(channel), reinterpret_cast<const void*>(sequencer),
-                         reinterpret_cast<const void*>(paste), reinterpret_cast<const void*>(params), reinterpret_cast<const void*>(wizard), reinterpret_cast<const void*>(delimiter)};
+                         reinterpret_cast<const void*>(paste), reinterpret_cast<const void*>(params), reinterpret_cast<const void*>(wizard), reinterpret_cast<const void*>(delimiter),
+                         reinterpret_cast<const void*>(key), reinterpret_cast<const void*>(scribble), reinterpret_cast<const void*>(masterBar), reinterpret_cast<const void*>(imageButton), reinterpret_cast<const void*>(cropEditor), reinterpret_cast<const void*>(fitImage), reinterpret_cast<const void*>(surface), reinterpret_cast<const void*>(palette), reinterpret_cast<const void*>(snapRect), reinterpret_cast<const void*>(resizeRect), reinterpret_cast<const void*>(hitHandle), reinterpret_cast<const void*>(guides), reinterpret_cast<const void*>(ledColor), reinterpret_cast<const void*>(kelvin), reinterpret_cast<const void*>(rgbw), reinterpret_cast<const void*>(mixLight), reinterpret_cast<const void*>(gradient), reinterpret_cast<const void*>(sample), reinterpret_cast<const void*>(pixelPreview), reinterpret_cast<const void*>(budget), reinterpret_cast<const void*>(current), reinterpret_cast<const void*>(orderPicker), reinterpret_cast<const void*>(patterns), reinterpret_cast<const void*>(portStrip), reinterpret_cast<const void*>(addressMap), reinterpret_cast<const void*>(channelMonitor), reinterpret_cast<const void*>(overlaps), reinterpret_cast<const void*>(freeRange), reinterpret_cast<const void*>(perUniverse)};
     for (const void* p : all)
         if (!p)
             return 1;

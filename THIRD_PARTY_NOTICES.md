@@ -55,6 +55,8 @@ Repository license files were checked on 2026-09-09. These repository licenses a
 
 Functional references for the Show module (licences checked 2026-10-27, no code, screens, icons or wording incorporated): the vocabulary of commercial media-server, VJ, cue-list and DJ products (for example Resolume, disguise, Pixera, QLab, MadMapper, Ableton Live, Traktor) comes from their public manuals only; the products are not dependencies and no affiliation is implied. GPL projects (Mixxx, OBS Studio) and projects with source-available licences were not consulted for code. Recurrence follows RFC 5545, solar times follow the public NOAA approximation.
 
+Functional references for the live surface, picture buttons and LED parts (licences checked 2026-10-28 with the GitHub API; no code, screens, icons or wording incorporated): WLED (EUPL-1.2), LedFx (GPL-3.0), xLights (GPL-3.0) and QLC+ (Apache-2.0) were read only for general feature descriptions; the GDTF/MVR specification repository and Open Stage Control show no detectable licence and were not consulted for code. Terminology about pixel mapping, DMX universes, LED wall controllers and calibration comes from the public documentation of commercial products (for example Resolume, NovaStar, Brompton, TouchOSC, Stream Deck, QLab, grandMA); the products are not dependencies and no affiliation is implied. Current-draw figures in the LED power helper are vendor datasheet values (WS2812B 60 mA, SK6812 RGBW up to 80 mA per pixel) and are only defaults the host overrides. `KelvinToRgb` uses the published Planckian-locus approximation of Kim et al. (2002) and the CIE XYZ to sRGB matrix.
+
 For any future source or asset reuse, review the exact file's license and preserve required notices before incorporation. Current benchmark references do not add runtime or production dependencies.
 
 ## Dear ImGui
@@ -125,7 +127,7 @@ OpenAI image generation tool for this project. They are not copied from the desi
 reference projects mentioned above. Their prompts and source hashes accompany the
 assets. These project assets are distributed under the repository MIT license.
 
-The 42 additional design-system icons are original deterministic code drawings in
+The 42 additional design-system icons and the 32 LED and live-surface icons (Led, LedStrip, LedMatrix, LedWall, LedCabinet, Pixel, Controller, Port, Dmx, Universe, Fixture, MovingHead, Dimmer, Brightness, ColorTemperature, Gamma, RgbChannels, WhiteChannel, Power, PowerBudget, Strobe, Chase, Gradient, ColorOrder, Identify, Freeze, Flash, Scene, ImageButton, ControlSurface, Fader, Knob) are original deterministic code drawings in
 `tools/design_icons.py`, distributed under the repository MIT license. No third-party
 icon shapes were imported. Seven raster levels (12–64px) are generated from the recorded sources.
 

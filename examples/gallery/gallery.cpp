@@ -109,6 +109,9 @@ const char *PageSummary(int page) {
     case 28: return "Calendar, resource timeline, recurrence, cron, sunrise triggers and weekly on-air hours with conflict detection.";
     case 29: return "Beat clock, decks, scrolling waveforms, hot cues, channel strips, pitch, step sequencer and spectrum.";
     case 30: return "Paste a script, see the problems line by line, get controls for its parameters, and import a pasted table.";
+    case 31: return "A console-style canvas: place faders, knobs, keys, pictures and displays freely, then operate them.";
+    case 32: return "LED colour with white and colour temperature, gradients, pixel preview, address map, channel monitor, power budget and test patterns.";
+    case 33: return "Turn any picture into a button: states, shapes, drop to assign, reposition and clear.";
     default: return "";
     }
 }
@@ -133,7 +136,7 @@ void Start(GalleryState &s) {
         TableNextColumn();
         StartCard(s, 21, "01 / THEME ONLY", "Modernize an existing UI", "The same ImGui calls, the same values. Compare a theme with the default style.", "Compare themes");
         TableNextColumn();
-        StartCard(s, 6, "02 / ICON LIBRARY", "Find your next icon", "288 icons, 19 categories and seven sizes. Search, select and copy the C++ call.", "Explore icons");
+        StartCard(s, 6, "02 / ICON LIBRARY", "Find your next icon", "320 icons, 21 categories and seven sizes. Search, select and copy the C++ call.", "Explore icons");
         TableNextRow();
         TableNextColumn();
         StartCard(s, 22, "03 / NEW IN 3.2", "Build a useful workspace", "Tabs, hierarchy actions, settings, three-axis editing and choices in one live screen.", "Open 3.2 workspace");
@@ -958,7 +961,7 @@ void Show(GalleryState &s) {
             {7,"Editor Core",2},{8,"Video",2},{9,"CG",2},{10,"Foundations",3},{11,"Components",3},{12,"Patterns",3},
             {13,"Accessibility",3},{14,"Responsive",3},{15,"Generic Workspace",2},{16,"Feedback / States",1},
             {17,"Preview Tiles",2},{18,"Frame Lab",3},{20,"Toasts",1},{21,"Compare",0},{22,"New in 3.2",0},
-            {25,"Show: Controls",4},{26,"Show: Live",4},{27,"Show: Rules",4},{28,"Show: Schedule",4},{29,"Show: Beat",4},{30,"Show: Script",4}};
+            {25,"Show: Controls",4},{26,"Show: Live",4},{27,"Show: Rules",4},{28,"Show: Schedule",4},{29,"Show: Beat",4},{30,"Show: Script",4},{31,"Show: Surface",4},{32,"Show: LED",4},{33,"Show: Images",4}};
         constexpr int pageCount=static_cast<int>(std::size(table));
         int pageIds[pageCount]; const char* pages[pageCount];
         for(int i=0;i<pageCount;++i) {pageIds[i]=table[i].id; pages[i]=table[i].name;}
@@ -1035,7 +1038,7 @@ void Show(GalleryState &s) {
         case 21: s.comparison.open=true; DrawComparison(s); break;
         case 23: s.charts.Show(s); break;
         case 24: s.ptz.Show(s); break;
-        case 25: case 26: case 27: case 28: case 29: case 30: s.show.Show(s.page,s); break;
+        case 25: case 26: case 27: case 28: case 29: case 30: case 31: case 32: case 33: s.show.Show(s.page,s); break;
         case 22: s.workflow.Workbench(s); break;
         case 20: s.toasts.Show(s); break;
         case 19: Start(s); break;
