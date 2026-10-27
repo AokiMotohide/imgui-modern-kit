@@ -3,6 +3,7 @@
 These primitives, not generated PNGs, are the authoritative source. Stroke=1.5,
 round caps, common 3..21 optical bounds. Rasterization supersamples at 8x.
 """
+import math
 from PIL import Image, ImageDraw
 
 DRAWINGS = {
@@ -56,6 +57,53 @@ DRAWINGS = {
     'KeyEscape': [('box',3,5,21,19), ('line',15,12,7,12), ('line',10,9,7,12,10,15)],
     'KeyTab': [('line',3,7,19,7), ('line',15,3,19,7,15,11), ('line',21,3,21,11), ('line',21,17,5,17), ('line',9,13,5,17,9,21), ('line',3,13,3,21)],
 }
+def _arc(cx, cy, r, a0, a1, steps=18):
+    """Polyline points of an arc; angles in degrees, y grows downwards."""
+    points = []
+    for i in range(steps + 1):
+        a = math.radians(a0 + (a1 - a0) * i / steps)
+        points += [round(cx + r * math.cos(a), 2), round(cy + r * math.sin(a), 2)]
+    return points
+
+
+# LED and live-surface icons (additions after the design-system set).
+DRAWINGS.update({
+    'Led': [('line',6,13,18,13), ('line',8,13,8,9,10,5,14,5,16,9,16,13), ('line',10,13,10,20), ('line',14,13,14,20)],
+    'LedStrip': [('box',3,9,21,15), ('circle',6,11,8,13), ('circle',11,11,13,13), ('circle',16,11,18,13)],
+    'LedMatrix': [('box',3,3,21,21)] + [('circle',x-1,y-1,x+1,y+1) for x in (8,12,16) for y in (8,12,16)],
+    'LedWall': [('box',3,4,21,18), ('line',9,4,9,18), ('line',15,4,15,18), ('line',3,11,21,11), ('line',8,21,16,21)],
+    'LedCabinet': [('box',3,3,21,21), ('box',6,6,18,18), ('line',12,6,12,18), ('line',6,12,18,12)],
+    'Pixel': [('box',3,3,21,21), ('box',8,8,16,16), ('line',3,12,8,12), ('line',16,12,21,12)],
+    'Controller': [('box',3,6,21,18), ('box',6,12,9,15), ('box',11,12,14,15), ('box',16,12,19,15), ('line',6,9,10,9)],
+    'Port': [('line',5,19,5,8,8,8,8,5,16,5,16,8,19,8,19,19,5,19), ('line',8,12,8,16), ('line',12,12,12,16), ('line',16,12,16,16)],
+    'Dmx': [('circle',3,3,21,21), ('circle',8,8,10,10), ('circle',14,8,16,10), ('circle',11,15,13,17), ('line',12,3,12,5)],
+    'Universe': [('line',12,3,21,8,12,13,3,8,12,3), ('line',3,12,12,17,21,12), ('line',3,16,12,21,21,16)],
+    'Fixture': [('line',8,4,16,4,19,14,5,14,8,4), ('line',9,14,9,19), ('line',15,14,15,19), ('line',7,20,17,20)],
+    'MovingHead': [('circle',7,3,17,13), ('circle',10,6,14,10), ('line',12,13,12,17), ('box',5,17,19,21)],
+    'Dimmer': [('line',9,3,9,21), ('box',5,9,13,14), ('line',16,8,19,8), ('line',16,12,19,12), ('line',16,16,19,16)],
+    'Brightness': [('circle',8,8,16,16), ('line',12,3,12,5), ('line',12,19,12,21), ('line',3,12,5,12), ('line',19,12,21,12),
+                   ('line',5.5,5.5,7,7), ('line',17,17,18.5,18.5), ('line',17,7,18.5,5.5), ('line',5.5,18.5,7,17)],
+    'ColorTemperature': [('line',9,14,9,5,10,3,14,3,15,5,15,14), ('circle',6,13,18,21), ('line',12,8,12,16),
+                         ('line',18,6,20,6), ('line',18,9,20,9), ('line',18,12,20,12)],
+    'Gamma': [('line',4,3,4,20,21,20), ('line',4,20,9,19,13,16,17,11,21,3)],
+    'RgbChannels': [('circle',3,3,14,14), ('circle',10,3,21,14), ('circle',6.5,9,17.5,20)],
+    'WhiteChannel': [('box',3,3,21,21), ('line',6,8,9,16,12,10,15,16,18,8)],
+    'Power': [('line',*_arc(12, 13, 8, -50, 230)), ('line',12,3,12,12)],
+    'PowerBudget': [('line',*_arc(12, 17, 9, 180, 360)), ('line',12,17,17,11), ('line',3,17,21,17)],
+    'Strobe': [('line',12,3,12,21), ('line',3,12,21,12), ('line',5.5,5.5,18.5,18.5), ('line',18.5,5.5,5.5,18.5)],
+    'Chase': [('circle',3,10,7,14), ('circle',10,10,14,14), ('circle',17,10,21,14), ('line',4,18,20,18), ('line',16,15,20,18,16,21)],
+    'Gradient': [('box',3,3,21,21), ('line',7,6,7,18), ('line',10,6,10,18), ('line',13.5,6,13.5,18), ('line',17.5,6,17.5,18)],
+    'ColorOrder': [('line',6,4,6,13), ('line',12,4,12,13), ('line',18,4,18,13), ('line',6,18,18,18), ('line',15,15,18,18,15,21), ('line',9,15,6,18,9,21)],
+    'Identify': [('circle',6,6,18,18), ('circle',10,10,14,14), ('line',12,3,12,6), ('line',12,18,12,21), ('line',3,12,6,12), ('line',18,12,21,12)],
+    'Freeze': [('box',3,3,21,21), ('line',9,8,9,16), ('line',15,8,15,16)],
+    'Flash': [('line',13,3,6,13,11,13,10,21,18,10,13,10,13,3)],
+    'Scene': [('box',3,3,21,21), ('box',6,6,11,11), ('box',13,6,18,11), ('box',6,13,11,18), ('box',13,13,18,18)],
+    'ImageButton': [('box',3,4,19,17), ('line',4,15,9,10,12,13,14,11,18,15), ('circle',13,6,16,9), ('line',15,12,15,20,17,18,19,21)],
+    'ControlSurface': [('line',6,3,6,21), ('line',12,3,12,21), ('line',18,3,18,21), ('box',3.5,12,8.5,16), ('box',9.5,6,14.5,10), ('box',15.5,15,20.5,19)],
+    'Fader': [('line',12,3,12,21), ('box',7,10,17,15), ('line',3,5,5,5), ('line',3,12,5,12), ('line',3,19,5,19)],
+    'Knob': [('circle',7,7,17,17), ('line',12,12,15,8), ('line',*_arc(12, 12, 10, 135, 405))],
+})
+
 for side in ('Left','Right','Bottom'):
     for action in ('Open','Close'):
         lines=[('box',3,3,21,21)]
