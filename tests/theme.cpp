@@ -209,6 +209,12 @@ int TestThemeText() {
     const auto incompleteResult = imkit::ParseTheme("brand.canvas = #ffe9a8\nbrand.text = #4a2a18\n", incomplete);
     if (incompleteResult.ignored != 1 || imkit::SerializeTheme(incomplete) != before)
         return 46;
+    // A lone accent keeps text on it readable, and a misspelt brand key is reported.
+    auto accented = imkit::MakeTheme(imkit::ThemePreset::PrecisionLight);
+    const auto accentResult = imkit::ParseTheme("semantic.accent = #ffee00\nbrand.textsecondary = #888888\n", accented);
+    if (accentResult.ignored != 1 || Contrast(accented.semantic.onAccent, accented.semantic.accent) < 4.5f ||
+        !Near(accented.semantic.control.focused, Hex(0xffee00)))
+        return 47;
     return 0;
 }
 

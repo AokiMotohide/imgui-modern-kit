@@ -304,9 +304,16 @@ ThemeParseResult ParseTheme(std::string_view text, Theme &theme) {
         }
     }
     // Step 3: every other key, top to bottom.
+    bool accentSet = false, onAccentSet = false, focusedSet = false, selectedSet = false;
     for (const auto &e : entries) {
-        if (e.key == "preset" || e.key.starts_with("brand."))
+        if (e.key == "preset")
             continue;
+        if (e.key.starts_with("brand.")) {
+            const bool known = std::any_of(std::begin(brandKeys), std::end(brandKeys), [&](const BrandKey &b) { return b.key == e.key; });
+            if (!known)
+                Warn(result, e.line, "unknown key `" + std::string(e.key) + "`");
+            continue;
+        }
         if (e.key == "corner") {
             CornerStyle style{};
             if (ParseName(kCorners, e.value, style)) {
@@ -322,10 +329,26 @@ ThemeParseResult ParseTheme(std::string_view text, Theme &theme) {
             Warn(result, e.line, "unknown key `" + std::string(e.key) + "`");
             continue;
         }
-        if (ParseValue(*field, theme, e.value))
+        if (ParseValue(*field, theme, e.value)) {
             ++result.applied;
-        else
+            accentSet = accentSet || e.key == "semantic.accent";
+            onAccentSet = onAccentSet || e.key == "semantic.on-accent";
+            focusedSet = focusedSet || e.key == "semantic.control.focused";
+            selectedSet = selectedSet || e.key == "semantic.control.selected";
+        } else
             Warn(result, e.line, "invalid value `" + std::string(e.value) + "` for `" + std::string(e.key) + "`");
+    }
+    if (accentSet) {
+        // A new accent brings its readable on-colour, focus and selection with it, unless the file names them itself.
+        const auto &c = theme.semantic;
+        const ImVec4 onAccent = c.onAccent, focused = c.control.focused, selected = c.control.selected;
+        SetAccent(theme, c.accent);
+        if (onAccentSet)
+            theme.semantic.onAccent = onAccent;
+        if (focusedSet)
+            theme.semantic.control.focused = focused;
+        if (selectedSet)
+            theme.semantic.control.selected = selected;
     }
     ResolveTheme(theme);
     return result;
