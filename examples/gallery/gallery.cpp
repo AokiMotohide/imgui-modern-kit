@@ -112,6 +112,8 @@ const char *PageSummary(int page) {
     case 31: return "A console-style canvas: place faders, knobs, keys, pictures and displays freely, then operate them.";
     case 32: return "LED colour with white and colour temperature, gradients, pixel preview, address map, channel monitor, power budget and test patterns.";
     case 33: return "Turn any picture into a button: states, shapes, drop to assign, reposition and clear.";
+    case 34: return "Build a look from four colours, a corner style, an outline and a shadow, and copy the theme text that reproduces it.";
+    case 35: return "Replace component frames with your own drawing, fill a backdrop with a pattern, stretch a picture with fixed corners.";
     default: return "";
     }
 }
@@ -925,6 +927,7 @@ void DrawComparison(GalleryState &s) {
 }
 void Show(GalleryState &s) {
     s.probes.clear();
+    s.look.Poll(s);
     s.theme.fonts = s.fonts;
     s.animation.Prune(GetFrameCount());
     ThemeScope scope(s.theme, s.scale);
@@ -961,7 +964,7 @@ void Show(GalleryState &s) {
             {7,"Editor Core",2},{8,"Video",2},{9,"CG",2},{10,"Foundations",3},{11,"Components",3},{12,"Patterns",3},
             {13,"Accessibility",3},{14,"Responsive",3},{15,"Generic Workspace",2},{16,"Feedback / States",1},
             {17,"Preview Tiles",2},{18,"Frame Lab",3},{20,"Toasts",1},{21,"Compare",0},{22,"New in 3.2",0},
-            {25,"Show: Controls",4},{26,"Show: Live",4},{27,"Show: Rules",4},{28,"Show: Schedule",4},{29,"Show: Beat",4},{30,"Show: Script",4},{31,"Show: Surface",4},{32,"Show: LED",4},{33,"Show: Images",4}};
+            {25,"Show: Controls",4},{26,"Show: Live",4},{27,"Show: Rules",4},{28,"Show: Schedule",4},{29,"Show: Beat",4},{30,"Show: Script",4},{31,"Show: Surface",4},{32,"Show: LED",4},{33,"Show: Images",4},{34,"Look: Studio",5},{35,"Look: Skins",5}};
         constexpr int pageCount=static_cast<int>(std::size(table));
         int pageIds[pageCount]; const char* pages[pageCount];
         for(int i=0;i<pageCount;++i) {pageIds[i]=table[i].id; pages[i]=table[i].name;}
@@ -1016,8 +1019,8 @@ void Show(GalleryState &s) {
         Spacing();
         if(wide) {
             BeginChild("categories",{192*s.scale*std::max(1.f,ImGui::GetStyle().FontScaleDpi),0},ImGuiChildFlags_Borders);
-            const char* groups[]={"Get started","Controls","Workspaces","Reference","Show"};
-            for(int g=0;g<5;++g) {
+            const char* groups[]={"Get started","Controls","Workspaces","Reference","Show","Look"};
+            for(int g=0;g<6;++g) {
                 if(g) Spacing();
                 TextDisabled("%s",groups[g]);
                 for(int i=0;i<pageCount;++i) {
@@ -1039,6 +1042,8 @@ void Show(GalleryState &s) {
         case 23: s.charts.Show(s); break;
         case 24: s.ptz.Show(s); break;
         case 25: case 26: case 27: case 28: case 29: case 30: case 31: case 32: case 33: s.show.Show(s.page,s); break;
+        case 34: s.look.Studio(s); break;
+        case 35: s.look.Skins(s); break;
         case 22: s.workflow.Workbench(s); break;
         case 20: s.toasts.Show(s); break;
         case 19: Start(s); break;

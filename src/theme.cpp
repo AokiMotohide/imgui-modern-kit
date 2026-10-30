@@ -345,7 +345,8 @@ void SetCornerStyle(Theme &t, CornerStyle style) {
     case CornerStyle::Sharp: t.radius = {0, 2, 4}; break;
     case CornerStyle::Soft: t.radius = {4, 8, 12}; break;
     case CornerStyle::Round: t.radius = {8, 16, 22}; break;
-    case CornerStyle::Pill: t.radius = {12, 999, 26}; break;
+    // 22 is half the tallest control (Touch, 44 px): every control becomes a pill, while a tall input stays a rounded box.
+    case CornerStyle::Pill: t.radius = {12, 22, 26}; break;
     }
     ResolveTheme(t);
 }

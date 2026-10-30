@@ -2100,6 +2100,7 @@ int main(int argc, char **argv) {
     std::string iconSearch, captureDemo;
     bool captureMotion=false;
     std::filesystem::path out = "out/catalog";
+    std::filesystem::path themeFile, captureLook; // --theme-file applies a theme text; --capture-look saves one frame of a page.
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
         if(a=="--window-frame" && i+1<argc) {
@@ -2150,6 +2151,12 @@ int main(int argc, char **argv) {
         else if(a=="--japanese") captureJapanese=true;
         else if (a == "--output" && i + 1 < argc)
             out = argv[++i];
+        else if (a == "--theme-file" && i + 1 < argc)
+            themeFile = argv[++i];
+        else if (a == "--capture-look" && i + 1 < argc) {
+            captureLook = argv[++i];
+            capture = true;
+        }
         else if (a == "--animation-page" && i + 1 < argc) {
             animationPage=std::stoi(argv[++i]);
             if (animationPage<0 || animationPage>3) return 2;
@@ -2389,6 +2396,11 @@ int main(int argc, char **argv) {
             throw std::runtime_error("Preview initialization failed");
         if (capturePage >= 0)
             h.s.page = capturePage;
+        if (!themeFile.empty()) {
+            h.s.look.watch = !h.automated; // Edit the file in any editor and the open Gallery follows.
+            if (!h.s.look.LoadFile(h.s, themeFile))
+                throw std::runtime_error("Cannot read theme file " + themeFile.string());
+        }
         h.Settle();
         if(!h.automated) glfwShowWindow(h.window);
         if(verifyWindowFrame) {
@@ -2498,6 +2510,12 @@ int main(int argc, char **argv) {
                 }
                 h.s.design.language=1; h.s.scale=1.5f; h.Page(12); h.Frame({},out/"japanese-150.png");
                 h.s.design.language=2; h.s.scale=2; h.Page(14); h.Frame({},out/"rtl-200.png");
+            } else if (!captureLook.empty()) {
+                // One frame of one page with the theme from --theme-file, for documentation and review.
+                if (captureLook.has_parent_path()) std::filesystem::create_directories(captureLook.parent_path());
+                h.s.comparison.open=false;
+                h.Page(capturePage >= 0 ? capturePage : 34);
+                h.Frame({}, captureLook);
             } else if (capture) {
                 h.s.editors.japanese=captureJapanese;
                 h.s.workflow.japanese=captureJapanese;

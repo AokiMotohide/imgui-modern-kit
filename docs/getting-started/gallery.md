@@ -13,6 +13,8 @@ The Windows-native Gallery is an onboarding application and a public-API specime
 
 The Start screen routes to **Components: Basic** (page 0), **Icons** (page 6; change themes from Appearance in the header), **Generic Workspace** (page 15; includes a responsive ChoiceGroup), and **Video** (page 8). The [examples and recipes map](examples-recipes.md) connects each route to its public header, CMake target, implementation source, ownership rules and next guide. The Start card identifiers are exercised by the Gallery verifier.
 
+**Look: Studio** (page 34) and **Look: Skins** (page 35) build a look from four colours, a corner style, an outline and a shadow, and show what a skin, a backdrop pattern and a nine-slice picture can do. `imkit_gallery --theme-file my.theme` applies a theme file at start-up and, in the window, follows later edits to it. See [Make your own look](../architecture/make-your-own-look.md).
+
 The comparison's baseline is only public Dear ImGui API (`StyleColorsDark` plus direct widgets). It is a visual and interaction-contract example, not a claim about performance, OS input or accessibility. Its ImKit column borrows the host-owned `Theme`, scale, state and animation values; no global registry or Gallery-only third-party asset is introduced.
 
 ## Build and run

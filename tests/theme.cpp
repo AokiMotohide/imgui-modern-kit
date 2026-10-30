@@ -86,12 +86,17 @@ int TestStyleProjection() {
         failure = 22;
     if (!Near(style.Colors[ImGuiCol_Border], outlined.colors.border, 1e-6f))
         failure = 23;
-    // A pill control radius must not turn windows and images into capsules.
+    // Pill rounds the tallest control (44 px) to a capsule and nothing taller than that.
     imkit::SetCornerStyle(outlined, imkit::CornerStyle::Pill);
     imkit::ApplyTheme(outlined, 1.f);
-    if (outlined.radius.control < 900.f || style.FrameRounding < 900.f || style.WindowRounding != outlined.radius.overlay ||
-        style.ImageRounding != outlined.radius.overlay)
+    if (outlined.radius.control != 22.f || style.FrameRounding != 22.f || style.WindowRounding != 22.f)
         failure = 24;
+    // A huge control radius set by hand must not turn windows and images into capsules.
+    outlined.radius.control = 999.f;
+    imkit::ApplyTheme(outlined, 1.f);
+    if (style.FrameRounding < 900.f || style.WindowRounding != outlined.radius.overlay ||
+        style.ImageRounding != outlined.radius.overlay)
+        failure = 26;
     imkit::SetCornerStyle(outlined, imkit::CornerStyle::Sharp);
     if (outlined.radius.control != 2.f || outlined.metrics.radius != 2.f)
         failure = 25;
@@ -170,7 +175,7 @@ int TestThemeText() {
     const auto diff = imkit::ParseTheme("preset = warm-sand\nstroke.border = 3\ncorner = pill\n", partial);
     const auto warmSand = imkit::MakeTheme(imkit::ThemePreset::WarmSand);
     if (diff.applied != 3 || diff.ignored != 0 || !Near(partial.semantic.accent, warmSand.semantic.accent, 0) ||
-        partial.stroke.border != 3.f || partial.radius.control < 900.f || partial.fonts.display != fakeFont ||
+        partial.stroke.border != 3.f || partial.radius.control != 22.f || partial.fonts.display != fakeFont ||
         partial.metrics.border != 3.f)
         return 43;
 
