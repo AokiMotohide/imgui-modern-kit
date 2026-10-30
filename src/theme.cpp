@@ -1,4 +1,5 @@
 #include <imkit/theme.h>
+#include "draw_internal.h"
 #include <algorithm>
 #include <cmath>
 
@@ -6,9 +7,6 @@ namespace imkit {
 namespace {
 ImVec4 Hex(unsigned x) {
     return {((x >> 16) & 255) / 255.f, ((x >> 8) & 255) / 255.f, (x & 255) / 255.f, 1};
-}
-ImVec4 Mix(ImVec4 a, ImVec4 b, float x) {
-    return {a.x + (b.x - a.x) * x, a.y + (b.y - a.y) * x, a.z + (b.z - a.z) * x, a.w + (b.w - a.w) * x};
 }
 ImVec4 Alpha(ImVec4 c, float a) {
     c.w = a;
@@ -81,7 +79,7 @@ ImGuiStyle Style(const Theme &t, float scale) {
     c[ImGuiCol_PopupBg] = p.raised;
     // Standard contrast softens the hairline; the semantic border token still drives validation
     // and focus. High contrast keeps the full-strength border.
-    const ImVec4 hairline = highContrast ? p.border : Mix(p.surface, p.border, .42f);
+    const ImVec4 hairline = highContrast ? p.border : detail::MixColor(p.surface, p.border, .42f);
     c[ImGuiCol_Border] = outline ? p.border : hairline;
     c[ImGuiCol_BorderShadow] = {0, 0, 0, 0};
     c[ImGuiCol_FrameBg] = p.input;
@@ -100,13 +98,13 @@ ImGuiStyle Style(const Theme &t, float scale) {
     c[ImGuiCol_SliderGrab] = p.accent;
     c[ImGuiCol_SliderGrabActive] = p.focus;
     // Secondary buttons are tonal: a neutral wash over the surface, never a white slab.
-    const ImVec4 button = highContrast ? p.raised : Mix(p.surface, p.text, .07f);
+    const ImVec4 button = highContrast ? p.raised : detail::MixColor(p.surface, p.text, .07f);
     c[ImGuiCol_Button] = button;
-    c[ImGuiCol_ButtonHovered] = highContrast ? Mix(p.raised, p.accent, .15f) : Mix(button, p.text, .06f);
-    c[ImGuiCol_ButtonActive] = Mix(button, p.accent, .25f);
+    c[ImGuiCol_ButtonHovered] = highContrast ? detail::MixColor(p.raised, p.accent, .15f) : detail::MixColor(button, p.text, .06f);
+    c[ImGuiCol_ButtonActive] = detail::MixColor(button, p.accent, .25f);
     c[ImGuiCol_Header] = p.selection;
-    c[ImGuiCol_HeaderHovered] = Mix(p.surface, p.accent, .20f);
-    c[ImGuiCol_HeaderActive] = Mix(p.surface, p.accent, .30f);
+    c[ImGuiCol_HeaderHovered] = detail::MixColor(p.surface, p.accent, .20f);
+    c[ImGuiCol_HeaderActive] = detail::MixColor(p.surface, p.accent, .30f);
     c[ImGuiCol_Separator] = hairline;
     c[ImGuiCol_SeparatorHovered] = p.focus;
     c[ImGuiCol_SeparatorActive] = p.accent;
@@ -234,8 +232,8 @@ Theme MakePrecisionTheme(ColorScheme scheme) {
     auto& c=t.semantic;
     c={t.colors.canvas,t.colors.surface,t.colors.raised,t.colors.raised,t.colors.text,t.colors.muted,
        t.colors.muted,t.colors.border,t.colors.accent,t.colors.onAccent,t.colors.success,t.colors.warning,
-       t.colors.destructive,{t.colors.input,Mix(t.colors.input,t.colors.accent,.10f),
-       Mix(t.colors.input,t.colors.accent,.17f),t.colors.focus,t.colors.selection,t.colors.input}};
+       t.colors.destructive,{t.colors.input,detail::MixColor(t.colors.input,t.colors.accent,.10f),
+       detail::MixColor(t.colors.input,t.colors.accent,.17f),t.colors.focus,t.colors.selection,t.colors.input}};
     return t;
 }
 Theme MakeTheme(ColorScheme scheme, ContrastMode contrast, Density density) {
@@ -269,7 +267,7 @@ void ResolveTheme(Theme& t) {
     t.editor.snapGuide=c.control.focused; t.editor.error=c.error; t.editor.locked=c.textDisabled;
 }
 float ContrastRatio(ImVec4 foreground,ImVec4 background) {
-    foreground=Mix(background,foreground,std::clamp(foreground.w,0.f,1.f));
+    foreground=detail::MixColor(background,foreground,std::clamp(foreground.w,0.f,1.f));
     float a=RelativeLuminance(foreground),b=RelativeLuminance(background); return (std::max(a,b)+.05f)/(std::min(a,b)+.05f);
 }
 bool ValidateContrast(const Theme& t) {
@@ -285,7 +283,7 @@ void SetAccent(Theme &t, ImVec4 accent) {
     t.colors.accent = accent;
     t.colors.focus = accent;
     t.colors.onAccent = OnColor(accent);
-    t.colors.selection = Mix(t.colors.surface, accent, t.scheme == ColorScheme::Dark ? .16f : .09f);
+    t.colors.selection = detail::MixColor(t.colors.surface, accent, t.scheme == ColorScheme::Dark ? .16f : .09f);
     t.semantic.accent=accent; t.semantic.onAccent=t.colors.onAccent;
     t.semantic.control.focused=accent; t.semantic.control.selected=t.colors.selection;
 }
@@ -293,7 +291,7 @@ namespace {
 // The weakest mix of `from` toward `to`, starting at `start`, that reaches `ratio` against every background.
 ImVec4 MixForContrast(ImVec4 from, ImVec4 to, float start, float ratio, std::span<const ImVec4> backgrounds) {
     for (float k = start; k < 1.f; k += .02f) {
-        const ImVec4 c = Mix(from, to, k);
+        const ImVec4 c = detail::MixColor(from, to, k);
         if (std::all_of(backgrounds.begin(), backgrounds.end(),
                         [&](ImVec4 background) { return ContrastRatio(c, background) >= ratio; }))
             return c;
@@ -314,14 +312,14 @@ Theme MakeBrandTheme(const BrandPalette &brand) {
     const auto given = [](ImVec4 c) { return c.w > 0; };
     s.canvas = canvas;
     s.surface = surface;
-    s.surfaceRaised = given(brand.raised) ? Opaque(brand.raised) : dark ? Mix(surface, text, .08f) : Mix(surface, white, .65f);
+    s.surfaceRaised = given(brand.raised) ? Opaque(brand.raised) : dark ? detail::MixColor(surface, text, .08f) : detail::MixColor(surface, white, .65f);
     s.overlay = s.surfaceRaised;
     s.text = text;
     s.accent = accent;
     s.onAccent = OnColor(accent);
-    const ImVec4 input = Mix(canvas, surface, .35f);
-    s.control = {input, Mix(input, accent, .10f), Mix(input, accent, .17f), accent,
-                 Mix(surface, accent, dark ? .16f : .09f), input};
+    const ImVec4 input = detail::MixColor(canvas, surface, .35f);
+    s.control = {input, detail::MixColor(input, accent, .10f), detail::MixColor(input, accent, .17f), accent,
+                 detail::MixColor(surface, accent, dark ? .16f : .09f), input};
     // Secondary text and the border are derived against the surfaces they sit on, so they stay legible.
     const std::array backgrounds = {s.canvas, s.surface, s.surfaceRaised, s.control.rest, s.control.hover,
                                     s.control.pressed, s.control.selected};

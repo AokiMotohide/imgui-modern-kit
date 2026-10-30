@@ -16,9 +16,6 @@
 namespace imkit {
 namespace {
 using detail::SemanticItem;
-ImVec4 Mix(ImVec4 a, ImVec4 b, float t) {
-    return {a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t, a.w + (b.w - a.w) * t};
-}
 ImVec4 Accent(const Theme *t) {
     return t ? t->colors.accent : ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
 }
@@ -81,8 +78,8 @@ ButtonPalette MakeButtonPalette(ActionVariant variant, const Theme *t, const ImG
     if (variant == ActionVariant::Ghost)
         p.fill.w = 0;
     const ImVec4 tone = p.subtleDestructive ? destructive : Accent(t);
-    p.hovered = Mix(p.fill, tone, .18f);
-    p.active = Mix(p.fill, tone, .32f);
+    p.hovered = detail::MixColor(p.fill, tone, .18f);
+    p.active = detail::MixColor(p.fill, tone, .32f);
     p.border = p.subtleDestructive ? destructive : style.Colors[ImGuiCol_Border];
     if (p.subtleDestructive)
         p.border.w *= .58f;
@@ -313,8 +310,8 @@ bool Toggle(const char *label, bool *value, ComponentOptions options) {
     }
     auto *d = ImGui::GetWindowDrawList();
     const ImVec4 off = detail::WithAlpha(style.Colors[ImGuiCol_Text], .22f);
-    auto fill = Mix(off, Accent(options.theme), position);
-    auto thumb = Mix(ImVec4(1, 1, 1, 1), options.theme ? options.theme->colors.onAccent : ImVec4(1, 1, 1, 1), position);
+    auto fill = detail::MixColor(off, Accent(options.theme), position);
+    auto thumb = detail::MixColor(ImVec4(1, 1, 1, 1), options.theme ? options.theme->colors.onAccent : ImVec4(1, 1, 1, 1), position);
     // Fit in native checkbox's square so label layout and hit target remain native.
     const float trackHeight = h * .6f, trackWidth = std::min(h, trackHeight * 1.8f);
     const float y = min.y + (h - trackHeight) * .5f;
