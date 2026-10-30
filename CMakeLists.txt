@@ -263,6 +263,7 @@ if(IMKIT_BUILD_GALLERY)
         examples/gallery/show_led_page.cpp
         examples/gallery/show_images_page.cpp
         examples/gallery/look_pages.cpp
+        examples/gallery/start_page.cpp
         examples/gallery/editor_workspaces.cpp
         examples/gallery/allocation_probe.cpp
         examples/gallery/gallery.h

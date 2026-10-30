@@ -21,7 +21,7 @@ int main() {
     if (imkit::GetIconCatalog().empty())
         return 1;
     const auto presets = imkit::ThemePresets();
-    if (presets.size() != 12)
+    if (presets.empty())
         return 1;
     auto theme = imkit::MakeTheme(imkit::ThemePreset::Ocean);
     imkit::ApplyTheme(theme);

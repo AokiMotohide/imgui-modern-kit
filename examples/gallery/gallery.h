@@ -14,6 +14,7 @@
 #include "ptz_page.h"
 #include "show_pages.h"
 #include "look_pages.h"
+#include "start_page.h"
 namespace imkit::gallery {
 struct Probe {
     ImVec2 min, max;
@@ -63,6 +64,7 @@ struct GalleryState {
     PtzPage ptz;
     ShowPages show;
     LookPages look;
+    StartPage start;
     EditorWorkspaces editors;
     Theme theme = MakeTheme(ThemePreset::PrecisionLight);
     FontSet fonts{};
@@ -112,6 +114,28 @@ struct GalleryState {
     ComparisonState comparison;
     std::map<std::string, Probe> probes;
 };
+// Restores plain Dear ImGui colours and metrics (fonts and scale stay) for the lifetime of the scope, so a specimen can
+// be drawn "before" next to the same calls drawn with an ImKit theme.
+class DefaultStyleScope {
+  public:
+    DefaultStyleScope() : previous_(ImGui::GetStyle()) {
+        ImGui::GetStyle() = ImGuiStyle{};
+        ImGui::StyleColorsDark(&ImGui::GetStyle());
+        ImGui::GetStyle().FontSizeBase = previous_.FontSizeBase;
+        ImGui::GetStyle().FontScaleMain = previous_.FontScaleMain;
+        ImGui::GetStyle().FontScaleDpi = previous_.FontScaleDpi;
+        ImGui::GetStyle().ScaleAllSizes(ImGui::GetIO().DisplayFramebufferScale.x);
+        ImGui::GetStyle().Colors[ImGuiCol_ChildBg].w = 1.f;
+    }
+    ~DefaultStyleScope() { ImGui::GetStyle() = previous_; }
+    DefaultStyleScope(const DefaultStyleScope &) = delete;
+    DefaultStyleScope &operator=(const DefaultStyleScope &) = delete;
+
+  private:
+    ImGuiStyle previous_;
+};
+// Makes ThemePresets()[index] the Gallery theme and keeps the Appearance controls in step with it.
+void ApplyThemePreset(GalleryState &s, int index);
 // Layout helpers shared by the Gallery pages: a responsive card grid and titled cards.
 bool BeginGrid(GalleryState &s, const char *id, int maxColumns = 2);
 void EndGrid();

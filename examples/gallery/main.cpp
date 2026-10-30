@@ -155,18 +155,27 @@ struct Host {
         Frame([](auto &io) { io.AddMouseButtonEvent(0, false); });
         Settle(2);
     }
-    void Click(const char *name) {
-        const auto it=s.probes.find(name);
-        if(it==s.probes.end()) {
-            std::string available;
-            for(const auto &[key, _] : s.probes) {
-                if(!available.empty()) available+=", ";
-                available+=key;
+    // Centre of a probe, scrolling the page with the wheel until it is inside the window.
+    ImVec2 Reveal(const char *name) {
+        const auto size=ImGui::GetIO().DisplaySize;
+        for(int attempt=0;;++attempt) {
+            const auto it=s.probes.find(name);
+            if(it==s.probes.end()) {
+                std::string available;
+                for(const auto &[key, _] : s.probes) {
+                    if(!available.empty()) available+=", ";
+                    available+=key;
+                }
+                throw std::runtime_error(std::string("missing Gallery probe: ")+name+"; available: "+available);
             }
-            throw std::runtime_error(std::string("missing Gallery probe: ")+name+"; available: "+available);
+            const auto centre=it->second.Center();
+            if(attempt==40 || (centre.y>=0 && centre.y<size.y-24 && centre.x>=0 && centre.x<size.x)) return centre;
+            mouse={size.x*.6f,size.y*.5f};
+            Frame([&](auto &io) { io.AddMouseWheelEvent(0, centre.y<0 ? 3.f : -3.f); });
+            Settle(2);
         }
-        ClickAt(it->second.Center());
     }
+    void Click(const char *name) { ClickAt(Reveal(name)); }
     void Key(ImGuiKey key) {
         Frame([&](auto &io) { io.AddKeyEvent(key, true); });
         Frame([&](auto &io) { io.AddKeyEvent(key, false); });
@@ -386,14 +395,18 @@ void Verify(Host &h, const std::filesystem::path &out) {
     h.Click("start-components");
     check(h.s.page == PageBasic, ("Start route: components (page " + std::to_string(h.s.page) + ")").c_str());
     h.Page(PageStart);
-    h.Click("start-Explore icons");
+    h.Click("start-icons");
     check(h.s.page == PageIcons, "Start route: visual system");
     h.Page(PageStart);
-    h.Click("start-circular-progress");
+    h.Click("start-feedback");
     check(h.s.page == PageFeedback, "Start route: feedback and progress");
     h.Page(PageStart);
-    h.Click("start-Open timeline");
-    check(h.s.page == PageVideo, "Start route: timeline");
+    h.Click("start-workspaces");
+    check(h.s.page == PageWorkbench, "Start route: workspaces");
+    h.Page(PageStart);
+    h.Click("start-world-3");
+    check(h.s.presetIndex == 3, "Start route: wear a world");
+    imkit::gallery::ApplyThemePreset(h.s, 0);
     h.Page(PageBasic);
     h.Click("apply");
     check(h.s.clicks == 1, "Action activation");
@@ -1053,7 +1066,7 @@ void CaptureMotion(Host& h,const std::filesystem::path& out,const std::string& d
         clickAt(play,"Play timeline");recording.Check("playback started",s.timeline.time.playing);hold(75);clickAt(play,"Pause timeline");recording.Check("playback paused",!s.timeline.time.playing);
         drag({p.x+240,p.y},{p.x+75,p.y},"Scrub back");
     } else if(demo=="overview") {
-        click("start-Open 3.2 workspace");click("workbench-row-1");click("workbench-tab-1");click("workbench-enabled");click("workbench-enabled");
+        click("start-workspaces");click("workbench-row-1");click("workbench-tab-1");click("workbench-enabled");click("workbench-enabled");
         recording.Check("Start route applied",h.s.page==PageWorkbench);
     } else if(demo=="workflow") {
         click("workflow-chip");recording.Check("filter enabled",h.s.workflow.chip);
