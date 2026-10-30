@@ -70,6 +70,8 @@ struct GalleryState {
     FontSet fonts{};
     AnimationState animation;
     int page = PageStart;
+    // Hides the navigation and top bar so a page fills the window; used by the motion captures.
+    bool presentation = false;
     int presetIndex = 0, presetFilter = 0, copyClicks = 0;
     float scale = ThemeScaleDefault;
     float windowFrameHeight = 0;

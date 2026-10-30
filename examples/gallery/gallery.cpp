@@ -913,6 +913,7 @@ void Show(GalleryState &s) {
             for(auto& c:haystack) c=static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
             return haystack.find(query)!=std::string::npos;
         };
+        if(!s.presentation) {
         PushFont(s.fonts.emphasis,s.theme.metrics.bodySize*1.2f); TextUnformatted("ImKit"); PopFont();
         SameLine(0,6.f*s.scale); TextDisabled("Gallery %s",IMKIT_VERSION);
         if(wide) {
@@ -965,7 +966,8 @@ void Show(GalleryState &s) {
             EndPopup();
         }
         Spacing();
-        if(wide) {
+        }
+        if(wide && !s.presentation) {
             BeginChild("categories",{192*s.scale*std::max(1.f,ImGui::GetStyle().FontScaleDpi),0},ImGuiChildFlags_Borders);
             const auto groups=PageGroups();
             bool first=true;

@@ -36,6 +36,7 @@ void ChartsPage::Show(GalleryState& host) {
         { const bool visible = BeginSection(host, "Storage", "Share by category. Hover a segment, click to select.");
         if (visible) {
             const int hit = DonutChart("storage", {usage, centre, "Used"}, {}, o);
+            Record(host, "charts-donut");
             if (hit >= 0)
                 donutSelected = hit;
             ImGui::TextDisabled("Selected: %s", donutSelected >= 0 ? usage[static_cast<std::size_t>(donutSelected)].label : "none");
@@ -49,6 +50,7 @@ void ChartsPage::Show(GalleryState& host) {
         { const bool visible = BeginSection(host, "Exports", "Bars with value labels and a hairline grid.");
         if (visible) {
             const int hit = BarChart("exports", {weekly}, {{0, 0}, Orientation::Vertical, 0, true, true, "%.0f"}, o);
+            Record(host, "charts-bar");
             if (hit >= 0)
                 barSelected = hit;
             ImGui::TextDisabled("Selected: %s", barSelected >= 0 ? weekly[static_cast<std::size_t>(barSelected)].label : "none");

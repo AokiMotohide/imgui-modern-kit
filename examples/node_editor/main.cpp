@@ -920,6 +920,8 @@ int main(int argc, char **argv) {
     if (!glfwInit())
         return 2;
     glfwWindowHint(GLFW_VISIBLE, smoke || verify || capture ? GLFW_FALSE : GLFW_TRUE);
+    // A decorated window is clamped below the monitor height; a capture needs the exact framebuffer.
+    if (capture) glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 #ifdef IMKIT_NODE_EDITOR_METAL
     glfwWindowHint(GLFW_CLIENT_API,GLFW_NO_API);
 #endif

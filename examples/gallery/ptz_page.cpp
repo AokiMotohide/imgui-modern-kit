@@ -137,6 +137,7 @@ void PtzPage::Show(GalleryState& host) {
             view.activePreset = active;
             view.connected = connected;
             const PtzRequest r = PtzControl("main", view, state, {}, o);
+            Record(host, "ptz-main");
             last = r;
             const float dt = ImGui::GetIO().DeltaTime;
             if (r.moving) {

@@ -984,8 +984,195 @@ void CaptureFrames(Host &h,const std::filesystem::path &dir,int &index,int count
         h.Frame({},dir/name);
     }
 }
+// Scripted public-IO input for the motion captures. Every frame is recorded, and the pointer moves like a hand.
+struct Motion {
+    Host& h;
+    imkit::design::MotionCapture& rec;
+    void Hold(int n) { h.Settle(n); }
+    void Move(ImVec2 target,int n=28) {
+        auto start=h.mouse;
+        for(int i=1;i<=n;++i) {float u=float(i)/n;u=u*u*(3-2*u);h.mouse={start.x+(target.x-start.x)*u,start.y+(target.y-start.y)*u};h.Frame();}
+    }
+    void ClickAt(ImVec2 p,const char* action) {
+        rec.Mark(action);Move(p);h.Frame([](auto&io){io.AddMouseButtonEvent(0,true);});Hold(7);
+        h.Frame([](auto&io){io.AddMouseButtonEvent(0,false);});Hold(20);
+    }
+    const imkit::gallery::Probe& At(const char* name) const { return h.s.probes.at(name); }
+    void Click(const char* name) { ClickAt(At(name).Center(),name); }
+    void Drag(ImVec2 from,ImVec2 to,const char* action,int frames=66) {
+        rec.Mark(action);Move(from);h.Frame([](auto&io){io.AddMouseButtonEvent(0,true);});Hold(8);
+        Move(to,frames);h.Frame([](auto&io){io.AddMouseButtonEvent(0,false);});Hold(22);
+    }
+    // Drags a slider probe (whose rectangle is the slider frame) from one fraction of its width to another.
+    void Slide(const char* probe,float from,float to,const char* action,int frames=54) {
+        const auto b=At(probe);const float y=b.Center().y,w=b.max.x-b.min.x;
+        Drag({b.min.x+w*from,y},{b.min.x+w*to,y},action,frames);
+    }
+    void Type(const char* probe,const char* text) {
+        Click(probe);
+        h.Frame([](auto&io){io.AddKeyEvent(ImGuiMod_Ctrl,true);io.AddKeyEvent(ImGuiKey_A,true);});
+        h.Frame([](auto&io){io.AddKeyEvent(ImGuiMod_Ctrl,false);io.AddKeyEvent(ImGuiKey_A,false);});
+        for(auto p=text;*p;++p) {char c[]={*p,0};h.Frame([&](auto&io){io.AddInputCharactersUTF8(c);});Hold(5);}
+        h.Key(ImGuiKey_Enter);Hold(18);
+    }
+    // Wheel ticks with the pointer resting at `at`, one short pause per tick.
+    void Scroll(ImVec2 at,int ticks,int pause=7) {
+        Move(at,24);
+        for(int i=0;i<std::abs(ticks);++i) {h.Frame([&](auto&io){io.AddMouseWheelEvent(0,ticks<0?-1.f:1.f);});Hold(pause);}
+    }
+    // Scrolls the page until a probe is comfortably inside the window.
+    void ScrollTo(const char* name,float targetY) {
+        for(int i=0;i<40 && At(name).Center().y>targetY;++i) Scroll({h.mouse.x<0?960.f:h.mouse.x,540.f},-1,5);
+    }
+};
+// One scripted take for the film or a GIF: a page, a look and the hand that drives it.
+struct MotionScene {
+    const char* name;
+    imkit::gallery::PageId page;
+    imkit::ThemePreset preset;
+    float scale;
+    void (*setup)(imkit::gallery::GalleryState&);
+    void (*play)(Motion&);
+    int minimumFrames;
+};
+void PlayHook(Motion& m) {
+    auto& p=m.h.s.start;
+    m.Hold(54); // The plain Dear ImGui version, before anything happens.
+    m.Click("start-default-apply");
+    m.Slide("start-default-level",.62f,.28f,"Plain slider edits the shared value");
+    m.rec.Check("plain slider changed",p.level<.4f,p.level);
+    const auto flip=[&](int style,const char* action) {
+        m.ClickAt(m.At(style==1?"start-style-imkit":"start-style-plain").Center(),action);
+        m.rec.Check("style flipped",p.style==style,p.style);
+    };
+    flip(1,"Flip to the ImKit theme");
+    m.Hold(40);
+    m.Slide("start-imkit-level",.28f,.9f,"ImKit slider edits the same value");
+    m.rec.Check("modern slider changed",p.level>.8f,p.level);
+    m.Click("start-imkit-apply");m.Click("start-imkit-apply");
+    m.rec.Check("applied twice",p.applied>=3,p.applied);
+    flip(0,"Back to plain");m.Hold(36);
+    flip(1,"And to ImKit again");m.Hold(60);
+}
+void PlayWorlds(Motion& m) {
+    auto& s=m.h.s;
+    m.Hold(40);
+    m.ScrollTo("start-world-2",760.f);m.Hold(30);
+    // Graphite is the starting theme; wear each of the others, ending where we began.
+    for(int world:{3,4,8,6,7,5,2}) {
+        const std::string probe="start-world-"+std::to_string(world);
+        m.Click(probe.c_str());m.Hold(42);
+        m.rec.Check("world applied",s.presetIndex==world,s.presetIndex);
+    }
+}
+void PlayStudio(Motion& m) {
+    auto& s=m.h.s;
+    m.Hold(40);
+    for(const char* world:{"blueprint","pastel-pop","sticker"}) {
+        const std::string probe=std::string("look-world-")+world;
+        const auto before=s.theme.semantic.canvas;
+        m.Click(probe.c_str());m.Hold(60);
+        m.rec.Check("world file applied",s.theme.semantic.canvas.x!=before.x||s.theme.semantic.canvas.z!=before.z||s.theme.semantic.canvas.y!=before.y);
+    }
+    const bool hard=s.look.hard;
+    m.Click("look-hard-shadow");m.Hold(48);
+    m.rec.Check("hard shadow toggled",s.look.hard!=hard);
+    m.Click("look-hard-shadow");m.Hold(36);
+    // Sharp corners, or pill corners when the world already has them: a change the eye cannot miss.
+    const int target=s.look.corner==0?3:0;
+    {const auto b=m.At("look-corners");m.ClickAt({b.min.x+60.f,b.Center().y},"look-corners");}
+    m.h.Key(ImGuiKey_Home);for(int i=0;i<target;++i) m.h.Key(ImGuiKey_DownArrow);m.h.Key(ImGuiKey_Enter);m.Hold(54);
+    m.rec.Check("corner style changed",s.look.corner==target,s.look.corner);
+    {const auto b=m.At("look-preset");m.ClickAt({b.min.x+60.f,b.Center().y},"look-preset");}m.h.Key(ImGuiKey_Home);m.h.Key(ImGuiKey_DownArrow);m.h.Key(ImGuiKey_DownArrow);m.h.Key(ImGuiKey_Enter);m.Hold(60);
+    m.rec.Check("preset restored",s.look.preset==2,s.look.preset);
+}
+void PlayShowLive(Motion& m) {
+    auto& show=m.h.s.show;
+    m.Hold(40);
+    // ARM, then GO three times. The keys sit just above the Next card, whose rectangle is the GoBar probe.
+    const auto bar=m.At("show-gobar");const float k=m.h.s.scale;
+    m.ClickAt({bar.min.x+39.f*k,bar.min.y-49.f*k},"ARM the GO key");m.Hold(24);
+    for(int i=0;i<3;++i) {
+        const int before=show.cue.goCount;
+        m.ClickAt({bar.min.x+172.f*k,bar.min.y-49.f*k},"GO");m.Hold(60);
+        m.rec.Check("GO fired a cue",show.cue.goCount==before+1,show.cue.goCount);
+    }
+    // Launch a few clips.
+    const auto launcher=m.At("show-launcher");
+    for(float u:{.34f,.52f,.70f}) m.ClickAt({launcher.min.x+(launcher.max.x-launcher.min.x)*u,launcher.min.y+(launcher.max.y-launcher.min.y)*.55f},"Launch a clip");
+    m.Hold(60);
+}
+void PlayShowSurface(Motion& m) {
+    m.Hold(40);
+    const auto surface=m.At("surface");const float w=surface.max.x-surface.min.x,h=surface.max.y-surface.min.y;
+    const auto at=[&](float u,float v){return ImVec2{surface.min.x+w*u,surface.min.y+h*v};};
+    // Operate: pull the first fader down and back, then the third.
+    m.Drag(at(.083f,.29f),at(.083f,.60f),"Pull a fader down",48);
+    m.Drag(at(.083f,.60f),at(.083f,.36f),"and back up",48);
+    m.Drag(at(.275f,.40f),at(.275f,.24f),"Raise another",48);
+    m.Click("surface-edit");m.Hold(60);
+    m.rec.Check("edit layout on",m.h.s.show.surface.state.editing);
+    m.Hold(90);
+}
+void PlayCharts(Motion& m) {
+    m.Hold(40);
+    const auto donut=m.At("charts-donut");
+    // Sweep the donut ring, then click a segment and a bar.
+    m.Move({donut.min.x+(donut.max.x-donut.min.x)*.25f,donut.min.y+(donut.max.y-donut.min.y)*.28f},40);m.Hold(30);
+    m.Move({donut.min.x+(donut.max.x-donut.min.x)*.45f,donut.min.y+(donut.max.y-donut.min.y)*.20f},40);m.Hold(30);
+    m.ClickAt({donut.min.x+(donut.max.x-donut.min.x)*.45f,donut.min.y+(donut.max.y-donut.min.y)*.20f},"Pick a donut segment");
+    const auto bar=m.At("charts-bar");
+    for(float u:{.2f,.45f,.7f}) {
+        m.Move({bar.min.x+(bar.max.x-bar.min.x)*u,bar.min.y+(bar.max.y-bar.min.y)*.55f},34);m.Hold(26);
+    }
+    m.ClickAt({bar.min.x+(bar.max.x-bar.min.x)*.7f,bar.min.y+(bar.max.y-bar.min.y)*.55f},"Pick a bar");
+    m.Hold(60);
+}
+void PlayPtz(Motion& m) {
+    m.Hold(40);
+    const auto ptz=m.At("ptz-main");const auto c=ptz.Center();
+    // Drag across the pad; the simulated camera follows.
+    const float r=std::min(ptz.max.x-ptz.min.x,ptz.max.y-ptz.min.y)*.18f;
+    m.Drag(c,{c.x+r,c.y-r},"Pan right and tilt up",50);
+    m.Drag(c,{c.x-r*1.4f,c.y+r*.5f},"Pan left and tilt down",50);
+    m.Hold(90);
+}
+const MotionScene kScenes[]={
+    {"hook",PageStart,imkit::ThemePreset::Graphite,1.5f,[](imkit::gallery::GalleryState& s){s.start.style=0;s.start.level=.62f;},PlayHook,840},
+    {"worlds",PageStart,imkit::ThemePreset::Graphite,1.5f,nullptr,PlayWorlds,720},
+    {"studio",PageLookStudio,imkit::ThemePreset::Graphite,1.5f,nullptr,PlayStudio,840},
+    {"show-live",PageShowLive,imkit::ThemePreset::Graphite,1.5f,nullptr,PlayShowLive,720},
+    {"show-surface",PageShowSurface,imkit::ThemePreset::Graphite,1.5f,nullptr,PlayShowSurface,720},
+    {"charts",PageCharts,imkit::ThemePreset::Graphite,1.5f,nullptr,PlayCharts,600},
+    {"ptz",PagePtz,imkit::ThemePreset::Graphite,1.5f,nullptr,PlayPtz,600},
+};
+const MotionScene* FindScene(const std::string& name) {
+    for(const auto& scene:kScenes) if(name==scene.name) return &scene;
+    return nullptr;
+}
 void CaptureMotion(Host& h,const std::filesystem::path& out,const std::string& demo) {
     using namespace imkit;
+    if(const auto* scene=FindScene(demo)) {
+        h.s.theme=MakeTheme(scene->preset);h.s.theme.fonts=h.s.fonts;
+        h.s.scale=scene->scale;h.s.presetIndex=static_cast<int>(scene->preset);h.s.dark=h.s.theme.scheme==ColorScheme::Dark;
+        h.s.comparison.open=false;h.s.presentation=true;
+        if(scene->setup) scene->setup(h.s);
+        h.Page(scene->page);h.mouse={1500,900};h.Settle();
+        std::filesystem::create_directories(out);
+        {
+            // Probe rectangles at the first frame, for tuning a script without re-recording.
+            std::ofstream layout(out/(demo+".layout.json"));layout<<"{";bool first=true;
+            for(const auto& [name,b]:h.s.probes){if(!first)layout<<",";first=false;layout<<"\""<<name<<"\":["<<b.min.x<<","<<b.min.y<<","<<b.max.x<<","<<b.max.y<<"]";}
+            layout<<"}";
+        }
+        design::MotionCapture recording;recording.Start(out/(demo+".mkv"),1920,1080);h.motion=&recording;
+        Motion m{h,recording};
+        m.Hold(24);scene->play(m);
+        // Closing hold, so a following cut never lands on motion.
+        while(recording.Frames()<scene->minimumFrames) m.Hold(6);
+        h.motion=nullptr;recording.Finish();
+        return;
+    }
     h.s.theme=MakeTheme(ThemePreset::Graphite);h.s.theme.fonts=h.s.fonts;
     h.s.scale=1.3f;h.s.presetIndex=2;h.s.dark=true;h.s.comparison.open=false;
     int page=demo=="comparison"?PageCompare:demo=="workspace"?PageWorkbench:demo=="icons"||demo=="themes"||demo=="icon-artwork"?PageIcons:
@@ -994,6 +1181,9 @@ void CaptureMotion(Host& h,const std::filesystem::path& out,const std::string& d
     if(page==PageVideo)h.s.editors.Dataset(false);
     if(demo=="preview-contract")h.s.editors.monitorMode=3;
     if(page==PageToasts){h.s.toasts.initialized=true;h.s.toasts.items.clear();h.s.toasts.state.Reset();}
+    // The film shows the page itself; the navigation and top bar stay out of frame.
+    h.s.presentation=true;
+    if(demo=="comparison"||demo=="toasts"||demo=="icons"||demo=="workspace") h.s.scale=2.0f;
     h.Page(page);h.mouse={350,150};h.Settle();
     std::filesystem::create_directories(out);
     std::ofstream layout(out/(demo+".layout.json"));layout<<"{";bool first=true;
@@ -2135,7 +2325,7 @@ int main(int argc, char **argv) {
             if(captureDemo!="overview" && captureDemo!="comparison" && captureDemo!="themes" &&
                captureDemo!="icons" && captureDemo!="icon-artwork" && captureDemo!="vector" && captureDemo!="workflow" &&
                captureDemo!="progress" && captureDemo!="timeline" && captureDemo!="components" &&
-               captureDemo!="preview-contract" && captureDemo!="workspace" && captureDemo!="toasts") return 2;
+               captureDemo!="preview-contract" && captureDemo!="workspace" && captureDemo!="toasts" && !FindScene(captureDemo)) return 2;
             continue;
         }
         if (a == "--verify-timeline-model") return VerifyTimelineModel();
@@ -2213,6 +2403,8 @@ int main(int argc, char **argv) {
     // Show only after the custom frame and first rendered frame are ready.
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
+    // A decorated window is clamped below the monitor height; a motion capture needs the exact framebuffer.
+    if(captureMotion) glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
     auto hostStorage=std::make_unique<Host>();
     auto &h=*hostStorage;
         h.automated = capture || verify || verifyIcons || verifyEditors || verifyColor || benchmarkEditors || verifyMonitors || verifyTrackControls || verifyLinkedClips || verifyNormals || verifyComparison || !captureDemo.empty();

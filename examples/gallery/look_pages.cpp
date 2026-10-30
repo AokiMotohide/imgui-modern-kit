@@ -223,7 +223,9 @@ void LookPages::Studio(GalleryState& s) {
     if (const Section section{s, "Start from", "A preset, or a sample world file from examples/gallery/worlds."}) {
         const auto presets = ThemePresets();
         SetNextItemWidth(220.f);
-        if (BeginCombo("Preset", presets[static_cast<std::size_t>(preset)].displayName.data())) {
+        const bool presetOpen = BeginCombo("Preset", presets[static_cast<std::size_t>(preset)].displayName.data());
+        Record(s, "look-preset");
+        if (presetOpen) {
             for (int i = 0; i < static_cast<int>(presets.size()); ++i)
                 if (Selectable(presets[static_cast<std::size_t>(i)].displayName.data(), preset == i)) {
                     preset = i;
@@ -242,6 +244,7 @@ void LookPages::Studio(GalleryState& s) {
         for (const auto& world : worlds) {
             if (Button(world.stem().string().c_str()))
                 LoadFile(s, world);
+            Record(s, ("look-world-" + world.stem().string()).c_str());
             SameLine();
         }
         NewLine();
@@ -277,11 +280,13 @@ void LookPages::Studio(GalleryState& s) {
         static const char* names[] = {"Sharp", "Soft", "Round", "Pill", "Custom"};
         SetNextItemWidth(160.f);
         changed |= Combo("Corners", &corner, names, corner == 4 ? 5 : 4);
+        Record(s, "look-corners");
         SetNextItemWidth(220.f);
         changed |= SliderFloat("Outline", &border, 0.f, 6.f, "%.1f px", ImGuiSliderFlags_AlwaysClamp);
         if (IsItemHovered())
             SetTooltip("%.0f px or more is an outline: full-strength colour on windows, frames and every button.", OutlineMinimumWidth);
         changed |= Checkbox("Hard shadow", &hard);
+        Record(s, "look-hard-shadow");
         if (hard) {
             SameLine();
             SetNextItemWidth(220.f);

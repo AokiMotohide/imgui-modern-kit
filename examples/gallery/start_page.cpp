@@ -30,8 +30,10 @@ void Specimen(GalleryState &s, StartPage &p, bool plain) {
     Text("Applied %d", p.applied);
     Checkbox("Enabled", &p.enabled);
     SetNextItemWidth(-CalcTextSize("Level").x - ImGui::GetStyle().ItemInnerSpacing.x);
+    const float levelWidth = CalcItemWidth();
     SliderFloat("Level", &p.level, 0, 1, "%.2f");
-    Record(s, plain ? "start-default-level" : "start-imkit-level");
+    // The probe is the slider frame without its label, so a script can drag along it.
+    s.probes[plain ? "start-default-level" : "start-imkit-level"] = {GetItemRectMin(), {GetItemRectMin().x + levelWidth, GetItemRectMax().y}};
     if (plain) ImGui::InputText("Name", p.name, sizeof(p.name));
     else InputText("Name", p.name, sizeof(p.name));
     const char *quality[] = {"Draft", "Balanced", "Final"};
@@ -77,8 +79,11 @@ void Hero(GalleryState &s, StartPage &p) {
     StatusBadge("MIT", StatusKind::Success, ComponentOptions{&s.theme});
     TableNextColumn();
     const char *styles[] = {"Dear ImGui", "ImKit"};
+    const ImVec2 origin = GetCursorScreenPos();
     Segmented("start-style", &p.style, styles, {&s.theme, &s.animation});
-    Record(s, "start-style");
+    // The last item is the final segment; the rest of the control lies to its left.
+    s.probes["start-style-imkit"] = {GetItemRectMin(), GetItemRectMax()};
+    s.probes["start-style-plain"] = {origin, {GetItemRectMin().x, GetItemRectMax().y}};
     const float height = 226.f * s.scale;
     if (p.style == 0) {
         DefaultStyleScope plain;
