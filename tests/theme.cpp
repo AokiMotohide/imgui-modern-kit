@@ -141,6 +141,17 @@ int TestBrandThemes() {
     poor.text = poor.canvas;
     if (imkit::ValidateContrast(imkit::MakeBrandTheme(poor)))
         return 35;
+    // The coloured presets have their own canvas and surface, not just another accent, and stay legible.
+    for (const auto preset : {imkit::ThemePreset::Graphite, imkit::ThemePreset::Midnight, imkit::ThemePreset::Ocean,
+                              imkit::ThemePreset::Forest, imkit::ThemePreset::Violet, imkit::ThemePreset::WarmSand,
+                              imkit::ThemePreset::Rose, imkit::ThemePreset::Solar}) {
+        const auto theme = imkit::MakeTheme(preset);
+        const auto base = imkit::MakePrecisionTheme(theme.scheme);
+        if (Near(theme.semantic.canvas, base.semantic.canvas, 0) || Near(theme.semantic.surface, base.semantic.surface, 0))
+            return 36;
+        if (!imkit::ValidateContrast(theme))
+            return 37;
+    }
     return 0;
 }
 

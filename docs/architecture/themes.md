@@ -26,7 +26,7 @@ auto theme = imkit::MakeTheme(preset);
 
 ## Customization
 
-Presets differ only in accent colour: Precision Light and Precision Dark supply the canvas, surface and text colours for every preset except Slate and the two high-contrast presets. To change the overall mood, edit `semantic` and call `ResolveTheme`.
+Precision Light, Precision Dark, Slate and the two high-contrast presets have hand-tuned palettes. The other eight (Graphite, Midnight, Ocean, Forest, Violet, Warm Sand, Rose and Solar) are each built by `MakeBrandTheme` from four colours: canvas, surface, text and accent. They are also examples of what a host can do with the same function; see [Make your own look](make-your-own-look.md).
 
 `SetAccent` updates accent, focus, contrasting on-accent text and selection. `semantic`, `typography`, `radius`, `stroke`, `elevation` and `opacity` are the source of truth; `colors` and `metrics` are projections that `ResolveTheme` rebuilds, so edits made directly to them are overwritten by the next `ResolveTheme` or `SetDensity`. Edit `motion` or `editor` fields explicitly when needed. Arbitrary edits are not automatically contrast-corrected.
 

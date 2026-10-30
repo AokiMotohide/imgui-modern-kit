@@ -196,11 +196,32 @@ Theme MakeTheme(ThemePreset preset) {
         SetAccent(theme, Hex(0x78aaff));
         return theme;
     }
+    // The coloured presets are built from four brand colours, like any host theme; only Precision keeps its own palette.
+    struct Brand {
+        ThemePreset preset;
+        unsigned canvas, surface, text, accent;
+    };
+    static constexpr Brand brands[] = {
+        {ThemePreset::Graphite, 0x101113, 0x1a1b1e, 0xeceef1, 0x78d6c6},
+        {ThemePreset::Midnight, 0x0b1226, 0x111b36, 0xe8eeff, 0x8eafff},
+        {ThemePreset::Ocean, 0x07202b, 0x0d2f3d, 0xe6f6fa, 0x56d3e5},
+        {ThemePreset::Forest, 0x0f1c14, 0x172a1d, 0xe8f4ea, 0x83d69c},
+        {ThemePreset::Violet, 0x17102a, 0x21183a, 0xf0eaff, 0xc19af5},
+        {ThemePreset::WarmSand, 0xefe6d6, 0xf8f2e6, 0x3a2f22, 0x9b5c2e},
+        {ThemePreset::Rose, 0xfbe9ee, 0xfff6f8, 0x3d2530, 0xa9466b},
+        {ThemePreset::Solar, 0xfbf0cf, 0xfffaea, 0x3a3012, 0x856500},
+    };
+    for (const auto &b : brands)
+        if (b.preset == preset) {
+            BrandPalette palette;
+            palette.canvas = Hex(b.canvas);
+            palette.surface = Hex(b.surface);
+            palette.text = Hex(b.text);
+            palette.accent = Hex(b.accent);
+            return MakeBrandTheme(palette);
+        }
     auto theme = MakePrecisionTheme(info.scheme);
-    constexpr std::array accents = {0x005ca8u, 0x8ab4f8u, 0x78d6c6u, 0x8eafffu,
-                                    0x56d3e5u, 0x83d69cu, 0x9b5c2eu, 0xa9466bu,
-                                    0xc19af5u, 0x856500u};
-    SetAccent(theme, Hex(accents[static_cast<std::size_t>(preset)]));
+    SetAccent(theme, Hex(preset == ThemePreset::PrecisionLight ? 0x005ca8u : 0x8ab4f8u));
     return theme;
 }
 Theme MakePrecisionTheme(ColorScheme scheme) {
