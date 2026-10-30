@@ -4,7 +4,7 @@
 
 The video timeline is ImKit's professional NLE surface: multi-track editing, fades, transitions, ripple/roll/slide/slip moves, track management, envelope keyframes, and a preview monitor. It is a host-owned, immediate-mode widget. You supply a `TimelineProvider` (your tracks and clips, as borrowed views each frame), a persistent `TimelineState` (pan/zoom/gestures), and an event buffer that the timeline fills with committed edits. The library never decodes media, owns files, or holds your clip list — it draws and reports.
 
-![Multi-track timeline with clips, tracks, and overview](../images/v3-timeline.gif)
+![Multi-track timeline with clips, tracks, and overview](../images/v4-timeline.gif)
 
 ## The core pattern
 

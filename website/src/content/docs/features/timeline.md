@@ -8,9 +8,9 @@ title: "Timeline編集"
 
 ## Galleryの画面
 
-![clip、track、編集操作を表示するTimeline画面。](../../../assets/captures/v3-timeline-poster.png)
+![clip、track、編集操作を表示するTimeline画面。](../../../assets/captures/v4-timeline-poster.png)
 
-Timeline — clip、track、編集操作 · [Galleryの操作映像を開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v3-timeline.gif)
+Timeline — clip、track、編集操作 · [Galleryの操作映像を開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-timeline.gif)
 
 ## 最小描画例
 

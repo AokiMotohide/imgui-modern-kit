@@ -6,8 +6,8 @@ The timeline/3D extension appends 32 IDs, including Empty, Frustum, Camera3D,
 Projector3D, geometric primitives and light types. `cg::ObjectView::icon` lets hosts
 select a semantic glyph without extending ObjectKind. The existing IDs retain their order.
 
-The icon catalog holds 288 entries in 19 categories: 238 ImageGen-generated monochrome
-glyphs plus 50 code-authored native control and drawing representations that need no source bitmaps.
+The icon catalog holds 320 entries in 21 categories: 238 ImageGen-generated monochrome
+glyphs plus 82 code-authored native control and drawing representations (including the 32 LED and live-surface icons added in 4.0) that need no source bitmaps.
 The artwork is distributed with this repository under its MIT license. The original
 generations and their prompts are retained in `assets/icons/originals` and
 `assets/icons/prompts`; `provenance.json` records source hashes. Original images use
@@ -55,7 +55,7 @@ The existing `IconButton(id, ImGuiDir, accessibleLabel)` overload is unchanged.
 ## API behavior
 
 - `GetIconCatalog()` returns stable IDs, English names and categories; `GetIconInfo`
-  returns null for invalid IDs. The 288 entries follow `assets/icons/catalog.json`.
+  returns null for invalid IDs. The 320 entries follow `assets/icons/catalog.json`.
 - `GetIconAtlasPixels` accepts exactly 12, 16, 20, 24, 32, 48 or 64. The returned CPU data
   is immutable with process lifetime; unsupported sizes return an empty view.
 - `GetIconRegion` returns the corresponding normalized UV rectangle. Two transparent
@@ -105,8 +105,8 @@ original hashes, every derived image and every atlas region.
 ## Native Gallery
 
 The Icons page provides category/name search, seven sizes, tint and interaction states.
-The final catalog has 288 icons (120 stable existing IDs + 168 additions): 238
-ImageGen originals plus 50 native representations, 2016 size variants and seven
+The final catalog has 320 icons (120 stable existing IDs + 200 additions): 238
+ImageGen originals plus 82 native representations, 2240 size variants and seven
 atlases. The operation map records 250 uses, including 55
 native control/drawing representations that do not need separate bitmaps.
 

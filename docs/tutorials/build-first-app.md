@@ -4,7 +4,7 @@
 
 This is a codelab. By the end, you will have the full shape of a Dear ImGui host application that draws themed ImKit controls. It is modelled on the repo's minimal host, `examples/consumer/main.cpp`, and uses CPU-embedded resources so it needs no GPU, image loader, or file lookup to *understand* how things fit together.
 
-![Native Gallery overview](../images/gallery-overview.gif)
+![Native Gallery overview](../images/v4-start.gif)
 
 ## What you'll build
 

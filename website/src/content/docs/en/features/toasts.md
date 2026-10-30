@@ -63,8 +63,8 @@ Cards use the raised surface with a status accent bar and icon; the status colou
 
 Open **Toasts** (page 20): six positions, timing overrides, queue bursts, same-ID success/error completion, determinate/indeterminate progress, a details action, and English/Japanese examples. **Appearance** changes theme, density, contrast and reduced motion.
 
-![Native Loading to Success toast interaction](/imgui-modern-kit/docs-images/v3-toasts-poster.png)
+![Native Loading to Success toast interaction](/imgui-modern-kit/docs-images/v4-toasts-poster.png)
 
-[Open native GIF](/imgui-modern-kit/docs-images/v3-toasts.gif)
+[Open native GIF](/imgui-modern-kit/docs-images/v4-toasts.gif)
 
 `imkit.toast` covers timing, pauses, queues, updates, buffer bounds, duplicate IDs, layout and public mouse requests. `imkit.toast_api_compile` and the external consumer cover public signatures. Gallery GPU capture is separate from native OS/IME, screen-reader, multi-monitor DPI and macOS acceptance.

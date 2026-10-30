@@ -195,7 +195,7 @@ configure_package_config_file(cmake/imkitConfig.cmake.in "${CMAKE_CURRENT_BINARY
 write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/imkitConfigVersion.cmake" VERSION ${PROJECT_VERSION} COMPATIBILITY SameMinorVersion)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/imkitConfig.cmake" "${CMAKE_CURRENT_BINARY_DIR}/imkitConfigVersion.cmake" DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/imkit)
 install(FILES README.md README.ja.md LICENSE THIRD_PARTY_NOTICES.md CHANGELOG.md DESTINATION .)
-install(FILES website/public/media/imkit-3.2-poster.jpg DESTINATION website/public/media)
+install(FILES website/public/media/imkit-4.0-poster.jpg DESTINATION website/public/media)
 install(DIRECTORY docs/ DESTINATION docs
     PATTERN "precision-layers-implementation-prompt.md" EXCLUDE
     PATTERN "completion-plan.md" EXCLUDE

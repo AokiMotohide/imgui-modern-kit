@@ -8,9 +8,9 @@ Use workflow components to show progress, empty or unavailable states, notificat
 
 ## Gallery capture
 
-![Native ImKit workflow view showing progress and status feedback.](../../../../assets/captures/v3-workflow-progress-poster.png)
+![Native ImKit workflow view showing progress and status feedback.](../../../../assets/captures/v4-progress-poster.png)
 
-Workflow — progress and status feedback · [Open the native Gallery animation](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v3-workflow-progress.gif)
+Workflow — progress and status feedback · [Open the native Gallery animation](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-progress.gif)
 
 ## Minimum drawing example
 
@@ -114,8 +114,8 @@ imkit::ProgressTrack("import-progress", progress, {&theme, &animation});
 
 For colored cards with six positions, actions and progress, see [Toasts](../toasts/). Existing `ToastRegion` behavior remains unchanged.
 
-Open **Generic Workspace** (page 15), **Feedback / States**, or **Preview Tiles**. Generic Workspace includes the new connection-method `ChoiceGroup` example. It combines navigation, toolbar, image, overlays, selection, feedback and status, and uses the existing procedural texture. `--verify-workflow --output <directory>` runs public IO checks and captures 36 page/theme combinations plus two narrow Japanese/disabled examples. Native GPU captures are distinct from native OS/IME and screen-reader tests.
+Open **Workspace shell** (page 15), **Progress and states**, or **Preview tiles**. Generic Workspace includes the new connection-method `ChoiceGroup` example. It combines navigation, toolbar, image, overlays, selection, feedback and status, and uses the existing procedural texture. `--verify-workflow --output <directory>` runs public IO checks and captures 36 page/theme combinations plus two narrow Japanese/disabled examples. Native GPU captures are distinct from native OS/IME and screen-reader tests.
 
 ## ImKit 3.2 workspace
 
-Open **New in 3.2** in the Gallery to use WorkspaceTabs, HierarchyGroupHeader/HierarchyRow, BeginInspectorCard/EndInspectorCard, SettingToggleRow, DragVector3WithUnit, ChoiceGroup and CompactActionRow together. Requests update Gallery-owned values; the same pattern works in an existing ImGui frame. See the [3.2 declarations and lifetime rules](../../api/v3-2/). All 288 runtime icons and 13 themes are available without introducing a new context or application framework.
+Open **Workspace** in the Gallery to use WorkspaceTabs, HierarchyGroupHeader/HierarchyRow, BeginInspectorCard/EndInspectorCard, SettingToggleRow, DragVector3WithUnit, ChoiceGroup and CompactActionRow together. Requests update Gallery-owned values; the same pattern works in an existing ImGui frame. See the [3.2 declarations and lifetime rules](../../api/v3-2/). All 320 runtime icons and 13 themes are available without introducing a new context or application framework.

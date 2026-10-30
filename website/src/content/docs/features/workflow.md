@@ -8,9 +8,9 @@ title: "Workflow部品"
 
 ## Galleryの画面
 
-![進捗と状態表示を含むWorkflow部品の画面。](../../../assets/captures/v3-workflow-progress-poster.png)
+![進捗と状態表示を含むWorkflow部品の画面。](../../../assets/captures/v4-progress-poster.png)
 
-Workflow — 進捗と状態の表示 · [Galleryの操作映像を開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v3-workflow-progress.gif)
+Workflow — 進捗と状態の表示 · [Galleryの操作映像を開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-progress.gif)
 
 ## 最小描画例
 
@@ -89,12 +89,12 @@ void DrawImportProgress() {
 6位置、操作、進行表示に対応した色付きカードは[トースト](../toasts/)を参照してください。既存の `ToastRegion` の挙動は維持します。
 
 Gallery アプリの以下の画面で実際の挙動を確認できます：
-- **Generic Workspace** (ページID: 15): 接続方式のChoiceGroup、ナビゲーション、ツールバー、画像ビューア、オーバーレイの統合例。
-- **Feedback / States**: 各種アラート、プログレスバー、エンプティステートの表示例。
-- **Preview Tiles**: 可変サイズプレビュータイルの操作例。
+- **Workspace shell** (ページID: 15): 接続方式のChoiceGroup、ナビゲーション、ツールバー、画像ビューア、オーバーレイの統合例。
+- **Progress and states**: 各種アラート、プログレスバー、エンプティステートの表示例。
+- **Preview tiles**: 可変サイズプレビュータイルの操作例。
 
 実装コードは [`examples/gallery/workflow_pages.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/workflow_pages.cpp) を参照してください。
 
 ## ImKit 3.2の作業画面
 
-Galleryの **New in 3.2** では、WorkspaceTabs、HierarchyGroupHeader／HierarchyRow、BeginInspectorCard／EndInspectorCard、SettingToggleRow、DragVector3WithUnit、ChoiceGroup、CompactActionRowを組み合わせて操作できます。要求を受けてGallery側の値を更新する実装は、既存のImGuiフレームでも利用できます。[3.2の宣言と寿命の規則](../../api/v3-2/)を参照してください。288アイコンと13テーマを利用でき、Contextやアプリのフレーム管理は引き続きホストが担当します。
+Galleryの **Workspace** では、WorkspaceTabs、HierarchyGroupHeader／HierarchyRow、BeginInspectorCard／EndInspectorCard、SettingToggleRow、DragVector3WithUnit、ChoiceGroup、CompactActionRowを組み合わせて操作できます。要求を受けてGallery側の値を更新する実装は、既存のImGuiフレームでも利用できます。[3.2の宣言と寿命の規則](../../api/v3-2/)を参照してください。320アイコンと13テーマを利用でき、Contextやアプリのフレーム管理は引き続きホストが担当します。

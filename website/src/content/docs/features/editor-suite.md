@@ -8,9 +8,9 @@ title: "Editor Suite"
 
 ## Galleryの画面
 
-![ImKitのTimeline編集画面。](../../../assets/captures/v3-timeline-poster.png)
+![ImKitのTimeline編集画面。](../../../assets/captures/v4-timeline-poster.png)
 
-Editor Suite — Timelineと編集画面 · [Galleryの操作映像を開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v3-timeline.gif)
+Editor Suite — Timelineと編集画面 · [Galleryの操作映像を開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-timeline.gif)
 
 ## 最小描画例
 

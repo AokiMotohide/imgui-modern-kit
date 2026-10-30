@@ -4,7 +4,7 @@
 
 ImKit components are small compositions over Dear ImGui behavior: a `ThemeScope`, semantic colors from your theme, host-owned state, and a returned request. Once you follow that shape, you can add a control that fits the design system without touching the library. This page shows the rules and a complete, minimal custom control — a "chip" toggle.
 
-![Themed panels in the Gallery](../images/gallery-overview.gif)
+![Themed panels in the Gallery](../images/v4-start.gif)
 
 ## The core pattern
 

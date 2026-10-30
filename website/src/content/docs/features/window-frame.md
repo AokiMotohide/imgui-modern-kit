@@ -8,9 +8,9 @@ WindowFrameはテーマ付きのtitle areaを描画し、型付きwindow操作�
 
 ## Galleryの画面
 
-![アプリケーションshellとcontent領域を含むGallery画面。](../../../assets/captures/v3-overview-poster.png)
+![アプリケーションshellとcontent領域を含むGallery画面。](../../../assets/captures/v4-start-poster.png)
 
-Galleryの全体画面 — application shellとcontent · [Galleryの操作映像を開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v3-overview.gif)
+Galleryの全体画面 — application shellとcontent · [Galleryの操作映像を開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-start.gif)
 
 ## 最小描画例
 
@@ -111,7 +111,7 @@ if (result.action == imkit::WindowFrameAction::Close) {
 
 ## Windows Gallery Frame Lab
 
-Windows環境で開発用ギャラリーをビルドして起動し、**Frame Lab** を選択すると動作を確認できます。
+Windows環境で開発用ギャラリーをビルドして起動し、**Window frame** を選択すると動作を確認できます。
 
 ```powershell
 cmake -S . -B build/window-frame-public-debug

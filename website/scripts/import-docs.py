@@ -49,7 +49,7 @@ PAGES["toasts"] = ("features/toasts", "Toast notifications", "トースト通知
 
 FEATURE_LEADS = {
     "components": {
-        "capture": "v3-overview",
+        "capture": "v4-start",
         "alt_en": "Native ImKit Gallery capture showing the integrated toolkit interface.",
         "alt_ja": "ImKit Galleryに表示されたUI部品の画面。",
         "caption_en": "Components — settings, selection and feedback",
@@ -73,7 +73,7 @@ void DrawApplyButton() {
         "links_ja": [("Native API一覧", "api/native"), ("部品一覧", "api/widgets")],
     },
     "themes": {
-        "capture": "v3-theme-comparison",
+        "capture": "v4-themes",
         "alt_en": "Native comparison of ImKit theme presets in the Gallery.",
         "alt_ja": "Gallery内でImKitのテーマを比較する画面。",
         "caption_en": "Themes — light and dark palettes",
@@ -97,7 +97,7 @@ imkit::Theme MakeForestTheme() {
         "links_ja": [("Design-system header一覧", "api/design-system"), ("Native API一覧", "api/native")],
     },
     "workflow-components": {
-        "capture": "v3-workflow-progress",
+        "capture": "v4-progress",
         "alt_en": "Native ImKit workflow view showing progress and status feedback.",
         "alt_ja": "進捗と状態表示を含むWorkflow部品の画面。",
         "caption_en": "Workflow — progress and status feedback",
@@ -122,7 +122,7 @@ void DrawImportProgress() {
         "links_ja": [("Workflowガイド", "features/workflow"), ("Application shellガイド", "features/shell")],
     },
     "editor-suite": {
-        "capture": "v3-timeline",
+        "capture": "v4-timeline",
         "alt_en": "Native Gallery capture of the ImKit timeline editing surface.",
         "alt_ja": "ImKitのTimeline編集画面。",
         "caption_en": "Editor Suite — timeline and editing surfaces",
@@ -149,7 +149,7 @@ void DrawTimeline(const imkit::video::TimelineProvider& provider,
         "links_ja": [("Editor API契約", "api/editor-suite"), ("Timeline編集ガイド", "features/timeline")],
     },
     "timeline-editing": {
-        "capture": "v3-timeline",
+        "capture": "v4-timeline",
         "alt_en": "Native ImKit timeline capture showing clips, tracks and editing controls.",
         "alt_ja": "clip、track、編集操作を表示するTimeline画面。",
         "caption_en": "Timeline — clip, track and edit controls",
@@ -176,7 +176,7 @@ void DrawTimeline(const imkit::video::TimelineProvider& provider,
         "links_ja": [("Timeline操作契約", "features/timeline"), ("Editor APIリファレンス", "api/editor-suite")],
     },
     "gallery-window-frame": {
-        "capture": "v3-overview",
+        "capture": "v4-start",
         "alt_en": "Native Gallery overview with its application shell and content regions.",
         "alt_ja": "アプリケーションshellとcontent領域を含むGallery画面。",
         "caption_en": "Gallery overview — application shell and content",
@@ -203,7 +203,7 @@ imkit::WindowFrameResult DrawTitleArea(const imkit::Theme& theme,
         "links_ja": [("WindowFrame API map", "api/window-frame"), ("Iconガイド", "features/icons")],
     },
     "icons": {
-        "capture": "gallery-icons",
+        "capture": "v4-icons",
         "alt_en": "Native Gallery capture displaying ImKit's icon atlas and icon buttons.",
         "alt_ja": "ImKitのicon atlasとicon buttonを表示するGallery画面。",
         "caption_en": "Icons — atlas and labeled actions",

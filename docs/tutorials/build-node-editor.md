@@ -4,7 +4,7 @@
 
 The Node Editor is ImKit's independent graph UI. It is an optional target (`imkit::node_editor`) that renders the *snapshot* you supply each frame and collects *edit requests* you choose to apply. There is no evaluation engine, renderer, filesystem, clipboard, or "current editor" singleton inside the library. You own the graph; ImKit draws it and hands back intent.
 
-![Node editor with dynamic sockets and links](../images/v3-node-editor.gif)
+![Node editor with dynamic sockets and links](../images/v4-node-editor.gif)
 
 ## The core pattern
 

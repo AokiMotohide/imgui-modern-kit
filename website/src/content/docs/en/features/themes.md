@@ -8,9 +8,9 @@ Start with a named preset, then adjust semantic colors and metrics for the host 
 
 ## Gallery capture
 
-![Native comparison of ImKit theme presets in the Gallery.](../../../../assets/captures/v3-theme-comparison-poster.png)
+![Native comparison of ImKit theme presets in the Gallery.](../../../../assets/captures/v4-themes-poster.png)
 
-Themes — light and dark palettes · [Open the native Gallery animation](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v3-theme-comparison.gif)
+Themes — light and dark palettes · [Open the native Gallery animation](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-themes.gif)
 
 ## Minimum drawing example
 

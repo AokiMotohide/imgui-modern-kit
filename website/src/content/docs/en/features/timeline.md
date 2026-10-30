@@ -8,9 +8,9 @@ Use Video Timeline when the host needs to present tracks, clips, keyframes and e
 
 ## Gallery capture
 
-![Native ImKit timeline capture showing clips, tracks and editing controls.](../../../../assets/captures/v3-timeline-poster.png)
+![Native ImKit timeline capture showing clips, tracks and editing controls.](../../../../assets/captures/v4-timeline-poster.png)
 
-Timeline — clip, track and edit controls · [Open the native Gallery animation](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v3-timeline.gif)
+Timeline — clip, track and edit controls · [Open the native Gallery animation](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-timeline.gif)
 
 ## Minimum drawing example
 

@@ -8,9 +8,9 @@ title: "コンポーネント"
 
 ## Galleryの画面
 
-![ImKit Galleryに表示されたUI部品の画面。](../../../assets/captures/v3-overview-poster.png)
+![ImKit Galleryに表示されたUI部品の画面。](../../../assets/captures/v4-start-poster.png)
 
-Components — 設定、選択、状態表示 · [Galleryの操作映像を開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v3-overview.gif)
+Components — 設定、選択、状態表示 · [Galleryの操作映像を開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-start.gif)
 
 ## 最小描画例
 
@@ -176,4 +176,4 @@ case imkit::CompactActionRowRequest::None: break;
 
 ## ImKit 3.2の作業画面
 
-Galleryの **New in 3.2** では、WorkspaceTabs、HierarchyGroupHeader／HierarchyRow、BeginInspectorCard／EndInspectorCard、SettingToggleRow、DragVector3WithUnit、ChoiceGroup、CompactActionRowを組み合わせて操作できます。要求を受けてGallery側の値を更新する実装は、既存のImGuiフレームでも利用できます。[3.2の宣言と寿命の規則](../../api/v3-2/)を参照してください。288アイコンと13テーマを利用でき、Contextやアプリのフレーム管理は引き続きホストが担当します。
+Galleryの **Workspace** では、WorkspaceTabs、HierarchyGroupHeader／HierarchyRow、BeginInspectorCard／EndInspectorCard、SettingToggleRow、DragVector3WithUnit、ChoiceGroup、CompactActionRowを組み合わせて操作できます。要求を受けてGallery側の値を更新する実装は、既存のImGuiフレームでも利用できます。[3.2の宣言と寿命の規則](../../api/v3-2/)を参照してください。320アイコンと13テーマを利用でき、Contextやアプリのフレーム管理は引き続きホストが担当します。

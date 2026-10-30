@@ -8,9 +8,9 @@ Use the components module when a creative tool needs consistent settings rows, b
 
 ## Gallery capture
 
-![Native ImKit Gallery capture showing the integrated toolkit interface.](../../../../assets/captures/v3-overview-poster.png)
+![Native ImKit Gallery capture showing the integrated toolkit interface.](../../../../assets/captures/v4-start-poster.png)
 
-Components — settings, selection and feedback · [Open the native Gallery animation](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v3-overview.gif)
+Components — settings, selection and feedback · [Open the native Gallery animation](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-start.gif)
 
 ## Minimum drawing example
 
@@ -173,4 +173,4 @@ Each action can be disabled independently; its disabled reason appears in that b
 
 ## ImKit 3.2 workspace
 
-Open **New in 3.2** in the Gallery to use WorkspaceTabs, HierarchyGroupHeader/HierarchyRow, BeginInspectorCard/EndInspectorCard, SettingToggleRow, DragVector3WithUnit, ChoiceGroup and CompactActionRow together. Requests update Gallery-owned values; the same pattern works in an existing ImGui frame. See the [3.2 declarations and lifetime rules](../../api/v3-2/). All 288 runtime icons and 13 themes are available without introducing a new context or application framework.
+Open **Workspace** in the Gallery to use WorkspaceTabs, HierarchyGroupHeader/HierarchyRow, BeginInspectorCard/EndInspectorCard, SettingToggleRow, DragVector3WithUnit, ChoiceGroup and CompactActionRow together. Requests update Gallery-owned values; the same pattern works in an existing ImGui frame. See the [3.2 declarations and lifetime rules](../../api/v3-2/). All 320 runtime icons and 13 themes are available without introducing a new context or application framework.

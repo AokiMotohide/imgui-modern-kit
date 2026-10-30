@@ -8,9 +8,9 @@ title: "テーマ"
 
 ## Galleryの画面
 
-![Gallery内でImKitのテーマを比較する画面。](../../../assets/captures/v3-theme-comparison-poster.png)
+![Gallery内でImKitのテーマを比較する画面。](../../../assets/captures/v4-themes-poster.png)
 
-Themes — ライト・ダークの配色 · [Galleryの操作映像を開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v3-theme-comparison.gif)
+Themes — ライト・ダークの配色 · [Galleryの操作映像を開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-themes.gif)
 
 ## 最小描画例
 

@@ -1,13 +1,13 @@
 ---
 title: ImKit
-description: Add host-owned C++20 UI modules to creative tools built with Dear ImGui.
+description: Give an existing Dear ImGui app a modern look and richer controls, with the frame and state you already own.
 template: splash
 hero:
   title: "Modern UI.<br />Familiar workflow."
-  tagline: "Modernize an existing Dear ImGui app with a theme. Add workspace controls, 288 icons and 13 themes, using the frame and state you already own."
+  tagline: "Add one theme to your Dear ImGui app, then bring in workspaces, charts, show controls and 320 icons. Your frame, data and undo history stay yours."
   image:
-    file: ../../../assets/captures/v3-workspace-poster.png
-    alt: "Native capture of the ImKit v3.2 Node Editor Gallery with nodes, links, and previews."
+    file: ../../../assets/captures/v4-start-poster.png
+    alt: "The ImKit Gallery start page: switch between plain Dear ImGui and ImKit, and wear a theme."
   actions:
     - text: "Get started"
       link: ./getting-started/
@@ -21,55 +21,56 @@ hero:
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 import CapturePlayer from '../../../components/CapturePlayer.astro';
-import progressCapture from '../../../../../docs/images/v3-progress.gif';
-import progressPoster from '../../../assets/captures/v3-progress-poster.png';
-import nodeCapture from '../../../../../docs/images/v3-workspace.gif';
-import nodePoster from '../../../assets/captures/v3-workspace-poster.png';
-import workflowCapture from '../../../../../docs/images/v3-comparison.gif';
-import workflowPoster from '../../../assets/captures/v3-comparison-poster.png';
-import timelineCapture from '../../../../../docs/images/v3-timeline.gif';
-import timelinePoster from '../../../assets/captures/v3-timeline-poster.png';
+import themesCapture from '../../../../../docs/images/v4-themes.gif';
+import themesPoster from '../../../assets/captures/v4-themes-poster.png';
+import studioCapture from '../../../../../docs/images/v4-studio.gif';
+import studioPoster from '../../../assets/captures/v4-studio-poster.png';
+import workspaceCapture from '../../../../../docs/images/v4-workspace.gif';
+import workspacePoster from '../../../assets/captures/v4-workspace-poster.png';
+import showCapture from '../../../../../docs/images/v4-show.gif';
+import showPoster from '../../../assets/captures/v4-show-poster.png';
+import compareCapture from '../../../../../docs/images/v4-compare.gif';
+import comparePoster from '../../../assets/captures/v4-compare-poster.png';
 
 <div class="imkit-home">
 
-## New in 3.3: show how work progresses
+## New in 4.0: make the look yours, reach the stage
 
-Shared progress tracks, stage lists, operation-enabled task cards and richer loading toasts explain long-running work. Your application owns the work and state. [Examples and recompilation requirements](./api/v3-3/).
+A refreshed default look, brand themes built from four colours, skins, charts, PTZ control, and the `show` module for media servers. Rebuild with the 4.0 headers: see the [4.0 additions](./api/v4-0/) and the [migration guide](./platform/migration-v4/).
 
-<CapturePlayer source={progressCapture} poster={progressPoster} alt="Native Gallery task progress and stages" caption="New in 3.3 — progress, stages and operations" playLabel="Play" stopLabel="Stop" playingLabel="Playing" pausedLabel="Still frame" reducedMotionLabel="Reduced motion is enabled; playback is manual" />
+[v4.0.0 SDK](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v4.0.0)
 
-[v3.3.0 SDK](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.3.0)
-
-The introductory film demonstrates the 3.2 release.
-
+The film above (about three minutes) shows these features in use.
 
 ## Add it to your application
 
 ImKit does not create a context, backend, renderer, or font atlas. Call the modules you need from your Dear ImGui application. Controls work with host values; editor surfaces borrow views and return bounded requests.
 
 <div class="home-points">
-  <div><span class="point-index">01</span><strong>Choose the modules</strong><p>Select Theme, workflow, Editor Suite, or Node Editor as separate targets.</p></div>
+  <div><span class="point-index">01</span><strong>Choose the modules</strong><p>Select Theme, Workflow, Editor Suite, Node Editor or Show as separate targets.</p></div>
   <div><span class="point-index">02</span><strong>Keep data ownership</strong><p>Controls work with host values. Editor surfaces borrow views and return bounded requests; the model stays with the host.</p></div>
   <div><span class="point-index">03</span><strong>Work with native ImGui</strong><p>Combine public widgets with ordinary ImGui input in the frame your host begins.</p></div>
 </div>
 
-## Try the 3.2 workspace
+## See it move
 
-These screens were recorded from the native backbuffers of the ImKit v3.2 Gallery and Node Editor companion. Each starts on a still native frame and loads the original capture only when you choose to play it.
+These takes were recorded from the ImKit Gallery. Each starts on a still frame and loads the original capture only when you choose to play it.
 
 <div class="capture-showcase">
-  <CapturePlayer source={nodeCapture} poster={nodePoster} alt="Native ImKit 3.2 workspace, with requests applied to host-owned values." caption="New in 3.2 · tabs, hierarchy, settings, axes and choices" playLabel="Play" stopLabel="Stop" playingLabel="Playing" pausedLabel="Still frame" reducedMotionLabel="Reduced motion is enabled; playback is manual" />
-  <CapturePlayer source={workflowCapture} poster={workflowPoster} alt="Native comparison of identical ImGui widgets under default and ImKit styles." caption="Theme only · identical ImGui calls, shared values" playLabel="Play" stopLabel="Stop" playingLabel="Playing" pausedLabel="Still frame" reducedMotionLabel="Reduced motion is enabled; playback is manual" />
-  <CapturePlayer source={timelineCapture} poster={timelinePoster} alt="Native capture of the Timeline editor in the ImKit Gallery." caption="Timeline · editing surface and host tools" playLabel="Play" stopLabel="Stop" playingLabel="Playing" pausedLabel="Still frame" reducedMotionLabel="Reduced motion is enabled; playback is manual" />
+  <CapturePlayer source={themesCapture} poster={themesPoster} alt="Picking a theme changes the whole Gallery." caption="Pick a theme and everything follows" playLabel="Play" stopLabel="Stop" playingLabel="Playing" pausedLabel="Still frame" reducedMotionLabel="Reduced motion is enabled; playback is manual" />
+  <CapturePlayer source={studioCapture} poster={studioPoster} alt="Theme Studio loading the blueprint, pastel-pop and sticker looks." caption="Theme Studio · load a whole look" playLabel="Play" stopLabel="Stop" playingLabel="Playing" pausedLabel="Still frame" reducedMotionLabel="Reduced motion is enabled; playback is manual" />
+  <CapturePlayer source={workspaceCapture} poster={workspacePoster} alt="A workspace with tabs, hierarchy, settings and choices." caption="Workspace · tabs, hierarchy, settings" playLabel="Play" stopLabel="Stop" playingLabel="Playing" pausedLabel="Still frame" reducedMotionLabel="Reduced motion is enabled; playback is manual" />
+  <CapturePlayer source={showCapture} poster={showPoster} alt="A cue list and clip launcher running a live show." caption="Show · run a live show with GO" playLabel="Play" stopLabel="Stop" playingLabel="Playing" pausedLabel="Still frame" reducedMotionLabel="Reduced motion is enabled; playback is manual" />
+  <CapturePlayer source={compareCapture} poster={comparePoster} alt="Plain Dear ImGui and ImKit editing the same values." caption="Before / After · one set of values" playLabel="Play" stopLabel="Stop" playingLabel="Playing" pausedLabel="Still frame" reducedMotionLabel="Reduced motion is enabled; playback is manual" />
 </div>
 
 ## Choose a starting point
 
 <CardGrid>
+  <LinkCard title="Migrate from 3.x to 4.0" description="Rebuild, changed defaults and deprecated spellings." href="./platform/migration-v4/" />
   <LinkCard title="Browse the feature catalog" description="Find controls, themes, workflow, and editing surfaces by use and screen." href="./features/" />
-  <LinkCard title="Integrate the Node Editor" description="Understand graph views, edit requests, sockets, and previews." href="./features/node-editor/" />
   <LinkCard title="Draw your first frame" description="Name the Dear ImGui target, then call ImKit and apply a theme." href="./getting-started/" />
-  <LinkCard title="BeginEditor API" description="Exact declaration, arguments, return value, lifetime, and draw order." href="./api/node-editor/begin-editor/" />
+  <LinkCard title="Integrate the Node Editor" description="Understand graph views, edit requests, sockets, and previews." href="./features/node-editor/" />
   <LinkCard title="GitHub repository" description="Find the source, releases, and native Gallery downloads." href="https://github.com/AokiMotohide/imgui-modern-kit" />
 </CardGrid>
 
