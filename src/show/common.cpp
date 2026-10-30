@@ -63,13 +63,26 @@ bool PillButton(const char* id, const char* text, const ShowColors& c, const Com
     ImGui::InvisibleButton("##pill", size);
     const bool hovered = ImGui::IsItemHovered(), held = ImGui::IsItemActive(), clicked = ImGui::IsItemClicked(), focused = ImGui::IsItemFocused();
     const ImVec4 fill = tone.w > 0 ? Mix(c.input, tone, held ? .45f : hovered ? .28f : .2f) : Mix(c.input, c.text, held ? .14f : hovered ? .09f : .03f);
-    draw->AddRectFilled(a, b, U32(fill), round);
-    if (dashed)
-        detail::DrawDashedRect(draw, a, b, round, U32(c.muted, .7f), 1.f, 3.f);
-    else if (detail::IsOutlined(ImGui::GetStyle()))
-        detail::DrawOutline(draw, a, b, round);
-    else
-        draw->AddRect(a, b, U32(tone.w > 0 ? Mix(c.border, tone, .6f) : c.border, .8f), round, 0, 1.f);
+    SkinFrame frame;
+    frame.draw = draw;
+    frame.min = a;
+    frame.max = b;
+    frame.rounding = round;
+    frame.part = SkinPart::Button;
+    frame.hovered = hovered;
+    frame.active = held;
+    frame.focused = focused;
+    frame.disabled = (ImGui::GetItemFlags() & ImGuiItemFlags_Disabled) != 0;
+    frame.hover = hovered ? 1.f : 0.f;
+    if (!detail::TrySkin(o.theme, frame)) {
+        draw->AddRectFilled(a, b, U32(fill), round);
+        if (dashed)
+            detail::DrawDashedRect(draw, a, b, round, U32(c.muted, .7f), 1.f, 3.f);
+        else if (detail::IsOutlined(ImGui::GetStyle()))
+            detail::DrawOutline(draw, a, b, round);
+        else
+            draw->AddRect(a, b, U32(tone.w > 0 ? Mix(c.border, tone, .6f) : c.border, .8f), round, 0, 1.f);
+    }
     DrawTextCentered(draw, a, b, U32(ink), text);
     if (focused && ImGui::GetIO().NavVisible)
         draw->AddRect({a.x - 2, a.y - 2}, {b.x + 2, b.y + 2}, U32(c.focus), round + 2.f, 0, 2.f);

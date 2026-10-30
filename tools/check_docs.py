@@ -32,6 +32,7 @@ PAIRS: list[tuple[str, str]] = [
     ("architecture/architecture.md", "architecture/アーキテクチャ.md"),
     ("architecture/design-system.md", "architecture/デザインシステム.md"),
     ("architecture/themes.md", "architecture/テーマ.md"),
+    ("architecture/make-your-own-look.md", "architecture/世界観を作る.md"),
     ("architecture/icons.md", "architecture/アイコン.md"),
     ("architecture/dependencies.md", "architecture/依存関係.md"),
     # components

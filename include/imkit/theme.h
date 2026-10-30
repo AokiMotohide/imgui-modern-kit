@@ -8,6 +8,7 @@
 #include <string_view>
 
 namespace imkit {
+struct Skin;
 enum class ColorScheme { Light, Dark };
 enum class ThemePreset : std::uint8_t {
     PrecisionLight, PrecisionDark, Graphite, Midnight, Ocean, Forest,
@@ -96,6 +97,7 @@ struct Theme {
     Motion motion{};
     FontSet fonts{};
     EditorPalette editor{};
+    const Skin *skin = nullptr; // Non-owning, like fonts; see skin.h. Not part of the theme text.
 };
 Theme MakePrecisionTheme(ColorScheme scheme = ColorScheme::Light);
 std::span<const ThemePresetInfo> ThemePresets() noexcept;

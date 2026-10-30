@@ -44,6 +44,7 @@ Documentation is organized into five structured categories based on development 
 | [Architecture](../architecture/architecture.md) / [JA](../architecture/アーキテクチャ.md) | Layer structure, module dependencies, and state boundaries | Overall design |
 | [Design System](../architecture/design-system.md) / [JA](../architecture/デザインシステム.md) | Color, spacing, typography tokens, and accessibility | `imkit/theme.h` |
 | [Themes](../architecture/themes.md) / [JA](../architecture/テーマ.md) | 13 preset themes, ThemeScope, and custom palette | `imkit/theme.h` |
+| [Make your own look](../architecture/make-your-own-look.md) / [JA](../architecture/世界観を作る.md) | Brand palette, theme file, outline, shadow, text roles, skins and backdrops | `imkit/theme.h`, `imkit/skin.h`, `imkit/decor.h` |
 | [Icons](../architecture/icons.md) / [JA](../architecture/アイコン.md) | Procedural icons, atlas management, and HiDPI drawing | `imkit/icons.h` |
 | [Dependencies](../architecture/dependencies.md) / [JA](../architecture/依存関係.md) | Pinned Dear ImGui docking revision and CMake options | `CMakeLists.txt` |
 

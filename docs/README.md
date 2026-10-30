@@ -67,6 +67,7 @@ flowchart TD
 - [Architecture](architecture/architecture.md) — Authoritative ownership model, module split, and host boundary.
 - [Design system](architecture/design-system.md) — Semantic design tokens, typography, and contrast invariants.
 - [Themes](architecture/themes.md) — 13 built-in presets, palette customization, and `ThemeScope`.
+- [Make your own look](architecture/make-your-own-look.md) — From four brand colours to a theme file, outlines, shadows and custom skins.
 - [Icons](architecture/icons.md) — Procedural outline icons, multi-size atlases, and GPU upload.
 - [Dependencies](architecture/dependencies.md) — Pinned Dear ImGui docking commit, compiler flags, and options.
 

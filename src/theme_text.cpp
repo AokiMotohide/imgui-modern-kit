@@ -262,6 +262,7 @@ ThemeParseResult ParseTheme(std::string_view text, Theme &theme) {
         }
         Theme next = MakeTheme(*preset);
         next.fonts = theme.fonts;
+        next.skin = theme.skin;
         theme = next;
         ++result.applied;
     }

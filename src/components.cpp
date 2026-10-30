@@ -48,63 +48,170 @@ bool Contains(const char *text, const char *query) {
     return a.find(b) != std::string::npos;
 }
 } // namespace
+namespace {
+// The colours of an ActionButton or IconActionButton and the width of its frame.
+struct ButtonPalette {
+    ImVec4 fill, text, hovered, active;
+    ImVec4 border;     // Only SubtleDestructive has its own; the other variants use ImGuiCol_Border.
+    ImVec4 focus;      // ImGuiCol_NavCursor as it was before the button hides ImGui's own ring.
+    float borderSize = 0;
+    bool solid = false, subtleDestructive = false, filled = false;
+};
+ButtonPalette MakeButtonPalette(ActionVariant variant, const Theme *t, const ImGuiStyle &style) {
+    ButtonPalette p;
+    p.subtleDestructive = variant == ActionVariant::SubtleDestructive;
+    p.solid = variant == ActionVariant::Primary || variant == ActionVariant::Destructive;
+    p.filled = variant != ActionVariant::Ghost && !p.subtleDestructive;
+    const ImVec4 destructive = t ? t->colors.destructive : ImVec4(.68f, .20f, .25f, 1);
+    p.fill = style.Colors[ImGuiCol_Button];
+    p.text = style.Colors[ImGuiCol_Text];
+    if (variant == ActionVariant::Primary) {
+        p.fill = Accent(t);
+        p.text = t ? t->colors.onAccent : ImVec4(1, 1, 1, 1);
+    }
+    if (variant == ActionVariant::Destructive) {
+        p.fill = destructive;
+        p.text = t ? t->colors.onDestructive : ImVec4(1, 1, 1, 1);
+    }
+    if (p.subtleDestructive) {
+        p.fill = destructive;
+        p.fill.w *= .12f;
+        p.text = destructive;
+    }
+    if (variant == ActionVariant::Ghost)
+        p.fill.w = 0;
+    const ImVec4 tone = p.subtleDestructive ? destructive : Accent(t);
+    p.hovered = Mix(p.fill, tone, .18f);
+    p.active = Mix(p.fill, tone, .32f);
+    p.border = p.subtleDestructive ? destructive : style.Colors[ImGuiCol_Border];
+    if (p.subtleDestructive)
+        p.border.w *= .58f;
+    // Solid and ghost buttons are drawn without a frame, unless the theme is outlined and every button carries it.
+    const bool borderless = (p.solid || variant == ActionVariant::Ghost) && !detail::IsOutlined(style);
+    p.borderSize = borderless ? 0.f : p.subtleDestructive ? std::max(1.f, style.FrameBorderSize) : style.FrameBorderSize;
+    p.focus = style.Colors[ImGuiCol_NavCursor];
+    return p;
+}
+// ImKit paints the frame itself when the theme has a skin, or a hard shadow that must sit behind the button.
+bool PaintsOwnFrame(const Theme *t, const ButtonPalette &p) {
+    return t && ((t->skin && t->skin->drawFrame) || (t->elevation.hard && p.filled));
+}
+struct PushedButtonStyle {
+    int colors = 0, vars = 0;
+};
+// `paintedByImKit` makes ImGui's own frame and focus ring invisible: PaintButtonFrame draws them instead.
+PushedButtonStyle PushButtonPalette(const ButtonPalette &p, bool paintedByImKit) {
+    const ImVec4 clear{0, 0, 0, 0};
+    ImGui::PushStyleColor(ImGuiCol_Button, paintedByImKit ? clear : p.fill);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, paintedByImKit ? clear : p.hovered);
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, paintedByImKit ? clear : p.active);
+    ImGui::PushStyleColor(ImGuiCol_Text, p.text);
+    PushedButtonStyle pushed{4, 1};
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, paintedByImKit ? 0.f : p.borderSize);
+    if (p.subtleDestructive || paintedByImKit) {
+        ImGui::PushStyleColor(ImGuiCol_Border, paintedByImKit ? clear : p.border);
+        ++pushed.colors;
+    }
+    if (paintedByImKit) {
+        ImGui::PushStyleColor(ImGuiCol_NavCursor, clear);
+        ++pushed.colors;
+    }
+    return pushed;
+}
+void PopButtonPalette(PushedButtonStyle pushed) {
+    ImGui::PopStyleColor(pushed.colors);
+    ImGui::PopStyleVar(pushed.vars);
+}
+// Paints the frame of the item just submitted as a transparent button: the hard shadow, then the skin's frame or the
+// default one, then the focus ring. Returns how far the content moves while the button sinks onto its shadow.
+ImVec2 PaintButtonFrame(const ButtonPalette &p, ActionVariant variant, const ComponentOptions &o, float hover) {
+    const auto &style = ImGui::GetStyle();
+    const Theme *t = o.theme;
+    auto *draw = ImGui::GetWindowDrawList();
+    ImVec2 minimum = ImGui::GetItemRectMin(), maximum = ImGui::GetItemRectMax();
+    const bool active = ImGui::IsItemActive(), hovered = ImGui::IsItemHovered(), focused = ImGui::IsItemFocused();
+    const float rounding = style.FrameRounding;
+    ImVec2 shift{0, 0};
+    if (t && t->elevation.hard && p.filled) {
+        if (active) {
+            shift = {t->elevation.offset.x * style.FontScaleMain, t->elevation.offset.y * style.FontScaleMain};
+            minimum = {minimum.x + shift.x, minimum.y + shift.y};
+            maximum = {maximum.x + shift.x, maximum.y + shift.y};
+        } else {
+            DrawShadow(*t, draw, minimum, maximum, rounding, ElevationLevel::Raised);
+        }
+    }
+    SkinFrame frame;
+    frame.draw = draw;
+    frame.min = minimum;
+    frame.max = maximum;
+    frame.rounding = rounding;
+    frame.part = SkinPart::Button;
+    frame.variant = variant;
+    frame.hovered = hovered;
+    frame.active = active;
+    frame.focused = focused;
+    frame.disabled = (ImGui::GetItemFlags() & ImGuiItemFlags_Disabled) != 0;
+    frame.hover = hover;
+    if (!detail::TrySkin(t, frame)) {
+        draw->AddRectFilled(minimum, maximum, ImGui::GetColorU32(active ? p.active : hovered ? p.hovered : p.fill), rounding);
+        if (p.borderSize > 0)
+            draw->AddRect(minimum, maximum, ImGui::GetColorU32(p.border), rounding, ImDrawFlags_None, p.borderSize);
+    }
+    if (focused && ImGui::GetIO().NavVisible)
+        draw->AddRect({minimum.x - 2, minimum.y - 2}, {maximum.x + 2, maximum.y + 2}, ImGui::GetColorU32(p.focus), rounding + 2.f,
+                      ImDrawFlags_None, t ? t->stroke.focus : 2.f);
+    return shift;
+}
+// Draws the label of a button whose frame ImKit painted, placed and clipped the way ImGui::Button would.
+void DrawButtonLabel(const char *label, ImVec4 color, ImVec2 shift) {
+    const std::string_view full = label ? label : "";
+    const auto visible = full.substr(0, full.find("##"));
+    if (visible.empty())
+        return;
+    const auto &style = ImGui::GetStyle();
+    const ImVec2 a{ImGui::GetItemRectMin().x + shift.x, ImGui::GetItemRectMin().y + shift.y};
+    const ImVec2 b{ImGui::GetItemRectMax().x + shift.x, ImGui::GetItemRectMax().y + shift.y};
+    const ImVec2 text = ImGui::CalcTextSize(visible.data(), visible.data() + visible.size());
+    const ImVec2 at{a.x + style.FramePadding.x + std::max(0.f, b.x - a.x - style.FramePadding.x * 2 - text.x) * style.ButtonTextAlign.x,
+                    a.y + style.FramePadding.y + std::max(0.f, b.y - a.y - style.FramePadding.y * 2 - text.y) * style.ButtonTextAlign.y};
+    const ImVec4 clip{a.x, a.y, b.x, b.y};
+    ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(), ImGui::GetFontSize(), at, ImGui::GetColorU32(color), visible.data(),
+                                        visible.data() + visible.size(), 0.f, &clip);
+}
+} // namespace
 bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, ComponentOptions options) {
     const auto *t = options.theme;
     auto &style = ImGui::GetStyle();
-    const bool subtleDestructive = variant == ActionVariant::SubtleDestructive;
-    const ImVec4 destructive = t ? t->colors.destructive : ImVec4(.68f, .20f, .25f, 1);
-    ImVec4 fill = style.Colors[ImGuiCol_Button], text = style.Colors[ImGuiCol_Text];
-    if (variant == ActionVariant::Primary) {
-        fill = Accent(t);
-        text = t ? t->colors.onAccent : ImVec4(1, 1, 1, 1);
-    }
-    if (variant == ActionVariant::Destructive) {
-        fill = destructive;
-        text = t ? t->colors.onDestructive : ImVec4(1, 1, 1, 1);
-    }
-    if (subtleDestructive) {
-        fill = destructive;
-        fill.w *= .12f;
-        text = destructive;
-    }
-    if (variant == ActionVariant::Ghost)
-        fill.w = 0;
-    ImGui::PushStyleColor(ImGuiCol_Button, fill);
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Mix(fill, subtleDestructive ? destructive : Accent(t), .18f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, Mix(fill, subtleDestructive ? destructive : Accent(t), .32f));
-    ImGui::PushStyleColor(ImGuiCol_Text, text);
-    const bool solid = variant == ActionVariant::Primary || variant == ActionVariant::Destructive;
-    // Solid and ghost buttons are drawn without a frame, unless the theme is outlined and every button carries it.
-    const bool borderless = (solid || variant == ActionVariant::Ghost) && !detail::IsOutlined(style);
-    if (borderless)
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
-    else if (subtleDestructive) {
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, std::max(1.f, style.FrameBorderSize));
-        auto border = destructive;
-        border.w *= .58f;
-        ImGui::PushStyleColor(ImGuiCol_Border, border);
-    }
+    const ButtonPalette palette = MakeButtonPalette(variant, t, style);
+    const bool painted = PaintsOwnFrame(t, palette);
+    const auto pushed = PushButtonPalette(palette, painted);
     const auto id = ImGui::GetID(label);
+    if (painted)
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0, 0, 0, 0)); // The label is drawn after the frame.
     bool pressed = ImGui::Button(label, size);
+    if (painted)
+        ImGui::PopStyleColor();
     if(ImGui::IsItemFocused()) ImGui::SetNavCursorVisible(true);
     if((ImGui::GetItemFlags()&ImGuiItemFlags_Disabled)!=0 &&
        ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
         ImGui::SetTooltip("%s",options.disabledReason?options.disabledReason:"Unavailable");
     pressed = SemanticItem(options,label,accessibility::SemanticRole::Button,accessibility::SemanticAction::Press) || pressed;
-    if (options.animation) {
-        const auto motion = t ? t->motion : Motion{};
-        float a = options.animation->Update(id, ImGui::IsItemHovered() ? 1.f : 0.f, ImGui::GetIO().DeltaTime,
-                                            motion.controlSeconds, ImGui::GetFrameCount(), motion.enabled && !motion.reducedMotion, motion.easing);
-        // Hover is a soft tonal wash that fades in; no outline.
-        auto color = solid ? ImVec4(1, 1, 1, 1) : Accent(t);
-        color.w = (solid ? .10f : .08f) * a;
-        if (a > 0)
-            ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
-                                                      ImGui::GetColorU32(color), style.FrameRounding);
+    const float hover = detail::Ease(options, id, ImGui::IsItemHovered() ? 1.f : 0.f);
+    ImVec2 shift{0, 0};
+    if (painted) {
+        shift = PaintButtonFrame(palette, variant, options, hover);
+        DrawButtonLabel(label, palette.text, shift);
     }
-    if (borderless || subtleDestructive)
-        ImGui::PopStyleVar();
-    ImGui::PopStyleColor(subtleDestructive ? 5 : 4);
+    if (options.animation && hover > 0) {
+        // Hover is a soft tonal wash that fades in; no outline.
+        auto color = palette.solid ? ImVec4(1, 1, 1, 1) : Accent(t);
+        color.w = (palette.solid ? .10f : .08f) * hover;
+        const ImVec2 a = ImGui::GetItemRectMin(), b = ImGui::GetItemRectMax();
+        ImGui::GetWindowDrawList()->AddRectFilled({a.x + shift.x, a.y + shift.y}, {b.x + shift.x, b.y + shift.y},
+                                                  ImGui::GetColorU32(color), style.FrameRounding);
+    }
+    PopButtonPalette(pushed);
     return pressed;
 }
 void DrawAtlasIcon(const IconAtlas& atlas,IconId icon,ImVec2 position,float size) {
@@ -123,37 +230,9 @@ bool IconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
                       ComponentOptions options) {
     const auto *t = options.theme;
     auto &style = ImGui::GetStyle();
-    const bool subtleDestructive = variant == ActionVariant::SubtleDestructive;
-    const ImVec4 destructive = t ? t->colors.destructive : ImVec4(.68f, .20f, .25f, 1);
-    ImVec4 fill = style.Colors[ImGuiCol_Button], text = style.Colors[ImGuiCol_Text];
-    if (variant == ActionVariant::Primary) {
-        fill = Accent(t);
-        text = t ? t->colors.onAccent : ImVec4(1, 1, 1, 1);
-    }
-    if (variant == ActionVariant::Destructive) {
-        fill = destructive;
-        text = t ? t->colors.onDestructive : ImVec4(1, 1, 1, 1);
-    }
-    if (subtleDestructive) {
-        fill = destructive;
-        fill.w *= .12f;
-        text = destructive;
-    }
-    if (variant == ActionVariant::Ghost)
-        fill.w = 0;
-    ImGui::PushStyleColor(ImGuiCol_Button, fill);
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Mix(fill, subtleDestructive ? destructive : Accent(t), .18f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, Mix(fill, subtleDestructive ? destructive : Accent(t), .32f));
-    ImGui::PushStyleColor(ImGuiCol_Text, text);
-    const bool borderless = variant != ActionVariant::Secondary && !subtleDestructive && !detail::IsOutlined(style);
-    if (borderless)
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
-    else if (subtleDestructive) {
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, std::max(1.f, style.FrameBorderSize));
-        auto border = destructive;
-        border.w *= .58f;
-        ImGui::PushStyleColor(ImGuiCol_Border, border);
-    }
+    const ButtonPalette palette = MakeButtonPalette(variant, t, style);
+    const bool painted = PaintsOwnFrame(t, palette);
+    const auto pushed = PushButtonPalette(palette, painted);
     const float iconSize = std::max(12.f, ImGui::GetFontSize());
     const std::string_view fullLabel=label?label:"";
     const auto visibleLabel=fullLabel.substr(0,fullLabel.find("##"));
@@ -169,7 +248,10 @@ bool IconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
     const bool pressedByWidget=ImGui::Button(widgetLabel.data(),extent);
     ImGui::PopStyleColor();
     if(ImGui::IsItemFocused()) ImGui::SetNavCursorVisible(true);
-    const auto minimum=ImGui::GetItemRectMin();
+    ImVec2 shift{0, 0};
+    if (painted)
+        shift = PaintButtonFrame(palette, variant, options, detail::Ease(options, ImGui::GetItemID(), ImGui::IsItemHovered() ? 1.f : 0.f));
+    const auto minimum=ImVec2{ImGui::GetItemRectMin().x+shift.x,ImGui::GetItemRectMin().y+shift.y};
     DrawAtlasIcon(atlas,icon,{minimum.x+style.FramePadding.x,
                              minimum.y+(extent.y-iconSize)*.5f},iconSize);
     ImGui::GetWindowDrawList()->AddText(
@@ -190,9 +272,7 @@ bool IconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
         ImGui::PopTextWrapPos();
         ImGui::EndTooltip();
     }
-    if (borderless || subtleDestructive)
-        ImGui::PopStyleVar();
-    ImGui::PopStyleColor(subtleDestructive ? 5 : 4);
+    PopButtonPalette(pushed);
     return pressed;
 }
 bool IconButton(const char *id, ImGuiDir direction, const char *accessibleLabel, ComponentOptions options) {
@@ -479,8 +559,17 @@ void StatusBadge(const char *text, StatusKind kind, const Theme *theme) {
     auto *d = ImGui::GetWindowDrawList();
     auto fill = color;
     fill.w = .14f;
-    d->AddRectFilled(p, {p.x + size.x, p.y + size.y}, ImGui::GetColorU32(fill), size.y * .5f);
-    detail::DrawOutline(d, p, {p.x + size.x, p.y + size.y}, size.y * .5f);
+    SkinFrame frame;
+    frame.draw = d;
+    frame.min = p;
+    frame.max = {p.x + size.x, p.y + size.y};
+    frame.rounding = size.y * .5f;
+    frame.part = SkinPart::Badge;
+    frame.status = kind;
+    if (!detail::TrySkin(theme, frame)) {
+        d->AddRectFilled(p, {p.x + size.x, p.y + size.y}, ImGui::GetColorU32(fill), size.y * .5f);
+        detail::DrawOutline(d, p, {p.x + size.x, p.y + size.y}, size.y * .5f);
+    }
     // Marker shape and text carry meaning in addition to color.
     const float u = ImGui::GetFontSize() * .3f;
     const ImVec2 m{p.x + size.y * .5f + u * .4f, p.y + size.y * .5f};
@@ -566,9 +655,18 @@ bool NotificationCard(const Notification &n, double now, const Theme *t) {
     const ImVec2 origin = ImGui::GetCursorScreenPos();
     auto *d = ImGui::GetWindowDrawList();
     const auto color = Status(n.kind, t);
-    d->AddRectFilled(origin, {origin.x + width, origin.y + height}, ImGui::GetColorU32(detail::WithAlpha(color, .10f)),
-                     style.FrameRounding);
-    detail::DrawOutline(d, origin, {origin.x + width, origin.y + height}, style.FrameRounding);
+    SkinFrame frame;
+    frame.draw = d;
+    frame.min = origin;
+    frame.max = {origin.x + width, origin.y + height};
+    frame.rounding = style.FrameRounding;
+    frame.part = SkinPart::Card;
+    frame.status = n.kind;
+    if (!detail::TrySkin(t, frame)) {
+        d->AddRectFilled(origin, {origin.x + width, origin.y + height}, ImGui::GetColorU32(detail::WithAlpha(color, .10f)),
+                         style.FrameRounding);
+        detail::DrawOutline(d, origin, {origin.x + width, origin.y + height}, style.FrameRounding);
+    }
     d->AddRectFilled({origin.x + 5, origin.y + 8}, {origin.x + 8, origin.y + height - 8}, ImGui::GetColorU32(color), 1.5f);
     const float textHeight = ImGui::CalcTextSize(n.text, nullptr, false, textWidth).y;
     d->AddText(ImGui::GetFont(), ImGui::GetFontSize(), {origin.x + pad + 6, origin.y + (height - textHeight) * .5f},

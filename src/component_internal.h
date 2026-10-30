@@ -1,5 +1,6 @@
 #pragma once
 #include <imkit/components.h>
+#include <imkit/skin.h>
 #include <cmath>
 #include <string_view>
 
@@ -43,6 +44,13 @@ inline void DrawOutline(ImDrawList* draw, ImVec2 minimum, ImVec2 maximum, float 
     const auto& style = ImGui::GetStyle();
     if (IsOutlined(style))
         draw->AddRect(minimum, maximum, ImGui::GetColorU32(ImGuiCol_Border), rounding, ImDrawFlags_None, style.FrameBorderSize);
+}
+// Offers a frame to the theme's skin. True when the skin painted it and the caller must skip its default frame.
+inline bool TrySkin(const Theme* theme, SkinFrame frame) {
+    if (!theme || !theme->skin || !theme->skin->drawFrame)
+        return false;
+    frame.theme = theme;
+    return theme->skin->drawFrame(frame, theme->skin->user);
 }
 inline bool MotionAllowed(const ComponentOptions& o) {
     return !o.theme || (o.theme->motion.enabled && !o.theme->motion.reducedMotion);

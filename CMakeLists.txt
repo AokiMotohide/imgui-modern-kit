@@ -58,7 +58,7 @@ if(NOT TARGET "${IMKIT_IMGUI_TARGET}")
         "Create the Dear ImGui target before adding imgui-modern-kit.")
 endif()
 
-add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/theme_text.cpp src/components.cpp src/icons.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp src/toast.cpp src/charts.cpp src/range_slider.cpp src/ptz.cpp src/shell.cpp src/window_frame.cpp)
+add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/theme_text.cpp src/decor.cpp src/components.cpp src/icons.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp src/toast.cpp src/charts.cpp src/range_slider.cpp src/ptz.cpp src/shell.cpp src/window_frame.cpp)
 add_library(imkit::imkit ALIAS imkit)
 
 target_compile_features(imkit PUBLIC cxx_std_20)
@@ -429,6 +429,9 @@ if(IMKIT_BUILD_TESTS)
     add_executable(imkit_theme_test tests/theme.cpp)
     target_link_libraries(imkit_theme_test PRIVATE imkit::imkit)
     add_test(NAME imkit.theme COMMAND imkit_theme_test)
+    add_executable(imkit_decor_test tests/decor.cpp)
+    target_link_libraries(imkit_decor_test PRIVATE imkit::imkit)
+    add_test(NAME imkit.decor COMMAND imkit_decor_test)
 
     add_executable(imkit_context_smoke tests/context_smoke.cpp)
     target_compile_features(imkit_context_smoke PRIVATE cxx_std_20)

@@ -1,6 +1,6 @@
 # Themes and customization
 
-[日本語](テーマ.md) · [Documentation index](../README.md)
+[日本語](テーマ.md) · [Documentation index](../README.md) · [Make your own look](make-your-own-look.md)
 
 ## Named presets
 

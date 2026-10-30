@@ -4,6 +4,8 @@
 #include <imkit/native.h>
 #include <imkit/theme.h>
 #include <imkit/components.h>
+#include <imkit/skin.h>
+#include <imkit/decor.h>
 #include <imkit/icons.h>
 #include <imkit/accessibility.h>
 #include <imkit/locale.h>
