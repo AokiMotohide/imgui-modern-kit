@@ -1,23 +1,30 @@
 {
-  "version": "3.2.0",
-  "license": "MIT; repository font/icon notices retained",
-  "revision": 2,
-  "duration": 60,
+  "version": "4.0.0",
+  "license": "MIT; repository font and icon notices retained",
+  "revision": 1,
+  "duration": 180,
   "fps": 60,
   "resolution": [
     1920,
     1080
   ],
-  "shots": 25,
-  "music": "Original 128 BPM D-minor electro-house; synthesized instruments and event-synchronized effects; seed 330; no samples or narration",
-  "fonts": "Repository Inter (SIL OFL), rasterized only",
-  "visuals": "Continuous native OpenGL backbuffer; real public Dear ImGui IO and large synchronized cursor; original typography and compositing",
-  "scripts": [
-    "tools/capture_v32_media.py",
-    "tools/render_v32_film.py",
-    "tools/motion_film.py"
+  "languages": [
+    "ja",
+    "en"
   ],
-  "validate": "tools/check_v32_media.py",
-  "sha256": "68e9ce75e4c510d13dac1100e61c3b5796535d552b3c945d0eaa66eb517dbc70",
-  "icons": "Repository MIT icons rasterized with a consistent dark ink for the original graphics layer"
+  "shots": 19,
+  "music": "Original house-style score synthesized with numpy at 120 BPM; no samples, no recordings, no narration. A licensed track can replace it with `tools/media/film.py --audio-only`.",
+  "fonts": "Inter and Noto Sans JP (SIL OFL), rasterized only; no font binaries are redistributed",
+  "visuals": "Native Gallery and Node Editor OpenGL backbuffers recorded through public Dear ImGui IO, with a large synchronized cursor; captions and transitions are original.",
+  "scripts": [
+    "tools/media/capture.py",
+    "tools/media/film.py",
+    "tools/media/music.py",
+    "examples/gallery/main.cpp (CaptureMotion)"
+  ],
+  "validate": "tools/media/verify.py",
+  "sha256": {
+    "ja": "ca784205e2d45d31226abe8f91d04111084a85c85eb44e64beac642bfc3c028a",
+    "en": "d1d28b1943e21863f295c16b759d390c0b61dec9318e2a847564cfeb24bfa671"
+  }
 }
