@@ -176,4 +176,4 @@ case imkit::CompactActionRowRequest::None: break;
 
 ## ImKit 3.2の作業画面
 
-Galleryの **Workspace** では、WorkspaceTabs、HierarchyGroupHeader／HierarchyRow、BeginInspectorCard／EndInspectorCard、SettingToggleRow、DragVector3WithUnit、ChoiceGroup、CompactActionRowを組み合わせて操作できます。要求を受けてGallery側の値を更新する実装は、既存のImGuiフレームでも利用できます。[3.2の宣言と寿命の規則](../../api/v3-2/)を参照してください。320アイコンと13テーマを利用でき、Contextやアプリのフレーム管理は引き続きホストが担当します。
+Galleryの **Workspace** では、WorkspaceTabs、HierarchyGroupHeader／HierarchyRow、BeginInspectorCard／EndInspectorCard、SettingToggleRow、DragVector3WithUnit、ChoiceGroup、CompactActionRowを組み合わせて操作できます。要求を受けてGallery側の値を更新する実装は、既存のImGuiフレームでも利用できます。[3.2の宣言と寿命の規則](../../api/v3-2/)を参照してください。321アイコンと13テーマを利用でき、Contextやアプリのフレーム管理は引き続きホストが担当します。

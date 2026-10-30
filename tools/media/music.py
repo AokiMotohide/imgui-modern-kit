@@ -256,3 +256,63 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# ---------------------------------------------------------------------------------------------------- licensed track
+def load_track(path: Path) -> np.ndarray:
+    """Decode any audio file to stereo float32 at SR."""
+    import subprocess
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(path), "-f", "f32le", "-ac", "2", "-ar", str(SR), "pipe:1"],
+                         capture_output=True, check=True).stdout
+    return np.frombuffer(raw, np.float32).reshape(-1, 2).copy()
+
+
+def track_grid(audio: np.ndarray, bpm: float):
+    """First downbeat (seconds) and per-bar RMS of a track whose tempo is known.
+
+    The kick shows up as low-frequency energy, so the beat phase is where low-passed energy peaks most often; the downbeat
+    is the strongest of the first four beats. Returns (offset_seconds, beat_scores, bar_rms)."""
+    mono = audio.mean(axis=1)
+    low = lowpass(mono[: SR * 40].astype(np.float64), 150, 2)
+    hop = SR // 200
+    energy = np.abs(low[: len(low) // hop * hop]).reshape(-1, hop).mean(axis=1)
+    flux = np.maximum(0, np.diff(energy, prepend=0))
+    beat = 60.0 / bpm
+    steps = int(beat * 200)
+    scores = np.array([flux[p::steps][:60].sum() for p in range(steps)])
+    phase = int(np.argmax(scores)) / 200
+    beats = [phase + k * beat for k in range(4)]
+    strength = [float(flux[int(t * 200): int(t * 200) + 3].sum()) for t in beats]
+    downbeat = beats[int(np.argmax(strength))]
+    bar = 4 * beat
+    rms = [float(np.sqrt((mono[int((downbeat + i * bar) * SR): int((downbeat + (i + 1) * bar) * SR)] ** 2).mean()))
+           for i in range(int((len(mono) / SR - downbeat) // bar))]
+    return downbeat, strength, rms
+
+
+def render_track_score(path: Path, track: Path, bpm: float, bars: int, offset: float, cuts=(), clicks=()):
+    """Write the film's score: the licensed track from its first downbeat, with the picture's cut whooshes and mouse clicks
+    mixed in softly. The track is trimmed to the film length and fades out; it is never time-stretched."""
+    beat, bar_len, _ = beat_grid(bpm)
+    seconds = bars * bar_len
+    audio = load_track(track)[int(offset * SR):]
+    n = int((seconds + 2.0) * SR)
+    audio = audio[:n] if len(audio) >= n else np.vstack([audio, np.zeros((n - len(audio), 2), np.float32)])
+    t = np.arange(n) / SR
+    fade_out = np.clip((seconds + 1.6 - t) / 3.0, 0, 1)
+    audio = audio * (np.minimum(1, t / .08) * fade_out)[:, None]
+    rng = np.random.default_rng(404)
+    fx = Mix(seconds + 3)
+    for at in cuts:
+        w = np.arange(int(SR * .22)) / SR
+        fx.add("fx", at - .1, highpass(rng.standard_normal(len(w)), 2500) * np.sin(np.pi * w / .22) ** 2, .05, -.2)
+    for at in clicks:
+        w = np.arange(int(SR * .04)) / SR
+        fx.add("fx", at, np.sin(2 * np.pi * 1700 * w) * np.exp(-w * 110), .07)
+    out = audio + fx.bus["fx"][:n]
+    out *= .9 / max(.01, float(np.abs(out).max()))
+    with wave.open(str(path), "wb") as f:
+        f.setnchannels(2)
+        f.setsampwidth(2)
+        f.setframerate(SR)
+        f.writeframes((out * 32767).astype("<i2").tobytes())

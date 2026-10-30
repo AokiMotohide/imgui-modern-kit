@@ -12,7 +12,7 @@
   "sub": "Familiar workflow."
  },
  "icons": {
-  "title": "320 icons.",
+  "title": "300+ icons.",
   "sub": "Search, then copy the C++ call."
  },
  "toasts": {
@@ -36,8 +36,8 @@
   "sub": "Copy your theme as text and share it."
  },
  "chapter-3": {
-  "title": "Build real tools.",
-  "sub": "Your data and undo history stay in your app."
+  "title": "Easy to adopt.",
+  "sub": "Keep your app the way it is."
  },
  "workspace": {
   "title": "Tabs, hierarchy, settings. One screen.",
@@ -52,8 +52,8 @@
   "sub": "Socket drags, minimap and previews included."
  },
  "chapter-4": {
-  "title": "Beyond editors.",
-  "sub": "Media servers, live shows and monitoring."
+  "title": "Build real tools.",
+  "sub": "Your data and undo history stay in your app."
  },
  "show-live": {
   "title": "Run a live show with GO.",
@@ -68,8 +68,8 @@
   "sub": "Donut, bar, gauge and sparkline."
  },
  "chapter-5": {
-  "title": "Easy to adopt.",
-  "sub": "Keep your app the way it is."
+  "title": "Beyond editors.",
+  "sub": "Media servers, live shows and monitoring."
  },
  "code": {
   "title": "Three lines of CMake. Three of C++.",
@@ -89,7 +89,7 @@
  },
  "outro-3": {
   "title": "Open source · MIT · C++20",
-  "sub": "github.com/AokiMotohide/imgui-modern-kit"
+  "sub": "Music: \"Laserpack\" by Kevin MacLeod ft. DarkNES (incompetech.com) · CC BY 4.0"
  },
  "compare": {
   "title": "Edit once. Both sides respond.",

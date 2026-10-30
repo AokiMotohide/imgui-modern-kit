@@ -12,7 +12,7 @@ ImKitは、既存のDear ImGuiアプリに、現代的な見た目と使いや�
 
 - **見た目だけが新しくなる。** テーマを足すと、角丸、やわらかい影、なめらかな動きが入ります。呼び出しの形も、値の持ち方もそのままです。
 - **自分の世界観にできる。** 4色からテーマを作り、角、枠線、影を足せます。部品の枠を自作のスキンに差し替えることもできます。テーマは13種を内蔵しています。
-- **部品が揃っている。** 作業画面、タイムライン、ノードエディタ、グラフ、PTZパッド、320個のアイコン。メディアサーバー向けの任意モジュール `show` もあります。
+- **部品が揃っている。** 作業画面、タイムライン、ノードエディタ、グラフ、PTZパッド、321個のアイコン。メディアサーバー向けの任意モジュール `show` もあります。
 - **アプリの作りは変わらない。** Dear ImGuiのコンテキスト、バックエンド、レンダラー、フォント、データ、Undo履歴、保存処理は、これまでどおりアプリが持ちます。
 
 <img src="docs/images/v4-start.gif" alt="同じ部品が、ImKitのテーマで見た目だけ変わり、続けてGallery全体の配色が切り替わる" width="960">
@@ -59,7 +59,7 @@ imkit::End();
 
 | 分野 | 使える部品 | CMakeターゲット | Galleryの画面 |
 | --- | --- | --- | --- |
-| 見た目 | テーマ、ブランド色、スキン、320個のアイコン | `imkit::imkit` | Theme Studio、Skins、Icons |
+| 見た目 | テーマ、ブランド色、スキン、321個のアイコン | `imkit::imkit` | Theme Studio、Skins、Icons |
 | 基本部品 | ボタン、トグル、スライダー、入力、表、トースト、進捗 | `imkit::imkit` | Controls |
 | データ | ドーナツ・棒・ゲージ・スパークラインのグラフ、PTZ操作 | `imkit::imkit` | Data |
 | 作業画面 | タイムライン、曲線、インスペクター、階層、プレビューモニター | `imkit::editor_suite` | Workspaces |
@@ -95,4 +95,4 @@ v4のABIは、Dear ImGui 1.93.0 WIP docking（コミット `367b2c24f399988ddafc
 
 ## ライセンス
 
-ImKitはMITライセンスです。Dear ImGui、GLFW、任意のフォントは、それぞれのライセンスを保ちます。リビジョン、ハッシュ、通知は[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)にあります。
+ImKitはMITライセンスです。Dear ImGui、GLFW、任意のフォントは、それぞれのライセンスを保ちます。動画の音楽、Kevin MacLeod ft. DarkNES「Laserpack」（[incompetech.com](https://incompetech.com)）は、[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)です。リビジョン、ハッシュ、通知は[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)にあります。

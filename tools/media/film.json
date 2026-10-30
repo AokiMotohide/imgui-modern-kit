@@ -1,28 +1,28 @@
 {
  "fps": 60,
  "size": [1920, 1080],
- "bpm": 120,
- "bars": 90,
+ "bpm": 128,
+ "bars": 96,
  "chapters": [
   {
    "first": 1,
    "color": [120, 214, 198]
   },
   {
-   "first": 21,
+   "first": 24,
    "color": [193, 154, 245]
   },
   {
-   "first": 36,
-   "color": [128, 170, 255]
-  },
-  {
-   "first": 55,
+   "first": 41,
    "color": [246, 200, 121]
   },
   {
-   "first": 73,
-   "color": [120, 214, 198]
+   "first": 49,
+   "color": [128, 170, 255]
+  },
+  {
+   "first": 68,
+   "color": [243, 154, 176]
   }
  ],
  "shots": [
@@ -70,7 +70,7 @@
     {
      "key": "hook-title",
      "t": 11.6,
-     "d": 4.4,
+     "d": 3.2,
      "style": "title"
     }
    ]
@@ -80,9 +80,9 @@
    "kind": "take",
    "take": "icons",
    "at": 9,
-   "bars": 4,
+   "bars": 5,
    "in": 0,
-   "speed": 1.15,
+   "speed": 0.98,
    "caps": [
     {
      "key": "icons",
@@ -105,10 +105,10 @@
    "id": "toasts",
    "kind": "take",
    "take": "toasts",
-   "at": 13,
-   "bars": 4,
+   "at": 14,
+   "bars": 5,
    "in": 0,
-   "speed": 1.07,
+   "speed": 0.91,
    "caps": [
     {
      "key": "toasts",
@@ -121,10 +121,10 @@
    "id": "compare",
    "kind": "take",
    "take": "comparison",
-   "at": 17,
-   "bars": 4,
+   "at": 19,
+   "bars": 5,
    "in": 2.0,
-   "speed": 1.5,
+   "speed": 1.4,
    "caps": [
     {
      "key": "compare",
@@ -136,7 +136,7 @@
   {
    "id": "chapter-2",
    "kind": "chapter",
-   "at": 21,
+   "at": 24,
    "bars": 1,
    "num": "02",
    "key": "chapter-2"
@@ -145,7 +145,7 @@
    "id": "worlds",
    "kind": "take",
    "take": "worlds",
-   "at": 22,
+   "at": 25,
    "bars": 7,
    "in": 0,
    "speed": 1.0,
@@ -161,10 +161,10 @@
    "id": "studio",
    "kind": "take",
    "take": "studio",
-   "at": 29,
-   "bars": 7,
+   "at": 32,
+   "bars": 9,
    "in": 0,
-   "speed": 1.03,
+   "speed": 0.85,
    "caps": [
     {
      "key": "studio-1",
@@ -181,128 +181,16 @@
   {
    "id": "chapter-3",
    "kind": "chapter",
-   "at": 36,
+   "at": 41,
    "bars": 1,
    "num": "03",
    "key": "chapter-3"
   },
   {
-   "id": "workspace",
-   "kind": "take",
-   "take": "workspace",
-   "at": 37,
-   "bars": 8,
-   "in": 0,
-   "speed": 1.1,
-   "caps": [
-    {
-     "key": "workspace",
-     "t": 0.4,
-     "d": 15.0
-    }
-   ]
-  },
-  {
-   "id": "timeline",
-   "kind": "take",
-   "take": "timeline",
-   "at": 45,
-   "bars": 5,
-   "in": 0,
-   "speed": 1.065,
-   "caps": [
-    {
-     "key": "timeline",
-     "t": 0.4,
-     "d": 9.2
-    }
-   ]
-  },
-  {
-   "id": "node-editor",
-   "kind": "take",
-   "take": "node-editor-final",
-   "at": 50,
-   "bars": 5,
-   "in": 0,
-   "speed": 0.9,
-   "caps": [
-    {
-     "key": "node-editor",
-     "t": 0.4,
-     "d": 9.2
-    }
-   ]
-  },
-  {
-   "id": "chapter-4",
-   "kind": "chapter",
-   "at": 55,
-   "bars": 1,
-   "num": "04",
-   "key": "chapter-4"
-  },
-  {
-   "id": "show-live",
-   "kind": "take",
-   "take": "show-live",
-   "at": 56,
-   "bars": 6,
-   "in": 0,
-   "speed": 1.01,
-   "caps": [
-    {
-     "key": "show-live",
-     "t": 0.4,
-     "d": 11.0
-    }
-   ]
-  },
-  {
-   "id": "show-surface",
-   "kind": "take",
-   "take": "show-surface",
-   "at": 62,
-   "bars": 6,
-   "in": 0,
-   "speed": 1.0,
-   "caps": [
-    {
-     "key": "show-surface",
-     "t": 0.4,
-     "d": 11.0
-    }
-   ]
-  },
-  {
-   "id": "charts",
-   "kind": "take",
-   "take": "charts",
-   "at": 68,
-   "bars": 5,
-   "in": 0,
-   "speed": 1.0,
-   "caps": [
-    {
-     "key": "charts",
-     "t": 0.4,
-     "d": 9.2
-    }
-   ]
-  },
-  {
-   "id": "chapter-5",
-   "kind": "chapter",
-   "at": 73,
-   "bars": 1,
-   "num": "05",
-   "key": "chapter-5"
-  },
-  {
    "id": "code",
    "kind": "code",
-   "at": 74,
-   "bars": 6,
+   "at": 42,
+   "bars": 7,
    "inset": {
     "take": "hook",
     "in": 4.0,
@@ -317,13 +205,125 @@
    ]
   },
   {
+   "id": "chapter-4",
+   "kind": "chapter",
+   "at": 49,
+   "bars": 1,
+   "num": "04",
+   "key": "chapter-4"
+  },
+  {
+   "id": "workspace",
+   "kind": "take",
+   "take": "workspace",
+   "at": 50,
+   "bars": 8,
+   "in": 0,
+   "speed": 1.17,
+   "caps": [
+    {
+     "key": "workspace",
+     "t": 0.4,
+     "d": 15.0
+    }
+   ]
+  },
+  {
+   "id": "timeline",
+   "kind": "take",
+   "take": "timeline",
+   "at": 58,
+   "bars": 5,
+   "in": 0,
+   "speed": 1.13,
+   "caps": [
+    {
+     "key": "timeline",
+     "t": 0.4,
+     "d": 9.2
+    }
+   ]
+  },
+  {
+   "id": "node-editor",
+   "kind": "take",
+   "take": "node-editor-final",
+   "at": 63,
+   "bars": 5,
+   "in": 0,
+   "speed": 0.96,
+   "caps": [
+    {
+     "key": "node-editor",
+     "t": 0.4,
+     "d": 9.2
+    }
+   ]
+  },
+  {
+   "id": "chapter-5",
+   "kind": "chapter",
+   "at": 68,
+   "bars": 1,
+   "num": "05",
+   "key": "chapter-5"
+  },
+  {
+   "id": "show-live",
+   "kind": "take",
+   "take": "show-live",
+   "at": 69,
+   "bars": 7,
+   "in": 0,
+   "speed": 0.93,
+   "caps": [
+    {
+     "key": "show-live",
+     "t": 0.4,
+     "d": 11.0
+    }
+   ]
+  },
+  {
+   "id": "show-surface",
+   "kind": "take",
+   "take": "show-surface",
+   "at": 76,
+   "bars": 7,
+   "in": 0,
+   "speed": 0.92,
+   "caps": [
+    {
+     "key": "show-surface",
+     "t": 0.4,
+     "d": 11.0
+    }
+   ]
+  },
+  {
+   "id": "charts",
+   "kind": "take",
+   "take": "charts",
+   "at": 83,
+   "bars": 6,
+   "in": 0,
+   "speed": 0.89,
+   "caps": [
+    {
+     "key": "charts",
+     "t": 0.4,
+     "d": 9.2
+    }
+   ]
+  },
+  {
    "id": "keep",
    "kind": "take",
    "take": "hook",
-   "at": 80,
-   "bars": 4,
+   "at": 89,
+   "bars": 3,
    "in": 4.0,
-   "speed": 0.9,
+   "speed": 1.9,
    "camera": [
     {
      "t": 0,
@@ -349,8 +349,17 @@
   {
    "id": "outro",
    "kind": "outro",
-   "at": 84,
-   "bars": 7
+   "at": 92,
+   "bars": 5
   }
- ]
+ ],
+ "track": {
+  "file": "out/media/music/Laserpack.mp3",
+  "offset": 0.0107,
+  "title": "Laserpack",
+  "artist": "Kevin MacLeod ft. DarkNES",
+  "source": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1800018",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+ }
 }

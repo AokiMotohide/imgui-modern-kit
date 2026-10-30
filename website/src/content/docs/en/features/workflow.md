@@ -118,4 +118,4 @@ Open **Workspace shell** (page 15), **Progress and states**, or **Preview tiles*
 
 ## ImKit 3.2 workspace
 
-Open **Workspace** in the Gallery to use WorkspaceTabs, HierarchyGroupHeader/HierarchyRow, BeginInspectorCard/EndInspectorCard, SettingToggleRow, DragVector3WithUnit, ChoiceGroup and CompactActionRow together. Requests update Gallery-owned values; the same pattern works in an existing ImGui frame. See the [3.2 declarations and lifetime rules](../../api/v3-2/). All 320 runtime icons and 13 themes are available without introducing a new context or application framework.
+Open **Workspace** in the Gallery to use WorkspaceTabs, HierarchyGroupHeader/HierarchyRow, BeginInspectorCard/EndInspectorCard, SettingToggleRow, DragVector3WithUnit, ChoiceGroup and CompactActionRow together. Requests update Gallery-owned values; the same pattern works in an existing ImGui frame. See the [3.2 declarations and lifetime rules](../../api/v3-2/). All 321 runtime icons and 13 themes are available without introducing a new context or application framework.

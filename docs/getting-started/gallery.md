@@ -42,7 +42,7 @@ Pages keep their numbers when the navigation changes. `--page N` and the capture
 | Group | Pages | Use it to |
 | --- | --- | --- |
 | **Overview** | Start · Before / After · Workspace | See what changes first. Workspace combines tabs, hierarchy actions, settings and choices; every request is applied by Gallery-owned state. |
-| **Look** | Theme Studio · Skins · Tokens · Icons · Window frame | Build a look from four colours, replace component frames, browse 320 icons in seven sizes, try the window-frame presets. |
+| **Look** | Theme Studio · Skins · Tokens · Icons · Window frame | Build a look from four colours, replace component frames, browse 321 icons in seven sizes, try the window-frame presets. |
 | **Controls** | Basic · Numbers and units · Text, colour, media · Trees and tables · Popups and layout · Composites · Rows and palette · Progress and states · Toasts | Find the control you need and copy its call. |
 | **Data** | Charts · PTZ camera | Donut, bar, gauge and sparkline charts; a pan, tilt and zoom pad against a simulated camera. |
 | **Workspaces** | Editor core · Video · CG · Workspace shell · Preview tiles | See timelines, inspectors, monitors and gizmos assembled from public components. |
@@ -71,4 +71,4 @@ Run from the repository root with FFmpeg on PATH. The film needs Python with Pil
 
 ## Provenance
 
-Images and films are recorded from the Gallery or the Node Editor companion. They contain no stock footage, third-party product screens, icons, fonts or UI code. Dear ImGui, GLFW and optional fonts keep their licenses ([THIRD_PARTY_NOTICES.md](../../THIRD_PARTY_NOTICES.md)). See [validation](../reference/validation.md) for evidence and exclusions, and [window frame](../components/gallery-window-frame.md) for Frame Lab's platform boundary.
+Images and films are recorded from the Gallery or the Node Editor companion. They contain no stock footage, third-party product screens, icons, fonts or UI code. The only third-party media is the film's music, "Laserpack" by Kevin MacLeod ft. DarkNES, under CC BY 4.0 (see the notices). Dear ImGui, GLFW and optional fonts keep their licenses ([THIRD_PARTY_NOTICES.md](../../THIRD_PARTY_NOTICES.md)). See [validation](../reference/validation.md) for evidence and exclusions, and [window frame](../components/gallery-window-frame.md) for Frame Lab's platform boundary.

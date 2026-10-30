@@ -2,9 +2,9 @@
 
 [日本語](トースト.md) · [Workflow components](workflow-components.md)
 
-## Colored cards
+`ToastViewport` draws colored cards in the current host window's viewport, without taking focus when a card appears. Include `imkit/toast.h` or `imkit/imkit.h`. The existing `ToastRegion` overloads are unchanged. The host owns state, content, context, fonts, renderer and application operations; no React dependency, global registry, worker or persistence is introduced.
 
-Include `imkit/toast.h` or `imkit/imkit.h`. `ToastViewport` draws colored cards in the current host window's viewport without taking focus on appearance. Existing `ToastRegion` overloads remain unchanged. The host owns state, content, context, fonts, renderer and application operations. No React dependency, global registry, worker or persistence is introduced.
+## Colored cards
 
 ```cpp
 // Host-owned values, retained across frames.
@@ -28,15 +28,30 @@ for (std::size_t i = 0; i < events.count; ++i) {
 }
 ```
 
-Include `<array>`, `<vector>` and `<algorithm>` for this example. Strings are borrowed UTF-8: their storage must remain valid during drawing. Use unique nonzero IDs. Use one state per viewport/context and `Reset()` before context reuse. Calls run on the UI thread; the host marshals worker results.
+The example needs `<array>`, `<vector>` and `<algorithm>`. Rules for using it:
 
-Create covering host windows with `ImGuiWindowFlags_NoBringToFrontOnFocus`, for example `ImGui::Begin("App", nullptr, ImGuiWindowFlags_NoBringToFrontOnFocus)`, before drawing toasts. Otherwise clicking a host window can raise it above existing toast windows. Toasts use ordinary public ImGui windows; they do not force display order through internal APIs or steal focus. Newly created overlapping windows and modal dialogs retain Dear ImGui's ordering/input rules.
+- Strings are borrowed UTF-8; keep their storage valid while drawing.
+- Use unique nonzero IDs.
+- Keep one state per viewport and context, and call `Reset()` before reusing a context.
+- Call on the UI thread. The host passes worker results across.
+- Create covering host windows with `ImGuiWindowFlags_NoBringToFrontOnFocus`, for example `ImGui::Begin("App", nullptr, ImGuiWindowFlags_NoBringToFrontOnFocus)`, before drawing toasts. Otherwise a click on a host window can raise it above existing toasts.
+- Toasts are ordinary public ImGui windows. They do not force the display order through internal APIs or steal focus, and new overlapping windows and modal dialogs keep Dear ImGui's ordering and input rules.
 
 ## Duration and queue
 
-Negative `duration` selects defaults: success/info use five seconds; warning/error persist. Zero persists; positive values specify seconds. Loading always persists. Hover or keyboard focus pauses expiry. Waiting cards do not age. Draw once per frame. `UpdateToastViewport` is available for nonvisual timing; do not also call it when drawing the same state in that frame.
+| Case | Behavior |
+| --- | --- |
+| `duration` negative | Defaults: success and info last five seconds; warning and error persist |
+| `duration` zero | Persists |
+| `duration` positive | That many seconds |
+| `Loading` phase | Always persists |
+| Hover or keyboard focus | Pauses expiry; waiting cards do not age |
 
-Set `phase=ToastPhase::Loading` for progress. The toast uses the shared thin rounded track, with `stage`, status and a percentage or optional `progressText` outside the bar. Negative or nonfinite `progress` shows a short moving segment while status is `Running`; paused and terminal unknown states remain still. Other values are clamped to 0–1. Update the same ID to `phase=Message`, `Succeeded` or `Failed`, and success/error kind when work completes. Changing phase, kind or duration restarts timing without changing insertion order. Text/progress updates do not restart it.
+Draw once per frame. `UpdateToastViewport` advances timing without drawing; do not call it for a state you also draw in the same frame.
+
+**Progress.** Set `phase=ToastPhase::Loading`. The toast uses the shared thin rounded track, with `stage`, the status, and a percentage or `progressText` outside the bar. A negative or nonfinite `progress` shows a short moving segment while the status is `Running`; paused and terminal unknown states stay still. Other values are clamped to 0–1.
+
+**Completion.** Update the same ID to `phase=Message`, `Succeeded` or `Failed`, with a success or error kind. Changing the phase, kind or duration restarts the timer without changing the insertion order. Text and progress updates do not restart it.
 
 The trailing `ToastView` fields `stage`, `progressText` and `status` have defaults, so existing aggregate initializers keep their field order and behavior.
 
@@ -49,19 +64,33 @@ toast.action = "View details"; // Returns an Action event for this toast ID.
 // On completion, update this same ID and set phase=Message, status=Succeeded/Failed.
 ```
 
-Newest cards appear closest to the selected edge; excess cards wait. Last duplicate ID wins. State holds up to 64 IDs, including expired IDs awaiting host removal. `state.overflow` reports untracked IDs; they can enter when slots are freed. Expired IDs stay hidden until removed or explicitly updated. `events.overflow` reports a full event buffer. Undelivered expiry requests retry in subsequent frames; action/dismiss overflow requires another activation. Reset buffer count each frame.
+**Queue limits**
+
+- The newest card appears closest to the selected edge; extra cards wait.
+- The last duplicate ID wins.
+- State holds up to 64 IDs, including expired IDs awaiting host removal. `state.overflow` reports untracked IDs, which enter when slots free up.
+- An expired ID stays hidden until it is removed or explicitly updated.
+- `events.overflow` reports a full event buffer. Undelivered expiry requests retry in later frames; an action or dismiss that did not fit needs another activation.
+- Reset the buffer count every frame.
 
 ## Placement and customization
 
-`ToastPosition` supports top/bottom × left/center/right; default is `TopRight`, with `maximum=4`. Width zero uses font-relative width; negative margin/gap use theme-derived current style spacing. Cards and visible count are bounded by the viewport work area; individually oversized cards scroll vertically.
+| Setting | Behavior |
+| --- | --- |
+| `ToastPosition` | Top or bottom, times left, center or right. Default `TopRight`, with `maximum=4` |
+| Width zero | Font-relative width |
+| Negative margin or gap | Uses the theme-derived current style spacing |
+| Size limits | Cards and the visible count stay within the viewport work area; an oversized card scrolls vertically |
 
-Cards use the raised surface with a status accent bar and icon; the status colour comes from semantic tokens and text keeps the theme text contrast. A hairline along the bottom edge shows the remaining display time and pauses with hover or focus. Theme controls radius, the entry slide and fade, and reduced motion; reduced motion stops slide, fade, the countdown tween, indeterminate segment motion and spinner rotation. Pass `ComponentOptions` for theme, locale and semantic publication. The `dismiss` locale key supplies the close button's accessible name. Titles, descriptions and action labels come from the host. Buttons support native keyboard navigation; no global shortcut or automatic focus transfer is installed.
+**Look.** Cards use the raised surface with a status accent bar and icon. The status colour comes from semantic tokens, and the text keeps the theme's text contrast. A hairline along the bottom edge shows the remaining display time and pauses on hover or focus. The theme controls the radius, the entry slide and fade, and reduced motion. Reduced motion stops the slide, the fade, the countdown tween, the indeterminate segment and the spinner.
 
-`action` supplies a button, `actionDisabled` disables it, and `dismissible` controls the close button. `ToastEvent` distinguishes `Action`, `Dismiss` and `Expired`. The host decides whether an action removes or updates a toast; cancelling work must be handled by the host.
+**Host input.** Pass `ComponentOptions` for the theme, locale and semantic publication. The `dismiss` locale key supplies the close button's accessible name. Titles, descriptions and action labels come from the host. Buttons support native keyboard navigation, and no global shortcut or automatic focus transfer is installed.
+
+**Actions.** `action` supplies a button, `actionDisabled` disables it, and `dismissible` controls the close button. `ToastEvent` distinguishes `Action`, `Dismiss` and `Expired`. The host decides whether an action removes or updates a toast, and cancelling work is the host's job.
 
 ## Gallery and validation
 
-Open **Toasts** (page 20): six positions, timing overrides, queue bursts, same-ID success/error completion, determinate/indeterminate progress, a details action, and English/Japanese examples. **Appearance** changes theme, density, contrast and reduced motion.
+Open **Toasts** (page 20): six positions, timing overrides, queue bursts, same-ID success and error completion, determinate and indeterminate progress, a details action, and English and Japanese examples. **Appearance** changes theme, density, contrast and reduced motion.
 
 <img src="../images/v4-toasts.gif" alt="Native Loading to Success toast interaction" width="960">
 

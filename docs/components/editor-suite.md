@@ -84,7 +84,7 @@ cmake --build --preset windows-debug --target imkit_gallery --parallel
 
 - **Stress Testing**: The 100k toggle benchmarks performance with 256 tracks, 100,096 clips, and 100,000 keys.
 - **Display Selection**: `--list-monitors` and `--monitor N` allow targeting specific displays in multi-monitor setups without altering OS display configurations.
-- **Interaction Demonstrations**: Includes transition history undo/redo, custom shortcut rebinding, and 320-icon atlas integration.
+- **Interaction Demonstrations**: Includes transition history undo/redo, custom shortcut rebinding, and 321-icon atlas integration.
 
 ---
 

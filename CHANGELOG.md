@@ -2,13 +2,6 @@
 
 > Published release entries present English first, followed by equivalent Japanese notes. Unreleased remains a work-in-progress list.
 
-## Unreleased
-
-- `imkit/icons.h`: `IconId::PtzCamera` (pan / tilt / zoom camera on a yoke) — 321 icons. PTZカメラ用アイコン `IconId::PtzCamera` を追加（計321個）。
-- `imkit/components.h`: `AxisVector3Field`, `AxisVector3Interaction`, `CompactIconActionButton`. インスペクター用の三軸入力と小型アイコンボタンを追加。
-- `imkit/workflow.h`: `BeginCollapsibleInspectorCard`, `EndCollapsibleInspectorCard`; `HierarchyRowView::accentColor`, full-width row selection. 開閉式インスペクターカードと、階層行の全幅選択・種類色を追加。
-- Inspector cards draw a tinted header band. Window frame: title-bar top-edge drag and move / resize hit testing fixed. インスペクターカードに見出し帯を付け、ウィンドウ枠の移動・サイズ変更判定を修正。
-
 ## 4.0.0 — 2026-10-31
 
 **ImKit 4.0 refreshes the default look, adds brand themes, and brings new modules for charts, camera control and live shows.** Rebuild your application and every linked ImKit library with the 4.0 headers: structures grew and default tokens changed. The Dear ImGui revision and the dependencies are unchanged. See the [migration guide](docs/reference/migration-v4.md) and the [4.0 additions](docs/reference/v4.0-api.md).
@@ -29,8 +22,9 @@
 | `imkit/range_slider.h` | `RangeSlider`, `RangeSliderInt` |
 | `imkit/theme.h` | `MakeBrandTheme`, `BrandPalette`, `SetCornerStyle`, `PushTextRole`, `SerializeTheme`, `ParseTheme`; outline strokes and hard shadows; `Theme::skin`, `FontSet::display` |
 | `imkit/skin.h` | `Skin`: component frames, backdrop patterns, nine-slice pictures |
-| `imkit/components.h` | `DrawShadow`, `IMKIT_DEPRECATED` |
-| `imkit/icons.h` | 32 LED and live-surface icons: 320 icons in 21 categories |
+| `imkit/components.h` | `DrawShadow`, `IMKIT_DEPRECATED`, `AxisVector3Field`, `AxisVector3Interaction`, `CompactIconActionButton` |
+| `imkit/workflow.h` | `BeginCollapsibleInspectorCard`, `EndCollapsibleInspectorCard`; `HierarchyRowView::accentColor`; hierarchy rows select across the full width |
+| `imkit/icons.h` | 32 LED and live-surface icons and `IconId::PtzCamera`: 321 icons in 21 categories |
 | `imkit/show.h` (`imkit::show`) | Controls: `Fader`, `Knob`, `XYPad`, `PadGrid`, `MeterBar`, `TimecodeDisplay`, `HoldButton`, `ConsoleButton`, `ScribbleStrip`, `MasterBar`. Live: `CueList`, `GoBar`, `ClipLauncher`, `Mixer`, `EffectRack`, `ModulatorEditor`, `MappingTable`, `DeviceHealth`. Rules: `RuleBuilder`, `EvaluateRule`, `FormatRuleSentence`, `ValidateRule`. Schedule: `Calendar`, `ResourceTimeline`, `RecurrenceEditor`, `CronEditor`, pickers, `WeekPainter`. Beat: `BeatClock`, `Deck`, `DjChannelStrip`, `StepSequencer`, `Spectrum`. Script panel. Pictures: `ImageButton`, `ImageCropEditor`, `FitImage`. Surface: `ControlSurface`, `SurfacePalette`. LED: `LedColorPicker`, `GradientEditor`, `PixelPreview`, `BudgetBar`, `ColorOrderPicker`, `TestPatternBar`, `PortStrip`. Address: `AddressMap`, `ChannelMonitor`, `FindOverlaps`, `FirstFreeRange`, `PixelsPerUniverse` |
 
 Gallery pages: Start, Theme Studio, Skins, Charts, PTZ camera and nine Show pages. Continuous controls report `ValueEdit`.
@@ -52,6 +46,7 @@ Default tokens (set them explicitly if your application relied on the old values
 - `SemanticRole` gains `Slider` and `Meter`; `RangeSlider` publishes `Slider` nodes instead of `Group`. `PtzState` keeps only `speed` public.
 - Timeline hit rectangles are unchanged apart from a narrower chevron on the track header.
 - `IMKIT_VERSION` read `3.0.0` since 3.0; it now reads `4.0.0`.
+- Inspector cards draw a tinted header band. The window frame fixes title-bar top-edge dragging and move / resize hit testing.
 
 ### Deprecated
 
@@ -84,8 +79,9 @@ Public additions are at the end of existing structs (`HoldButtonOptions` gains `
 | `imkit/range_slider.h` | `RangeSlider`、`RangeSliderInt` |
 | `imkit/theme.h` | `MakeBrandTheme`、`BrandPalette`、`SetCornerStyle`、`PushTextRole`、`SerializeTheme`、`ParseTheme`。枠線（アウトライン）と硬い影。`Theme::skin`、`FontSet::display` |
 | `imkit/skin.h` | `Skin`: 部品の枠、背景パターン、ナインスライス画像 |
-| `imkit/components.h` | `DrawShadow`、`IMKIT_DEPRECATED` |
-| `imkit/icons.h` | LEDとライブ操作のアイコン32個。合計320個、21カテゴリ |
+| `imkit/components.h` | `DrawShadow`、`IMKIT_DEPRECATED`、`AxisVector3Field`、`AxisVector3Interaction`、`CompactIconActionButton`（インスペクター用の三軸入力と小型アイコンボタン） |
+| `imkit/workflow.h` | `BeginCollapsibleInspectorCard`、`EndCollapsibleInspectorCard`（開閉式のインスペクターカード）、`HierarchyRowView::accentColor`（種類色）。階層行は全幅で選択できる |
+| `imkit/icons.h` | LEDとライブ操作のアイコン32個と `IconId::PtzCamera`。合計321個、21カテゴリ |
 | `imkit/show.h`（`imkit::show`） | 操作部品: `Fader`、`Knob`、`XYPad`、`PadGrid`、`MeterBar`、`TimecodeDisplay`、`HoldButton`、`ConsoleButton`、`ScribbleStrip`、`MasterBar`。ライブ: `CueList`、`GoBar`、`ClipLauncher`、`Mixer`、`EffectRack`、`ModulatorEditor`、`MappingTable`、`DeviceHealth`。ルール: `RuleBuilder`、`EvaluateRule`、`FormatRuleSentence`、`ValidateRule`。スケジュール: `Calendar`、`ResourceTimeline`、`RecurrenceEditor`、`CronEditor`、各ピッカー、`WeekPainter`。ビート: `BeatClock`、`Deck`、`DjChannelStrip`、`StepSequencer`、`Spectrum`。スクリプトパネル。画像: `ImageButton`、`ImageCropEditor`、`FitImage`。サーフェス: `ControlSurface`、`SurfacePalette`。LED: `LedColorPicker`、`GradientEditor`、`PixelPreview`、`BudgetBar`、`ColorOrderPicker`、`TestPatternBar`、`PortStrip`。アドレス: `AddressMap`、`ChannelMonitor`、`FindOverlaps`、`FirstFreeRange`、`PixelsPerUniverse` |
 
 Galleryには、Start、Theme Studio、Skins、Charts、PTZ camera、Showの9画面を追加しました。連続値の部品は `ValueEdit` を返します。
@@ -107,6 +103,7 @@ Galleryには、Start、Theme Studio、Skins、Charts、PTZ camera、Showの9画
 - `SemanticRole` に `Slider` と `Meter` を追加し、`RangeSlider` は `Group` ではなく `Slider` ノードを公開します。`PtzState` の公開フィールドは `speed` だけです。
 - タイムラインの当たり判定は、トラック見出しのシェブロンを狭めた点を除いて変わりません。
 - `IMKIT_VERSION` は3.0以降 `3.0.0` のままでした。`4.0.0` に直しました。
+- インスペクターカードに見出し帯を付けました。ウィンドウ枠は、タイトルバー上端のドラッグと、移動・サイズ変更の判定を修正しました。
 
 #### 非推奨
 

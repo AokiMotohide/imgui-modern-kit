@@ -12,7 +12,7 @@ ImKit is a C++20 static library that gives an existing Dear ImGui app a modern l
 
 - **A new look, the same workflow.** Add a theme and your existing app picks up rounded controls, soft shadows and smooth motion. Call shapes and values stay as they are.
 - **Make it yours.** Build a theme from four colours, add corners, an outline and a shadow, or replace component frames with your own skin. 13 themes are built in.
-- **More than widgets.** Workspaces, a timeline, a node editor, charts, a PTZ pad, 320 icons, and an optional `show` module for media servers.
+- **More than widgets.** Workspaces, a timeline, a node editor, charts, a PTZ pad, 321 icons, and an optional `show` module for media servers.
 - **Your app stays yours.** The Dear ImGui context, backend, renderer, fonts, data, undo history and persistence remain in your application.
 
 <img src="docs/images/v4-start.gif" alt="The same controls before and after an ImKit theme, then the whole Gallery changing theme" width="960">
@@ -59,7 +59,7 @@ imkit::End();
 
 | Area | What it gives you | CMake target | Gallery page |
 | --- | --- | --- | --- |
-| Look | Themes, brand colours, skins, 320 icons | `imkit::imkit` | Theme Studio, Skins, Icons |
+| Look | Themes, brand colours, skins, 321 icons | `imkit::imkit` | Theme Studio, Skins, Icons |
 | Controls | Buttons, toggles, sliders, inputs, tables, toasts, progress | `imkit::imkit` | Controls |
 | Data | Donut, bar, gauge and sparkline charts, PTZ control | `imkit::imkit` | Data |
 | Workspaces | Timeline, curves, inspector, hierarchy, preview monitors | `imkit::editor_suite` | Workspaces |
@@ -95,4 +95,4 @@ The v4 ABI targets Dear ImGui 1.93.0 WIP docking commit `367b2c24f399988ddafc0bb
 
 ## License
 
-ImKit is MIT licensed. Dear ImGui, GLFW and optional font assets keep their own licenses. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for revisions, hashes and notices.
+ImKit is MIT licensed. Dear ImGui, GLFW and optional font assets keep their own licenses. The film's music, "Laserpack" by Kevin MacLeod ft. DarkNES ([incompetech.com](https://incompetech.com)), is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for revisions, hashes and notices.

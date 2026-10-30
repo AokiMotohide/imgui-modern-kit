@@ -27,7 +27,8 @@ FPS = SPEC["fps"]
 BEAT = 60.0 / SPEC["bpm"]
 BAR = 4 * BEAT
 TOTAL = SPEC["bars"] * BAR
-BG = (11, 14, 18)
+AUDIO_BITRATE = "256k"
+BG =(11, 14, 18)
 WHITE = (240, 244, 247)
 MUTED = (150, 162, 172)
 CARD = (1520, 855)
@@ -389,7 +390,8 @@ def loudnorm(wav):
     measured = subprocess.run(["ffmpeg", "-hide_banner", "-i", str(wav), "-af", "loudnorm=I=-14:TP=-2.5:LRA=11:print_format=json", "-f", "null", "-"],
                               capture_output=True, text=True, check=True).stderr
     stats = json.loads(re.search(r"\{\s*\"input_i\"[\s\S]*?\}", measured).group())
-    # The limiter keeps about 3.6 dB of headroom: the AAC encode overshoots a limited signal by about 1 dB.
+    # The limiter keeps about 3.6 dB of headroom for the AAC overshoot. At 192k the licensed track overshot by 2.6 dB
+    # (-0.83 dBTP), at 256k by 1.3 dB (-2.19 dBTP), so the film uses AUDIO_BITRATE.
     return ("loudnorm=I=-14:TP=-2.5:LRA=11:linear=true:" +
             ":".join(f"{a}={stats[b]}" for a, b in [("measured_I", "input_i"), ("measured_TP", "input_tp"), ("measured_LRA", "input_lra"), ("measured_thresh", "input_thresh"), ("offset", "target_offset")]) +
             ",alimiter=limit=0.66:level=0")
@@ -408,7 +410,7 @@ def build(lang, seconds, out_path, wav, workers):
     out_path.parent.mkdir(parents=True, exist_ok=True)
     command = ["ffmpeg", "-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", str(listing)]
     if wav:
-        command += ["-i", str(wav), "-af", loudnorm(wav), "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-shortest"]
+        command += ["-i", str(wav), "-af", loudnorm(wav), "-c:a", "aac", "-b:a", AUDIO_BITRATE, "-ar", "48000", "-shortest"]
     command += ["-c:v", "libx264", "-preset", "slow", "-crf", "21", "-pix_fmt", "yuv420p", "-r", str(FPS), "-movflags", "+faststart", str(out_path)]
     subprocess.run(command, check=True)
     for j in jobs:
@@ -421,6 +423,7 @@ def main():
     parser.add_argument("--seconds", type=float, default=TOTAL)
     parser.add_argument("--review", action="store_true", help="write a contact sheet of key frames and stop")
     parser.add_argument("--no-audio", action="store_true")
+    parser.add_argument("--synth", action="store_true", help="use the synthesized score even when film.json names a track")
     parser.add_argument("--audio-only", action="store_true", help="re-mux a new score into the existing films without rendering video")
     parser.add_argument("--workers", type=int, default=16)
     parser.add_argument("--output-dir", type=Path, default=ROOT / "website/public/media")
@@ -444,14 +447,20 @@ def main():
     if not args.no_audio:
         wav = WORK / "score.wav"
         cuts = [start_of(s) for s in SPEC["shots"]]
-        music.render_score(wav, SPEC["bpm"], SPEC["bars"], cuts, click_times())
-        print("score", wav)
+        track = SPEC.get("track")
+        source = ROOT / track["file"] if track and not args.synth else None
+        if source and source.is_file():
+            music.render_track_score(wav, source, SPEC["bpm"], SPEC["bars"], track["offset"], cuts, click_times())
+            print("score from", source.name)
+        else:
+            music.render_score(wav, SPEC["bpm"], SPEC["bars"], cuts, click_times())
+            print("score synthesized")
     if args.audio_only:
         for lang in langs:
             target = args.output_dir / f"imkit-4.0-film-{lang}.mp4"
             tmp = target.with_suffix(".tmp.mp4")
             subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", str(target), "-i", str(wav), "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-af", loudnorm(wav),
-                            "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-shortest", "-movflags", "+faststart", str(tmp)], check=True)
+                            "-c:a", "aac", "-b:a", AUDIO_BITRATE, "-ar", "48000", "-shortest", "-movflags", "+faststart", str(tmp)], check=True)
             tmp.replace(target)
             print("remuxed", target)
         return
