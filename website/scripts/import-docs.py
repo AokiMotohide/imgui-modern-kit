@@ -41,6 +41,10 @@ SOURCES["v3.2-api"]=("reference/v3.2-api.md","reference/3.2追加API.md")
 PAGES["v3.2-api"]=("api/v3-2", "ImKit 3.2 API", "ImKit 3.2 API")
 SOURCES["v3.3-api"]=("reference/v3.3-api.md","reference/3.3追加API.md")
 PAGES["v3.3-api"]=("api/v3-3", "ImKit 3.3 API", "ImKit 3.3 API")
+SOURCES["v4.0-api"]=("reference/v4.0-api.md","reference/4.0追加API.md")
+PAGES["v4.0-api"]=("api/v4-0", "ImKit 4.0 API", "ImKit 4.0 API")
+SOURCES["migration-v4"]=("reference/migration-v4.md","reference/v4移行ガイド.md")
+PAGES["migration-v4"]=("platform/migration-v4", "Migrate from v3", "v3からの移行")
 PAGES["toasts"] = ("features/toasts", "Toast notifications", "トースト通知")
 
 FEATURE_LEADS = {

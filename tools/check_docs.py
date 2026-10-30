@@ -16,6 +16,7 @@ PAIRS: list[tuple[str, str]] = [
     ("README.md", "目次.md"),
     ("reference/v3.2-api.md", "reference/3.2追加API.md"),
     ("reference/v3.3-api.md", "reference/3.3追加API.md"),
+    ("reference/v4.0-api.md", "reference/4.0追加API.md"),
     # getting-started
     ("getting-started/getting-started.md", "getting-started/導入ガイド.md"),
     ("getting-started/how-it-works.md", "getting-started/仕組みと設計思想.md"),
@@ -54,6 +55,7 @@ PAIRS: list[tuple[str, str]] = [
     ("reference/documentation-catalog.md", "reference/文書カタログ.md"),
     ("reference/validation.md", "reference/検証記録.md"),
     ("reference/migration-v3.md", "reference/v3移行ガイド.md"),
+    ("reference/migration-v4.md", "reference/v4移行ガイド.md"),
     ("reference/troubleshooting.md", "reference/トラブルシューティング.md"),
 ]
 
@@ -159,19 +161,23 @@ def main() -> int:
             errors.append(f"missing public entry page: {path.relative_to(ROOT)}")
         else:
             errors.extend(check_links(path))
-    gallery_source = (ROOT / "examples/gallery/gallery.cpp").read_text(encoding="utf-8")
+    start_source = (ROOT / "examples/gallery/start_page.cpp").read_text(encoding="utf-8")
     gallery_guides = [DOCS / "getting-started/gallery.md", DOCS / "getting-started/ギャラリーガイド.md"]
-    for page, action, title in (
-        (21, "Compare themes", "Compare"),
-        (6, "Explore icons", "Icons"),
-        (22, "Open 3.2 workspace", "New in 3.2"),
-        (8, "Open timeline", "Video"),
+    # Every route on the Start page needs a probe in the source and a page of that name in both Gallery guides.
+    for probe, title in (
+        ("start-comparison", "Before / After"),
+        ("start-look", "Theme Studio"),
+        ("start-workspaces", "Workspace"),
+        ("start-show", "Live"),
+        ("start-data", "Charts"),
+        ("start-feedback", "Progress and states"),
+        ("start-icons", "Icons"),
     ):
-        if f'StartCard(s, {page},' not in gallery_source or f'"{action}"' not in gallery_source:
-            errors.append(f"Gallery Start route is missing page {page}: {action}")
+        if f'"{probe}"' not in start_source:
+            errors.append(f"Gallery Start route is missing probe {probe}")
         for guide in gallery_guides:
             if title not in guide.read_text(encoding="utf-8"):
-                errors.append(f"{guide.relative_to(ROOT)} does not describe Gallery route {title}")
+                errors.append(f"{guide.relative_to(ROOT)} does not describe Gallery page {title}")
     # SameMinorVersion intentionally rejects a consumer requesting an older minor.
     project = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
     release_minor = re.search(r"project\(imgui-modern-kit VERSION (\d+\.\d+)\.", project).group(1)

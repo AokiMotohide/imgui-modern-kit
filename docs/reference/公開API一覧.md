@@ -1,6 +1,7 @@
 # 公開API対応表
 
 
+[4.0追加API：ブランドテーマ・グラフ・PTZ・範囲スライダー・Showモジュール](4.0追加API.md)
 [3.3追加API：進捗トラック・段階表示・タスクカード](3.3追加API.md)
 [English (Generated Table)](api-coverage.md) · [API Inventory JSON](api-inventory.json) · [文書カタログ](文書カタログ.md)
 

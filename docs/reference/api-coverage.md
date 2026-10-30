@@ -1,6 +1,7 @@
 # Public API coverage
 
 
+[4.0 additions: brand themes, charts, PTZ, range sliders and the show module](v4.0-api.md)
 [3.3 additions: progress tracks, stages and task cards](v3.3-api.md)
 [日本語](公開API一覧.md) · [English](api-coverage.md)
 

@@ -30,6 +30,7 @@ DOCS_PAIRS = [
     ("README.md", "目次.md"),
     ("reference/v3.2-api.md", "reference/3.2追加API.md"),
     ("reference/v3.3-api.md", "reference/3.3追加API.md"),
+    ("reference/v4.0-api.md", "reference/4.0追加API.md"),
     ("getting-started/getting-started.md", "getting-started/導入ガイド.md"),
     ("getting-started/how-it-works.md", "getting-started/仕組みと設計思想.md"),
     ("getting-started/guide.md", "getting-started/利用ガイド.md"),
@@ -59,6 +60,7 @@ DOCS_PAIRS = [
     ("reference/documentation-catalog.md", "reference/文書カタログ.md"),
     ("reference/validation.md", "reference/検証記録.md"),
     ("reference/migration-v3.md", "reference/v3移行ガイド.md"),
+    ("reference/migration-v4.md", "reference/v4移行ガイド.md"),
     ("reference/troubleshooting.md", "reference/トラブルシューティング.md"),
 ]
 PUBLIC_DOCS = [f"docs/{en}" for en, _ in DOCS_PAIRS] + [f"docs/{ja}" for _, ja in DOCS_PAIRS]

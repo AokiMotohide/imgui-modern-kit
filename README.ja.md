@@ -1,180 +1,98 @@
 # ImKit
 
-**公開マニュアル:** [日本語](https://aokimotohide.github.io/imgui-modern-kit/) · [English](https://aokimotohide.github.io/imgui-modern-kit/en/) · [API参照](https://aokimotohide.github.io/imgui-modern-kit/api/)
+**Dear ImGuiのまま、現代的なUIへ。使い方は、いつもどおり。**
 
-**Dear ImGuiで、使い心地まで整ったネイティブ制作ツールを。**
+ImKitは、既存のDear ImGuiアプリに、現代的な見た目と使いやすい部品を足すC++20の静的ライブラリです。テーマを1つ足すだけで始められ、フレームのループは変えません。必要なモジュールだけをリンクできます。
 
-ImKitは、既存のDear ImGuiアプリにテーマと再利用できるUI部品を追加するC++20の静的ライブラリです。まずGalleryで動作を確かめ、必要な部品だけをアプリに組み込めます。
+[動画を見る](https://aokimotohide.github.io/imgui-modern-kit/#film) · [ダウンロード](https://github.com/AokiMotohide/imgui-modern-kit/releases/latest) · [マニュアル](https://aokimotohide.github.io/imgui-modern-kit/) · [API参照](https://aokimotohide.github.io/imgui-modern-kit/api/) · [English](README.md)
 
-[English](README.md) · [最新リリースをダウンロード](https://github.com/AokiMotohide/imgui-modern-kit/releases/latest) · [文書一覧](docs/目次.md) · [Release一覧](https://github.com/AokiMotohide/imgui-modern-kit/releases)
+[![ImKit 4.0の紹介動画: テーマの前後で同じアプリが変わる](website/public/media/imkit-4.0-poster.jpg)](https://aokimotohide.github.io/imgui-modern-kit/#film)
 
-**3.3の新機能:** [進捗トラック・段階表示・操作付きタスクカード](docs/reference/3.3追加API.md)。トーストにも工程と進捗情報を表示できます。
+## ImKitでできること
 
-[![ImKit 3.2紹介動画](website/public/media/imkit-3.2-poster.jpg)](https://aokimotohide.github.io/imgui-modern-kit/#film)
+- **見た目だけが新しくなる。** テーマを足すと、角丸、やわらかい影、なめらかな動きが入ります。呼び出しの形も、値の持ち方もそのままです。
+- **自分の世界観にできる。** 4色からテーマを作り、角、枠線、影を足せます。部品の枠を自作のスキンに差し替えることもできます。テーマは13種を内蔵しています。
+- **部品が揃っている。** 作業画面、タイムライン、ノードエディタ、グラフ、PTZパッド、320個のアイコン。メディアサーバー向けの任意モジュール `show` もあります。
+- **アプリの作りは変わらない。** Dear ImGuiのコンテキスト、バックエンド、レンダラー、フォント、データ、Undo履歴、保存処理は、これまでどおりアプリが持ちます。
 
-**[Watch the 60-second film](https://aokimotohide.github.io/imgui-modern-kit/#film)** — 大きなカーソルでドラッグ・クリックと操作結果を紹介します。英語モーショングラフィックスと、オリジナルの128 BPMエレクトロハウス付きです。
+<img src="docs/images/v4-start.gif" alt="同じ部品が、ImKitのテーマで見た目だけ変わり、続けてGallery全体の配色が切り替わる" width="960">
 
-<img src="docs/images/v3-overview.gif" alt="Galleryのスタート画面から実例を開く" width="960">
+## Galleryで試す
 
-## まずGalleryを試す
+お使いの環境向けの[v4.0.0パッケージ](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v4.0.0)をダウンロードして展開し、`bin/imkit_gallery.exe`（Windows）または `imkit_gallery.app`（macOS）を起動してください。Node Editor専用のGalleryも入っています。Galleryは、アプリがリンクするのと同じ公開部品だけで作ってあります。
 
-お使いの環境に合う[v3.3.0のパッケージ](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.3.0)をダウンロードして展開し、次を起動してください。
+Windowsでソースからビルドする場合は、次のとおりです。
 
-- Windows: bin/imkit_gallery.exe
-- macOS: imkit_gallery.app
-
-Node Editor専用のGalleryも同梱しています。Galleryでは、利用するアプリと同じImKitライブラリと公開部品を使っており、デモ専用の代替ウィジェットは使っていません。
-
-Windowsでソースからビルドする場合は、次のコマンドを実行します。
-
-    cmake --preset windows-debug
-    cmake --build --preset windows-debug --target imkit_gallery --parallel
-    ./build/windows-debug/catalog/Debug/imkit_gallery.exe
+```
+cmake --preset windows-debug
+cmake --build --preset windows-debug --target imkit_gallery --parallel
+./build/windows-debug/catalog/Debug/imkit_gallery.exe
+```
 
 ## 既存アプリへ組み込む
 
-アプリがすでに使っているDear ImGuiのtargetをImKitに指定します。
+アプリがすでに使っているDear ImGuiのターゲットを、ImKitに教えます。
 
-    set(IMKIT_IMGUI_TARGET host_imgui)
-    add_subdirectory(external/imgui-modern-kit)
-    target_link_libraries(your_app PRIVATE imkit::imkit)
+```cmake
+set(IMKIT_IMGUI_TARGET host_imgui)
+add_subdirectory(external/imgui-modern-kit)
+target_link_libraries(your_app PRIVATE imkit::imkit)
+```
 
-ImGuiのフレームを開始する前にテーマを適用し、通常のウィンドウ内で部品を描画します。
+フレームを始める前にテーマを適用し、ふつうのウィンドウの中で部品を呼びます。
 
-    #include <imkit/imkit.h>
+```cpp
+#include <imkit/imkit.h>
 
-    auto theme = imkit::MakeTheme(imkit::ThemePreset::Ocean);
-    imkit::ApplyTheme(theme, 1.0f); // ImGui::NewFrame()より前
+auto theme = imkit::MakeTheme(imkit::ThemePreset::Ocean);
+imkit::ApplyTheme(theme, 1.0f); // ImGui::NewFrame() より前
 
-    if (imkit::Begin("Display")) {
-        static bool enabled = true;
-        imkit::Toggle("Enabled", &enabled);
-        imkit::ActionButton("Apply", imkit::ActionVariant::Primary);
-    }
-    imkit::End();
+if (imkit::Begin("Display")) {
+    static bool enabled = true;
+    imkit::Toggle("Enabled", &enabled);
+    imkit::ActionButton("Apply", imkit::ActionVariant::Primary);
+}
+imkit::End();
+```
 
-Dear ImGuiのコンテキスト、描画バックエンド、レンダラー、フォント、データ、Undo履歴、保存処理、ワーカーは、引き続きアプリ側が管理します。ImKitは現在のコンテキストにUIを描画します。
+## 作れるもの
 
-## 作れる画面
+| 分野 | 使える部品 | CMakeターゲット | Galleryの画面 |
+| --- | --- | --- | --- |
+| 見た目 | テーマ、ブランド色、スキン、320個のアイコン | `imkit::imkit` | Theme Studio、Skins、Icons |
+| 基本部品 | ボタン、トグル、スライダー、入力、表、トースト、進捗 | `imkit::imkit` | Controls |
+| データ | ドーナツ・棒・ゲージ・スパークラインのグラフ、PTZ操作 | `imkit::imkit` | Data |
+| 作業画面 | タイムライン、曲線、インスペクター、階層、プレビューモニター | `imkit::editor_suite` | Workspaces |
+| ノードグラフ | キャンバス、ソケット、ミニマップ、編集要求 | `imkit::node_editor` | Node Editor Gallery |
+| ショー | キューリスト、ミキサー、コントロールサーフェス、LED、スケジュール | `imkit::show` | Show |
+| ネイティブ連携 | ウィンドウ枠、OpenGL／Metalのプレビュー、アクセシビリティ連携 | `imkit::window_frame_*`、`imkit::preview_*` | Window frame |
 
-- **テーマと基本部品** — ボタン、トグル、選択状態、検索、アイコン、状態を見分けやすい配色。
-- **ワークフロー画面** — 作業手順の案内、通知、進捗表示、アプリ側で構成するシェル。
-- **編集用部品** — タイムライン、インスペクター、曲線編集、階層表示、プレビューモニター、追加可能なNode Editor。
-- **ネイティブ連携** — OpenGL／Metalによるプレビュー描画、ウィンドウ枠、アクセシビリティ連携。
+分野ごとの公開ヘッダー、ターゲット、フレーム内で呼ぶ位置は、[実例とレシピ](docs/getting-started/実例とレシピ.md)にまとめてあります。
 
-必要な部品に応じてCMakeターゲットを選んでください。[モジュール別の実装例](docs/getting-started/実例とレシピ.md)では、ターゲット、公開ヘッダー、Galleryの該当画面、描画ループから呼び出す位置を対応付けています。
+## 動きを見る
 
-## 画面で見る
+| | |
+| --- | --- |
+| <img src="docs/images/v4-themes.gif" alt="テーマを選ぶと、Gallery全体の配色が変わる" width="470"><br>テーマを選ぶと、画面全体が着替えます。 | <img src="docs/images/v4-studio.gif" alt="Theme Studioでblueprint、pastel-pop、stickerの見た目を読み込む" width="470"><br>見た目を丸ごと読み込み、角と影も変えられます。 |
+| <img src="docs/images/v4-workspace.gif" alt="タブ、階層、設定、選択部品を1画面にまとめた作業画面" width="470"><br>タブ、階層、設定を1画面に。 | <img src="docs/images/v4-show.gif" alt="キューリストとクリップランチャーでライブ演出を動かす" width="470"><br>GOでライブ演出を動かします。 |
 
-### Galleryの概要
+## 4.0の新機能
 
-<img src="docs/images/v3-overview.gif" alt="Galleryのスタート画面と目的別の案内" width="960">
+- 既定の見た目を刷新しました。角丸、影、動きのトークンを見直し、ピル形のセグメントとスライダー、描き直した進捗・トースト・グラフが入ります。
+- ブランドテーマ。`MakeBrandTheme`、Theme Studio、スキン、枠線、硬い影を追加しました。
+- 新しいモジュール。グラフ、PTZ操作、範囲スライダー、`show` モジュールです。
+- Galleryを作り直し、約3分の紹介動画を新しくしました。
 
-目的に合う画面を開き、実例を操作してから導入ガイドへ進めます。
+アプリと、リンクするすべてのImKitライブラリを、4.0のヘッダーで再ビルドしてください。3.xのオブジェクトと4.0の構造体は混ぜられません。既定のトークンが変わっています。[移行ガイド](docs/reference/v4移行ガイド.md)と[変更履歴](CHANGELOG.md)を確認してください。
 
-### 基本コンポーネント
+## 互換性
 
-<img src="docs/images/v3-components.gif" alt="ボタン、トグル、選択状態、入力部品の例" width="960">
-
-よく使う部品を、通常・切り替え後・混在選択の状態で確認できます。
-
-### トースト通知
-
-<img src="docs/images/v3-toasts.gif" alt="実際のGalleryでLoadingからSuccessへ変わる通知" width="960">
-
-通知位置や表示時間を選び、処理ボタンの要求を受け取る例を確認できます。
-
-### 制作用アイコン画像 · PNG原画238点
-
-**透過PNGの原画を238点、16カテゴリに収録しています。** `Projector`、`Projector3D`、`ProjectionSurface`、`Camera3D`、`Frustum`、`Lens`など投影関連の画像に加え、編集用91種、制作操作10種、3Dオブジェクト10種、照明9種を揃えています。
-
-<img src="docs/images/v3-icon-artwork.gif" alt="Projectorや投影、照明、3Dオブジェクト、Editorのアイコン原画を大きなタイルで切り替えて表示" width="960">
-
-GIFでは、各アイコンの形が分かる大きさで原画を切り替えて表示します。[PNG原画238点の一覧](assets/icons/originals/)と、名前・カテゴリを収録した[288種のカタログ](assets/icons/catalog.json)も確認できます。
-
-### プリセットアイコンカタログ · 288種
-
-C++から使えるカタログには、**19カテゴリ・288種類のアイコン**を収録しています。12〜64 pxの7サイズに対応し、アイコンとサイズの組み合わせは計2,016通りです。名前やカテゴリで検索し、選んだアイコンのC++呼び出し例を確認できます。
-
-<img src="docs/images/v3-icons.gif" alt="ImKitの検索可能なアイコンカタログ。カテゴリやサイズを切り替え、選択したアイコンをプレビュー" width="960">
-
-Galleryでは288種すべてをタイルで一覧でき、アイコンのプレビューとC++での呼び出し例を表示します。
-
-### Dear ImGuiとのライブ比較
-
-<img src="docs/images/v3-comparison.gif" alt="Dear ImGui標準部品とImKitの部品で同じ値を操作" width="960">
-
-Dear ImGuiの標準部品とImKitを並べ、アプリ側で管理する同じ値を両方から変更できます。
-
-### Previewの配置と状態
-
-<img src="docs/images/v3-preview-contract.gif" alt="Fit、Fill、StretchとReady、Loading、Empty、Offline、Errorの表示例" width="960">
-
-Fit／Fill／Stretchの配置と、Ready、Loading、Empty、Offline、Errorの各状態を確認できます。
-
-### Workflowと進捗
-
-<img src="docs/images/v3-workflow-progress.gif" alt="Workflowの案内、フィードバック部品、進捗表示" width="960">
-
-作業の案内、通知、ダイアログ、進捗表示を組み合わせても、状態の管理はアプリ側に残ります。
-
-### Timeline
-
-<img src="docs/images/v3-timeline.gif" alt="Timelineの編集操作とUndo" width="960">
-
-タイムラインの操作と編集時の表示を確認できます。データと操作履歴はアプリ側で管理します。
-
-### Node Editor
-
-<img src="docs/images/v3-node-editor.gif" alt="link、動的socket、minimap、previewを備えたNode Editor" width="960">
-
-グラフの描画と編集要求を使えます。グラフモデルの検証・評価・Undoはアプリ側で管理します。
-
-### Theme
-
-<img src="docs/images/v3-theme-comparison.gif" alt="ImKitのThemeとDear ImGui標準表示の比較" width="960">
-
-名前付きThemeとpaletteをネイティブGalleryで見比べられます。
-
-## 3.3の新機能 — 処理の進み方を伝える
-
-処理がどこまで進んだか、どの工程にいるか、次に何を操作できるかを表示できます。処理の実行と状態管理はアプリ側に残し、毎フレームの値を渡します。
-
-![native Galleryのタスク進捗と段階表示](docs/images/v3-progress.gif)
-
-- **ProgressTrack:** 確定値・未確定の進捗、ラベル、6種類の処理状態を共通のトラックで表示します。
-- **StageProgress:** 完了・現在・待機中の工程を表示します。アプリの工程は変更しません。
-- **TaskProgressCard:** タイトル、工程、進捗、操作ボタンをまとめます。返された操作IDをアプリ側で処理します。
-- **トーストの進捗:** 同じ通知の`stage`・`progressText`・`status`を更新できます。
-
-[コード例・API・互換性](docs/reference/3.3追加API.md)。`ToastView`にフィールドが追加されたため、アプリとリンクするImKitライブラリを3.3ヘッダーで再コンパイルしてください。3.2のobjectと3.3の構造体は混在させないでください。上の紹介動画は3.2、ここに掲載した画面は3.3です。
-
-## 3.2で追加した部品
-
-<img src="docs/images/v3-workspace.gif" alt="作業タブ、階層操作、設定カード、三軸入力、選択部品" width="960">
-
-作業タブ、階層操作、設定カード、三軸入力、見出し付き選択、状態と操作をまとめる行、LoadingからSuccessへ変わるトーストを、従来の即時モードの使い方で組み込めます。288アイコンと13テーマを利用できます。[宣言、既定値、所有権](docs/reference/3.2追加API.md)も公開しています。
-
-`WindowFrameContent` に `iconTexture` が追加されたため、アプリとImKit静的ライブラリを再コンパイルしてください。Dear ImGuiの対応revisionは変わりません。
-
-## 対応環境
-
-v3のABIはDear ImGui 1.93.0 WIP docking commit 367b2c24f399988ddafc0bb4628da0106bcc09beを基準にしています。配布パッケージはWindows x64／Arm64、macOS arm64／x86_64、macOS Universal 2に対応します。
-
-macOSのパッケージには署名・公証を行っていません。自動検証では、実機の入力操作、OS標準IME、画面読み上げ、複数のDPI設定を組み合わせた表示、外部アプリへの組み込みを確認していません。[検証範囲](docs/reference/検証記録.md)と[依存関係](docs/architecture/依存関係.md)を参照してください。
+v4のABIは、Dear ImGui 1.93.0 WIP docking（コミット `367b2c24f399988ddafc0bb4628da0106bcc09be`）を対象にしています。リリースパッケージは、Windows x64とArm64、macOS arm64、x86_64、Universal 2です。macOS版は署名も公証もしていません。自動検査では、実機の入力、ネイティブIME、スクリーンリーダー、複数DPI、他社ホストでの動作は確かめていません。範囲は[検証の範囲](docs/reference/検証記録.md)と[依存関係](docs/architecture/依存関係.md)を参照してください。
 
 ## 文書
 
-- [文書一覧・ロードマップ](docs/目次.md)
-- [導入ガイド](docs/getting-started/導入ガイド.md)
-- [部品と使い方（利用ガイド）](docs/getting-started/利用ガイド.md)
-- [モジュール別の実例と実装例](docs/getting-started/実例とレシピ.md)
-- [Galleryガイド](docs/getting-started/ギャラリーガイド.md)
-- [Node Editorの導入](docs/components/ノードエディタ.md)
-- [v3移行ガイド](docs/reference/v3移行ガイド.md)
-- [設計と所有権（アーキテクチャ）](docs/architecture/アーキテクチャ.md)
-- [変更履歴](CHANGELOG.md)
+[文書一覧](docs/目次.md) · [導入ガイド](docs/getting-started/導入ガイド.md) · [部品の使い方](docs/getting-started/利用ガイド.md) · [Galleryガイド](docs/getting-started/ギャラリーガイド.md) · [ノードエディタ](docs/components/ノードエディタ.md) · [アーキテクチャ](docs/architecture/アーキテクチャ.md) · [変更履歴](CHANGELOG.md)
 
 ## ライセンス
 
-ImKitはMITライセンスです。Dear ImGui、GLFW、任意のフォント資産には、それぞれのライセンスが適用されます。利用したリビジョンとハッシュ、ライセンス表記は[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)を参照してください。
+ImKitはMITライセンスです。Dear ImGui、GLFW、任意のフォントは、それぞれのライセンスを保ちます。リビジョン、ハッシュ、通知は[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)にあります。

@@ -68,7 +68,7 @@ void DrawSettingsFrame() {
 set(IMKIT_IMGUI_TARGET host_imgui)
 set(CMAKE_PREFIX_PATH "path/to/imkit-sdk" ${CMAKE_PREFIX_PATH})
 set(IMKIT_SDK_ABI_CONFIRMED ON)
-find_package(imkit 3.3 CONFIG REQUIRED)
+find_package(imkit 4.0 CONFIG REQUIRED)
 target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
 

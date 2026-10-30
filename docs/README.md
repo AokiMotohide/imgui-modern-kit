@@ -1,6 +1,7 @@
 # ImKit documentation
 
 
+[4.0 additions: brand themes, charts, PTZ, range sliders and the show module](reference/v4.0-api.md) · [Migrating to 4.0](reference/migration-v4.md)
 [3.3 additions: progress tracks, stages and task cards](reference/v3.3-api.md)
 [日本語](目次.md) · [Project overview](../README.md)
 
@@ -86,6 +87,7 @@ flowchart TD
 - [Widget inventory](reference/widget-inventory.md) — Complete widget list and audit rationale.
 - [Documentation catalog](reference/documentation-catalog.md) — Complete page index, audience, and source mapping.
 - [Validation](reference/validation.md) — Automated gate and acceptance evidence.
+- [Migration to 4.0](reference/migration-v4.md) — Upgrading from 3.x: rebuild, changed defaults and deprecated spellings.
 - [Migration v3](reference/migration-v3.md) — Upgrading from ImKit v2 to v3.
 - [Troubleshooting](reference/troubleshooting.md) — Solutions to common integration and build issues.
 

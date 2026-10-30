@@ -73,6 +73,8 @@ Documentation is organized into five structured categories based on development 
 | [Widget Inventory](widget-inventory.md) / [JA](ウィジェット一覧.md) | Component inventory and design audit decision logs | All modules |
 | [Documentation Catalog](documentation-catalog.md) / [JA](文書カタログ.md) | This document (comprehensive documentation index) | - |
 | [Validation](validation.md) / [JA](検証記録.md) | Platform, CI, and GPU smoke test verification records | Test suite |
+| [4.0 additions](v4.0-api.md) / [JA](4.0追加API.md) | Brand themes, skins, charts, PTZ, range sliders and the show module | `imkit/theme.h`, `imkit/charts.h` |
+| [Migration to 4.0](migration-v4.md) / [JA](v4移行ガイド.md) | Rebuild, changed default tokens and deprecated spellings | - |
 | [Migration v3](migration-v3.md) / [JA](v3移行ガイド.md) | Step-by-step upgrade guide from v2 | - |
 | [Troubleshooting](troubleshooting.md) / [JA](トラブルシューティング.md) | Solutions for common build issues and rendering anomalies | - |
 
