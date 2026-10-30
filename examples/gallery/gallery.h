@@ -4,6 +4,7 @@
 #include <string>
 #include <array>
 #include <cstdint>
+#include <span>
 #include <vector>
 #include "editor_workspaces.h"
 #include "design_pages.h"
@@ -34,6 +35,26 @@ struct ComparisonState {
     int applyCount = 0;
     char name[96] = "Display Console";
 };
+// Page ids are stable: --page and the capture scripts address pages by number. Navigation order and grouping live in
+// Pages(), so reordering the sidebar never renumbers a page. PageStart is the Gallery-only start page.
+enum PageId : int {
+    PageBasic = 0, PageNumeric, PageInput, PageHierarchy, PageOverlay, PageComposites, PageIcons,
+    PageEditorCore, PageVideo, PageCG,
+    PageFoundations, PageReferenceComponents, PagePatterns, PageAccessibility, PageResponsive,
+    PageGenericWorkspace, PageFeedback, PagePreviewTiles, PageFrameLab,
+    PageStart, PageToasts, PageCompare, PageWorkbench, PageCharts, PagePtz,
+    PageShowControls, PageShowLive, PageShowRules, PageShowSchedule, PageShowBeat, PageShowScript, PageShowSurface,
+    PageShowLed, PageShowImages, PageLookStudio, PageLookSkins
+};
+struct PageInfo {
+    PageId id;
+    const char *title;
+    int group; // Index into PageGroups().
+    const char *summary;
+};
+std::span<const PageInfo> Pages();
+std::span<const char *const> PageGroups();
+const PageInfo *FindPage(int id);
 struct GalleryState {
     DesignPages design;
     WorkflowPages workflow;
@@ -46,9 +67,7 @@ struct GalleryState {
     Theme theme = MakeTheme(ThemePreset::PrecisionLight);
     FontSet fonts{};
     AnimationState animation;
-    // Keep existing numeric pages stable for capture flags. Page 19 is the
-    // Gallery-only onboarding start page.
-    int page = 19;
+    int page = PageStart;
     int presetIndex = 0, presetFilter = 0, copyClicks = 0;
     float scale = ThemeScaleDefault;
     float windowFrameHeight = 0;

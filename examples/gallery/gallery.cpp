@@ -77,73 +77,33 @@ void PageHeader(GalleryState &s, const char *title, const char *summary, bool co
     if (!compact)
         Spacing();
 }
-const char *PageSummary(int page) {
-    switch (page) {
-    case 0: return "Buttons, selection controls and text. Standard Dear ImGui behaviour with a modern look.";
-    case 1: return "Scalar, vector and unit-bearing numeric input.";
-    case 2: return "Text, colour, image and plot widgets.";
-    case 3: return "Trees, tabs, tables and drag and drop.";
-    case 4: return "Popups, modals, toolbars, scroll regions and docking.";
-    case 5: return "Segmented controls, badges, notifications and Japanese text.";
-    case 6: return "Searchable icon catalogue with copyable C++ calls.";
-    case 7: return "Timeline ruler, transport and curve editing.";
-    case 8: return "Media bin, monitors and inspector for video editing.";
-    case 9: return "Views, scene properties and gizmos for CG editing.";
-    case 10: return "Density, contrast, typography and motion tokens.";
-    case 11: return "Rows, toolbars, command palette, dialogs and a 100,000 row data table.";
-    case 12: return "Navigation, command and data patterns.";
-    case 13: return "The semantic tree published for assistive technology.";
-    case 14: return "Layouts that adapt from narrow to wide.";
-    case 15: return "A full workspace assembled from public components.";
-    case 16: return "Progress, stages, alerts and empty, error and retry states.";
-    case 17: return "Resizable preview tiles with host-owned state.";
-    case 18: return "Window frame presets with live colour and metric editing.";
-    case 20: return "Stacked notifications with progress, actions and timers.";
-    case 21: return "The same ImGui calls with and without an ImKit theme.";
-    case 22: return "Tabs, hierarchy actions, settings and choices in one screen.";
-    case 23: return "Donut, bar, gauge, sparkline and progress components.";
-    case 24: return "Pan, tilt and zoom control with presets, driven against a simulated camera.";
-    case 25: return "Faders, knobs, pads, meters, clocks and hold-to-confirm controls for a live operator.";
-    case 26: return "Cue list, clip launcher, mixer, transition, effects, modulator, mappings and device health.";
-    case 27: return "Build if / then / else rules without code, explain them in a sentence and test them against live values.";
-    case 28: return "Calendar, resource timeline, recurrence, cron, sunrise triggers and weekly on-air hours with conflict detection.";
-    case 29: return "Beat clock, decks, scrolling waveforms, hot cues, channel strips, pitch, step sequencer and spectrum.";
-    case 30: return "Paste a script, see the problems line by line, get controls for its parameters, and import a pasted table.";
-    case 31: return "A console-style canvas: place faders, knobs, keys, pictures and displays freely, then operate them.";
-    case 32: return "LED colour with white and colour temperature, gradients, pixel preview, address map, channel monitor, power budget and test patterns.";
-    case 33: return "Turn any picture into a button: states, shapes, drop to assign, reposition and clear.";
-    case 34: return "Build a look from four colours, a corner style, an outline and a shadow, and copy the theme text that reproduces it.";
-    case 35: return "Replace component frames with your own drawing, fill a backdrop with a pattern, stretch a picture with fixed corners.";
-    default: return "";
-    }
-}
 void Start(GalleryState &s) {
     Heading(s, "Modern UI. Familiar workflow.");
     TextWrapped("Modernize your existing Dear ImGui app with a theme. Add useful controls as your tool grows. "
                 "Your context, values and frame loop stay yours.");
     if (ActionButton("Open live comparison", ActionVariant::Primary, {}, {&s.theme, &s.animation}))
-        { s.page = 21; s.comparison.open = true; }
+        { s.page = PageCompare; s.comparison.open = true; }
     Record(s, "start-comparison");
     if(GetContentRegionAvail().x > 650.f) SameLine();
     if (Button("Explore components"))
-        s.page = 0;
+        s.page = PageBasic;
     Record(s, "start-components");
     if(GetContentRegionAvail().x > 650.f) SameLine();
     if (Button("Circular progress"))
-        s.page = 16;
+        s.page = PageFeedback;
     Record(s, "start-circular-progress");
     SeparatorText("Choose a route");
     if (BeginTable("start-routes", GetContentRegionAvail().x < 680.f ? 1 : 2, ImGuiTableFlags_SizingStretchSame)) {
         TableNextRow();
         TableNextColumn();
-        StartCard(s, 21, "01 / THEME ONLY", "Modernize an existing UI", "The same ImGui calls, the same values. Compare a theme with the default style.", "Compare themes");
+        StartCard(s, PageCompare, "01 / THEME ONLY", "Modernize an existing UI", "The same ImGui calls, the same values. Compare a theme with the default style.", "Compare themes");
         TableNextColumn();
-        StartCard(s, 6, "02 / ICON LIBRARY", "Find your next icon", "320 icons, 21 categories and seven sizes. Search, select and copy the C++ call.", "Explore icons");
+        StartCard(s, PageIcons, "02 / ICON LIBRARY", "Find your next icon", "320 icons, 21 categories and seven sizes. Search, select and copy the C++ call.", "Explore icons");
         TableNextRow();
         TableNextColumn();
-        StartCard(s, 22, "03 / NEW IN 3.2", "Build a useful workspace", "Tabs, hierarchy actions, settings, three-axis editing and choices in one live screen.", "Open 3.2 workspace");
+        StartCard(s, PageWorkbench, "03 / NEW IN 3.2", "Build a useful workspace", "Tabs, hierarchy actions, settings, three-axis editing and choices in one live screen.", "Open 3.2 workspace");
         TableNextColumn();
-        StartCard(s, 8, "04 / EDITING", "Scale into timelines", "Explore Video editing UI. Media, project data and Undo stay in the host.", "Open timeline");
+        StartCard(s, PageVideo, "04 / EDITING", "Scale into timelines", "Explore Video editing UI. Media, project data and Undo stay in the host.", "Open timeline");
         EndTable();
     }
     SeparatorText("Try it here");
@@ -156,7 +116,7 @@ void Start(GalleryState &s) {
     TextWrapped("Your Dear ImGui context, renderer, font atlas, data, undo history and persistence stay in the host. "
                 "ImKit supplies visual structure and reusable controls without taking those responsibilities.");
     if (ActionButton("Open Frame Lab", ActionVariant::Ghost, {}, {&s.theme, &s.animation}))
-        s.page = 18;
+        s.page = PageFrameLab;
     Record(s, "start-frame-lab");
 }
 class DefaultStyleScope {
@@ -925,6 +885,54 @@ void DrawComparison(GalleryState &s) {
     TextUnformatted("auto theme = imkit::MakeTheme(imkit::ThemePreset::PrecisionLight);\nimkit::ApplyTheme(theme, 1.0f); // before ImGui::NewFrame()\n// Keep drawing your existing ImGui:: widgets.");
     TextWrapped("Guide: docs/getting-started/getting-started.md | Components: docs/components/components.md");
 }
+namespace {
+constexpr PageInfo kPages[] = {
+    {PageStart, "Start", 0, ""},
+    {PageBasic, "Components: Basic", 1, "Buttons, selection controls and text. Standard Dear ImGui behaviour with a modern look."},
+    {PageNumeric, "Numeric / Units", 1, "Scalar, vector and unit-bearing numeric input."},
+    {PageInput, "Input / Media", 1, "Text, colour, image and plot widgets."},
+    {PageHierarchy, "Hierarchy / Table", 1, "Trees, tabs, tables and drag and drop."},
+    {PageOverlay, "Overlay / Layout", 1, "Popups, modals, toolbars, scroll regions and docking."},
+    {PageComposites, "Composites", 1, "Segmented controls, badges, notifications and Japanese text."},
+    {PageIcons, "Icons", 1, "Searchable icon catalogue with copyable C++ calls."},
+    {PageCharts, "Charts", 1, "Donut, bar, gauge, sparkline and progress components."},
+    {PagePtz, "PTZ Camera", 1, "Pan, tilt and zoom control with presets, driven against a simulated camera."},
+    {PageEditorCore, "Editor Core", 2, "Timeline ruler, transport and curve editing."},
+    {PageVideo, "Video", 2, "Media bin, monitors and inspector for video editing."},
+    {PageCG, "CG", 2, "Views, scene properties and gizmos for CG editing."},
+    {PageFoundations, "Foundations", 3, "Density, contrast, typography and motion tokens."},
+    {PageReferenceComponents, "Components", 3, "Rows, toolbars, command palette, dialogs and a 100,000 row data table."},
+    {PagePatterns, "Patterns", 3, "Navigation, command and data patterns."},
+    {PageAccessibility, "Accessibility", 3, "The semantic tree published for assistive technology."},
+    {PageResponsive, "Responsive", 3, "Layouts that adapt from narrow to wide."},
+    {PageGenericWorkspace, "Generic Workspace", 2, "A full workspace assembled from public components."},
+    {PageFeedback, "Feedback / States", 1, "Progress, stages, alerts and empty, error and retry states."},
+    {PagePreviewTiles, "Preview Tiles", 2, "Resizable preview tiles with host-owned state."},
+    {PageFrameLab, "Frame Lab", 3, "Window frame presets with live colour and metric editing."},
+    {PageToasts, "Toasts", 1, "Stacked notifications with progress, actions and timers."},
+    {PageCompare, "Compare", 0, "The same ImGui calls with and without an ImKit theme."},
+    {PageWorkbench, "New in 3.2", 0, "Tabs, hierarchy actions, settings and choices in one screen."},
+    {PageShowControls, "Show: Controls", 4, "Faders, knobs, pads, meters, clocks and hold-to-confirm controls for a live operator."},
+    {PageShowLive, "Show: Live", 4, "Cue list, clip launcher, mixer, transition, effects, modulator, mappings and device health."},
+    {PageShowRules, "Show: Rules", 4, "Build if / then / else rules without code, explain them in a sentence and test them against live values."},
+    {PageShowSchedule, "Show: Schedule", 4, "Calendar, resource timeline, recurrence, cron, sunrise triggers and weekly on-air hours with conflict detection."},
+    {PageShowBeat, "Show: Beat", 4, "Beat clock, decks, scrolling waveforms, hot cues, channel strips, pitch, step sequencer and spectrum."},
+    {PageShowScript, "Show: Script", 4, "Paste a script, see the problems line by line, get controls for its parameters, and import a pasted table."},
+    {PageShowSurface, "Show: Surface", 4, "A console-style canvas: place faders, knobs, keys, pictures and displays freely, then operate them."},
+    {PageShowLed, "Show: LED", 4, "LED colour with white and colour temperature, gradients, pixel preview, address map, channel monitor, power budget and test patterns."},
+    {PageShowImages, "Show: Images", 4, "Turn any picture into a button: states, shapes, drop to assign, reposition and clear."},
+    {PageLookStudio, "Look: Studio", 5, "Build a look from four colours, a corner style, an outline and a shadow, and copy the theme text that reproduces it."},
+    {PageLookSkins, "Look: Skins", 5, "Replace component frames with your own drawing, fill a backdrop with a pattern, stretch a picture with fixed corners."},
+};
+constexpr const char *kPageGroups[] = {"Get started", "Controls", "Workspaces", "Reference", "Show", "Look"};
+} // namespace
+std::span<const PageInfo> Pages() { return kPages; }
+std::span<const char *const> PageGroups() { return kPageGroups; }
+const PageInfo *FindPage(int id) {
+    for (const auto &page : kPages)
+        if (page.id == id) return &page;
+    return nullptr;
+}
 void Show(GalleryState &s) {
     s.probes.clear();
     s.look.Poll(s);
@@ -949,40 +957,32 @@ void Show(GalleryState &s) {
                           std::max(1.f,ImGui::GetIO().DisplaySize.y-s.windowFrameHeight)});
         windowFlags|=ImGuiWindowFlags_NoDecoration;
     }
-    if(s.page==20) windowFlags|=ImGuiWindowFlags_NoBringToFrontOnFocus;
+    if(s.page==PageToasts) windowFlags|=ImGuiWindowFlags_NoBringToFrontOnFocus;
     const bool visible=Begin("ImKit Gallery - Precision Layers",nullptr,windowFlags);
     if(s.floatingComparison) {
         s.floatingCatalogPosition=GetWindowPos();
         s.floatingCatalogSize=GetWindowSize();
     }
     if(visible) {
-        // One table drives the sidebar, the narrow-width combo and the category groups.
-        struct PageEntry {int id; const char* name; int group;};
-        static constexpr PageEntry table[]={
-            {19,"Start",0},{0,"Components: Basic",1},{1,"Numeric / Units",1},{2,"Input / Media",1},{3,"Hierarchy / Table",1},
-            {4,"Overlay / Layout",1},{5,"Composites",1},{6,"Icons",1},{23,"Charts",1},{24,"PTZ Camera",1},
-            {7,"Editor Core",2},{8,"Video",2},{9,"CG",2},{10,"Foundations",3},{11,"Components",3},{12,"Patterns",3},
-            {13,"Accessibility",3},{14,"Responsive",3},{15,"Generic Workspace",2},{16,"Feedback / States",1},
-            {17,"Preview Tiles",2},{18,"Frame Lab",3},{20,"Toasts",1},{21,"Compare",0},{22,"New in 3.2",0},
-            {25,"Show: Controls",4},{26,"Show: Live",4},{27,"Show: Rules",4},{28,"Show: Schedule",4},{29,"Show: Beat",4},{30,"Show: Script",4},{31,"Show: Surface",4},{32,"Show: LED",4},{33,"Show: Images",4},{34,"Look: Studio",5},{35,"Look: Skins",5}};
-        constexpr int pageCount=static_cast<int>(std::size(table));
-        int pageIds[pageCount]; const char* pages[pageCount];
-        for(int i=0;i<pageCount;++i) {pageIds[i]=table[i].id; pages[i]=table[i].name;}
+        // Pages() drives the sidebar, the narrow-width combo and the category groups.
+        const auto pageTable=Pages();
+        const int pageCount=static_cast<int>(pageTable.size());
+        static const std::vector<const char*> pages=[&]{std::vector<const char*> titles;for(const auto& p:pageTable) titles.push_back(p.title);return titles;}();
         int pageIndex=0;
-        for(int i=0;i<pageCount;++i) if(pageIds[i]==s.page) {pageIndex=i;break;}
+        for(int i=0;i<pageCount;++i) if(pageTable[i].id==s.page) {pageIndex=i;break;}
         const bool wide=GetContentRegionAvail().x>=1100.f*std::max(1.f,ImGui::GetStyle().FontScaleDpi);
         PushFont(s.fonts.emphasis,s.theme.metrics.bodySize*1.1f); TextUnformatted("ImKit Gallery"); PopFont();
-        SameLine(); TextDisabled("3.3   |   %d themes   |   %d icons",static_cast<int>(ThemePresets().size()),static_cast<int>(GetIconCatalog().size()));
+        SameLine(); TextDisabled("%s   |   %d themes   |   %d icons",IMKIT_VERSION,static_cast<int>(ThemePresets().size()),static_cast<int>(GetIconCatalog().size()));
         if(!wide) {
             SetNextItemWidth(std::min(260.f,GetContentRegionAvail().x*.45f));
-            if(Combo("##section",&pageIndex,pages,pageCount)) s.page=pageIds[pageIndex];
+            if(Combo("##section",&pageIndex,pages.data(),pageCount)) s.page=pageTable[pageIndex].id;
             Record(s,"gallery-section");
             SameLine();
         }
         if(Button("Appearance")) OpenPopup("appearance");
         Record(s,"appearance");
         if(GetContentRegionAvail().x>280.f) SameLine();
-        if(Button("Compare")) {s.page=21;s.comparison.open=true;}
+        if(Button("Compare")) {s.page=PageCompare;s.comparison.open=true;}
         Record(s,"comparison-open");
         static NodeLauncher nodeLauncher;
         if(GetContentRegionAvail().x>160.f) SameLine();
@@ -1019,68 +1019,54 @@ void Show(GalleryState &s) {
         Spacing();
         if(wide) {
             BeginChild("categories",{192*s.scale*std::max(1.f,ImGui::GetStyle().FontScaleDpi),0},ImGuiChildFlags_Borders);
-            const char* groups[]={"Get started","Controls","Workspaces","Reference","Show","Look"};
-            for(int g=0;g<6;++g) {
+            const auto groups=PageGroups();
+            for(int g=0;g<static_cast<int>(groups.size());++g) {
                 if(g) Spacing();
                 TextDisabled("%s",groups[g]);
-                for(int i=0;i<pageCount;++i) {
-                    const int id=pageIds[i];
-                    if(table[i].group!=g) continue;
-                    if(Selectable(pages[i],s.page==id)) {s.page=id;if(id==21)s.comparison.open=true;}
+                for(const auto& p:pageTable) {
+                    if(p.group!=g) continue;
+                    if(Selectable(p.title,s.page==p.id)) {s.page=p.id;if(p.id==PageCompare)s.comparison.open=true;}
                 }
             }
             EndChild(); SameLine();
         }
         BeginChild("Component panel", {GetContentRegionAvail().x, 0}, ImGuiChildFlags_AlwaysUseWindowPadding,
-                   s.page == 4 ? ImGuiWindowFlags_MenuBar : 0);
-        int active=0;
-        for(int i=0;i<pageCount;++i) if(pageIds[i]==s.page) active=i;
-        if(s.page!=19) PageHeader(s,pages[active],PageSummary(s.page),s.page>=7&&s.page<=9);
+                   s.page == PageOverlay ? ImGuiWindowFlags_MenuBar : 0);
+        if(const auto* active=FindPage(s.page); active && s.page!=PageStart)
+            PageHeader(s,active->title,active->summary,s.page>=PageEditorCore&&s.page<=PageCG);
         PushItemWidth(std::min(420 * s.scale,GetContentRegionAvail().x*.70f));
         switch (s.page) {
-        case 21: s.comparison.open=true; DrawComparison(s); break;
-        case 23: s.charts.Show(s); break;
-        case 24: s.ptz.Show(s); break;
-        case 25: case 26: case 27: case 28: case 29: case 30: case 31: case 32: case 33: s.show.Show(s.page,s); break;
-        case 34: s.look.Studio(s); break;
-        case 35: s.look.Skins(s); break;
-        case 22: s.workflow.Workbench(s); break;
-        case 20: s.toasts.Show(s); break;
-        case 19: Start(s); break;
-        case 18: FrameLab(s); break;
-        case 15: case 16: case 17: s.workflow.Show(s.page,s); break;
-        case 10: case 11: case 12: case 13: case 14:
+        case PageCompare: s.comparison.open=true; DrawComparison(s); break;
+        case PageCharts: s.charts.Show(s); break;
+        case PagePtz: s.ptz.Show(s); break;
+        case PageShowControls: case PageShowLive: case PageShowRules: case PageShowSchedule: case PageShowBeat:
+        case PageShowScript: case PageShowSurface: case PageShowLed: case PageShowImages:
+            s.show.Show(s.page,s); break;
+        case PageLookStudio: s.look.Studio(s); break;
+        case PageLookSkins: s.look.Skins(s); break;
+        case PageWorkbench: s.workflow.Workbench(s); break;
+        case PageToasts: s.toasts.Show(s); break;
+        case PageStart: Start(s); break;
+        case PageFrameLab: FrameLab(s); break;
+        case PageGenericWorkspace: case PageFeedback: case PagePreviewTiles: s.workflow.Show(s.page,s); break;
+        case PageFoundations: case PageReferenceComponents: case PagePatterns: case PageAccessibility: case PageResponsive:
             s.design.Show(s.page,s); break;
-        case 0:
-            Basic(s);
-            break;
-        case 1:
-            Numeric(s);
-            break;
-        case 2:
-            InputColor(s);
-            break;
-        case 3:
-            Hierarchy(s);
-            break;
-        case 4:
-            Overlay(s);
-            break;
-        case 5:
-            Composites(s);
-            break;
-        case 6:
-            Icons(s);
-            break;
-        case 7:
+        case PageBasic: Basic(s); break;
+        case PageNumeric: Numeric(s); break;
+        case PageInput: InputColor(s); break;
+        case PageHierarchy: Hierarchy(s); break;
+        case PageOverlay: Overlay(s); break;
+        case PageComposites: Composites(s); break;
+        case PageIcons: Icons(s); break;
+        case PageEditorCore:
             s.editors.icons = &s.icons;
             CoreWorkspace(s.editors, s.theme);
             break;
-        case 8:
+        case PageVideo:
             s.editors.icons = &s.icons;
             VideoWorkspace(s.editors, s.theme, s.texture);
             break;
-        case 9:
+        case PageCG:
             s.editors.icons = &s.icons;
             CGWorkspace(s.editors, s.theme, s.texture);
             break;

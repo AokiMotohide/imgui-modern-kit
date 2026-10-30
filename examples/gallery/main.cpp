@@ -26,6 +26,7 @@
 #include <array>
 #include <set>
 namespace {
+using enum imkit::gallery::PageId;
 int lastGlfwErrorCode = GLFW_NO_ERROR;
 const std::filesystem::path &NoCapturePath() {
     static const std::filesystem::path empty;
@@ -381,19 +382,19 @@ void Verify(Host &h, const std::filesystem::path &out) {
         if (!ok)
             throw std::runtime_error(name);
     };
-    h.Page(19);
+    h.Page(PageStart);
     h.Click("start-components");
-    check(h.s.page == 0, ("Start route: components (page " + std::to_string(h.s.page) + ")").c_str());
-    h.Page(19);
+    check(h.s.page == PageBasic, ("Start route: components (page " + std::to_string(h.s.page) + ")").c_str());
+    h.Page(PageStart);
     h.Click("start-Explore icons");
-    check(h.s.page == 6, "Start route: visual system");
-    h.Page(19);
+    check(h.s.page == PageIcons, "Start route: visual system");
+    h.Page(PageStart);
     h.Click("start-circular-progress");
-    check(h.s.page == 16, "Start route: feedback and progress");
-    h.Page(19);
+    check(h.s.page == PageFeedback, "Start route: feedback and progress");
+    h.Page(PageStart);
     h.Click("start-Open timeline");
-    check(h.s.page == 8, "Start route: timeline");
-    h.Page(0);
+    check(h.s.page == PageVideo, "Start route: timeline");
+    h.Page(PageBasic);
     h.Click("apply");
     check(h.s.clicks == 1, "Action activation");
     h.Click("disabled");
@@ -421,7 +422,7 @@ void Verify(Host &h, const std::filesystem::path &out) {
     h.Key(ImGuiKey_Tab);
     h.Frame([](auto &io) { io.AddKeyEvent(ImGuiMod_Shift, false); });
     check(h.s.applyFocused, "Shift-Tab restores focus");
-    h.Page(1);
+    h.Page(PageNumeric);
     auto slider = h.s.probes.at("slider");
     h.ClickAt({slider.min.x + 350, slider.Center().y});
     check(h.s.scalar > .7f, "Slider edit");
@@ -443,7 +444,7 @@ void Verify(Host &h, const std::filesystem::path &out) {
     h.Frame([](auto &io) { io.AddMouseButtonEvent(0, false); });
     h.Settle();
     check(h.s.lower > 20 && h.s.lower <= h.s.upper, "Range edit and ordering");
-    h.Page(2);
+    h.Page(PageInput);
     h.Replace("text", "Quality / 品質");
     check(std::strcmp(h.s.name, "Quality / 品質") == 0 && h.s.callbackCount > 0, "UTF-8 edit and callback");
     h.Replace("resize-text", "A growing UTF-8 buffer / 日本語の設定");
@@ -460,7 +461,7 @@ void Verify(Host &h, const std::filesystem::path &out) {
     h.ClickAt({picker.min.x + 25, picker.min.y + 35});
     check(h.s.color.x != beforeColor.x || h.s.color.y != beforeColor.y || h.s.color.z != beforeColor.z,
           "Color picker input");
-    h.Page(3);
+    h.Page(PageHierarchy);
     h.Click("tree");
     check(h.s.treeOpen, "Tree expansion");
     h.Click("row-2");
@@ -489,7 +490,7 @@ void Verify(Host &h, const std::filesystem::path &out) {
     h.Frame([](auto &io) { io.AddMouseWheelEvent(0, -4); });
     h.Settle();
     check(h.s.tableScroll > 0, "Table scrolling with frozen header and clipped rows");
-    h.Page(4);
+    h.Page(PageOverlay);
     h.Click("popup");
     check(h.s.popupVisible, "Popup opens");
     h.Key(ImGuiKey_Escape);
@@ -513,7 +514,7 @@ void Verify(Host &h, const std::filesystem::path &out) {
     h.Click("cancel");
     check(!h.s.modalVisible, "Modal cancellation");
     check(h.s.modalLauncherFocused, "Modal restores launcher focus");
-    h.Page(5);
+    h.Page(PageComposites);
     auto r = h.s.probes.at("segments");
     h.ClickAt({r.max.x - 20, r.Center().y});
     check(h.s.segment == 2, "Segmented selection");
@@ -540,7 +541,7 @@ void VerifyIcons(Host &h, const std::filesystem::path &out) {
         if (!ok)
             throw std::runtime_error(name);
     };
-    h.Page(6);
+    h.Page(PageIcons);
     h.Click("icon-button");
     check(h.s.iconClicks == 1, "Icon button mouse activation");
     h.Click("icon-label-button");
@@ -631,14 +632,14 @@ void VerifyEditors(Host &h, const std::filesystem::path &out, const imkit::previ
     const int expectedShear=static_cast<int>(std::lround(255*(.25+.75*1.175/std::sqrt(4.8125*.98))));
     check(std::abs(static_cast<int>(normalPixels[(240*640+320)*4])-expectedShear)<=2,
           "GL inverse transpose preserves sheared surface lighting");
-    h.Page(8);
+    h.Page(PageVideo);
     int dragCapture=0;
     auto drag = [&](ImVec2 from, ImVec2 to) {
         h.mouse = from; h.Frame();
         h.Frame([](auto &io) { io.AddMouseButtonEvent(0, true); });
         h.mouse = to; h.Frame();
         h.Frame({},out/("drag-preview-"+std::to_string(dragCapture++)+".png"));
-        if (h.s.page==9 && s.viewport.drag.active) {
+        if (h.s.page==PageCG && s.viewport.drag.active) {
             const auto pose=imkit::cg::PreviewTransform(s.objects[1],s.viewport);
             const auto center=imkit::cg::Project(pose.translation,s.viewport.camera,{0,0},s.viewportSize);
             check(center.visible && renderer.Pick(static_cast<int>(center.screen.x),static_cast<int>(center.screen.y))==s.objects[1].id,
@@ -670,7 +671,7 @@ void VerifyEditors(Host &h, const std::filesystem::path &out, const imkit::previ
     h.ClickAt(clipPosition(1000, 100));
     check(s.clips.size() == count+1, "Timeline razor split via public IO");
     s.timeline.tool = imkit::video::Tool::Select;
-    h.Page(9);
+    h.Page(PageCG);
     auto projected = imkit::cg::Project(s.objects[1].transform.translation, s.viewport.camera, s.viewportOrigin, s.viewportSize);
     auto end = imkit::cg::Project({s.objects[1].transform.translation.x+1,s.objects[1].transform.translation.y,s.objects[1].transform.translation.z},s.viewport.camera,s.viewportOrigin,s.viewportSize);
     float dx=end.screen.x-projected.screen.x,dy=end.screen.y-projected.screen.y,len=std::sqrt(dx*dx+dy*dy);
@@ -731,18 +732,18 @@ void VerifyEditors(Host &h, const std::filesystem::path &out, const imkit::previ
             }
     s.viewport.camera=savedCamera;s.viewport.orientation=imkit::cg::Orientation::World;
     s.objects[1].transform.rotation=savedRotation;s.objectSelection.Set(s.objects[1].id);
-    h.Page(7);
+    h.Page(PageEditorCore);
     auto &key=s.keys[4]; const auto keyId=key.id; auto keyTick=key.tick;
     auto keyScreen=imkit::editor::ToScreen({imkit::editor::Seconds(key.tick),-key.value},s.curve.canvas,{s.curve.view.min.x,s.curve.view.min.y});
     drag({static_cast<float>(keyScreen.x),static_cast<float>(keyScreen.y)}, {static_cast<float>(keyScreen.x+20),static_cast<float>(keyScreen.y+10)});
     auto editedKey=std::find_if(s.keys.begin(),s.keys.end(),[&](const auto &k){return k.id==keyId;});
     check(editedKey->tick>keyTick,"Curve key move via public IO");
-    s.animationPage=2; h.Page(9); s.animationPage=-1; h.Settle();
+    s.animationPage=2; h.Page(PageCG); s.animationPage=-1; h.Settle();
     auto vertex=s.uv[0].uv;auto uvScreen=imkit::editor::ToScreen(vertex,s.uvState.canvas,{s.uvState.view.min.x,s.uvState.view.min.y});
     drag({static_cast<float>(uvScreen.x),static_cast<float>(uvScreen.y)},{static_cast<float>(uvScreen.x+30),static_cast<float>(uvScreen.y+15)});
     check(s.uv[0].uv.x>vertex.x&&s.uv[0].uv.y>vertex.y,"UV vertex transform via public IO");
     h.Frame({},out/"uv-edited.png");
-    s.Dataset(true); h.Page(8); h.Settle(20);
+    s.Dataset(true); h.Page(PageVideo); h.Settle(20);
     std::array<double,180> timings{};
     std::size_t maxQueries=0,maxClips=0;
     h.imguiAllocations=0; h.countImGuiAllocations=true;
@@ -786,7 +787,7 @@ void BenchmarkEditors(Host &h,const std::filesystem::path &out) {
     bool allPassed=width==1920 && height==1440;
     for (int operation=0;operation<6;++operation) {
         s.Dataset(true);s.selection.Clear();s.timeline={};s.timeline.snapping=false;
-        h.Page(8);h.Settle(20);
+        h.Page(PageVideo);h.Settle(20);
         const auto &clip=s.clips.front();const auto clipId=clip.id;
         const auto startTick=clip.start,originalDuration=clip.duration;
         const float left=s.timeline.view.min.x+s.timeline.headerWidth;
@@ -849,7 +850,7 @@ void BenchmarkEditors(Host &h,const std::filesystem::path &out) {
 
 void VerifyLinkedClips(Host &h,const std::filesystem::path &out) {
     using namespace imkit;
-    auto &s=h.s.editors;s.Dataset(false);h.Page(8);h.Settle();
+    auto &s=h.s.editors;s.Dataset(false);h.Page(PageVideo);h.Settle();
     s.timeline.canvas.origin.x=7;s.timeline.canvas.scale.x=100;s.timeline.snapping=false;
     h.Settle();
     const auto target=s.clips[2].id;
@@ -901,7 +902,7 @@ void VerifyTimelineUI(Host &h,const std::filesystem::path &out) {
     auto &s=h.s.editors;s.japanese=false;s.tracks={{710,"Video A"},{711,"Video B"},{712,"Video C"}};
     s.clips.clear();s.selection.Clear();s.trackSelection.Clear();s.timeline.canvas.origin={0,0};s.timeline.canvas.scale={120,1};
     for(int i=0;i<2;++i) {video::ClipView c;c.id=810+i;c.track=710;c.label="Editable clip";c.start=editor::FromSeconds(2*i);c.duration=editor::FromSeconds(2);c.sourceIn=editor::FromSeconds(10);s.clips.push_back(c);}
-    s.selection.Set(810);s.RebuildTrackLayout();s.RebuildClipIndex();s.RebuildKeyIndex();h.Page(8);
+    s.selection.Set(810);s.RebuildTrackLayout();s.RebuildClipIndex();s.RebuildKeyIndex();h.Page(PageVideo);
     std::ofstream log(out/"timeline-ui.txt");
     const auto require=[&](bool ok,const char *message){log<<(ok ? "PASS " : "FAIL ")<<message<<'\n';log.flush();if(!ok) throw std::runtime_error(message);};
     const auto origin=s.timeline.view.min;
@@ -928,7 +929,7 @@ void VerifyTimelineUI(Host &h,const std::filesystem::path &out) {
 }
 void VerifyComparison(Host &h,const std::filesystem::path &out) {
     auto require=[](bool ok,const char *message) { if(!ok) throw std::runtime_error(message); };
-    h.s.page=21;h.s.comparison.open=true;h.Settle();
+    h.s.page=PageCompare;h.s.comparison.open=true;h.Settle();
     for(int mode=0;mode<2;++mode) {
         h.s.comparison.mode=mode;h.Settle();
         const ImGuiStyle before=ImGui::GetStyle();h.Frame();
@@ -951,11 +952,11 @@ void VerifyComparison(Host &h,const std::filesystem::path &out) {
         require(h.s.comparison.applyCount==disabledCount,"disabled controls changed state");
         h.s.comparison.disabled=false;
     }
-    h.s.comparison.open=false;h.Page(19);
+    h.s.comparison.open=false;h.Page(PageStart);
     require(!h.s.probes.contains("comparison-default-apply"),"comparison leaked into Start");
-    h.s.comparison.open=true;h.Page(21);
+    h.s.comparison.open=true;h.Page(PageCompare);
     h.Frame({},out/"comparison-native.png");
-    h.s.comparison.open=false;h.Page(22);
+    h.s.comparison.open=false;h.Page(PageWorkbench);
     const bool setting=h.s.workflow.settingEnabled;h.Click("workbench-enabled");
     require(h.s.workflow.settingEnabled!=setting,"workbench setting request was not applied");
     h.Click("workbench-row-1");
@@ -974,12 +975,12 @@ void CaptureMotion(Host& h,const std::filesystem::path& out,const std::string& d
     using namespace imkit;
     h.s.theme=MakeTheme(ThemePreset::Graphite);h.s.theme.fonts=h.s.fonts;
     h.s.scale=1.3f;h.s.presetIndex=2;h.s.dark=true;h.s.comparison.open=false;
-    int page=demo=="comparison"?21:demo=="workspace"?22:demo=="icons"||demo=="themes"||demo=="icon-artwork"?6:
-        demo=="toasts"?20:demo=="timeline"||demo=="preview-contract"?8:demo=="workflow"?15:demo=="overview"?19:0;
-    if(page==21)h.s.comparison.open=true;
-    if(page==8)h.s.editors.Dataset(false);
+    int page=demo=="comparison"?PageCompare:demo=="workspace"?PageWorkbench:demo=="icons"||demo=="themes"||demo=="icon-artwork"?PageIcons:
+        demo=="toasts"?PageToasts:demo=="timeline"||demo=="preview-contract"?PageVideo:demo=="workflow"?PageGenericWorkspace:demo=="overview"?PageStart:PageBasic;
+    if(page==PageCompare)h.s.comparison.open=true;
+    if(page==PageVideo)h.s.editors.Dataset(false);
     if(demo=="preview-contract")h.s.editors.monitorMode=3;
-    if(page==20){h.s.toasts.initialized=true;h.s.toasts.items.clear();h.s.toasts.state.Reset();}
+    if(page==PageToasts){h.s.toasts.initialized=true;h.s.toasts.items.clear();h.s.toasts.state.Reset();}
     h.Page(page);h.mouse={350,150};h.Settle();
     std::filesystem::create_directories(out);
     std::ofstream layout(out/(demo+".layout.json"));layout<<"{";bool first=true;
@@ -1053,7 +1054,7 @@ void CaptureMotion(Host& h,const std::filesystem::path& out,const std::string& d
         drag({p.x+240,p.y},{p.x+75,p.y},"Scrub back");
     } else if(demo=="overview") {
         click("start-Open 3.2 workspace");click("workbench-row-1");click("workbench-tab-1");click("workbench-enabled");click("workbench-enabled");
-        recording.Check("Start route applied",h.s.page==22);
+        recording.Check("Start route applied",h.s.page==PageWorkbench);
     } else if(demo=="workflow") {
         click("workflow-chip");recording.Check("filter enabled",h.s.workflow.chip);
         click("workflow-review");
@@ -1083,14 +1084,14 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
     std::filesystem::create_directories(dir);
     int frame=0;
     if(demo=="overview") {
-        h.s.page=19;h.s.comparison.open=false;h.Settle();
+        h.s.page=PageStart;h.s.comparison.open=false;h.Settle();
         CaptureFrames(h,dir,frame,16);
-        h.s.page=21;h.s.comparison.open=true;h.Settle();
+        h.s.page=PageCompare;h.s.comparison.open=true;h.Settle();
         CaptureFrames(h,dir,frame,24);
-        h.s.page=22;h.s.comparison.open=false;h.Settle();
+        h.s.page=PageWorkbench;h.s.comparison.open=false;h.Settle();
         CaptureFrames(h,dir,frame,20);
     } else if(demo=="comparison") {
-        h.s.page=21;h.s.comparison.open=true;h.Settle();
+        h.s.page=PageCompare;h.s.comparison.open=true;h.Settle();
         CaptureFrames(h,dir,frame,14);
         h.Click("comparison-default-apply");
         CaptureFrames(h,dir,frame,14);
@@ -1099,19 +1100,19 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
         h.Click("comparison-imkit-enabled");
         CaptureFrames(h,dir,frame,14);
     } else if(demo=="workspace") {
-        h.s.comparison.open=false;h.Page(22);
+        h.s.comparison.open=false;h.Page(PageWorkbench);
         CaptureFrames(h,dir,frame,16);
         h.Click("workbench-enabled");h.mouse={-100,-100};h.Settle();CaptureFrames(h,dir,frame,12);
         h.Click("workbench-row-1");h.mouse={-100,-100};h.Settle();CaptureFrames(h,dir,frame,12);
         h.Click("workbench-tabs");h.mouse={-100,-100};h.Settle();CaptureFrames(h,dir,frame,12);
         h.Click("workbench-enabled");h.mouse={-100,-100};h.Settle();CaptureFrames(h,dir,frame,12);
     } else if(demo=="toasts") {
-        h.s.comparison.open=false;h.s.toasts.initialized=true;h.s.toasts.items.clear();h.s.toasts.state.Reset();h.Page(20);
+        h.s.comparison.open=false;h.s.toasts.initialized=true;h.s.toasts.items.clear();h.s.toasts.state.Reset();h.Page(PageToasts);
         h.Click("toast-loading");CaptureFrames(h,dir,frame,24);
         h.Click("toast-complete");CaptureFrames(h,dir,frame,24);
         h.Click("toast-success");CaptureFrames(h,dir,frame,16);
     } else if(demo=="components") {
-        h.s.page=0;h.s.comparison.open=false;h.Settle();
+        h.s.page=PageBasic;h.s.comparison.open=false;h.Settle();
         CaptureFrames(h,dir,frame,16);
         h.Click("apply");CaptureFrames(h,dir,frame,12);
         h.Click("toggle");CaptureFrames(h,dir,frame,12);
@@ -1130,7 +1131,7 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
             const auto category=std::find(categories.begin(),categories.end(),name);
             return category==categories.end()?0:static_cast<int>(category-categories.begin());
         };
-        h.s.page=6;h.s.comparison.open=false;h.s.iconSearch[0]='\0';h.s.iconCategory=0;
+        h.s.page=PageIcons;h.s.comparison.open=false;h.s.iconSearch[0]='\0';h.s.iconCategory=0;
         h.s.selectedIcon=iconIndex("Camera");h.Settle();
         CaptureFrames(h,dir,frame,20);
         h.s.iconCategory=categoryIndex("Editor");h.s.selectedIcon=iconIndex("Timecode");h.Settle();
@@ -1162,7 +1163,7 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
             h.s.design.density=static_cast<int>(h.s.theme.density);
             h.Settle();
         };
-        h.s.page=6;h.s.comparison.open=false;h.s.palette=true;h.Settle();
+        h.s.page=PageIcons;h.s.comparison.open=false;h.s.palette=true;h.Settle();
         CaptureFrames(h,dir,frame,8);
         applyPreset(4);
         CaptureFrames(h,dir,frame,8);
@@ -1172,14 +1173,14 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
         CaptureFrames(h,dir,frame,8);
         h.s.palette=false;h.Settle();
         CaptureFrames(h,dir,frame,8);
-        h.s.page=21;h.s.comparison.open=true;h.Settle();
+        h.s.page=PageCompare;h.s.comparison.open=true;h.Settle();
         CaptureFrames(h,dir,frame,16);
     } else if(demo=="vector") {
-        h.s.page=1;h.s.comparison.open=false;h.s.floatingComparison=false;
+        h.s.page=PageNumeric;h.s.comparison.open=false;h.s.floatingComparison=false;
         h.s.theme=imkit::MakeTheme(imkit::ThemePreset::Slate);h.s.theme.fonts=h.s.fonts;h.s.dark=true;h.Settle();
         CaptureFrames(h,dir,frame,20);
     } else if(demo=="workflow") {
-        h.s.page=15;h.s.comparison.open=false;h.Settle();
+        h.s.page=PageGenericWorkspace;h.s.comparison.open=false;h.Settle();
         CaptureFrames(h,dir,frame,10);
         h.Click("workflow-chip");
         CaptureFrames(h,dir,frame,10);
@@ -1187,14 +1188,14 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
         CaptureFrames(h,dir,frame,10);
         h.Click("workflow-steps");
         CaptureFrames(h,dir,frame,10);
-        h.s.page=16;h.Settle();
+        h.s.page=PageFeedback;h.Settle();
         for(int i=0;i<24;++i) {
             h.s.workflow.fraction=static_cast<float>(i)/23.f;
             char name[32];std::snprintf(name,sizeof(name),"frame-%03d.png",frame++);
             h.Frame({},dir/name);
         }
     } else if(demo=="preview-contract") {
-        auto &s=h.s.editors;s.Dataset(false);h.s.page=8;h.s.comparison.open=false;h.Settle();
+        auto &s=h.s.editors;s.Dataset(false);h.s.page=PageVideo;h.s.comparison.open=false;h.Settle();
         s.videoTopRatio=.95f;
         s.monitorMode=3;s.monitorContractSource=0;s.monitorContractAspect=1;
         for(int state=0;state<5;++state) {
@@ -1202,7 +1203,7 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
             CaptureFrames(h,dir,frame,10);
         }
     } else if(demo=="progress") {
-        h.s.page=16;h.s.comparison.open=false;h.Settle();
+        h.s.page=PageFeedback;h.s.comparison.open=false;h.Settle();
         h.s.workflow.taskFraction=0.f;
         h.mouse={1700,800};
         h.Frame([](ImGuiIO& io){io.AddMouseWheelEvent(0,-5);});h.Settle();
@@ -1214,7 +1215,7 @@ void CaptureDemo(Host &h,const std::filesystem::path &out,const std::string &dem
         if(h.s.workflow.taskFraction<1.f) throw std::runtime_error("progress operation did not complete the host task");
         CaptureFrames(h,dir,frame,10);
     } else if(demo=="timeline") {
-        auto &s=h.s.editors;s.Dataset(false);h.s.page=8;h.s.comparison.open=false;h.Settle();
+        auto &s=h.s.editors;s.Dataset(false);h.s.page=PageVideo;h.s.comparison.open=false;h.Settle();
         CaptureFrames(h,dir,frame,16);
         const auto origin=s.timeline.view.min;
         h.mouse={origin.x+s.timeline.headerWidth+5,origin.y+11};h.Settle();
@@ -1237,7 +1238,7 @@ void VerifyTrackControls(Host &h,const std::filesystem::path &out) {
     using namespace imkit;
     // 420 px: seven icon buttons stay inline only while the header is wider than their padded width at 125% scale.
     auto &s=h.s.editors;s.japanese=false;s.timeline.headerWidth=420;
-    s.tracks.front().label="Picture / a long production track name / 映像トラックの長い名前";h.Page(8);
+    s.tracks.front().label="Picture / a long production track name / 映像トラックの長い名前";h.Page(PageVideo);
     std::ofstream log(out/"track-controls.txt");
     auto require=[&](bool ok,const char *label) {
         log<<(ok ? "PASS " : "FAIL ")<<label<<'\n';log.flush();
@@ -1268,7 +1269,7 @@ void VerifyTrackControls(Host &h,const std::filesystem::path &out) {
 
 void VerifyMonitors(Host &h,const std::filesystem::path &out) {
     using namespace imkit;
-    auto &s=h.s.editors;h.Page(8);
+    auto &s=h.s.editors;h.Page(PageVideo);
     s.timeline.time.playhead=0;s.markers[0]={s.nextId++,0,"Opening cue / 開始の合図"};s.markerCount=1;
     std::ofstream log(out/"monitor-interaction.txt");
     const auto timelineScale=s.timeline.canvas.scale.x,timelineOrigin=s.timeline.canvas.origin.x;
@@ -1311,7 +1312,7 @@ void VerifyMonitors(Host &h,const std::filesystem::path &out) {
             log<<"PASS Preview Monitor "<<aspectNames[aspect]<<' '<<stateNames[state]<<" Fit/Fill/Stretch capture\n";
         }
     }
-    h.Page(9);
+    h.Page(PageCG);
     const auto savedCamera=s.viewport.camera;
     s.viewport.camera.yaw=s.viewport.camera.pitch=s.viewport.camera.roll=0;s.viewport.camera.target={};
     for(int aspect=0;aspect<4;++aspect) {
@@ -1332,7 +1333,7 @@ void VerifyMonitors(Host &h,const std::filesystem::path &out) {
 
 void VerifyColor(Host &h, const std::filesystem::path &out) {
     auto &s=h.s.editors;
-    s.videoPanel=1; h.Page(8); h.Settle(4);
+    s.videoPanel=1; h.Page(PageVideo); h.Settle(4);
     std::ofstream log(out/"color-interaction.txt");
     for (int wheel=0; wheel<3; ++wheel) {
         auto center=s.colorState.wheelCenters[wheel];
@@ -2111,7 +2112,7 @@ int main(int argc, char **argv) {
         if(a=="--window-title" && i+1<argc) {windowTitle=argv[++i];continue;}
         if(a=="--verify-window-frame") {verifyWindowFrame=true;frameMode=1;continue;}
         if(a=="--verify-workflow") {verifyWorkflow=true;capture=true;continue;}
-        if(a=="--verify-toasts") {verifyToasts=true;capture=true;capturePage=20;continue;}
+        if(a=="--verify-toasts") {verifyToasts=true;capture=true;capturePage=PageToasts;continue;}
         if(a=="--capture-design-system") {captureDesign=true; capture=true; continue;}
         if(a=="--verify-comparison") {verifyComparison=true;continue;}
         if(a=="--capture-readme") {captureDemo="overview";captureReadme=true;continue;}
@@ -2409,7 +2410,7 @@ int main(int argc, char **argv) {
         } else if (h.automated) {
             std::filesystem::create_directories(out);
             if(verifyToasts) {
-                h.s.comparison.open=false;h.Page(20);
+                h.s.comparison.open=false;h.Page(PageToasts);
                 auto& demo=h.s.toasts;
                 auto require=[](bool ok,const char* what){if(!ok) throw std::runtime_error(what);};
                 require(demo.items.size()==4,"toast demo seed");
@@ -2450,7 +2451,7 @@ int main(int argc, char **argv) {
             else if (verifyTrackControls) VerifyTrackControls(h,out);
             if (verifyLinkedClips) VerifyLinkedClips(h,out);
             if (verifyNormals) {
-                h.Page(9);h.s.editors.viewport.normals=true;h.s.editors.viewport.faceNormals=true;
+                h.Page(PageCG);h.s.editors.viewport.normals=true;h.s.editors.viewport.faceNormals=true;
                 h.s.editors.viewport.cameraFrame=true;h.s.editors.viewport.safeFrame=true;
                 h.s.editors.viewport.renderRegion=true;h.s.editors.viewport.passepartout=true;
                 h.s.editors.viewport.measurement=true;
@@ -2471,7 +2472,7 @@ int main(int argc, char **argv) {
             if(verifyWorkflow) {
                 std::ofstream log(out/"workflow-interaction.txt");
                 auto check=[&](bool ok,const char* text){log<<(ok?"PASS ":"FAIL ")<<text<<'\n';if(!ok)throw std::runtime_error(text);};
-                h.Page(15);h.s.workflow.notice=false;h.Settle();
+                h.Page(PageGenericWorkspace);h.s.workflow.notice=false;h.Settle();
                 bool before=h.s.workflow.chip;h.Click("workflow-chip");check(h.s.workflow.chip!=before,"filter chip click");
                 // The workspace page is taller than the window; scroll until the canvas centre is on screen.
                 for(int i=0;i<12&&h.s.probes.at("workflow-canvas").Center().y>ImGui::GetIO().DisplaySize.y-160;++i) {
@@ -2485,11 +2486,11 @@ int main(int argc, char **argv) {
                 for(int dark=0;dark<2;++dark)for(int contrast=0;contrast<2;++contrast)for(int density=0;density<3;++density){
                     h.s.dark=dark!=0;h.s.theme=imkit::MakeTheme(static_cast<imkit::ColorScheme>(dark),static_cast<imkit::ContrastMode>(contrast),static_cast<imkit::Density>(density));
                     h.s.theme.motion.reducedMotion=true;
-                    for(int page:{15,16,17}){h.Page(page);h.Frame({},out/("workflow-"+std::to_string(page)+"-"+std::to_string(dark)+"-"+std::to_string(contrast)+"-"+std::to_string(density)+".png"));}
+                    for(int page:{PageGenericWorkspace,PageFeedback,PagePreviewTiles}){h.Page(page);h.Frame({},out/("workflow-"+std::to_string(page)+"-"+std::to_string(dark)+"-"+std::to_string(contrast)+"-"+std::to_string(density)+".png"));}
                 }
                 h.s.workflow.japanese=true;h.s.workflow.vertical=true;h.s.workflow.disabled=true;
-                glfwSetWindowSize(h.window,640,800);h.Page(17);h.Frame({},out/"workflow-narrow-disabled.png");
-                h.s.workflow.disabled=false;h.Page(15);h.Frame({},out/"workflow-japanese.png");
+                glfwSetWindowSize(h.window,640,800);h.Page(PagePreviewTiles);h.Frame({},out/"workflow-narrow-disabled.png");
+                h.s.workflow.disabled=false;h.Page(PageGenericWorkspace);h.Frame({},out/"workflow-japanese.png");
                 h.mouse={620,700};h.Frame([](auto& io){io.AddMouseWheelEvent(0,-20);});h.Settle(2);
                 h.Frame({},out/"workflow-image-aspects.png");
                 check(true,"Light/Dark, contrast, density, reduced motion, Japanese, narrow, disabled GPU captures");
@@ -2503,18 +2504,18 @@ int main(int argc, char **argv) {
                     h.s.dark=dark!=0;
                     h.s.theme=imkit::MakeTheme(static_cast<imkit::ColorScheme>(dark),static_cast<imkit::ContrastMode>(contrast),static_cast<imkit::Density>(density));
                     h.s.design.density=density; h.s.design.contrast=contrast;
-                    for(int page:{10,11,12,13,14}) {
+                    for(int page:{PageFoundations,PageReferenceComponents,PagePatterns,PageAccessibility,PageResponsive}) {
                         h.Page(page);
                         h.Frame({},out/("design-"+std::to_string(page)+"-"+std::to_string(dark)+"-"+std::to_string(contrast)+"-"+std::to_string(density)+".png"));
                     }
                 }
-                h.s.design.language=1; h.s.scale=1.5f; h.Page(12); h.Frame({},out/"japanese-150.png");
-                h.s.design.language=2; h.s.scale=2; h.Page(14); h.Frame({},out/"rtl-200.png");
+                h.s.design.language=1; h.s.scale=1.5f; h.Page(PagePatterns); h.Frame({},out/"japanese-150.png");
+                h.s.design.language=2; h.s.scale=2; h.Page(PageResponsive); h.Frame({},out/"rtl-200.png");
             } else if (!captureLook.empty()) {
                 // One frame of one page with the theme from --theme-file, for documentation and review.
                 if (captureLook.has_parent_path()) std::filesystem::create_directories(captureLook.parent_path());
                 h.s.comparison.open=false;
-                h.Page(capturePage >= 0 ? capturePage : 34);
+                h.Page(capturePage >= 0 ? capturePage : PageLookStudio);
                 h.Frame({}, captureLook);
             } else if (capture) {
                 h.s.editors.japanese=captureJapanese;
@@ -2532,26 +2533,26 @@ int main(int argc, char **argv) {
                         h.Page(page);
                         h.Frame({},
                                 out / ("page-" + std::to_string(page) + (dark ? "-dark.png" : "-light.png")));
-                        if(page==22) {
+                        if(page==PageWorkbench) {
                             h.mouse={ImGui::GetIO().DisplaySize.x*.7f,ImGui::GetIO().DisplaySize.y*.7f};
                             h.Frame([](auto& io){io.AddMouseWheelEvent(0,-100);});h.mouse={-100,-100};h.Settle();
                             h.Frame({},out/(dark?"workbench-scrolled-dark.png":"workbench-scrolled-light.png"));
                         }
-                        if (page == 6 || (page >= 8 && page<=15)) {
+                        if (page == PageIcons || (page >= 8 && page<=15)) {
                             h.s.scale = 1.5f; h.Settle();
                             h.Frame({}, out / ("page-"+std::to_string(page)+(dark ? "-dark-150.png" : "-light-150.png")));
-                            if(page==6 || page==8) {
+                            if(page==PageIcons || page==PageVideo) {
                                 const auto oldPanel=h.s.editors.activeVideoPanel;
-                                if(page==8) {h.s.editors.videoPanel=1;h.s.editors.colorCurve.fitRequested=true;h.Settle();}
-                                h.mouse={page==8?h.s.editors.colorCurve.view.max.x+16:1200,1320};h.Frame([](ImGuiIO &io){io.AddMouseWheelEvent(0,-100);});h.Settle();
+                                if(page==PageVideo) {h.s.editors.videoPanel=1;h.s.editors.colorCurve.fitRequested=true;h.Settle();}
+                                h.mouse={page==PageVideo?h.s.editors.colorCurve.view.max.x+16:1200,1320};h.Frame([](ImGuiIO &io){io.AddMouseWheelEvent(0,-100);});h.Settle();
                                 const auto scrollMouse=h.mouse;h.mouse={-100,-100};h.Settle();
-                                h.Frame({},out/((page==6?"icons-bottom":"color-curves")+std::string(dark?"-dark-150.png":"-light-150.png")));
+                                h.Frame({},out/((page==PageIcons?"icons-bottom":"color-curves")+std::string(dark?"-dark-150.png":"-light-150.png")));
                                 h.mouse=scrollMouse;h.Frame([](ImGuiIO &io){io.AddMouseWheelEvent(0,100);});h.Settle();
-                                if(page==8) h.s.editors.videoPanel=oldPanel;
+                                if(page==PageVideo) h.s.editors.videoPanel=oldPanel;
                             }
                             h.s.scale = 1; h.Settle();
                         }
-                        if (page == 6) {
+                        if (page == PageIcons) {
                             h.s.iconSizeIndex = 0;
                             h.Settle();
                             h.Frame({}, out / (dark ? "icons-16-dark.png" : "icons-16-light.png"));
@@ -2561,14 +2562,14 @@ int main(int argc, char **argv) {
                         }
                     }
                 }
-                if (capturePage == -1 || capturePage == 0) {
+                if (capturePage == -1 || capturePage == PageBasic) {
                     h.s.scale = 1.5f;
-                    h.Page(0);
+                    h.Page(PageBasic);
                     h.Frame({}, out / "page-0-dark-150.png");
                     h.s.scale = 1;
                 }
-                if (capturePage == -1 || capturePage == 4) {
-                    h.Page(4);
+                if (capturePage == -1 || capturePage == PageOverlay) {
+                    h.Page(PageOverlay);
                     h.Click("modal");
                     h.Settle(10);
                     h.Frame({}, out / "modal-dark.png");

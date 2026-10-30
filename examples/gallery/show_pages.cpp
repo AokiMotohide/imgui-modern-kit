@@ -25,23 +25,23 @@ void ShowPages::Init() {
 
 void ShowPages::Show(int page, GalleryState& host) {
     Init();
-    if (page == 25)
+    if (page == PageShowControls)
         Controls(host);
-    else if (page == 26)
+    else if (page == PageShowLive)
         Live(host);
-    else if (page == 27)
+    else if (page == PageShowRules)
         Rules(host);
-    else if (page == 28)
+    else if (page == PageShowSchedule)
         Schedule(host);
-    else if (page == 29)
+    else if (page == PageShowBeat)
         Beat(host);
-    else if (page == 30)
+    else if (page == PageShowScript)
         Script(host);
-    else if (page == 31)
+    else if (page == PageShowSurface)
         Surface(host);
-    else if (page == 32)
+    else if (page == PageShowLed)
         Led(host);
-    else if (page == 33)
+    else if (page == PageShowImages)
         Images(host);
 }
 

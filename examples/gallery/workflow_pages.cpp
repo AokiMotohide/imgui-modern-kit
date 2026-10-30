@@ -12,7 +12,7 @@ void WorkflowPages::Show(int page,GalleryState& host) {
     imkit::Command commands[]={{1,japanese?"通知を表示":"Notify"},{2,japanese?"コマンド検索":"Search commands"},{3,japanese?"実行不可":"Unavailable","",true,"The host disabled this action"}};
     auto apply=[&](StableId action){if(!action)return;++actions;if(action==1){notice=true;expiresAt=ImGui::GetTime()+15;}if(action==2)palette.open=true;};
     ImGui::BeginDisabled(disabled);
-    if(page==15) {
+    if(page==PageGenericWorkspace) {
         AppBarView app{"ImKit",japanese?"サンプルプロジェクト":"Sample project",japanese?"編集ワークフロー":"Edit workflow",japanese?"準備完了":"Ready",true,FeedbackKind::Success,commands};
         apply(AppBar("app",app,toolbar,o));
         WorkspaceHeaderView header{"WORKFLOW",japanese?"作業スペース":"Workspace",japanese?"状態と操作はホストが所有します":"The host owns state and actions",japanese?"接続済み":"Connected",FeedbackKind::Success,commands};
@@ -106,7 +106,7 @@ void WorkflowPages::Show(int page,GalleryState& host) {
         ImGui::EndChild();ImGui::SameLine(0,0);
         RightSidePanelHandle("right-panel-handle",rightPanel,panelAvailable,panelOptions,o);
         if(panelLayout.panelVisible){ImGui::SameLine(0,0);ImGui::BeginChild("right-panel-body",{panelLayout.panelWidth,panelAvailable.y},ImGuiChildFlags_Borders);ImGui::TextUnformatted(japanese?"インスペクター":"Inspector");ImGui::TextDisabled(japanese?"状態と幅はホストが所有します":"The host owns open state and width");ImGui::EndChild();}
-    } else if(page==16) {
+    } else if(page==PageFeedback) {
         if(BeginGrid(host,"feedback-grid")) {
             const bool track=BeginSection(host,japanese?"進捗":"Progress","Inline, overlay and modal presentations share one track");
             if(track) {
