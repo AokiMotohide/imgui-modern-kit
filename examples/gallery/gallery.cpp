@@ -1094,23 +1094,27 @@ void Show(GalleryState &s) {
                 const char *name;
                 ImVec4 *color;
             };
-            auto &c = s.theme.colors;
+            // semantic is the source of truth; colors is rebuilt from it by ResolveTheme.
+            auto &c = s.theme.semantic;
             Entry entries[] = {{"Canvas", &c.canvas},
                                {"Surface", &c.surface},
-                               {"Input", &c.input},
-                               {"Raised", &c.raised},
+                               {"Input", &c.control.rest},
+                               {"Raised", &c.surfaceRaised},
                                {"Text", &c.text},
-                               {"Muted", &c.muted},
+                               {"Muted", &c.textSecondary},
                                {"Border", &c.border},
                                {"On accent", &c.onAccent},
-                               {"Selection", &c.selection},
-                               {"Focus", &c.focus},
-                               {"Destructive", &c.destructive},
-                               {"On destructive", &c.onDestructive},
+                               {"Selection", &c.control.selected},
+                               {"Focus", &c.control.focused},
+                               {"Destructive", &c.error},
                                {"Success", &c.success},
                                {"Warning", &c.warning}};
+            bool edited = false;
             for (auto &e : entries)
-                ColorEdit4(e.name, &e.color->x);
+                edited = ColorEdit4(e.name, &e.color->x) || edited;
+            ColorEdit4("On destructive", &s.theme.colors.onDestructive.x);
+            if (edited)
+                ResolveTheme(s.theme);
             TextWrapped(
                 "Theme is a host-owned value. Copy it to save a session preset, then apply it explicitly.");
         }

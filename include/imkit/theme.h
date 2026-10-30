@@ -40,6 +40,7 @@ struct SemanticColors {
     ImVec4 border{}, accent{}, onAccent{}, success{}, warning{}, error{};
     StateColors control{};
 };
+// Derived from `Theme::semantic` by ResolveTheme; edit semantic tokens instead.
 struct Palette {
     ImVec4 canvas, surface, input, raised, text, muted, border;
     ImVec4 accent, onAccent, selection, focus, destructive, onDestructive;

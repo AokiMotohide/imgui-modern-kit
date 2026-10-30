@@ -26,7 +26,9 @@ auto theme = imkit::MakeTheme(preset);
 
 ## Customization
 
-`SetAccent` updates accent, focus, contrasting on-accent text and selection. Edit other `Theme::colors`, `metrics`, `motion` or `editor` fields explicitly when needed. Arbitrary edits are not automatically contrast-corrected.
+Presets differ only in accent colour: Precision Light and Precision Dark supply the canvas, surface and text colours for every preset except Slate and the two high-contrast presets. To change the overall mood, edit `semantic` and call `ResolveTheme`.
+
+`SetAccent` updates accent, focus, contrasting on-accent text and selection. `semantic`, `typography`, `radius`, `stroke`, `elevation` and `opacity` are the source of truth; `colors` and `metrics` are projections that `ResolveTheme` rebuilds, so edits made directly to them are overwritten by the next `ResolveTheme` or `SetDensity`. Edit `motion` or `editor` fields explicitly when needed. Arbitrary edits are not automatically contrast-corrected.
 
 Shipped presets validate normal text at 4.5:1 or better against canvas, surface, input and raised surfaces. Muted text validates at 3:1 or better. Accent and destructive foreground pairs validate at 4.5:1 or better.
 
