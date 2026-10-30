@@ -146,6 +146,14 @@ def main() -> int:
             ja_steps = len(re.findall(r"^\s*\d+[.)]\s+", strip_code(japanese.read_text(encoding="utf-8")), re.MULTILINE))
             if en_steps != ja_steps:
                 errors.append(f"numbered procedure count differs: {english.relative_to(ROOT)} ({en_steps}) vs {japanese.relative_to(ROOT)} ({ja_steps})")
+            # Ensure English documents do not contain stray Japanese text
+            if en_rel != "reference/validation.md":
+                clean_en = strip_code(re.sub(r"\[日本語\]\([^)]+\)", "", english.read_text(encoding="utf-8")))
+                clean_en = re.sub(r"\[[^\]]+\]\([^)]*[\u3040-\u30ff\u4e00-\u9fff][^)]*\)", "", clean_en)
+                clean_en = re.sub(r"\"[^\"]*[\u3040-\u30ff\u4e00-\u9fff][^\"]*\"", "", clean_en)
+                jp_lines = [l.strip() for l in clean_en.splitlines() if re.search(r"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]", l)]
+                if jp_lines:
+                    errors.append(f"English doc contains stray Japanese: {english.relative_to(ROOT)} ({len(jp_lines)} lines, e.g. '{jp_lines[0][:60]}')")
     for path in sorted(PUBLIC_FILES):
         if not path.is_file():
             errors.append(f"missing public entry page: {path.relative_to(ROOT)}")

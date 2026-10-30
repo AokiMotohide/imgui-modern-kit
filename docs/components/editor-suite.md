@@ -1,69 +1,95 @@
 # Editor Suite 2.0
 
-[日本語](エディタスイート.md) · [Documentation index](../README.md)
+[日本語](エディタスイート.md) · [Documentation Index](../README.md) · [Editor API](../reference/editor-api.md)
 
-[Timeline editing](timeline-editing.md) documents independent fades, cut transitions, track management and selection/clipboard operations.
+ImKit's Editor Suite provides professional UI components built on the pinned Dear ImGui 1.93.0 WIP docking commit, tailored for creative applications such as DCC tools, video editors, and audio sequencers.
 
-ImKit provides reusable C++20 editor controls on the pinned Dear ImGui 1.93.0 WIP docking commit.
+For clip fade curves, cut transitions, and track gestures, see [Timeline Editing](timeline-editing.md).
+
+---
 
 ## Modules
 
 | Target | Header | Role |
 |---|---|---|
-| `imkit::imkit` | `imkit/imkit.h` | Native wrappers, Precision Layers theme, icons |
-| `imkit::editor_core` | `imkit/editor_core.h` | Canvas, time, curves, property/asset controls |
-| `imkit::video` | `imkit/video.h` | Timeline, monitors, audio, color |
-| `imkit::cg` | `imkit/cg.h`, `imkit/preview.h` | Viewport, hierarchy, animation, UV, DrawList preview |
-| `imkit::editor_suite` | Module headers above | Core + Video + CG, without mandatory OpenGL |
-| `imkit::preview_opengl3` | `imkit/preview.h` | Optional host-context renderer |
+| `imkit::imkit` | `<imkit/imkit.h>` | Native wrappers, Precision Layers theme, and core icon support |
+| `imkit::editor_core` | `<imkit/editor_core.h>` | Infinite canvas, time ruler, curve editor, property grid, and asset browser |
+| `imkit::video` | `<imkit/video.h>` | Multi-track timeline, video monitor overlays, audio mixer, and color controls |
+| `imkit::cg` | `<imkit/cg.h>`<br>`<imkit/preview.h>` | 3D viewport gizmos, scene hierarchy, animation dope sheet, and UV editor |
+| `imkit::editor_suite` | Module headers above | Complete suite aggregate: Core + Video + CG (OpenGL optional) |
+| `imkit::preview_opengl3` | `<imkit/preview.h>` | Optional offscreen GPU preview renderer using host OpenGL 3.3 context |
+
+---
 
 ## Ownership and events
 
-The host owns the Context, backend, fonts, textures, source data, providers, UI state, selection, undo, persistence and workers. Spans and UTF-8 label pointers are borrowed for each call. StableId is a unique nonzero uint64_t; times use int64_t Tick at 705600000 ticks/second with a rational FrameRate, including negative pre-roll and 29.97/59.94 drop-frame timecode. Parsing accepts two-digit hour fields.
+- **Host Ownership**: The host application owns the Dear ImGui Context, backend, fonts, textures, project source data, providers, UI state, selection, undo/redo history, persistence, and worker threads.
+- **Data Borrowing**: Spans and UTF-8 label pointers are borrowed strictly for the duration of each call.
+- **Identifiers & Time Precision**:
+  - `StableId` is a unique, non-zero `uint64_t`.
+  - Time is managed in integer `Tick` units at 705,600,000 ticks/second (`int64_t`) with a rational `FrameRate`.
+  - Supports negative pre-roll, drop-frame timecodes (29.97 / 59.94 fps), and two-digit hour fields.
+- **Preview Component Scope**: Layout, overlays, input handling, and user interaction requests only. Image/video decoding, media streaming, CG rendering, device contexts, and window management remain host-owned. The Video Monitor displays host-supplied textures and states for the current frame without seeking or playing media directly.
+- **Continuous Gestures & Transactions**:
+  - Continuous edits emit `Begin / Update / Commit / Cancel` phases with revision counters, original values, and proposed values.
+  - Drafts are previewed separately; revisions increment on accepted commits or external changes, cancelling stale gestures.
+  - Fixed-capacity event and scratch buffers report overflow without implicit heap allocations.
+- **Query Bounding**: Visible providers bound per-frame processing; detailed selected-member and neighbor queries execute only when actively required for editing.
 
-Preview components own layout, overlays, input UI and requests only. Image/video textures, media decode/capture, CG rendering and FBO resize, frame clocks, devices, native windows, workers and persistence remain host-owned. The Video Monitor displays the texture and state supplied for the current frame; it does not play or seek media.
-
-Continuous model edits emit Begin/Update/Commit/Cancel with revision, original and proposed values. Apply preview separately, increment revision on accepted commits or external changes, and cancel stale gestures. A full event or scratch buffer sets overflow. Terminal intent is retained for retry; related edits reserve the complete batch and reject locked members together. Instant context actions carry typed Commit events. Navigation ranges and display options are mutable host UI state.
-
-Visible providers bound steady-frame work. Complete selected-member and neighbor queries run when needed for editing. Keep IDs stable across sorting and filtering. All keyboard presets route through host-owned Command bindings; canvas interaction stays inside the focused widget. See [API contracts](../reference/editor-api.md) for event payloads, query completeness, scratch sizes and overloads.
+---
 
 ## Editor controls
 
-Timeline selection keeps the selected set when dragging a selected clip; Shift adds and Ctrl toggles clips. Move/Duplicate clamp the entire set at timeline zero without changing spacing. `TimelineState::memberDrags` must hold all companion transactions, and `TimelineProvider::selected` must resolve offscreen and linked members with lock information. The host must test strict interval overlap: touching clip ends are valid.
+### 1. Editor Core
+- **Infinite Canvas**: Smooth pan, zoom, fit, and box/lasso selection.
+- **Time & Transport**: Frame-accurate time ruler, editable ranges, marker edits, and configurable transport controls.
+- **Curve Editing**: Multi-key Bezier curves, adjustable handles, extrapolation modes, and frame snapping.
+- **Inspector & Assets**: Property states, array reordering, numeric copy/paste, and filtered asset grid/list views with inline renaming.
 
-Timeline `SelectAll` uses `editing.box` over the full Tick and track-height range; return unique editable clip IDs, including offscreen clips. Insufficient selection storage preserves the previous set. Delete and Duplicate emit complete selected-clip Begin/Commit batches when no clip key is selected. Duplicate offsets the set by its total time extent. A selected clip key takes precedence; clicking a clip body or selecting all clips clears key selection. The host owns collision policy and Undo.
+### 2. Video Editor
+- **Multi-Track Timeline**: Variable-height role tracks, linked clip move/trim, split, ripple, roll, slip, slide, and ripple-delete operations.
+- **Snapping & Alignment**: Magnet snapping to playhead, markers, clip boundaries, and frame grids.
+- **Audio & Scopes**: PCM bucket caching, envelope/mixer controls, CPU-based RGB/luma/vectorscopes, and three-way color wheels.
 
-The Gallery Shortcuts popup edits the same host-owned bindings used by the editor, including modifiers and unbinding, and flags shared chords. Changes last for the Gallery session; persistence belongs to the consuming application. Presets are starter maps, not complete replicas of the named applications.
+![Native Video](../images/editor-video-1.0.png)
 
-Core supplies canvas pan/zoom/fit, box/lasso selection, time ruler and editable ranges, marker edits, transport, multi-key curves and Bezier handles, property states and array reorder, numeric copy/paste, and filtered/renamable asset grid/list views.
+### 3. CG Editor
+- **3D Viewport**: Orbit, Pan, and Zoom navigation with camera/lighting framing guides, safe frames, and passepartout.
+- **Affine Transform Gizmos**: Multi-object transform gizmos supporting translation, rotation, oriented non-uniform scaling, and affine shear via QR decomposition.
+- **Scene Hierarchy**: Outliner supporting component/modifier rows, drag-and-drop reparenting, and state filtering.
+- **UV Editor**: Vertex, edge, face, and island selection/transforms with normalized, pixel, and UDIM coordinate systems.
 
-Timeline places Fit, zoom-out, a logarithmic zoom bar and zoom-in at the lower right. Ctrl+wheel zooms around the pointer, middle drag or Hand pans, and the overview range moves or resizes the visible interval. Hosts can restrict the visible tool set and zoom bounds through `TimelineState::options` while retaining existing defaults.
+![Native CG](../images/editor-cg-1.0.png)
 
-`TimelineProvider::externalDrops` accepts multiple host-defined ImGui payload types. The payload buffer is borrowed for the duration of the callback; a delivery flag distinguishes candidate previews from the single committed drop. `drawClipOverlay` adds application-defined visual decorations inside clips without transferring hit-testing or edit ownership from the Timeline. An optional route preview returns precise candidate ranges, track kinds and borrowed labels; the Timeline renders candidate shapes rather than row-wide bars, and the host retains responsibility for applying the same planning rules on commit.
-
-Video provides variable-height role tracks, bounded source/target controls, linked clip move/trim, split/ripple/roll/slip/slide/ripple-delete, snap targets, transition overlap/type/duration, captions, and property keys. Monitor overlays use host textures. PCM bucket caching, envelope/mixer controls, and CPU RGB/luma/vectorscopes operate independently of the playback engine. Three-way wheels and RGB CurveEditor edits apply to composite host data, and ApplyColorCurves evaluates RGB while preserving alpha.
-
-CG supplies camera/navigation/shading/overlay modes, bounded hierarchy selection and reparent/reorder, multi-object transform gizmos with oriented affine scale and shear, component/modifier rows, graph/dope-sheet/strip views, and UV vertex/edge/face/island selection and transforms with normalized/pixel/UDIM coordinates and pin/seam overlays.
+---
 
 ## Preview lifecycle
 
-DrawList preview projects unowned indexed mesh spans into the host's scratch triangle buffer and depth-sorts them. Cube, Sphere, CameraPrimitive and LightPrimitive write directly to host buffers. There is no z-buffer; intersecting or cyclic faces and occluded outline edges are approximate. Both renderers use affine inverse-transpose normal transformations.
+- **DrawList Preview**: Projects unowned indexed mesh spans into host scratch buffers with depth sorting. Includes cube, sphere, camera, and light primitives. Intersection and occluded silhouettes are approximate due to the absence of a hardware Z-buffer.
+- **OpenGL 3.3 Renderer**: Manages its own FBO, color, depth, and pick textures.
+  - The host supplies `GLFunctions` and an active OpenGL 3.3 context for `Init`, `Resize`, `Render`, `Pick`, and `Shutdown`.
+  - Always call `Shutdown()` before destroying the OpenGL context.
+  - The host is responsible for restoring OpenGL pipeline state (blend, depth, viewport, scissor) after rendering.
 
-The OpenGL3 object owns its FBO, color, ID and depth textures, shaders, VAO and buffers. The host supplies GLFunctions and the active OpenGL 3.3 context for Init, Resize, Render, Pick and Shutdown. Call Shutdown before destroying that context; destructors issue no GL calls. Resize replaces the texture ID, and Pick returns a full uint64_t ID (zero for background). Rendering alters GL bindings, viewport, and depth/cull/blend/scissor/polygon state, leaving framebuffer, program and VAO zeroed. The host restores state for subsequent passes.
+---
 
 ## Native Gallery
 
-Pages 7/8/9 use the public Core/Video/CG APIs and apply edits in the sample host. Context menus expose secondary actions; range endpoints and timeline track names have their own menus. Color/Inspector panes scroll when compact. The 100k toggle creates 256 tracks, 100096 clips and 100000 keys. The transition history menu demonstrates host Undo/Redo. Icons are host-uploaded atlases: 288 icons (120 stable IDs plus 168 additions).
+The companion Gallery application demonstrates Core, Video, and CG editor modules in action:
 
-`imkit_gallery.exe --list-monitors` lists displays; `--monitor N` places the native window on a selected display, including hidden capture runs. This is useful with DisplayLink/multiple-adapter desktops. It does not change system display settings.
+```powershell
+cmake --build --preset windows-debug --target imkit_gallery --parallel
+./build/windows-debug/catalog/Debug/imkit_gallery.exe
+```
 
-![Native Video](../images/editor-video-1.0.png)
-![Native CG](../images/editor-cg-1.0.png)
+- **Stress Testing**: The 100k toggle benchmarks performance with 256 tracks, 100,096 clips, and 100,000 keys.
+- **Display Selection**: `--list-monitors` and `--monitor N` allow targeting specific displays in multi-monitor setups without altering OS display configurations.
+- **Interaction Demonstrations**: Includes transition history undo/redo, custom shortcut rebinding, and 288-icon atlas integration.
+
+---
 
 ## Scope
 
-The independent development node module is documented in [Node editor](node-editor.md).
-
-This is an editor UI suite, not a media decoder/player, resampler, color-management engine, UV unwrapper, IK/simulation/animation runtime, PBR/shadow renderer or file-format loader. Native OS/IME and real-project integration are not inferred from public ImGui IO or GPU tests. See [validation](../archive/editor-validation.md).
-
-See [Editor 2.0 migration and interaction design](../archive/editor-refresh.md).
+- For the graph and workflow companion module, see [Node Editor](node-editor.md).
+- ImKit provides immediate-mode UI controls; it is **not** a media decoder, audio resampler, color management pipeline, UV unwrapper, physics engine, or 3D asset file loader.
+- Historical validation records and interaction design notes are preserved in [Validation Records](../archive/editor-validation.md) and [Editor Refresh Design](../archive/editor-refresh.md).
