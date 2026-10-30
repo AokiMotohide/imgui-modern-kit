@@ -140,6 +140,8 @@ if (imkit::BeginSettingRow("exposure", "露出補正")) {
 `EndSettingRow` は、`BeginSettingRow` が `true` を返したときのみ呼び出してください。Dear ImGui ネイティブの数値精度とパース処理がそのまま維持されます。
 3軸のベクトル入力には `DragVector3WithUnit("オフセット", values, "cm", 0.1f, -10.0f, 10.0f)` を使用します。幅が狭い画面では自動的に縦積みにレイアウトされます。
 
+ラベル付きのインスペクター欄には `AxisVector3Field("position", "位置", values, "m", .01f)` を使用します。X/Y/Zの色分けと、ネイティブのドラッグ・数値の直接入力を保ち、幅が足りないときは軸を縦に積みます。編集の開始・確定・取消を受け取りたいホストは、最後の `AxisVector3Interaction*` 引数で受け取れます。`CompactIconActionButton` は、アトラスのアイコンと見えるラベルに控えめな役割色を組み合わせた、ツール群向けの小型ボタンです。アトラスと操作状態はホストが所有します。
+
 ## ステータス表示と通知
 
 ```cpp
