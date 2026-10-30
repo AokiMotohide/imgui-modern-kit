@@ -31,7 +31,8 @@ CONTROLTYPEID Type(SemanticRole role) {
     case SemanticRole::Row:case SemanticRole::Cell:return UIA_DataItemControlTypeId;
     case SemanticRole::Menu:return UIA_MenuControlTypeId;
     case SemanticRole::MenuItem:return UIA_MenuItemControlTypeId;
-    case SemanticRole::Progress:return UIA_ProgressBarControlTypeId;
+    case SemanticRole::Progress:case SemanticRole::Meter:return UIA_ProgressBarControlTypeId;
+    case SemanticRole::Slider:return UIA_SliderControlTypeId;
     case SemanticRole::Dialog:return UIA_WindowControlTypeId;
     default:return UIA_GroupControlTypeId;
     }

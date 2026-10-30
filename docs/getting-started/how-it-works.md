@@ -33,7 +33,7 @@ There is no persistent widget tree. Every call re-creates the widget. State (tex
 
 ## Where ImKit fits
 
-![Native Gallery overview](../images/gallery-overview.gif)
+![Native Gallery overview](../images/v4-start.gif)
 
 Think of ImKit as a thin layer of themed widgets and composites drawn inside your existing Dear ImGui frame:
 

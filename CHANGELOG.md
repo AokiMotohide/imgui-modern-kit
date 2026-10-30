@@ -2,6 +2,120 @@
 
 > Published release entries present English first, followed by equivalent Japanese notes. Unreleased remains a work-in-progress list.
 
+## 4.0.0 — 2026-10-31
+
+**ImKit 4.0 refreshes the default look, adds brand themes, and brings new modules for charts, camera control and live shows.** Rebuild your application and every linked ImKit library with the 4.0 headers: structures grew and default tokens changed. The Dear ImGui revision and the dependencies are unchanged. See the [migration guide](docs/reference/migration-v4.md) and the [4.0 additions](docs/reference/v4.0-api.md).
+
+### Highlights
+
+- **New default look.** Larger radii, real shadows, 0.14 s control motion, tonal buttons, pill segments, fill sliders, chevron combos, and redrawn progress, toasts, alerts, empty states, pagination and search.
+- **Brand themes.** `MakeBrandTheme` builds a complete theme from four colours. Corners, outlines, hard shadows and text roles are tokens. Skins replace component frames, and the Gallery gains Theme Studio and Skins.
+- **New modules.** Charts, PTZ control, range sliders, and the optional `imkit::show` module for media servers.
+- **Redesigned Gallery** with a new Start page, searchable navigation, and a three-minute film in Japanese and English.
+
+### Added
+
+| Header | Additions |
+| --- | --- |
+| `imkit/charts.h` | `DonutChart`, `BarChart`, `Gauge`, `Sparkline`, `ChartColor` |
+| `imkit/ptz.h` | `PtzControl`, `PtzPadVector` |
+| `imkit/range_slider.h` | `RangeSlider`, `RangeSliderInt` |
+| `imkit/theme.h` | `MakeBrandTheme`, `BrandPalette`, `SetCornerStyle`, `PushTextRole`, `SerializeTheme`, `ParseTheme`; outline strokes and hard shadows; `Theme::skin`, `FontSet::display` |
+| `imkit/skin.h` | `Skin`: component frames, backdrop patterns, nine-slice pictures |
+| `imkit/components.h` | `DrawShadow`, `IMKIT_DEPRECATED`, `AxisVector3Field`, `AxisVector3Interaction`, `CompactIconActionButton` |
+| `imkit/workflow.h` | `BeginCollapsibleInspectorCard`, `EndCollapsibleInspectorCard`; `HierarchyRowView::accentColor`; hierarchy rows select across the full width |
+| `imkit/icons.h` | 32 LED and live-surface icons and `IconId::PtzCamera`: 321 icons in 21 categories |
+| `imkit/show.h` (`imkit::show`) | Controls: `Fader`, `Knob`, `XYPad`, `PadGrid`, `MeterBar`, `TimecodeDisplay`, `HoldButton`, `ConsoleButton`, `ScribbleStrip`, `MasterBar`. Live: `CueList`, `GoBar`, `ClipLauncher`, `Mixer`, `EffectRack`, `ModulatorEditor`, `MappingTable`, `DeviceHealth`. Rules: `RuleBuilder`, `EvaluateRule`, `FormatRuleSentence`, `ValidateRule`. Schedule: `Calendar`, `ResourceTimeline`, `RecurrenceEditor`, `CronEditor`, pickers, `WeekPainter`. Beat: `BeatClock`, `Deck`, `DjChannelStrip`, `StepSequencer`, `Spectrum`. Script panel. Pictures: `ImageButton`, `ImageCropEditor`, `FitImage`. Surface: `ControlSurface`, `SurfacePalette`. LED: `LedColorPicker`, `GradientEditor`, `PixelPreview`, `BudgetBar`, `ColorOrderPicker`, `TestPatternBar`, `PortStrip`. Address: `AddressMap`, `ChannelMonitor`, `FindOverlaps`, `FirstFreeRange`, `PixelsPerUniverse` |
+
+Gallery pages: Start, Theme Studio, Skins, Charts, PTZ camera and nine Show pages. Continuous controls report `ValueEdit`.
+
+### Changed
+
+Default tokens (set them explicitly if your application relied on the old values):
+
+| Token | 3.3.0 | 4.0.0 |
+| --- | --- | --- |
+| `Radius` subtle / control / overlay | 2 / 4 / 6 | 4 / 8 / 12 |
+| `Elevation` raised / overlay | 2 / 5 | 4 / 14, plus `offset` and `hard` |
+| `Opacity::disabled` | 1 | 0.55 |
+| `Metrics::controlHeight` (Comfortable) | 28 | 30 |
+| `Metrics::horizontalPadding` | 10 | 12 |
+| `Motion` control / overlay seconds | 0.06 / 0.10 | 0.14 / 0.20 |
+
+- `imkit::Combo`, `BeginCombo`, `EndCombo`, `RadioButton`, `SliderInt*`, `SliderFloat2-4` and `VSliderFloat` are now ImKit wrappers instead of forwards to `ImGui::`. The chevron combos do not mark the item as edited.
+- `SemanticRole` gains `Slider` and `Meter`; `RangeSlider` publishes `Slider` nodes instead of `Group`. `PtzState` keeps only `speed` public.
+- Timeline hit rectangles are unchanged apart from a narrower chevron on the track header.
+- `IMKIT_VERSION` read `3.0.0` since 3.0; it now reads `4.0.0`.
+- Inspector cards draw a tinted header band. The window frame fixes title-bar top-edge dragging and move / resize hit testing.
+
+### Deprecated
+
+- The `const Theme*` overloads of `StatusBadge`, `NotificationCard` and `ValidationMessage`: pass `ComponentOptions`.
+- `EmptyState(message)`, `Progress(id, fraction, label)` and `ToastRegion(span<Notification>)`: use the newer spellings.
+
+Define `IMKIT_DEPRECATED(message)` as nothing to silence the warnings.
+
+### Compatibility
+
+Public additions are at the end of existing structs (`HoldButtonOptions` gains `key` and `hint`, `GoBarView` gains `nextNumber` and `totalSeconds`, `CueListOptions` gains `showHeader`), so objects built with 3.x must not be mixed with 4.0 structures.
+
+### 日本語
+
+**ImKit 4.0は、既定の見た目を刷新し、ブランドテーマを加え、グラフ、カメラ操作、ライブ演出向けの新しいモジュールを追加します。** 構造体が拡張され、既定のトークンも変わっています。アプリと、リンクするすべてのImKitライブラリを、4.0のヘッダーで再ビルドしてください。Dear ImGuiのrevisionと依存は変わりません。[移行ガイド](docs/reference/v4移行ガイド.md)と[4.0追加API](docs/reference/4.0追加API.md)を参照してください。
+
+#### 主な変更
+
+- **新しい既定の見た目。** 角丸を大きく、影を実際に落とし、コントロールの動きを0.14秒に。トーン塗りのボタン、ピル形のセグメント、塗りつぶし表示のスライダー、シェブロン付きのコンボを備え、進捗・トースト・通知・空状態・ページ送り・検索欄を描き直しました。
+- **ブランドテーマ。** `MakeBrandTheme` が4色から完成したテーマを作ります。角、枠線、硬い影、文字の役割はトークンになりました。スキンで部品の枠を差し替えられ、GalleryにTheme StudioとSkinsを追加しました。
+- **新しいモジュール。** グラフ、PTZ操作、範囲スライダー、メディアサーバー向けの任意モジュール `imkit::show` です。
+- **Galleryを作り直しました。** 新しいStart画面、検索できるナビゲーション、日英の約3分の紹介動画があります。
+
+#### 追加
+
+| ヘッダー | 追加するもの |
+| --- | --- |
+| `imkit/charts.h` | `DonutChart`、`BarChart`、`Gauge`、`Sparkline`、`ChartColor` |
+| `imkit/ptz.h` | `PtzControl`、`PtzPadVector` |
+| `imkit/range_slider.h` | `RangeSlider`、`RangeSliderInt` |
+| `imkit/theme.h` | `MakeBrandTheme`、`BrandPalette`、`SetCornerStyle`、`PushTextRole`、`SerializeTheme`、`ParseTheme`。枠線（アウトライン）と硬い影。`Theme::skin`、`FontSet::display` |
+| `imkit/skin.h` | `Skin`: 部品の枠、背景パターン、ナインスライス画像 |
+| `imkit/components.h` | `DrawShadow`、`IMKIT_DEPRECATED`、`AxisVector3Field`、`AxisVector3Interaction`、`CompactIconActionButton`（インスペクター用の三軸入力と小型アイコンボタン） |
+| `imkit/workflow.h` | `BeginCollapsibleInspectorCard`、`EndCollapsibleInspectorCard`（開閉式のインスペクターカード）、`HierarchyRowView::accentColor`（種類色）。階層行は全幅で選択できる |
+| `imkit/icons.h` | LEDとライブ操作のアイコン32個と `IconId::PtzCamera`。合計321個、21カテゴリ |
+| `imkit/show.h`（`imkit::show`） | 操作部品: `Fader`、`Knob`、`XYPad`、`PadGrid`、`MeterBar`、`TimecodeDisplay`、`HoldButton`、`ConsoleButton`、`ScribbleStrip`、`MasterBar`。ライブ: `CueList`、`GoBar`、`ClipLauncher`、`Mixer`、`EffectRack`、`ModulatorEditor`、`MappingTable`、`DeviceHealth`。ルール: `RuleBuilder`、`EvaluateRule`、`FormatRuleSentence`、`ValidateRule`。スケジュール: `Calendar`、`ResourceTimeline`、`RecurrenceEditor`、`CronEditor`、各ピッカー、`WeekPainter`。ビート: `BeatClock`、`Deck`、`DjChannelStrip`、`StepSequencer`、`Spectrum`。スクリプトパネル。画像: `ImageButton`、`ImageCropEditor`、`FitImage`。サーフェス: `ControlSurface`、`SurfacePalette`。LED: `LedColorPicker`、`GradientEditor`、`PixelPreview`、`BudgetBar`、`ColorOrderPicker`、`TestPatternBar`、`PortStrip`。アドレス: `AddressMap`、`ChannelMonitor`、`FindOverlaps`、`FirstFreeRange`、`PixelsPerUniverse` |
+
+Galleryには、Start、Theme Studio、Skins、Charts、PTZ camera、Showの9画面を追加しました。連続値の部品は `ValueEdit` を返します。
+
+#### 変更
+
+既定のトークン（従来の値に頼るアプリは、明示的に指定してください）:
+
+| トークン | 3.3.0 | 4.0.0 |
+| --- | --- | --- |
+| `Radius` 小・コントロール・オーバーレイ | 2 / 4 / 6 | 4 / 8 / 12 |
+| `Elevation` raised / overlay | 2 / 5 | 4 / 14（`offset`と`hard`を追加） |
+| `Opacity::disabled` | 1 | 0.55 |
+| `Metrics::controlHeight`（Comfortable） | 28 | 30 |
+| `Metrics::horizontalPadding` | 10 | 12 |
+| `Motion` コントロール・オーバーレイの秒数 | 0.06 / 0.10 | 0.14 / 0.20 |
+
+- `imkit::Combo`、`BeginCombo`、`EndCombo`、`RadioButton`、`SliderInt*`、`SliderFloat2〜4`、`VSliderFloat` は、`ImGui::` への転送をやめ、ImKitのラッパーになりました。シェブロン付きのコンボは、項目を編集済みとして記録しません。
+- `SemanticRole` に `Slider` と `Meter` を追加し、`RangeSlider` は `Group` ではなく `Slider` ノードを公開します。`PtzState` の公開フィールドは `speed` だけです。
+- タイムラインの当たり判定は、トラック見出しのシェブロンを狭めた点を除いて変わりません。
+- `IMKIT_VERSION` は3.0以降 `3.0.0` のままでした。`4.0.0` に直しました。
+- インスペクターカードに見出し帯を付けました。ウィンドウ枠は、タイトルバー上端のドラッグと、移動・サイズ変更の判定を修正しました。
+
+#### 非推奨
+
+- `StatusBadge`、`NotificationCard`、`ValidationMessage` の `const Theme*` 版: `ComponentOptions` を渡してください。
+- `EmptyState(message)`、`Progress(id, fraction, label)`、`ToastRegion(span<Notification>)`: 新しい綴りを使ってください。
+
+警告を消すには、`IMKIT_DEPRECATED(message)` を空に定義します。
+
+#### 互換性
+
+公開構造体への追加は、末尾だけです（`HoldButtonOptions` に `key` と `hint`、`GoBarView` に `nextNumber` と `totalSeconds`、`CueListOptions` に `showHeader`）。それでも、3.xでビルドしたオブジェクトと4.0の構造体は混ぜないでください。
+
 ## 3.3.0 — 2026-10-23
 
 Shared progress tracks, stage lists, task progress cards and richer loading toasts make long-running work easier to follow. `ProgressTrack`, `StageProgress` and `TaskProgressCard` take borrowed views; the host owns values and handles operation IDs. `ToastView` adds `stage`, `progressText` and `status`. Recompile applications and static libraries with matching 3.3 headers; do not mix 3.2 objects with 3.3 structures. Dependencies and the Dear ImGui baseline are unchanged. See [the 3.3 guide](docs/reference/v3.3-api.md).

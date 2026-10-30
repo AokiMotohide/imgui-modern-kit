@@ -8,9 +8,9 @@ WindowFrame is for drawing a themed title area and returning typed window operat
 
 ## Gallery capture
 
-![Native Gallery overview with its application shell and content regions.](../../../../assets/captures/v3-overview-poster.png)
+![Native Gallery overview with its application shell and content regions.](../../../../assets/captures/v4-start-poster.png)
 
-Gallery overview — application shell and content · [Open the native Gallery animation](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v3-overview.gif)
+Gallery overview — application shell and content · [Open the native Gallery animation](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-start.gif)
 
 ## Minimum drawing example
 
@@ -111,7 +111,7 @@ if (result.action == imkit::WindowFrameAction::Close) {
 
 ## Windows Gallery Frame Lab
 
-Build and start the Windows Gallery, then choose **Frame Lab** to test live window frame features:
+Build and start the Windows Gallery, then choose **Window frame** to test live window frame features:
 
 ```powershell
 cmake -S . -B build/window-frame-public-debug

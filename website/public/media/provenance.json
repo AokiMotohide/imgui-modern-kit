@@ -1,23 +1,39 @@
 {
-  "version": "3.2.0",
-  "license": "MIT; repository font/icon notices retained",
-  "revision": 2,
-  "duration": 60,
+  "version": "4.0.0",
+  "license": "MIT; repository font and icon notices retained",
+  "revision": 1,
+  "duration": 180,
   "fps": 60,
   "resolution": [
     1920,
     1080
   ],
-  "shots": 25,
-  "music": "Original 128 BPM D-minor electro-house; synthesized instruments and event-synchronized effects; seed 330; no samples or narration",
-  "fonts": "Repository Inter (SIL OFL), rasterized only",
-  "visuals": "Continuous native OpenGL backbuffer; real public Dear ImGui IO and large synchronized cursor; original typography and compositing",
-  "scripts": [
-    "tools/capture_v32_media.py",
-    "tools/render_v32_film.py",
-    "tools/motion_film.py"
+  "languages": [
+    "ja",
+    "en"
   ],
-  "validate": "tools/check_v32_media.py",
-  "sha256": "68e9ce75e4c510d13dac1100e61c3b5796535d552b3c945d0eaa66eb517dbc70",
-  "icons": "Repository MIT icons rasterized with a consistent dark ink for the original graphics layer"
+  "shots": 19,
+  "music": {
+    "title": "Laserpack",
+    "artist": "Kevin MacLeod ft. DarkNES",
+    "source": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1800018",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "credit": "Laserpack Kevin MacLeod ft. DarkNES (incompetech.com). Licensed under Creative Commons: By Attribution 4.0 License. https://creativecommons.org/licenses/by/4.0/",
+    "use": "Trimmed to the film length from its first downbeat and faded out; not time-stretched. Cut whooshes and mouse-click sounds are mixed in softly.",
+    "fallback": "tools/media/music.py can synthesize an original score instead (`film.py --synth`)."
+  },
+  "fonts": "Inter and Noto Sans JP (SIL OFL), rasterized only; no font binaries are redistributed",
+  "visuals": "Native Gallery and Node Editor OpenGL backbuffers recorded through public Dear ImGui IO, with a large synchronized cursor; captions and transitions are original.",
+  "scripts": [
+    "tools/media/capture.py",
+    "tools/media/film.py",
+    "tools/media/music.py",
+    "examples/gallery/main.cpp (CaptureMotion)"
+  ],
+  "validate": "tools/media/verify.py",
+  "sha256": {
+    "ja": "0432c22ecacd5281646e8f90bac6b5d8705290da72505031dfa7a314be5ef18a",
+    "en": "aa5c063b923d49d7b2986a02a266d82c125b0bccf84e37d58ef6f67764892bb5"
+  }
 }

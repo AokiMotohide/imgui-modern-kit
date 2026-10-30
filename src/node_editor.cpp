@@ -1,4 +1,6 @@
 #include <imkit/node_editor.h>
+#include <imkit/widgets.h>
+#include "draw_internal.h"
 #include <algorithm>
 #include <cmath>
 #include <cctype>
@@ -338,7 +340,7 @@ NodeStyle MakeNodeStyle(const Theme &t) {
     s.error = t.semantic.error;
     s.warning = t.semantic.warning;
     s.success = t.semantic.success;
-    s.rounding = t.radius.overlay;
+    s.rounding = t.radius.control;
     s.borderWidth = t.stroke.border;
     s.padding = t.metrics.horizontalPadding;
     s.headerHeight = t.metrics.controlHeight + 4;
@@ -624,10 +626,11 @@ EditorFrame BeginEditor(const char *id, GraphView graph, EditorState &s, Request
         while (step < 12)
             step *= 2;
         auto *dl = ImGui::GetWindowDrawList();
+        // Dot grid: quieter than full lines and keeps node edges readable.
+        const float dot = std::clamp(float(s.zoom), .6f, 1.4f);
         for (double x = f.min.x - std::fmod(s.origin.x * s.zoom, step); x < f.max.x; x += step)
-            dl->AddLine({float(x), f.min.y}, {float(x), f.max.y}, Color(style.grid));
-        for (double y = f.min.y - std::fmod(s.origin.y * s.zoom, step); y < f.max.y; y += step)
-            dl->AddLine({f.min.x, float(y)}, {f.max.x, float(y)}, Color(style.grid));
+            for (double y = f.min.y - std::fmod(s.origin.y * s.zoom, step); y < f.max.y; y += step)
+                dl->AddRectFilled({float(x) - dot, float(y) - dot}, {float(x) + dot, float(y) + dot}, Color(style.grid));
     }
     // Draw all node silhouettes before links and interactive child windows.
     auto *dl = ImGui::GetWindowDrawList();
@@ -639,7 +642,7 @@ EditorFrame BeginEditor(const char *id, GraphView graph, EditorState &s, Request
             auto b = Add(a, {float(size.x * s.zoom), float(size.y * s.zoom)});
             const bool group = n.kind == NodeKind::Frame || n.kind == NodeKind::Group;
             if (st.shadows && !group)
-                dl->AddRectFilled(Add(a, {2, 3}), Add(b, {2, 3}), IM_COL32(0, 0, 0, 32), st.rounding);
+                detail::DrawSoftShadow(dl, a, b, st.rounding, 10.f * float(s.zoom), .14f);
             dl->AddRectFilled(a, b, Color(group ? st.group : st.surface), st.rounding);
             dl->AddRectFilled(a, {b.x, a.y + float(st.headerHeight * s.zoom)}, Color(st.header), st.rounding,
                               ImDrawFlags_RoundCornersTop);
@@ -869,7 +872,7 @@ void PinActions(EditorFrame &f, const PinView &pin) {
         if (t.id == pin.type)
             current = &t;
     ImGui::BeginDisabled(!pin.capabilities.changeType);
-    if (ImGui::BeginCombo("Type", current ? std::string(current->name).c_str() : "Custom")) {
+    if (imkit::BeginCombo("Type", current ? std::string(current->name).c_str() : "Custom")) {
         for (auto &t : f.graph.socketTypes) {
             ImGui::PushID(std::to_string(t.id).c_str());
             if (ImGui::Selectable(std::string(t.name).c_str(), t.id == pin.type)) {
@@ -885,11 +888,11 @@ void PinActions(EditorFrame &f, const PinView &pin) {
             }
             ImGui::PopID();
         }
-        ImGui::EndCombo();
+        imkit::EndCombo();
     }
     ImGui::EndDisabled();
     bool shown = !pin.hidden;
-    if (ImGui::Checkbox("Visible", &shown)) {
+    if (imkit::Checkbox("Visible", &shown)) {
         EditRequest r;
         r.kind = EditKind::HidePin;
         r.index = !shown;
@@ -897,7 +900,7 @@ void PinActions(EditorFrame &f, const PinView &pin) {
     }
     bool multiple = pin.multiple;
     ImGui::BeginDisabled(!pin.capabilities.changeMultiplicity);
-    if (ImGui::Checkbox("Multiple connections", &multiple)) {
+    if (imkit::Checkbox("Multiple connections", &multiple)) {
         EditRequest r;
         r.kind = EditKind::SetPinMultiplicity;
         r.index = multiple;
@@ -1048,7 +1051,7 @@ void PinRow(EditorFrame &f, PinId id, PinRowOptions options) {
             changed = ImGui::ColorEdit4("##value", value.number.data(), ImGuiColorEditFlags_NoInputs);
             break;
         case ValueKind::Float:
-            changed = ImGui::SliderFloat("##value", value.number.data(), options.minimum, options.maximum);
+            changed = imkit::SliderFloat("##value", value.number.data(), options.minimum, options.maximum);
             break;
         case ValueKind::Vector: {
             auto padding = ImGui::GetStyle().FramePadding;
@@ -1065,13 +1068,13 @@ void PinRow(EditorFrame &f, PinId id, PinRowOptions options) {
             changed = ImGui::InputInt("##value", &value.integer);
             break;
         case ValueKind::Boolean:
-            changed = ImGui::Checkbox("##value", &value.boolean);
+            changed = imkit::Checkbox("##value", &value.boolean);
             break;
         case ValueKind::Text:
             changed = ImGui::InputText("##value", value.text.data(), value.text.size());
             break;
         case ValueKind::Enum:
-            if (ImGui::BeginCombo("##value", value.integer >= 0 && value.integer < int(options.choices.size())
+            if (imkit::BeginCombo("##value", value.integer >= 0 && value.integer < int(options.choices.size())
                                                  ? std::string(options.choices[value.integer]).c_str()
                                                  : "Choose")) {
                 for (int i = 0; i < int(options.choices.size()); ++i)
@@ -1080,7 +1083,7 @@ void PinRow(EditorFrame &f, PinId id, PinRowOptions options) {
                         changed = true;
                         customPhase = Phase::Commit;
                     }
-                ImGui::EndCombo();
+                imkit::EndCombo();
             }
             break;
         case ValueKind::Custom:
@@ -1155,10 +1158,14 @@ void Link(EditorFrame &f, const LinkView &link) {
     if (f.state->selectedLink == link.id)
         color = f.style.selected;
     auto *dl = ImGui::GetWindowDrawList();
-    for (std::size_t i = 1; i < points.size(); ++i)
-        if (!link.reference || i % 2)
-            dl->AddLine(points[i - 1], points[i], Color(color),
-                        link.width > 0 ? link.width : f.style.linkWidth);
+    const float linkWidth = link.width > 0 ? link.width : f.style.linkWidth;
+    if (!link.reference) {
+        // One polyline keeps joins smooth; per-segment lines show notches at the joints.
+        dl->AddPolyline(points.data(), static_cast<int>(points.size()), Color(color), ImDrawFlags_None, linkWidth);
+    } else {
+        for (std::size_t i = 1; i < points.size(); i += 2)
+            dl->AddLine(points[i - 1], points[i], Color(color), linkWidth);
+    }
     const auto tip = points[18];
     auto direction = Sub(points[18], points[17]);
     const auto length = std::sqrt(Dot(direction, direction));
@@ -1444,7 +1451,7 @@ void ExposedProperties(EditorFrame &f, NodeId node, std::span<const PropertyView
         auto &property = properties[i];
         ImGui::PushID(int(i));
         bool exposed = property.exposed;
-        if (ImGui::Checkbox(std::string(property.label).c_str(), &exposed)) {
+        if (imkit::Checkbox(std::string(property.label).c_str(), &exposed)) {
             auto r = Request(f, EditKind::ExposeProperty, node);
             r.type = property.id;
             r.index = exposed ? 1 : 0;
@@ -1585,15 +1592,19 @@ void MiniMap(EditorFrame &f, ImVec2 size) {
         return ImVec2{a.x + 6 + float((p.x - bounds.min.x) * scale),
                       a.y + 6 + float((p.y - bounds.min.y) * scale)};
     };
-    dl->AddRectFilled(a, b, Color(f.style.header), 5);
+    dl->AddRectFilled(a, b, Color(f.style.header), f.style.rounding);
+    dl->AddRect(a, b, Color(f.style.border), f.style.rounding);
     dl->PushClipRect(a, b, true);
     for (auto &n : f.graph.nodes)
         dl->AddRectFilled(map(n.position), map({n.position.x + n.size.x, n.position.y + n.size.y}),
                           Color(IsSelected(*f.state, n.id) ? f.style.accent : f.style.muted), 1);
-    dl->AddRect(map(f.state->origin),
-                map({f.state->origin.x + (f.max.x - f.min.x) / f.state->zoom,
-                     f.state->origin.y + (f.max.y - f.min.y) / f.state->zoom}),
-                Color(f.style.accent));
+    const auto viewMin = map(f.state->origin),
+               viewMax = map({f.state->origin.x + (f.max.x - f.min.x) / f.state->zoom,
+                              f.state->origin.y + (f.max.y - f.min.y) / f.state->zoom});
+    auto viewFill = f.style.accent;
+    viewFill.w *= .12f;
+    dl->AddRectFilled(viewMin, viewMax, Color(viewFill), 2);
+    dl->AddRect(viewMin, viewMax, Color(f.style.accent), 2);
     dl->PopClipRect();
     if (hovered || active) {
         f.blocked = true;
@@ -1671,11 +1682,11 @@ void Preview(EditorFrame &f, std::span<const PreviewOutput> outputs,
         return;
     p.output = std::clamp(p.output, 0, int(outputs.size()) - 1);
     if (outputs.size() > 1) {
-        if (ImGui::BeginCombo("##preview-output", std::string(outputs[p.output].title).c_str())) {
+        if (imkit::BeginCombo("##preview-output", std::string(outputs[p.output].title).c_str())) {
             for (int i = 0; i < int(outputs.size()); ++i)
                 if (ImGui::Selectable(std::string(outputs[i].title).c_str(), i == p.output))
                     p.output = i;
-            ImGui::EndCombo();
+            imkit::EndCombo();
         }
     }
     ImVec2 size{std::max(1.f, ImGui::GetContentRegionAvail().x), std::max(24.f, p.height * z)};
@@ -1707,11 +1718,11 @@ void DrawDetachedPreviews(EditorFrame &f, NodeId node, std::span<const PreviewOu
     bool open = true;
     ImGui::SetNextWindowSize({500, 380}, ImGuiCond_FirstUseEver);
     if (ImGui::Begin(label.c_str(), &open)) {
-        ImGui::Checkbox("Interact", &p.interactive);
+        imkit::Checkbox("Interact", &p.interactive);
         ImGui::SameLine();
-        ImGui::Checkbox("Pinned", &p.pinned);
+        imkit::Checkbox("Pinned", &p.pinned);
         if (outputs.size() > 1 &&
-            ImGui::BeginCombo(
+            imkit::BeginCombo(
                 "Compare",
                 p.compare < 0
                     ? "None"
@@ -1721,7 +1732,7 @@ void DrawDetachedPreviews(EditorFrame &f, NodeId node, std::span<const PreviewOu
             for (int i = 0; i < int(outputs.size()); ++i)
                 if (ImGui::Selectable(std::string(outputs[i].title).c_str(), i == p.compare))
                     p.compare = i;
-            ImGui::EndCombo();
+            imkit::EndCombo();
         }
         auto size = ImGui::GetContentRegionAvail();
         if (p.compare >= int(outputs.size()))

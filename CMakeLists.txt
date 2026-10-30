@@ -3,7 +3,7 @@ if(POLICY CMP0141)
     cmake_policy(SET CMP0141 NEW)
 endif()
 
-project(imgui-modern-kit VERSION 3.3.0 LANGUAGES CXX)
+project(imgui-modern-kit VERSION 4.0.0 LANGUAGES CXX)
 
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(IMKIT_IS_TOP_LEVEL ON)
@@ -58,7 +58,7 @@ if(NOT TARGET "${IMKIT_IMGUI_TARGET}")
         "Create the Dear ImGui target before adding imgui-modern-kit.")
 endif()
 
-add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/components.cpp src/icons.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp src/toast.cpp src/shell.cpp src/window_frame.cpp)
+add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/theme_text.cpp src/decor.cpp src/components.cpp src/icons.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp src/toast.cpp src/charts.cpp src/range_slider.cpp src/ptz.cpp src/shell.cpp src/window_frame.cpp)
 add_library(imkit::imkit ALIAS imkit)
 
 target_compile_features(imkit PUBLIC cxx_std_20)
@@ -157,6 +157,14 @@ add_library(imkit::editor_suite ALIAS imkit_editor_suite)
 set_target_properties(imkit_editor_suite PROPERTIES EXPORT_NAME editor_suite)
 target_link_libraries(imkit_editor_suite INTERFACE imkit::editor_core imkit::video imkit::cg)
 install(TARGETS imkit_cg imkit_editor_suite EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+# Optional Show module: live, schedule, rule, beat and script components for media servers and show control.
+add_library(imkit_show STATIC src/show/common.cpp src/show/controls.cpp src/show/live.cpp src/show/rules.cpp src/show/rules_ui.cpp src/show/schedule.cpp src/show/schedule_ui.cpp src/show/beat.cpp src/show/script.cpp src/show/image.cpp src/show/surface.cpp src/show/led_color.cpp src/show/led_view.cpp src/show/address.cpp)
+add_library(imkit::show ALIAS imkit_show)
+set_target_properties(imkit_show PROPERTIES EXPORT_NAME show DEBUG_POSTFIX d)
+target_link_libraries(imkit_show PUBLIC imkit::editor_core)
+target_include_directories(imkit_show PRIVATE src)
+target_compile_options(imkit_show PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
+install(TARGETS imkit_show EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 add_library(imkit_preview_opengl3 STATIC src/preview_opengl3.cpp)
 add_library(imkit::preview_opengl3 ALIAS imkit_preview_opengl3)
 set_target_properties(imkit_preview_opengl3 PROPERTIES EXPORT_NAME preview_opengl3 DEBUG_POSTFIX d)
@@ -187,7 +195,7 @@ configure_package_config_file(cmake/imkitConfig.cmake.in "${CMAKE_CURRENT_BINARY
 write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/imkitConfigVersion.cmake" VERSION ${PROJECT_VERSION} COMPATIBILITY SameMinorVersion)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/imkitConfig.cmake" "${CMAKE_CURRENT_BINARY_DIR}/imkitConfigVersion.cmake" DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/imkit)
 install(FILES README.md README.ja.md LICENSE THIRD_PARTY_NOTICES.md CHANGELOG.md DESTINATION .)
-install(FILES website/public/media/imkit-3.2-poster.jpg DESTINATION website/public/media)
+install(FILES website/public/media/imkit-4.0-poster.jpg DESTINATION website/public/media)
 install(DIRECTORY docs/ DESTINATION docs
     PATTERN "precision-layers-implementation-prompt.md" EXCLUDE
     PATTERN "completion-plan.md" EXCLUDE
@@ -243,6 +251,19 @@ if(IMKIT_BUILD_GALLERY)
         examples/gallery/design_pages.cpp
         examples/gallery/workflow_pages.cpp
         examples/gallery/toast_page.cpp
+        examples/gallery/charts_page.cpp
+        examples/gallery/ptz_page.cpp
+        examples/gallery/show_pages.cpp
+        examples/gallery/show_live_page.cpp
+        examples/gallery/show_rules_page.cpp
+        examples/gallery/show_schedule_page.cpp
+        examples/gallery/show_beat_page.cpp
+        examples/gallery/show_script_page.cpp
+        examples/gallery/show_surface_page.cpp
+        examples/gallery/show_led_page.cpp
+        examples/gallery/show_images_page.cpp
+        examples/gallery/look_pages.cpp
+        examples/gallery/start_page.cpp
         examples/gallery/editor_workspaces.cpp
         examples/gallery/allocation_probe.cpp
         examples/gallery/gallery.h
@@ -256,6 +277,7 @@ if(IMKIT_BUILD_GALLERY)
         PRIVATE
             imkit::imkit
             imkit::editor_suite
+            imkit::show
             imkit::preview_opengl3
             "${IMKIT_GALLERY_BACKEND_TARGET}"
     )
@@ -305,6 +327,48 @@ if(IMKIT_BUILD_TESTS)
     add_executable(imkit_toast_api_compile tests/toast_api_compile.cpp)
     target_link_libraries(imkit_toast_api_compile PRIVATE imkit::imkit)
     add_test(NAME imkit.toast_api_compile COMMAND imkit_toast_api_compile)
+    add_executable(imkit_charts_test tests/charts.cpp)
+    target_link_libraries(imkit_charts_test PRIVATE imkit::imkit)
+    add_test(NAME imkit.charts COMMAND imkit_charts_test)
+    add_executable(imkit_charts_api_compile tests/charts_api_compile.cpp)
+    target_link_libraries(imkit_charts_api_compile PRIVATE imkit::imkit)
+    add_test(NAME imkit.charts_api_compile COMMAND imkit_charts_api_compile)
+    add_executable(imkit_ptz_test tests/ptz.cpp)
+    target_link_libraries(imkit_ptz_test PRIVATE imkit::imkit)
+    add_test(NAME imkit.ptz COMMAND imkit_ptz_test)
+    add_executable(imkit_show_controls_test tests/show_controls.cpp)
+    target_link_libraries(imkit_show_controls_test PRIVATE imkit::show)
+    add_test(NAME imkit.show_controls COMMAND imkit_show_controls_test)
+    add_executable(imkit_show_live_test tests/show_live.cpp)
+    target_link_libraries(imkit_show_live_test PRIVATE imkit::show)
+    add_test(NAME imkit.show_live COMMAND imkit_show_live_test)
+    add_executable(imkit_show_rules_test tests/show_rules.cpp)
+    target_link_libraries(imkit_show_rules_test PRIVATE imkit::show)
+    add_test(NAME imkit.show_rules COMMAND imkit_show_rules_test)
+    add_executable(imkit_show_schedule_test tests/show_schedule.cpp)
+    target_link_libraries(imkit_show_schedule_test PRIVATE imkit::show)
+    add_test(NAME imkit.show_schedule COMMAND imkit_show_schedule_test)
+    add_executable(imkit_show_beat_test tests/show_beat.cpp)
+    target_link_libraries(imkit_show_beat_test PRIVATE imkit::show)
+    add_test(NAME imkit.show_beat COMMAND imkit_show_beat_test)
+    add_executable(imkit_show_api_compile tests/show_api_compile.cpp)
+    target_link_libraries(imkit_show_api_compile PRIVATE imkit::show)
+    add_test(NAME imkit.show_api_compile COMMAND imkit_show_api_compile)
+    add_executable(imkit_show_script_test tests/show_script.cpp)
+    target_link_libraries(imkit_show_script_test PRIVATE imkit::show)
+    add_test(NAME imkit.show_script COMMAND imkit_show_script_test)
+    add_executable(imkit_show_surface_test tests/show_surface.cpp)
+    target_link_libraries(imkit_show_surface_test PRIVATE imkit::show)
+    add_test(NAME imkit.show_surface COMMAND imkit_show_surface_test)
+    add_executable(imkit_show_image_test tests/show_image.cpp)
+    target_link_libraries(imkit_show_image_test PRIVATE imkit::show)
+    add_test(NAME imkit.show_image COMMAND imkit_show_image_test)
+    add_executable(imkit_show_led_test tests/show_led.cpp)
+    target_link_libraries(imkit_show_led_test PRIVATE imkit::show)
+    add_test(NAME imkit.show_led COMMAND imkit_show_led_test)
+    add_executable(imkit_ptz_api_compile tests/ptz_api_compile.cpp)
+    target_link_libraries(imkit_ptz_api_compile PRIVATE imkit::imkit)
+    add_test(NAME imkit.ptz_api_compile COMMAND imkit_ptz_api_compile)
     add_executable(imkit_workflow_test tests/workflow.cpp examples/gallery/allocation_probe.cpp)
     target_link_libraries(imkit_workflow_test PRIVATE imkit::editor_core)
     add_test(NAME imkit.workflow COMMAND imkit_workflow_test)
@@ -367,6 +431,9 @@ if(IMKIT_BUILD_TESTS)
     add_executable(imkit_theme_test tests/theme.cpp)
     target_link_libraries(imkit_theme_test PRIVATE imkit::imkit)
     add_test(NAME imkit.theme COMMAND imkit_theme_test)
+    add_executable(imkit_decor_test tests/decor.cpp)
+    target_link_libraries(imkit_decor_test PRIVATE imkit::imkit)
+    add_test(NAME imkit.decor COMMAND imkit_decor_test)
 
     add_executable(imkit_context_smoke tests/context_smoke.cpp)
     target_compile_features(imkit_context_smoke PRIVATE cxx_std_20)

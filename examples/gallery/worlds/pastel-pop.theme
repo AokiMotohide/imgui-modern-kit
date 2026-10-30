@@ -1,0 +1,10 @@
+# Pastel Pop: soft pink paper, pill-shaped controls and a tinted shadow.
+brand.canvas = #fde8ef
+brand.surface = #fff7fa
+brand.text = #3b2a4a
+brand.accent = #c2417c
+corner = pill
+stroke.border = 2
+elevation.hard = true
+elevation.offset = 2 2
+semantic.shadow = #c2417c66

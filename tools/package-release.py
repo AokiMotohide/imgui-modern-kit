@@ -30,6 +30,7 @@ DOCS_PAIRS = [
     ("README.md", "目次.md"),
     ("reference/v3.2-api.md", "reference/3.2追加API.md"),
     ("reference/v3.3-api.md", "reference/3.3追加API.md"),
+    ("reference/v4.0-api.md", "reference/4.0追加API.md"),
     ("getting-started/getting-started.md", "getting-started/導入ガイド.md"),
     ("getting-started/how-it-works.md", "getting-started/仕組みと設計思想.md"),
     ("getting-started/guide.md", "getting-started/利用ガイド.md"),
@@ -59,6 +60,7 @@ DOCS_PAIRS = [
     ("reference/documentation-catalog.md", "reference/文書カタログ.md"),
     ("reference/validation.md", "reference/検証記録.md"),
     ("reference/migration-v3.md", "reference/v3移行ガイド.md"),
+    ("reference/migration-v4.md", "reference/v4移行ガイド.md"),
     ("reference/troubleshooting.md", "reference/トラブルシューティング.md"),
 ]
 PUBLIC_DOCS = [f"docs/{en}" for en, _ in DOCS_PAIRS] + [f"docs/{ja}" for _, ja in DOCS_PAIRS]
@@ -84,7 +86,7 @@ def verify_package(key: str, archive: Path) -> dict:
         "README.ja.md",
         "LICENSE",
         "THIRD_PARTY_NOTICES.md",
-        "website/public/media/imkit-3.2-poster.jpg",
+        "website/public/media/imkit-4.0-poster.jpg",
     ]
     common.extend(PUBLIC_DOCS)
     missing = [name for name in common if not one_member(names, name)]
@@ -235,13 +237,13 @@ def main() -> int:
         ],
         "documentation_media": {
             "gif_size": "960x540",
-            "gif_count": len(list((ROOT / "docs/images").glob("v3-*.gif"))),
-            "current_capture": "docs/images/v3-progress.gif",
+            "gif_count": len(list((ROOT / "docs/images").glob("v4-*.gif"))),
+            "current_capture": "docs/images/v4-start.gif",
             "source": "native Gallery OpenGL backbuffer; public Dear ImGui IO",
-            "historical_film": {
-                "version": "3.2.0",
-                "url": "https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.2.0",
-                "boundary": "Historical demonstration; not 3.3 validation evidence",
+            "film": {
+                "version": version,
+                "files": [f"website/public/media/imkit-4.0-film-{lang}.mp4" for lang in ("ja", "en")],
+                "boundary": "Demonstration recorded from the Gallery; not validation evidence",
             },
         },
         "signing": {
@@ -273,7 +275,7 @@ def main() -> int:
         archive.write(args.native_evidence,"native-evidence.json")
         for record in args.packages_dir.rglob("sdk-consumer-evidence.json"):
             archive.write(record,"sdk-consumers/"+record.parent.name+".json")
-        for gif in sorted((ROOT / "docs/images").glob("v3-*.gif")):
+        for gif in sorted((ROOT / "docs/images").glob("v4-*.gif")):
             archive.write(gif, f"images/{gif.name}")
         for path in native_files:
             archive.write(path, "native/" + path.name)

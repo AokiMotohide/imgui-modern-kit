@@ -1,5 +1,8 @@
+// This file implements or exercises the deprecated spellings on purpose.
+#define IMKIT_DEPRECATED(message)
 #include <imkit/patterns.h>
 #include "progress_internal.h"
+#include "draw_internal.h"
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -25,13 +28,31 @@ void Copy(char* destination,std::size_t capacity,const char* source) { if(capaci
 void Apply(const DataProvider& p,const DataEvent& event) { if(p.apply) p.apply(p.user,event); }
 }
 bool SearchField(const char* id,char* text,std::size_t capacity,ComponentOptions o) {
-    ImGui::PushID(id); ImGui::SetNextItemWidth(std::max(1.f,ImGui::GetContentRegionAvail().x-ImGui::GetFrameHeight()-ImGui::GetStyle().ItemSpacing.x));
+    ImGui::PushID(id);
+    const auto& style=ImGui::GetStyle();
+    const float icon=ImGui::GetFontSize()*.9f,lead=icon+style.ItemInnerSpacing.x;
+    ImGui::SetNextItemWidth(std::max(1.f,ImGui::GetContentRegionAvail().x));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,{style.FramePadding.x+lead,style.FramePadding.y});
     bool changed=ImGui::InputTextWithHint("##search",Text(o,"search","Search"),text,capacity);
+    ImGui::PopStyleVar();
     Node(o,Text(o,"search","Search"),accessibility::SemanticRole::TextField);
-    ImGui::SameLine(); ImGui::BeginDisabled(!*text);
-    if(ActionButton("X##clear",ActionVariant::Ghost,{},o)) { text[0]=0; changed=true; }
-    if(ImGui::IsItemHovered() || ImGui::IsItemFocused()) ImGui::SetTooltip("%s",Text(o,"clear_search","Clear search"));
-    ImGui::EndDisabled(); ImGui::PopID(); return changed;
+    const ImVec2 minimum=ImGui::GetItemRectMin(),maximum=ImGui::GetItemRectMax();
+    auto* draw=ImGui::GetWindowDrawList();
+    const ImU32 muted=ImGui::GetColorU32(ImGuiCol_TextDisabled);
+    const ImVec2 lens{minimum.x+style.FramePadding.x+icon*.42f,(minimum.y+maximum.y)*.5f-icon*.06f};
+    draw->AddCircle(lens,icon*.3f,muted,16,1.5f);
+    draw->AddLine({lens.x+icon*.21f,lens.y+icon*.21f},{lens.x+icon*.42f,lens.y+icon*.42f},muted,1.5f);
+    if(*text) {
+        const float size=maximum.y-minimum.y;
+        ImGui::SetCursorScreenPos({maximum.x-size,minimum.y});
+        const bool clear=ImGui::InvisibleButton("##clear",{size,size});
+        const ImVec2 c{maximum.x-size*.5f,(minimum.y+maximum.y)*.5f};
+        if(ImGui::IsItemHovered()) draw->AddCircleFilled(c,size*.3f,ImGui::GetColorU32(ImGuiCol_Button));
+        detail::DrawCross(draw,c,size*.2f,ImGui::GetColorU32(ImGui::IsItemHovered()?ImGuiCol_Text:ImGuiCol_TextDisabled),1.5f);
+        if(ImGui::IsItemHovered()||ImGui::IsItemFocused()) ImGui::SetTooltip("%s",Text(o,"clear_search","Clear search"));
+        if(clear) {text[0]=0;changed=true;}
+    }
+    ImGui::PopID();return changed;
 }
 StableId CommandPalette(const char* id,CommandPaletteState& s,std::span<const Command> commands,ComponentOptions o) {
     if(s.open && !ImGui::IsPopupOpen(id)) ImGui::OpenPopup(id);
@@ -74,15 +95,50 @@ int Breadcrumbs(const char* id,std::span<const char* const> labels,ComponentOpti
     for(int visual=0;visual<static_cast<int>(labels.size());++visual) {
         int i=o.locale?o.locale->VisualIndex(visual,static_cast<int>(labels.size())):visual;
         auto width=ImGui::CalcTextSize(labels[i]).x+2*ImGui::GetStyle().FramePadding.x;
-        if(visual && ImGui::GetContentRegionAvail().x>width+20) { ImGui::SameLine(); ImGui::TextUnformatted(o.locale && o.locale->direction==TextDirection::RTL?"<":">"); ImGui::SameLine(); }
+        if(visual && ImGui::GetContentRegionAvail().x>width+20) {
+            ImGui::SameLine(0,0);const auto p=ImGui::GetCursorScreenPos();const float size=ImGui::GetFontSize();
+            ImGui::Dummy({size,ImGui::GetFrameHeight()});
+            detail::DrawChevron(ImGui::GetWindowDrawList(),{p.x+size*.5f,p.y+ImGui::GetFrameHeight()*.5f},size*.55f,ImGui::GetColorU32(ImGuiCol_TextDisabled),
+                                o.locale && o.locale->direction==TextDirection::RTL?ImGuiDir_Left:ImGuiDir_Right,1.4f);
+            ImGui::SameLine(0,0);
+        }
         ImGui::PushID(i); if(ActionButton(labels[i],ActionVariant::Ghost,{},o)) result=i; ImGui::PopID();
     } ImGui::PopID(); return result;
 }
 SplitButtonResult SplitButton(const char* id,const char* label,ComponentOptions o) {
-    ImGui::PushID(id); auto result=SplitButtonResult::None;
-    if(ActionButton(label,ActionVariant::Primary,{},o)) result=SplitButtonResult::Primary;
-    ImGui::SameLine(0,1); if(IconButton("menu",ImGuiDir_Down,Text(o,"menu","Menu"),o)) result=SplitButtonResult::Menu;
-    ImGui::PopID(); return result;
+    ImGui::PushID(id);auto result=SplitButtonResult::None;
+    const auto& style=ImGui::GetStyle();
+    const float height=ImGui::GetFrameHeight(),menuWidth=height*.85f;
+    const float labelWidth=ImGui::CalcTextSize(label,nullptr,true).x+style.FramePadding.x*2;
+    const ImVec2 origin=ImGui::GetCursorScreenPos();
+    const ImVec4 fill=o.theme?o.theme->colors.accent:ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
+    const ImVec4 ink=o.theme?o.theme->colors.onAccent:ImVec4(1,1,1,1);
+    const float rounding=style.FrameRounding;
+    auto* draw=ImGui::GetWindowDrawList();
+    draw->AddRectFilled(origin,{origin.x+labelWidth+menuWidth,origin.y+height},ImGui::GetColorU32(fill),rounding);
+    auto part=[&](const char* partId,ImVec2 size,ImDrawFlags corners,ImVec2 at,const char* name,accessibility::SemanticAction action) {
+        ImGui::SetCursorScreenPos(at);
+        bool hit=ImGui::InvisibleButton(partId,size);
+        if(ImGui::IsItemFocused()) ImGui::SetNavCursorVisible(true);
+        if(ImGui::IsItemHovered()||ImGui::IsItemActive())
+            draw->AddRectFilled(at,{at.x+size.x,at.y+size.y},ImGui::GetColorU32(ImVec4(ink.x,ink.y,ink.z,ImGui::IsItemActive()?.28f:.14f)),rounding,corners);
+        if(ImGui::IsItemFocused()) draw->AddRect(at,{at.x+size.x,at.y+size.y},ImGui::GetColorU32(ImGuiCol_NavCursor),rounding,corners,2.f);
+        if(o.accessibility) {
+            accessibility::SemanticNode node;node.id=ImGui::GetItemID();node.parent=o.parent;node.name=name;
+            node.role=accessibility::SemanticRole::Button;node.actions=accessibility::SemanticAction::Press|accessibility::SemanticAction::Focus;
+            hit=o.accessibility->Take(node.id,action)||hit;
+            accessibility::AnnotateLastItem(*o.accessibility,node);
+        }
+        return hit;
+    };
+    if(part("##primary",{labelWidth,height},ImDrawFlags_RoundCornersLeft,origin,label,accessibility::SemanticAction::Press)) result=SplitButtonResult::Primary;
+    draw->AddText({origin.x+style.FramePadding.x,origin.y+(height-ImGui::GetFontSize())*.5f},ImGui::GetColorU32(ink),label,std::strstr(label,"##"));
+    const ImVec2 menuAt{origin.x+labelWidth,origin.y};
+    if(part("##menu",{menuWidth,height},ImDrawFlags_RoundCornersRight,menuAt,Text(o,"menu","Menu"),accessibility::SemanticAction::Press)) result=SplitButtonResult::Menu;
+    draw->AddLine({menuAt.x,origin.y+height*.25f},{menuAt.x,origin.y+height*.75f},ImGui::GetColorU32(ImVec4(ink.x,ink.y,ink.z,.4f)));
+    detail::DrawChevron(draw,{menuAt.x+menuWidth*.5f,origin.y+height*.5f},ImGui::GetFontSize()*.6f,ImGui::GetColorU32(ink),ImGuiDir_Down,1.6f);
+    ImGui::SetCursorScreenPos(origin);ImGui::Dummy({labelWidth+menuWidth,height});
+    ImGui::PopID();return result;
 }
 StableId ResponsiveToolbar(const char* id,ToolbarState& s,std::span<const Command> commands,ComponentOptions o) {
     const auto parent=o.parent; const auto group=ImGui::GetID(id); auto origin=ImGui::GetCursorScreenPos();
@@ -146,8 +202,12 @@ bool DialogLauncher(const char* label,DialogState& s,ComponentOptions o) {
 bool BeginDialog(const char* id,DialogState& s,ComponentOptions o) {
     if(s.open && !ImGui::IsPopupOpen(id)) ImGui::OpenPopup(id);
     if(!s.open) return false;
+    const float pad=ImGui::GetFontSize()*1.3f;
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,{pad,pad});
     bool visible=ImGui::BeginPopupModal(id,nullptr,ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::PopStyleVar();
     if(visible) {
+        if(o.theme) OverlayDecoration(*o.theme,o.animation);
         if(ImGui::IsKeyPressed(ImGuiKey_Escape)) { s.open=false; s.restoreFocus=true; ImGui::CloseCurrentPopup(); ImGui::EndPopup(); return false; }
         if(s.initialFocus) { ImGui::SetKeyboardFocusHere(); s.initialFocus=false; }
         if(o.accessibility) { accessibility::SemanticNode n; n.id=ImGui::GetID(id); n.parent=o.parent; n.role=accessibility::SemanticRole::Dialog;
@@ -159,8 +219,12 @@ DialogResult AlertDialog(const char* id,const char* message,DialogState& s,Compo
     auto result=DialogResult::None;
     if(BeginDialog(id,s,o)) {
         ImGui::PushTextWrapPos(ImGui::GetCursorPosX()+std::min(440.f,ImGui::GetMainViewport()->WorkSize.x-48)); ImGui::TextUnformatted(message); ImGui::PopTextWrapPos();
-        if(ActionButton(Text(o,"cancel","Cancel"),ActionVariant::Secondary,{},o)) result=DialogResult::Cancel;
-        ImGui::SameLine(); if(ActionButton(Text(o,"accept","Accept"),ActionVariant::Primary,{},o)) result=DialogResult::Accept;
+        ImGui::Dummy({0,ImGui::GetStyle().ItemSpacing.y});
+        const auto* cancel=Text(o,"cancel","Cancel");const auto* accept=Text(o,"accept","Accept");
+        const float footer=ImGui::CalcTextSize(cancel).x+ImGui::CalcTextSize(accept).x+ImGui::GetStyle().FramePadding.x*4+ImGui::GetStyle().ItemSpacing.x;
+        ImGui::SetCursorPosX(std::max(ImGui::GetCursorPosX(),ImGui::GetWindowContentRegionMax().x-footer));
+        if(ActionButton(cancel,ActionVariant::Secondary,{},o)) result=DialogResult::Cancel;
+        ImGui::SameLine(); if(ActionButton(accept,ActionVariant::Primary,{},o)) result=DialogResult::Accept;
         if(result!=DialogResult::None) { s.open=false; s.restoreFocus=true; ImGui::CloseCurrentPopup(); }
         EndDialog();
     } return result;
@@ -175,10 +239,24 @@ StableId Menu(const char* id,std::span<const Command> commands,ComponentOptions 
 }
 bool BeginFormField(const char* id,const FormFieldInfo& f,ComponentOptions o) {
     ImGui::PushID(id); ImGui::BeginGroup();
-    ImGui::TextWrapped("%s%s",f.label,f.required?" *":"");
-    if(*f.hint) ImGui::TextWrapped("%s",f.hint);
-    if(*f.validation) ImGui::TextWrapped("! %s",f.validation);
-    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x); (void)o; return true;
+    const ImVec4 error=o.theme?o.theme->semantic.error:ImVec4(.8f,.2f,.25f,1);
+    ImGui::TextWrapped("%s",f.label);
+    if(f.required) {ImGui::SameLine(0,2);ImGui::TextColored(error,"*");}
+    if(*f.hint) {
+        ImGui::PushStyleColor(ImGuiCol_Text,ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+        ImGui::TextWrapped("%s",f.hint);ImGui::PopStyleColor();
+    }
+    if(*f.validation) {
+        const float size=ImGui::GetFontSize()*.85f;const auto p=ImGui::GetCursorScreenPos();
+        auto* draw=ImGui::GetWindowDrawList();
+        const ImVec2 c{p.x+size*.5f,p.y+ImGui::GetTextLineHeight()*.5f};
+        draw->AddCircleFilled(c,size*.5f,ImGui::GetColorU32(error));
+        draw->AddLine({c.x,c.y-size*.2f},{c.x,c.y+size*.04f},ImGui::GetColorU32(ImGuiCol_WindowBg),1.6f);
+        draw->AddCircleFilled({c.x,c.y+size*.22f},1.f,ImGui::GetColorU32(ImGuiCol_WindowBg));
+        ImGui::Dummy({size,ImGui::GetTextLineHeight()});ImGui::SameLine(0,ImGui::GetStyle().ItemInnerSpacing.x);
+        ImGui::PushStyleColor(ImGuiCol_Text,error);ImGui::TextWrapped("%s",f.validation);ImGui::PopStyleColor();
+    }
+    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);return true;
 }
 void EndFormField() { ImGui::EndGroup(); ImGui::PopID(); }
 namespace {
@@ -202,37 +280,64 @@ ImVec4 ProgressStatusColor(ProgressStatus status,ComponentOptions o) {
     }
 }
 }
+namespace {
+bool MotionAllowed(ComponentOptions o) {
+    return !o.theme||(o.theme->motion.enabled&&!o.theme->motion.reducedMotion);
+}
+ImVec4 TextColor(ComponentOptions o) { return o.theme?o.theme->semantic.text:ImGui::GetStyleColorVec4(ImGuiCol_Text); }
+ImVec4 SecondaryColor(ComponentOptions o) { return o.theme?o.theme->semantic.textSecondary:ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled); }
+float ControlRadius(ComponentOptions o) { return o.theme?o.theme->radius.control:ImGui::GetStyle().FrameRounding; }
+// Light moving highlight clipped to [minimum, maximum]; used by progress fills and skeletons.
+void DrawSheen(ImDrawList* draw,ImVec2 minimum,ImVec2 maximum,float phase,ImVec4 color) {
+    const float width=maximum.x-minimum.x,band=std::max((maximum.y-minimum.y)*4.f,width*.4f);
+    const float x=minimum.x-band+phase*(width+band);
+    const ImU32 clear=ImGui::ColorConvertFloat4ToU32(detail::WithAlpha(color,0.f)),lit=ImGui::ColorConvertFloat4ToU32(color);
+    draw->PushClipRect(minimum,maximum,true);
+    draw->AddRectFilledMultiColor({x,minimum.y},{x+band*.5f,maximum.y},clear,lit,lit,clear);
+    draw->AddRectFilledMultiColor({x+band*.5f,minimum.y},{x+band,maximum.y},lit,clear,clear,lit);
+    draw->PopClipRect();
+}
+}
 void ProgressTrack(const char* id,float fraction,ProgressStatus status,ComponentOptions o) {
     const bool available=std::isfinite(fraction)&&fraction>=0.f;
     const float value=available?std::clamp(fraction,0.f,1.f):0.f;
     const float width=std::max(1.f,ImGui::GetContentRegionAvail().x);
-    const float height=std::clamp(ImGui::GetFrameHeight()*.18f,4.f,8.f);
-    const float radius=std::min(height*.5f,o.theme?o.theme->radius.control:ImGui::GetStyle().FrameRounding);
+    const float height=detail::ProgressTrackBarHeight();
+    const float radius=height*.5f;
     const ImVec2 position=ImGui::GetCursorScreenPos();
     ImGui::PushID(id);
     ImGui::Dummy({width,height});
     auto* draw=ImGui::GetWindowDrawList();
-    const ImVec4 track=o.theme?o.theme->semantic.border:ImGui::GetStyleColorVec4(ImGuiCol_FrameBg);
+    const Motion motion=o.theme?o.theme->motion:Motion{};
+    const bool animate=MotionAllowed(o);
+    const ImVec4 track=detail::WithAlpha(TextColor(o),.13f);
     const ImVec4 foreground=ProgressStatusColor(status,o);
     draw->AddRectFilled(position,{position.x+width,position.y+height},ImGui::GetColorU32(track),radius,ImDrawFlags_RoundCornersAll);
     if(available) {
-        const float fill=width*value;
-        if(fill>0.f) draw->AddRectFilled(position,{position.x+fill,position.y+height},ImGui::GetColorU32(foreground),radius,ImDrawFlags_RoundCornersAll);
-    } else if(status==ProgressStatus::Running) {
-        const Motion motion=o.theme?o.theme->motion:Motion{};
-        const bool animate=motion.enabled&&!motion.reducedMotion;
-        const float segment=std::min(width,std::max(height*2.f,width*.22f));
-        float phase=animate?static_cast<float>(std::fmod(std::max(0.0,ImGui::GetTime()),1.6)/1.6):.5f;
-        if(o.animation) {
-            const ImGuiID animationId=ImGui::GetID("progress-indeterminate");
-            phase=o.animation->Update(animationId,phase,ImGui::GetIO().DeltaTime,.08f,
-                                       ImGui::GetFrameCount(),animate,motion.easing);
+        float shown=value;
+        // Values tween so that coarse host updates do not look like jumps.
+        if(o.animation) shown=o.animation->Update(ImGui::GetID("progress-value"),value,ImGui::GetIO().DeltaTime,
+                                                  std::max(motion.controlSeconds*1.5f,.05f),ImGui::GetFrameCount(),animate,motion.easing);
+        const float fill=std::max(height,width*shown);
+        if(shown>0.f) {
+            const ImVec2 end{position.x+fill,position.y+height};
+            draw->AddRectFilled(position,end,ImGui::GetColorU32(foreground),radius,ImDrawFlags_RoundCornersAll);
+            if(status==ProgressStatus::Running&&animate&&fill>height*3.f)
+                DrawSheen(draw,position,end,static_cast<float>(std::fmod(std::max(0.0,ImGui::GetTime()),1.8)/1.8),{1,1,1,.30f});
         }
-        const float start=position.x-segment+static_cast<float>(phase)*(width+segment);
-        const float left=std::max(position.x,start);
-        const float right=std::min(position.x+width,start+segment);
-        if(right>left) draw->AddRectFilled({left,position.y},{right,position.y+height},ImGui::GetColorU32(foreground),radius,ImDrawFlags_RoundCornersAll);
+    } else if(status==ProgressStatus::Running) {
+        const float segment=std::min(width,std::max(height*3.f,width*.28f));
+        // Ping-pong with easing at both ends so the segment never snaps back.
+        float phase=.5f;
+        if(animate) {
+            const float t=static_cast<float>(std::fmod(std::max(0.0,ImGui::GetTime()),2.2)/2.2);
+            const float triangle=t<.5f?t*2.f:2.f-t*2.f;
+            phase=triangle*triangle*(3.f-2.f*triangle);
+        }
+        const float left=position.x+phase*(width-segment);
+        draw->AddRectFilled({left,position.y},{left+segment,position.y+height},ImGui::GetColorU32(foreground),radius,ImDrawFlags_RoundCornersAll);
     }
+    detail::DrawOutline(draw,position,{position.x+width,position.y+height},radius);
     if(o.accessibility) {
         accessibility::SemanticNode node;
         node.id=ImGui::GetID("progress-track");node.parent=o.parent;
@@ -248,22 +353,35 @@ void ProgressTrack(const char* id,float fraction,ProgressStatus status,Component
 }
 void ProgressTrack(const char* id,const ProgressTrackView& view,ComponentOptions o) {
     const bool available=std::isfinite(view.fraction)&&view.fraction>=0.f;
-    char valueBuffer[32]{};
-    const char* value=detail::ProgressValueText(view,valueBuffer,sizeof(valueBuffer));
     const char* status=detail::ProgressStatusLabel(view.status,o);
-
     const ImVec2 top=ImGui::GetCursorScreenPos();
     ImGui::PushID(id);ImGui::BeginGroup();
-    if(*detail::SafeProgressText(view.label)) ImGui::TextWrapped("%s",view.label);
-    ImGui::PushStyleColor(ImGuiCol_Text,o.theme?o.theme->semantic.textSecondary:ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-    ImGui::TextWrapped("%s",status);ImGui::PopStyleColor();
-    if(*value) {
-        ImGui::PushStyleColor(ImGuiCol_Text,o.theme?o.theme->semantic.textDisabled:ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-        ImGui::TextWrapped("%s",value);ImGui::PopStyleColor();
+    const float width=std::max(1.f,ImGui::GetContentRegionAvail().x);
+    const auto header=detail::MakeProgressHeader(view,o);
+    const float gap=detail::ProgressHeaderGap(),spacing=ImGui::GetStyle().ItemSpacing.y;
+    if(header.any) {
+        const ImVec2 origin=ImGui::GetCursorScreenPos();
+        const float headerHeight=detail::ProgressHeaderHeight(header,width);
+        ImGui::Dummy({width,headerHeight});
+        auto* draw=ImGui::GetWindowDrawList();
+        if(*header.left)
+            draw->AddText(ImGui::GetFont(),ImGui::GetFontSize(),origin,ImGui::GetColorU32(TextColor(o)),
+                          header.left,nullptr,detail::ProgressHeaderLeftWidth(header,width));
+        if(*header.right) {
+            const float right=ImGui::CalcTextSize(header.right).x;
+            draw->AddText({origin.x+width-right,origin.y},ImGui::GetColorU32(SecondaryColor(o)),header.right);
+        }
+        // The layout reserved ItemSpacing below the header; replace it with the tighter gap.
+        ImGui::SetCursorScreenPos({origin.x,origin.y+headerHeight+gap});
     }
     auto trackOptions=o;trackOptions.accessibility=nullptr;
     ProgressTrack("track",view.fraction,view.status,trackOptions);
-    if(*detail::SafeProgressText(view.supplemental)) ImGui::TextWrapped("%s",view.supplemental);
+    if(*detail::SafeProgressText(view.supplemental)) {
+        ImGui::SetCursorScreenPos({top.x,ImGui::GetItemRectMax().y+gap});
+        ImGui::PushStyleColor(ImGuiCol_Text,SecondaryColor(o));
+        ImGui::TextWrapped("%s",view.supplemental);ImGui::PopStyleColor();
+    }
+    (void)spacing;
     ImGui::EndGroup();
     const ImVec2 bottom=ImGui::GetItemRectMax();
     if(o.accessibility) {
@@ -298,37 +416,85 @@ void Spinner(const char* id,ComponentOptions o) {
     const float size=ImGui::GetFrameHeight();const ImVec2 p=ImGui::GetCursorScreenPos();
     const ImGuiID semanticId=ImGui::GetID(id);
     ImGui::PushID(id);ImGui::Dummy({size,size});
-    const Motion motion=o.theme?o.theme->motion:Motion{};
-    float phase=motion.enabled&&!motion.reducedMotion?static_cast<float>(std::fmod(std::max(0.0,ImGui::GetTime()*4.0),6.283185307179586)):0.f;
-    if(o.animation) {
-        const bool animate=motion.enabled&&!motion.reducedMotion;
-        phase=o.animation->Update(ImGui::GetID("spinner-rotation"),phase,ImGui::GetIO().DeltaTime,
-                                  .08f,ImGui::GetFrameCount(),animate,motion.easing);
-    }
+    const bool animate=MotionAllowed(o);
+    const float t=animate?static_cast<float>(std::fmod(std::max(0.0,ImGui::GetTime()),1000.0)):0.f;
+    // The arc grows and shrinks while it rotates so the motion never looks mechanical.
+    const float start=t*5.2f,sweep=animate?1.1f+3.4f*(.5f+.5f*std::sin(t*3.1f)):4.2f;
     auto* draw=ImGui::GetWindowDrawList();
-    const ImVec4 color=o.theme?o.theme->semantic.accent:ImGui::GetStyleColorVec4(ImGuiCol_Text);
-    const float stroke=o.theme?std::max(1.f,o.theme->stroke.focus):2.f;
-    draw->PathArcTo({p.x+size*.5f,p.y+size*.5f},size*.3f,phase,phase+4.7f,20);
-    draw->PathStroke(ImGui::GetColorU32(color),0,stroke);
+    const ImU32 color=ImGui::GetColorU32(o.theme?o.theme->semantic.accent:ImGui::GetStyleColorVec4(ImGuiCol_Text));
+    const float stroke=std::max(2.f,size*.09f),radius=size*.3f;
+    const ImVec2 center{p.x+size*.5f,p.y+size*.5f};
+    draw->AddCircle(center,radius,ImGui::GetColorU32(detail::WithAlpha(TextColor(o),.12f)),32,stroke);
+    draw->PathArcTo(center,radius,start,start+sweep,24);
+    draw->PathStroke(color,ImDrawFlags_None,stroke);
+    for(float angle:{start,start+sweep})
+        draw->AddCircleFilled({center.x+std::cos(angle)*radius,center.y+std::sin(angle)*radius},stroke*.5f,color);
     Node(o,Text(o,"loading","Loading"),accessibility::SemanticRole::Status,semanticId);
     ImGui::PopID();
 }
 void Skeleton(const char* id,ImVec2 size,ComponentOptions o) {
     auto p=ImGui::GetCursorScreenPos(); ImGui::Dummy(size);
-    ImGui::GetWindowDrawList()->AddRectFilled(p,{p.x+size.x,p.y+size.y},ImGui::GetColorU32(ImGuiCol_FrameBg),ImGui::GetStyle().FrameRounding);
+    const ImVec2 end{p.x+size.x,p.y+size.y};
+    auto* draw=ImGui::GetWindowDrawList();
+    draw->AddRectFilled(p,end,ImGui::GetColorU32(detail::WithAlpha(TextColor(o),.09f)),ControlRadius(o));
+    if(MotionAllowed(o))
+        DrawSheen(draw,p,end,static_cast<float>(std::fmod(std::max(0.0,ImGui::GetTime()),1.6)/1.6),detail::WithAlpha(TextColor(o),.07f));
     Node(o,Text(o,"loading","Loading"),accessibility::SemanticRole::Status,ImGui::GetID(id));
 }
-void EmptyState(const char* message) { ImGui::TextWrapped("%s",message); }
-void LoadingState(const char* message,ComponentOptions o) { Spinner("loading",o); ImGui::SameLine(); ImGui::TextWrapped("%s",message); }
-bool ErrorState(const char* message,ComponentOptions o) { ImGui::TextWrapped("! %s",message); return ActionButton(Text(o,"retry","Retry"),ActionVariant::Secondary,{},o); }
+void EmptyState(const char* message) {
+    ImGui::PushStyleColor(ImGuiCol_Text,ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+    ImGui::TextWrapped("%s",message);ImGui::PopStyleColor();
+}
+void LoadingState(const char* message,ComponentOptions o) { Spinner("loading",o); ImGui::SameLine(); ImGui::AlignTextToFramePadding(); ImGui::TextWrapped("%s",message); }
+bool ErrorState(const char* message,ComponentOptions o) {
+    const float size=ImGui::GetFontSize();const auto p=ImGui::GetCursorScreenPos();
+    const ImVec4 error=o.theme?o.theme->semantic.error:ImVec4(.8f,.2f,.25f,1);
+    ImGui::Dummy({size,size});
+    auto* draw=ImGui::GetWindowDrawList();
+    const ImVec2 c{p.x+size*.5f,p.y+size*.5f};
+    draw->AddCircleFilled(c,size*.5f,ImGui::GetColorU32(detail::WithAlpha(error,.16f)));
+    draw->AddLine({c.x,c.y-size*.2f},{c.x,c.y+size*.05f},ImGui::GetColorU32(error),1.8f);
+    draw->AddCircleFilled({c.x,c.y+size*.22f},1.1f,ImGui::GetColorU32(error));
+    ImGui::SameLine();ImGui::TextWrapped("%s",message);
+    return ActionButton(Text(o,"retry","Retry"),ActionVariant::Secondary,{},o);
+}
 const char* ToastRegion(std::span<const Notification> notifications,double now,ComponentOptions o) {
-    const char* result=nullptr; for(auto& n:notifications) if(NotificationCard(n,now,o.theme)) result=n.id; return result;
+    const char* result=nullptr; for(auto& n:notifications) if(NotificationCard(n,now,o)) result=n.id; return result;
 }
 bool Pagination(const char* id,int& page,int count,ComponentOptions o) {
-    ImGui::PushID(id); int before=page; page=std::clamp(page,0,std::max(0,count-1));
-    ImGui::BeginDisabled(page==0); if(ActionButton(Text(o,"previous","Previous"),ActionVariant::Ghost,{},o)) --page; ImGui::EndDisabled();
-    ImGui::SameLine(); ImGui::Text("%d / %d",count?page+1:0,std::max(0,count)); ImGui::SameLine();
-    ImGui::BeginDisabled(page>=count-1); if(ActionButton(Text(o,"next","Next"),ActionVariant::Ghost,{},o)) ++page; ImGui::EndDisabled(); ImGui::PopID(); return page!=before;
+    ImGui::PushID(id);int before=page;count=std::max(0,count);page=std::clamp(page,0,std::max(0,count-1));
+    const float side=ImGui::GetFrameHeight();
+    auto step=[&](const char* name,ImGuiDir direction,bool disabled,const char* tooltip) {
+        ImGui::BeginDisabled(disabled);
+        ImGui::PushStyleColor(ImGuiCol_Button,{0,0,0,0});ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize,0.f);
+        const bool hit=ImGui::Button(name,{side,side});
+        ImGui::PopStyleVar();ImGui::PopStyleColor();
+        const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
+        detail::DrawChevron(ImGui::GetWindowDrawList(),{(a.x+b.x)*.5f,(a.y+b.y)*.5f},side*.34f,ImGui::GetColorU32(ImGuiCol_Text),direction);
+        if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)||ImGui::IsItemFocused()) ImGui::SetTooltip("%s",tooltip);
+        Node(o,tooltip,accessibility::SemanticRole::Button);
+        ImGui::EndDisabled();return hit;
+    };
+    if(step("##previous",ImGuiDir_Left,page==0,Text(o,"previous","Previous"))) --page;
+    // Window of pages: first, last and the neighbours of the current page; gaps become an ellipsis.
+    int last=-1;
+    for(int i=0;i<count;++i) {
+        const bool shown=i==0||i==count-1||std::abs(i-page)<=1||(page<3&&i<5)||(page>count-4&&i>count-6);
+        if(!shown) continue;
+        ImGui::SameLine();
+        if(last>=0&&i-last>1) {
+            ImGui::AlignTextToFramePadding();ImGui::TextDisabled("...");ImGui::SameLine();
+        }
+        char label[24];std::snprintf(label,sizeof(label),"%d",i+1);
+        ImGui::PushID(i);
+        auto number=o;
+        if(ActionButton(label,i==page?ActionVariant::Primary:ActionVariant::Ghost,{std::max(side,ImGui::CalcTextSize(label).x+ImGui::GetStyle().FramePadding.x*2),0},number)) page=i;
+        ImGui::PopID();last=i;
+    }
+    if(!count) {ImGui::SameLine();ImGui::AlignTextToFramePadding();ImGui::TextDisabled("0 / 0");}
+    ImGui::SameLine();
+    if(step("##next",ImGuiDir_Right,page>=count-1,Text(o,"next","Next"))) ++page;
+    ImGui::PopID();return page!=before;
 }
 bool BeginAdaptiveSplitLayout(const char* id,AdaptiveSplitState& s,float minimum,float fraction) {
     ImGui::PushID(id); auto available=ImGui::GetContentRegionAvail(); s.stacked=available.x<minimum*2;
@@ -400,7 +566,9 @@ void DataTable(const char* id,DataTableState& s,const DataProvider& p,std::span<
                             ImGui::SetKeyboardFocusHere(); ImGui::SetScrollHereY(); s.focusPending=false;
                         }
                         char label[1024]; std::snprintf(label,sizeof(label),"%s###cell",text);
+                        ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign,{0,.5f}); // Centre cell text in the row.
                         bool hit=ImGui::Selectable(label,selected,ImGuiSelectableFlags_AllowDoubleClick,{0,ImGui::GetFrameHeight()});
+                        ImGui::PopStyleVar();
                         bool focused=ImGui::IsItemFocused();
                         if(hit || focused) { s.focusedRow=row; s.focusedColumn=c; }
                         if(hit) { auto& io=ImGui::GetIO(); if(!io.KeyShift) s.anchor=row;

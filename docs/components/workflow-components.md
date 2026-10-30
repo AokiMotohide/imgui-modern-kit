@@ -19,8 +19,9 @@ Reset event buffers each frame. Full buffers set `overflow`. Keyboard tile resiz
 | `StepNavigator`, `NavigationRail` | Borrowed StepItem span, current ID, explicit focus state; returns a selection request |
 | `WorkspaceTabs` | Icon and label navigation; collapses to a combo when space is narrow; returns a selection request |
 | `ChoiceGroup` | Bordered heading and responsive one-to-three-column radio choices; returns the selected stable ID as a request; host owns current state |
-| `HierarchyGroupHeader`, `HierarchyRow` | Host-owned group state and stable row IDs; selection, visibility, lock and optional group action are requests; unavailable visibility or lock actions may be omitted |
+| `HierarchyGroupHeader`, `HierarchyRow` | Host-owned group state and stable row IDs; full-width selection, ellipsized labels and optional `accentColor`; selection, visibility, lock and optional group action are requests; unavailable visibility or lock actions may be omitted |
 | `BeginInspectorCard`, `EndInspectorCard` | Groups related controls in an auto-height bordered card; always pair Begin/End |
+| `BeginCollapsibleInspectorCard`, `EndCollapsibleInspectorCard` | Inspector card with a host-owned open state; call End only when Begin returns true. Closed content is not drawn |
 | `SettingToggleRow` | Label, description and optional disabled reason; returns a toggle request without changing host state |
 | `FilterChip`, `SectionHeader` | Explicit selection/open state, native activation |
 | `SelectNotifications` | Last duplicate wins before expiry filtering; priority descending, stable ties |
@@ -74,8 +75,8 @@ imkit::ProgressTrack("import-progress", progress, {&theme, &animation});
 
 For colored cards with six positions, actions and progress, see [Toasts](toasts.md). Existing `ToastRegion` behavior remains unchanged.
 
-Open **Generic Workspace** (page 15), **Feedback / States**, or **Preview Tiles**. Generic Workspace includes the new connection-method `ChoiceGroup` example. It combines navigation, toolbar, image, overlays, selection, feedback and status, and uses the existing procedural texture. `--verify-workflow --output <directory>` runs public IO checks and captures 36 page/theme combinations plus two narrow Japanese/disabled examples. Native GPU captures are distinct from native OS/IME and screen-reader tests.
+Open **Workspace shell** (page 15), **Progress and states**, or **Preview tiles**. Generic Workspace includes the new connection-method `ChoiceGroup` example. It combines navigation, toolbar, image, overlays, selection, feedback and status, and uses the existing procedural texture. `--verify-workflow --output <directory>` runs public IO checks and captures 36 page/theme combinations plus two narrow Japanese/disabled examples. Native GPU captures are distinct from native OS/IME and screen-reader tests.
 
 ## ImKit 3.2 workspace
 
-Open **New in 3.2** in the Gallery to use WorkspaceTabs, HierarchyGroupHeader/HierarchyRow, BeginInspectorCard/EndInspectorCard, SettingToggleRow, DragVector3WithUnit, ChoiceGroup and CompactActionRow together. Requests update Gallery-owned values; the same pattern works in an existing ImGui frame. See the [3.2 declarations and lifetime rules](../reference/v3.2-api.md). All 288 runtime icons and 13 themes are available without introducing a new context or application framework.
+Open **Workspace** in the Gallery to use WorkspaceTabs, HierarchyGroupHeader/HierarchyRow, BeginInspectorCard/EndInspectorCard, SettingToggleRow, DragVector3WithUnit, ChoiceGroup and CompactActionRow together. Requests update Gallery-owned values; the same pattern works in an existing ImGui frame. See the [3.2 declarations and lifetime rules](../reference/v3.2-api.md). All 321 runtime icons and 13 themes are available without introducing a new context or application framework.

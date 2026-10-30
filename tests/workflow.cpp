@@ -1,3 +1,5 @@
+// This file implements or exercises the deprecated spellings on purpose.
+#define IMKIT_DEPRECATED(message)
 #include <imkit/editor_canvas.h>
 #include <imkit/shell.h>
 #include <algorithm>
@@ -99,7 +101,7 @@ int main(){
         rightPanelLayout=ResolveRightSidePanelLayout(rightPanel,300);
         Check(std::isfinite(rightPanel.width)&&rightPanelLayout.contentWidth>=1&&rightPanelLayout.panelWidth>=1,"right panel clamps narrow and nonfinite input");
         StableId workspaceRequest=0;
-        bool toggleRequest=false,groupOpen=true;
+        bool toggleRequest=false,groupOpen=true,detailsOpen=false,detailsDrawn=false;
         auto drawWorkspace=[&]{
             const WorkspaceTab tabs[]={{101,"Edit","Edit items"},{102,"Connect","Connect items"},{103,"Review","Review items"}};
             workspaceRequest=WorkspaceTabs("workspace-tabs",tabs,101,nullptr,options);
@@ -108,8 +110,13 @@ int main(){
             if(BeginInspectorCard("card","Settings","Related controls",nullptr,IconId::Count,options))
                 toggleRequest=SettingToggleRow("enabled","Enabled","Use this item",false,false,"",options);
             EndInspectorCard();
+            detailsDrawn=BeginCollapsibleInspectorCard("details","Details",&detailsOpen,nullptr,IconId::Count,options);
+            if(detailsDrawn) {ImGui::TextUnformatted("Additional settings");EndCollapsibleInspectorCard();}
         };
         frame(drawWorkspace);
+        Check(!detailsDrawn,"collapsed inspector omits detail content");
+        detailsOpen=true;frame(drawWorkspace);
+        Check(detailsDrawn,"host can reopen inspector detail content");
         accessibility::SemanticNode connect{},toggle{};
         for(const auto& node:semantics.Tree().nodes) {
             if(node.name=="Connect")connect=node;

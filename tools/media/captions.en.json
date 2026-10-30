@@ -1,0 +1,98 @@
+{
+ "hook-1": {
+  "title": "Your Dear ImGui app.",
+  "sub": "Same call shapes. Same values."
+ },
+ "hook-2": {
+  "title": "Add a theme. This happens.",
+  "sub": "Drop-in calls, same values. A new look and feel."
+ },
+ "hook-title": {
+  "title": "Modern UI.",
+  "sub": "Familiar workflow."
+ },
+ "icons": {
+  "title": "300+ icons.",
+  "sub": "Search, then copy the C++ call."
+ },
+ "toasts": {
+  "title": "Show progress in place.",
+  "sub": "Loading to Success. Your app owns the state."
+ },
+ "chapter-2": {
+  "title": "Make it yours.",
+  "sub": "Pick a colour and the whole screen follows."
+ },
+ "worlds": {
+  "title": "Pick a theme. Everything changes.",
+  "sub": "13 built-in themes, or build your own from four colours."
+ },
+ "studio-1": {
+  "title": "Bring a whole world.",
+  "sub": "Load a theme file and the Gallery follows."
+ },
+ "studio-2": {
+  "title": "Corners, outline, shadow.",
+  "sub": "Copy your theme as text and share it."
+ },
+ "chapter-3": {
+  "title": "Easy to adopt.",
+  "sub": "Keep your app the way it is."
+ },
+ "workspace": {
+  "title": "Tabs, hierarchy, settings. One screen.",
+  "sub": "Actions return as requests. Your app applies them."
+ },
+ "timeline": {
+  "title": "Scrub. Edit. Play.",
+  "sub": "Playhead, clips and transport, ready to use."
+ },
+ "node-editor": {
+  "title": "Connect ideas with nodes.",
+  "sub": "Socket drags, minimap and previews included."
+ },
+ "chapter-4": {
+  "title": "Build real tools.",
+  "sub": "Your data and undo history stay in your app."
+ },
+ "show-live": {
+  "title": "Run a live show with GO.",
+  "sub": "Cue list, clip launcher and mixer."
+ },
+ "show-surface": {
+  "title": "Build your own console.",
+  "sub": "Place faders and knobs. Rearrange in edit mode."
+ },
+ "charts": {
+  "title": "Charts, too.",
+  "sub": "Donut, bar, gauge and sparkline."
+ },
+ "chapter-5": {
+  "title": "Beyond editors.",
+  "sub": "Media servers, live shows and monitoring."
+ },
+ "code": {
+  "title": "Three lines of CMake. Three of C++.",
+  "sub": "Your context, renderer and fonts stay yours."
+ },
+ "keep": {
+  "title": "Keep your calls.",
+  "sub": "Add the look and the components."
+ },
+ "outro-1": {
+  "title": "ImKit 4.0",
+  "sub": "Modern tools, still Dear ImGui."
+ },
+ "outro-2": {
+  "title": "Try the Gallery today.",
+  "sub": "aokimotohide.github.io/imgui-modern-kit"
+ },
+ "outro-3": {
+  "title": "Open source · MIT · C++20",
+  "sub": "Music: \"Laserpack\" by Kevin MacLeod ft. DarkNES (incompetech.com) · CC BY 4.0"
+ },
+ "compare": {
+  "title": "Edit once. Both sides respond.",
+  "sub": "Compare plain Dear ImGui and ImKit side by side."
+ }
+}

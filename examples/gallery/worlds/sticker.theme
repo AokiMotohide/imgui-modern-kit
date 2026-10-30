@@ -1,0 +1,13 @@
+# Sticker: warm paper, a dark ink outline and a hard offset shadow.
+# Read it with imkit::ParseTheme; every line is optional.
+brand.canvas = #ffe9a8
+brand.surface = #fff6d6
+brand.text = #4a2a18
+brand.accent = #b2552f
+brand.border = #4a2a18
+brand.success = #2f7a3e
+corner = round
+stroke.border = 3
+elevation.hard = true
+elevation.offset = 0 3
+semantic.shadow = #4a2a18

@@ -1,5 +1,7 @@
 #include <imkit/cg.h>
+#include <imkit/widgets.h>
 #include "transaction_support.h"
+#include "draw_internal.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -217,36 +219,42 @@ ViewportView BeginViewport(const char *id, ViewportState &s, ImTextureRef textur
     ImGui::SetCursorScreenPos({toolbar.x+rail,toolbar.y});
     ImGui::BeginGroup();
     const float start=ImGui::GetCursorPosX();
-    const float comboWidth=std::max(55.f,std::min(100.f*ImGui::GetFontSize()/14,(ImGui::GetContentRegionAvail().x-12)/3));
+    // Wide enough for the longest option of the three combos, within a third of the toolbar.
+    float longest=0;
+    for(const char* label:s.labels.orientations) longest=std::max(longest,ImGui::CalcTextSize(label).x);
+    for(const char* label:s.labels.pivots) longest=std::max(longest,ImGui::CalcTextSize(label).x);
+    for(const char* label:s.labels.projections) longest=std::max(longest,ImGui::CalcTextSize(label).x);
+    const float fitted=longest+ImGui::GetFrameHeight()+ImGui::GetStyle().FramePadding.x*2;
+    const float comboWidth=std::max(55.f,std::min(std::max(100.f*ImGui::GetFontSize()/14,fitted),(ImGui::GetContentRegionAvail().x-12)/3));
     ImGui::BeginDisabled(s.drag.active);
     int orientation=static_cast<int>(s.orientation),pivot=static_cast<int>(s.pivot),projection=static_cast<int>(s.camera.projection);
     ImGui::SetNextItemWidth(comboWidth);
-    if(ImGui::Combo("##orientation",&orientation,s.labels.orientations.data(),5)) s.orientation=static_cast<Orientation>(orientation);
+    if(imkit::Combo("##orientation",&orientation,s.labels.orientations.data(),5)) s.orientation=static_cast<Orientation>(orientation);
     ImGui::SameLine();ImGui::SetNextItemWidth(comboWidth);
-    if(ImGui::Combo("##pivot",&pivot,s.labels.pivots.data(),4)) s.pivot=static_cast<Pivot>(pivot);
+    if(imkit::Combo("##pivot",&pivot,s.labels.pivots.data(),4)) s.pivot=static_cast<Pivot>(pivot);
     ImGui::SameLine();ImGui::SetNextItemWidth(comboWidth);
-    if(ImGui::BeginCombo("##projection",s.labels.projections[projection])) {
+    if(imkit::BeginCombo("##projection",s.labels.projections[projection])) {
         for(int i=0;i<3;++i) {
             ImGui::BeginDisabled(i==2 && !s.cameraView);
             if(ImGui::Selectable(s.labels.projections[i],i==projection)) s.camera.projection=static_cast<Projection>(i);
             ImGui::EndDisabled();
         }
-        ImGui::EndCombo();
+        imkit::EndCombo();
     }
     ImGui::EndDisabled();
     ImGui::SetCursorPosX(start);
-    ImGui::Checkbox(s.labels.snap,&s.snap);ImGui::SameLine();
+    imkit::Checkbox(s.labels.snap,&s.snap);ImGui::SameLine();
     if(ImGui::Button(s.labels.overlays)) ImGui::OpenPopup("viewport-overlays");
     if(ImGui::BeginPopup("viewport-overlays")) {
-        ImGui::Checkbox(s.labels.grid,&s.grid);ImGui::Checkbox(s.labels.gizmo,&s.gizmo);
-        ImGui::Checkbox(s.labels.axes,&s.axes);ImGui::Checkbox(s.labels.origins,&s.origins);
-        ImGui::Checkbox(s.labels.selectionOutline,&s.selectionOutline);
-        ImGui::Checkbox(s.labels.vertexNormals,&s.normals);ImGui::Checkbox(s.labels.faceNormals,&s.faceNormals);
-        ImGui::Checkbox(s.labels.cameraFrame,&s.cameraFrame);ImGui::Checkbox(s.labels.safeFrame,&s.safeFrame);
-        ImGui::Checkbox(s.labels.renderRegion,&s.renderRegion);ImGui::Checkbox(s.labels.passepartout,&s.passepartout);
-        ImGui::Checkbox(s.labels.measurement,&s.measurement);ImGui::Checkbox(s.labels.lassoSelect,&s.lassoSelection);
+        imkit::Checkbox(s.labels.grid,&s.grid);imkit::Checkbox(s.labels.gizmo,&s.gizmo);
+        imkit::Checkbox(s.labels.axes,&s.axes);imkit::Checkbox(s.labels.origins,&s.origins);
+        imkit::Checkbox(s.labels.selectionOutline,&s.selectionOutline);
+        imkit::Checkbox(s.labels.vertexNormals,&s.normals);imkit::Checkbox(s.labels.faceNormals,&s.faceNormals);
+        imkit::Checkbox(s.labels.cameraFrame,&s.cameraFrame);imkit::Checkbox(s.labels.safeFrame,&s.safeFrame);
+        imkit::Checkbox(s.labels.renderRegion,&s.renderRegion);imkit::Checkbox(s.labels.passepartout,&s.passepartout);
+        imkit::Checkbox(s.labels.measurement,&s.measurement);imkit::Checkbox(s.labels.lassoSelect,&s.lassoSelection);
         int shading=s.shading==Shading::Wireframe ? 0 : 1;
-        if(ImGui::Combo("##shading",&shading,s.labels.shading.data(),2)) s.shading=shading?Shading::Solid:Shading::Wireframe;
+        if(imkit::Combo("##shading",&shading,s.labels.shading.data(),2)) s.shading=shading?Shading::Solid:Shading::Wireframe;
         ImGui::EndPopup();
     }
     ImGui::EndGroup();
@@ -742,9 +750,9 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
     ImGui::InputText(s.labels.search, s.search, sizeof(s.search));
     ImGui::SameLine();ImGui::SetNextItemWidth(-1);
     int filter=static_cast<int>(s.filter);
-    if (ImGui::Combo("##filter",&filter,s.labels.filters.data(),5)) s.filter=static_cast<OutlinerFilter>(filter);
+    if (imkit::Combo("##filter",&filter,s.labels.filters.data(),5)) s.filter=static_cast<OutlinerFilter>(filter);
     int kind=s.kindFilter+1;
-    if (ImGui::Combo("##kind",&kind,s.labels.kinds.data(),8)) s.kindFilter=kind-1;
+    if (imkit::Combo("##kind",&kind,s.labels.kinds.data(),8)) s.kindFilter=kind-1;
     if (ImGui::BeginTable("tree", 5,
                           ImGuiTableFlags_Resizable | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY)) {
         ImGui::TableSetupColumn(s.labels.name, ImGuiTableColumnFlags_WidthStretch);
@@ -763,7 +771,16 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
                 ImGui::TableNextColumn();
                 ImGui::Indent(row.depth * 14.f);
                 if (row.hasChildren) {
-                    if (ImGui::SmallButton(row.expanded ? "v" : ">"))
+                    // Borderless disclosure chevron; the label stays the widget id and is hidden under the drawn glyph.
+                    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
+                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0, 0, 0, 0));
+                    const bool toggled = ImGui::SmallButton(row.expanded ? "v" : ">");
+                    ImGui::PopStyleColor(2);
+                    ImGui::PopStyleVar();
+                    detail::DrawChevron(ImGui::GetWindowDrawList(), {(ImGui::GetItemRectMin().x + ImGui::GetItemRectMax().x) * .5f, (ImGui::GetItemRectMin().y + ImGui::GetItemRectMax().y) * .5f},
+                                        ImGui::GetFontSize() * .5f, ImGui::GetColorU32(ImGuiCol_Text, .75f), row.expanded ? ImGuiDir_Down : ImGuiDir_Right, 1.5f);
+                    if (toggled)
                         Emit(out, row.id, p.revision, editor::EditKind::Toggle,
                              Value({4, row.expanded ? 1. : 0., 0}), Value({4, row.expanded ? 0. : 1., 0}));
                     ImGui::SameLine();
@@ -864,15 +881,16 @@ void Outliner(const char *id, const SceneProvider &p, OutlinerState &s, editor::
                     bool changed=false;
                     if (s.icons) {
                         const IconId glyphs[]={draft?IconId::Eye:IconId::EyeOff,draft?IconId::SelectAll:IconId::Unselectable,IconId::Camera,draft?IconId::Lock:IconId::Unlock};
-                        if (draft) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-                        changed=IconButton("restriction",*s.icons,glyphs[f],labels[f],{16*ImGui::GetFontSize()/14});
-                        if (draft) {
-                            const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
-                            ImGui::GetWindowDrawList()->AddLine({a.x+3,b.y-2},{b.x-3,b.y-2},ImGui::GetColorU32(ImGuiCol_Text),2);
-                            ImGui::PopStyleColor();
-                        }
+                        // Quiet ghost buttons: the state reads from the glyph's strength, not a filled square.
+                        ImVec4 tone=ImGui::GetStyleColorVec4(ImGuiCol_Text);
+                        tone.w*=draft ? .9f : .38f;
+                        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize,0.f);
+                        ImGui::PushStyleColor(ImGuiCol_Button,ImVec4(0,0,0,0));
+                        changed=IconButton("restriction",*s.icons,glyphs[f],labels[f],{16*ImGui::GetFontSize()/14,tone});
+                        ImGui::PopStyleColor();
+                        ImGui::PopStyleVar();
                         if (changed) draft=!draft;
-                    } else changed=ImGui::Checkbox("##restriction", &draft);
+                    } else changed=imkit::Checkbox("##restriction", &draft);
                     if (changed)
                         Emit(out, row.id, p.revision, editor::EditKind::Toggle,
                              Value({static_cast<double>(field), values[f] ? 1. : 0., 0}),
@@ -919,7 +937,7 @@ void ComponentStack(const char *id,std::span<const ComponentView> components,
             ImGui::PushID(reinterpret_cast<void*>(static_cast<std::uintptr_t>(component.id)));
             ImGui::TableNextRow();ImGui::TableNextColumn();
             bool enabled=component.enabled;ImGui::BeginDisabled(component.locked || options.locked);
-            if (ImGui::Checkbox("##enabled",&enabled))
+            if (imkit::Checkbox("##enabled",&enabled))
                 Emit(out,component.id,revision,editor::EditKind::Toggle,Value({0,component.enabled?1.:0.,0}),Value({0,enabled?1.:0.,0}));
             ImGui::EndDisabled();ImGui::TableNextColumn();
             glyph(component.icon);
@@ -1143,7 +1161,7 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
         if(s.icons) {Icon(*s.icons,IconId::Deselect,{ImGui::GetFontSize()});ImGui::SameLine();}
         if(ImGui::MenuItem(s.labels.clearSelection,nullptr,false,selection.count!=0) && out.Push({0,p.revision,editor::Phase::Commit,editor::EditKind::Select})) selection.Clear();
         const int selectionMode=static_cast<int>(s.selection);
-        if (ImGui::BeginCombo(s.labels.selection,s.labels.modes[selectionMode])) {
+        if (imkit::BeginCombo(s.labels.selection,s.labels.modes[selectionMode])) {
             constexpr IconId icons[]{IconId::SelectVertex,IconId::SelectEdge,IconId::SelectFace,IconId::SelectIsland};
             for (int mode=0;mode<4;++mode) {
                 ImGui::PushID(mode);
@@ -1154,10 +1172,10 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
                 if (selectionMode==mode) ImGui::SetItemDefaultFocus();
                 ImGui::PopID();
             }
-            ImGui::EndCombo();
+            imkit::EndCombo();
         }
         auto overlay=[&](const char *id,IconId icon,const char *label,bool &enabled) {
-            if (!s.icons) {ImGui::Checkbox(label,&enabled);return;}
+            if (!s.icons) {imkit::Checkbox(label,&enabled);return;}
             const bool active=enabled;
             if (active) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
             if (IconLabelButton(id,*s.icons,icon,label,{16*ImGui::GetFontSize()/14})) enabled=!enabled;
@@ -1193,19 +1211,19 @@ void UVEditor(const char *id, const UVProvider &p, ImTextureRef texture, UVState
                 }
             }
             ImGui::EndDisabled();
-        } else ImGui::Checkbox(s.labels.lasso,&s.lassoSelect);
+        } else imkit::Checkbox(s.labels.lasso,&s.lassoSelect);
         int coordinates=static_cast<int>(s.coordinates);
-        if (ImGui::Combo(s.labels.coordinates,&coordinates,s.labels.coordinateModes.data(),3))
+        if (imkit::Combo(s.labels.coordinates,&coordinates,s.labels.coordinateModes.data(),3))
             s.coordinates=static_cast<UVCoordinates>(coordinates);
         int tool=s.tool==TransformTool::Rotate?1:s.tool==TransformTool::Scale?2:0;
-        if (ImGui::BeginCombo(s.labels.transform,s.labels.tools[tool])) {
+        if (imkit::BeginCombo(s.labels.transform,s.labels.tools[tool])) {
             constexpr IconId icons[]{IconId::Move,IconId::Rotate,IconId::Scale};
             for (int i=0;i<3;++i) {
                 if (s.icons) {Icon(*s.icons,icons[i],{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
                 if (ImGui::Selectable(s.labels.tools[i],tool==i))
                     s.tool=i==1?TransformTool::Rotate:i==2?TransformTool::Scale:TransformTool::Translate;
             }
-            ImGui::EndCombo();
+            imkit::EndCombo();
         }
         double pivot[2]={s.pivot.x,s.pivot.y};
         if (ImGui::DragScalarN(s.labels.pivot,ImGuiDataType_Double,pivot,2,.01f)) s.pivot={pivot[0],pivot[1]};
@@ -1260,19 +1278,30 @@ void AnimationStrips(const char *id,std::span<const StripView> strips,std::uint6
                   static_cast<float>((editor::Seconds(range.first) - canvas.origin.x) * canvas.scale.x);
         float w = static_cast<float>((editor::Seconds(range.last)-editor::Seconds(range.first))*canvas.scale.x);
         const auto fill=strip.muted?theme.colors.muted:options.selection && options.selection->Contains(strip.id)?theme.colors.accent:theme.colors.selection;
-        const auto textColor=ImGui::GetColorU32(fill.x*.2126f+fill.y*.7152f+fill.z*.0722f>.5f ?
-            ImVec4{.06f,.06f,.08f,1}:ImVec4{.96f,.96f,.98f,1});
-        d->AddRectFilled({x, y}, {x + w, y + rowHeight-4},ImGui::GetColorU32(fill),4);
+        const ImVec4 textColorVec=fill.x*.2126f+fill.y*.7152f+fill.z*.0722f>.5f ?
+            ImVec4{.06f,.06f,.08f,1}:ImVec4{.96f,.96f,.98f,1};
+        const auto textColor=ImGui::GetColorU32(textColorVec);
+        const float corner=(std::min)(6.f,ImGui::GetStyle().FrameRounding);
+        d->AddRectFilled({x, y}, {x + w, y + rowHeight-4},ImGui::GetColorU32(fill),corner);
+        auto edge=theme.colors.text;edge.w=.16f;
+        d->AddRect({x, y}, {x + w, y + rowHeight-4},ImGui::GetColorU32(edge),corner);
         d->PushClipRect({x,y},{x+(std::max)(1.f,w),y+rowHeight-4},true);
         if (repeat>1 && std::isfinite(repeat)) {
             const int divisions=static_cast<int>((std::min)(repeat,128.));
+            auto divider=ImVec4(fill.x*.55f,fill.y*.55f,fill.z*.55f,.7f);
             for (int i=1;i<=divisions;++i) {
                 float boundary=x+static_cast<float>(w*i/repeat);
-                d->AddLine({boundary,y+2},{boundary,y+24},ImGui::GetColorU32(theme.colors.border));
+                for (float dash=y+3;dash<y+22;dash+=6) d->AddLine({boundary,dash},{boundary,dash+3},ImGui::GetColorU32(divider));
             }
         }
-        d->AddLine({x+2,y+24},{x+2+(std::max)(0.f,w-4)*static_cast<float>(std::clamp(blend,0.,1.)),y+24},
-                   ImGui::GetColorU32(theme.colors.text),2);
+        {
+            // Blend ramp: a faint track with the blended share filled, rounded like the strip.
+            const float left=x+4,right=x+(std::max)(4.f,w-4),yy=y+25;
+            auto track=ImVec4(textColorVec.x,textColorVec.y,textColorVec.z,.28f);
+            d->AddRectFilled({left,yy-1.5f},{right,yy+1.5f},ImGui::GetColorU32(track),1.5f);
+            const float filled=(right-left)*static_cast<float>(std::clamp(blend,0.,1.));
+            if (filled>.5f) d->AddRectFilled({left,yy-1.5f},{left+filled,yy+1.5f},ImGui::GetColorU32(textColorVec),1.5f);
+        }
         char description[256];
         std::snprintf(description,sizeof(description),"%s  x%.2f / %.2f %s%s%s",strip.label,scale,repeat,options.labels.repeats,
             strip.muted?options.labels.muted:"",strip.locked?options.labels.locked:"");
@@ -1346,14 +1375,14 @@ void AnimationStrips(const char *id,std::span<const StripView> strips,std::uint6
             }
             bool muted=strip.muted;
             glyph(IconId::Mute);
-            if (ImGui::Checkbox(options.labels.mute,&muted)) {
+            if (imkit::Checkbox(options.labels.mute,&muted)) {
                 value=original;value.offset=muted?value.offset|1:value.offset&~editor::Tick{1};
                 Emit(out,strip.id,revision,editor::EditKind::StripSettings,original,value);
             }
             ImGui::EndDisabled();
             bool locked=strip.locked;
             glyph(locked?IconId::Lock:IconId::Unlock);
-            if (ImGui::Checkbox(options.labels.lock,&locked)) {
+            if (imkit::Checkbox(options.labels.lock,&locked)) {
                 value=original;value.offset=locked?value.offset|2:value.offset&~editor::Tick{2};
                 Emit(out,strip.id,revision,editor::EditKind::StripSettings,original,value);
             }
@@ -1386,6 +1415,7 @@ void DopeSheet(const char *id, const editor::CurveProvider &p, editor::CurveStat
     auto view = editor::BeginCanvas(id, s.canvas, size, theme);
     s.view=view;
     auto *d = ImGui::GetWindowDrawList();
+    editor::DrawGrid(view, s.canvas, {1, 0}, theme); // Time lines only; rows carry the channel structure.
     auto keys =
         p.query
             ? p.query(
@@ -1435,7 +1465,12 @@ void DopeSheet(const char *id, const editor::CurveProvider &p, editor::CurveStat
             channel = key.channel;
             ++row;
             float y = view.min.y + row * 30;
-            d->AddLine({view.min.x, y}, {view.max.x, y}, ImGui::GetColorU32(theme.colors.border));
+            auto band = theme.colors.text;
+            band.w = row % 2 ? .05f : .02f;
+            d->AddRectFilled({view.min.x, y}, {view.max.x, y + 30}, ImGui::GetColorU32(band));
+            auto separator = theme.colors.border;
+            separator.w *= .55f;
+            d->AddLine({view.min.x, y}, {view.max.x, y}, ImGui::GetColorU32(separator));
         }
         float y = view.min.y + row * 30 + 15;
         if (y > view.max.y)
@@ -1448,9 +1483,10 @@ void DopeSheet(const char *id, const editor::CurveProvider &p, editor::CurveStat
         }
         float x = view.min.x +
                   static_cast<float>((editor::Seconds(tick) - s.canvas.origin.x) * s.canvas.scale.x);
-        auto color =
-            ImGui::GetColorU32(selection.Contains(key.id) ? theme.colors.warning : theme.colors.text);
-        d->AddQuadFilled({x, y - 5}, {x + 5, y}, {x, y + 5}, {x - 5, y}, color);
+        auto color = ImGui::GetColorU32(selection.Contains(key.id) ? theme.editor.selectedKey : theme.editor.key);
+        const float r = !key.locked && std::hypot(mouse.x - x, mouse.y - y) < 8 ? 6.f : 5.f;
+        d->AddQuadFilled({x, y - r - 1.5f}, {x + r + 1.5f, y}, {x, y + r + 1.5f}, {x - r - 1.5f, y}, ImGui::GetColorU32(theme.editor.canvas));
+        d->AddQuadFilled({x, y - r}, {x + r, y}, {x, y + r}, {x - r, y}, color);
         if (!key.locked && std::hypot(mouse.x - x, mouse.y - y) < 8) {
             hit = key.id;
             original = {key.tick, 0, 0, 0, key.value};
@@ -1460,8 +1496,8 @@ void DopeSheet(const char *id, const editor::CurveProvider &p, editor::CurveStat
     if (view.hovered && ImGui::IsMouseReleased(ImGuiMouseButton_Right) && !s.drag.active)
         ImGui::OpenPopup("dope-options");
     if (ImGui::BeginPopup("dope-options")) {
-        ImGui::Checkbox(s.labels.scale,&s.scaleTime);
-        ImGui::Checkbox(s.labels.snap,&s.snapToFrame);
+        imkit::Checkbox(s.labels.scale,&s.scaleTime);
+        imkit::Checkbox(s.labels.snap,&s.snapToFrame);
         ImGui::EndPopup();
     }
     ImGui::PopID();

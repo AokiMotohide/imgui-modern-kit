@@ -4,7 +4,7 @@
 
 A settings screen in ImKit is a host-owned struct plus a row of labeled controls. ImKit gives you themed controls that read and write your state and report the result; your code decides what to do with the changes. This page walks the build from an empty window to a complete, save-able settings panel. The per-control reference is [Components](../components/components.md).
 
-![Gallery overview with themed panels](../images/gallery-overview.gif)
+![Gallery overview with themed panels](../images/v4-start.gif)
 
 ## The core pattern
 

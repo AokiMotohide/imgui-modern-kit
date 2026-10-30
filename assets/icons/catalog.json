@@ -1150,5 +1150,137 @@
   {
     "name": "IndustrialCamera",
     "category": "Connectivity"
+  },
+  {
+    "name": "Led",
+    "category": "LED"
+  },
+  {
+    "name": "LedStrip",
+    "category": "LED"
+  },
+  {
+    "name": "LedMatrix",
+    "category": "LED"
+  },
+  {
+    "name": "LedWall",
+    "category": "LED"
+  },
+  {
+    "name": "LedCabinet",
+    "category": "LED"
+  },
+  {
+    "name": "Pixel",
+    "category": "LED"
+  },
+  {
+    "name": "Controller",
+    "category": "LED"
+  },
+  {
+    "name": "Port",
+    "category": "LED"
+  },
+  {
+    "name": "Dmx",
+    "category": "LED"
+  },
+  {
+    "name": "Universe",
+    "category": "LED"
+  },
+  {
+    "name": "Fixture",
+    "category": "LED"
+  },
+  {
+    "name": "MovingHead",
+    "category": "LED"
+  },
+  {
+    "name": "Dimmer",
+    "category": "LED"
+  },
+  {
+    "name": "Brightness",
+    "category": "LED"
+  },
+  {
+    "name": "ColorTemperature",
+    "category": "LED"
+  },
+  {
+    "name": "Gamma",
+    "category": "LED"
+  },
+  {
+    "name": "RgbChannels",
+    "category": "LED"
+  },
+  {
+    "name": "WhiteChannel",
+    "category": "LED"
+  },
+  {
+    "name": "Power",
+    "category": "LED"
+  },
+  {
+    "name": "PowerBudget",
+    "category": "LED"
+  },
+  {
+    "name": "Strobe",
+    "category": "LED"
+  },
+  {
+    "name": "Chase",
+    "category": "LED"
+  },
+  {
+    "name": "Gradient",
+    "category": "LED"
+  },
+  {
+    "name": "ColorOrder",
+    "category": "LED"
+  },
+  {
+    "name": "Identify",
+    "category": "LED"
+  },
+  {
+    "name": "Freeze",
+    "category": "Live"
+  },
+  {
+    "name": "Flash",
+    "category": "Live"
+  },
+  {
+    "name": "Scene",
+    "category": "Live"
+  },
+  {
+    "name": "ImageButton",
+    "category": "Live"
+  },
+  {
+    "name": "ControlSurface",
+    "category": "Live"
+  },
+  {
+    "name": "Fader",
+    "category": "Live"
+  },
+  {
+    "name": "Knob",
+    "category": "Live"
+  },
+  {
+    "name": "PtzCamera",
+    "category": "3D Projection"
   }
 ]

@@ -6,7 +6,9 @@ import { resolve } from 'node:path';
 
 const base=import.meta.env.BASE_URL.replace(/\/$/, "");
 const english=Astro.url.pathname.includes("/en/");
-const revision=createHash('sha256').update(readFileSync(resolve('public/media/imkit-3.2-film.mp4'))).digest('hex').slice(0,12);
+const language=english ? 'en' : 'ja';
+const film=`imkit-4.0-film-${language}.mp4`;
+const revision=createHash('sha256').update(readFileSync(resolve(`public/media/${film}`))).digest('hex').slice(0,12);
 const { data } = Astro.locals.starlightRoute.entry;
 const { title = data.title, tagline, actions = [] } = data.hero ?? {};
 ---
@@ -14,11 +16,11 @@ const { title = data.title, tagline, actions = [] } = data.hero ?? {};
 <div class="hero imkit-hero">
 	<div class="imkit-hero-image imkit-film" id="film">
         <video controls playsinline preload="metadata"
-            poster={`${base}/media/imkit-3.2-poster.jpg?v=${revision}`}
-            aria-label={english ? 'ImKit 3.2: Modern UI. Familiar workflow. English film with original music.' : 'ImKit 3.2の英語紹介動画。オリジナルBGM付き。'}>
-            <source src={`${base}/media/imkit-3.2-film.mp4?v=${revision}`} type="video/mp4" />
+            poster={`${base}/media/imkit-4.0-poster.jpg?v=${revision}`}
+            aria-label={english ? 'ImKit 4.0: Modern UI. Familiar workflow. Three-minute film with music.' : 'ImKit 4.0の紹介動画（約3分）。BGM付き。'}>
+            <source src={`${base}/media/${film}?v=${revision}`} type="video/mp4" />
         </video>
-        <p>{english ? 'ImKit 3.2 film · Real interaction · English · Original electro-house score' : 'ImKit 3.2の紹介動画 · 実操作60秒 · 英語 · オリジナルBGM'}</p>
+        <p>{english ? 'ImKit 4.0 film · About 3 minutes · Recorded in the Gallery · Music: "Laserpack" by Kevin MacLeod ft. DarkNES (CC BY 4.0)' : 'ImKit 4.0の紹介動画 · 約3分 · Galleryを実際に操作して録画 · 音楽: Kevin MacLeod ft. DarkNES「Laserpack」（CC BY 4.0）'}</p>
     </div>
 	<div class="imkit-hero-stack">
 		<div class="imkit-hero-copy">

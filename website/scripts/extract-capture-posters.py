@@ -10,20 +10,24 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "docs/images"
 DESTINATION = ROOT / "website/src/assets/captures"
 CAPTURES = (
-    "v3-progress", "v3-overview", "v3-workspace", "v3-comparison", "v3-toasts", "v3-icons",
-    "v3-node-editor",
-    "v3-workflow-progress",
-    "v3-timeline",
-    "v3-theme-comparison",
-    "gallery-icons",
+    "v4-start", "v4-themes", "v4-compare", "v4-studio", "v4-workspace", "v4-timeline", "v4-show",
+    "v4-surface", "v4-charts", "v4-toasts", "v4-icons", "v4-progress", "v4-node-editor",
 )
+# Frame numbers (20 fps, about 160 frames) that show the capture at its most telling moment.
 POSTER_FRAMES = {
-    "v3-overview": 65,  # Enter the live 3.2 workspace from Start.
-    "v3-workspace": 85,  # Inspector, shared values and live preview.
-    "v3-comparison": 80,
-    "v3-icons": 65,
-    "v3-node-editor": 65,  # Actual socket drag and connection.
-    "v3-timeline": 65,
+    "v4-start": 120,  # The ImKit side after the flip, slider moved.
+    "v4-themes": 70,
+    "v4-compare": 100,
+    "v4-studio": 70,
+    "v4-workspace": 90,
+    "v4-timeline": 70,
+    "v4-show": 100,
+    "v4-surface": 80,
+    "v4-charts": 80,
+    "v4-toasts": 80,
+    "v4-icons": 80,
+    "v4-progress": 60,
+    "v4-node-editor": 70,  # Actual socket drag and connection.
 }
 
 

@@ -64,7 +64,7 @@ export default defineConfig({
 				{
 					label: '環境と移行',
 					translations: { en: 'Platform and migration' },
-					items: [{ slug: 'platform/dependencies' }, { slug: 'platform/faq' }, { slug: 'platform/troubleshooting' }, { slug: 'platform/migration' }],
+					items: [{ slug: 'platform/dependencies' }, { slug: 'platform/faq' }, { slug: 'platform/troubleshooting' }, { slug: 'platform/migration' }, { slug: 'platform/migration-v4' }],
 				},
 				{
 					label: 'API',
@@ -72,7 +72,7 @@ export default defineConfig({
 						{ slug: 'api' },
 						{ label: 'BeginEditor', translations: { en: 'BeginEditor' }, slug: 'api/node-editor/begin-editor' },
 						{ slug: 'api/node-editor' },
-						{ slug: 'api/native' }, { slug: 'api/v3-3' }, { slug: 'api/v3-2' },
+						{ slug: 'api/native' }, { slug: 'api/v4-0' }, { slug: 'api/v3-3' }, { slug: 'api/v3-2' },
 						{ label: 'Design-system API', translations: { en: 'Design-system API' }, slug: 'api/design-system' },
 						{ slug: 'api/editor-suite' },
 						{ slug: 'api/window-frame' },

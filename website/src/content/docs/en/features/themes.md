@@ -8,9 +8,9 @@ Start with a named preset, then adjust semantic colors and metrics for the host 
 
 ## Gallery capture
 
-![Native comparison of ImKit theme presets in the Gallery.](../../../../assets/captures/v3-theme-comparison-poster.png)
+![Native comparison of ImKit theme presets in the Gallery.](../../../../assets/captures/v4-themes-poster.png)
 
-Themes — light and dark palettes · [Open the native Gallery animation](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v3-theme-comparison.gif)
+Themes — light and dark palettes · [Open the native Gallery animation](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-themes.gif)
 
 ## Minimum drawing example
 
@@ -65,7 +65,9 @@ auto theme = imkit::MakeTheme(preset);
 
 ## Customization
 
-`SetAccent` updates accent, focus, contrasting on-accent text and selection. Edit other `Theme::colors`, `metrics`, `motion` or `editor` fields explicitly when needed. Arbitrary edits are not automatically contrast-corrected.
+Precision Light, Precision Dark, Slate and the two high-contrast presets have hand-tuned palettes. The other eight (Graphite, Midnight, Ocean, Forest, Violet, Warm Sand, Rose and Solar) are each built by `MakeBrandTheme` from four colours: canvas, surface, text and accent. They are also examples of what a host can do with the same function; see [Make your own look](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/architecture/make-your-own-look.md).
+
+`SetAccent` updates accent, focus, contrasting on-accent text and selection. `semantic`, `typography`, `radius`, `stroke`, `elevation` and `opacity` are the source of truth; `colors` and `metrics` are projections that `ResolveTheme` rebuilds, so edits made directly to them are overwritten by the next `ResolveTheme` or `SetDensity`. Edit `motion` or `editor` fields explicitly when needed. Arbitrary edits are not automatically contrast-corrected.
 
 Shipped presets validate normal text at 4.5:1 or better against canvas, surface, input and raised surfaces. Muted text validates at 3:1 or better. Accent and destructive foreground pairs validate at 4.5:1 or better.
 

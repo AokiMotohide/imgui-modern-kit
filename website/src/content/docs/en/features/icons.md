@@ -8,9 +8,9 @@ Use the bundled icon catalog for common tool actions while keeping atlas upload 
 
 ## Gallery capture
 
-![Native Gallery capture displaying ImKit's icon atlas and icon buttons.](../../../../assets/captures/gallery-icons-poster.png)
+![Native Gallery capture displaying ImKit's icon atlas and icon buttons.](../../../../assets/captures/v4-icons-poster.png)
 
-Icons — atlas and labeled actions · [Open the native Gallery animation](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/gallery-icons.gif)
+Icons — atlas and labeled actions · [Open the native Gallery animation](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-icons.gif)
 
 ## Minimum drawing example
 
@@ -42,12 +42,9 @@ Icons do not add a renderer, image decoder, file lookup or operating-system acce
 The timeline/3D extension appends 32 IDs, including Empty, Frustum, Camera3D,
 Projector3D, geometric primitives and light types. `cg::ObjectView::icon` lets hosts
 select a semantic glyph without extending ObjectKind. The existing IDs retain their order.
-タイムライン・3D拡張はEmpty、視錐台、3Dカメラ、3Dプロジェクター、基本形状、ライト種別など
-32 IDを末尾に追加する。`ObjectView::icon`でObjectKindを増やさず意味に合う図柄を指定できる。
-既存IDの順序は維持する。
 
-The icon catalog holds 288 entries in 19 categories: 238 ImageGen-generated monochrome
-glyphs plus 50 code-authored native control and drawing representations that need no source bitmaps.
+The icon catalog holds 321 entries in 21 categories: 238 ImageGen-generated monochrome
+glyphs plus 82 code-authored native control and drawing representations (including the 32 LED and live-surface icons added in 4.0) that need no source bitmaps.
 The artwork is distributed with this repository under its MIT license. The original
 generations and their prompts are retained in `assets/icons/originals` and
 `assets/icons/prompts`; `provenance.json` records source hashes. Original images use
@@ -95,7 +92,7 @@ The existing `IconButton(id, ImGuiDir, accessibleLabel)` overload is unchanged.
 ## API behavior
 
 - `GetIconCatalog()` returns stable IDs, English names and categories; `GetIconInfo`
-  returns null for invalid IDs. The 288 entries follow `assets/icons/catalog.json`.
+  returns null for invalid IDs. The 321 entries follow `assets/icons/catalog.json`.
 - `GetIconAtlasPixels` accepts exactly 12, 16, 20, 24, 32, 48 or 64. The returned CPU data
   is immutable with process lifetime; unsupported sizes return an empty view.
 - `GetIconRegion` returns the corresponding normalized UV rectangle. Two transparent
@@ -141,31 +138,20 @@ categories and asset counts, and the C++ UV calculations use the generated layou
 The generator checks the complete public enum against the catalog and validates
 original hashes, every derived image and every atlas region.
 
-atlasの行数はcatalog件数から算出します。`metadata.json`に寸法・カテゴリ数・資産数を記録し、
-C++のUV計算も生成した配置を使用します。`stable-ids.json`は既存120個の順序を固定し、
-新規IDは末尾へ追加します。生成処理は公開enumとcatalogの一致、原画hash、全派生画像、
-全atlas領域を検査します。原画や派生物の追加なしに件数だけを増やすことはできません。
 
 ## Native Gallery
 
 The Icons page provides category/name search, seven sizes, tint and interaction states.
-The final catalog has 288 icons (120 stable existing IDs + 168 additions): 238
-ImageGen originals plus 50 native representations, 2016 size variants and seven
+The final catalog has 321 icons (120 stable existing IDs + 200 additions): 238
+ImageGen originals plus 82 native representations, 2240 size variants and seven
 atlases. The operation map records 250 uses, including 55
 native control/drawing representations that do not need separate bitmaps.
 
-Iconsページでカテゴリ・名前、7サイズ、tintと操作状態を確認できます。カタログは288件
-（既存120 ID保持＋追加168。原画238＋ネイティブ表現50）、サイズ別PNGは2016枚、
-atlasは7枚です。250用途の対応表には、
-bitmapを必要としないnative操作・描画55用途も記録しています。
 
 Additional 3D symbols are available through `ObjectView::icon` and the searchable catalog.
 Current checks are recorded in [timeline editing](../timeline/). Generation
 validates every original/hash/size/atlas. The image below and
 [Editor 1.0 acceptance](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/archive/editor-validation.md) are the previous baseline.
 
-追加3Dアイコンは`ObjectView::icon`と検索可能なカタログから利用できる。今回の検証結果は
-[タイムライン編集](../../../features/timeline/)を参照してください。生成処理は全原画hash・サイズ・
-atlasを検査する。下の画像とEditor 1.0の検証記録は従来版の記録です。
 
 ![Editor icons at 150%](/imgui-modern-kit/docs-images/editor-icons-1.0.png)

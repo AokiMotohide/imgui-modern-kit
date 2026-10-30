@@ -1,4 +1,5 @@
 #include <imkit/shell.h>
+#include <imkit/widgets.h>
 
 #include <algorithm>
 #include <cctype>
@@ -27,7 +28,7 @@ bool Contains(const char* text,const char* query) {
 }
 
 void DrawStatus(const char* status,FeedbackKind kind,const Theme* theme) {
-    if(status&&*status)StatusBadge(status,ToStatusKind(kind),theme);
+    if(status&&*status)StatusBadge(status,ToStatusKind(kind),ComponentOptions{theme});
 }
 
 float FiniteOr(float value,float fallback) {
@@ -63,7 +64,7 @@ StableId AppBar(const char* id,const AppBarView& view,ToolbarState& state,Compon
     if(ImGui::BeginChild("app-bar",{0,height},ImGuiChildFlags_None,ImGuiWindowFlags_NoScrollbar)) {
         if(view.product&&*view.product)ImGui::TextUnformatted(view.product);
         if(view.document&&*view.document){ImGui::SameLine();ImGui::TextDisabled("/");ImGui::SameLine();ImGui::TextUnformatted(view.document);}
-        if(view.dirty){ImGui::SameLine();StatusBadge("Modified",StatusKind::Warning,options.theme);}
+        if(view.dirty){ImGui::SameLine();StatusBadge("Modified",StatusKind::Warning,ComponentOptions{options.theme});}
         if(view.context&&*view.context){ImGui::SameLine();ImGui::TextDisabled("%s",view.context);}
         if(view.status&&*view.status){ImGui::SameLine();DrawStatus(view.status,view.statusKind,options.theme);}
         if(!view.actions.empty()){
@@ -204,7 +205,7 @@ bool ThemePicker(const char* id,ThemePreset* selected,ThemePickerState& state,Co
     const char* preview=current<presets.size()?presets[current].displayName.data():"";
     bool changed=false;
     ImGui::PushID(id);
-    if(ImGui::BeginCombo("Theme",preview)){
+    if(imkit::BeginCombo("Theme",preview)){
         ImGui::InputTextWithHint("##search",options.locale?options.locale->Text("search","Search..."):"Search...",state.search,sizeof(state.search));
         for(std::size_t i=0;i<presets.size();++i){
             if(!Contains(presets[i].displayName.data(),state.search)&&!Contains(presets[i].id.data(),state.search))continue;
@@ -216,7 +217,7 @@ bool ThemePicker(const char* id,ThemePreset* selected,ThemePickerState& state,Co
             if(active)ImGui::SetItemDefaultFocus();
             ImGui::PopID();
         }
-        ImGui::EndCombo();
+        imkit::EndCombo();
     }
     ImGui::PopID();
     return changed;

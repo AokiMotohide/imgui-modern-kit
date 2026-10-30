@@ -1,0 +1,8 @@
+# Blueprint: a dark drafting-table blue, square corners and a fine light outline.
+brand.canvas = #0d2438
+brand.surface = #123453
+brand.text = #e8f3ff
+brand.accent = #6cc4ff
+brand.border = #6cc4ff
+corner = sharp
+stroke.border = 2

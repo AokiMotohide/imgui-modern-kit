@@ -44,6 +44,7 @@ Documentation is organized into five structured categories based on development 
 | [Architecture](../architecture/architecture.md) / [JA](../architecture/アーキテクチャ.md) | Layer structure, module dependencies, and state boundaries | Overall design |
 | [Design System](../architecture/design-system.md) / [JA](../architecture/デザインシステム.md) | Color, spacing, typography tokens, and accessibility | `imkit/theme.h` |
 | [Themes](../architecture/themes.md) / [JA](../architecture/テーマ.md) | 13 preset themes, ThemeScope, and custom palette | `imkit/theme.h` |
+| [Make your own look](../architecture/make-your-own-look.md) / [JA](../architecture/世界観を作る.md) | Brand palette, theme file, outline, shadow, text roles, skins and backdrops | `imkit/theme.h`, `imkit/skin.h`, `imkit/decor.h` |
 | [Icons](../architecture/icons.md) / [JA](../architecture/アイコン.md) | Procedural icons, atlas management, and HiDPI drawing | `imkit/icons.h` |
 | [Dependencies](../architecture/dependencies.md) / [JA](../architecture/依存関係.md) | Pinned Dear ImGui docking revision and CMake options | `CMakeLists.txt` |
 
@@ -57,6 +58,9 @@ Documentation is organized into five structured categories based on development 
 | [Editor Suite](../components/editor-suite.md) / [JA](../components/エディタスイート.md) | 3D viewports, transform gizmos, outliners, and UV editor | `imkit/cg.h`, `imkit/preview.h` |
 | [Workflow Components](../components/workflow-components.md) / [JA](../components/ワークフローコンポーネント.md) | Wizards, breadcrumbs, inspector cards, and side panels | `imkit/workflow.h` |
 | [Toasts](../components/toasts.md) / [JA](../components/トースト.md) | Colored notification cards, positions, actions, timing and progress | `imkit/toast.h` |
+| [Charts](../components/charts.md) / [JA](../components/チャート.md) | Donut, bar, gauge and sparkline charts with a colour-blind-safe palette | `imkit/charts.h` |
+| [PTZ and range slider](../components/ptz.md) / [JA](../components/PTZ操作と範囲スライダー.md) | PTZ camera control, two-handle range slider, fill sliders and chevron combos | `imkit/ptz.h`, `imkit/range_slider.h` |
+| [Show module](../components/show.md) / [JA](../components/ショーモジュール.md) | Live, rule, schedule, beat, script, control-surface, picture-button and LED components for media servers and show control | `imkit/show.h` |
 | [Shell Components](../components/shell-components.md) / [JA](../components/シェルコンポーネント.md) | App bars, workspace headers, action bars, and drawers | `imkit/shell.h` |
 | [Window Frame](../components/gallery-window-frame.md) / [JA](../components/ウィンドウフレーム.md) | Custom title bars, snap layouts, and OS window adapters | `imkit/window_frame.h` |
 
@@ -69,6 +73,8 @@ Documentation is organized into five structured categories based on development 
 | [Widget Inventory](widget-inventory.md) / [JA](ウィジェット一覧.md) | Component inventory and design audit decision logs | All modules |
 | [Documentation Catalog](documentation-catalog.md) / [JA](文書カタログ.md) | This document (comprehensive documentation index) | - |
 | [Validation](validation.md) / [JA](検証記録.md) | Platform, CI, and GPU smoke test verification records | Test suite |
+| [4.0 additions](v4.0-api.md) / [JA](4.0追加API.md) | Brand themes, skins, charts, PTZ, range sliders and the show module | `imkit/theme.h`, `imkit/charts.h` |
+| [Migration to 4.0](migration-v4.md) / [JA](v4移行ガイド.md) | Rebuild, changed default tokens and deprecated spellings | - |
 | [Migration v3](migration-v3.md) / [JA](v3移行ガイド.md) | Step-by-step upgrade guide from v2 | - |
 | [Troubleshooting](troubleshooting.md) / [JA](トラブルシューティング.md) | Solutions for common build issues and rendering anomalies | - |
 

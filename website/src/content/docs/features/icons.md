@@ -8,9 +8,9 @@ title: "アイコン"
 
 ## Galleryの画面
 
-![ImKitのicon atlasとicon buttonを表示するGallery画面。](../../../assets/captures/gallery-icons-poster.png)
+![ImKitのicon atlasとicon buttonを表示するGallery画面。](../../../assets/captures/v4-icons-poster.png)
 
-Icons — atlasとlabel付き操作 · [Galleryの操作映像を開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/gallery-icons.gif)
+Icons — atlasとlabel付き操作 · [Galleryの操作映像を開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-icons.gif)
 
 ## 最小描画例
 
@@ -94,7 +94,7 @@ if (imkit::IconActionButton("設定を開く", icons, imkit::IconId::Settings)) 
 
 ## Gallery での動作確認
 
-Gallery アプリの **Icons** 画面（ページID: 6）では、全288種類のアイコンカタログをリアルタイム検索し、異なるサイズやテーマでの外観を確認できます。
+Gallery アプリの **Icons** 画面（ページID: 6）では、全321種類のアイコンカタログをリアルタイム検索し、異なるサイズやテーマでの外観を確認できます。
 実装コードは [`examples/gallery/gallery.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/gallery.cpp) を参照してください。
 
 ライセンス条件やアセットの出典情報については [THIRD_PARTY_NOTICES.md](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/THIRD_PARTY_NOTICES.md) をご覧ください。

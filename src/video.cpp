@@ -1,4 +1,7 @@
+#include "draw_internal.h"
 #include <imkit/video.h>
+#include <imkit/components.h>
+#include <imkit/widgets.h>
 #include "transaction_support.h"
 #include <algorithm>
 #include <cmath>
@@ -337,6 +340,14 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             for (int i=0;i<7;++i) if (toolVisible(i)) {s.tool=static_cast<Tool>(i);break;}
     }
     bool firstTool=true;
+    auto *toolDraw=ImGui::GetWindowDrawList();
+    const ImVec2 toolGroupStart=ImGui::GetCursorScreenPos();
+    ImVec2 toolGroupEnd=toolGroupStart;
+    // Tools share one tonal container (background channel) with a raised thumb on the active tool.
+    toolDraw->ChannelsSplit(2);
+    toolDraw->ChannelsSetCurrent(1);
+    ImGui::PushStyleColor(ImGuiCol_Button,ImVec4(0,0,0,0));
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize,0.f);
     for (int i = 0; i < 7; ++i) {
         if (!toolVisible(i)) continue;
         if (!firstTool)
@@ -346,13 +357,13 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             const IconId glyphs[]={IconId::SelectPointer,IconId::Razor,IconId::RippleEdit,IconId::RollingEdit,IconId::SlipEdit,IconId::SlideEdit,IconId::HandPan};
             const auto &tips=s.labels.tooltips;
             const bool active=static_cast<int>(s.tool)==i;
-            if (active) ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+            if (active) ImGui::PushStyleColor(ImGuiCol_Button,theme.colors.raised);
             if (IconButton(tools[i],*s.icons,glyphs[i],tips[i])) s.tool=static_cast<Tool>(i);
             if (active) {
                 const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
-                ImGui::GetWindowDrawList()->AddLine({a.x+4,b.y-2},{b.x-4,b.y-2},ImGui::GetColorU32(theme.colors.text),2);
+                ImGui::GetWindowDrawList()->AddRect(a,b,ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.text,.12f)),ImGui::GetStyle().FrameRounding);
+                ImGui::PopStyleColor();
             }
-            if (active) ImGui::PopStyleColor();
         } else if (ImGui::Selectable(tools[i], static_cast<int>(s.tool) == i, 0, {56, 24}))
             s.tool = static_cast<Tool>(i);
         if (ImGui::IsItemHovered() || ImGui::IsItemFocused()) {
@@ -367,31 +378,39 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             }
         }
     }
+    toolGroupEnd=ImGui::GetItemRectMax();
+    ImGui::PopStyleVar();
+    ImGui::PopStyleColor();
+    toolDraw->ChannelsSetCurrent(0);
+    if (!firstTool)
+        toolDraw->AddRectFilled({toolGroupStart.x-3,toolGroupStart.y-3},{toolGroupEnd.x+3,toolGroupEnd.y+3},
+                                ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.text,.07f)),ImGui::GetStyle().FrameRounding+3);
+    toolDraw->ChannelsMerge();
     if (!firstTool) ImGui::SameLine();
-    ImGui::Checkbox(s.labels.snap, &s.snapping);
+    imkit::Toggle(s.labels.snap, &s.snapping, {&theme});
     ImGui::SameLine();
     if (s.icons) {
         const bool active=s.magnet;
-        if (active) ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+        if (active) ImGui::PushStyleColor(ImGuiCol_Button, ::imkit::detail::WithAlpha(theme.colors.accent,.28f));
         if (IconButton("magnet", *s.icons, IconId::Magnet, s.labels.magnetTooltip)) s.magnet=!s.magnet;
         if (active) ImGui::PopStyleColor();
-    } else ImGui::Checkbox(s.labels.magnet, &s.magnet);
+    } else imkit::Checkbox(s.labels.magnet, &s.magnet);
     ImGui::SameLine();
     if (ImGui::Button(s.labels.options)) ImGui::OpenPopup("snap-options");
     if (ImGui::BeginPopup("snap-options")) {
-        ImGui::Checkbox("Stereo waveforms",&s.waveformOptions.stereo);
-        ImGui::SliderFloat("Waveform display gain",&s.waveformOptions.gain,.25f,4.f);
+        imkit::Checkbox("Stereo waveforms",&s.waveformOptions.stereo);
+        imkit::SliderFloat("Waveform display gain",&s.waveformOptions.gain,.25f,4.f);
         int follow=static_cast<int>(s.autoScroll);
-        if (ImGui::Combo(s.labels.follow,&follow,s.labels.followModes.data(),static_cast<int>(s.labels.followModes.size())))
+        if (imkit::Combo(s.labels.follow,&follow,s.labels.followModes.data(),static_cast<int>(s.labels.followModes.size())))
             s.autoScroll=static_cast<editor::AutoScroll>(follow);
         if(s.icons) {Icon(*s.icons,IconId::SnapToFrame,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
-        ImGui::Checkbox(s.labels.frameGrid, &s.snapToFrame);
+        imkit::Checkbox(s.labels.frameGrid, &s.snapToFrame);
         const auto &names=s.labels.snapKinds;
         for (unsigned i=1;i<7;++i) {
             constexpr IconId glyphs[]{IconId::SnapToFrame,IconId::Timecode,IconId::Marker,IconId::SnapToClipEdge,IconId::Keyframe,IconId::WorkRange,IconId::SnapToSelection};
             if(s.icons) {Icon(*s.icons,glyphs[i],{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
             bool enabled=(s.snapKinds & (1u<<i))!=0;
-            if (ImGui::Checkbox(names[i],&enabled)) s.snapKinds ^= 1u<<i;
+            if (imkit::Checkbox(names[i],&enabled)) s.snapKinds ^= 1u<<i;
         }
         ImGui::EndPopup();
     }
@@ -465,10 +484,14 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         }
         if(ImGui::IsItemHovered()) ImGui::SetTooltip("Drag: navigate / Ctrl+wheel: zoom");
         auto *d=ImGui::GetWindowDrawList();const auto lo=ImGui::GetItemRectMin(),hi=ImGui::GetItemRectMax();
-        d->AddRectFilled(lo,hi,ImGui::GetColorU32(theme.colors.input),3);
+        const float stripRound=(hi.y-lo.y)*.5f;
+        d->AddRectFilled(lo,hi,ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.text,.07f)),stripRound);
         const float left=lo.x+float(std::clamp((s.canvas.origin.x-first)/length,0.,1.)*width);
-        const float right=lo.x+float(std::clamp((s.canvas.origin.x+width/s.canvas.scale.x-first)/length,0.,1.)*width);
-        d->AddRectFilled({left,lo.y+2},{std::max(left+3,right),hi.y-2},ImGui::GetColorU32(theme.colors.selection),2);
+        const float right=std::max(left+8,lo.x+float(std::clamp((s.canvas.origin.x+width/s.canvas.scale.x-first)/length,0.,1.)*width));
+        d->AddRectFilled({left,lo.y+1},{right,hi.y-1},ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.accent,.30f)),stripRound-1);
+        d->AddRect({left,lo.y+1},{right,hi.y-1},ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.accent,.75f)),stripRound-1);
+        for (const float grip:{left+4.f,right-4.f})
+            d->AddLine({grip,lo.y+4},{grip,hi.y-4},ImGui::GetColorU32(theme.colors.accent),1.5f);
     }
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + s.headerWidth);
     s.time.icons=s.icons;
@@ -612,10 +635,24 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
            io.MousePos.y>=y && io.MousePos.y<y+rowHeight) s.hoveredTrack=track.id;
         draw->AddRectFilled({view.min.x, y}, {view.max.x, y + rowHeight - 2},
                             ImGui::GetColorU32(theme.editor.trackHeader));
+        // The header cell is a slightly stronger tone with a hairline on its right edge.
+        draw->AddRectFilled({view.min.x, y}, {view.min.x + s.headerWidth, y + rowHeight - 2},
+                            ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.text,.045f)),theme.radius.control,ImDrawFlags_RoundCornersLeft);
+        draw->AddLine({view.min.x + s.headerWidth, y + 2}, {view.min.x + s.headerWidth, y + rowHeight - 4},
+                      ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.text,.10f)));
         ImGui::SetCursorScreenPos({view.min.x + 4, y + 3});
         ImGui::PushID(reinterpret_cast<void *>(static_cast<std::uintptr_t>(track.id)));
-        if (ImGui::SmallButton(track.expanded ? "v" : ">"))
+        // Compact hit area: the old text button grew with FramePadding and pushed the track name rightwards.
+        const ImVec2 chevronSize{ImGui::GetFontSize()*1.2f,ImGui::GetFontSize()};
+        if (ImGui::InvisibleButton("expand",chevronSize))
             Toggle(out,track,p.revision,static_cast<int>(TrackControl::Expanded),track.expanded);
+        {
+            const auto ca=ImGui::GetItemRectMin(),cb=ImGui::GetItemRectMax();
+            if (ImGui::IsItemHovered())
+                draw->AddRectFilled(ca,cb,ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.text,.08f)),4);
+            ::imkit::detail::DrawChevron(draw,{(ca.x+cb.x)*.5f,(ca.y+cb.y)*.5f},ImGui::GetFontSize()*.55f,
+                                         ImGui::GetColorU32(theme.colors.muted),track.expanded?ImGuiDir_Down:ImGuiDir_Right,1.5f);
+        }
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s",track.expanded ? s.trackLabels.collapse : s.trackLabels.expand);
         ImGui::SameLine(0,4);
         if (s.icons) {
@@ -677,7 +714,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             float height=s.heightDrag.active && s.heightDrag.draft.target==track.id ?
                          static_cast<float>(s.heightDrag.draft.proposed.x) : track.height;
             if(s.icons) {Icon(*s.icons,IconId::TrackHeight,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
-            bool edited=ImGui::SliderFloat(s.trackLabels.height,&height,64,240,"%.0f px");
+            bool edited=imkit::SliderFloat(s.trackLabels.height,&height,64,240,"%.0f px");
             if (ImGui::IsItemActivated())
                 s.heightDrag.Begin(track.id,p.revision,editor::EditKind::TrackHeight,
                                    {0,0,0,0,track.height},editor::CurrentModifiers(),out);
@@ -702,7 +739,10 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         for (int f=0;f<7;++f) controlsWidth+=(s.icons && controlIcons[f]!=IconId::Count ? controlIconSize :
             ImGui::CalcTextSize(labels[f]).x)+2*ImGui::GetStyle().FramePadding.x;
         if (controlsWidth>s.headerWidth-8) {
-            if (ImGui::SmallButton(s.trackLabels.controls)) ImGui::OpenPopup("track controls");
+            ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding,ImGui::GetFontSize()*.7f);
+            const bool controlsClicked=ImGui::SmallButton(s.trackLabels.controls);
+            ImGui::PopStyleVar();
+            if (controlsClicked) ImGui::OpenPopup("track controls");
             if (ImGui::BeginPopup("track controls")) {
                 for (int f=0;f<7;++f) {
                     ImGui::PushID(f);
@@ -719,18 +759,14 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         } else for (int f = 0; f < 7; ++f) {
             if (f)
                 ImGui::SameLine(0, 2);
-            if (values[f]) ImGui::PushStyleColor(ImGuiCol_Button,theme.colors.accent);
+            if (values[f]) ImGui::PushStyleColor(ImGuiCol_Button,::imkit::detail::WithAlpha(theme.colors.accent,.30f));
             ImGui::PushID(f);
             const bool pressed=s.icons && controlIcons[f]!=IconId::Count ?
                 IconButton("control",*s.icons,controlIcons[f],tooltips[f],{controlIconSize}) :
                 s.icons ? ImGui::Button(labels[f],{0,controlIconSize+2*ImGui::GetStyle().FramePadding.y}) : ImGui::SmallButton(labels[f]);
             if (pressed) Toggle(out,track,p.revision,f,values[f]);
             ImGui::PopID();
-            if (values[f]) {
-                auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
-                draw->AddLine({a.x+2,b.y-1},{b.x-2,b.y-1},ImGui::GetColorU32(theme.colors.text),2);
-                ImGui::PopStyleColor();
-            }
+            if (values[f]) ImGui::PopStyleColor();
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s: %s",tooltips[f],values[f] ? s.trackLabels.on : s.trackLabels.off);
         }
         }
@@ -765,25 +801,36 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                          : track.kind == TrackKind::Adjustment ? theme.editor.adjustmentClip
                          : track.kind == TrackKind::Group ? theme.editor.groupClip
                                                             : theme.editor.videoClip;
-            color.w *= selected ? .9f : bodyHovered ? .62f : .38f;
-            draw->AddRectFilled(a, b, ImGui::GetColorU32(color), 4);
+            const float fillAlpha = selected ? .92f : bodyHovered ? .72f : .56f;
+            const ImVec4 composite = ::imkit::detail::MixColor(theme.editor.trackHeader, color, fillAlpha * color.w);
+            color.w *= fillAlpha;
+            // Text colour follows the clip's actual tone so selected (saturated) clips stay readable.
+            const ImVec4 white{1,1,1,1}, black{0,0,0,1};
+            const ImVec4 ink = ContrastRatio(theme.colors.text, composite) >= 4.5f ? theme.colors.text
+                             : ContrastRatio(white, composite) >= ContrastRatio(black, composite) ? white : black;
+            const ImU32 inkColor = ImGui::GetColorU32(ink);
+            const float clipRadius = std::min(std::max(6.f, theme.radius.subtle), theme.radius.control);
+            if (selected)
+                draw->AddRect({a.x-2,a.y-2}, {b.x+2,b.y+2}, ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.focus,.30f)),
+                              clipRadius + 2, ImDrawFlags_None, 3.f);
+            draw->AddRectFilled(a, b, ImGui::GetColorU32(color), clipRadius);
             if (p.drawClipOverlay) p.drawClipOverlay(p.user,clip.id,value,a,b);
+            const bool outlined=::imkit::detail::IsOutlined(ImGui::GetStyle());
             draw->AddRect(a, b,
-                          ImGui::GetColorU32(selected ? theme.colors.focus
-                                                     : theme.colors.border),
-                          4, ImDrawFlags_None, selected ? 2.f : 1.f);
+                          selected ? ImGui::GetColorU32(theme.colors.focus)
+                                   : outlined ? ImGui::GetColorU32(ImGuiCol_Border) : ImGui::GetColorU32(ImVec4(0,0,0,.20f)),
+                          clipRadius, ImDrawFlags_None,
+                          selected ? std::max(2.f, ::imkit::detail::FrameLineWidth(1.f)) : ::imkit::detail::FrameLineWidth(1.f));
             const float edgeHit=std::min(10.f,std::max(6.f,(b.x-a.x)*.22f));
             const bool leftEdge=bodyHovered && io.MousePos.x-a.x<=edgeHit;
             const bool rightEdge=bodyHovered && b.x-io.MousePos.x<=edgeHit;
             if (s.tool==Tool::Select && (selected || leftEdge || rightEdge)) {
-                const auto handleColor=ImGui::GetColorU32((leftEdge||rightEdge) ? theme.colors.accent : theme.colors.text);
+                const auto handleColor=ImGui::GetColorU32((leftEdge||rightEdge) ? theme.colors.accent : ::imkit::detail::WithAlpha(ink,.65f));
                 const float gripTop=a.y+std::max(4.f,(b.y-a.y-18.f)*.5f);
                 const float gripBottom=std::min(b.y-4.f,gripTop+18.f);
-                for(const float edge:{a.x+3.f,b.x-3.f}) {
-                    draw->AddLine({edge,gripTop},{edge,gripBottom},handleColor,2.f);
-                    draw->AddLine({edge+(edge<a.x+(b.x-a.x)*.5f?3.f:-3.f),gripTop},
-                                  {edge+(edge<a.x+(b.x-a.x)*.5f?3.f:-3.f),gripBottom},handleColor,1.f);
-                }
+                // One rounded bar per edge: reads as a handle rather than a pair of hairlines.
+                draw->AddRectFilled({a.x+3.f,gripTop},{a.x+6.f,gripBottom},handleColor,1.5f);
+                draw->AddRectFilled({b.x-6.f,gripTop},{b.x-3.f,gripBottom},handleColor,1.5f);
             }
             const bool editBand=clip.transitionIn || clip.transitionOut || p.editing.fades || p.editing.cut;
             const float nameY=y+4+(editBand ? ImGui::GetFontSize()+3.f : 3.f);
@@ -812,7 +859,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     if (nameLeft+iconSize+12>nameRight || !s.icons->textures[level].GetTexID()) return;
                     const auto region=GetIconRegion(id,IconPixelSizes[level]);
                     draw->AddImage(s.icons->textures[level],{nameLeft,nameY},{nameLeft+iconSize,nameY+iconSize},
-                        region.uv0,region.uv1,ImGui::GetColorU32(theme.colors.text));
+                        region.uv0,region.uv1,inkColor);
                     nameLeft+=iconSize+3;
                 };
                 if (clip.linked) badge(IconId::Link);
@@ -835,8 +882,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                     if (accept) {s.captionDrag.draft.proposedText=update.proposedText;s.captionDrag.Commit(p.revision,out);}
                 }
             } else {
-                text({nameLeft,nameY},ImGui::GetColorU32(theme.colors.text),clip.label,nameRight);
-                if (showMetadata) text({metadataRight-metadataWidth,nameY},ImGui::GetColorU32(theme.colors.muted),metadata,metadataRight);
+                text({nameLeft,nameY},inkColor,clip.label,nameRight);
+                if (showMetadata) text({metadataRight-metadataWidth,nameY},ImGui::GetColorU32(::imkit::detail::WithAlpha(ink,.70f)),metadata,metadataRight);
             }
             if (clip.missing || clip.offline)
                 draw->AddLine(a, b, ImGui::GetColorU32(clip.offline ? theme.editor.error : theme.editor.missing), 2);
@@ -845,7 +892,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             if (clip.proxy)
                 text({end-ImGui::GetFontSize()-8,y+7},ImGui::GetColorU32(theme.editor.proxy),"P",end-8);
             if (clip.linked || clip.group)
-                draw->AddLine({x + 3, b.y - 3}, {end - 3, b.y - 3}, ImGui::GetColorU32(theme.colors.text));
+                draw->AddLine({x + 3, b.y - 3}, {end - 3, b.y - 3}, ImGui::GetColorU32(::imkit::detail::WithAlpha(ink,.55f)));
             const float waveformTop=std::min(b.y-2,a.y+((clip.transitionIn || clip.transitionOut) ? 2.f : 1.f)*ImGui::GetFontSize()+7);
             const float waveformCenter=(waveformTop+b.y)*.5f;
             const float waveformAmplitude=std::max(0.f,(b.y-waveformTop)*.5f);
@@ -1681,7 +1728,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             float x =
                 view.min.x + s.headerWidth +
                 static_cast<float>((editor::Seconds(s.guide.candidate.tick) - s.canvas.origin.x) * s.canvas.scale.x);
-            draw->AddLine({x, view.min.y}, {x, view.max.y}, ImGui::GetColorU32(theme.editor.snapGuide), 2);
+            for (float dashY = view.min.y; dashY < view.max.y; dashY += 9.f)
+                draw->AddLine({x, dashY}, {x, std::min(dashY + 5.f, view.max.y)}, ImGui::GetColorU32(theme.editor.snapGuide), 1.5f);
         }
     }
     if (s.drag.active && !ImGui::IsMouseDown(0))
@@ -1689,7 +1737,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
     float playhead =
         view.min.x + s.headerWidth +
         static_cast<float>((editor::Seconds(s.time.playhead) - s.canvas.origin.x) * s.canvas.scale.x);
-    draw->AddLine({playhead, view.min.y}, {playhead, view.max.y}, ImGui::GetColorU32(theme.colors.accent), 2);
+    draw->AddLine({playhead, view.min.y}, {playhead, view.max.y}, ImGui::GetColorU32(theme.colors.accent), 1.5f);
     if(s.drag.active && ImGui::IsMouseDown(0)) {
         ImGui::BeginTooltip();
         ImGui::Text("%+.3f s / %.3f s",editor::Seconds(s.drag.draft.proposed.first-s.drag.draft.original.first),
@@ -1703,7 +1751,9 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         const float buttonWidth=ImGui::GetFrameHeight();
         const float width=sliderWidth+buttonWidth*3+ImGui::GetStyle().ItemSpacing.x*3+12;
         const ImVec2 panelMin{std::max(view.min.x+s.headerWidth,view.max.x-width-6),view.max.y-height-6};
-        draw->AddRectFilled(panelMin,{view.max.x-6,view.max.y-6},ImGui::GetColorU32(theme.colors.surface),4);
+        ::imkit::detail::DrawSoftShadow(draw,panelMin,{view.max.x-6,view.max.y-6},theme.radius.control+2,6.f,.14f);
+        draw->AddRectFilled(panelMin,{view.max.x-6,view.max.y-6},ImGui::GetColorU32(theme.colors.raised),theme.radius.control+2);
+        draw->AddRect(panelMin,{view.max.x-6,view.max.y-6},ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.text,.10f)),theme.radius.control+2);
         ImGui::SetCursorScreenPos({panelMin.x+6,panelMin.y+4});
         const auto button=[&](const char *widget,IconId icon,const char *tooltip) {
             const bool pressed=s.icons ? IconButton(widget,*s.icons,icon,tooltip,{ImGui::GetFontSize()}) : ImGui::SmallButton(widget);
@@ -1715,7 +1765,7 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
         if(button("-##bottom-zoom",IconId::ZoomOut,s.labels.zoomOut)) zoomAt(s.canvas.scale.x/1.25,(view.max.x-view.min.x-s.headerWidth)*.5);
         ImGui::SameLine();ImGui::SetNextItemWidth(sliderWidth);
         float normalized=maximumZoom>minimumZoom ? static_cast<float>(std::log(s.canvas.scale.x/minimumZoom)/std::log(maximumZoom/minimumZoom)) : 0;
-        if(ImGui::SliderFloat("##timeline-zoom",&normalized,0,1,"",ImGuiSliderFlags_AlwaysClamp))
+        if(imkit::SliderFloat("##timeline-zoom",&normalized,0,1,"",ImGuiSliderFlags_AlwaysClamp))
             zoomAt(minimumZoom*std::pow(maximumZoom/minimumZoom,normalized),(view.max.x-view.min.x-s.headerWidth)*.5);
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s: %.0f px/s",s.labels.zoom,s.canvas.scale.x);
         ImGui::SameLine();
@@ -1759,14 +1809,14 @@ void TransitionPicker(const char *id,const ClipView &clip,std::uint64_t revision
     for (int side=0;side<2;++side) {
         int selected=static_cast<int>(side ? clip.transitionOutKind : clip.transitionInKind);
         bool changed=false;
-        if (ImGui::BeginCombo(side ? options.labels.out : options.labels.in,names[selected])) {
+        if (imkit::BeginCombo(side ? options.labels.out : options.labels.in,names[selected])) {
             const IconId icons[]{IconId::Transition,IconId::Dissolve,side ? IconId::FadeOut : IconId::FadeIn,IconId::Crossfade};
             for (int i=0;i<4;++i) {
                 if (options.icons && i) {Icon(*options.icons,icons[i],{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
                 if (ImGui::Selectable(names[i],selected==i)) {selected=i;changed=true;}
                 if (selected==i) ImGui::SetItemDefaultFocus();
             }
-            ImGui::EndCombo();
+            imkit::EndCombo();
         }
         if (changed) {
             if (events.storage.size()-events.count<2) events.overflow=true;
@@ -1785,18 +1835,18 @@ void MonitorControls(const char *id,MonitorOptions &options,const IconAtlas *ico
     ImGui::PushID(id);
     auto toggle=[&](IconId icon,const char *label,bool &value) {
         if (icons) {Icon(*icons,icon,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
-        ImGui::Checkbox(label,&value);
+        imkit::Checkbox(label,&value);
     };
     toggle(IconId::SafeArea,labels.safeArea,options.safeArea);
     toggle(IconId::Guides,labels.guides,options.guides);
-    ImGui::Checkbox(labels.timecode,&options.showTimecode);
+    imkit::Checkbox(labels.timecode,&options.showTimecode);
     toggle(IconId::TransformBounds,labels.bounds,options.transform);
     bool anchor=options.showAnchor.value_or(options.transform);
     const bool before=anchor;toggle(IconId::AnchorPoint,labels.anchor,anchor);
     if (anchor!=before) options.showAnchor=anchor;
     if (icons) {Icon(*icons,IconId::MetadataOverlay,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
     int preset=static_cast<int>(options.metadataPreset);
-    if (ImGui::Combo(labels.metadata,&preset,labels.presets.data(),3)) options.metadataPreset=static_cast<MonitorMetadataPreset>(preset);
+    if (imkit::Combo(labels.metadata,&preset,labels.presets.data(),3)) options.metadataPreset=static_cast<MonitorMetadataPreset>(preset);
     ImGui::PopID();
 }
 void Monitor(const char *id, ImTextureRef texture, ImVec2 size, const editor::TimeState &time,
@@ -2054,8 +2104,15 @@ void DrawWaveform(const WaveformView &view, editor::Range range, ImVec2 min, ImV
         for (int i=0;i<pixels;++i) {
             const auto v=WaveformPixel(view,{time(i),time(i+1)});
             const float low=std::clamp(v.minimum*gain,-1.f,1.f), high=std::clamp(v.maximum*gain,-1.f,1.f);
-            if (low!=0 || high!=0) d->AddRectFilled({min.x+i,center-high*amplitude},
-                {min.x+i+1, std::max(center-low*amplitude,center-high*amplitude+1)},ImGui::GetColorU32(theme.colors.text));
+            if (low!=0 || high!=0) {
+                const float top=center-high*amplitude, bottom=std::max(center-low*amplitude,top+1);
+                auto envelope=theme.colors.text; envelope.w*=.38f;
+                d->AddRectFilled({min.x+i,top},{min.x+i+1,bottom},ImGui::GetColorU32(envelope));
+                // RMS core: the perceived loudness sits inside the peak envelope.
+                const float core=std::clamp(v.rms*gain,0.f,1.f)*amplitude;
+                if (core>.5f) d->AddRectFilled({min.x+i,std::max(top,center-core)},{min.x+i+1,std::min(bottom,center+core)},
+                                               ImGui::GetColorU32(theme.colors.text));
+            }
         }
     }
     d->PopClipRect();
@@ -2071,17 +2128,38 @@ void LevelMeter(const char *id, const MeterState &left, const MeterState &right,
     auto p = ImGui::GetCursorScreenPos();
     ImGui::InvisibleButton(id, size);
     auto *d = ImGui::GetWindowDrawList();
+    const auto level = [](float value) {
+        return std::clamp((20 * std::log10((std::max)(value, 1e-6f)) + 60) / 60, 0.f, 1.f);
+    };
+    const float gap = std::max(3.f, size.x * .1f), w = std::max(4.f, (size.x - gap) * .5f), round = std::min(w * .4f, 4.f);
+    // Zone boundaries in dB: green up to -18, amber up to -6, red above.
+    const float zoneLow = level(std::pow(10.f, -18.f / 20.f)), zoneHigh = level(std::pow(10.f, -6.f / 20.f));
+    const ImVec4 zones[3] = {t.colors.success, t.colors.warning, t.colors.destructive};
+    const float bounds[4] = {0.f, zoneLow, zoneHigh, 1.f};
     int i = 0;
     for (auto s : {left, right}) {
-        float x = p.x + i++ * size.x * .5f, w = size.x * .45f;
-        auto level = [](float value) {
-            return std::clamp((20 * std::log10((std::max)(value, 1e-6f)) + 60) / 60, 0.f, 1.f);
-        };
-        d->AddRectFilled({x, p.y}, {x + w, p.y + size.y}, ImGui::GetColorU32(t.colors.input));
-        d->AddRectFilled({x, p.y + size.y * (1 - level(s.rms))}, {x + w, p.y + size.y},
-                         ImGui::GetColorU32(s.peak >= 1 ? t.colors.destructive : t.colors.success));
-        float hold = p.y + size.y * (1 - level(s.heldPeak));
-        d->AddLine({x, hold}, {x + w, hold}, ImGui::GetColorU32(t.colors.warning), 2);
+        const float x = p.x + i++ * (w + gap);
+        const float bottom = p.y + size.y, top = p.y;
+        auto at = [&](float fraction) { return bottom - (bottom - top) * fraction; };
+        auto track = t.colors.text; track.w = .09f;
+        d->AddRectFilled({x, top}, {x + w, bottom}, ImGui::GetColorU32(track), round);
+        const float fill = level(s.rms);
+        for (int zone = 0; zone < 3; ++zone) {
+            const float from = bounds[zone], to = std::min(bounds[zone + 1], fill);
+            if (to <= from) continue;
+            const ImDrawFlags corners = (zone == 0 ? ImDrawFlags_RoundCornersBottom : 0) |
+                                        (to >= fill ? ImDrawFlags_RoundCornersTop : 0);
+            d->AddRectFilled({x, at(to)}, {x + w, at(from)}, ImGui::GetColorU32(zones[zone]), corners ? round : 0.f,
+                             corners ? corners : ImDrawFlags_RoundCornersNone);
+        }
+        for (float tick : {zoneLow, zoneHigh}) {
+            auto line = t.colors.canvas; line.w = .8f;
+            d->AddLine({x, at(tick)}, {x + w, at(tick)}, ImGui::GetColorU32(line));
+        }
+        const float hold = at(level(s.heldPeak));
+        d->AddRectFilled({x - 1, hold - 1}, {x + w + 1, hold + 1}, ImGui::GetColorU32(s.peak >= 1 ? t.colors.destructive : t.colors.text), 1.f);
+        if (s.peak >= 1)
+            d->AddRectFilled({x, top}, {x + w, top + 3}, ImGui::GetColorU32(t.colors.destructive), round, ImDrawFlags_RoundCornersTop);
     }
 }
 void AudioStrip(const AudioStripView &v, std::uint64_t revision, editor::PropertyState &s,
@@ -2126,7 +2204,7 @@ void AudioStrip(const AudioStripView &v, std::uint64_t revision, editor::Propert
         bool value=flags[i];
         ImGui::PushID(i);
         if(s.icons) {const IconId icons[]{IconId::Mute,IconId::Solo,IconId::Microphone};Icon(*s.icons,icons[i],{ImGui::GetFontSize()});ImGui::SameLine();}
-        if (ImGui::Checkbox(labels[i],&value))
+        if (imkit::Checkbox(labels[i],&value))
             out.Push({v.id,revision,editor::Phase::Commit,editor::EditKind::Toggle,
                       {0,0,0,0,static_cast<double>(controls[i]),flags[i] ? 1. : 0.},
                       {0,0,0,0,static_cast<double>(controls[i]),value ? 1. : 0.},editor::CurrentModifiers()});
@@ -2176,27 +2254,62 @@ bool BuildScopes(std::span<const Rgba> pixels, int w, int h, ScopeBuffers out) {
 void Histogram(const char *id, std::span<const std::uint32_t> bins, ImVec2 size, const Theme &t) {
     auto p = ImGui::GetCursorScreenPos();
     ImGui::InvisibleButton(id, size);
-    if (bins.empty())
-        return;
-    float maximum = static_cast<float>((std::max)(1u, *std::max_element(bins.begin(), bins.end())));
     auto *d = ImGui::GetWindowDrawList();
-    for (std::size_t i = 0; i < bins.size(); ++i) {
-        float x = p.x + size.x * i / bins.size();
-        d->AddLine({x, p.y + size.y}, {x, p.y + size.y * (1 - bins[i] / maximum)},
-                   ImGui::GetColorU32(t.colors.accent));
+    auto panel = t.colors.text; panel.w = .06f;
+    d->AddRectFilled(p, {p.x + size.x, p.y + size.y}, ImGui::GetColorU32(panel), t.radius.control);
+    if (bins.empty() || size.x < 4 || size.y < 4)
+        return;
+    auto grid = t.colors.text; grid.w = .08f;
+    for (int i = 1; i < 4; ++i) {
+        const float x = p.x + size.x * i / 4;
+        d->AddLine({x, p.y + 2}, {x, p.y + size.y - 2}, ImGui::GetColorU32(grid));
     }
+    if (size.x > 90 && size.y > 36) {
+        // Level marks at the black point, mid grey and white point.
+        auto mark = t.colors.muted; mark.w *= .8f;
+        ImFont *font = ImGui::GetFont();
+        const float small = ImGui::GetFontSize() * .78f;
+        const ImU32 ink = ImGui::GetColorU32(mark);
+        d->AddText(font, small, {p.x + 4, p.y + size.y - small - 2}, ink, "0");
+        d->AddText(font, small, {p.x + size.x * .5f - small * .7f, p.y + size.y - small - 2}, ink, "128");
+        d->AddText(font, small, {p.x + size.x - small * 1.6f - 3, p.y + size.y - small - 2}, ink, "255");
+    }
+    const float maximum = static_cast<float>((std::max)(1u, *std::max_element(bins.begin(), bins.end())));
+    // One sample per two pixels, taking the tallest bin that falls in the column.
+    constexpr int MaxColumns = 512;
+    const int columns = std::clamp(static_cast<int>(size.x * .5f), 2, MaxColumns);
+    std::array<ImVec2, MaxColumns> points{};
+    const float baseline = p.y + size.y - 1;
+    for (int c = 0; c < columns; ++c) {
+        const std::size_t first = bins.size() * c / columns;
+        const std::size_t last = (std::max)(first + 1, bins.size() * (c + 1) / columns);
+        std::uint32_t peak = 0;
+        for (std::size_t i = first; i < last && i < bins.size(); ++i) peak = (std::max)(peak, bins[i]);
+        // Square-root scaling keeps small populations visible next to a dominant bin.
+        const float height = std::sqrt(peak / maximum) * (size.y - 4);
+        points[c] = {p.x + size.x * c / (columns - 1), baseline - height};
+    }
+    auto fill = t.colors.accent; fill.w = .28f;
+    for (int c = 0; c + 1 < columns; ++c)
+        d->AddQuadFilled(points[c], points[c + 1], {points[c + 1].x, baseline}, {points[c].x, baseline}, ImGui::GetColorU32(fill));
+    d->AddPolyline(points.data(), columns, ImGui::GetColorU32(t.colors.accent), ImDrawFlags_None, 1.75f);
 }
 void ScopeImage(const char *id, std::span<const std::uint32_t> bins, int w, int h, ImVec2 size,
                 const Theme &t) {
     ScopeImage(id, bins, w, h, size, t, t.colors.success);
 }
 void ScopeImage(const char *id, std::span<const std::uint32_t> bins, int w, int h, ImVec2 size,
-                const Theme &, ImVec4 tint) {
+                const Theme &t, ImVec4 tint) {
     auto p = ImGui::GetCursorScreenPos();
     ImGui::InvisibleButton(id, size);
+    auto *d = ImGui::GetWindowDrawList();
+    auto panel = t.colors.canvas; panel.w = .7f;
+    d->AddRectFilled(p, {p.x + size.x, p.y + size.y}, ImGui::GetColorU32(panel), t.radius.control);
+    auto graticule = t.colors.text; graticule.w = .10f;
+    for (int i = 1; i < 4; ++i)
+        d->AddLine({p.x, p.y + size.y * i / 4}, {p.x + size.x, p.y + size.y * i / 4}, ImGui::GetColorU32(graticule));
     if (w <= 0 || h <= 0 || bins.size() != static_cast<std::size_t>(w) * h)
         return;
-    auto *d = ImGui::GetWindowDrawList();
     auto max = *std::max_element(bins.begin(), bins.end());
     if (!max)
         return;
@@ -2250,22 +2363,29 @@ bool Wheel(float *rgb, float diameter, ImVec2 &center) {
         }
     }
     auto *draw = ImGui::GetWindowDrawList();
-    for (int ring=0; ring<8; ++ring)
-        for (int sector=0; sector<48; ++sector) {
-            float a = sector * 2*pi/48, b = (sector+1) * 2*pi/48;
-            float inner = radius*ring/8, outer = radius*(ring+1)/8;
-            float hue = (sector+.5f)/48, saturation = (ring+.5f)/8;
-            ImVec4 color;
-            ImGui::ColorConvertHSVtoRGB(hue,saturation,.85f,color.x,color.y,color.z);
-            color.w = 1;
-            auto point = [&](float angle, float r) {
-                return ImVec2{center.x+std::cos(angle)*r, center.y-std::sin(angle)*r};
-            };
-            draw->AddQuadFilled(point(a,inner),point(a,outer),point(b,outer),point(b,inner),
-                                ImGui::GetColorU32(color));
-        }
+    {
+        // Smooth hue/saturation disc from one indexed mesh: no seams between sectors.
+        constexpr int rings = 14, sectors = 90;
+        draw->PrimReserve(rings * sectors * 6, (rings + 1) * (sectors + 1));
+        const ImDrawIdx base = static_cast<ImDrawIdx>(draw->_VtxCurrentIdx);
+        const ImVec2 white = ImGui::GetFontTexUvWhitePixel();
+        for (int ring = 0; ring <= rings; ++ring)
+            for (int sector = 0; sector <= sectors; ++sector) {
+                const float angle = sector * 2 * pi / sectors, r = radius * ring / rings;
+                float cr, cg, cb;
+                ImGui::ColorConvertHSVtoRGB(static_cast<float>(sector % sectors) / sectors, static_cast<float>(ring) / rings, .85f, cr, cg, cb);
+                draw->PrimWriteVtx({center.x + std::cos(angle) * r, center.y - std::sin(angle) * r}, white,
+                                   ImGui::GetColorU32(ImVec4(cr, cg, cb, 1)));
+            }
+        for (int ring = 0; ring < rings; ++ring)
+            for (int sector = 0; sector < sectors; ++sector) {
+                const ImDrawIdx a = base + static_cast<ImDrawIdx>(ring * (sectors + 1) + sector), b = a + 1,
+                                c = a + static_cast<ImDrawIdx>(sectors + 1), e = c + 1;
+                for (ImDrawIdx index : {a, b, e, a, e, c}) draw->PrimWriteIdx(index);
+            }
+    }
     const auto border = ImGui::GetColorU32(ImGuiCol_Border);
-    draw->AddCircle(center,radius,border,64,1.5f);
+    draw->AddCircle(center,radius,border,64,1.f);
     draw->AddLine({center.x-4,center.y},{center.x+4,center.y},border);
     draw->AddLine({center.x,center.y-4},{center.x,center.y+4},border);
     float length = std::hypot(x,y);
@@ -2301,7 +2421,7 @@ bool ColorPanel(const char *id, ColorValues &draft, const ColorValues &original,
             if (state) { state->wheelCenters[i]=center; state->wheelRadius=diameter*.5f-4; }
             ImGui::SetNextItemWidth(diameter);
             float mean = (rgb[i][0]+rgb[i][1]+rgb[i][2])/3, before = mean;
-            edited = ImGui::SliderFloat(labels.level,&mean,i==0 ? -1.f : .01f,i==0 ? 1.f : 4.f);
+            edited = imkit::SliderFloat(labels.level,&mean,i==0 ? -1.f : .01f,i==0 ? 1.f : 4.f);
             if (edited) for (int c=0;c<3;++c) rgb[i][c] += mean-before;
             ColorEvent(targets[i],ColorValue(source[i]),ColorValue(rgb[i]),edited,revision,state,events);
             changed |= edited;
@@ -2317,7 +2437,7 @@ bool ColorPanel(const char *id, ColorValues &draft, const ColorValues &original,
     for (int i=0; i<3; ++i) {
         ImGui::PushID(i+3);
         ImGui::BeginDisabled(state && !scalarIds[i]);
-        bool edited = ImGui::SliderFloat(scalarNames[i],scalars[i],i==2 ? -10.f : -1.f,i==2 ? 10.f : 1.f);
+        bool edited = imkit::SliderFloat(scalarNames[i],scalars[i],i==2 ? -10.f : -1.f,i==2 ? 10.f : 1.f);
         ColorEvent(scalarIds[i],{0,0,0,0,values[i]},{0,0,0,0,*scalars[i]},edited,revision,state,events);
         changed |= edited;
         ImGui::EndDisabled();

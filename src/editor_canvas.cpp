@@ -212,7 +212,16 @@ void ResizableTileStrip(const char* id,std::span<const PreviewTileView> tiles,st
                 if((plus||minus)&&!disabled){first->extent=std::clamp(first->extent+(plus?1:-1)*ImGui::GetFontSize(),minimum,total-minimum);changed=true;}
             }
             auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
-            ImGui::GetWindowDrawList()->AddRectFilled(a,b,ImGui::GetColorU32(ImGui::IsItemHovered()||ImGui::IsItemFocused()?ImGuiCol_CheckMark:ImGuiCol_Border));
+            {
+                // A slim centred grip instead of a solid bar: the hit area stays the same, the divider just stops shouting.
+                const bool hot=ImGui::IsItemHovered()||ImGui::IsItemFocused()||ImGui::IsItemActive();
+                const float length=std::min(horizontal?b.y-a.y:b.x-a.x,ImGui::GetFontSize()*3.f);
+                const ImVec2 mid{(a.x+b.x)*.5f,(a.y+b.y)*.5f};
+                const ImVec2 half=horizontal?ImVec2(1.5f,length*.5f):ImVec2(length*.5f,1.5f);
+                ImVec4 color=ImGui::GetStyleColorVec4(hot?ImGuiCol_CheckMark:ImGuiCol_Text);
+                if(!hot) color.w=.28f;
+                ImGui::GetWindowDrawList()->AddRectFilled({mid.x-half.x,mid.y-half.y},{mid.x+half.x,mid.y+half.y},ImGui::GetColorU32(color),1.5f);
+            }
             if(ImGui::IsItemActivated() && !state.resizing) {
                 if(events.Push({TileAction::ResizeBegin,tiles[i].id,0,before,second->extent})) {state.resizing=tiles[i].id;state.neighbor=tiles[i+1].id;state.originalFirst=before;state.originalSecond=second->extent;}
             }

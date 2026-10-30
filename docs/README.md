@@ -1,6 +1,7 @@
 # ImKit documentation
 
 
+[4.0 additions: brand themes, charts, PTZ, range sliders and the show module](reference/v4.0-api.md) · [Migrating to 4.0](reference/migration-v4.md)
 [3.3 additions: progress tracks, stages and task cards](reference/v3.3-api.md)
 [日本語](目次.md) · [Project overview](../README.md)
 
@@ -67,6 +68,7 @@ flowchart TD
 - [Architecture](architecture/architecture.md) — Authoritative ownership model, module split, and host boundary.
 - [Design system](architecture/design-system.md) — Semantic design tokens, typography, and contrast invariants.
 - [Themes](architecture/themes.md) — 13 built-in presets, palette customization, and `ThemeScope`.
+- [Make your own look](architecture/make-your-own-look.md) — From four brand colours to a theme file, outlines, shadows and custom skins.
 - [Icons](architecture/icons.md) — Procedural outline icons, multi-size atlases, and GPU upload.
 - [Dependencies](architecture/dependencies.md) — Pinned Dear ImGui docking commit, compiler flags, and options.
 
@@ -85,6 +87,7 @@ flowchart TD
 - [Widget inventory](reference/widget-inventory.md) — Complete widget list and audit rationale.
 - [Documentation catalog](reference/documentation-catalog.md) — Complete page index, audience, and source mapping.
 - [Validation](reference/validation.md) — Automated gate and acceptance evidence.
+- [Migration to 4.0](reference/migration-v4.md) — Upgrading from 3.x: rebuild, changed defaults and deprecated spellings.
 - [Migration v3](reference/migration-v3.md) — Upgrading from ImKit v2 to v3.
 - [Troubleshooting](reference/troubleshooting.md) — Solutions to common integration and build issues.
 

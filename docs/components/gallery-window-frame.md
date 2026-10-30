@@ -69,7 +69,7 @@ if (result.action == imkit::WindowFrameAction::Close) {
 
 ## Windows Gallery Frame Lab
 
-Build and start the Windows Gallery, then choose **Frame Lab** to test live window frame features:
+Build and start the Windows Gallery, then choose **Window frame** to test live window frame features:
 
 ```powershell
 cmake -S . -B build/window-frame-public-debug

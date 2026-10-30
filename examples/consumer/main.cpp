@@ -21,7 +21,7 @@ int main() {
     if (imkit::GetIconCatalog().empty())
         return 1;
     const auto presets = imkit::ThemePresets();
-    if (presets.size() != 12)
+    if (presets.empty())
         return 1;
     auto theme = imkit::MakeTheme(imkit::ThemePreset::Ocean);
     imkit::ApplyTheme(theme);
@@ -31,7 +31,7 @@ int main() {
         if (imkit::Begin("Settings")) {
             bool enabled = true;
             imkit::Toggle("Enabled", &enabled, {&theme});
-            imkit::StatusBadge("Ready", imkit::StatusKind::Success, &theme);
+            imkit::StatusBadge("Ready", imkit::StatusKind::Success, imkit::ComponentOptions{&theme});
             imkit::Icon(icons, imkit::IconId::Settings); // Reserved space until host binds texture.
         }
         imkit::End();

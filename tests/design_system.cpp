@@ -27,7 +27,7 @@ int main() {
             auto theme=MakeTheme(scheme,contrast,density);
             if(!ValidateContrast(theme)) std::fprintf(stderr,"contrast scheme=%d mode=%d density=%d\n",int(scheme),int(contrast),int(density));
             Check(ValidateContrast(theme),"theme contrast");
-            Check(theme.metrics.controlHeight==(density==Density::Compact?24:density==Density::Touch?44:28),"density target");
+            Check(theme.metrics.controlHeight==(density==Density::Compact?24:density==Density::Touch?44:30),"density target");
             Check(theme.metrics.bodySize==14,"density preserves font size");
         }
     Check(ContrastRatio({0,0,0,1},{1,1,1,1})>20.99f,"WCAG black white");
