@@ -131,6 +131,6 @@ The 42 additional design-system icons and the 32 LED and live-surface icons (Led
 `tools/design_icons.py`, distributed under the repository MIT license. No third-party
 icon shapes were imported. Seven raster levels (12–64px) are generated from the recorded sources.
 
-## ImKit 3.2 promotional film
+## ImKit 4.0 promotional film
 
-The motion graphics, English copy and electronic score are original project assets distributed under the repository MIT license. The score is synthesized from oscillators and deterministic noise; no music recordings or samples are used. UI footage is from the native ImKit Gallery and Node Editor companion. Rasterized Inter typography and repository icon artwork retain the provenance and licenses listed above. The film does not redistribute font binaries. Reproduction scripts: `tools/capture_v32_media.py` and `tools/render_v32_film.py`.
+The motion graphics and Japanese and English captions are original project assets distributed under the repository MIT license. UI footage is recorded from the native ImKit Gallery and Node Editor companion. Rasterized Inter and Noto Sans JP typography retain the licenses listed above; the film does not redistribute font binaries. The score is **pending**: the draft film uses a score synthesized from oscillators and deterministic noise (`tools/media/music.py`; no recordings or samples). If a licensed track replaces it, its title, author, source URL, license and required credit will be listed here and in the film's end card. Reproduction scripts: `tools/media/capture.py`, `tools/media/film.py`, `tools/media/music.py` and `tools/media/verify.py`.

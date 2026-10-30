@@ -237,11 +237,11 @@ compile/link、公開IO操作、GPU外観、配布を区別します。署名確
 
 The public-IO integration log is `out/catalog/interaction.txt`; renderer details are in `out/catalog/capture-info.txt`. These are generated outputs. Representative images are checked into `docs/images/` for documentation. Full captures are available as release evidence.
 
-The README animation is generated from 120 native 960×540 backbuffer frames. `tools/build_readme_gif.py` enforces the frame count, dimensions and 8 MiB limit; it does not validate native OS input.
+The README and Pages animations are cut from lossless 1920×1080 60 Hz takes of the Gallery. `tools/media/capture.py` records them and checks each take's assertions; `tools/media/verify.py` enforces the GIF size (960×540, at most 2 MiB, 6–8 s) and the film contract. Neither validates native OS input.
 
 公開IOログは`out/catalog/interaction.txt`、renderer情報は`out/catalog/capture-info.txt`に生成します。文書用の代表画像は`docs/images/`、全カテゴリ画像はReleaseの検証用archiveに収録します。
 
-README animationは960×540のnative backbuffer 120枚から生成します。`tools/build_readme_gif.py`はframe数、寸法、8MiB上限を確認しますが、native OS入力の検証ではありません。
+READMEとPagesのアニメーションは、Galleryを1920×1080・60 Hzで可逆圧縮録画したテイクから切り出します。`tools/media/capture.py`が録画と各テイクの検査を行い、`tools/media/verify.py`がGIFの規格（960×540、2 MiB以下、6〜8秒）と動画の規格を確認します。どちらもnative OS入力の検証ではありません。
 
 ## Limits / 制約
 

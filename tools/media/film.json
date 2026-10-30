@@ -1,0 +1,346 @@
+{
+ "fps": 60,
+ "size": [1920, 1080],
+ "bpm": 120,
+ "bars": 90,
+ "chapters": [
+  {
+   "first": 1,
+   "color": [120, 214, 198]
+  },
+  {
+   "first": 21,
+   "color": [193, 154, 245]
+  },
+  {
+   "first": 36,
+   "color": [128, 170, 255]
+  },
+  {
+   "first": 55,
+   "color": [246, 200, 121]
+  },
+  {
+   "first": 73,
+   "color": [120, 214, 198]
+  }
+ ],
+ "shots": [
+  {
+   "id": "hook",
+   "kind": "take",
+   "take": "hook",
+   "at": 1,
+   "bars": 8,
+   "in": 0,
+   "speed": 1.0,
+   "camera": [
+    {
+     "t": 0,
+     "rect": [0, 0, 1920, 1080]
+    },
+    {
+     "t": 4.2,
+     "rect": [0, 0, 1920, 1080]
+    },
+    {
+     "t": 5.2,
+     "rect": [1020, 30, 1880, 514]
+    },
+    {
+     "t": 9.8,
+     "rect": [1020, 30, 1880, 514]
+    },
+    {
+     "t": 10.8,
+     "rect": [0, 0, 1920, 1080]
+    }
+   ],
+   "caps": [
+    {
+     "key": "hook-1",
+     "t": 0.4,
+     "d": 3.8
+    },
+    {
+     "key": "hook-2",
+     "t": 4.6,
+     "d": 6.0
+    },
+    {
+     "key": "hook-title",
+     "t": 11.6,
+     "d": 4.4,
+     "style": "title"
+    }
+   ]
+  },
+  {
+   "id": "icons",
+   "kind": "take",
+   "take": "icons",
+   "at": 9,
+   "bars": 4,
+   "in": 0,
+   "speed": 1.15,
+   "caps": [
+    {
+     "key": "icons",
+     "t": 0.3,
+     "d": 7.2
+    }
+   ]
+  },
+  {
+   "id": "toasts",
+   "kind": "take",
+   "take": "toasts",
+   "at": 13,
+   "bars": 4,
+   "in": 0,
+   "speed": 1.07,
+   "caps": [
+    {
+     "key": "toasts",
+     "t": 0.3,
+     "d": 7.2
+    }
+   ]
+  },
+  {
+   "id": "compare",
+   "kind": "take",
+   "take": "comparison",
+   "at": 17,
+   "bars": 4,
+   "in": 2.0,
+   "speed": 1.5,
+   "caps": [
+    {
+     "key": "compare",
+     "t": 0.3,
+     "d": 7.2
+    }
+   ]
+  },
+  {
+   "id": "chapter-2",
+   "kind": "chapter",
+   "at": 21,
+   "bars": 1,
+   "num": "02",
+   "key": "chapter-2"
+  },
+  {
+   "id": "worlds",
+   "kind": "take",
+   "take": "worlds",
+   "at": 22,
+   "bars": 7,
+   "in": 0,
+   "speed": 1.0,
+   "caps": [
+    {
+     "key": "worlds",
+     "t": 0.4,
+     "d": 13.0
+    }
+   ]
+  },
+  {
+   "id": "studio",
+   "kind": "take",
+   "take": "studio",
+   "at": 29,
+   "bars": 7,
+   "in": 0,
+   "speed": 1.03,
+   "caps": [
+    {
+     "key": "studio-1",
+     "t": 0.4,
+     "d": 6.0
+    },
+    {
+     "key": "studio-2",
+     "t": 6.8,
+     "d": 7.0
+    }
+   ]
+  },
+  {
+   "id": "chapter-3",
+   "kind": "chapter",
+   "at": 36,
+   "bars": 1,
+   "num": "03",
+   "key": "chapter-3"
+  },
+  {
+   "id": "workspace",
+   "kind": "take",
+   "take": "workspace",
+   "at": 37,
+   "bars": 8,
+   "in": 0,
+   "speed": 1.1,
+   "caps": [
+    {
+     "key": "workspace",
+     "t": 0.4,
+     "d": 15.0
+    }
+   ]
+  },
+  {
+   "id": "timeline",
+   "kind": "take",
+   "take": "timeline",
+   "at": 45,
+   "bars": 5,
+   "in": 0,
+   "speed": 1.065,
+   "caps": [
+    {
+     "key": "timeline",
+     "t": 0.4,
+     "d": 9.2
+    }
+   ]
+  },
+  {
+   "id": "node-editor",
+   "kind": "take",
+   "take": "node-editor-final",
+   "at": 50,
+   "bars": 5,
+   "in": 0,
+   "speed": 0.9,
+   "caps": [
+    {
+     "key": "node-editor",
+     "t": 0.4,
+     "d": 9.2
+    }
+   ]
+  },
+  {
+   "id": "chapter-4",
+   "kind": "chapter",
+   "at": 55,
+   "bars": 1,
+   "num": "04",
+   "key": "chapter-4"
+  },
+  {
+   "id": "show-live",
+   "kind": "take",
+   "take": "show-live",
+   "at": 56,
+   "bars": 6,
+   "in": 0,
+   "speed": 1.01,
+   "caps": [
+    {
+     "key": "show-live",
+     "t": 0.4,
+     "d": 11.0
+    }
+   ]
+  },
+  {
+   "id": "show-surface",
+   "kind": "take",
+   "take": "show-surface",
+   "at": 62,
+   "bars": 6,
+   "in": 0,
+   "speed": 1.0,
+   "caps": [
+    {
+     "key": "show-surface",
+     "t": 0.4,
+     "d": 11.0
+    }
+   ]
+  },
+  {
+   "id": "charts",
+   "kind": "take",
+   "take": "charts",
+   "at": 68,
+   "bars": 5,
+   "in": 0,
+   "speed": 1.0,
+   "caps": [
+    {
+     "key": "charts",
+     "t": 0.4,
+     "d": 9.2
+    }
+   ]
+  },
+  {
+   "id": "chapter-5",
+   "kind": "chapter",
+   "at": 73,
+   "bars": 1,
+   "num": "05",
+   "key": "chapter-5"
+  },
+  {
+   "id": "code",
+   "kind": "code",
+   "at": 74,
+   "bars": 6,
+   "inset": {
+    "take": "hook",
+    "in": 4.0,
+    "speed": 0.9
+   },
+   "caps": [
+    {
+     "key": "code",
+     "t": 0.4,
+     "d": 11.0
+    }
+   ]
+  },
+  {
+   "id": "keep",
+   "kind": "take",
+   "take": "hook",
+   "at": 80,
+   "bars": 4,
+   "in": 4.0,
+   "speed": 0.9,
+   "camera": [
+    {
+     "t": 0,
+     "rect": [0, 0, 1920, 1080]
+    },
+    {
+     "t": 1.0,
+     "rect": [1020, 30, 1880, 514]
+    },
+    {
+     "t": 7.0,
+     "rect": [1020, 30, 1880, 514]
+    }
+   ],
+   "caps": [
+    {
+     "key": "keep",
+     "t": 0.4,
+     "d": 7.2
+    }
+   ]
+  },
+  {
+   "id": "outro",
+   "kind": "outro",
+   "at": 84,
+   "bars": 7
+  }
+ ]
+}
