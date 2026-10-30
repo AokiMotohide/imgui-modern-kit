@@ -5,6 +5,9 @@
 ## Unreleased
 
 - `imkit/icons.h`: `IconId::PtzCamera` (pan / tilt / zoom camera on a yoke) — 321 icons. PTZカメラ用アイコン `IconId::PtzCamera` を追加（計321個）。
+- `imkit/components.h`: `AxisVector3Field`, `AxisVector3Interaction`, `CompactIconActionButton`. インスペクター用の三軸入力と小型アイコンボタンを追加。
+- `imkit/workflow.h`: `BeginCollapsibleInspectorCard`, `EndCollapsibleInspectorCard`; `HierarchyRowView::accentColor`, full-width row selection. 開閉式インスペクターカードと、階層行の全幅選択・種類色を追加。
+- Inspector cards draw a tinted header band. Window frame: title-bar top-edge drag and move / resize hit testing fixed. インスペクターカードに見出し帯を付け、ウィンドウ枠の移動・サイズ変更判定を修正。
 
 ## 4.0.0 — 2026-10-31
 
