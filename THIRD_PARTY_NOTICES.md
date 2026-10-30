@@ -127,7 +127,7 @@ OpenAI image generation tool for this project. They are not copied from the desi
 reference projects mentioned above. Their prompts and source hashes accompany the
 assets. These project assets are distributed under the repository MIT license.
 
-The 42 additional design-system icons and the 32 LED and live-surface icons (Led, LedStrip, LedMatrix, LedWall, LedCabinet, Pixel, Controller, Port, Dmx, Universe, Fixture, MovingHead, Dimmer, Brightness, ColorTemperature, Gamma, RgbChannels, WhiteChannel, Power, PowerBudget, Strobe, Chase, Gradient, ColorOrder, Identify, Freeze, Flash, Scene, ImageButton, ControlSurface, Fader, Knob) are original deterministic code drawings in
+The 42 additional design-system icons and the 32 LED and live-surface icons (Led, LedStrip, LedMatrix, LedWall, LedCabinet, Pixel, Controller, Port, Dmx, Universe, Fixture, MovingHead, Dimmer, Brightness, ColorTemperature, Gamma, RgbChannels, WhiteChannel, Power, PowerBudget, Strobe, Chase, Gradient, ColorOrder, Identify, Freeze, Flash, Scene, ImageButton, ControlSurface, Fader, Knob), plus PtzCamera, are original deterministic code drawings in
 `tools/design_icons.py`, distributed under the repository MIT license. No third-party
 icon shapes were imported. Seven raster levels (12–64px) are generated from the recorded sources.
 

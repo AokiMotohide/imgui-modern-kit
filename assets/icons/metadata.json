@@ -1,8 +1,8 @@
 {
-  "count": 320,
+  "count": 321,
   "categories": 21,
   "columns": 16,
-  "rows": 20,
+  "rows": 21,
   "sizes": [
     12,
     16,
@@ -13,7 +13,7 @@
     64
   ],
   "padding": 2,
-  "originals": 320,
-  "variants": 2240,
+  "originals": 321,
+  "variants": 2247,
   "atlases": 7
 }

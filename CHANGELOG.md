@@ -2,6 +2,10 @@
 
 > Published release entries present English first, followed by equivalent Japanese notes. Unreleased remains a work-in-progress list.
 
+## Unreleased
+
+- `imkit/icons.h`: `IconId::PtzCamera` (pan / tilt / zoom camera on a yoke) — 321 icons. PTZカメラ用アイコン `IconId::PtzCamera` を追加（計321個）。
+
 ## 4.0.0 — 2026-10-31
 
 **ImKit 4.0 refreshes the default look, adds brand themes, and brings new modules for charts, camera control and live shows.** Rebuild your application and every linked ImKit library with the 4.0 headers: structures grew and default tokens changed. The Dear ImGui revision and the dependencies are unchanged. See the [migration guide](docs/reference/migration-v4.md) and the [4.0 additions](docs/reference/v4.0-api.md).

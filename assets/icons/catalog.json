@@ -1278,5 +1278,9 @@
   {
     "name": "Knob",
     "category": "Live"
+  },
+  {
+    "name": "PtzCamera",
+    "category": "3D Projection"
   }
 ]

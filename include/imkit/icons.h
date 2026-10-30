@@ -330,6 +330,7 @@ enum class IconId : std::uint16_t {
     ControlSurface,
     Fader,
     Knob,
+    PtzCamera,
     Count
 };
 struct IconInfo {
