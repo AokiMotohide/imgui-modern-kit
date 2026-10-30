@@ -309,7 +309,6 @@ PtzRequest PtzControl(const char* id, const PtzView& view, PtzState& state, PtzO
         cy += u * .85f;
         const float cell = std::max(u * 1.1f, (cw - gap * .6f * static_cast<float>(columns - 1)) / static_cast<float>(columns));
         const float cellH = std::max(u * 1.15f, cell * .62f);
-        ImGuiStorage* storage = ImGui::GetStateStorage();
         for (int i = 0; i < count; ++i) {
             const PtzPreset& preset = view.presets[static_cast<std::size_t>(i)];
             const int col = i % columns, row = i / columns;

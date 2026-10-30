@@ -16,6 +16,9 @@
 namespace imkit {
 namespace {
 using detail::SemanticItem;
+ImVec4 Mix(ImVec4 a, ImVec4 b, float t) {
+    return {a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t, a.w + (b.w - a.w) * t};
+}
 ImVec4 Accent(const Theme *t) {
     return t ? t->colors.accent : ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
 }
