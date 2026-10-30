@@ -19,15 +19,6 @@
    graph data, revision checks, edit application, Undo, evaluation and persistence
    into the host; do not treat the companion Material Graph model as library state.
 
-## Deprecations in 3.4
+## Moving on to 4.0
 
-| Deprecated | Use instead |
-|---|---|
-| `StatusBadge(text, kind, const Theme*)` | `StatusBadge(text, kind, ComponentOptions{&theme})` |
-| `NotificationCard(Notification, now, const Theme*)` | `NotificationCard(Notification, now, ComponentOptions{&theme})` or the `FeedbackView` overload |
-| `ValidationMessage(message, invalid, const Theme*)` | `ValidationMessage(message, invalid, ComponentOptions{&theme})` |
-| `EmptyState(message)` | `EmptyState(id, StateView, options)` |
-| `Progress(id, fraction, label, options)` | `Progress(id, ProgressView, ProgressPresentation, ...)` or `ProgressTrack` |
-| `ToastRegion(span<Notification>, now, options)` | `ToastViewport` |
-
-The old spellings still compile and behave as before; they only warn. Define `IMKIT_DEPRECATED(message)` as nothing to silence the warnings. Removal is planned for the next major version. Other 3.4 changes that can affect hosts: `SemanticRole` gained `Slider` and `Meter`, `RangeSlider` publishes `Slider` nodes instead of `Group`, and `PtzState` no longer exposes `held` and `padValid`.
+The spellings deprecated after 3.3, the changed default tokens and the other changes that can affect hosts are listed in the [4.0 migration guide](migration-v4.md).

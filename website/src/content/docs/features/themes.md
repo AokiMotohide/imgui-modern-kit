@@ -49,20 +49,22 @@ ImKit は、13種類の洗練された名前付きプリセットと、柔軟な
 
 `ThemePresets()` を呼び出すことで、全13種類のプリセット情報を取得できます。各プリセットには enum 値、永続化用の小文字 ID（例: `"precision-dark"`）、表示名が定義されています。
 
+`PrecisionLight`、`PrecisionDark`、`Slate`、高コントラストの2種は、手で調整した配色です。それ以外の8種（Graphite、Midnight、Ocean、Forest、Violet、WarmSand、Rose、Solar）は、背景・面・文字・アクセントの4色から `MakeBrandTheme` で作っています。ホストが自分のテーマを作るときと同じ関数の使用例にもなります。手順は [自分の世界観を作る](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/architecture/世界観を作る.md) を参照してください。
+
 | カラースキーム | プリセット名 | 特徴 |
 |---|---|---|
-| **Dark** | `PrecisionDark` | ImKit の標準ダークテーマ。落ち着いたグレーとシアンアクセント |
-| | `Graphite` | 黒に近い深いグレー基調 |
-| | `Midnight` | 深夜の青みを帯びたダークネイビー |
-| | `Ocean` | 海洋をイメージした深い青緑色 |
-| | `Forest` | 自然な深いフォレストグリーン |
-| | `Violet` | 高級感のあるダークパープル |
-| | `Slate` | スレート石のような青灰色 |
+| **Dark** | `PrecisionDark` | ImKit の標準ダークテーマ。落ち着いたグレーとブルーのアクセント |
+| | `Graphite` | 黒に近い深いグレーの地にミントグリーン |
+| | `Midnight` | 深夜のネイビーの地にラベンダーブルー |
+| | `Ocean` | 深い青緑の地にシアン |
+| | `Forest` | 深い森の緑の地にグリーン |
+| | `Violet` | 濃い紫の地にパープル |
+| | `Slate` | 青灰色の背景・面を持つ専用配色 |
 | | `HighContrastDark` | コントラスト比を高めた視認性重視のダークテーマ |
 | **Light** | `PrecisionLight` | ImKit の標準ライトテーマ。クリーンな白と淡いグレー |
-| | `WarmSand` | 暖かみのあるサンドベージュ |
-| | `Rose` | 優しいピンクがかったペールトーン |
-| | `Solar` | 明るい太陽光のような暖色ライト |
+| | `WarmSand` | 砂色（サンドベージュ）の地にブラウン |
+| | `Rose` | 淡いピンクの地にローズ |
+| | `Solar` | 日だまりのような暖色の地にオリーブゴールド |
 | | `HighContrastLight` | 視認性重視の高コントラストライトテーマ |
 
 ---
@@ -96,7 +98,7 @@ auto currentTheme = imkit::MakeTheme(preset);
 imkit::SetAccent(theme, ImVec4(1.0f, 0.5f, 0.0f, 1.0f));
 ```
 
-さらに細かい配色を調整したい場合は、`theme.semantic.*` または `theme.colors.*` の各フィールドを直接編集し、`imkit::ResolveTheme(theme)` を呼び出します。
+さらに細かい配色を調整したい場合は、`theme.semantic.*` の各フィールドを編集し、`imkit::ResolveTheme(theme)` を呼び出します。`semantic`（および `typography`、`radius`、`stroke`、`elevation`、`opacity`）が正で、`theme.colors` と `theme.metrics` は `ResolveTheme` が作る派生値です。`colors` を直接編集しても、次の `ResolveTheme` や `SetDensity` で上書きされます。
 
 ---
 

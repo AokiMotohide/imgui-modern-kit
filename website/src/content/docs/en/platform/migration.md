@@ -18,3 +18,7 @@ title: "Migrate from v2"
 6. Link `imkit::node_editor` explicitly when adopting the new Node Editor. Move
    graph data, revision checks, edit application, Undo, evaluation and persistence
    into the host; do not treat the companion Material Graph model as library state.
+
+## Moving on to 4.0
+
+The spellings deprecated after 3.3, the changed default tokens and the other changes that can affect hosts are listed in the [4.0 migration guide](../migration-v4/).

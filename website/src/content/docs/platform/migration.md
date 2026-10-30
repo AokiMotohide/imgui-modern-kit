@@ -12,3 +12,7 @@ ImKit v2を利用している既存プロジェクトをv3へ移行する際の�
 6. **ノードエディタのリンクと所有権の分離**: 新しいノードエディタを採用する場合、CMakeで `imkit::node_editor` を明示的にリンクします。ノードグラフデータ、リビジョン検証、編集適用の確定、Undo履歴、ノード評価、およびファイル永続化はすべてホスト側が所有し、GalleryのMaterial Graph companionをライブラリの内部状態として依存しないように移行します。
 
 詳しいCMakeターゲット構成や依存関係の要件については [導入ガイド](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/getting-started/導入ガイド.md) および [依存関係](../dependencies/) を参照してください。
+
+## 4.0へ進む
+
+3.3のあとに非推奨になった綴り、変わった既定トークン、ホストに影響しうるそのほかの変更は、[4.0への移行ガイド](../migration-v4/)にまとめています。
