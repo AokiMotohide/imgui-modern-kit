@@ -74,7 +74,8 @@ bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, 
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, Mix(fill, subtleDestructive ? destructive : Accent(t), .32f));
     ImGui::PushStyleColor(ImGuiCol_Text, text);
     const bool solid = variant == ActionVariant::Primary || variant == ActionVariant::Destructive;
-    const bool borderless = solid || variant == ActionVariant::Ghost;
+    // Solid and ghost buttons are drawn without a frame, unless the theme is outlined and every button carries it.
+    const bool borderless = (solid || variant == ActionVariant::Ghost) && !detail::IsOutlined(style);
     if (borderless)
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
     else if (subtleDestructive) {
@@ -144,7 +145,7 @@ bool IconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Mix(fill, subtleDestructive ? destructive : Accent(t), .18f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, Mix(fill, subtleDestructive ? destructive : Accent(t), .32f));
     ImGui::PushStyleColor(ImGuiCol_Text, text);
-    const bool borderless = variant != ActionVariant::Secondary && !subtleDestructive;
+    const bool borderless = variant != ActionVariant::Secondary && !subtleDestructive && !detail::IsOutlined(style);
     if (borderless)
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
     else if (subtleDestructive) {
@@ -237,8 +238,11 @@ bool Toggle(const char *label, bool *value, ComponentOptions options) {
     // Fit in native checkbox's square so label layout and hit target remain native.
     const float trackHeight = h * .6f, trackWidth = std::min(h, trackHeight * 1.8f);
     const float y = min.y + (h - trackHeight) * .5f;
-    const float thumbRadius = trackHeight * .5f - 2.5f;
+    // An outline takes room from inside the track, so the thumb shrinks with it.
+    const float inset = detail::IsOutlined(style) ? style.FrameBorderSize * .5f : 0.f;
+    const float thumbRadius = std::max(2.f, trackHeight * .5f - 2.5f - inset);
     d->AddRectFilled({min.x, y}, {min.x + trackWidth, y + trackHeight}, ImGui::GetColorU32(fill), trackHeight * .5f);
+    detail::DrawOutline(d, {min.x, y}, {min.x + trackWidth, y + trackHeight}, trackHeight * .5f);
     // The thumb overshoots slightly mid-travel, then settles.
     const float travel = position + std::sin(position * 3.14159265f) * .06f;
     const float left = min.x + trackHeight * .5f, right = min.x + trackWidth - trackHeight * .5f;
@@ -286,6 +290,7 @@ bool Segmented(const char *id, int *selected, std::span<const char *const> label
     const float rounding = style.FrameRounding;
     draw->AddRectFilled(origin, {origin.x + total + inset * 2, origin.y + height},
                         ImGui::GetColorU32(detail::WithAlpha(style.Colors[ImGuiCol_Text], .08f)), rounding + 2.f);
+    detail::DrawOutline(draw, origin, {origin.x + total + inset * 2, origin.y + height}, rounding + 2.f);
     // The raised thumb glides between segments (fractional index while animating).
     float index = static_cast<float>(std::clamp(*selected, 0, shown - 1));
     if (options.animation) {
@@ -475,6 +480,7 @@ void StatusBadge(const char *text, StatusKind kind, const Theme *theme) {
     auto fill = color;
     fill.w = .14f;
     d->AddRectFilled(p, {p.x + size.x, p.y + size.y}, ImGui::GetColorU32(fill), size.y * .5f);
+    detail::DrawOutline(d, p, {p.x + size.x, p.y + size.y}, size.y * .5f);
     // Marker shape and text carry meaning in addition to color.
     const float u = ImGui::GetFontSize() * .3f;
     const ImVec2 m{p.x + size.y * .5f + u * .4f, p.y + size.y * .5f};
@@ -562,6 +568,7 @@ bool NotificationCard(const Notification &n, double now, const Theme *t) {
     const auto color = Status(n.kind, t);
     d->AddRectFilled(origin, {origin.x + width, origin.y + height}, ImGui::GetColorU32(detail::WithAlpha(color, .10f)),
                      style.FrameRounding);
+    detail::DrawOutline(d, origin, {origin.x + width, origin.y + height}, style.FrameRounding);
     d->AddRectFilled({origin.x + 5, origin.y + 8}, {origin.x + 8, origin.y + height - 8}, ImGui::GetColorU32(color), 1.5f);
     const float textHeight = ImGui::CalcTextSize(n.text, nullptr, false, textWidth).y;
     d->AddText(ImGui::GetFont(), ImGui::GetFontSize(), {origin.x + pad + 6, origin.y + (height - textHeight) * .5f},
@@ -616,15 +623,30 @@ void OverlayDecoration(const Theme &t, AnimationState *state) {
             state->Update(id, 0, 0, t.motion.overlaySeconds, frame, t.motion.enabled && !t.motion.reducedMotion, t.motion.easing);
         a = state->Update(id, 1, ImGui::GetIO().DeltaTime, t.motion.overlaySeconds, frame, t.motion.enabled && !t.motion.reducedMotion, t.motion.easing);
     }
-    if (t.metrics.elevation <= 0)
-        return;
     const auto p = ImGui::GetWindowPos(), size = ImGui::GetWindowSize();
-    auto *d = ImGui::GetWindowDrawList();
-    const float peak = (t.scheme == ColorScheme::Dark ? .34f : .16f) * a;
-    // Rings extend outside the window, so allow drawing beyond its clip rectangle.
-    d->PushClipRectFullScreen();
-    detail::DrawSoftShadow(d, p, {p.x + size.x, p.y + size.y}, t.radius.overlay, t.metrics.elevation, peak);
-    d->PopClipRect();
+    DrawShadow(t, ImGui::GetWindowDrawList(), p, {p.x + size.x, p.y + size.y}, t.radius.overlay, ElevationLevel::Overlay, a);
+}
+void DrawShadow(const Theme &t, ImDrawList *draw, ImVec2 minimum, ImVec2 maximum, float rounding, ElevationLevel level,
+                float alpha) {
+    const float extent = level == ElevationLevel::Raised ? t.elevation.raised : t.elevation.overlay;
+    const bool hasColor = t.semantic.shadow.w > 0;
+    if (alpha <= 0 || (!t.elevation.hard && extent <= 0))
+        return;
+    // The shadow lies outside the shape, so allow drawing beyond the current clip rectangle.
+    draw->PushClipRectFullScreen();
+    if (t.elevation.hard) {
+        // A solid copy of the shape, moved by the offset; it scales with the UI like the outline does.
+        const float scale = ImGui::GetStyle().FontScaleMain;
+        const ImVec2 offset{t.elevation.offset.x * scale, t.elevation.offset.y * scale};
+        ImVec4 color = hasColor ? t.semantic.shadow : ImVec4(0, 0, 0, .25f);
+        color.w *= alpha;
+        draw->AddRectFilled({minimum.x + offset.x, minimum.y + offset.y}, {maximum.x + offset.x, maximum.y + offset.y},
+                            ImGui::GetColorU32(color), rounding);
+    } else {
+        const float peak = (t.scheme == ColorScheme::Dark ? .34f : .16f) * alpha;
+        detail::DrawSoftShadow(draw, minimum, maximum, rounding, extent, peak, hasColor ? t.semantic.shadow : ImVec4(0, 0, 0, 1));
+    }
+    draw->PopClipRect();
 }
 void StatusBadge(const char *text, StatusKind kind, ComponentOptions options) { StatusBadge(text, kind, options.theme); }
 bool NotificationCard(const Notification &n, double now, ComponentOptions options) { return NotificationCard(n, now, options.theme); }

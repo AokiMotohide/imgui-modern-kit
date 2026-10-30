@@ -58,7 +58,7 @@ if(NOT TARGET "${IMKIT_IMGUI_TARGET}")
         "Create the Dear ImGui target before adding imgui-modern-kit.")
 endif()
 
-add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/components.cpp src/icons.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp src/toast.cpp src/charts.cpp src/range_slider.cpp src/ptz.cpp src/shell.cpp src/window_frame.cpp)
+add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/theme_text.cpp src/components.cpp src/icons.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp src/toast.cpp src/charts.cpp src/range_slider.cpp src/ptz.cpp src/shell.cpp src/window_frame.cpp)
 add_library(imkit::imkit ALIAS imkit)
 
 target_compile_features(imkit PUBLIC cxx_std_20)

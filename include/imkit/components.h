@@ -92,4 +92,9 @@ IMKIT_DEPRECATED("pass ComponentOptions instead of a bare Theme pointer")
 void ValidationMessage(const char *message, bool invalid, const Theme *theme);
 // Optional inset elevation for the CURRENT popup window. Clip stays inside it.
 void OverlayDecoration(const Theme &theme, AnimationState *animation = nullptr);
+// Draws the theme's shadow around a shape: elevation.hard gives a solid copy moved by elevation.offset, otherwise the
+// blurred shadow of `level`. `alpha` scales the strength. Draws outside the current clip rectangle, so call it before
+// the shape itself.
+void DrawShadow(const Theme &theme, ImDrawList *draw, ImVec2 minimum, ImVec2 maximum, float rounding,
+                ElevationLevel level = ElevationLevel::Overlay, float alpha = 1.f);
 } // namespace imkit

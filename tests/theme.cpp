@@ -25,6 +25,195 @@ bool Valid(ImVec4 color) {
         return std::isfinite(value) && value >= 0 && value <= 1;
     }) && color.w == 1;
 }
+ImVec4 Hex(unsigned x) {
+    return {((x >> 16) & 255) / 255.f, ((x >> 8) & 255) / 255.f, (x & 255) / 255.f, 1};
+}
+bool Near(ImVec4 a, ImVec4 b, float tolerance = 1.f / 255.f) {
+    return std::fabs(a.x - b.x) <= tolerance && std::fabs(a.y - b.y) <= tolerance &&
+           std::fabs(a.z - b.z) <= tolerance && std::fabs(a.w - b.w) <= tolerance;
+}
+bool Contains(const std::string &text, const char *part) {
+    return text.find(part) != std::string::npos;
+}
+
+// Generic sample palettes; none of them is tied to a product.
+imkit::BrandPalette StickerPalette() {
+    imkit::BrandPalette p;
+    p.canvas = Hex(0xffe9a8); p.surface = Hex(0xfff6d6); p.text = Hex(0x4a2a18);
+    p.accent = Hex(0xb2552f); p.border = Hex(0x4a2a18);
+    return p;
+}
+imkit::BrandPalette PastelPalette() {
+    imkit::BrandPalette p;
+    p.canvas = Hex(0xfde8ef); p.surface = Hex(0xfff7fa); p.text = Hex(0x3b2a4a); p.accent = Hex(0xc2417c);
+    return p;
+}
+imkit::BrandPalette BlueprintPalette() {
+    imkit::BrandPalette p;
+    p.canvas = Hex(0x0d2438); p.surface = Hex(0x123453); p.text = Hex(0xe8f3ff); p.accent = Hex(0x6cc4ff);
+    return p;
+}
+
+int TestStyleProjection() {
+    ImGui::CreateContext();
+    int failure = 0;
+    // Hairline themes (border <= 1) must keep their previous projection exactly.
+    for (const auto &info : imkit::ThemePresets()) {
+        const auto theme = imkit::MakeTheme(info.preset);
+        imkit::ApplyTheme(theme, 1.f);
+        const auto &style = ImGui::GetStyle();
+        const bool highContrast = theme.contrast == imkit::ContrastMode::HighContrast;
+        const auto &c = theme.colors;
+        const ImVec4 hairline = highContrast ? c.border
+            : ImVec4(c.surface.x + (c.border.x - c.surface.x) * .42f, c.surface.y + (c.border.y - c.surface.y) * .42f,
+                     c.surface.z + (c.border.z - c.surface.z) * .42f, c.surface.w + (c.border.w - c.surface.w) * .42f);
+        if (style.FrameBorderSize != theme.stroke.border || style.WindowBorderSize != theme.stroke.border ||
+            style.ChildBorderSize != 0.f || style.TabBorderSize != 0.f ||
+            style.SeparatorTextBorderSize != theme.stroke.border ||
+            style.WindowRounding != theme.radius.control || style.ImageRounding != theme.radius.control ||
+            !Near(style.Colors[ImGuiCol_Border], hairline, 1e-6f))
+            failure = 20;
+    }
+    // A border of two pixels or more is an outline: full-strength colour, thick frames, thin dividers.
+    auto outlined = imkit::MakeTheme(imkit::ThemePreset::WarmSand);
+    outlined.stroke.border = 3.f; // Deliberately without ResolveTheme: the token alone must apply.
+    imkit::ApplyTheme(outlined, 1.f);
+    const auto &style = ImGui::GetStyle();
+    if (style.FrameBorderSize != 3.f || style.WindowBorderSize != 3.f || style.PopupBorderSize != 3.f ||
+        style.ChildBorderSize != 3.f || style.TabBorderSize != 3.f)
+        failure = 21;
+    if (style.SeparatorTextBorderSize != 1.f || style.TreeLinesSize != 1.f)
+        failure = 22;
+    if (!Near(style.Colors[ImGuiCol_Border], outlined.colors.border, 1e-6f))
+        failure = 23;
+    // A pill control radius must not turn windows and images into capsules.
+    imkit::SetCornerStyle(outlined, imkit::CornerStyle::Pill);
+    imkit::ApplyTheme(outlined, 1.f);
+    if (outlined.radius.control < 900.f || style.FrameRounding < 900.f || style.WindowRounding != outlined.radius.overlay ||
+        style.ImageRounding != outlined.radius.overlay)
+        failure = 24;
+    imkit::SetCornerStyle(outlined, imkit::CornerStyle::Sharp);
+    if (outlined.radius.control != 2.f || outlined.metrics.radius != 2.f)
+        failure = 25;
+    ImGui::DestroyContext();
+    return failure;
+}
+
+int TestBrandThemes() {
+    struct Case { imkit::BrandPalette palette; imkit::ColorScheme scheme; };
+    const Case cases[] = {{StickerPalette(), imkit::ColorScheme::Light}, {PastelPalette(), imkit::ColorScheme::Light},
+                          {BlueprintPalette(), imkit::ColorScheme::Dark}};
+    for (const auto &item : cases) {
+        const auto theme = imkit::MakeBrandTheme(item.palette);
+        const auto &c = theme.semantic;
+        if (theme.scheme != item.scheme || !Near(c.canvas, item.palette.canvas, 0) ||
+            !Near(c.surface, item.palette.surface, 0) || !Near(c.text, item.palette.text, 0) ||
+            !Near(c.accent, item.palette.accent, 0) || !Near(c.control.focused, item.palette.accent, 0))
+            return 30;
+        const std::array colors = {c.canvas, c.surface, c.surfaceRaised, c.overlay, c.text, c.textSecondary, c.textDisabled,
+                                   c.border, c.accent, c.onAccent, c.success, c.warning, c.error, c.control.rest,
+                                   c.control.hover, c.control.pressed, c.control.focused, c.control.selected};
+        if (!std::all_of(colors.begin(), colors.end(), Valid))
+            return 31;
+        // Derived colours must keep the contrast the validator asks for.
+        if (!imkit::ValidateContrast(theme))
+            return 32;
+        // The projection is already resolved: colors mirrors semantic.
+        if (!Near(theme.colors.canvas, c.canvas, 0) || !Near(theme.colors.accent, c.accent, 0) ||
+            !Near(theme.colors.input, c.control.rest, 0))
+            return 33;
+    }
+    // Explicit optional colours win over derived ones; an explicit error colour picks its own on-colour.
+    auto custom = StickerPalette();
+    custom.raised = Hex(0xffffff); custom.textSecondary = Hex(0x6b4a36); custom.error = Hex(0x7a1020);
+    const auto themed = imkit::MakeBrandTheme(custom);
+    if (!Near(themed.semantic.surfaceRaised, Hex(0xffffff), 0) || !Near(themed.semantic.textSecondary, Hex(0x6b4a36), 0) ||
+        !Near(themed.semantic.error, Hex(0x7a1020), 0) || !Valid(themed.colors.onDestructive) ||
+        Contrast(themed.colors.onDestructive, themed.semantic.error) < 4.5f)
+        return 34;
+    // Poor input is a warning (false), never a failure.
+    imkit::BrandPalette poor = StickerPalette();
+    poor.text = poor.canvas;
+    if (imkit::ValidateContrast(imkit::MakeBrandTheme(poor)))
+        return 35;
+    return 0;
+}
+
+int TestThemeText() {
+    auto original = imkit::MakeBrandTheme(StickerPalette());
+    original.stroke.border = 3.f;
+    original.elevation.hard = true;
+    original.elevation.offset = {0.f, 3.f};
+    original.semantic.shadow = Hex(0x4a2a18);
+    imkit::SetCornerStyle(original, imkit::CornerStyle::Round);
+    imkit::SetDensity(original, imkit::Density::Touch);
+    const std::string text = imkit::SerializeTheme(original);
+
+    // Fonts belong to the host and must survive reading. A fake pointer is enough: it is never dereferenced.
+    auto *fakeFont = reinterpret_cast<ImFont *>(std::uintptr_t{64});
+    auto restored = imkit::MakeTheme(imkit::ThemePreset::Graphite);
+    restored.fonts.regular = fakeFont;
+    const auto result = imkit::ParseTheme(text, restored);
+    if (result.ignored != 0 || !result.warnings.empty() || result.applied < 40)
+        return 40;
+    if (imkit::SerializeTheme(restored) != text) // Reading what was written reproduces it exactly.
+        return 41;
+    if (restored.fonts.regular != fakeFont || restored.stroke.border != 3.f || !restored.elevation.hard ||
+        restored.elevation.offset.y != 3.f || restored.density != imkit::Density::Touch ||
+        restored.radius.control != original.radius.control || restored.metrics.controlHeight != 44.f ||
+        !Near(restored.semantic.canvas, original.semantic.canvas) || !Near(restored.colors.accent, original.semantic.accent))
+        return 42;
+
+    // A partial file changes only what it names, on top of the chosen base preset.
+    auto partial = imkit::MakeTheme(imkit::ThemePreset::PrecisionLight);
+    partial.fonts.display = fakeFont;
+    const auto diff = imkit::ParseTheme("preset = warm-sand\nstroke.border = 3\ncorner = pill\n", partial);
+    const auto warmSand = imkit::MakeTheme(imkit::ThemePreset::WarmSand);
+    if (diff.applied != 3 || diff.ignored != 0 || !Near(partial.semantic.accent, warmSand.semantic.accent, 0) ||
+        partial.stroke.border != 3.f || partial.radius.control < 900.f || partial.fonts.display != fakeFont ||
+        partial.metrics.border != 3.f)
+        return 43;
+
+    // Bad lines are skipped one by one with a line-numbered warning; the good ones still apply.
+    auto tolerant = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
+    const char *messy = "\xEF\xBB\xBF# comment\r\n\r\n"
+                        "stroke.border = 2\r\n"
+                        "semantic.accent = blue\r\n"
+                        "no equals sign here\r\n"
+                        "radius.control = -4\r\n"
+                        "future.token = 1\r\n"
+                        "preset = nonsense\r\n"
+                        "elevation.offset = 1 2\r\n";
+    const auto messyResult = imkit::ParseTheme(messy, tolerant);
+    if (messyResult.applied != 2 || messyResult.ignored != 5 || tolerant.stroke.border != 2.f ||
+        tolerant.elevation.offset.x != 1.f || tolerant.elevation.offset.y != 2.f ||
+        !Contains(messyResult.warnings, "line 4:") || !Contains(messyResult.warnings, "line 5:") ||
+        !Contains(messyResult.warnings, "line 6:") || !Contains(messyResult.warnings, "line 7:") ||
+        !Contains(messyResult.warnings, "line 8:") || Contains(messyResult.warnings, "line 3:"))
+        return 44;
+
+    // brand.* rebuilds colours only; shape stays. Without the four required colours nothing is applied.
+    auto branded = imkit::MakeTheme(imkit::ThemePreset::PrecisionLight);
+    imkit::ParseTheme("corner = round\nbrand.canvas = #ffe9a8\nbrand.surface = #fff6d6\nbrand.text = #4a2a18\nbrand.accent = #b2552f\n",
+                      branded);
+    if (!Near(branded.semantic.canvas, Hex(0xffe9a8)) || !Near(branded.colors.accent, Hex(0xb2552f)) ||
+        branded.radius.control != 16.f || !imkit::ValidateContrast(branded))
+        return 45;
+    auto incomplete = imkit::MakeTheme(imkit::ThemePreset::PrecisionLight);
+    const auto before = imkit::SerializeTheme(incomplete);
+    const auto incompleteResult = imkit::ParseTheme("brand.canvas = #ffe9a8\nbrand.text = #4a2a18\n", incomplete);
+    if (incompleteResult.ignored != 1 || imkit::SerializeTheme(incomplete) != before)
+        return 46;
+    return 0;
+}
+
+int TestWorlds() {
+    if (const int failure = TestStyleProjection())
+        return failure;
+    if (const int failure = TestBrandThemes())
+        return failure;
+    return TestThemeText();
+}
 }
 
 int main() {
@@ -92,6 +281,8 @@ int main() {
         slate.colors.canvas.x >= slate.colors.surface.x ||
         imkit::ThemePresetFromId("slate") != imkit::ThemePreset::Slate)
         return 14;
-    std::puts("13 theme presets, stable IDs, scale bounds and legacy factories validated");
+    if (const int failure = TestWorlds())
+        return failure;
+    std::puts("13 theme presets, stable IDs, scale bounds, legacy factories, brand themes, outlines and theme text validated");
     return 0;
 }

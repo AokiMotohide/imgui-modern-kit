@@ -1,5 +1,6 @@
 #pragma once
 #include <imkit/components.h>
+#include <cmath>
 #include <string_view>
 
 // Helpers shared by the component implementations; nothing here owns ImGui state.
@@ -30,6 +31,18 @@ inline bool SemanticItem(ComponentOptions options, const char* label, accessibil
     node.actions = action | SemanticAction::Focus;
     AnnotateLastItem(*options.accessibility, node);
     return requested && !disabled;
+}
+// A frame border of OutlineMinimumWidth or more is an outline, not a hairline (see theme.h). ApplyTheme truncates scaled
+// borders, so the minimum is scaled and truncated the same way. This reads the style, so it works without a Theme.
+inline bool IsOutlined(const ImGuiStyle& style) {
+    return style.FrameBorderSize > 0.f &&
+           style.FrameBorderSize >= std::trunc(OutlineMinimumWidth * style.FontScaleMain);
+}
+// Strokes a frame in the border colour at the style's border width when the theme is outlined; draws nothing otherwise.
+inline void DrawOutline(ImDrawList* draw, ImVec2 minimum, ImVec2 maximum, float rounding) {
+    const auto& style = ImGui::GetStyle();
+    if (IsOutlined(style))
+        draw->AddRect(minimum, maximum, ImGui::GetColorU32(ImGuiCol_Border), rounding, ImDrawFlags_None, style.FrameBorderSize);
 }
 inline bool MotionAllowed(const ComponentOptions& o) {
     return !o.theme || (o.theme->motion.enabled && !o.theme->motion.reducedMotion);

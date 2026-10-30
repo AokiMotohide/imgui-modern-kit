@@ -14,41 +14,58 @@ ImVec4 Alpha(ImVec4 c, float a) {
     c.w = a;
     return c;
 }
+float Linear(float v) {
+    return v <= .04045f ? v / 12.92f : std::pow((v + .055f) / 1.055f, 2.4f);
+}
+float RelativeLuminance(ImVec4 c) {
+    c = {std::clamp(c.x, 0.f, 1.f), std::clamp(c.y, 0.f, 1.f), std::clamp(c.z, 0.f, 1.f), c.w};
+    return .2126f * Linear(c.x) + .7152f * Linear(c.y) + .0722f * Linear(c.z);
+}
+// Dark text on light backgrounds and white on dark ones; the crossover is where both give equal contrast.
+ImVec4 OnColor(ImVec4 background) {
+    return Hex(RelativeLuminance(background) > .179f ? 0x142031 : 0xffffff);
+}
 ImGuiStyle Style(const Theme &t, float scale) {
     IM_ASSERT(scale > 0 && std::isfinite(scale));
     ImGuiStyle s; // Always derive from unscaled values, never the last application.
     const auto &m = t.metrics;
     const auto &p = t.colors;
+    // Read from the token, not the metrics projection, so a border set without ResolveTheme still applies.
+    const float border = t.stroke.border;
+    const bool outline = border >= OutlineMinimumWidth;
+    const float hairlineWidth = std::min(border, 1.f);
     s.WindowPadding = {12, 12};
     s.FramePadding = {m.horizontalPadding, std::max(3.f, (m.controlHeight - m.bodySize) / 2)};
     s.ItemSpacing = {m.spacing, m.spacing};
     s.ItemInnerSpacing = {m.spacing, m.spacing};
     s.CellPadding = {m.spacing, 4};
     const bool highContrast = t.contrast == ContrastMode::HighContrast;
-    s.WindowRounding = t.radius.control;
-    s.ChildRounding = t.radius.control;
+    // Windows, children and images are overlay-class surfaces: a pill control radius must not turn them into capsules.
+    const float surfaceRadius = std::min(t.radius.control, t.radius.overlay);
+    s.WindowRounding = surfaceRadius;
+    s.ChildRounding = surfaceRadius;
     s.PopupRounding = t.radius.overlay;
     s.FrameRounding = t.radius.control;
     s.GrabRounding = 999.f; // Pill grabs follow the Toggle thumb.
     s.ScrollbarRounding = 999.f;
-    s.WindowBorderSize = m.border;
-    s.ChildBorderSize = 0;
-    s.PopupBorderSize = m.border;
-    s.FrameBorderSize = m.border;
+    s.WindowBorderSize = border;
+    s.ChildBorderSize = outline ? border : 0.f;
+    s.PopupBorderSize = border;
+    s.FrameBorderSize = border;
     s.IndentSpacing = 18;
     s.ScrollbarSize = 10;
     s.GrabMinSize = 14;
     s.TabRounding = t.radius.control + 2;
-    s.TabBorderSize = 0;
+    s.TabBorderSize = outline ? border : 0.f;
     s.TabBarBorderSize = 1;
     s.TabBarOverlineSize = 0;
-    s.SeparatorTextBorderSize = m.border;
+    s.SeparatorTextBorderSize = hairlineWidth;
     s.SeparatorTextPadding = {0, 6};
     s.SeparatorTextAlign = {0, .5f};
-    s.ImageRounding = t.radius.control;
-    s.ImageBorderSize = m.border;
+    s.ImageRounding = surfaceRadius;
+    s.ImageBorderSize = border;
     s.MenuItemRounding = t.radius.control - 2;
-    s.TreeLinesSize = m.border;
+    s.TreeLinesSize = hairlineWidth;
     s.TreeLinesRounding = 2;
     s.TreeLinesFlags = ImGuiTreeNodeFlags_DrawLinesToNodes;
     s.DragDropTargetBorderSize = m.focusWidth;
@@ -65,7 +82,7 @@ ImGuiStyle Style(const Theme &t, float scale) {
     // Standard contrast softens the hairline; the semantic border token still drives validation
     // and focus. High contrast keeps the full-strength border.
     const ImVec4 hairline = highContrast ? p.border : Mix(p.surface, p.border, .42f);
-    c[ImGuiCol_Border] = hairline;
+    c[ImGuiCol_Border] = outline ? p.border : hairline;
     c[ImGuiCol_BorderShadow] = {0, 0, 0, 0};
     c[ImGuiCol_FrameBg] = p.input;
     c[ImGuiCol_FrameBgHovered] = t.semantic.control.hover;
@@ -252,11 +269,8 @@ void ResolveTheme(Theme& t) {
     t.editor.snapGuide=c.control.focused; t.editor.error=c.error; t.editor.locked=c.textDisabled;
 }
 float ContrastRatio(ImVec4 foreground,ImVec4 background) {
-    auto lum=[](ImVec4 c) { auto linear=[](float x) { x=std::clamp(x,0.f,1.f);
-        return x<=.04045f?x/12.92f:std::pow((x+.055f)/1.055f,2.4f); };
-        return .2126f*linear(c.x)+.7152f*linear(c.y)+.0722f*linear(c.z); };
     foreground=Mix(background,foreground,std::clamp(foreground.w,0.f,1.f));
-    float a=lum(foreground),b=lum(background); return (std::max(a,b)+.05f)/(std::min(a,b)+.05f);
+    float a=RelativeLuminance(foreground),b=RelativeLuminance(background); return (std::max(a,b)+.05f)/(std::min(a,b)+.05f);
 }
 bool ValidateContrast(const Theme& t) {
     const auto& c=t.semantic;
@@ -270,14 +284,86 @@ bool ValidateContrast(const Theme& t) {
 void SetAccent(Theme &t, ImVec4 accent) {
     t.colors.accent = accent;
     t.colors.focus = accent;
-    const auto linear = [](float v) {
-        return v <= .04045f ? v / 12.92f : std::pow((v + .055f) / 1.055f, 2.4f);
-    };
-    float luminance = .2126f * linear(accent.x) + .7152f * linear(accent.y) + .0722f * linear(accent.z);
-    t.colors.onAccent = Hex(luminance > .179f ? 0x142031 : 0xffffff);
+    t.colors.onAccent = OnColor(accent);
     t.colors.selection = Mix(t.colors.surface, accent, t.scheme == ColorScheme::Dark ? .16f : .09f);
     t.semantic.accent=accent; t.semantic.onAccent=t.colors.onAccent;
     t.semantic.control.focused=accent; t.semantic.control.selected=t.colors.selection;
+}
+namespace {
+// The weakest mix of `from` toward `to`, starting at `start`, that reaches `ratio` against every background.
+ImVec4 MixForContrast(ImVec4 from, ImVec4 to, float start, float ratio, std::span<const ImVec4> backgrounds) {
+    for (float k = start; k < 1.f; k += .02f) {
+        const ImVec4 c = Mix(from, to, k);
+        if (std::all_of(backgrounds.begin(), backgrounds.end(),
+                        [&](ImVec4 background) { return ContrastRatio(c, background) >= ratio; }))
+            return c;
+    }
+    return to;
+}
+ImVec4 Opaque(ImVec4 c) {
+    c.w = 1;
+    return c;
+}
+} // namespace
+Theme MakeBrandTheme(const BrandPalette &brand) {
+    const ImVec4 canvas = Opaque(brand.canvas), surface = Opaque(brand.surface), text = Opaque(brand.text),
+                 accent = Opaque(brand.accent), white{1, 1, 1, 1};
+    const bool dark = RelativeLuminance(canvas) <= .179f;
+    Theme t = MakePrecisionTheme(dark ? ColorScheme::Dark : ColorScheme::Light);
+    auto &s = t.semantic;
+    const auto given = [](ImVec4 c) { return c.w > 0; };
+    s.canvas = canvas;
+    s.surface = surface;
+    s.surfaceRaised = given(brand.raised) ? Opaque(brand.raised) : dark ? Mix(surface, text, .08f) : Mix(surface, white, .65f);
+    s.overlay = s.surfaceRaised;
+    s.text = text;
+    s.accent = accent;
+    s.onAccent = OnColor(accent);
+    const ImVec4 input = Mix(canvas, surface, .35f);
+    s.control = {input, Mix(input, accent, .10f), Mix(input, accent, .17f), accent,
+                 Mix(surface, accent, dark ? .16f : .09f), input};
+    // Secondary text and the border are derived against the surfaces they sit on, so they stay legible.
+    const std::array backgrounds = {s.canvas, s.surface, s.surfaceRaised, s.control.rest, s.control.hover,
+                                    s.control.pressed, s.control.selected};
+    s.textSecondary = given(brand.textSecondary) ? Opaque(brand.textSecondary)
+                                                 : MixForContrast(canvas, text, .78f, 4.5f, backgrounds);
+    s.textDisabled = s.textSecondary;
+    s.border = given(brand.border) ? Opaque(brand.border) : MixForContrast(surface, text, .62f, 3.f, backgrounds);
+    if (given(brand.success))
+        s.success = Opaque(brand.success);
+    if (given(brand.warning))
+        s.warning = Opaque(brand.warning);
+    if (given(brand.error)) {
+        s.error = Opaque(brand.error);
+        t.colors.onDestructive = OnColor(s.error);
+    }
+    ResolveTheme(t);
+    return t;
+}
+void SetCornerStyle(Theme &t, CornerStyle style) {
+    switch (style) {
+    case CornerStyle::Sharp: t.radius = {0, 2, 4}; break;
+    case CornerStyle::Soft: t.radius = {4, 8, 12}; break;
+    case CornerStyle::Round: t.radius = {8, 16, 22}; break;
+    case CornerStyle::Pill: t.radius = {12, 999, 26}; break;
+    }
+    ResolveTheme(t);
+}
+void PushTextRole(const Theme &t, TextRole role) {
+    const auto &y = t.typography;
+    const bool heading = role == TextRole::Heading || role == TextRole::Title;
+    const float size = role == TextRole::Caption ? y.caption
+                     : role == TextRole::Heading ? y.heading
+                     : role == TextRole::Title   ? y.title
+                     : role == TextRole::Mono    ? y.monospace
+                                                 : y.body;
+    ImFont *font = t.fonts.regular;
+    if (heading)
+        font = t.fonts.display ? t.fonts.display : t.fonts.emphasis ? t.fonts.emphasis : t.fonts.regular;
+    ImGui::PushFont(font, size);
+}
+void PopTextRole() {
+    ImGui::PopFont();
 }
 void ApplyTheme(const Theme &t, float scale) {
     auto next = Style(t, scale);

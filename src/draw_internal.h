@@ -54,14 +54,14 @@ inline void DrawRingArc(ImDrawList* draw, ImVec2 c, float radius, float thicknes
 // Soft shadow around a rectangle: concentric hairline rings fading outwards. The
 // caller must have a clip rectangle that allows drawing outside the rectangle.
 inline void DrawSoftShadow(ImDrawList* draw, ImVec2 minimum, ImVec2 maximum, float rounding, float extent,
-                           float peakAlpha) {
+                           float peakAlpha, ImVec4 color = {0, 0, 0, 1}) {
     const int steps = std::clamp(static_cast<int>(std::ceil(extent)), 1, 16);
     const float step = extent / static_cast<float>(steps);
     for (int i = 0; i < steps; ++i) {
         const float falloff = 1.f - (static_cast<float>(i) + .5f) / static_cast<float>(steps);
         const float spread = step * static_cast<float>(i) + step * .5f;
         draw->AddRect({minimum.x - spread, minimum.y - spread}, {maximum.x + spread, maximum.y + spread},
-                      ImGui::ColorConvertFloat4ToU32({0, 0, 0, peakAlpha * falloff * falloff}), rounding + spread,
+                      ImGui::ColorConvertFloat4ToU32({color.x, color.y, color.z, peakAlpha * falloff * falloff}), rounding + spread,
                       ImDrawFlags_None, step + .5f);
     }
 }

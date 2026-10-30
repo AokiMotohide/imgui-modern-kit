@@ -66,6 +66,8 @@ bool PillButton(const char* id, const char* text, const ShowColors& c, const Com
     draw->AddRectFilled(a, b, U32(fill), round);
     if (dashed)
         detail::DrawDashedRect(draw, a, b, round, U32(c.muted, .7f), 1.f, 3.f);
+    else if (detail::IsOutlined(ImGui::GetStyle()))
+        detail::DrawOutline(draw, a, b, round);
     else
         draw->AddRect(a, b, U32(tone.w > 0 ? Mix(c.border, tone, .6f) : c.border, .8f), round, 0, 1.f);
     DrawTextCentered(draw, a, b, U32(ink), text);
