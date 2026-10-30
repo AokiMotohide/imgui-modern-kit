@@ -79,8 +79,10 @@ int DonutChart(const char* id, const DonutChartView& view, DonutChartOptions lay
     const bool ringHovered = ImGui::IsItemHovered();
     const bool ringClicked = ImGui::IsItemClicked();
     const ImVec2 c{origin.x + diameter * .5f, origin.y + diameter * .5f};
-    const float radius = diameter * .5f - thickness * .5f - 3.f;
+    const float outline = detail::IsOutlined(ImGui::GetStyle()) ? ImGui::GetStyle().FrameBorderSize : 0.f;
+    const float radius = diameter * .5f - thickness * .5f - 3.f - outline;
     auto* draw = ImGui::GetWindowDrawList();
+    detail::DrawRingOutline(draw, c, radius, thickness, 64);
     draw->AddCircle(c, radius, ImGui::GetColorU32(detail::WithAlpha(TextColor(o), .10f)), 64, thickness);
 
     // Hit test by polar angle so hover follows the ring rather than the square.
@@ -325,8 +327,10 @@ int BarChart(const char* id, const BarChartView& view, BarChartOptions layout, C
                 ImVec4 color = b.color.w > 0 ? b.color : ChartColor(o.theme, 0); // One series: one colour.
                 if (hovered >= 0 && hovered != static_cast<int>(i))
                     color = detail::WithAlpha(color, .55f);
-                if (c.y - a.y > 0)
+                if (c.y - a.y > 0) {
                     draw->AddRectFilled(a, c, ImGui::GetColorU32(color), std::min(barWidth * .3f, 6.f), ImDrawFlags_RoundCornersTop);
+                    detail::DrawOutline(draw, a, c, std::min(barWidth * .3f, 6.f), ImDrawFlags_RoundCornersTop);
+                }
                 if (layout.values && Finite(b.value)) {
                     char text[32];
                     std::snprintf(text, sizeof(text), detail::SafeFormat(layout.format, "fge", "%.0f"), b.value);
@@ -363,9 +367,12 @@ int BarChart(const char* id, const BarChartView& view, BarChartOptions layout, C
                 ImVec4 color = b.color.w > 0 ? b.color : ChartColor(o.theme, 0);
                 if (hovered >= 0 && hovered != static_cast<int>(i))
                     color = detail::WithAlpha(color, .55f);
-                if (barEnd > plotMin.x)
+                if (barEnd > plotMin.x) {
                     draw->AddRectFilled({plotMin.x, cy - barHeight * .5f}, {barEnd, cy + barHeight * .5f}, ImGui::GetColorU32(color),
                                         std::min(barHeight * .3f, 6.f), ImDrawFlags_RoundCornersRight);
+                    detail::DrawOutline(draw, {plotMin.x, cy - barHeight * .5f}, {barEnd, cy + barHeight * .5f}, std::min(barHeight * .3f, 6.f),
+                                        ImDrawFlags_RoundCornersRight);
+                }
                 draw->PushClipRect({origin.x, cy - slot * .5f}, {plotMin.x - 4.f, cy + slot * .5f}, true);
                 draw->AddText({origin.x, cy - lineHeight * .5f}, ImGui::GetColorU32(SecondaryColor(o)), Safe(b.label));
                 draw->PopClipRect();

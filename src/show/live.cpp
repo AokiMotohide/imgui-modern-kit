@@ -27,7 +27,7 @@ bool MiniToggle(const char* id, const char* letter, bool* value, ImVec4 tone, co
     const ImVec4 fill = *value ? tone : Mix(c.input, c.text, hovered ? .1f : .04f);
     draw->AddRectFilled(a, b, U32(fill), s * .28f);
     if (!*value)
-        draw->AddRect(a, b, U32(c.border), s * .28f, 0, 1.f);
+        draw->AddRect(a, b, U32(c.border), s * .28f, 0, detail::FrameLineWidth(1.f));
     DrawTextCentered(draw, a, b, U32(*value ? InkFor(c, tone) : c.muted), letter);
     if (focused && ImGui::GetIO().NavVisible)
         draw->AddRect({a.x - 2, a.y - 2}, {b.x + 2, b.y + 2}, U32(c.focus), s * .28f + 2.f, 0, 2.f);
@@ -370,7 +370,7 @@ GoBarRequest GoBar(const char* id, const GoBarView& view, bool* armed, Component
         const ImVec2 a = ImGui::GetCursorScreenPos(), b{a.x + w, a.y + h};
         ReadoutItem({w, h});
         draw->AddRectFilled(a, b, U32(Mix(c.input, c.text, .02f)), round);
-        draw->AddRect(a, b, U32(c.border, .7f), round, 0, 1.f);
+        draw->AddRect(a, b, U32(c.border, detail::FrameLineAlpha(.7f)), round, 0, detail::FrameLineWidth(1.f));
         draw->AddRectFilled({a.x + 1.f, a.y + u * .3f}, {a.x + 4.f, b.y - u * .3f}, U32(c.armed), 2.f);
         const float small = ImGui::GetFontSize() * .78f;
         ImFont* font = ImGui::GetFont();
@@ -474,7 +474,7 @@ ClipLauncherRequest ClipLauncher(const char* id, const ClipLauncherView& view, C
                 request.selectLayer = layer;
             SemanticItem(options, Safe(lv.name), accessibility::SemanticRole::Group, accessibility::SemanticAction::Select, lv.selected);
             draw->AddRectFilled(la, lb, U32(Mix(c.raised, c.accent, lv.selected ? .12f : 0.f)), round);
-            draw->AddRect(la, lb, U32(lv.selected ? c.accent : c.border, lv.selected ? .9f : .6f), round, 0, 1.f);
+            draw->AddRect(la, lb, U32(lv.selected ? c.accent : c.border, lv.selected ? .9f : .6f), round, 0, detail::FrameLineWidth(1.f));
             draw->AddRectFilled({la.x, la.y + 3}, {la.x + 4.f, lb.y - 3}, U32(tone), 2.f);
             // Stop square.
             {
@@ -774,7 +774,7 @@ EffectRackRequest EffectRack(const char* id, std::span<const EffectSlot> slots, 
         const float headH = u * 1.5f;
         const float bodyH = expanded ? static_cast<float>(slot.params.size()) * u * 1.15f + u * .5f : 0.f;
         draw->AddRectFilled(a, {a.x + width, a.y + headH + bodyH}, U32(c.raised), round);
-        draw->AddRect(a, {a.x + width, a.y + headH + bodyH}, U32(c.border, .7f), round, 0, 1.f);
+        draw->AddRect(a, {a.x + width, a.y + headH + bodyH}, U32(c.border, detail::FrameLineAlpha(.7f)), round, 0, detail::FrameLineWidth(1.f));
         // Grip (drag source), chevron (expand), name.
         ImGui::SetCursorScreenPos({a.x + u * .2f, a.y});
         ImGui::InvisibleButton("##grip", {u * 1.0f, headH});
@@ -1230,7 +1230,7 @@ int DeviceHealth(const char* id, std::span<const DeviceView> devices, ComponentO
             clicked = i;
         const ImVec2 b{a.x + width, a.y + h};
         draw->AddRectFilled(a, b, U32(Mix(c.raised, c.text, hovered ? .05f : 0.f)), round);
-        draw->AddRect(a, b, U32(d.led == LedState::Error ? c.error : d.led == LedState::Warning ? c.warning : c.border, d.led == LedState::Error || d.led == LedState::Warning ? .9f : .6f), round, 0, 1.f);
+        draw->AddRect(a, b, U32(d.led == LedState::Error ? c.error : d.led == LedState::Warning ? c.warning : c.border, d.led == LedState::Error || d.led == LedState::Warning ? .9f : .6f), round, 0, detail::FrameLineWidth(1.f));
         SemanticItem(options, FrameText("%s, %s", Safe(d.name), Safe(d.status)), accessibility::SemanticRole::Row, accessibility::SemanticAction::Select);
         // Status light (shape coded) and names.
         const ImVec2 lc{a.x + u * .8f, a.y + h * .5f};

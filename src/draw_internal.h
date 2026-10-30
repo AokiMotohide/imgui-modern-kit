@@ -1,11 +1,40 @@
 #pragma once
 #include <imgui.h>
+#include <imkit/theme.h>
 #include <algorithm>
 #include <cmath>
 
 // Small drawing helpers shared by the component implementations. Everything is
 // stateless and draws into the supplied list; nothing here owns ImGui state.
 namespace imkit::detail {
+// A frame border of OutlineMinimumWidth or more is an outline, not a hairline (see theme.h). ApplyTheme truncates scaled
+// borders, so the minimum is scaled and truncated the same way. This reads the style, so it works without a Theme.
+inline bool IsOutlined(const ImGuiStyle& style) {
+    return style.FrameBorderSize > 0.f &&
+           style.FrameBorderSize >= std::trunc(OutlineMinimumWidth * style.FontScaleMain);
+}
+// The width of a thin frame line: the outline width when the theme is outlined, otherwise `thin`. The line colour of
+// components is already the full-strength border colour, so only the width needs to follow the theme.
+inline float FrameLineWidth(float thin) {
+    const auto& style = ImGui::GetStyle();
+    return IsOutlined(style) ? style.FrameBorderSize : thin;
+}
+// The alpha of a thin frame line: full strength when outlined, so thick outlines are not washed out.
+inline float FrameLineAlpha(float thin) {
+    return IsOutlined(ImGui::GetStyle()) ? 1.f : thin;
+}
+// Strokes a shape in the border colour at the style's border width when the theme is outlined; draws nothing otherwise.
+inline void DrawOutline(ImDrawList* draw, ImVec2 minimum, ImVec2 maximum, float rounding, ImDrawFlags flags = ImDrawFlags_None) {
+    const auto& style = ImGui::GetStyle();
+    if (IsOutlined(style))
+        draw->AddRect(minimum, maximum, ImGui::GetColorU32(ImGuiCol_Border), rounding, flags, style.FrameBorderSize);
+}
+// The same for a ring: a border-coloured circle wider than the ring by the outline on both sides. Draw it before the ring.
+inline void DrawRingOutline(ImDrawList* draw, ImVec2 center, float radius, float thickness, int segments) {
+    const auto& style = ImGui::GetStyle();
+    if (IsOutlined(style))
+        draw->AddCircle(center, radius, ImGui::GetColorU32(ImGuiCol_Border), segments, thickness + style.FrameBorderSize * 2.f);
+}
 inline ImVec4 MixColor(ImVec4 a, ImVec4 b, float t) {
     return {a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t, a.w + (b.w - a.w) * t};
 }

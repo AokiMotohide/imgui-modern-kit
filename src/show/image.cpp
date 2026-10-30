@@ -186,7 +186,7 @@ ImageButtonRequest ImageButton(const char* id, const ImageButtonView& view, Imag
     }
 
     // Border, state ring, badge and focus.
-    draw->AddRect(ia, ib, U32(c.border, .8f), r, 0, 1.f);
+    draw->AddRect(ia, ib, U32(c.border, detail::FrameLineAlpha(.8f)), r, 0, detail::FrameLineWidth(1.f));
     if (lit || dropping) {
         draw->AddRect({ia.x - 2, ia.y - 2}, {ib.x + 2, ib.y + 2}, U32(accent, .3f), r + 2.f, 0, 2.f);
         draw->AddRect(ia, ib, U32(accent), r, 0, 2.f);
@@ -272,7 +272,7 @@ ValueEdit ImageCropEditor(const char* id, const ImageButtonView& view, ImageCrop
             draw->AddLine({fx, a.y}, {fx, b.y}, IM_COL32(255, 255, 255, 70), 1.f);
             draw->AddLine({a.x, fy}, {b.x, fy}, IM_COL32(255, 255, 255, 70), 1.f);
         }
-    draw->AddRect(a, b, U32(active ? c.accent : c.border, .9f), r, 0, active ? 2.f : 1.f);
+    draw->AddRect(a, b, U32(active ? c.accent : c.border, .9f), r, 0, active ? 2.f : detail::FrameLineWidth(1.f));
     SemanticItem(options, Str(options, "show.adjustImage", "Adjust position..."), accessibility::SemanticRole::Group,
                  accessibility::SemanticAction::None);
 

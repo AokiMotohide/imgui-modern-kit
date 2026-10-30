@@ -679,7 +679,7 @@ void RuleBuilder(const char* id, const RuleView& rule, const RuleContext& contex
         const ImVec2 a = ImGui::GetCursorScreenPos(), b{a.x + width, a.y + ts.y + u * .8f};
         ImGui::Dummy({width, ts.y + u * .8f});
         ui.draw->AddRectFilled(a, b, U32(Mix(c.surface, c.accent, .06f)), u * .4f);
-        ui.draw->AddRect(a, b, U32(Mix(c.border, c.accent, .3f), .8f), u * .4f, 0, 1.f);
+        ui.draw->AddRect(a, b, U32(Mix(c.border, c.accent, .3f), .8f), u * .4f, 0, detail::FrameLineWidth(1.f));
         ui.draw->AddText(ImGui::GetFont(), ImGui::GetFontSize(), {a.x + u * .6f, a.y + u * .4f}, U32(c.muted), sentence, nullptr, width - u * 1.2f);
     }
     ImGui::EndGroup();

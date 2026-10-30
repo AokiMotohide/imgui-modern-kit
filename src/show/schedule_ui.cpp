@@ -233,7 +233,7 @@ bool TimePicker(const char* id, int* secondsOfDay, TimePickerOptions o, Componen
             changed = true;
         }
         draw->AddRectFilled(a, b, U32(Mix(c.input, c.text, hovered || active ? .08f : 0.f)), u * .3f);
-        draw->AddRect(a, b, U32(active || focused ? c.accent : c.border), u * .3f, 0, active ? 2.f : 1.f);
+        draw->AddRect(a, b, U32(active || focused ? c.accent : c.border), u * .3f, 0, active ? 2.f : detail::FrameLineWidth(1.f));
         const char* text = FrameText("%02d", fields[i]);
         DrawTextCentered(draw, a, b, U32(c.text), text);
         if (hovered) {
@@ -272,7 +272,7 @@ bool DateTimeField(const char* id, std::int64_t* utc, TimeZone zone, std::int32_
         ImGui::OpenPopup("##picker");
     SemanticItem(options, id, accessibility::SemanticRole::ComboBox, accessibility::SemanticAction::Press);
     draw->AddRectFilled(a, b, U32(Mix(c.input, c.text, hovered ? .06f : 0.f)), u * .3f);
-    draw->AddRect(a, b, U32(c.border), u * .3f, 0, 1.f);
+    draw->AddRect(a, b, U32(c.border), u * .3f, 0, detail::FrameLineWidth(1.f));
     draw->AddText({a.x + u * .45f, a.y + (size.y - ImGui::GetTextLineHeight()) * .5f}, U32(c.text), text);
     detail::DrawChevron(draw, {b.x - u * .6f, a.y + size.y * .5f}, u * .4f, U32(c.muted), ImGuiDir_Down, 1.5f);
     bool changed = false;
@@ -837,6 +837,7 @@ CalendarRequest Calendar(const char* id, std::span<const CalendarEvent> events, 
                     request.activate = ev.id;
                 const ImVec4 tone = c.layer(static_cast<std::size_t>(ev.color));
                 draw->AddRectFilled(r0, r1, U32(Mix(c.surface, tone, ev.id == state.selected ? .55f : .35f)), round);
+                detail::DrawOutline(draw, r0, r1, round);
                 draw->AddRectFilled(r0, {r0.x + 3.f, r1.y}, U32(tone), 2.f);
                 DrawTextFit(draw, {r0.x + u * .4f, r0.y + (u - ImGui::GetTextLineHeight()) * .5f}, r1.x - r0.x - u * .6f, U32(c.text), Safe(ev.title));
                 SemanticItem(options, Safe(ev.title), accessibility::SemanticRole::Button, accessibility::SemanticAction::Select, ev.id == state.selected);
@@ -989,6 +990,7 @@ CalendarRequest Calendar(const char* id, std::span<const CalendarEvent> events, 
                 if (active && moved)
                     fill = Mix(c.surface, tone, .15f);
                 draw->AddRectFilled(a, b, U32(fill), round);
+                detail::DrawOutline(draw, a, b, round);
                 draw->AddRectFilled(a, {a.x + 3.f, b.y}, U32(tone), 2.f);
                 const bool conflict = conflictIndex[static_cast<std::size_t>(seg.event)] != 0;
                 if (conflict)
@@ -1077,7 +1079,7 @@ CalendarRequest Calendar(const char* id, std::span<const CalendarEvent> events, 
             }
             SemanticItem(options, DateText(day), accessibility::SemanticRole::Cell, accessibility::SemanticAction::Select);
             draw->AddRectFilled(a, b, U32(cm == m ? Mix(c.surface, c.text, hovered ? .06f : .02f) : Mix(c.surface, c.input, .5f)));
-            draw->AddRect(a, b, U32(c.border, .6f));
+            draw->AddRect(a, b, U32(c.border, detail::FrameLineAlpha(.6f)));
             if (day == today) {
                 draw->AddRectFilled({a.x + 4.f, a.y + 3.f}, {a.x + u * 1.3f, a.y + u * 1.1f}, U32(c.accent), u * .5f);
                 DrawTextCentered(draw, {a.x + 4.f, a.y + 3.f}, {a.x + u * 1.3f, a.y + u * 1.1f}, U32(c.onAccent), FrameText("%d", cd));
@@ -1105,6 +1107,7 @@ CalendarRequest Calendar(const char* id, std::span<const CalendarEvent> events, 
                     request.activate = ev.id;
                 const ImVec4 tone = c.layer(static_cast<std::size_t>(ev.color));
                 draw->AddRectFilled(ca, cb, U32(Mix(c.surface, tone, ev.id == state.selected ? .55f : .3f)), 3.f);
+                detail::DrawOutline(draw, ca, cb, 3.f);
                 draw->AddRectFilled(ca, {ca.x + 3.f, cb.y}, U32(tone), 2.f);
                 draw->PushClipRect(ca, cb, true);
                 draw->AddText(ImGui::GetFont(), ImGui::GetFontSize() * .85f, {ca.x + 6.f, ca.y + 1.f}, U32(c.text), Safe(ev.title));
@@ -1253,6 +1256,7 @@ ResourceTimelineRequest ResourceTimeline(const char* id, std::span<const char* c
         }
         const ImVec4 tone = c.layer(static_cast<std::size_t>(ev.color));
         draw->AddRectFilled(a, b, U32(Mix(c.surface, tone, ev.id == selected ? .6f : hovered ? .45f : .35f)), round);
+        detail::DrawOutline(draw, a, b, round);
         draw->AddRectFilled(a, {a.x + 3.f, b.y}, U32(tone), 2.f);
         bool conflict = false;
         for (std::size_t i = 0; i < std::min<std::size_t>(pairCount, pairs.size()); ++i)

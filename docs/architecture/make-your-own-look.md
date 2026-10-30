@@ -59,6 +59,7 @@ ImKit reads and writes no files and watches nothing. For development, reload the
 ## Outlines, corners and shadows
 
 - **Outline.** A border of 2 design pixels or more (`theme.stroke.border`) is an outline: it is drawn in the full-strength border colour on windows, popups, frames and every button variant. Below 2 it stays a soft hairline, exactly as before. Dividers, tree lines and table lines never exceed 1.
+- **Components that follow the outline.** Besides windows and buttons: progress bars, circular progress and the donut chart (a bordered track), stage markers and connectors, timeline clips, bar chart bars, step sequencer cells, schedule events, the range slider rail and the thin frames of the Show module. Where a component drew a 1 px line, it now draws the outline width in full strength.
 - **Corners.** `SetCornerStyle` sets `radius.subtle`, `control` and `overlay` together: Sharp, Soft (the default), Round or Pill; Pill rounds a control to half its height at every density. Windows and images never use a radius larger than the overlay radius, so even a very large control radius does not turn them into capsules.
 - **Shadow.** `elevation.hard` replaces the blurred shadow with a solid copy of the shape moved by `elevation.offset`, in `semantic.shadow`. `DrawShadow` draws it for your own shapes and `OverlayDecoration` uses it for popups. Buttons that receive the theme draw it behind the frame and move down by the offset while pressed.
 

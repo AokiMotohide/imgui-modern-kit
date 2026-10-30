@@ -191,7 +191,8 @@ bool RangeCore(const char* label, double* lowValue, double* highValue, double mi
     const float finalLow = xOf(m.low), finalHigh = xOf(m.high);
     draw->AddRectFilled({x0, cy - railH * .5f}, {x1, cy + railH * .5f}, ImGui::GetColorU32(ImGuiCol_FrameBg), railH);
     if (style.FrameBorderSize > 0)
-        draw->AddRect({x0, cy - railH * .5f}, {x1, cy + railH * .5f}, ImGui::GetColorU32(ImGuiCol_Border), railH);
+        draw->AddRect({x0, cy - railH * .5f}, {x1, cy + railH * .5f}, ImGui::GetColorU32(ImGuiCol_Border), railH, ImDrawFlags_None,
+                      std::max(1.f, style.FrameBorderSize));
     if (layout.ticks > 1) {
         const ImU32 tick = ImGui::GetColorU32(ImGuiCol_TextDisabled, .6f);
         for (int i = 0; i < layout.ticks; ++i) {

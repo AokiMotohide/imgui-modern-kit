@@ -253,7 +253,7 @@ WaveformRequest ScrollingWaveform(const char* id, const WaveformSpan& track, Scr
     draw->PopClipRect();
     // Playhead.
     draw->AddLine({a.x + size.x * .5f, a.y}, {a.x + size.x * .5f, b.y}, U32(c.text), 2.f);
-    draw->AddRect(a, b, U32(frame.Active() ? c.accent : c.border), u * .3f, 0, frame.Active() ? 2.f : 1.f);
+    draw->AddRect(a, b, U32(frame.Active() ? c.accent : c.border), u * .3f, 0, frame.Active() ? 2.f : detail::FrameLineWidth(1.f));
     detail::ValueNode node;
     node.name = id;
     node.value = request.scrub.value;
@@ -311,7 +311,7 @@ WaveformRequest OverviewWaveform(const char* id, const WaveformSpan& track, Over
         }
         draw->AddLine({playedX, a.y}, {playedX, b.y}, U32(c.text), 2.f);
     }
-    draw->AddRect(a, b, U32(c.border), u * .25f, 0, 1.f);
+    draw->AddRect(a, b, U32(c.border), u * .25f, 0, detail::FrameLineWidth(1.f));
     detail::ValueNode node;
     node.name = id;
     node.value = track.position;
@@ -466,7 +466,7 @@ bool Kill(const char* id, bool* value, const ShowColors& c, const ComponentOptio
         *value = !*value;
     draw->AddRectFilled(a, b, U32(*value ? c.error : Mix(c.input, c.text, ImGui::IsItemHovered() ? .1f : .04f)), s * .28f);
     if (!*value)
-        draw->AddRect(a, b, U32(c.border), s * .28f, 0, 1.f);
+        draw->AddRect(a, b, U32(c.border), s * .28f, 0, detail::FrameLineWidth(1.f));
     DrawTextCentered(draw, a, b, U32(*value ? InkFor(c, c.error) : c.muted), "K");
     ImGui::PopID();
     return changed;
@@ -655,6 +655,7 @@ void StepSequencer(const char* id, const SequencerView& view, StepEditBuffer& ed
             const ImVec2 a{g0.x + static_cast<float>(s) * cellW + gap * .5f + (beat && s > 0 ? 2.f : 0.f), y + gap * .5f};
             const ImVec2 b{g0.x + static_cast<float>(s + 1) * cellW - gap * .5f, y + rowH - gap * .5f};
             draw->AddRectFilled(a, b, U32(beat ? Mix(c.input, c.text, .08f) : c.input), 4.f);
+            detail::DrawOutline(draw, a, b, 4.f);
             if (v) {
                 const float fill = .35f + .65f * static_cast<float>(v) / 127.f;
                 draw->AddRectFilled({a.x, b.y - (b.y - a.y) * fill}, b, U32(c.accent), 4.f, fill >= .99f ? ImDrawFlags_None : ImDrawFlags_RoundCornersBottom);
@@ -713,7 +714,7 @@ ValueEdit Spectrum(const char* id, std::span<const float> bandsDb, std::span<con
             }
         }
     }
-    draw->AddRect(a, b, U32(c.border), u * .3f, 0, 1.f);
+    draw->AddRect(a, b, U32(c.border), u * .3f, 0, detail::FrameLineWidth(1.f));
     AnnotateText(options, id, FrameText("peak %.0f dB", maxDb), accessibility::SemanticRole::Meter);
     if (bandLow && bandHigh) {
         RangeSliderOptions rs;

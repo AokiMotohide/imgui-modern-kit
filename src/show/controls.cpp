@@ -181,7 +181,7 @@ ValueEdit Fader(const char* label, float* value, FaderOptions o, ComponentOption
     if (options.theme)
         draw->AddRectFilled({cmin.x, cmin.y + 2}, {cmax.x, cmax.y + 2}, U32({0, 0, 0, .28f}), u * .18f);
     draw->AddRectFilled(cmin, cmax, U32(Mix(c.raised, c.text, .08f + .08f * emph)), u * .18f);
-    draw->AddRect(cmin, cmax, U32(active ? c.accent : c.border, active ? 1.f : .9f), u * .18f, 0, active ? 2.f : 1.f);
+    draw->AddRect(cmin, cmax, U32(active ? c.accent : c.border, active ? 1.f : .9f), u * .18f, 0, active ? 2.f : detail::FrameLineWidth(1.f));
     if (vertical)
         draw->AddLine({cmin.x + u * .18f, cp.y}, {cmax.x - u * .18f, cp.y}, U32(Mix(c.muted, c.accent, emph)), 2.f);
     else
@@ -414,7 +414,7 @@ ValueEdit XYPad(const char* label, float* x, float* y, XYPadOptions o, Component
     const float hr = u * (.3f + .06f * emph);
     draw->AddCircleFilled({px, py}, hr, U32(c.accent), 20);
     draw->AddCircle({px, py}, hr + 2.f, U32(c.text, .9f), 20, 1.5f);
-    draw->AddRect(p0, p1, U32(active ? c.accent : c.border), round, 0, active ? 2.f : 1.f);
+    draw->AddRect(p0, p1, U32(active ? c.accent : c.border), round, 0, active ? 2.f : detail::FrameLineWidth(1.f));
     if (focused && io.NavVisible)
         draw->AddRect({p0.x - 3, p0.y - 3}, {p1.x + 3, p1.y + 3}, U32(c.focus), round + 3.f, 0, 2.f);
     char text[64];
@@ -562,7 +562,7 @@ void DrawConsoleKey(ImDrawList* draw, const ShowColors& c, ImVec2 a, ImVec2 b, c
         draw->AddRectFilled(ia, b, U32(tone, .5f), round);
         draw->PopClipRect();
     }
-    draw->AddRect(ia, b, U32(k.lit && k.enabled ? tone : c.border, k.enabled ? .85f : .5f), round, 0, 1.f);
+    draw->AddRect(ia, b, U32(k.lit && k.enabled ? tone : c.border, k.enabled ? .85f : .5f), round, 0, detail::FrameLineWidth(1.f));
     // Lamp bar along the top edge: lit keys glow, unlit keys keep a dim slot.
     const float lampW = w * .46f, lampH = std::max(2.5f, u * .09f);
     const ImVec2 la{ia.x + (w - lampW) * .5f, ia.y + std::max(3.f, u * .12f)}, lb{la.x + lampW, la.y + lampH};
@@ -943,7 +943,7 @@ bool ArmSwitch(const char* label, bool* armed, ComponentOptions options) {
     const float t = Ease(options, ImGui::GetItemID(), *armed ? 1.f : 0.f);
     const ImVec2 b{a.x + trackW, a.y + h};
     draw->AddRectFilled(a, b, U32(Mix(c.input, c.armed, .15f + .65f * t + (hovered ? .06f : 0.f))), h * .5f);
-    draw->AddRect(a, b, U32(Mix(c.border, c.armed, t)), h * .5f, 0, 1.f);
+    draw->AddRect(a, b, U32(Mix(c.border, c.armed, t)), h * .5f, 0, detail::FrameLineWidth(1.f));
     const float kr = h * .38f;
     const ImVec2 kc{a.x + h * .5f + (trackW - h) * t, a.y + h * .5f};
     draw->AddCircleFilled(kc, kr, U32(Mix(c.text, c.onAccent, 0.f)), 20);
@@ -1043,7 +1043,7 @@ void ScribbleStrip(const char* id, const char* name, const char* value, ImVec4 c
     ReadoutItem({w, h});
     const float round = ControlRound(options) * .8f;
     draw->AddRectFilled(a, b, U32(Recessed(c, .45f)), round);
-    draw->AddRect(a, b, U32(c.border, .7f), round, 0, 1.f);
+    draw->AddRect(a, b, U32(c.border, detail::FrameLineAlpha(.7f)), round, 0, detail::FrameLineWidth(1.f));
     const ImVec4 tone = color.w > 0 ? color : c.accent;
     draw->PushClipRect(a, b, true);
     draw->AddRectFilled(a, {b.x, a.y + std::max(3.f, u * .14f)}, U32(tone));

@@ -337,6 +337,7 @@ void ProgressTrack(const char* id,float fraction,ProgressStatus status,Component
         const float left=position.x+phase*(width-segment);
         draw->AddRectFilled({left,position.y},{left+segment,position.y+height},ImGui::GetColorU32(foreground),radius,ImDrawFlags_RoundCornersAll);
     }
+    detail::DrawOutline(draw,position,{position.x+width,position.y+height},radius);
     if(o.accessibility) {
         accessibility::SemanticNode node;
         node.id=ImGui::GetID("progress-track");node.parent=o.parent;

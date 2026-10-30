@@ -88,7 +88,7 @@ AddressMapRequest AddressMap(const char* id, const AddressMapView& view, Address
         const float y = rowTop(r);
         draw->AddText({origin.x, y + (rowH - ImGui::GetTextLineHeight()) * .5f}, U32(c.muted), FrameText("U%d", r + 1));
         draw->AddRectFilled({barX, y}, {barX + barW, y + rowH}, U32(Recessed(c, .4f)), round);
-        draw->AddRect({barX, y}, {barX + barW, y + rowH}, U32(c.border, .7f), round, 0, 1.f);
+        draw->AddRect({barX, y}, {barX + barW, y + rowH}, U32(c.border, detail::FrameLineAlpha(.7f)), round, 0, detail::FrameLineWidth(1.f));
         for (int t = slots >= 128 ? 64 : slots / 4; t > 0 && t < slots; t += (slots >= 128 ? 64 : slots / 4)) {
             const float x = slotX(static_cast<float>(t));
             draw->AddLine({x, y + rowH - u * .3f}, {x, y + rowH - 1.f}, U32(c.muted, .5f), 1.f);
@@ -309,7 +309,7 @@ ChannelMonitorRequest ChannelMonitor(const char* id, const ChannelMonitorView& v
         if (band.w > 0)
             draw->AddRectFilled({a.x, a.y}, {b.x, a.y + 3.f}, U32(band), 2.f);
         const bool selected = i >= lo && i <= hi && state.selected >= 0;
-        draw->AddRect(a, b, U32(selected ? c.accent : c.border, selected ? 1.f : .6f), 3.f, 0, selected ? 2.f : 1.f);
+        draw->AddRect(a, b, U32(selected ? c.accent : c.border, selected ? 1.f : .6f), 3.f, 0, selected ? 2.f : detail::FrameLineWidth(1.f));
         if (cellW >= u * 1.3f) {
             const char* text = o.hex ? FrameText("%02X", value) : FrameText("%d", value);
             const ImVec2 ts = ImGui::CalcTextSize(text);

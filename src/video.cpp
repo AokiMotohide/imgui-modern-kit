@@ -809,15 +809,18 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             const ImVec4 ink = ContrastRatio(theme.colors.text, composite) >= 4.5f ? theme.colors.text
                              : ContrastRatio(white, composite) >= ContrastRatio(black, composite) ? white : black;
             const ImU32 inkColor = ImGui::GetColorU32(ink);
-            const float clipRadius = std::min(6.f, theme.radius.control);
+            const float clipRadius = std::min(std::max(6.f, theme.radius.subtle), theme.radius.control);
             if (selected)
                 draw->AddRect({a.x-2,a.y-2}, {b.x+2,b.y+2}, ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.focus,.30f)),
                               clipRadius + 2, ImDrawFlags_None, 3.f);
             draw->AddRectFilled(a, b, ImGui::GetColorU32(color), clipRadius);
             if (p.drawClipOverlay) p.drawClipOverlay(p.user,clip.id,value,a,b);
+            const bool outlined=::imkit::detail::IsOutlined(ImGui::GetStyle());
             draw->AddRect(a, b,
-                          selected ? ImGui::GetColorU32(theme.colors.focus) : ImGui::GetColorU32(ImVec4(0,0,0,.20f)),
-                          clipRadius, ImDrawFlags_None, selected ? 2.f : 1.f);
+                          selected ? ImGui::GetColorU32(theme.colors.focus)
+                                   : outlined ? ImGui::GetColorU32(ImGuiCol_Border) : ImGui::GetColorU32(ImVec4(0,0,0,.20f)),
+                          clipRadius, ImDrawFlags_None,
+                          selected ? std::max(2.f, ::imkit::detail::FrameLineWidth(1.f)) : ::imkit::detail::FrameLineWidth(1.f));
             const float edgeHit=std::min(10.f,std::max(6.f,(b.x-a.x)*.22f));
             const bool leftEdge=bodyHovered && io.MousePos.x-a.x<=edgeHit;
             const bool rightEdge=bodyHovered && b.x-io.MousePos.x<=edgeHit;

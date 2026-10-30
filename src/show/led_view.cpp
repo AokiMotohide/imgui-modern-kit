@@ -36,7 +36,7 @@ PixelPreviewRequest PixelPreview(const char* id, const PixelPreviewView& view, i
     ImGui::InvisibleButton("##pixels", size);
     const bool hovered = ImGui::IsItemHovered();
     draw->AddRectFilled(a, b, U32(ImVec4{.05f, .05f, .07f, 1.f}), round); // LEDs are shown on black in every theme.
-    draw->AddRect(a, b, U32(c.border, .8f), round, 0, 1.f);
+    draw->AddRect(a, b, U32(c.border, detail::FrameLineAlpha(.8f)), round, 0, detail::FrameLineWidth(1.f));
     AnnotateText(options, "Pixel preview", FrameText("%d pixels", n), accessibility::SemanticRole::Status);
     if (n == 0) {
         draw->AddText({a.x + u * .5f, a.y + u * .4f}, U32(c.muted), Str(options, "show.noPixels", "No pixels"));
@@ -234,7 +234,7 @@ BudgetStatus BudgetBar(const char* id, const BudgetBarView& view, BudgetBarOptio
         draw->PopClipRect();
     }
     draw->PopClipRect();
-    draw->AddRect(ba, bb, U32(c.border, .8f), round, 0, 1.f);
+    draw->AddRect(ba, bb, U32(c.border, detail::FrameLineAlpha(.8f)), round, 0, detail::FrameLineWidth(1.f));
     // Limit and warning marks.
     const float lx = ba.x + w * limit / scaleMax, wx = ba.x + w * limit * warn / scaleMax;
     draw->AddLine({lx, ba.y - 3.f}, {lx, bb.y + 3.f}, U32(c.text), 2.f);
@@ -293,11 +293,11 @@ void DrawPatternGlyph(ImDrawList* d, const ShowColors& c, TestPattern p, ImVec2 
     case TestPattern::Blue: d->AddRectFilled(a, b, IM_COL32(70, 110, 240, 255), s * .2f); break;
     case TestPattern::Black:
         d->AddRectFilled(a, b, IM_COL32(8, 8, 10, 255), s * .2f);
-        d->AddRect(a, b, U32(c.border), s * .2f, 0, 1.f);
+        d->AddRect(a, b, U32(c.border), s * .2f, 0, detail::FrameLineWidth(1.f));
         break;
     case TestPattern::Gradient:
         d->AddRectFilledMultiColor(a, b, IM_COL32(0, 0, 0, 255), IM_COL32(255, 255, 255, 255), IM_COL32(255, 255, 255, 255), IM_COL32(0, 0, 0, 255));
-        d->AddRect(a, b, U32(c.border), s * .2f, 0, 1.f);
+        d->AddRect(a, b, U32(c.border), s * .2f, 0, detail::FrameLineWidth(1.f));
         break;
     case TestPattern::Grid:
         d->AddRect(a, b, line, s * .15f, 0, 1.2f);
@@ -397,7 +397,7 @@ int PortStrip(const char* id, std::span<const PortView> ports, int* selected, Po
         }
         const ImVec4 tone = p.state == PortState::Active ? c.success : p.state == PortState::Warning ? c.warning : p.state == PortState::Error ? c.error : c.muted;
         draw->AddRectFilled(a, b, U32(Mix(c.input, c.text, hovered ? .07f : .025f)), round);
-        draw->AddRect(a, b, U32(on ? c.accent : c.border, on ? 1.f : .8f), round, 0, on ? 2.f : 1.f);
+        draw->AddRect(a, b, U32(on ? c.accent : c.border, on ? 1.f : .8f), round, 0, on ? 2.f : detail::FrameLineWidth(1.f));
         const ImVec2 g{a.x + u * .75f, a.y + u * .85f};
         switch (p.state) {
         case PortState::Active: draw->AddCircle(g, u * .24f, U32(tone), 14, 2.f); draw->AddCircleFilled(g, u * .11f, U32(tone), 10); break;

@@ -134,7 +134,7 @@ void DrawItem(const SurfaceItem& it, const Px& box, const ShowColors& c, const C
     case SurfaceKind::Display: {
         ReadoutItem(size);
         draw->AddRectFilled(box.min, box.max, U32(Recessed(c, .45f)), round);
-        draw->AddRect(box.min, box.max, U32(c.border, .7f), round, 0, 1.f);
+        draw->AddRect(box.min, box.max, U32(c.border, detail::FrameLineAlpha(.7f)), round, 0, detail::FrameLineWidth(1.f));
         draw->PushClipRect(box.min, box.max, true);
         if (label[0])
             draw->AddText(ImGui::GetFont(), ImGui::GetFontSize() * .8f, {box.min.x + u * .4f, box.min.y + u * .25f}, U32(c.muted), label);
@@ -173,7 +173,7 @@ void DrawItem(const SurfaceItem& it, const Px& box, const ShowColors& c, const C
     }
     case SurfaceKind::Panel: {
         draw->AddRectFilled(box.min, box.max, U32(Mix(c.surface, c.text, .03f)), round);
-        draw->AddRect(box.min, box.max, U32(c.border, .7f), round, 0, 1.f);
+        draw->AddRect(box.min, box.max, U32(c.border, detail::FrameLineAlpha(.7f)), round, 0, detail::FrameLineWidth(1.f));
         if (label[0]) {
             draw->PushClipRect(box.min, box.max, true);
             draw->AddText(ImGui::GetFont(), ImGui::GetFontSize() * .82f, {box.min.x + u * .45f, box.min.y + u * .3f}, U32(c.muted), label);
@@ -352,7 +352,7 @@ void SurfacePalette(const char* id, ComponentOptions options) {
             ImGui::EndDragDropSource();
         }
         draw->AddRectFilled(a, b, U32(Mix(c.input, c.text, hovered ? .09f : .03f)), size.y * .4f);
-        draw->AddRect(a, b, U32(c.border, .8f), size.y * .4f, 0, 1.f);
+        draw->AddRect(a, b, U32(c.border, detail::FrameLineAlpha(.8f)), size.y * .4f, 0, detail::FrameLineWidth(1.f));
         draw->AddText({a.x + u * .7f, a.y + (size.y - ts.y) * .5f}, U32(c.text), name);
         SemanticItem(options, name, accessibility::SemanticRole::Button, accessibility::SemanticAction::None);
         ImGui::PopID();
@@ -397,7 +397,7 @@ SurfaceRequest ControlSurface(const char* id, std::span<const SurfaceItem> items
     auto cellsOf = [&](ImVec2 p) { return ImVec2{(p.x - origin.x) / cell, (p.y - origin.y) / cell}; };
 
     draw->AddRectFilled(origin, areaMax, U32(Recessed(c, .3f)), round);
-    draw->AddRect(origin, areaMax, U32(c.border, .8f), round, 0, 1.f);
+    draw->AddRect(origin, areaMax, U32(c.border, detail::FrameLineAlpha(.8f)), round, 0, detail::FrameLineWidth(1.f));
     if (editing && o.showGrid)
         for (int gx = 1; gx < cols; ++gx)
             for (int gy = 1; gy < rows; ++gy)

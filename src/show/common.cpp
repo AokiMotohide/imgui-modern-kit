@@ -81,7 +81,7 @@ bool PillButton(const char* id, const char* text, const ShowColors& c, const Com
         else if (detail::IsOutlined(ImGui::GetStyle()))
             detail::DrawOutline(draw, a, b, round);
         else
-            draw->AddRect(a, b, U32(tone.w > 0 ? Mix(c.border, tone, .6f) : c.border, .8f), round, 0, 1.f);
+            draw->AddRect(a, b, U32(tone.w > 0 ? Mix(c.border, tone, .6f) : c.border, .8f), round, 0, detail::FrameLineWidth(1.f));
     }
     DrawTextCentered(draw, a, b, U32(ink), text);
     if (focused && ImGui::GetIO().NavVisible)

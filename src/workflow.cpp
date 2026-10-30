@@ -739,8 +739,10 @@ void CircularProgress(const char* id,const CircularProgressView& view,CircularPr
     }
     const ImVec2 top=ImGui::GetCursorScreenPos();ImGui::Dummy({diameter,diameter});
     const ImVec2 center{top.x+diameter*.5f,top.y+diameter*.5f};
-    const float radius=std::max(1.f,diameter*.5f-stroke*.5f-1.f);
+    const float outline=detail::IsOutlined(ImGui::GetStyle())?ImGui::GetStyle().FrameBorderSize:0.f;
+    const float radius=std::max(1.f,diameter*.5f-stroke*.5f-1.f-outline);
     auto* draw=ImGui::GetWindowDrawList();const int segments=std::clamp(static_cast<int>(diameter*.75f),24,96);
+    detail::DrawRingOutline(draw,center,radius,stroke,segments);
     draw->AddCircle(center,radius,ImGui::GetColorU32(detail::WithAlpha(text,.11f)),segments,stroke);
     if(available&&fraction>0.f) {
         const float start=-pi*.5f;
@@ -748,7 +750,7 @@ void CircularProgress(const char* id,const CircularProgressView& view,CircularPr
         else detail::DrawRingArc(draw,center,radius,stroke,start,start+2.f*pi*fraction,ImGui::GetColorU32(foreground));
     }
     const ImVec2 valueSize=ImGui::CalcTextSize(value);
-    const float innerWidth=std::max(1.f,(radius-stroke*.5f)*1.55f);
+    const float innerWidth=std::max(1.f,(radius-stroke*.5f-outline)*1.55f);
     const float textScale=std::min({diameter>=ImGui::GetFontSize()*4.f?1.15f:1.f,
                                   innerWidth/std::max(1.f,valueSize.x),
                                   innerWidth/std::max(1.f,valueSize.y)});
@@ -817,10 +819,14 @@ void StageProgress(const char* id,const StageProgressView& view,ComponentOptions
         const float radius=std::min(markerHeight*.4f,ImGui::GetFontSize()*.5f);
         const float centerY=origin.y+markerHeight*.5f;
         const ImVec4 connector=o.theme?o.theme->semantic.border:ImGui::GetStyleColorVec4(ImGuiCol_Border);
+        const bool outlined=detail::IsOutlined(ImGui::GetStyle());
+        const float outline=ImGui::GetStyle().FrameBorderSize;
+        const ImU32 outlineColor=ImGui::GetColorU32(ImGuiCol_Border);
         for(std::size_t i=0;i+1<stages.size();++i) {
             const float x1=origin.x+step*(static_cast<float>(i)+.5f)+radius;
             const float x2=origin.x+step*(static_cast<float>(i)+1.5f)-radius;
             const ImVec4 line=stages[i].status==ProgressStatus::Succeeded?ProgressStatusColor(stages[i].status,o):connector;
+            if(outlined) draw->AddLine({x1,centerY},{x2,centerY},outlineColor,3.f+outline*2.f);
             draw->AddLine({x1,centerY},{x2,centerY},ImGui::GetColorU32(line),3.f);
         }
         for(std::size_t i=0;i<stages.size();++i) {
@@ -828,6 +834,7 @@ void StageProgress(const char* id,const StageProgressView& view,ComponentOptions
             const ImVec4 color=ProgressStatusColor(stage.status,o);
             if(stage.status==ProgressStatus::Queued) draw->AddCircle({x,centerY},radius,ImGui::GetColorU32(color),24,2.f);
             else draw->AddCircleFilled({x,centerY},radius,ImGui::GetColorU32(color),24);
+            if(outlined) draw->AddCircle({x,centerY},radius,outlineColor,24,outline);
             if(stage.status==ProgressStatus::Succeeded) {
                 const ImVec4 ink=ContrastRatio({1,1,1,1},color)>=ContrastRatio({0,0,0,1},color)?ImVec4{1,1,1,1}:ImVec4{0,0,0,1};
                 detail::DrawCheck(draw,{x,centerY},radius*1.1f,ImGui::GetColorU32(ink),1.7f);

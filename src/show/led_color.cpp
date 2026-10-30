@@ -114,7 +114,7 @@ LedColorRequest LedColorPicker(const char* id, LightColor* color, float* kelvin,
         const ImVec2 a = ImGui::GetCursorScreenPos(), b{a.x + w, a.y + u * 1.2f};
         ReadoutItem({w, u * 1.2f});
         draw->AddRectFilled(a, b, U32(MixLightColor(*color)), round);
-        draw->AddRect(a, b, U32(c.border), round, 0, 1.f);
+        draw->AddRect(a, b, U32(c.border), round, 0, detail::FrameLineWidth(1.f));
         AnnotateText(options, "Light colour", FrameText("#%02X%02X%02X", Byte(color->r), Byte(color->g), Byte(color->b)), accessibility::SemanticRole::Status);
     }
     // Saturation / value area.
@@ -138,7 +138,7 @@ LedColorRequest LedColorPicker(const char* id, LightColor* color, float* kelvin,
         const ImU32 pure = U32({cr, cg, cb, 1.f}), white = IM_COL32(255, 255, 255, 255), clear = IM_COL32(0, 0, 0, 0), black = IM_COL32(0, 0, 0, 255);
         draw->AddRectFilledMultiColor(a, b, white, pure, pure, white);
         draw->AddRectFilledMultiColor(a, b, clear, clear, black, black);
-        draw->AddRect(a, b, U32(c.border), round * .6f, 0, 1.f);
+        draw->AddRect(a, b, U32(c.border), round * .6f, 0, detail::FrameLineWidth(1.f));
         const ImVec2 m{a.x + s * w, a.y + (1.f - v) * ah};
         draw->AddCircle(m, u * .32f, IM_COL32(0, 0, 0, 200), 16, 3.f);
         draw->AddCircle(m, u * .32f, IM_COL32(255, 255, 255, 255), 16, 1.6f);
@@ -166,7 +166,7 @@ LedColorRequest LedColorPicker(const char* id, LightColor* color, float* kelvin,
             const ImU32 c0 = U32({r0, g0, b0, 1.f}), c1 = U32({r1, g1, b1, 1.f});
             draw->AddRectFilledMultiColor({a.x + w * static_cast<float>(i) / 6.f, a.y}, {a.x + w * static_cast<float>(i + 1) / 6.f, b.y}, c0, c1, c1, c0);
         }
-        draw->AddRect(a, b, U32(c.border), 2.f, 0, 1.f);
+        draw->AddRect(a, b, U32(c.border), 2.f, 0, detail::FrameLineWidth(1.f));
         const float mx = a.x + hue * w;
         draw->AddRectFilled({mx - 3.f, a.y - 2.f}, {mx + 3.f, b.y + 2.f}, IM_COL32(255, 255, 255, 255), 2.f);
         draw->AddRect({mx - 3.f, a.y - 2.f}, {mx + 3.f, b.y + 2.f}, IM_COL32(0, 0, 0, 200), 2.f, 0, 1.f);
@@ -192,7 +192,7 @@ LedColorRequest LedColorPicker(const char* id, LightColor* color, float* kelvin,
         draw->AddText({a.x, a.y + (th - ImGui::GetTextLineHeight()) * .5f}, U32(c.muted), name);
         const ImU32 lo = U32(Recessed(c, .8f)), hi = U32(high);
         draw->AddRectFilledMultiColor({x0, ty - tr * .5f}, {x1, ty + tr * .5f}, lo, hi, hi, lo);
-        draw->AddRect({x0, ty - tr * .5f}, {x1, ty + tr * .5f}, U32(c.border), tr * .4f, 0, 1.f);
+        draw->AddRect({x0, ty - tr * .5f}, {x1, ty + tr * .5f}, U32(c.border), tr * .4f, 0, detail::FrameLineWidth(1.f));
         const ImVec2 tc{x0 + *value * (x1 - x0), ty};
         draw->AddCircleFilled(tc, th * .4f, IM_COL32(255, 255, 255, 255), 16);
         draw->AddCircle(tc, th * .4f, IM_COL32(0, 0, 0, 160), 16, 1.5f);
@@ -243,7 +243,7 @@ LedColorRequest LedColorPicker(const char* id, LightColor* color, float* kelvin,
             const ImU32 c0 = U32(KelvinToRgb(lo + (hi - lo) * static_cast<float>(i) / 8.f)), c1 = U32(KelvinToRgb(lo + (hi - lo) * static_cast<float>(i + 1) / 8.f));
             draw->AddRectFilledMultiColor({x0 + (x1 - x0) * static_cast<float>(i) / 8.f, ty - tr * .5f}, {x0 + (x1 - x0) * static_cast<float>(i + 1) / 8.f, ty + tr * .5f}, c0, c1, c1, c0);
         }
-        draw->AddRect({x0, ty - tr * .5f}, {x1, ty + tr * .5f}, U32(c.border), tr * .4f, 0, 1.f);
+        draw->AddRect({x0, ty - tr * .5f}, {x1, ty + tr * .5f}, U32(c.border), tr * .4f, 0, detail::FrameLineWidth(1.f));
         const ImVec2 tc{x0 + Clamp01((*kelvin - lo) / std::max(1.f, hi - lo)) * (x1 - x0), ty};
         draw->AddCircleFilled(tc, th * .4f, IM_COL32(255, 255, 255, 255), 16);
         draw->AddCircle(tc, th * .4f, IM_COL32(0, 0, 0, 160), 16, 1.5f);
@@ -299,7 +299,7 @@ LedColorRequest LedColorPicker(const char* id, LightColor* color, float* kelvin,
                 note(e, LedColorField::Swatch);
             }
             draw->AddRectFilled(a, b, U32({o.swatches[i].x, o.swatches[i].y, o.swatches[i].z, 1.f}), round * .6f);
-            draw->AddRect(a, b, U32(ImGui::IsItemHovered() ? c.text : c.border), round * .6f, 0, 1.f);
+            draw->AddRect(a, b, U32(ImGui::IsItemHovered() ? c.text : c.border), round * .6f, 0, detail::FrameLineWidth(1.f));
             SemanticItem(options, FrameText("Swatch #%02X%02X%02X", Byte(o.swatches[i].x), Byte(o.swatches[i].y), Byte(o.swatches[i].z)),
                          accessibility::SemanticRole::Button, accessibility::SemanticAction::Press);
             ImGui::PopID();
@@ -383,7 +383,7 @@ GradientRequest GradientEditor(const char* id, const GradientEditorView& view, i
             }
         }
         draw->PopClipRect();
-        draw->AddRect(a, b, U32(c.border), round, 0, 1.f);
+        draw->AddRect(a, b, U32(c.border), round, 0, detail::FrameLineWidth(1.f));
     }
 
     // Markers below the bar.
@@ -423,7 +423,7 @@ GradientRequest GradientEditor(const char* id, const GradientEditorView& view, i
         draw->AddTriangleFilled(apex, {cx - markerW * .35f, b.y + u * .45f}, {cx + markerW * .35f, b.y + u * .45f}, U32(isSel ? c.accent : c.muted));
         const ImVec2 sa{cx - markerW * .4f, b.y + u * .45f}, sb{cx + markerW * .4f, b.y + u * .1f + markerH};
         draw->AddRectFilled(sa, sb, U32({stop.color.x, stop.color.y, stop.color.z, 1.f}), 3.f);
-        draw->AddRect(sa, sb, U32(isSel ? c.accent : c.border), 3.f, 0, isSel ? 2.f : 1.f);
+        draw->AddRect(sa, sb, U32(isSel ? c.accent : c.border), 3.f, 0, isSel ? 2.f : detail::FrameLineWidth(1.f));
         ImGui::PopID();
     }
     ImGui::SetCursorScreenPos({a.x, b.y + u * .1f});
@@ -437,7 +437,7 @@ GradientRequest GradientEditor(const char* id, const GradientEditorView& view, i
         if (ImGui::IsItemClicked())
             ImGui::OpenPopup("##stopcolor");
         draw->AddRectFilled(sa, sb, U32({stop.color.x, stop.color.y, stop.color.z, 1.f}), round);
-        draw->AddRect(sa, sb, U32(c.border), round, 0, 1.f);
+        draw->AddRect(sa, sb, U32(c.border), round, 0, detail::FrameLineWidth(1.f));
         SemanticItem(options, "Stop colour", accessibility::SemanticRole::Button, accessibility::SemanticAction::Press);
         if (ImGui::BeginPopup("##stopcolor")) {
             LightColor light{stop.color.x, stop.color.y, stop.color.z};
