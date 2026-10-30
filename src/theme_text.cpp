@@ -4,6 +4,9 @@
 #include <charconv>
 #include <cmath>
 #include <cstdio>
+#include <locale>
+#include <sstream>
+#include <string>
 #include <vector>
 
 // Text form of a Theme: `key = value` lines. One field table drives both directions, so a token that can be
@@ -107,9 +110,13 @@ std::string_view Trim(std::string_view s) {
 }
 bool ParseFloat(std::string_view text, float low, float high, float &out) {
     text = Trim(text);
+    // Floating-point std::from_chars is deleted in Apple's libc++ for older deployment targets, and strtof follows the
+    // process locale. A stream imbued with the classic locale parses the same text everywhere.
+    std::istringstream stream{std::string(text)};
+    stream.imbue(std::locale::classic());
     float value = 0;
-    const auto [end, error] = std::from_chars(text.data(), text.data() + text.size(), value);
-    if (error != std::errc{} || end != text.data() + text.size() || !std::isfinite(value) || value < low || value > high)
+    stream >> value;
+    if (stream.fail() || stream.peek() != std::char_traits<char>::eof() || !std::isfinite(value) || value < low || value > high)
         return false;
     out = value;
     return true;
