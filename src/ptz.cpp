@@ -77,6 +77,9 @@ void DrawHome(ImDrawList* draw, ImVec2 c, float size, ImU32 color, float thickne
     draw->PathLineTo({c.x + h * .68f, c.y + h * .06f});
     draw->PathStroke(color, ImDrawFlags_RoundCornersAll, thickness);
 }
+float ChipWidth(float height, const char* letter, const char* value) {
+    return height * .35f * 2 + ImGui::CalcTextSize(letter).x + height * .22f + ImGui::CalcTextSize(value).x;
+}
 // Draws "label value" chips for the readout row; returns the width used.
 float DrawChip(ImDrawList* draw, ImVec2 p, float height, const char* letter, const char* value, ImU32 fill, ImU32 letterColor,
                ImU32 valueColor) {
@@ -119,13 +122,13 @@ PtzRequest PtzControl(const char* id, const PtzView& view, PtzState& state, PtzO
     const bool bar = hasZoom && view.zoomFraction >= 0;
     const float available = ImGui::GetContentRegionAvail().x;
     float padSize = layout.diameter > 0 ? layout.diameter : u * (compact ? 4.2f : 6.5f);
+    // Width the zoom rocker and bar take beside the pad.
+    const float zoomColumn = hasZoom ? gap * 1.5f + railW + (bar ? gap * .7f + barW : 0.f) : 0.f;
     // An automatic diameter shrinks (down to 3.2 frame heights) so the pad and the zoom column fit a narrow host.
-    if (layout.diameter <= 0 && hasPad) {
-        const float zoomColumn = hasZoom ? gap * 1.5f + railW + (bar ? gap * .7f + barW : 0.f) : 0.f;
+    if (layout.diameter <= 0 && hasPad)
         padSize = std::clamp(available - zoomColumn, std::min(padSize, u * 3.2f), padSize);
-    }
     const float radius = padSize * .5f;
-    const float totalWidth = std::max(padSize + u * 2, available);
+    const float totalWidth = std::max(hasPad ? padSize + zoomColumn : zoomColumn, available);
 
     ImGui::PushID(id);
     ImGui::BeginGroup();
@@ -168,10 +171,19 @@ PtzRequest PtzControl(const char* id, const PtzView& view, PtzState& state, PtzO
         const char* letters[3] = {Label(options, "ptz.pan.short", "P"), Label(options, "ptz.tilt.short", "T"), Label(options, "ptz.zoom.short", "Z")};
         const bool shown[3] = {caps.pan, caps.tilt, caps.zoom};
         const char* hosted[3] = {view.readoutText.pan, view.readoutText.tilt, view.readoutText.zoom};
+        // Chips wrap onto a second row when the host is too narrow for all of them.
         float x = origin.x;
-        for (int i = 0; i < 3; ++i)
-            if (shown[i])
-                x += DrawChip(draw, {x, y}, h, letters[i], hosted[i] ? hosted[i] : value[i], chip, dim, text) + gap * .6f;
+        for (int i = 0; i < 3; ++i) {
+            if (!shown[i])
+                continue;
+            const char* shownValue = hosted[i] ? hosted[i] : value[i];
+            const float width = ChipWidth(h, letters[i], shownValue);
+            if (x > origin.x && x + width > origin.x + available) {
+                x = origin.x;
+                y += h + style.ItemSpacing.y * .5f;
+            }
+            x += DrawChip(draw, {x, y}, h, letters[i], shownValue, chip, dim, text) + gap * .6f;
+        }
         y += h + style.ItemSpacing.y;
     }
     y += compact ? 0.f : style.ItemSpacing.y * .25f;
