@@ -423,8 +423,11 @@ PtzRequest PtzControl(const char* id, const PtzView& view, PtzState& state, PtzO
         cy += static_cast<float>(rows) * (cellH + gap * .6f);
     }
     if (!hasPad && !hasZoom && !hasPresets) {
-        draw->AddText({origin.x, y + (u - ImGui::GetFontSize()) * .5f}, dim, Label(options, "ptz.unsupported", "No camera controls available"));
-        cy = y + u;
+        const char* notice = Label(options, "ptz.unsupported", "No camera controls available");
+        const float wrap = std::max(available, u * 4.f);
+        const float height = std::max(u, ImGui::CalcTextSize(notice, nullptr, false, wrap).y);
+        draw->AddText(ImGui::GetFont(), ImGui::GetFontSize(), {origin.x, y + (u - ImGui::GetFontSize()) * .5f}, dim, notice, nullptr, wrap);
+        cy = y + height;
     }
     bottom = std::max(bottom, cy);
     request.recallPreset = connected ? recall : -1;
