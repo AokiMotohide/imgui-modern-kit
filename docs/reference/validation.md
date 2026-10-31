@@ -1,295 +1,246 @@
-# Validation / 検証
+# Validation
 
-[日本語](検証記録.md) · [English](validation.md)
+[日本語](検証記録.md) · [Architecture](../architecture/architecture.md) · [Documentation catalog](documentation-catalog.md)
 
-## 3.3 release validation — 2026-10-23
+This page records what was checked, on which revision and configuration, and what was not. Compile/link, public-IO interaction, GPU appearance and distribution are separate kinds of evidence, and none substitutes for another. A result holds only for its stated date, revision and configuration.
 
-Windows x64 Debug Gallery and four focused targets built in `build/windows-debug` through the shared build lock. `imkit.workflow`, `imkit.workflow_api_compile`, `imkit.toast` and `imkit.toast_api_compile` passed (4/4). Workflow covers indeterminate/running/paused semantics and task operation ID dispatch. Toast regression covers timing, focus, loading completion and existing API behavior.
+## Standing gates
 
-The native Gallery toast verifier passed mouse action/dismiss, keyboard Space, same-ID loading completion, six positions in light/dark and Japanese indeterminate loading. The new progress GIF records 80 native OpenGL backbuffer frames, including six public-IO clicks that advance the host-owned task to completion. This is an 8-second, 960×540 demonstration at 10 fps; it is not physical OS input automation. The 3.2 film remains a labeled historical demonstration.
+The Gallery and the test suite re-check these on every release. Passing native-API signature coverage does not mean every native behavior was retested.
 
-Release publication requires successful push CI at the exact release source commit: Windows x64/Arm64 and macOS arm64/x86_64/Universal 2 build, test, package and packaged SDK consumer. The release manifest and evidence ZIP record the actual run, per-SDK source commit and native evidence hashes. Historical sections below describe earlier revisions, not new 3.3 acceptance.
+| Gate | Evidence |
+|---|---|
+| Public API | 365 included overloads; independent function-pointer signature references compile and link against the pinned header; excluded functions are enumerated |
+| Debug / Release | Library and production catalog compile and link on Windows x64, MSVC 19.51.36256 / v145 |
+| Ownership | Two independent contexts; non-cumulative scale; nested ThemeScope style and font restoration; surrounding disabled alpha retained |
+| Theme presets | 13 stable unique IDs; complete finite palettes; Light/Dark metadata; legacy Precision values; normal, muted and semantic contrast thresholds |
+| Motion | Intermediate value, endpoint, disabled immediate result, pruning and generation reset |
+| External target | A separate consumer creates its own ImGui target; no core or backend sources in imkit; no GLFW/OpenGL target leakage |
+| Actions | Pointer and model edits, disabled action, switch, mixed-to-checked, radio, same-label IDs, programmatic focus, Space, Tab/Shift-Tab |
+| Numeric | Slider edit, Ctrl-click drag direct input, exact 64-bit value beyond float integer precision, range drag and ordering |
+| Input / Media | UTF-8 editing, edit callback, resize callback, multiline, validation edit, image button and color picker input; real color, image and plot rendering |
+| Hierarchy | Tree expansion, table row selection, independent inline action, descending sort, scrolling with frozen headers, tab switch, reorder and close |
+| Overlay | Popup open and Escape, menu selection, modal blocking, nested combo, modal Escape and cancellation, launcher focus restoration |
+| Composites | Segmented selection, disabled search result, filtered result selection |
+| Visual | Product Home, searchable navigation, presets, component categories and advanced examples; Japanese glyphs, representative 1.5 scale, modal; real OpenGL backbuffers |
+| Installed SDK | Debug and Release consumer compile, link and run from a relocated prefix; normalized archives contain no Windows absolute paths |
+| Distribution | Source and SDK manifests identify the source commit and ABI; release attachments and SHA256SUMS are the authoritative published artifacts |
 
-Physical OS input, native IME, real screen readers, mixed-DPI/multi-monitor and external-host/hardware acceptance were not performed. macOS signing/notarization depends on CI credentials; Universal 2 executes on arm64, with Intel executed in its separate job.
+Generated evidence and media:
 
-## Media revision 2 / 映像改訂2（2026-10-05）
+- The public-IO log is `out/catalog/interaction.txt`; renderer details are in `out/catalog/capture-info.txt`. Both are generated and not committed.
+- Representative images are checked into `docs/images/`. Full captures are release evidence.
+- The README and Pages animations are cut from lossless 1920×1080, 60 Hz takes of the Gallery. `tools/media/capture.py` records them and checks each take's assertions. `tools/media/verify.py` enforces the GIF contract (960×540, at most 2 MiB, 6–8 s) and the film contract. Neither validates native OS input.
 
-### Native operation footage / native操作素材
+## Records, newest first
 
-Windows x64 Debug Gallery and Node Editor compiled in the canonical shared output. Twelve continuous 1920×1080/60 Hz public-IO takes contain 7,857 recorded frames and 38 successful state checks. Checks cover shared comparison edits, workspace tabs and hierarchy, axis dragging, host-applied actions, typed icon searches/selections, four theme selections, Loading→Success, timeline scrubbing/clip movement/play/pause, and an actual socket connection and node-header drag. Middle-button pan and wheel zoom are recorded. The independent comparison regression also passed keyboard/disabled/style-restoration and host-workbench checks. Raw videos and event logs remain outside Git.
+### 4.0.0 — 2026-10-31
 
-### Film and site review / 映像とサイトのレビュー
+**Verified**
 
-The English film has 25 cuts, kinetic type, focused native screens, masked transitions, an icon expansion and an original 128 BPM score. Review fixes include cropped headings, caption overlap, crowded icon tiles, offscreen theme targets, an invalid timeline move, a scrolled notification control, and clipped/overlapping nodes after navigation. Corrected compositions were rechecked in 24 timecoded stills and complete normal-speed browser playback; a video-only copy also completed 60 seconds for silent review. Source exhaustion raises an error instead of repeating the final frame.
+- CI at merge commit `efa9d17` (push): Windows x64, Windows Arm64, macOS arm64, macOS x86_64, the macOS Universal 2 package and documentation, six of six succeeded. The platform jobs build, test, package and run the packaged SDK consumer.
+- Windows x64 Debug Gallery rebuilt from the merged tree: `--verify` (public IO) 45 checks passed, `--verify-comparison` passed.
+- Both films (`tools/media/verify.py`): 1920×1080, 60 fps, 180.0 s (10,800 frames), −14.64 LUFS, −2.19 dBTP, 28.3 MiB (ja) and 28.1 MiB (en). 13 GIFs at 960×540 and 8.0 s, the largest 1.67 MiB. Both languages have the same 24 caption keys.
+- Audio encode: AAC at 192 kbit/s overshot the limited signal by 2.6 dB (−0.83 dBTP), above the −1.5 dBTP limit. At 256 kbit/s the same signal measures −2.19 dBTP.
+- Documentation: `tools/check_docs.py` passed for 39 English/Japanese pairs and 80 public pages. The site build produced 67 pages and checked 4,900 local links, 365 API rows (48 excluded) and 47 Node declarations.
+- Pages: published from `main`. Both films, the poster, the credit line and the migration guide answer HTTP 200, and the home page was checked at 375 px width.
+- macOS build: `ParseTheme` no longer uses floating-point `std::from_chars`, which Apple's libc++ does not provide.
 
-Final measurements: 60.000 seconds, 1920×1080, 60 fps/3,600 frames, H.264/AAC stereo 48 kHz, 8,557,071 bytes, −16.06 LUFS, −1.84 dBTP. Two-pass normalization leaves AAC reconstruction headroom. All twelve native GIFs are 960×540, 20 fps, 6–8 seconds, each below 2 MiB; the largest is 1,325,419 bytes. Pages generation, Astro type checking, static build and 61-page/4,182-link inspection passed. Browser checks cover Japanese/English, light/dark, desktop and approximately 390 CSS-pixel width, video playback and GIF play/stop. README and Pages use the revised poster; the Pages video URL includes the film content hash.
+**Not verified**
 
-### Evidence and limits / 証拠と未確認事項
+- How the music sounds. Only loudness and true peak were measured.
+- Physical OS input, native IME, screen readers, mixed-DPI and multi-monitor use.
+- Third-party hosts and hardware: cameras, PTZ heads, media servers, LED controllers.
+- macOS signing and notarization. The macOS packages are unsigned.
 
-The v3.2.0 library tag, source archive, five SDK archives and original release CI identity remain unchanged. Revised media has its own production commit, timestamp, hashes and evidence in the release manifest. These measurements and visual reviews do not establish perceptual listening quality, commercial buyer acceptance, physical OS/IME input or hardware acceptance. The new footage is a Windows OpenGL development capture; it is not a claim of native operation acceptance on every packaged platform.
+### 3.3.0 — 2026-10-23
 
-## ImKit 3.2 release preparation / 3.2公開準備（2026-10-04）
+**Verified**
 
-### Gallery and API
+- Windows x64 Debug Gallery and four targets built in `build/windows-debug` through the shared build lock. `imkit.workflow`, `imkit.workflow_api_compile`, `imkit.toast` and `imkit.toast_api_compile` passed (4/4). Workflow covers indeterminate, running and paused semantics and task operation IDs. Toast covers timing, focus, loading completion and existing API behavior.
+- Native Gallery toast verifier: mouse action and dismiss, Space, same-ID loading completion, six positions in light and dark, Japanese indeterminate loading.
+- The progress GIF has 80 native OpenGL backbuffer frames (960×540, 10 fps, 8 s). Six public-IO clicks advance the host-owned task to completion. It is a demonstration, not physical OS input. The 3.2 film remains labeled as a historical demonstration.
+- Release gate: push CI at the exact release commit (Windows x64/Arm64, macOS arm64/x86_64/Universal 2: build, test, package, packaged SDK consumer). The manifest and evidence ZIP record the run, each SDK's source commit and the native evidence hashes. Older records below are not 3.3 acceptance.
 
-Windows x64 Debug Gallery compiled using the canonical shared output. Focused `imkit.workflow`, `workflow_api_compile`, `toast`, `toast_api_compile`, `theme`, `api_compile` and `window_frame_api_compile` passed. Native public-IO verification covered both comparison modes, shared edits in both directions, keyboard activation, disabled controls, complete style restoration and host-applied workspace selection/toggle requests. `--verify-workflow` and `--verify-toasts` passed; toast evidence covers six positions in light/dark, Japanese loading, actions, dismissal and same-ID completion. Native backbuffers at 640x600 verified compact navigation and scrollable workspace settings; 1280x720 captures supplied the finished GIFs.
+**Not verified**
 
-### Media and public site
+- Physical OS input, native IME, real screen readers, mixed-DPI and multi-monitor use, external-host and hardware acceptance.
+- macOS signing and notarization depend on CI credentials. Universal 2 runs on arm64; Intel runs in its own job.
 
-Three review passes covered the first-ten-second message, timecoded film compositions/full playback, and README/Pages/GIF/API consistency. Corrections included restoring default font conditions, isolating comparison, fitting labels, compact toast controls, light icon tiles, Loading-to-Success timing and stale documentation paths/anchors. The film is 60.000 seconds, 1920x1080, 60 fps/3600 frames, H.264/AAC stereo, 6,023,496 bytes, -16.00 LUFS and -1.78 dBTP. All 12 `v3-*.gif` native captures are 960x540 and under 2 MiB; the largest is 1,877,626 bytes. Motion graphics and music are original; the film is a composition, while documentation GIFs are native captures.
+### Media revision 2 — 2026-10-05
 
-Pages generation, Astro type checking (zero diagnostics), static build and 61-page/4,182-link checks passed. Chrome review checked Japanese/English, light/dark, PC and approximately 384 CSS-pixel mobile width, controlled GIF playback, the complete 60-second film and Pagefind queries for `DragVector3WithUnit` and `TableGetColumnFlags`. The exact final-commit CI result and SDK package consumer evidence are stored in the release manifest/evidence archive after all five platform jobs succeed; these local checks alone do not establish the platform release gate.
+**Verified**
 
-### Acceptance boundary
+- Native footage: Windows x64 Debug Gallery and Node Editor built in the shared output. Twelve continuous 1920×1080, 60 Hz public-IO takes hold 7,857 frames and 38 successful state checks.
+- The checks cover shared comparison edits, workspace tabs and hierarchy, axis dragging, host-applied actions, typed icon search and selection, four theme selections, Loading to Success, timeline scrub, clip move, play and pause, a socket connection and a node-header drag. Middle-button pan and wheel zoom are recorded. The independent comparison regression also passed keyboard, disabled, style-restoration and host-workbench checks. Raw videos and event logs stay outside Git.
+- Film: 25 cuts, kinetic type, focused native screens, masked transitions, an icon expansion and an original 128 BPM score. Review fixes: cropped headings, caption overlap, crowded icon tiles, offscreen theme targets, an invalid timeline move, a scrolled notification control, clipped and overlapping nodes after navigation. The corrected compositions were rechecked in 24 timecoded stills and full normal-speed browser playback, and a video-only copy ran 60 s for silent review. Source exhaustion raises an error instead of repeating the last frame.
+- Measurements: 60.000 s, 1920×1080, 60 fps (3,600 frames), H.264/AAC stereo 48 kHz, 8,557,071 bytes, −16.06 LUFS, −1.84 dBTP. Two-pass normalization leaves headroom for AAC reconstruction. The 12 native GIFs are 960×540, 20 fps and 6–8 s, each under 2 MiB (largest 1,325,419 bytes).
+- Pages generation, Astro type checking and the static build passed; the inspection covered 61 pages and 4,182 links. Browser checks: Japanese and English, light and dark, desktop and about 390 CSS px, video playback, GIF play and stop. README and Pages use the revised poster, and the Pages video URL carries the film's content hash.
+- The v3.2.0 library tag, source archive, five SDK archives and original release CI identity are unchanged. The revised media has its own commit, timestamp and hashes in the release manifest.
 
-Public ImGui IO and backbuffer capture do not establish physical OS input, native IME, real screen-reader, multi-monitor DPI, external-product integration or hardware acceptance. Universal 2 tests run on the arm64 CI host; the separate x86_64 job covers that CPU configuration. macOS signing/notarization remains conditional on release credentials. Recompile consumers for `WindowFrameContent::iconTexture`; the pinned Dear ImGui revision is unchanged.
+**Not verified**
 
-## Colored toasts / 色付きトースト（2026-10-01）
+- Listening quality, buyer acceptance of commercial quality, physical OS and IME input, hardware.
+- The footage is a Windows OpenGL development capture. It does not show native-operation acceptance on every packaged platform.
 
-Windows x64 Debug: new toast and API compile tests, existing workflow regressions, and an external host-ImGui toast consumer compiled successfully. Native OpenGL Gallery `--verify-toasts --output out/toast-verification` checked mouse action/dismiss, keyboard Space action and same-ID loading completion, and captured six positions in light/dark plus Japanese indeterminate loading. At that revision, `docs/images/v4-toasts.gif` was a 12-frame, 960×540, 96-color animation encoded from six-position light/dark Gallery backbuffers. The GIF encoder restores the canvas between frames so cards remain clear when they move. Host covering windows use `NoBringToFrontOnFocus` to retain notification visibility after host clicks. Native OS/IME, screen-reader, cross-monitor DPI, macOS, Arm64, Release and installed-package acceptance for this addition were not performed. See [Toasts](../components/toasts.md).
+### 3.2 release preparation — 2026-10-04
 
-## v3.0 platform matrix / v3.0 platform matrix
+**Verified**
+
+- Windows x64 Debug Gallery built in the shared output. Passed: `imkit.workflow`, `workflow_api_compile`, `toast`, `toast_api_compile`, `theme`, `api_compile`, `window_frame_api_compile`.
+- Native public-IO verification covered both comparison modes, shared edits in both directions, keyboard activation, disabled controls, complete style restoration, and host-applied workspace selection and toggle requests. `--verify-workflow` and `--verify-toasts` passed; toast evidence covers six positions in light and dark, Japanese loading, actions, dismissal and same-ID completion.
+- 640×600 backbuffers verified compact navigation and scrollable workspace settings. 1280×720 captures supplied the GIFs.
+- Three review passes covered the first ten seconds, timecoded compositions with full playback, and README, Pages, GIF and API consistency. Fixes: default font conditions, isolated comparison, label fit, compact toast controls, light icon tiles, Loading-to-Success timing, stale paths and anchors.
+- Film: 60.000 s, 1920×1080, 60 fps (3,600 frames), H.264/AAC stereo, 6,023,496 bytes, −16.00 LUFS, −1.78 dBTP. The 12 `v3-*.gif` captures are 960×540, each under 2 MiB (largest 1,877,626 bytes). Motion graphics and music are original. The film is a composition; the documentation GIFs are native captures.
+- Pages generation, Astro type checking (zero diagnostics), the static build and a 61-page, 4,182-link inspection passed. Chrome checks: Japanese and English, light and dark, desktop and about 384 CSS px, GIF play and stop, the full 60 s film, Pagefind queries for `DragVector3WithUnit` and `TableGetColumnFlags`.
+
+**Not verified**
+
+- The final-commit CI result and SDK package consumer evidence are stored in the release manifest and evidence archive once all five platform jobs succeed. Local checks alone do not meet the platform release gate.
+- Physical OS input, native IME, real screen readers, multi-monitor DPI, external-product integration, hardware.
+- Universal 2 tests run on the arm64 CI host, with a separate x86_64 job. macOS signing and notarization depend on release credentials.
+- Consumers must recompile for `WindowFrameContent::iconTexture`. The pinned Dear ImGui revision is unchanged.
+
+### Colored toasts — 2026-10-01
+
+**Verified**
+
+- Windows x64 Debug: the new toast and API compile tests, existing workflow regressions, and an external host-ImGui toast consumer.
+- Native OpenGL Gallery `--verify-toasts --output out/toast-verification`: mouse action and dismiss, Space action, same-ID loading completion. Six positions in light and dark and Japanese indeterminate loading were captured.
+- The animation was a 12-frame, 960×540, 96-color GIF encoded from the six-position light and dark backbuffers. The encoder restores the canvas between frames so moving cards stay clear.
+- Host covering windows use `NoBringToFrontOnFocus`, so notifications stay visible after host clicks. See [Toasts](../components/toasts.md).
+
+**Not verified**
+
+- Native OS/IME, screen reader, cross-monitor DPI, macOS, Arm64, Release and installed-package acceptance for this addition.
+
+### v3 Gallery and documentation captures — 2026-09-13
+
+**Verified**
+
+- The Debug native Gallery passed `--verify-comparison`. Default Dear ImGui and ImKit controls changed the same host-owned value, temporary comparison styles were restored after a frame, and closing and reopening removed then restored the submitted controls.
+- Native 960×540 captures: 120 overview frames, 80 Node Editor, 120 workflow/progress, 80 timeline and 120 theme/comparison. The encoder accepted all five GIFs under its 8 MiB limit. The Node Editor sequence deterministically changes host-owned zoom and pan, adds and connects a visible socket, and shows inline values, previews and the minimap. The showcase MP4 came from the same 520 native frames.
+- The released Gallery executable is built, staged and inspected for DLL imports separately. Its archive does not bundle the Microsoft Visual C++ Redistributable.
+
+**Not verified**
+
+- The runner sends public Dear ImGui IO and reads a real OpenGL backbuffer. It does not establish native OS/IME input, assistive-technology operation, physical DPI, performance or external-host acceptance.
+
+### v3.0 platform matrix — 2026-09-13
 
 | Configuration | Automated gate | Native acceptance |
 |---|---|---|
 | Windows 10/11 x64 | build, focused tests, Gallery, install consumer, ZIP | required on one Windows x64 machine |
-| Windows 11 Arm64 | build, focused tests, Gallery, install consumer, ZIP | architecture-specific manual run is not required |
+| Windows 11 Arm64 | build, focused tests, Gallery, install consumer, ZIP | architecture-specific manual run not required |
 | macOS 15+ Apple Silicon | build, tests, Metal Gallery, app bundle, ZIP | required on one Apple Silicon Mac |
-| macOS 15+ Intel | build, tests, Metal Gallery, app bundle, ZIP | architecture-specific manual run is not required |
+| macOS 15+ Intel | build, tests, Metal Gallery, app bundle, ZIP | architecture-specific manual run not required |
 
-PR #8 head `326618c` passed all five GitHub Actions jobs on 2026-09-13:
-Windows x64 and Arm64 build/test/package, macOS arm64 and x86_64 build/test/package,
-and the Universal 2 Gallery/package job. The arm64 job also launched the native Metal
-Gallery smoke path. Signing/notarization steps were skipped because release credentials
-were unavailable.
+**Verified**
 
-PR #8 head `326618c`は2026-09-13にGitHub Actions全5 jobへ合格しました。
-Windows x64／Arm64のbuild・test・package、macOS arm64／x86_64のbuild・test・package、
-Universal 2のGallery build・packageが対象です。arm64ではnative Metal Gallery smokeも
-成功しました。release資格情報がなかったため、署名・notarization stepは未実施です。
+- PR #8 head `326618c` passed all five GitHub Actions jobs on 2026-09-13: Windows x64 and Arm64 build, test and package; macOS arm64 and x86_64 build, test and package; the Universal 2 Gallery and package job. The arm64 job also launched the native Metal Gallery smoke path.
 
-These automated gates do not establish physical Apple Silicon/Intel acceptance,
-Japanese IME, Retina or mixed-DPI behavior, traffic-light interaction, VoiceOver,
-native pointer/keyboard behavior or external-host integration.
+**Not verified**
 
-これらの自動gateは、Apple Silicon／Intel実機受入、日本語IME、Retina／mixed-DPI、
-traffic-light操作、VoiceOver、native pointer／keyboard、外部host統合の合格を意味しません。
+- Signing and notarization were skipped because release credentials were unavailable.
+- Physical Apple Silicon and Intel acceptance, Japanese IME, Retina or mixed-DPI behavior, traffic-light interaction, VoiceOver, native pointer and keyboard behavior, external-host integration.
 
-## Node editor access, appearance and collapse / Node editorの導線・外観・折りたたみ（2026-09-12）
+### Node editor access, appearance and collapse — 2026-09-12
 
-The Debug Gallery and Node Editor companion built successfully. `imkit.node_editor`
-passed host name/color Undo/Redo, borrowed header styles and repeated collapsed-node
-layout checks. The collapse regression reproduced Dear ImGui's cursor-boundary
-assertion before the fix. The native `--verify-node-actions` runner passed 60
-public-IO clicks on Output monitor, producing 30 collapse/expand transitions.
-Native OS mouse/IME input and launcher focus behavior were not verified. The v3 PR
-CI subsequently built and packaged the companion on every supported architecture.
+**Verified**
 
-Debugの通常GalleryとNode Editor実行ファイルはbuildに成功した。`imkit.node_editor`で
-ホスト所有の名前・色のUndo／Redo、借用header style、折りたたみの反復を確認した。
-修正前には折りたたみ回帰テストでDear ImGuiのcursor境界assertionを再現した。
-native `--verify-node-actions`ではOutput monitorへの公開IOクリック60回、
-折りたたみ・展開30回が成功した。native OSマウス／IMEとlauncherの前面化は未検証。
-v3 PR CIではその後、全対応architectureでcompanionのbuildとpackageが成功した。
+- The Debug Gallery and Node Editor companion built. `imkit.node_editor` passed host name and color Undo/Redo, borrowed header styles and repeated collapsed-node layout checks.
+- The collapse regression reproduced Dear ImGui's cursor-boundary assertion before the fix.
+- The native `--verify-node-actions` runner passed 60 public-IO clicks on Output monitor, producing 30 collapse and expand transitions.
+- The v3 PR CI later built and packaged the companion on every supported architecture.
 
-## V3 Gallery and documentation captures / V3 Galleryと文書capture（2026-09-13）
+**Not verified**
 
-The Debug native Gallery build passed `--verify-comparison`: Default Dear ImGui and ImKit controls changed the same host-owned value, temporary comparison styles restored after a frame, and closing/reopening removed then restored the submitted controls. V3 documentation captures contain 120 overview frames, 80 Node Editor frames, 120 workflow/progress frames, 80 timeline frames and 120 theme/comparison frames at native `960×540`. The checked-in encoder accepted all five GIFs under its 8 MiB limit. The Node Editor sequence deterministically changes host-owned zoom/pan state, adds a visible socket, connects it, and shows inline values, previews and the minimap. The showcase MP4 was encoded from the same 520 native frames.
+- Native OS mouse and IME input, launcher focus behavior.
 
-Debug native Galleryで`--verify-comparison`が成功しました。Default Dear ImGuiとImKitのcontrolは同じホスト所有値を変更し、比較用の一時styleはframe後に復元され、close/reopenでcontrolが消えて再表示されました。V3文書用にoverview 120、Node Editor 80、workflow／progress 120、timeline 80、theme／comparison 120 frameをnative `960×540`でcaptureし、5本のGIFは8MiB上限付きencoderを通過しました。Node Editor列はホスト所有zoom／pan、可視socket追加と接続、inline値、preview、minimapを決定的に変化させます。showcase MP4は同じnative 520 frameから生成しました。
+### Timeline external-drop preview — 2026-09-12
 
-The runner sends public Dear ImGui IO and reads a real OpenGL backbuffer. It does not establish native OS/IME input, assistive-technology operation, physical-DPI, performance or external-host acceptance. The released Gallery executable is separately built, staged and inspected for its DLL imports; its archive does not bundle the Microsoft Visual C++ Redistributable.
+**Verified**
 
-runnerは公開Dear ImGui IOを送り、実OpenGL backbufferを読みます。native OS/IME入力、支援技術、実機DPI、性能、外部ホストでの受け入れは確認しません。公開Gallery実行ファイルは別途Release build・stage・DLL import確認を行い、Microsoft Visual C++ Redistributableをarchiveに同梱しません。
+- The Debug Video test, the Editor API compile fixture and an independent source consumer passed. The checks cover the optional exact candidate-range callback, the preserved single delivery callback and source-compatible aggregate initialization.
 
-## Timeline external-drop preview / Timeline外部drop preview（2026-09-12）
+**Not verified**
 
-The Debug Video test, Editor API compile fixture and independent source consumer passed.
-The focused checks cover the optional exact candidate range callback, the preserved
-single delivery callback and source-compatible aggregate initialization. Release,
-native OS input and external-host acceptance were not run.
+- Release, native OS input, external-host acceptance.
 
-DebugのVideo test、Editor API compile fixture、独立source consumerが合格しました。任意の正確な
-候補範囲callback、deliveryが1回だけであること、既存aggregate初期化とのsource互換を確認しました。
-Release、native OS入力、外部ホスト受け入れは未実施です。
+### Preview placement extension — 2026-09-12
 
-## Preview placement extension / Preview配置拡張（2026-09-12）
+**Verified**
 
-The affected Debug library, API-fixture and Gallery targets built successfully.
-`imkit.workflow`, `imkit.workflow_api_compile`, `imkit.video`, `imkit.cg`,
-`imkit.editor_api_compile` and `imkit.consumer_build` passed. CPU checks cover
-Fit/Fill/Stretch placement, invalid and extreme geometry, ImageViewport mode
-recalculation and pan/coordinate behavior, legacy and additive Monitor rendering,
-UV cropping and `flipY`, all five preview states, action requests, steady-frame
-allocation, and perspective/orthographic projection at 4:3, 16:9, 1:1 and 9:16.
+- The affected Debug library, API-fixture and Gallery targets built. `imkit.workflow`, `imkit.workflow_api_compile`, `imkit.video`, `imkit.cg`, `imkit.editor_api_compile` and `imkit.consumer_build` passed.
+- CPU checks: Fit/Fill/Stretch placement; invalid and extreme geometry; ImageViewport mode recalculation, pan and coordinates; legacy and additive Monitor rendering; UV cropping and `flipY`; all five preview states; action requests; steady-frame allocation; perspective and orthographic projection at 4:3, 16:9, 1:1 and 9:16.
+- The Debug native Gallery verifier passed public-IO interaction and OpenGL backbuffer captures for the four ImageViewport modes, every combination of four source aspects, five Monitor states and three placement modes, and uniform CG projection at the four viewport aspects. The evidence in `out/preview-contract-debug/` is not committed. Representative ImageViewport, portrait Loading Monitor and portrait CG captures were inspected visually.
+- v2.2.0: Debug and Release built the affected library, Gallery and API fixtures. The workflow, Video, CG, editor API, public API, Window Frame and accessibility checks passed. Source and staged-SDK consumers configured, built and ran in both configurations. The Windows Gallery and SDK were staged for packaging, with the DLL-import inventory inspected.
 
-影響するDebug library・API fixture・Gallery targetはbuildに成功しました。
-`imkit.workflow`、`imkit.workflow_api_compile`、`imkit.video`、`imkit.cg`、
-`imkit.editor_api_compile`、`imkit.consumer_build`が合格しました。CPU検証は
-Fit／Fill／Stretch配置、不正・極端geometry、ImageViewport mode再計算とpan／座標変換、
-新旧Monitor描画、UV cropと`flipY`、5状態、action要求、定常frame allocation、
-Perspective／Orthographicの4:3・16:9・1:1・9:16投影を対象にしました。
+**Not verified**
 
-The Debug native Gallery verifier passed public-IO interaction and OpenGL backbuffer
-captures for the four ImageViewport modes, every combination of four source aspects,
-five Monitor states and three placement modes, and uniform CG projection at the four
-viewport aspects. The generated evidence under `out/preview-contract-debug/` is not
-committed. Representative ImageViewport, portrait Loading Monitor and portrait CG
-captures were visually inspected.
+- Real camera enumeration and capture, media decoding, physical monitor selection or output, native OS/IME input, external-host integration. Debug and Release builds and synthetic Gallery sources do not establish them.
 
-Debug native Gallery verifierでは公開IO操作とOpenGL backbuffer captureが合格しました。
-ImageViewportの4 mode、4 source aspect×5 Monitor状態×3配置、4 viewport aspectのCG等方投影を
-確認しています。`out/preview-contract-debug/`の生成物はcommitせず、ImageViewport、縦長Loading
-Monitor、縦長CGの代表captureを目視確認しました。
+### Dynamic node sockets — 2026-09-12
 
-For v2.2.0, Debug and Release built the affected library, Gallery and API fixtures. The focused
-workflow, Video, CG, editor API, public API, Window Frame and accessibility checks passed; source
-and staged-SDK consumers configured, built and ran in Debug and Release. The Windows Gallery and
-SDK were staged for packaging, including the inspected DLL-import inventory.
+**Verified**
 
-v2.2.0では、影響するlibrary、Gallery、API fixtureをDebug／Releaseでbuildしました。workflow、Video、CG、
-Editor API、公開API、Window Frame、accessibilityの対象checkが合格し、source consumerとstage済みSDK consumerを
-Debug／Releaseでconfigure・build・実行しました。Windows GalleryとSDKは、DLL import一覧を確認してpackage用にstageしています。
+- The dedicated Debug node-editor library, API fixture and independent Gallery built. `imkit.node_editor` and `imkit.node_editor_api_compile` passed. The same public fixture built and ran against a separate consumer-owned ImGui target.
+- A native Gallery capture was checked visually, and the clipped preview and minimap overlap were corrected. The [review](../archive/node-editor-review.md) records the P0/P1 findings, focused regressions and remaining boundaries. No capture is committed.
 
-Real camera enumeration/capture, media decoding, physical monitor selection or output, native OS/IME
-input and external-host integration were not performed. Debug/Release and synthetic Gallery sources
-do not establish those categories.
+**Not verified**
 
-実Camera列挙・capture、media decode、物理monitor選択・出力、native OS/IME入力、外部ホスト統合は未実施です。
-Debug／Releaseとsynthetic Gallery sourceを、これらの合格とは扱いません。
+- Physical OS/IME and DPI, assistive technology, performance, external-host integration, Release and distribution.
 
-## Public window frame / 公開ウィンドウ枠（2026-09-11）
+### Node navigation completion — 2026-09-12
 
-The isolated `build/window-frame-public-debug` tree passed the Debug public API unit test and compile fixture, the independent source consumer build, the minimal Gallery build, and `--verify-window-frame`. The verifier covered all four presets, Theme-derived color regeneration versus complete preset reset, metric and feature layout effects, UTF-8 elision, Win32 caption/client/edge hit tests including `HTMAXBUTTON`, maximize/work-area containment, restore, minimize and the GLFW close-request path. Generated captures and reports under `out/window-frame-public/` are not committed.
+**Verified**
 
-隔離した`build/window-frame-public-debug`で、Debug公開API unit test／compile fixture、独立source consumer build、最小Gallery build、`--verify-window-frame`が成功しました。枠検証は4 preset、Theme由来の色再生成と完全preset resetの区別、寸法・featureのlayout反映、UTF-8省略、`HTMAXBUTTON`を含むWin32 caption／client／edge hit test、最大化時のwork area、復元、最小化、GLFW終了要求経路を対象にしました。`out/window-frame-public/`の生成capture・reportはcommitしません。
+- The focused Debug node test and the native Gallery build passed. A new public-IO regression verifies that minimap clicks navigate without editing the nodes underneath.
+- Native captures cover both pages, Comfortable, Touch and Compact density, narrow width, Japanese labels and High Contrast.
+- Touch preview clipping was corrected by sizing host views from control metrics, and narrow vector controls keep the exact value in a tooltip. An initial minimap cursor-restoration assertion was fixed before the final pass.
 
-GitHub-hosted macOS arm64/x86_64 compilation and arm64 automated Gallery smoke now pass.
-No interactive physical-Mac acceptance was performed for traffic-light controls,
-drag/full-screen/minimize/zoom, native input, 100%/200% or mixed-DPI behavior,
-screen readers, signing or notarization. Automated launch does not establish those categories.
+**Not verified**
 
-GitHub-hosted macOS arm64／x86_64 buildとarm64自動Gallery smokeは成功しました。
-traffic-light、drag／full-screen／最小化／拡大、native入力、物理DPI 100%／200%、
-mixed-DPI、screen reader、署名、notarizationの対話的な実機受入は未実施です。
-自動起動をそれらの合格とは扱いません。
+- Physical IME and DPI, performance, external-host integration.
 
-## Generic workflow extension / 汎用部品拡張（2026-09-11）
+### Public window frame — 2026-09-11
 
-- Debug workflow tests passed: notification replacement/expiry/priority/capacity,
-  Step mouse/keyboard/disabled IDs, dismissal, tile selection/resize/cancel and parent
-  disabled semantics, overflow commands, palette actions, modal Begin/End, empty
-  geometry, image fit/fill/clamp/zoom anchor, and two context lifetimes.
+**Verified**
+
+- The isolated `build/window-frame-public-debug` tree passed the Debug public API unit test and compile fixture, the independent source consumer build, the minimal Gallery build and `--verify-window-frame`.
+- The verifier covered all four presets; Theme-derived color regeneration versus complete preset reset; metric and feature layout effects; UTF-8 elision; Win32 caption, client and edge hit tests including `HTMAXBUTTON`; maximize and work-area containment, restore and minimize; and the GLFW close-request path. Captures and reports under `out/window-frame-public/` are not committed.
+- GitHub-hosted macOS arm64 and x86_64 compilation and the arm64 automated Gallery smoke now pass.
+
+**Not verified**
+
+- Interactive physical-Mac acceptance: traffic-light controls; drag, full-screen, minimize and zoom; native input; 100% and 200% or mixed-DPI behavior; screen readers; signing; notarization. Automated launch does not establish them.
+
+### Generic workflow extension — 2026-09-11
+
+**Verified**
+
+- Debug workflow tests: notification replacement, expiry, priority and capacity; Step mouse, keyboard and disabled IDs; dismissal; tile selection, resize, cancel and parent disabled semantics; overflow commands; palette actions; modal Begin/End; empty geometry; image fit, fill, clamp and zoom anchor; two context lifetimes.
 - Warmed composed controls produced zero measured C++ and ImGui allocations.
-- Native API, design-system and Editor Core direct regressions passed. New API fixture
-  passed in Debug/Release; source and relocated SDK consumers compiled, linked and ran.
-- Debug/Release Gallery built. Public IO exercised filter click and cursor zoom.
-  `out/workflow-final/` contains 38 native GPU captures; representative workspace,
-  feedback, tile and narrow Japanese frames were visually inspected.
-- Debug/Release install includes both new headers. The optional Win32 accessibility
-  Release library was built because the existing install manifest requires it.
+- Native API, design-system and Editor Core direct regressions passed. The new API fixture passed in Debug and Release, and source and relocated-SDK consumers compiled, linked and ran.
+- The Debug and Release Gallery built. Public IO exercised filter click and cursor zoom. `out/workflow-final/` holds 38 native GPU captures; representative workspace, feedback, tile and narrow Japanese frames were inspected visually.
+- The Debug and Release install includes both new headers. The optional Win32 accessibility Release library was built because the existing install manifest requires it.
 
-Debugでは通知更新・期限・優先度・容量、Stepのclick／keyboard／disabled／ID分離、dismiss、
-Tile選択・resize・取消・親disabled、overflow command、Palette、modalのBegin/End、
-空geometry、fit／fill／clamp／zoom中心、2回のContext生成を検証しました。
-定常frameのC++／ImGui allocationは0でした。既存native API・design system・Editor Coreの
-直接回帰、新規APIのDebug／Release fixture、source／relocated SDK consumerのcompile・link・
-実行も合格しています。Debug／Release Galleryをbuildし、公開IOによるfilter click・cursor zoomと
-38枚のnative GPU captureを取得、代表的なworkspace・feedback・Tile・狭幅日本語を目視確認しました。
-Debug／Release installに新規headerを収録し、既存installが要求する任意Win32 accessibilityの
-Release libraryもbuildしました。
+**Not verified**
 
-These checks do not cover every state combination, native OS/IME input, real
-screen-reader operation, external application integration or release publication.
-No claim is made that pre-existing Editor Suite acceptance is complete.
+- Every state combination, native OS/IME input, real screen-reader operation, external application integration, release publication. This result does not declare the earlier Editor Suite acceptance complete.
 
-全状態組合せ、native OS/IME、実スクリーンリーダー、他アプリ統合、Release公開は未実施です。
-既存Editor Suiteの全受け入れ項目を今回の結果で完了扱いにはしません。
+## Related records
 
-Design-system foundation verification and remaining implementation: [design-system.md](../architecture/design-system.md#recorded-verification). This is separate from the Editor Suite 2.0 record below.
+- Design-system foundation and remaining work: [design-system.md](../architecture/design-system.md#recorded-verification). This is separate from the Editor Suite 2.0 record.
+- Editor Suite 2.0 results and boundaries: [Editor refresh](../archive/editor-refresh.md).
+- Editor Suite 1.0 (CPU and public IO, source and installed consumers, native GPU, captures, six-operation Release performance): [Editor validation](../archive/editor-validation.md). Native OS/IME and real-project integration remain separate, unperformed categories.
 
-デザインシステム基盤の検証・残る実装は[デザインシステム](../architecture/デザインシステム.md)を参照してください。以下のEditor Suite 2.0記録とは別の検証です。
+## Limits
 
-Editor Suite 2.0 results and boundaries: [Editor refresh](../archive/editor-refresh.md#recorded-verification-2026-09-10-今回の検証結果).
-Editor Suite 2.0の今回の結果と検証範囲は[刷新記録](../archive/editor-refresh.md)を参照してください。以下の従来記録とは区別します。
-
-This record distinguishes compile/link, public-IO interaction, GPU appearance and distribution. Passing native-API signature coverage does not mean every native behavior was exhaustively retested.
-
-compile/link、公開IO操作、GPU外観、配布を区別します。署名確認を、標準APIの全動作を個別に再検証した証拠としては扱いません。
-
-| Gate | Evidence / 確認内容 |
-|---|---|
-| Public API | 365 included overloads; independent function-pointer signature references compile and link against the pinned header; excluded functions are enumerated |
-| Debug / Release | Library and production catalog compile/link on Windows x64, MSVC 19.51.36256 / v145 |
-| Ownership | Two independent contexts; non-cumulative scale; nested ThemeScope style/font restoration; surrounding disabled alpha retained |
-| Theme presets | 12 stable unique IDs; complete finite palettes; Light/Dark metadata; legacy Precision values; normal/muted/semantic contrast thresholds |
-| Motion | Intermediate value, endpoint, disabled immediate result, pruning and generation reset |
-| External target | Separate consumer creates its own ImGui target; no core/backend sources in imkit; no GLFW/OpenGL target leakage |
-| Actions | Pointer/model edits, disabled action, switch, mixed-to-checked, radio, same-label IDs, programmatic focus, Space, Tab/Shift-Tab |
-| Numeric | Slider edit, Ctrl-click drag direct input, exact 64-bit value beyond float integer precision, range drag and ordering |
-| Input / Media | UTF-8 editing, edit callback, resize callback, multiline, validation edit, image button and color picker input; real color/image/plot rendering |
-| Hierarchy | Tree expansion, table row selection, independent inline action, descending sort, scrolling with frozen headers, tab switch/reorder/close |
-| Overlay | Popup open/Escape, menu selection, modal blocking, nested combo, modal Escape/cancellation and launcher focus restoration |
-| Composites | Segmented selection, disabled search result, filtered result selection |
-| Visual | Product Home, searchable navigation, 12 presets, component categories and advanced examples; Japanese glyphs, representative 1.5 scale, modal; real OpenGL backbuffers |
-| Installed SDK | Debug and Release consumer compile/link/run from a relocated prefix; normalized archives contain no Windows absolute paths |
-| Distribution | Source/SDK manifests identify the source commit and ABI; release attachments and SHA256SUMS are the authoritative published artifacts |
-
-The public-IO integration log is `out/catalog/interaction.txt`; renderer details are in `out/catalog/capture-info.txt`. These are generated outputs. Representative images are checked into `docs/images/` for documentation. Full captures are available as release evidence.
-
-The README and Pages animations are cut from lossless 1920×1080 60 Hz takes of the Gallery. `tools/media/capture.py` records them and checks each take's assertions; `tools/media/verify.py` enforces the GIF size (960×540, at most 2 MiB, 6–8 s) and the film contract. Neither validates native OS input.
-
-公開IOログは`out/catalog/interaction.txt`、renderer情報は`out/catalog/capture-info.txt`に生成します。文書用の代表画像は`docs/images/`、全カテゴリ画像はReleaseの検証用archiveに収録します。
-
-READMEとPagesのアニメーションは、Galleryを1920×1080・60 Hzで可逆圧縮録画したテイクから切り出します。`tools/media/capture.py`が録画と各テイクの検査を行い、`tools/media/verify.py`がGIFの規格（960×540、2 MiB以下、6〜8秒）と動画の規格を確認します。どちらもnative OS入力の検証ではありません。
-
-## Limits / 制約
-
-- Baseline: Dear ImGui docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be`, default ABI types. Supported artifacts are the four v3 matrix configurations above; other combinations require source builds and explicit validation.
+- Baseline: Dear ImGui docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be` with default ABI types. Supported artifacts are the release packages (Windows x64 and Arm64, macOS arm64 and x86_64, Universal 2); other combinations need source builds and their own validation.
 - Native OS/IME input, physical devices and integration into another application are not tested by this runner.
-- Reordering/resizing/drag-drop preserve exact native APIs; exhaustive combinations are not reimplemented or exhaustively retested.
-- Native wrappers are immediate. Optional explicit animation affects custom decoration only; fonts/renderer/state ownership stays with the host.
-- Input units are separate labels. Native numeric text layout and parsing are retained, including native centering for drags/sliders and native text editing behavior.
-- Japanese coverage is limited to the supplied font. Japanese headings use Regular; arbitrary Unicode/emoji coverage is not claimed.
-- Screenshot state after interaction can differ from initial values; no synthetic reference image is used as evidence.
-
-対応版・環境以外、native OS/IME、実機、他アプリへの導入は未検証です。標準のreorder/resize/drag-dropの全組合せを再試験していません。日本語の字形範囲、通常weight、数値の標準レイアウトを明示し、未実施の受け入れ確認を合格扱いしません。
-
-## Editor Suite 1.0
-
-See [Editor validation](../archive/editor-validation.md) for CPU/public IO, source and installed
-consumers, native GPU, captures and the six-operation Release performance result.
-EditorのCPU・公開IO・source/SDK consumer・実GPU・capture・6操作のRelease性能は上記を参照してください。
-Native OS/IME and real-project integration remain separate, unperformed categories.
-native OS/IMEと実project統合は別区分で、未実施です。
-
-## Dynamic node sockets / 動的ノードソケット（2026-09-12）
-
-The dedicated Debug node-editor library, API fixture and independent Gallery built
-successfully. `imkit.node_editor` and `imkit.node_editor_api_compile` passed. The
-same public fixture built and ran against a separate consumer-owned ImGui target.
-Native Gallery capture was visually checked; clipped preview and minimap overlap
-were corrected. [Review and exact scope](../archive/node-editor-review.md) records the P0/P1
-findings, focused regressions and remaining boundaries. No capture is committed.
-
-専用Debugのノードライブラリ・公開API fixture・独立Galleryがbuildに成功した。
-直接テスト2件が合格し、独自ImGui targetを持つ独立consumerもbuild・実行に成功した。
-Native captureを目視し、previewの切れとminimapの重なりを修正した。
-P0／P1、直接回帰、未実施境界は上記レビューに記録した。captureはcommitしない。
-実機OS／IME・DPI、支援技術、性能、外部ホスト統合、Release・配布検証は未実施。
-
-## Node navigation completion / ノード周辺操作の完了（2026-09-12）
-
-The focused Debug node test and native Gallery build passed. The new public-IO
-regression verifies that minimap clicks navigate without editing underlying nodes.
-Native captures cover both pages, Comfortable/Touch/Compact density, narrow width,
-Japanese labels and High Contrast. Touch preview clipping was corrected by sizing
-host views from control metrics; narrow vector controls retain precise tooltips.
-The initial minimap cursor-restoration assertion was fixed before the final pass.
-
-対象Debug testとnative Gallery buildが合格した。追加した公開IO回帰ではminimapのクリックが
-背後のノードを編集せずviewportを移動することを確認した。両ページ、Comfortable／Touch／Compact、
-狭幅、日本語ラベル、High Contrastをnative captureで目視した。Touchのpreview切れを
-control寸法に基づくホストView高さで修正し、狭いVector欄は正確な値をtooltipでも表示する。
-初回に検出したminimapカーソル復元assertは最終合格前に修正済み。
-実機IME・DPI、性能、外部ホスト統合の受入検証とは区別する。
+- Reordering, resizing and drag-drop keep the exact native APIs. Their combinations are not reimplemented or exhaustively retested.
+- Native wrappers are immediate. Optional explicit animation affects custom decoration only; fonts, renderer and state ownership stay with the host.
+- Input units are separate labels. Native numeric text layout and parsing are retained, including native centering for drags and sliders and native text editing.
+- Japanese coverage is limited to the supplied font. Japanese headings use Regular; arbitrary Unicode and emoji coverage is not claimed.
+- Screenshot state after interaction can differ from initial values. No synthetic reference image is used as evidence.
