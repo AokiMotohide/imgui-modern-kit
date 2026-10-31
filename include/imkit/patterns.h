@@ -6,12 +6,30 @@ namespace imkit {
 using StableId=accessibility::StableId;
 
 enum class ProgressStatus { Queued, Running, Paused, Succeeded, Failed, Cancelled };
+// Handed to ProgressTrackView::thumb once per frame, after the fill is drawn and before the outline.
+struct ProgressThumbInfo {
+    ImDrawList* draw=nullptr;
+    ImVec2 trackMin{0,0}, trackMax{0,0}; // The track rectangle.
+    // head.x is the leading edge of the fill, or the centre of the moving segment when indeterminate.
+    // head.y is the vertical centre of the track.
+    ImVec2 head{0,0};
+    float fraction=-1;  // The value being shown (tweened), 0..1; negative when indeterminate.
+    ProgressStatus status=ProgressStatus::Running;
+    bool animate=true;  // False under reduced motion or when motion is disabled.
+};
+using ProgressThumbFn=void(*)(const ProgressThumbInfo&, void* user);
 struct ProgressTrackView {
     float fraction=-1; // Negative or nonfinite values are indeterminate.
     ProgressStatus status=ProgressStatus::Running;
     const char* label="";
     const char* supplemental="";
     const char* valueText=""; // Optional host-formatted value; otherwise a percentage is shown when determinate.
+    // Optional host drawing on the track's leading edge, such as a small picture that rides the fill. Called only when a
+    // value is shown or an indeterminate segment is running. The host draws with the given draw list and may draw above
+    // the track; `thumbHeight` reserves that much layout height above the track so that it does not overlap the header.
+    ProgressThumbFn thumb=nullptr;
+    void* thumbUser=nullptr;
+    float thumbHeight=0;
 };
 struct Command { StableId id; const char* label; const char* shortcut=""; bool disabled=false; const char* disabledReason=""; };
 struct CommandPaletteState { bool open=false; char search[256]{}; int focused=0; };

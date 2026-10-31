@@ -4,6 +4,18 @@
 
 ## Unreleased
 
+### Sprite playback and progress thumbs
+
+- `Sprite`, `SpriteSheet` and `SpriteState` play a sheet of equally sized frames from one host-owned texture: `Loop`, `Once` (then the rest frame) or `HoldLast`. Reduced motion shows `restFrame`; a rectangle outside the visible area is not drawn. `SpriteFrameAt` and `SpriteFrameUV` give the frame and its texture coordinates without a Dear ImGui context, and `DrawSprite` draws one frame into any rectangle.
+- `ProgressTrackView::thumb` (with `thumbUser` and `thumbHeight`) calls the host with the track rectangle, the head position and the shown fraction, so a picture can ride the fill. It is called for a determinate track and for a running indeterminate one. `thumbHeight` reserves layout height above the track.
+- Both additions are appended to existing structures or are new declarations; rebuild code that links ImKit with the new headers.
+
+### スプライトの再生と進捗のつまみ
+
+- `Sprite`、`SpriteSheet`、`SpriteState` で、ホストが所有する1枚のテクスチャに並べた、同じ大きさのコマのシートを再生できます。`Loop`、`Once`（終わったら静止コマ）、`HoldLast` に対応します。`reducedMotion` では `restFrame` を表示し、見えない領域は描きません。`SpriteFrameAt` と `SpriteFrameUV` は、Dear ImGui のコンテキストなしで、コマ番号とテクスチャ座標を返し、`DrawSprite` は、任意の矩形に1コマを描きます。
+- `ProgressTrackView::thumb`（`thumbUser`、`thumbHeight` つき）で、トラックの矩形、先頭の位置、表示中の割合をホストへ渡し、塗りに乗る絵を描けます。確定した進捗と、動いている不確定の進捗で呼ばれます。`thumbHeight` は、トラックの上にレイアウトの高さを確保します。
+- どちらも既存の構造体の末尾への追加、または新しい宣言です。ImKit をリンクするコードは、新しいヘッダーで再ビルドしてください。
+
 ### PTZ control draws only what the camera offers
 
 - `PtzView::capabilities` (`PtzCapabilities`: `pan`, `tilt`, `zoom`, `home`, `presets`, `presetStore`, `speed`) hides the controls a camera lacks. A pan-only head, a zoom-only lens or recall-only presets get a smaller control; with nothing to offer it draws one line of text. Every field defaults to true, so existing code is unchanged.

@@ -298,7 +298,8 @@ void DrawSheen(ImDrawList* draw,ImVec2 minimum,ImVec2 maximum,float phase,ImVec4
     draw->PopClipRect();
 }
 }
-void ProgressTrack(const char* id,float fraction,ProgressStatus status,ComponentOptions o) {
+namespace {
+void ProgressTrackImpl(const char* id,float fraction,ProgressStatus status,ComponentOptions o,const ProgressTrackView* thumbView) {
     const bool available=std::isfinite(fraction)&&fraction>=0.f;
     const float value=available?std::clamp(fraction,0.f,1.f):0.f;
     const float width=std::max(1.f,ImGui::GetContentRegionAvail().x);
@@ -325,6 +326,14 @@ void ProgressTrack(const char* id,float fraction,ProgressStatus status,Component
             if(status==ProgressStatus::Running&&animate&&fill>height*3.f)
                 DrawSheen(draw,position,end,static_cast<float>(std::fmod(std::max(0.0,ImGui::GetTime()),1.8)/1.8),{1,1,1,.30f});
         }
+        if(thumbView&&thumbView->thumb) {
+            // An empty bar still shows the thumb, at the start of the track.
+            ProgressThumbInfo info;
+            info.draw=draw;info.trackMin=position;info.trackMax={position.x+width,position.y+height};
+            info.head={position.x+(shown>0.f?fill:0.f),position.y+height*.5f};
+            info.fraction=shown;info.status=status;info.animate=animate;
+            thumbView->thumb(info,thumbView->thumbUser);
+        }
     } else if(status==ProgressStatus::Running) {
         const float segment=std::min(width,std::max(height*3.f,width*.28f));
         // Ping-pong with easing at both ends so the segment never snaps back.
@@ -336,6 +345,13 @@ void ProgressTrack(const char* id,float fraction,ProgressStatus status,Component
         }
         const float left=position.x+phase*(width-segment);
         draw->AddRectFilled({left,position.y},{left+segment,position.y+height},ImGui::GetColorU32(foreground),radius,ImDrawFlags_RoundCornersAll);
+        if(thumbView&&thumbView->thumb) {
+            ProgressThumbInfo info;
+            info.draw=draw;info.trackMin=position;info.trackMax={position.x+width,position.y+height};
+            info.head={left+segment*.5f,position.y+height*.5f};
+            info.fraction=-1.f;info.status=status;info.animate=animate;
+            thumbView->thumb(info,thumbView->thumbUser);
+        }
     }
     detail::DrawOutline(draw,position,{position.x+width,position.y+height},radius);
     if(o.accessibility) {
@@ -350,6 +366,10 @@ void ProgressTrack(const char* id,float fraction,ProgressStatus status,Component
         accessibility::AnnotateLastItem(*o.accessibility,node);
     }
     ImGui::PopID();
+}
+}
+void ProgressTrack(const char* id,float fraction,ProgressStatus status,ComponentOptions o) {
+    ProgressTrackImpl(id,fraction,status,o,nullptr);
 }
 void ProgressTrack(const char* id,const ProgressTrackView& view,ComponentOptions o) {
     const bool available=std::isfinite(view.fraction)&&view.fraction>=0.f;
@@ -375,7 +395,13 @@ void ProgressTrack(const char* id,const ProgressTrackView& view,ComponentOptions
         ImGui::SetCursorScreenPos({origin.x,origin.y+headerHeight+gap});
     }
     auto trackOptions=o;trackOptions.accessibility=nullptr;
-    ProgressTrack("track",view.fraction,view.status,trackOptions);
+    if(view.thumb&&view.thumbHeight>0.f) {
+        // Leave room above the track for the host's drawing, without the usual item spacing.
+        const ImVec2 origin=ImGui::GetCursorScreenPos();
+        ImGui::Dummy({width,view.thumbHeight});
+        ImGui::SetCursorScreenPos({origin.x,origin.y+view.thumbHeight});
+    }
+    ProgressTrackImpl("track",view.fraction,view.status,trackOptions,&view);
     if(*detail::SafeProgressText(view.supplemental)) {
         ImGui::SetCursorScreenPos({top.x,ImGui::GetItemRectMax().y+gap});
         ImGui::PushStyleColor(ImGuiCol_Text,SecondaryColor(o));

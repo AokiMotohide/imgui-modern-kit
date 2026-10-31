@@ -1,5 +1,6 @@
 #include <imkit/decor.h>
 #include <algorithm>
+#include <climits>
 #include <cmath>
 
 namespace imkit {
@@ -45,6 +46,64 @@ void DrawNineSlice(ImDrawList* draw, ImTextureRef texture, ImVec2 minimum, ImVec
     const int count = NineSliceQuads(minimum, maximum, texturePixels, border, scale, uvMin, uvMax, quads);
     for (int i = 0; i < count; ++i)
         draw->AddImage(texture, quads[i].min, quads[i].max, quads[i].uv0, quads[i].uv1, tint);
+}
+
+int SpriteFrameAt(const SpriteSheet& sheet, double elapsedSeconds, bool animate) {
+    const int frames = std::max(sheet.frames, 1);
+    const int rest = std::clamp(sheet.restFrame, 0, frames - 1);
+    if (!animate || !(sheet.fps > 0.f) || !std::isfinite(elapsedSeconds) || frames == 1)
+        return rest;
+    const double position = std::max(elapsedSeconds, 0.0) * static_cast<double>(sheet.fps);
+    if (position >= static_cast<double>(INT_MAX))
+        return sheet.playback == SpritePlayback::Loop ? 0 : (sheet.playback == SpritePlayback::Once ? rest : frames - 1);
+    const int index = static_cast<int>(position);
+    switch (sheet.playback) {
+    case SpritePlayback::Loop:
+        return index % frames;
+    case SpritePlayback::Once:
+        return index < frames ? index : rest;
+    case SpritePlayback::HoldLast:
+        return std::min(index, frames - 1);
+    }
+    return rest;
+}
+
+bool SpriteFrameUV(const SpriteSheet& sheet, int frame, ImVec2& uv0, ImVec2& uv1) {
+    if (sheet.frames < 1 || sheet.columns < 1 || frame < 0 || frame >= sheet.frames || !(sheet.cellPixels.x > 0.f) ||
+        !(sheet.cellPixels.y > 0.f) || !(sheet.sheetPixels.x > 0.f) || !(sheet.sheetPixels.y > 0.f))
+        return false;
+    const int column = frame % sheet.columns, row = frame / sheet.columns;
+    // The cell must lie inside the sheet; a frame that would sample outside it is refused rather than clamped.
+    const float right = static_cast<float>(column + 1) * sheet.cellPixels.x;
+    const float bottom = static_cast<float>(row + 1) * sheet.cellPixels.y;
+    if (right > sheet.sheetPixels.x + 1e-3f || bottom > sheet.sheetPixels.y + 1e-3f)
+        return false;
+    const float uSpan = sheet.uvMax.x - sheet.uvMin.x, vSpan = sheet.uvMax.y - sheet.uvMin.y;
+    uv0 = {sheet.uvMin.x + uSpan * static_cast<float>(column) * sheet.cellPixels.x / sheet.sheetPixels.x,
+           sheet.uvMin.y + vSpan * static_cast<float>(row) * sheet.cellPixels.y / sheet.sheetPixels.y};
+    uv1 = {sheet.uvMin.x + uSpan * right / sheet.sheetPixels.x, sheet.uvMin.y + vSpan * bottom / sheet.sheetPixels.y};
+    return true;
+}
+
+void DrawSprite(ImDrawList* draw, const SpriteSheet& sheet, int frame, ImVec2 minimum, ImVec2 maximum, ImU32 tint) {
+    ImVec2 uv0, uv1;
+    if (!draw || !SpriteFrameUV(sheet, frame, uv0, uv1) || !(maximum.x > minimum.x) || !(maximum.y > minimum.y))
+        return;
+    draw->AddImage(sheet.texture, minimum, maximum, uv0, uv1, tint);
+}
+
+int Sprite(const char* id, const SpriteSheet& sheet, SpriteState& state, double now, ImVec2 size, bool animate) {
+    ImGui::PushID(id);
+    const ImVec2 position = ImGui::GetCursorScreenPos();
+    ImGui::Dummy(size);
+    const ImVec2 maximum{position.x + size.x, position.y + size.y};
+    if (state.start < 0.0)
+        state.start = now;
+    const int frame = SpriteFrameAt(sheet, now - state.start, animate);
+    if (ImGui::IsRectVisible(position, maximum))
+        DrawSprite(ImGui::GetWindowDrawList(), sheet, frame, position, maximum);
+    ImGui::PopID();
+    return frame;
 }
 
 namespace {

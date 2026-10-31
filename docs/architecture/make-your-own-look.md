@@ -86,6 +86,26 @@ imkit::ActionButton("Go", imkit::ActionVariant::Primary, {}, {&theme});
 
 `SkinFrame` carries the rectangle, rounding, part (`Button`, `Badge`, `Card`), variant or status, the interaction state and an eased `hover` value. `DrawNineSlice` stretches a picture you loaded over a rectangle while keeping its corners; `NineSliceQuads` gives the same split without drawing. `DrawBackdropPattern` fills a rectangle with `Dots`, `Stripes` or `Rays`. Neither helper loads or owns a texture.
 
+### Animated pictures and progress thumbs
+
+`Sprite` plays a sheet of equally sized frames that you loaded into one texture. Describe the sheet with `SpriteSheet` (cell size, columns, frame count, fps, `Loop`, `Once` or `HoldLast`, and the `restFrame`), keep one `SpriteState` per sprite, and pass the host's monotonic time.
+
+```cpp
+imkit::SpriteSheet walk;
+walk.texture = walkTexture;                       // the host loads and owns it
+walk.sheetPixels = {1920, 640};
+walk.cellPixels = {160, 128};
+walk.columns = 12;
+walk.frames = 36;
+walk.fps = 24.f;
+walk.restFrame = 0;                               // shown under reduced motion
+static imkit::SpriteState state;
+const bool animate = theme.motion.enabled && !theme.motion.reducedMotion;
+imkit::Sprite("walk", walk, state, ImGui::GetTime(), {80, 64}, animate);
+```
+
+`SpriteFrameAt` and `SpriteFrameUV` give the frame number and texture coordinates without a Dear ImGui context; `DrawSprite` draws one frame into any rectangle. `ProgressTrackView::thumb` lets you draw on the leading edge of a progress fill, for example a sprite that rides it. The callback receives the draw list, the track rectangle, the head position and the shown fraction; `thumbHeight` reserves layout height above the track so the picture does not cover the header.
+
 ## What follows the theme on its own
 
 `ApplyTheme` writes `ImGuiStyle`, so colours, corners and outlines reach plain `ImGui::` widgets and ImKit components called without options. Skins, the hard shadow on buttons and text roles need the theme itself: pass it as `ComponentOptions::theme` (`imkit::ComponentOptions{&theme}`) or to the function. ImKit keeps no global current theme. A host that calls components in many places usually wraps them once.

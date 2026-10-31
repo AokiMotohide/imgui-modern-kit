@@ -19,5 +19,10 @@ int (*volatile slices)(ImVec2,ImVec2,ImVec2,imkit::NineSliceBorder,float,ImVec2,
 void (*volatile nineSlice)(ImDrawList*,ImTextureRef,ImVec2,ImVec2,ImVec2,imkit::NineSliceBorder,float,ImU32,ImVec2,ImVec2)=&imkit::DrawNineSlice;
 void (*volatile backdrop)(ImDrawList*,ImVec2,ImVec2,const imkit::BackdropStyle&)=&imkit::DrawBackdropPattern;
 bool (*volatile skinFrame)(const imkit::SkinFrame&,void*)=imkit::Skin{}.drawFrame;
+int (*volatile spriteAt)(const imkit::SpriteSheet&,double,bool)=&imkit::SpriteFrameAt;
+bool (*volatile spriteUV)(const imkit::SpriteSheet&,int,ImVec2&,ImVec2&)=&imkit::SpriteFrameUV;
+void (*volatile drawSprite)(ImDrawList*,const imkit::SpriteSheet&,int,ImVec2,ImVec2,ImU32)=&imkit::DrawSprite;
+int (*volatile sprite)(const char*,const imkit::SpriteSheet&,imkit::SpriteState&,double,ImVec2,bool)=&imkit::Sprite;
+imkit::ProgressThumbFn volatile thumb=nullptr;
 }
-int main(){return theme && resolve && contrast && palette && table && tree && annotate && compactActionRow && brand && corners && serialize && parse && pushRole && popRole && shadow && slices && nineSlice && backdrop && !skinFrame?0:1;}
+int main(){return theme && resolve && contrast && palette && table && tree && annotate && compactActionRow && brand && corners && serialize && parse && pushRole && popRole && shadow && slices && nineSlice && backdrop && spriteAt && spriteUV && drawSprite && sprite && !thumb && !skinFrame?0:1;}
