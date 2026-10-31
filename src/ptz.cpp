@@ -115,9 +115,17 @@ PtzRequest PtzControl(const char* id, const PtzView& view, PtzState& state, PtzO
     const bool hasPad = caps.pan || caps.tilt, hasZoom = caps.zoom, hasHome = caps.home && hasPad;
     const bool hasSpeed = !compact && layout.speed && caps.speed && (hasPad || hasZoom);
     const bool hasPresets = !compact && layout.presets && caps.presets && !view.presets.empty();
-    const float padSize = layout.diameter > 0 ? layout.diameter : u * (compact ? 4.2f : 6.5f);
+    const float railW = u * 1.4f, barW = std::max(4.f, ImGui::GetFontSize() * .3f);
+    const bool bar = hasZoom && view.zoomFraction >= 0;
+    const float available = ImGui::GetContentRegionAvail().x;
+    float padSize = layout.diameter > 0 ? layout.diameter : u * (compact ? 4.2f : 6.5f);
+    // An automatic diameter shrinks (down to 3.2 frame heights) so the pad and the zoom column fit a narrow host.
+    if (layout.diameter <= 0 && hasPad) {
+        const float zoomColumn = hasZoom ? gap * 1.5f + railW + (bar ? gap * .7f + barW : 0.f) : 0.f;
+        padSize = std::clamp(available - zoomColumn, std::min(padSize, u * 3.2f), padSize);
+    }
     const float radius = padSize * .5f;
-    const float totalWidth = std::max(padSize + u * 2, ImGui::GetContentRegionAvail().x);
+    const float totalWidth = std::max(padSize + u * 2, available);
 
     ImGui::PushID(id);
     ImGui::BeginGroup();
@@ -170,8 +178,7 @@ PtzRequest PtzControl(const char* id, const PtzView& view, PtzState& state, PtzO
 
     // Geometry of the three columns: pad, zoom rocker with its bar, then speed and presets. A column the camera
     // does not offer takes no room.
-    const float railW = u * 1.4f, railH = compact ? padSize : std::min(padSize, u * 3.8f), barW = std::max(4.f, ImGui::GetFontSize() * .3f);
-    const bool bar = hasZoom && view.zoomFraction >= 0;
+    const float railH = compact ? padSize : std::min(padSize, u * 3.8f);
     const float mainH = hasPad ? padSize : hasZoom ? railH : 0.f;
     const ImVec2 padMin{origin.x, y}, centre{padMin.x + radius, padMin.y + radius};
     const ImVec2 railMin{origin.x + (hasPad ? padSize + gap * 1.5f : 0.f), padMin.y + (mainH - railH) * .5f};

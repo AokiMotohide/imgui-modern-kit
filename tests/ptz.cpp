@@ -55,6 +55,7 @@ int main() {
     view.presets = presets;
     PtzState state;
     PtzRequest request;
+    float hostWidth = io.DisplaySize.x;
     float low = 20, high = 80;
     int ilow = 3, ihigh = 8;
     bool changedLow = false;
@@ -64,7 +65,7 @@ int main() {
         semantics.Begin(static_cast<std::uint64_t>(ImGui::GetFrameCount()) + 1);
         ImGui::NewFrame();
         ImGui::SetNextWindowPos({0, 0});
-        ImGui::SetNextWindowSize(io.DisplaySize);
+        ImGui::SetNextWindowSize({hostWidth, io.DisplaySize.y});
         ImGui::Begin("Host");
         request = PtzControl("ptz", view, state, {}, options);
         PtzOptions compact;
@@ -248,6 +249,18 @@ int main() {
     Check(!find("Up") && !find("Zoom in") && !find("Wide") && !request.moving && request.recallPreset == -1, "no controls draw no buttons");
     view.capabilities = {};
     view.readoutText = {};
+    for (int i = 0; i < 2; ++i)
+        frame();
+    // A narrow host: the automatic pad shrinks so the pad and the zoom rocker stay inside the window.
+    view.capabilities = {};
+    hostWidth = 7.f * ImGui::GetFrameHeight(); // Narrower than the natural pad and rocker, wider than the minimum.
+    for (int i = 0; i < 3; ++i)
+        frame();
+    if (const auto* zoomIn = find("Zoom in"); zoomIn && find("Right"))
+        Check(zoomIn->maximum.x <= hostWidth && find("Right")->maximum.x <= hostWidth, "pad and zoom rocker fit a narrow host");
+    else
+        Check(false, "zoom rocker in a narrow host");
+    hostWidth = io.DisplaySize.x;
     for (int i = 0; i < 2; ++i)
         frame();
     frame(true, true); // Reduced motion draws without animation state.

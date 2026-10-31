@@ -9,6 +9,7 @@
 - `PtzView::capabilities` (`PtzCapabilities`: `pan`, `tilt`, `zoom`, `home`, `presets`, `presetStore`, `speed`) hides the controls a camera lacks. A pan-only head, a zoom-only lens or recall-only presets get a smaller control; with nothing to offer it draws one line of text. Every field defaults to true, so existing code is unchanged.
 - `PtzView::readoutText` lets the host format the P / T / Z chips for devices that report normalised values.
 - New locale keys: `ptz.panPad`, `ptz.tiltPad`, `ptz.presetRecallHint`, `ptz.unsupported`. The Gallery PTZ page gains a Capabilities section.
+- With the default diameter the pad shrinks (down to 3.2 frame heights) to fit a narrow host instead of being clipped at the right edge.
 - Both additions are appended to `PtzView`; rebuild code that links ImKit with the new header.
 
 ### 日本語
@@ -16,6 +17,7 @@
 - `PtzView::capabilities`（`PtzCapabilities`: `pan`、`tilt`、`zoom`、`home`、`presets`、`presetStore`、`speed`）で、カメラが持たない操作を隠せます。パンだけの雲台、ズームだけのレンズ、呼び出し専用のプリセットでは小さな操作部になり、何もなければ1行の文だけを描きます。どのフィールドも既定値はtrueなので、既存のコードは変わりません。
 - `PtzView::readoutText`で、正規化した値を報告する機器向けにP / T / Zのチップの文字をホストが整えられます。
 - ロケールキー `ptz.panPad`、`ptz.tiltPad`、`ptz.presetRecallHint`、`ptz.unsupported` を追加しました。GalleryのPTZ画面にCapabilitiesの節を加えました。
+- 直径が既定のときは、狭い配置先でも右端が切れないよう、パッドをフレーム高さの3.2倍まで縮めます。
 - どちらも`PtzView`の末尾に追加したので、ImKitをリンクするコードは新しいヘッダーで再ビルドしてください。
 
 ## 4.0.0 — 2026-10-31

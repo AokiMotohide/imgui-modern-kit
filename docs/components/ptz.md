@@ -28,6 +28,7 @@ if (r.storePreset >= 0) device.Store(r.storePreset);
 | Speed | A fill slider edits `PtzState::speed`; the scale applies to pad and zoom. |
 | Presets | Click recalls a stored slot, Shift+click or a 0.6 s hold stores, and an empty slot stores on click. |
 | Disconnected | Every control is disabled and a move in progress ends with `stop`. |
+| Narrow host | With the default `PtzOptions::diameter` of zero the pad shrinks, down to 3.2 frame heights, so the pad and the zoom column fit the available width. An explicit diameter is kept. |
 
 Arrows, Home, zoom halves and presets are focusable; hold Space or Enter on a focused arrow to move. Each is an accessibility Button node with a localisable name (`ptz.up`, `ptz.home`, `ptz.zoomIn`, `ptz.preset…` through `LocaleContext`). `PtzOptions::compact` draws the pad, zoom and Home only. The control never talks to a camera and was verified only against the Gallery's simulated camera, not a real device.
 
