@@ -31,6 +31,11 @@ struct LookPages {
     // Skins page.
     BackdropStyle backdrop;
     float nineSliceBorder = 24.f;
+    SpriteState sprite;
+    int spritePlayback = 0;
+    float spriteFps = 12.f;
+    bool spriteAnimate = true, progressAuto = true;
+    float progressValue = .35f;
 
     void Studio(GalleryState& s);
     void Skins(GalleryState& s);

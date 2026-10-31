@@ -2466,6 +2466,7 @@ int main(int argc, char **argv) {
     GLuint texture = 0;
     std::array<GLuint, 7> iconTextures{};
     std::array<GLuint, 6> imageTextures{};
+    GLuint spriteTexture = 0;
     try {
         if (!renderer)
             throw std::runtime_error("Backend initialization failed");
@@ -2553,6 +2554,44 @@ int main(int argc, char **argv) {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, N, N, 0, GL_RGBA, GL_UNSIGNED_BYTE, px.data());
             h.s.sampleImages[static_cast<std::size_t>(kind)] = ImTextureRef(static_cast<ImTextureID>(imageTextures[static_cast<std::size_t>(kind)]));
+        }
+        // A generated sprite sheet (no third-party artwork): 12 frames of a bouncing ball, 4 columns by 3 rows of 64 px.
+        {
+            constexpr int Cell = 64, Columns = 4, Rows = 3, Frames = 12;
+            constexpr int W = Cell * Columns, H = Cell * Rows;
+            std::vector<unsigned char> px(static_cast<std::size_t>(W * H * 4), 0);
+            for (int frame = 0; frame < Frames; ++frame) {
+                const float t = static_cast<float>(frame) / Frames;
+                const float lift = std::fabs(std::sin(t * 3.14159265f)) * 22.f; // Jump height.
+                const float squash = 1.f + .22f * (1.f - std::min(1.f, lift / 6.f)); // Flattens on the ground.
+                const float rx = 14.f * squash, ry = 14.f / squash;
+                const float cx = Cell * .5f, cy = Cell - 12.f - lift - ry * .2f;
+                for (int y = 0; y < Cell; ++y)
+                    for (int x = 0; x < Cell; ++x) {
+                        float r = 0, g = 0, b = 0, a = 0;
+                        const float sx = (x - cx) / (12.f + lift * .15f), sy = (y - (Cell - 8.f)) / 3.f; // Ground shadow.
+                        const float shadow = std::max(0.f, 1.f - (sx * sx + sy * sy));
+                        if (shadow > 0.f) { a = shadow * .35f; }
+                        const float ex = (x - cx) / rx, ey = (y - cy) / ry, e = ex * ex + ey * ey;
+                        if (e < 1.f) {
+                            const float shade = .75f + .25f * (-ex * .5f - ey * .8f);
+                            r = (.95f * shade); g = (.62f * shade); b = (.18f * shade); a = 1.f;
+                            if (e > .8f) { r *= .7f; g *= .6f; b *= .5f; } // Rim.
+                        }
+                        const int ox = (frame % Columns) * Cell + x, oy = (frame / Columns) * Cell + y;
+                        const std::size_t o = static_cast<std::size_t>((oy * W + ox) * 4);
+                        px[o] = static_cast<unsigned char>(std::clamp(r, 0.f, 1.f) * 255.f);
+                        px[o + 1] = static_cast<unsigned char>(std::clamp(g, 0.f, 1.f) * 255.f);
+                        px[o + 2] = static_cast<unsigned char>(std::clamp(b, 0.f, 1.f) * 255.f);
+                        px[o + 3] = static_cast<unsigned char>(std::clamp(a, 0.f, 1.f) * 255.f);
+                    }
+            }
+            glGenTextures(1, &spriteTexture);
+            glBindTexture(GL_TEXTURE_2D, spriteTexture);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, W, H, 0, GL_RGBA, GL_UNSIGNED_BYTE, px.data());
+            h.s.spriteSheet = ImTextureRef(static_cast<ImTextureID>(spriteTexture));
         }
         glGenTextures(7, iconTextures.data());
         for (int i = 0; i < 7; ++i) {
@@ -2822,6 +2861,8 @@ int main(int argc, char **argv) {
     h.s.icons.Clear();
     glDeleteTextures(7, iconTextures.data());
     glDeleteTextures(6, imageTextures.data());
+    if (spriteTexture)
+        glDeleteTextures(1, &spriteTexture);
     if (renderer)
         ImGui_ImplOpenGL3_Shutdown();
     h.windowFrame.Detach();

@@ -108,6 +108,7 @@ struct GalleryState {
     ImVec4 color{.42f, .32f, .72f, 1};
     ImTextureRef texture{};
     std::array<ImTextureRef, 6> sampleImages{}; // Generated pictures for the picture-button pages.
+    ImTextureRef spriteSheet{};                  // Generated 4x3 sheet of 64 px frames for the Skins page.
     IconAtlas icons;
     char iconSearch[96]{};
     int iconCategory = 0, iconSizeIndex = 1, selectedIcon = 0, iconClicks = 0;

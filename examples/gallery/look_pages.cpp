@@ -368,6 +368,67 @@ void LookPages::Skins(GalleryState& s) {
                 "stay with the library. It reaches components that receive the theme.");
     if (!BeginGrid(s, "look-skins", 1))
         return;
+    if (const Section section{s, "Sprite sheet and progress thumb", "Sprite plays a sheet of frames; ProgressTrackView::thumb draws on the leading edge of a fill."}) {
+        if (s.spriteSheet.GetTexID() == ImTextureID{}) {
+            TextDisabled("This build has no sample sheet.");
+        } else {
+            SpriteSheet sheet;
+            sheet.texture = s.spriteSheet;
+            sheet.sheetPixels = {256.f, 192.f};
+            sheet.cellPixels = {64.f, 64.f};
+            sheet.columns = 4;
+            sheet.frames = 12;
+            sheet.fps = spriteFps;
+            sheet.playback = static_cast<SpritePlayback>(spritePlayback);
+            sheet.restFrame = 0;
+            static const char* const kPlayback[] = {"Loop", "Once", "HoldLast"};
+            SetNextItemWidth(140.f);
+            Combo("Playback", &spritePlayback, kPlayback, 3);
+            SameLine();
+            SetNextItemWidth(160.f);
+            SliderFloat("fps", &spriteFps, 2.f, 30.f, "%.0f");
+            SameLine();
+            if (Button("Restart"))
+                sprite.Restart();
+            SameLine();
+            Checkbox("Animate (off = rest frame)", &spriteAnimate);
+            const bool animate = spriteAnimate && s.theme.motion.enabled && !s.theme.motion.reducedMotion;
+            const double now = GetTime();
+            const ImVec2 sizes[] = {{32.f, 32.f}, {64.f, 64.f}, {128.f, 128.f}};
+            for (const ImVec2 size : sizes) {
+                Sprite(size.x < 40.f ? "sprite-s" : size.x < 100.f ? "sprite-m" : "sprite-l", sheet, sprite, now, size, animate);
+                SameLine(0, 24.f);
+            }
+            NewLine();
+            Checkbox("Advance the bar", &progressAuto);
+            if (progressAuto)
+                progressValue = static_cast<float>(std::fmod(now * .12, 1.0));
+            else
+                SliderFloat("Value", &progressValue, 0.f, 1.f, "%.2f");
+            struct Rider {
+                const SpriteSheet* sheet;
+                double now;
+            } rider{&sheet, now};
+            const float height = 44.f;
+            ProgressTrackView view;
+            view.fraction = progressValue;
+            view.label = "Determinate: the picture rides the fill";
+            view.thumb = [](const ProgressThumbInfo& info, void* user) {
+                const auto* r = static_cast<const Rider*>(user);
+                const float size = 44.f;
+                const ImVec2 minimum{info.head.x - size * .5f, info.trackMin.y - size + 6.f};
+                DrawSprite(info.draw, *r->sheet, SpriteFrameAt(*r->sheet, r->now, info.animate), minimum,
+                           {minimum.x + size, minimum.y + size});
+            };
+            view.thumbUser = &rider;
+            view.thumbHeight = height;
+            ProgressTrack("sprite-progress", view, {&s.theme});
+            ProgressTrackView idle = view;
+            idle.fraction = -1.f;
+            idle.label = "Indeterminate: the picture follows the moving segment";
+            ProgressTrack("sprite-idle", idle, {&s.theme});
+        }
+    }
     if (const Section section{s, "The same components, three looks"}) {
         Theme plain = s.theme;
         plain.skin = nullptr;
