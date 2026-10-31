@@ -4,6 +4,7 @@
 #include <cctype>
 #include <cmath>
 #include <cstdio>
+#include <iterator>
 #include <map>
 #include <string>
 
@@ -23,6 +24,8 @@ const char* Japanese(void* user, std::string_view key, const char* fallback) {
         {"ptz.connected", "接続済み"}, {"ptz.offline", "オフライン"},
         {"ptz.presetHint", "クリックで呼び出し。長押しまたは Shift+クリックで保存"},
         {"ptz.presetEmptyHint", "空きスロット。クリックで現在位置を保存"},
+        {"ptz.presetRecallHint", "クリックで呼び出し"}, {"ptz.panPad", "パン操作パッド"}, {"ptz.tiltPad", "チルト操作パッド"},
+        {"ptz.unsupported", "操作できる機能がありません"},
     };
     for (const auto& e : table)
         if (e.key == key)
@@ -104,7 +107,7 @@ void PtzPage::Show(GalleryState& host) {
     locale.lookup = Japanese;
     locale.user = &japanese;
     locale.languageTag = japanese ? "ja" : "en";
-    std::array<accessibility::SemanticNode, 128> nodes{};
+    std::array<accessibility::SemanticNode, 256> nodes{};
     accessibility::AccessibilityFrame semantics{nodes};
     semantics.Begin(ImGui::GetFrameCount());
     ComponentOptions o{&host.theme, &host.animation, &semantics, 0, &locale};
@@ -209,6 +212,40 @@ void PtzPage::Show(GalleryState& host) {
             (void)PtzControl("offline", offline, offlineState, {}, o);
         }
         EndSection(variants);
+
+        // Each camera offers a different set of controls; only those are drawn.
+        const bool capable = BeginSection(host, "Capabilities", "Only the controls a camera offers are drawn.");
+        if (capable) {
+            struct Variant {
+                const char* label;
+                PtzCapabilities capabilities;
+            };
+            static const Variant variantsList[] = {
+                {"Pan / tilt head", {.zoom = false}},
+                {"Zoom lens only", {.pan = false, .tilt = false}},
+                {"Pan only, recall-only presets", {.tilt = false, .zoom = false, .home = false, .presetStore = false}},
+                {"Nothing to control", {.pan = false, .tilt = false, .zoom = false, .presets = false}},
+            };
+            if (ImGui::BeginTable("ptz-capabilities", 2, ImGuiTableFlags_SizingStretchSame)) {
+                for (std::size_t i = 0; i < std::size(variantsList); ++i) {
+                    ImGui::TableNextColumn();
+                    PtzView v;
+                    v.label = variantsList[i].label;
+                    v.position = {pose.pan, pose.tilt, pose.zoom, connected};
+                    v.presets = presets;
+                    v.connected = connected;
+                    v.capabilities = variantsList[i].capabilities;
+                    PtzOptions layout;
+                    layout.speed = false;
+                    layout.presets = i == 2; // Only the recall-only head shows its preset slots.
+                    ImGui::PushID(static_cast<int>(i));
+                    (void)PtzControl("capability", v, capabilityStates[i], layout, o);
+                    ImGui::PopID();
+                }
+                ImGui::EndTable();
+            }
+        }
+        EndSection(capable);
         EndGrid();
     }
 

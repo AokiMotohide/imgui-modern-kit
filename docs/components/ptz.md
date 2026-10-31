@@ -31,6 +31,25 @@ if (r.storePreset >= 0) device.Store(r.storePreset);
 
 Arrows, Home, zoom halves and presets are focusable; hold Space or Enter on a focused arrow to move. Each is an accessibility Button node with a localisable name (`ptz.up`, `ptz.home`, `ptz.zoomIn`, `ptz.preset…` through `LocaleContext`). `PtzOptions::compact` draws the pad, zoom and Home only. The control never talks to a camera and was verified only against the Gallery's simulated camera, not a real device.
 
+### Capabilities
+
+Not every camera pans, tilts, zooms, goes home or stores presets. Fill `PtzView::capabilities` from what the device reports and the control draws only those parts: the rest take no room, report no request and publish no accessibility node.
+
+| Field | When false |
+|---|---|
+| `pan`, `tilt` | The left-right or up-down arrows go, and the pad's analog axis is masked the same way. A diagonal needs both. With neither, the pad and Home go. |
+| `zoom` | The zoom rocker and bar go. A zoom-only lens shows just the rocker. |
+| `home` | The Home well goes. It also needs `pan` or `tilt`. |
+| `presets` | The preset grid goes. |
+| `presetStore` | Slots become recall-only: empty slots are inert, and Shift+click and the 0.6 s hold no longer store. |
+| `speed` | The speed slider goes and requests use full velocity. |
+
+With no pan, tilt, zoom or presets the control draws one line of text (`ptz.unsupported`). Every field defaults to true, so existing code is unchanged.
+
+`PtzView::readoutText` replaces the P / T / Z chip text for devices that report normalised pan and tilt or a 0..1 zoom instead of degrees and magnification. A null field keeps the number from `position`.
+
+New locale keys: `ptz.panPad`, `ptz.tiltPad`, `ptz.presetRecallHint`, `ptz.unsupported`.
+
 ## RangeSlider
 
 `RangeSlider` and `RangeSliderInt` edit a low and a high value in place and return true on the frame they change. Drag a handle, drag the filled span to move both, or click the rail to move the nearest handle. Values stay in the range with `low <= high`; `minGap` and `step` are options. A focused handle answers `+` and `-` (Shift = x10); the arrow keys stay with Dear ImGui navigation. Handles are two accessibility Group nodes with numeric ranges and Increment/Decrement actions.

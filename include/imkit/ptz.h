@@ -15,6 +15,25 @@ struct PtzPosition {
     float zoom = 1;          // Magnification.
     bool valid = false;      // False shows dashes instead of numbers.
 };
+// The controls a camera offers. A control it lacks is not drawn and never reports a request, so a pan-only head, a
+// zoom-only lens or a camera without presets gets a smaller control instead of dead buttons. Everything defaults to
+// true, which keeps the full control.
+struct PtzCapabilities {
+    bool pan = true;          // Left and right arrows, and the horizontal axis of the pad.
+    bool tilt = true;         // Up and down arrows, and the vertical axis of the pad. Diagonals need both.
+    bool zoom = true;         // Zoom rocker and zoom bar.
+    bool home = true;         // Home well in the centre of the pad. Needs pan or tilt.
+    bool presets = true;      // Recall from the preset grid.
+    bool presetStore = true;  // Store from the grid; false leaves the slots recall-only and empty slots inert.
+    bool speed = true;        // Variable speed; false hides the speed slider and sends full velocity.
+};
+// Readout text formatted by the host, for devices that report neither degrees nor magnification (normalised
+// -1..1 pan and tilt, or a 0..1 zoom). A null field falls back to PtzView::position.
+struct PtzReadoutText {
+    const char* pan = nullptr;
+    const char* tilt = nullptr;
+    const char* zoom = nullptr;
+};
 struct PtzView {
     const char* label = "";  // Heading, for example the camera name.
     const char* status = ""; // Short text next to the connection dot, for example "Connected" or "Offline".
@@ -24,6 +43,8 @@ struct PtzView {
     int activePreset = -1;   // Preset matching the current position, or -1.
     // False disables every control, ends a move in progress and shows the status as offline.
     bool connected = true;
+    PtzCapabilities capabilities{};
+    PtzReadoutText readoutText{};
 };
 struct PtzState {
     float speed = .5f; // 0..1 scale applied to pad and zoom velocity. Edited by the speed slider.
@@ -33,6 +54,7 @@ struct PtzOptions {
     float diameter = 0;
     // Pad, zoom and Home only: no heading, readout, speed or presets.
     bool compact = false;
+    // Layout switches. A part also needs the camera to offer it (PtzCapabilities) before it is drawn.
     bool readout = true;
     bool speed = true;
     bool presets = true;
@@ -56,6 +78,7 @@ ImVec2 PtzPadVector(ImVec2 point, ImVec2 centre, float radius, float deadZone);
 // Draws the control and returns what the user asked for this frame. Direction arrows move at full speed while
 // held; pressing elsewhere on the pad is an analog joystick. Presets recall on click, store on Shift+click or a
 // 0.6 s hold, and an empty slot stores on click. Arrow buttons are focusable (Tab, then hold Space or Enter).
+// Only the controls in PtzView::capabilities are drawn; with none of them and no presets it shows a short notice.
 PtzRequest PtzControl(const char* id, const PtzView& view, PtzState& state, PtzOptions layout = {},
                       ComponentOptions options = {});
 } // namespace imkit

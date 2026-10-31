@@ -2,6 +2,22 @@
 
 > Published release entries present English first, followed by equivalent Japanese notes. Unreleased remains a work-in-progress list.
 
+## Unreleased
+
+### PTZ control draws only what the camera offers
+
+- `PtzView::capabilities` (`PtzCapabilities`: `pan`, `tilt`, `zoom`, `home`, `presets`, `presetStore`, `speed`) hides the controls a camera lacks. A pan-only head, a zoom-only lens or recall-only presets get a smaller control; with nothing to offer it draws one line of text. Every field defaults to true, so existing code is unchanged.
+- `PtzView::readoutText` lets the host format the P / T / Z chips for devices that report normalised values.
+- New locale keys: `ptz.panPad`, `ptz.tiltPad`, `ptz.presetRecallHint`, `ptz.unsupported`. The Gallery PTZ page gains a Capabilities section.
+- Both additions are appended to `PtzView`; rebuild code that links ImKit with the new header.
+
+### 日本語
+
+- `PtzView::capabilities`（`PtzCapabilities`: `pan`、`tilt`、`zoom`、`home`、`presets`、`presetStore`、`speed`）で、カメラが持たない操作を隠せます。パンだけの雲台、ズームだけのレンズ、呼び出し専用のプリセットでは小さな操作部になり、何もなければ1行の文だけを描きます。どのフィールドも既定値はtrueなので、既存のコードは変わりません。
+- `PtzView::readoutText`で、正規化した値を報告する機器向けにP / T / Zのチップの文字をホストが整えられます。
+- ロケールキー `ptz.panPad`、`ptz.tiltPad`、`ptz.presetRecallHint`、`ptz.unsupported` を追加しました。GalleryのPTZ画面にCapabilitiesの節を加えました。
+- どちらも`PtzView`の末尾に追加したので、ImKitをリンクするコードは新しいヘッダーで再ビルドしてください。
+
 ## 4.0.0 — 2026-10-31
 
 **ImKit 4.0 refreshes the default look, adds brand themes, and brings new modules for charts, camera control and live shows.** Rebuild your application and every linked ImKit library with the 4.0 headers: structures grew and default tokens changed. The Dear ImGui revision and the dependencies are unchanged. See the [migration guide](docs/reference/migration-v4.md) and the [4.0 additions](docs/reference/v4.0-api.md).

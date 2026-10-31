@@ -72,6 +72,7 @@ int main() {
         static PtzState compactState;
         PtzView compactView;
         compactView.connected = connected;
+        compactView.capabilities = view.capabilities;
         PtzControl("compact", compactView, compactState, compact, options);
         ImGui::SetNextItemWidth(400);
         changedLow = RangeSlider("range", &low, &high, 0, 100, "%.0f", {}, options);
@@ -165,6 +166,90 @@ int main() {
         io.AddMouseButtonEvent(0, false);
         frame(false);
     }
+    // Capabilities: a pan-only head without Home, zoom or storing draws only what it can do.
+    auto press = [&](const accessibility::SemanticNode& n, int frames = 2) {
+        io.AddMousePosEvent(centre(n).x, centre(n).y);
+        frame();
+        io.AddMouseButtonEvent(0, true);
+        for (int i = 0; i < frames; ++i)
+            frame();
+    };
+    auto release = [&] {
+        io.AddMouseButtonEvent(0, false);
+        frame();
+        frame();
+    };
+    view.capabilities = {};
+    view.capabilities.tilt = false;
+    view.capabilities.zoom = false;
+    view.capabilities.home = false;
+    view.capabilities.presetStore = false;
+    view.readoutText.pan = "0.25";
+    for (int i = 0; i < 3; ++i)
+        frame();
+    Check(semantics.Tree().Validate(), "semantic tree is valid for a pan-only head");
+    Check(find("Left") && find("Right"), "pan-only head keeps left and right");
+    Check(!find("Up") && !find("Down") && !find("Up left") && !find("Down right"), "pan-only head drops tilt and diagonals");
+    Check(!find("Zoom in") && !find("Zoom out") && !find("Home"), "pan-only head drops zoom and Home");
+    if (const auto* right = find("Right")) {
+        state.speed = .5f;
+        press(*right);
+        Check(request.moving && request.velocity.x > .4f && request.velocity.y == 0, "right moves pan only");
+        release();
+    } else
+        Check(false, "right button");
+    // A click is reported on the frame the button is released, so read the request before it is cleared.
+    if (const auto* empty = find("Preset 3")) {
+        press(*empty, 1);
+        io.AddMouseButtonEvent(0, false);
+        frame();
+        Check(request.storePreset == -1 && request.recallPreset == -1, "empty slot is inert without store");
+        frame();
+    }
+    if (const auto* wide = find("Wide")) {
+        press(*wide, 1);
+        io.AddMouseButtonEvent(0, false);
+        frame();
+        Check(request.recallPreset == 0 && request.storePreset == -1, "stored slot still recalls without store");
+        frame();
+    }
+    // Without variable speed the slider is gone and velocity is full scale.
+    view.capabilities = {};
+    view.capabilities.speed = false;
+    state.speed = .25f;
+    for (int i = 0; i < 2; ++i)
+        frame();
+    if (const auto* up = find("Up")) {
+        press(*up);
+        Check(request.moving && std::abs(request.velocity.y - 1.f) < 1e-4f, "fixed-speed camera ignores the speed setting");
+        release();
+    } else
+        Check(false, "up button at fixed speed");
+    // A zoom-only lens has no pad.
+    view.capabilities = {};
+    view.capabilities.pan = false;
+    view.capabilities.tilt = false;
+    for (int i = 0; i < 3; ++i)
+        frame();
+    Check(!find("Up") && !find("Left") && !find("Home"), "zoom-only lens has no pad");
+    if (const auto* zoomOut = find("Zoom out")) {
+        press(*zoomOut);
+        Check(request.moving && request.zoom < 0 && request.velocity.x == 0 && request.velocity.y == 0, "zoom-only lens zooms out");
+        release();
+    } else
+        Check(false, "zoom out button on a zoom-only lens");
+    // Nothing to offer: only a notice is drawn and nothing is ever requested.
+    view.capabilities = {};
+    view.capabilities.pan = view.capabilities.tilt = view.capabilities.zoom = false;
+    view.capabilities.presets = false;
+    for (int i = 0; i < 3; ++i)
+        frame();
+    Check(semantics.Tree().Validate(), "semantic tree is valid with no controls");
+    Check(!find("Up") && !find("Zoom in") && !find("Wide") && !request.moving && request.recallPreset == -1, "no controls draw no buttons");
+    view.capabilities = {};
+    view.readoutText = {};
+    for (int i = 0; i < 2; ++i)
+        frame();
     frame(true, true); // Reduced motion draws without animation state.
     Check(semantics.Tree().Validate(), "semantic tree stays valid after reduced motion");
 

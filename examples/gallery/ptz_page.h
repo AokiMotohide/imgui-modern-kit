@@ -11,6 +11,7 @@ struct PtzPage {
         float pan = 0, tilt = 0, zoom = 1;
     };
     PtzState state, compactState, offlineState;
+    std::array<PtzState, 4> capabilityStates{};
     Pose pose{-18, 6, 1.4f}, target{};
     bool moveToTarget = false;
     std::array<Pose, 8> stored{};

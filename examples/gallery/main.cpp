@@ -2756,6 +2756,11 @@ int main(int argc, char **argv) {
                         h.Page(page);
                         h.Frame({},
                                 out / ("page-" + std::to_string(page) + (dark ? "-dark.png" : "-light.png")));
+                        if(page==PagePtz) {
+                            h.mouse={ImGui::GetIO().DisplaySize.x*.7f,ImGui::GetIO().DisplaySize.y*.7f};
+                            h.Frame([](auto& io){io.AddMouseWheelEvent(0,-100);});h.mouse={-100,-100};h.Settle();
+                            h.Frame({},out/(dark?"ptz-scrolled-dark.png":"ptz-scrolled-light.png"));
+                        }
                         if(page==PageWorkbench) {
                             h.mouse={ImGui::GetIO().DisplaySize.x*.7f,ImGui::GetIO().DisplaySize.y*.7f};
                             h.Frame([](auto& io){io.AddMouseWheelEvent(0,-100);});h.mouse={-100,-100};h.Settle();

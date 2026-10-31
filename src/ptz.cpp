@@ -36,6 +36,10 @@ const std::array<Direction, 8> Directions = {{
 const char* Label(const ComponentOptions& o, const char* key, const char* fallback) {
     return o.locale ? o.locale->Text(key, fallback) : fallback;
 }
+// A diagonal needs both axes; a straight arrow needs the one it moves along.
+bool DirectionAllowed(const Direction& d, const PtzCapabilities& caps) {
+    return (std::abs(d.unit.x) < .01f || caps.pan) && (std::abs(d.unit.y) < .01f || caps.tilt);
+}
 const char* Safe(const char* s) { return s ? s : ""; }
 // Stable storage for default preset names: accessibility nodes borrow the text until the frame is published.
 const char* PresetName(int index) {
@@ -107,6 +111,10 @@ PtzRequest PtzControl(const char* id, const PtzView& view, PtzState& state, PtzO
     const float gap = std::max(4.f, style.ItemSpacing.x);
     const bool compact = layout.compact;
     const bool connected = view.connected;
+    const PtzCapabilities& caps = view.capabilities;
+    const bool hasPad = caps.pan || caps.tilt, hasZoom = caps.zoom, hasHome = caps.home && hasPad;
+    const bool hasSpeed = !compact && layout.speed && caps.speed && (hasPad || hasZoom);
+    const bool hasPresets = !compact && layout.presets && caps.presets && !view.presets.empty();
     const float padSize = layout.diameter > 0 ? layout.diameter : u * (compact ? 4.2f : 6.5f);
     const float radius = padSize * .5f;
     const float totalWidth = std::max(padSize + u * 2, ImGui::GetContentRegionAvail().x);
@@ -137,7 +145,7 @@ PtzRequest PtzControl(const char* id, const PtzView& view, PtzState& state, PtzO
         y += h + style.ItemSpacing.y * .5f;
     }
     // Readout chips.
-    if (!compact && layout.readout) {
+    if (!compact && layout.readout && (caps.pan || caps.tilt || caps.zoom)) {
         const float h = u * .8f;
         const ImU32 chip = Col(StyleColor(ImGuiCol_Button), .9f);
         char value[3][32];
@@ -150,106 +158,118 @@ PtzRequest PtzControl(const char* id, const PtzView& view, PtzState& state, PtzO
             for (auto& v : value)
                 std::snprintf(v, sizeof(v), "\xE2\x80\x94");
         const char* letters[3] = {Label(options, "ptz.pan.short", "P"), Label(options, "ptz.tilt.short", "T"), Label(options, "ptz.zoom.short", "Z")};
+        const bool shown[3] = {caps.pan, caps.tilt, caps.zoom};
+        const char* hosted[3] = {view.readoutText.pan, view.readoutText.tilt, view.readoutText.zoom};
         float x = origin.x;
         for (int i = 0; i < 3; ++i)
-            x += DrawChip(draw, {x, y}, h, letters[i], value[i], chip, dim, text) + gap * .6f;
+            if (shown[i])
+                x += DrawChip(draw, {x, y}, h, letters[i], hosted[i] ? hosted[i] : value[i], chip, dim, text) + gap * .6f;
         y += h + style.ItemSpacing.y;
     }
     y += compact ? 0.f : style.ItemSpacing.y * .25f;
 
-    // Geometry of the three columns.
+    // Geometry of the three columns: pad, zoom rocker with its bar, then speed and presets. A column the camera
+    // does not offer takes no room.
     const float railW = u * 1.4f, railH = compact ? padSize : std::min(padSize, u * 3.8f), barW = std::max(4.f, ImGui::GetFontSize() * .3f);
-    const bool bar = view.zoomFraction >= 0;
+    const bool bar = hasZoom && view.zoomFraction >= 0;
+    const float mainH = hasPad ? padSize : hasZoom ? railH : 0.f;
     const ImVec2 padMin{origin.x, y}, centre{padMin.x + radius, padMin.y + radius};
-    const ImVec2 railMin{padMin.x + padSize + gap * 1.5f, padMin.y + (padSize - railH) * .5f};
-    const float columnEnd = railMin.x + railW + (bar ? gap * .7f + barW : 0.f);
+    const ImVec2 railMin{origin.x + (hasPad ? padSize + gap * 1.5f : 0.f), padMin.y + (mainH - railH) * .5f};
+    const float columnEnd = hasZoom ? railMin.x + railW + (bar ? gap * .7f + barW : 0.f) : origin.x + (hasPad ? padSize : 0.f);
     const float rightX = columnEnd + gap * 1.8f, rightW = origin.x + totalWidth - rightX;
-    const bool wantRight = !compact && (layout.speed || (layout.presets && !view.presets.empty()));
-    const bool wide = wantRight && rightW >= u * 8.f;
-    float bottom = padMin.y + padSize;
+    const bool wide = (hasPad || hasZoom) && (hasSpeed || hasPresets) && rightW >= u * 8.f;
+    float bottom = padMin.y + mainH;
 
-    // Pad face and Home well.
     const ImVec4 face = StyleColor(ImGuiCol_FrameBg);
     const float well = radius * PadDeadZone;
-    draw->AddCircleFilled(centre, radius, Col(face), 72);
-    draw->AddCircle(centre, radius, hairline, 72, 1.f);
-    draw->AddCircle(centre, radius * .54f, Col(StyleColor(ImGuiCol_Border), .35f), 72, 1.f);
-
-    // 1. Analog joystick over the whole square; the arrows and Home are submitted later and win overlaps.
-    ImGui::SetCursorScreenPos(padMin);
-    ImGui::SetNextItemAllowOverlap(); // The arrows and Home are submitted later and must be able to take the hover.
-    ImGui::InvisibleButton("##pad", {padSize, padSize});
-    const bool padActive = ImGui::IsItemActive();
-    const ImVec2 mouse = ImGui::GetIO().MousePos;
-    if (ImGui::IsItemActivated())
-        storage->SetBool(padValidKey, std::hypot(mouse.x - centre.x, mouse.y - centre.y) <= radius);
-    detail::SemanticItem(options, Label(options, "ptz.pad", "Pan and tilt pad"), accessibility::SemanticRole::Group,
-                         accessibility::SemanticAction::None);
-
     ImVec2 velocity{};
     int held = HeldNone;
-    if (padActive && storage->GetBool(padValidKey) && connected) {
-        const ImVec2 v = PtzPadVector(mouse, centre, radius, PadDeadZone);
-        velocity = {v.x, -v.y};
-        held = HeldPad;
-    }
-    // 2. Eight arrow buttons at the rim ring; they also give keyboard and screen-reader access.
-    const float ringR = radius * .74f, glyph = u * .52f, hit = std::max(u * 1.05f, radius * .34f);
-    for (int i = 0; i < 8; ++i) {
-        const Direction& d = Directions[static_cast<std::size_t>(i)];
-        const ImVec2 p{centre.x + d.unit.x * ringR, centre.y + d.unit.y * ringR};
-        ImGui::PushID(i);
-        ImGui::SetCursorScreenPos({p.x - hit * .5f, p.y - hit * .5f});
-        ImGui::InvisibleButton("##dir", {hit, hit});
-        const bool active = ImGui::IsItemActive(), hovered = ImGui::IsItemHovered(), focused = ImGui::IsItemFocused() && ImGui::GetIO().NavVisible;
-        const bool pressed = detail::SemanticItem(options, Label(options, d.key, d.fallback), accessibility::SemanticRole::Button,
-                                                  accessibility::SemanticAction::Press);
-        const float wash = Ease(options, ImGui::GetItemID(), active ? 1.f : hovered ? .5f : 0.f);
-        if (wash > 0) {
-            const float a = std::atan2(d.unit.y, d.unit.x);
-            draw->PathArcTo(centre, radius * .70f, a - Pi / 8.f, a + Pi / 8.f, 10);
-            draw->PathStroke(Col(accent, .30f * wash), 0, radius * .40f);
+    if (hasPad) {
+        // Pad face.
+        draw->AddCircleFilled(centre, radius, Col(face), 72);
+        draw->AddCircle(centre, radius, hairline, 72, 1.f);
+        draw->AddCircle(centre, radius * .54f, Col(StyleColor(ImGuiCol_Border), .35f), 72, 1.f);
+
+        // 1. Analog joystick over the whole square; the arrows and Home are submitted later and win overlaps.
+        ImGui::SetCursorScreenPos(padMin);
+        ImGui::SetNextItemAllowOverlap(); // The arrows and Home are submitted later and must be able to take the hover.
+        ImGui::InvisibleButton("##pad", {padSize, padSize});
+        const bool padActive = ImGui::IsItemActive();
+        const ImVec2 mouse = ImGui::GetIO().MousePos;
+        if (ImGui::IsItemActivated())
+            storage->SetBool(padValidKey, std::hypot(mouse.x - centre.x, mouse.y - centre.y) <= radius);
+        const char* padName = caps.pan && caps.tilt ? Label(options, "ptz.pad", "Pan and tilt pad")
+                              : caps.pan            ? Label(options, "ptz.panPad", "Pan pad")
+                                                    : Label(options, "ptz.tiltPad", "Tilt pad");
+        detail::SemanticItem(options, padName, accessibility::SemanticRole::Group, accessibility::SemanticAction::None);
+
+        if (padActive && storage->GetBool(padValidKey) && connected) {
+            const ImVec2 v = PtzPadVector(mouse, centre, radius, PadDeadZone);
+            velocity = {caps.pan ? v.x : 0.f, caps.tilt ? -v.y : 0.f};
+            held = HeldPad;
         }
-        DrawArrow(draw, p, d.unit, glyph, active ? Col(accent) : Col(StyleColor(ImGuiCol_Text), hovered ? .95f : .62f), std::max(1.6f, u * .07f));
-        if (focused)
-            draw->AddCircle(p, hit * .52f, Col(accent), 24, 2.f);
-        if ((active || pressed) && connected) {
-            velocity = {d.unit.x, -d.unit.y};
-            held = HeldDirection + i;
+        // 2. Arrow buttons at the rim ring (those the camera can follow); they also give keyboard and screen-reader access.
+        const float ringR = radius * .74f, glyph = u * .52f, hit = std::max(u * 1.05f, radius * .34f);
+        for (int i = 0; i < 8; ++i) {
+            const Direction& d = Directions[static_cast<std::size_t>(i)];
+            if (!DirectionAllowed(d, caps))
+                continue;
+            const ImVec2 p{centre.x + d.unit.x * ringR, centre.y + d.unit.y * ringR};
+            ImGui::PushID(i);
+            ImGui::SetCursorScreenPos({p.x - hit * .5f, p.y - hit * .5f});
+            ImGui::InvisibleButton("##dir", {hit, hit});
+            const bool active = ImGui::IsItemActive(), hovered = ImGui::IsItemHovered(), focused = ImGui::IsItemFocused() && ImGui::GetIO().NavVisible;
+            const bool pressed = detail::SemanticItem(options, Label(options, d.key, d.fallback), accessibility::SemanticRole::Button,
+                                                      accessibility::SemanticAction::Press);
+            const float wash = Ease(options, ImGui::GetItemID(), active ? 1.f : hovered ? .5f : 0.f);
+            if (wash > 0) {
+                const float a = std::atan2(d.unit.y, d.unit.x);
+                draw->PathArcTo(centre, radius * .70f, a - Pi / 8.f, a + Pi / 8.f, 10);
+                draw->PathStroke(Col(accent, .30f * wash), 0, radius * .40f);
+            }
+            DrawArrow(draw, p, d.unit, glyph, active ? Col(accent) : Col(StyleColor(ImGuiCol_Text), hovered ? .95f : .62f), std::max(1.6f, u * .07f));
+            if (focused)
+                draw->AddCircle(p, hit * .52f, Col(accent), 24, 2.f);
+            if ((active || pressed) && connected) {
+                velocity = {d.unit.x, -d.unit.y};
+                held = HeldDirection + i;
+            }
+            ImGui::PopID();
         }
-        ImGui::PopID();
-    }
-    // 3. Home well.
-    ImGui::SetCursorScreenPos({centre.x - well, centre.y - well});
-    const bool home = ImGui::InvisibleButton("##home", {well * 2, well * 2}) && connected;
-    {
-        const bool active = ImGui::IsItemActive(), hovered = ImGui::IsItemHovered(), focused = ImGui::IsItemFocused() && ImGui::GetIO().NavVisible;
-        detail::SemanticItem(options, Label(options, "ptz.home", "Home"), accessibility::SemanticRole::Button,
-                             accessibility::SemanticAction::Press);
-        const float wash = Ease(options, ImGui::GetItemID(), active ? 1.f : hovered ? .55f : 0.f);
-        draw->AddCircleFilled(centre, well, Col(StyleColor(ImGuiCol_WindowBg), .55f), 40);
-        draw->AddCircleFilled(centre, well, Col(accent, .22f * wash), 40);
-        draw->AddCircle(centre, well, hairline, 40, 1.f);
-        DrawHome(draw, centre, well * 1.0f, wash > .6f ? Col(accent) : Col(StyleColor(ImGuiCol_Text), .75f), std::max(1.5f, u * .06f));
-        if (focused)
-            draw->AddCircle(centre, well + 2.f, Col(accent), 32, 2.f);
-        request.home = home;
-    }
-    // Analog knob follows the pointer, clamped inside the rim.
-    if (held == HeldPad) {
-        const ImVec2 d{mouse.x - centre.x, mouse.y - centre.y};
-        const float length = std::max(1e-3f, std::hypot(d.x, d.y)), reach = std::min(length, radius * .86f);
-        const ImVec2 k{centre.x + d.x / length * reach, centre.y + d.y / length * reach};
-        draw->AddLine(centre, k, Col(accent, .45f), 2.f);
-        draw->AddCircleFilled(k, radius * .15f + 4.f, Col(accent, .25f), 28);
-        draw->AddCircleFilled(k, radius * .15f, Col(accent), 28);
+        // 3. Home well.
+        if (hasHome) {
+            ImGui::SetCursorScreenPos({centre.x - well, centre.y - well});
+            const bool home = ImGui::InvisibleButton("##home", {well * 2, well * 2}) && connected;
+            const bool active = ImGui::IsItemActive(), hovered = ImGui::IsItemHovered(), focused = ImGui::IsItemFocused() && ImGui::GetIO().NavVisible;
+            detail::SemanticItem(options, Label(options, "ptz.home", "Home"), accessibility::SemanticRole::Button,
+                                 accessibility::SemanticAction::Press);
+            const float wash = Ease(options, ImGui::GetItemID(), active ? 1.f : hovered ? .55f : 0.f);
+            draw->AddCircleFilled(centre, well, Col(StyleColor(ImGuiCol_WindowBg), .55f), 40);
+            draw->AddCircleFilled(centre, well, Col(accent, .22f * wash), 40);
+            draw->AddCircle(centre, well, hairline, 40, 1.f);
+            DrawHome(draw, centre, well * 1.0f, wash > .6f ? Col(accent) : Col(StyleColor(ImGuiCol_Text), .75f), std::max(1.5f, u * .06f));
+            if (focused)
+                draw->AddCircle(centre, well + 2.f, Col(accent), 32, 2.f);
+            request.home = home;
+        }
+        // Analog knob follows the pointer on the axes the camera has, clamped inside the rim.
+        if (held == HeldPad) {
+            ImVec2 d{caps.pan ? mouse.x - centre.x : 0.f, caps.tilt ? mouse.y - centre.y : 0.f};
+            const float length = std::max(1e-3f, std::hypot(d.x, d.y)), reach = std::min(length, radius * .86f);
+            const ImVec2 k{centre.x + d.x / length * reach, centre.y + d.y / length * reach};
+            draw->AddLine(centre, k, Col(accent, .45f), 2.f);
+            draw->AddCircleFilled(k, radius * .15f + 4.f, Col(accent, .25f), 28);
+            draw->AddCircleFilled(k, radius * .15f, Col(accent), 28);
+        }
     }
 
     // Zoom rocker: top half zooms in, bottom half zooms out, both while held.
     const ImVec2 railMax{railMin.x + railW, railMin.y + railH};
-    draw->AddRectFilled(railMin, railMax, Col(face), railW * .5f);
-    draw->AddRect(railMin, railMax, hairline, railW * .5f, 0, 1.f);
-    for (int half = 0; half < 2; ++half) {
+    if (hasZoom) {
+        draw->AddRectFilled(railMin, railMax, Col(face), railW * .5f);
+        draw->AddRect(railMin, railMax, hairline, railW * .5f, 0, 1.f);
+    }
+    for (int half = 0; half < (hasZoom ? 2 : 0); ++half) {
         const bool zoomIn = half == 0;
         ImGui::PushID(zoomIn ? "zoom-in" : "zoom-out");
         const ImVec2 a{railMin.x, railMin.y + (zoomIn ? 0.f : railH * .5f)}, b{railMax.x, railMin.y + (zoomIn ? railH * .5f : railH)};
@@ -278,7 +298,8 @@ PtzRequest PtzControl(const char* id, const PtzView& view, PtzState& state, PtzO
         }
         ImGui::PopID();
     }
-    draw->AddLine({railMin.x + railW * .22f, railMin.y + railH * .5f}, {railMax.x - railW * .22f, railMin.y + railH * .5f}, hairline, 1.f);
+    if (hasZoom)
+        draw->AddLine({railMin.x + railW * .22f, railMin.y + railH * .5f}, {railMax.x - railW * .22f, railMin.y + railH * .5f}, hairline, 1.f);
     if (bar) {
         const float x0 = railMax.x + gap * .7f, f = std::clamp(view.zoomFraction, 0.f, 1.f);
         draw->AddRectFilled({x0, railMin.y}, {x0 + barW, railMax.y}, Col(detail::MixColor(face, StyleColor(ImGuiCol_Text), .16f)), barW * .5f);
@@ -286,9 +307,9 @@ PtzRequest PtzControl(const char* id, const PtzView& view, PtzState& state, PtzO
     }
 
     // Right column (or below): speed and presets.
-    float cx = wide ? rightX : origin.x, cy = wide ? padMin.y : padMin.y + padSize + style.ItemSpacing.y * 1.6f;
+    float cx = wide ? rightX : origin.x, cy = wide ? padMin.y : padMin.y + mainH + (mainH > 0 ? style.ItemSpacing.y * 1.6f : 0.f);
     const float cw = wide ? rightW : totalWidth;
-    if (!compact && layout.speed) {
+    if (hasSpeed) {
         const char* speedLabel = Label(options, "ptz.speed", "Speed");
         draw->AddText({cx, cy + (u * .8f - ImGui::GetFontSize()) * .5f}, dim, speedLabel);
         int value = std::clamp(static_cast<int>(std::lround(state.speed * 100.f)), 1, 100);
@@ -302,7 +323,7 @@ PtzRequest PtzControl(const char* id, const PtzView& view, PtzState& state, PtzO
         cy += u + style.ItemSpacing.y * 1.2f;
     }
     int recall = -1, store = -1;
-    if (!compact && layout.presets && !view.presets.empty()) {
+    if (hasPresets) {
         const int columns = std::clamp(layout.presetColumns, 1, 8), count = static_cast<int>(view.presets.size());
         const char* header = Label(options, "ptz.presets", "Presets");
         draw->AddText({cx, cy + (u * .8f - ImGui::GetFontSize()) * .5f}, dim, header);
@@ -316,23 +337,28 @@ PtzRequest PtzControl(const char* id, const PtzView& view, PtzState& state, PtzO
             const ImVec2 b{a.x + cell, a.y + cellH};
             ImGui::PushID(i);
             ImGui::SetCursorScreenPos(a);
+            // An empty slot on a camera that cannot store has nothing to offer.
+            const bool inert = !preset.stored && !caps.presetStore;
+            ImGui::BeginDisabled(inert);
             const bool clicked = ImGui::InvisibleButton("##preset", {cell, cellH});
             const bool active = ImGui::IsItemActive(), hovered = ImGui::IsItemHovered(), focused = ImGui::IsItemFocused() && ImGui::GetIO().NavVisible;
             const char* fallback = PresetName(i);
             const ImGuiID cellId = ImGui::GetItemID();
             const bool semantic = detail::SemanticItem(options, *Safe(preset.name) ? preset.name : fallback,
                                                        accessibility::SemanticRole::Button, accessibility::SemanticAction::Press);
+            ImGui::EndDisabled();
             const bool shift = ImGui::GetIO().KeyShift;
             const float holdTime = active ? ImGui::GetIO().MouseDownDuration[0] : 0.f;
-            if (active && holdTime >= StoreHoldSeconds && !storage->GetBool(cellId, false)) {
+            if (caps.presetStore && active && holdTime >= StoreHoldSeconds && !storage->GetBool(cellId, false)) {
                 storage->SetBool(cellId, true);
                 store = i;
             }
             if (clicked || semantic) {
                 if (!storage->GetBool(cellId, false)) {
-                    if (shift || !preset.stored)
-                        store = i;
-                    else
+                    if (shift || !preset.stored) {
+                        if (caps.presetStore)
+                            store = i;
+                    } else
                         recall = i;
                 }
             }
@@ -352,7 +378,7 @@ PtzRequest PtzControl(const char* id, const PtzView& view, PtzState& state, PtzO
                 draw->AddRectFilled(a, b, Col(accent, .10f * wash), r);
                 detail::DrawDashedRect(draw, a, b, r, Col(StyleColor(ImGuiCol_Border), .9f), 1.f, std::max(2.5f, u * .1f));
             }
-            if (active && holdTime > .12f && !storage->GetBool(cellId, false)) {
+            if (caps.presetStore && active && holdTime > .12f && !storage->GetBool(cellId, false)) {
                 const float f = std::min(1.f, holdTime / StoreHoldSeconds);
                 draw->PushClipRect(a, {a.x + cell * f, b.y}, true);
                 draw->AddRectFilled({a.x, b.y - 3.f}, {b.x, b.y}, Col(accent), 1.5f);
@@ -367,21 +393,26 @@ PtzRequest PtzControl(const char* id, const PtzView& view, PtzState& state, PtzO
                 draw->AddRect({a.x - 2, a.y - 2}, {b.x + 2, b.y + 2}, Col(accent), r + 2, 0, 2.f);
             if (connected && ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip)) {
                 const char* name = *Safe(preset.name) ? preset.name : fallback;
-                ImGui::SetTooltip("%s\n%s", name,
-                                  preset.stored ? Label(options, "ptz.presetHint", "Click to recall. Hold or Shift+click to save.")
-                                                : Label(options, "ptz.presetEmptyHint", "Empty. Click to save the current position."));
+                const char* hint = !preset.stored ? Label(options, "ptz.presetEmptyHint", "Empty. Click to save the current position.")
+                                   : caps.presetStore ? Label(options, "ptz.presetHint", "Click to recall. Hold or Shift+click to save.")
+                                                      : Label(options, "ptz.presetRecallHint", "Click to recall.");
+                ImGui::SetTooltip("%s\n%s", name, hint);
             }
             ImGui::PopID();
         }
         const int rows = (count + columns - 1) / columns;
         cy += static_cast<float>(rows) * (cellH + gap * .6f);
     }
+    if (!hasPad && !hasZoom && !hasPresets) {
+        draw->AddText({origin.x, y + (u - ImGui::GetFontSize()) * .5f}, dim, Label(options, "ptz.unsupported", "No camera controls available"));
+        cy = y + u;
+    }
     bottom = std::max(bottom, cy);
     request.recallPreset = connected ? recall : -1;
     request.storePreset = connected ? store : -1;
 
     // Velocity, scaled by the speed setting; stop edge when a move ends or the camera disconnects.
-    const float scale = std::clamp(state.speed, .05f, 1.f);
+    const float scale = caps.speed ? std::clamp(state.speed, .05f, 1.f) : 1.f;
     request.velocity = {velocity.x * scale, velocity.y * scale};
     request.zoom *= scale;
     request.moving = request.velocity.x != 0 || request.velocity.y != 0 || request.zoom != 0;
