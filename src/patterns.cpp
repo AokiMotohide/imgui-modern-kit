@@ -202,7 +202,7 @@ bool DialogLauncher(const char* label,DialogState& s,ComponentOptions o) {
 bool BeginDialog(const char* id,DialogState& s,ComponentOptions o) {
     if(s.open && !ImGui::IsPopupOpen(id)) ImGui::OpenPopup(id);
     if(!s.open) return false;
-    const float pad=ImGui::GetFontSize()*1.3f;
+    const float pad=ImGui::GetFontSize()*detail::CurrentParts().dialogPaddingScale;
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,{pad,pad});
     bool visible=ImGui::BeginPopupModal(id,nullptr,ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::PopStyleVar();

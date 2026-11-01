@@ -58,11 +58,34 @@ struct Palette {
     ImVec4 accent, onAccent, selection, focus, destructive, onDestructive;
     ImVec4 success, warning;
 };
-// Derived from the density and tokens by ResolveTheme; edit those instead.
+// Sizes that components read while drawing. Ratios are multiples of the font size, so they follow the UI scale; the two
+// pixel values are screen pixels, as the literals they replace were. Defaults draw exactly as before.
+struct PartMetrics {
+    float checkHeightScale = 1.45f;       // Checkbox and RadioButton height.
+    float toggleHeightScale = 1.75f;      // Toggle and Switch height.
+    float dialogPaddingScale = 1.3f;      // Dialog window padding.
+    float progressBarHeightScale = .2f;   // Progress bar height as a share of the frame height (kept within 4..8).
+    float badgeExtraHeight = 8.f;         // StatusBadge height beyond the font size, in pixels.
+    float segmentedInset = 3.f;           // Segmented control inset, in pixels.
+};
+// Derived from the density, tokens and `Theme::layout` by ResolveTheme; edit those instead.
 struct Metrics {
     float controlHeight = 30, spacing = 6, radius = 8, border = 1;
     float bodySize = 14, headingSize = 18, focusWidth = 1.5f, elevation = 14;
     float horizontalPadding = 12;
+    float spacingY = 6;                   // Vertical item spacing; `spacing` is the horizontal one.
+    float windowPaddingX = 12, windowPaddingY = 12;
+    float cellPaddingY = 4, indent = 18, scrollbar = 10, grabMin = 14, separatorTextPaddingY = 6;
+    PartMetrics parts{};
+};
+// Overrides for the sizes that decide how tall controls are. An unset value keeps the density preset (or the
+// component's own ratio), so a theme that sets nothing draws as before. ResolveTheme applies them after the density.
+// Lengths are design pixels scaled with the UI; `*Scale` values are multiples of the font size.
+struct LayoutTokens {
+    std::optional<float> controlHeight, spacingX, spacingY, horizontalPadding;
+    std::optional<float> windowPaddingX, windowPaddingY, cellPaddingY, indent, scrollbar, grabMin, separatorTextPaddingY;
+    std::optional<float> checkHeightScale, toggleHeightScale, dialogPaddingScale, progressBarHeightScale;
+    std::optional<float> badgeExtraHeight, segmentedInset; // Screen pixels.
 };
 struct Motion {
     float controlSeconds = .14f, overlaySeconds = .20f;
@@ -85,6 +108,7 @@ struct Theme {
     ColorScheme scheme = ColorScheme::Light;
     ContrastMode contrast = ContrastMode::Standard;
     Density density = Density::Comfortable;
+    LayoutTokens layout{}; // Optional size overrides on top of the density.
     SemanticColors semantic{};
     Typography typography{};
     SpacingTokens spacing{};
@@ -155,6 +179,7 @@ class ThemeScope {
   private:
     ImGuiContext *context_;
     ImGuiStyle previous_;
+    PartMetrics previousParts_;
 };
 // Host-owned, fixed capacity. Separate instance per context. No retained context
 // pointer: bind with a host-issued generation token; Reset before context reuse.

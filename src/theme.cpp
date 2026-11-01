@@ -2,6 +2,7 @@
 #include "draw_internal.h"
 #include <algorithm>
 #include <cmath>
+#include <vector>
 
 namespace imkit {
 namespace {
@@ -32,11 +33,11 @@ ImGuiStyle Style(const Theme &t, float scale) {
     const float border = t.stroke.border;
     const bool outline = border >= OutlineMinimumWidth;
     const float hairlineWidth = std::min(border, 1.f);
-    s.WindowPadding = {12, 12};
+    s.WindowPadding = {m.windowPaddingX, m.windowPaddingY};
     s.FramePadding = {m.horizontalPadding, std::max(3.f, (m.controlHeight - m.bodySize) / 2)};
-    s.ItemSpacing = {m.spacing, m.spacing};
-    s.ItemInnerSpacing = {m.spacing, m.spacing};
-    s.CellPadding = {m.spacing, 4};
+    s.ItemSpacing = {m.spacing, m.spacingY};
+    s.ItemInnerSpacing = {m.spacing, m.spacingY};
+    s.CellPadding = {m.spacing, m.cellPaddingY};
     const bool highContrast = t.contrast == ContrastMode::HighContrast;
     // Windows, children and images are overlay-class surfaces: a pill control radius must not turn them into capsules.
     const float surfaceRadius = std::min(t.radius.control, t.radius.overlay);
@@ -50,15 +51,15 @@ ImGuiStyle Style(const Theme &t, float scale) {
     s.ChildBorderSize = outline ? border : 0.f;
     s.PopupBorderSize = border;
     s.FrameBorderSize = border;
-    s.IndentSpacing = 18;
-    s.ScrollbarSize = 10;
-    s.GrabMinSize = 14;
+    s.IndentSpacing = m.indent;
+    s.ScrollbarSize = m.scrollbar;
+    s.GrabMinSize = m.grabMin;
     s.TabRounding = t.radius.control + 2;
     s.TabBorderSize = outline ? border : 0.f;
     s.TabBarBorderSize = 1;
     s.TabBarOverlineSize = 0;
     s.SeparatorTextBorderSize = hairlineWidth;
-    s.SeparatorTextPadding = {0, 6};
+    s.SeparatorTextPadding = {0, m.separatorTextPaddingY};
     s.SeparatorTextAlign = {0, .5f};
     s.ImageRounding = surfaceRadius;
     s.ImageBorderSize = border;
@@ -279,6 +280,23 @@ void ResolveTheme(Theme& t) {
     t.metrics.controlHeight=t.density==Density::Compact?24.f:t.density==Density::Touch?44.f:30.f;
     t.metrics.horizontalPadding=t.density==Density::Compact?8.f:t.density==Density::Touch?16.f:12.f;
     t.metrics.spacing=t.density==Density::Compact?4.f:t.density==Density::Touch?8.f:6.f;
+    t.metrics.spacingY=t.metrics.spacing;
+    t.metrics.windowPaddingX=t.metrics.windowPaddingY=12.f; t.metrics.cellPaddingY=4.f; t.metrics.indent=18.f;
+    t.metrics.scrollbar=10.f; t.metrics.grabMin=14.f; t.metrics.separatorTextPaddingY=6.f;
+    t.metrics.parts=PartMetrics{};
+    {
+        // A set layout token replaces the density's value; an unset one leaves it.
+        const auto& l=t.layout; auto& m=t.metrics; auto& p=m.parts;
+        const auto take=[](float& target,const std::optional<float>& value) { if(value) target=*value; };
+        take(m.controlHeight,l.controlHeight); take(m.spacing,l.spacingX); take(m.horizontalPadding,l.horizontalPadding);
+        m.spacingY=l.spacingY?*l.spacingY:(l.spacingX?*l.spacingX:m.spacingY);
+        take(m.windowPaddingX,l.windowPaddingX); take(m.windowPaddingY,l.windowPaddingY);
+        take(m.cellPaddingY,l.cellPaddingY); take(m.indent,l.indent); take(m.scrollbar,l.scrollbar);
+        take(m.grabMin,l.grabMin); take(m.separatorTextPaddingY,l.separatorTextPaddingY);
+        take(p.checkHeightScale,l.checkHeightScale); take(p.toggleHeightScale,l.toggleHeightScale);
+        take(p.dialogPaddingScale,l.dialogPaddingScale); take(p.progressBarHeightScale,l.progressBarHeightScale);
+        take(p.badgeExtraHeight,l.badgeExtraHeight); take(p.segmentedInset,l.segmentedInset);
+    }
     t.metrics.bodySize=t.typography.body; t.metrics.headingSize=t.typography.heading;
     t.metrics.radius=t.radius.control; t.metrics.border=t.stroke.border; t.metrics.focusWidth=t.stroke.focus;
     t.metrics.elevation=t.elevation.overlay;
@@ -385,7 +403,28 @@ void PushTextRole(const Theme &t, TextRole role) {
 void PopTextRole() {
     ImGui::PopFont();
 }
+namespace {
+// Component sizes that cannot live in ImGuiStyle, kept per context so a host with several contexts stays correct.
+struct PartsEntry { ImGuiContext* context; PartMetrics parts; };
+std::vector<PartsEntry>& PartsTable() { static std::vector<PartsEntry> table; return table; }
+} // namespace
+namespace detail {
+const PartMetrics& CurrentParts() {
+    static const PartMetrics defaults;
+    for (const auto& e : PartsTable())
+        if (e.context == ImGui::GetCurrentContext())
+            return e.parts;
+    return defaults;
+}
+void SetCurrentParts(const PartMetrics& parts) {
+    auto* context = ImGui::GetCurrentContext();
+    for (auto& e : PartsTable())
+        if (e.context == context) { e.parts = parts; return; }
+    PartsTable().push_back({context, parts});
+}
+} // namespace detail
 void ApplyTheme(const Theme &t, float scale) {
+    detail::SetCurrentParts(t.metrics.parts);
     auto next = Style(t, scale);
     // These are host/window multipliers, not design tokens. In particular a
     // temporary theme must not undo a surrounding BeginDisabled() alpha.
@@ -394,7 +433,7 @@ void ApplyTheme(const Theme &t, float scale) {
     ImGui::GetStyle() = next;
 }
 ThemeScope::ThemeScope(const Theme &t, float scale)
-    : context_(ImGui::GetCurrentContext()), previous_(ImGui::GetStyle()) {
+    : context_(ImGui::GetCurrentContext()), previous_(ImGui::GetStyle()), previousParts_(detail::CurrentParts()) {
     ApplyTheme(t, scale);
     ImGui::PushFont(t.fonts.regular, t.metrics.bodySize);
 }
@@ -402,6 +441,7 @@ ThemeScope::~ThemeScope() {
     IM_ASSERT(ImGui::GetCurrentContext() == context_);
     ImGui::PopFont();
     ImGui::GetStyle() = previous_;
+    detail::SetCurrentParts(previousParts_);
 }
 void AnimationState::Reset(std::uint64_t generation) {
     entries_ = {};

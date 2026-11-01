@@ -29,7 +29,7 @@ inline const char* ProgressValueText(const ProgressTrackView& view,char* buffer,
     return buffer;
 }
 inline float ProgressTrackBarHeight() {
-    const float height=std::clamp(ImGui::GetFrameHeight()*.2f,4.f,8.f);
+    const float height=std::clamp(ImGui::GetFrameHeight()*CurrentParts().progressBarHeightScale,4.f,8.f);
     // An outline takes room from inside the bar, so the bar grows with it.
     return IsOutlined(ImGui::GetStyle())?std::max(height,ImGui::GetStyle().FrameBorderSize*2.f+4.f):height;
 }

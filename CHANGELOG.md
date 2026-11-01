@@ -4,6 +4,20 @@
 
 ## Unreleased
 
+### Adjustable control sizes
+
+- `Theme::layout` (`LayoutTokens`) overrides the sizes that decide how tall controls are: `controlHeight`, `spacingX` / `spacingY`, `horizontalPadding`, window and cell padding, `indent`, `scrollbar`, `grabMin`, `separatorTextPaddingY`, and the component ratios `checkHeightScale`, `toggleHeightScale`, `dialogPaddingScale`, `progressBarHeightScale`, `badgeExtraHeight`, `segmentedInset`. `ResolveTheme` applies them after the density; an unset value keeps the density, so existing themes draw as before.
+- `Metrics` gains the resolved values (`spacingY`, `windowPaddingX/Y`, `cellPaddingY`, `indent`, `scrollbar`, `grabMin`, `separatorTextPaddingY`, `parts`). Components that have no `Theme` (Checkbox, Toggle, StatusBadge, Segmented, dialogs, progress bars) read `parts` from the theme last applied to the context; `ThemeScope` restores the previous one.
+- The theme text format reads and writes `layout.*` keys; an unset token is not written.
+- `ThemeScope` and `Theme` gain members; rebuild code that links ImKit with the new header.
+
+### 調整できるコントロールの寸法
+
+- `Theme::layout`（`LayoutTokens`）で、コントロールの縦幅を決める寸法を上書きできます。`controlHeight`、`spacingX` / `spacingY`、`horizontalPadding`、ウィンドウとセルの余白、`indent`、`scrollbar`、`grabMin`、`separatorTextPaddingY`、および部品ごとの比率 `checkHeightScale`、`toggleHeightScale`、`dialogPaddingScale`、`progressBarHeightScale`、`badgeExtraHeight`、`segmentedInset` です。`ResolveTheme` が密度のあとに適用し、未指定の項目は密度の値のままなので、既存のテーマの見た目は変わりません。
+- `Metrics` に解決済みの値（`spacingY`、`windowPaddingX/Y`、`cellPaddingY`、`indent`、`scrollbar`、`grabMin`、`separatorTextPaddingY`、`parts`）が加わります。`Theme` を持たない部品（Checkbox、Toggle、StatusBadge、Segmented、ダイアログ、進捗バー）は、そのコンテキストに最後に適用したテーマの `parts` を読みます。`ThemeScope` は前の値に戻します。
+- テーマのテキスト形式で `layout.*` を読み書きできます。未指定のトークンは書き出しません。
+- `ThemeScope` と `Theme` にメンバーが加わります。ImKit をリンクするコードは、新しいヘッダーで再ビルドしてください。
+
 ### Sprite playback and progress thumbs
 
 - `Sprite`, `SpriteSheet` and `SpriteState` play a sheet of equally sized frames from one host-owned texture: `Loop`, `Once` (then the rest frame) or `HoldLast`. Reduced motion shows `restFrame`; a rectangle outside the visible area is not drawn. `SpriteFrameAt` and `SpriteFrameUV` give the frame and its texture coordinates without a Dear ImGui context, and `DrawSprite` draws one frame into any rectangle.

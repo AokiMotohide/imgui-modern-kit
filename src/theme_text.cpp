@@ -13,7 +13,8 @@
 // written can always be read back, and adding a token means adding one row here.
 namespace imkit {
 namespace {
-enum class Kind { Color, Float, Bool, Vec2, Scheme, Contrast, Density, Easing };
+// OptFloat: an optional number; an unset value is not written, and a written one is read back as set.
+enum class Kind { Color, Float, OptFloat, Bool, Vec2, Scheme, Contrast, Density, Easing };
 
 struct Field {
     std::string_view key;
@@ -31,6 +32,23 @@ const Field kFields[] = {
     IMKIT_FIELD("scheme", Scheme, scheme),
     IMKIT_FIELD("contrast", Contrast, contrast),
     IMKIT_FIELD("density", Density, density),
+    IMKIT_RANGED("layout.control-height", OptFloat, layout.controlHeight, 0, 400),
+    IMKIT_RANGED("layout.spacing-x", OptFloat, layout.spacingX, 0, 100),
+    IMKIT_RANGED("layout.spacing-y", OptFloat, layout.spacingY, 0, 100),
+    IMKIT_RANGED("layout.horizontal-padding", OptFloat, layout.horizontalPadding, 0, 100),
+    IMKIT_RANGED("layout.window-padding-x", OptFloat, layout.windowPaddingX, 0, 200),
+    IMKIT_RANGED("layout.window-padding-y", OptFloat, layout.windowPaddingY, 0, 200),
+    IMKIT_RANGED("layout.cell-padding-y", OptFloat, layout.cellPaddingY, 0, 100),
+    IMKIT_RANGED("layout.indent", OptFloat, layout.indent, 0, 200),
+    IMKIT_RANGED("layout.scrollbar", OptFloat, layout.scrollbar, 1, 100),
+    IMKIT_RANGED("layout.grab-min", OptFloat, layout.grabMin, 1, 100),
+    IMKIT_RANGED("layout.separator-text-padding-y", OptFloat, layout.separatorTextPaddingY, 0, 100),
+    IMKIT_RANGED("layout.check-height-scale", OptFloat, layout.checkHeightScale, 1, 4),
+    IMKIT_RANGED("layout.toggle-height-scale", OptFloat, layout.toggleHeightScale, 1, 4),
+    IMKIT_RANGED("layout.dialog-padding-scale", OptFloat, layout.dialogPaddingScale, 0, 8),
+    IMKIT_RANGED("layout.progress-bar-height-scale", OptFloat, layout.progressBarHeightScale, 0.01, 2),
+    IMKIT_RANGED("layout.badge-extra-height", OptFloat, layout.badgeExtraHeight, 0, 64),
+    IMKIT_RANGED("layout.segmented-inset", OptFloat, layout.segmentedInset, 0, 32),
     IMKIT_FIELD("semantic.canvas", Color, semantic.canvas),
     IMKIT_FIELD("semantic.surface", Color, semantic.surface),
     IMKIT_FIELD("semantic.surface-raised", Color, semantic.surfaceRaised),
@@ -166,6 +184,13 @@ bool ParseValue(const Field &field, Theme &theme, std::string_view value) {
     switch (field.kind) {
     case Kind::Color: return ParseColor(value, *static_cast<ImVec4 *>(target));
     case Kind::Float: return ParseFloat(value, field.low, field.high, *static_cast<float *>(target));
+    case Kind::OptFloat: {
+        float number = 0;
+        if (!ParseFloat(value, field.low, field.high, number))
+            return false;
+        *static_cast<std::optional<float> *>(target) = number;
+        return true;
+    }
     case Kind::Bool: return ParseBool(value, *static_cast<bool *>(target));
     case Kind::Vec2: return ParseVec2(value, field.low, field.high, *static_cast<ImVec2 *>(target));
     case Kind::Scheme: return ParseName(kSchemes, value, *static_cast<ColorScheme *>(target));
@@ -196,6 +221,7 @@ void AppendValue(std::string &out, const Field &field, Theme &theme) {
     switch (field.kind) {
     case Kind::Color: AppendColor(out, *static_cast<ImVec4 *>(source)); break;
     case Kind::Float: AppendFloat(out, *static_cast<float *>(source)); break;
+    case Kind::OptFloat: AppendFloat(out, **static_cast<std::optional<float> *>(source)); break;
     case Kind::Bool: out += *static_cast<bool *>(source) ? "true" : "false"; break;
     case Kind::Vec2:
         AppendFloat(out, static_cast<ImVec2 *>(source)->x);
@@ -232,6 +258,8 @@ std::string SerializeTheme(const Theme &theme) {
     std::string out = "# ImKit theme. Keys and values: docs/architecture/make-your-own-look.md\n";
     Theme copy = theme; // The field table reads through mutable accessors.
     for (const auto &field : kFields) {
+        if (field.kind == Kind::OptFloat && !static_cast<std::optional<float> *>(field.access(copy))->has_value())
+            continue;
         out += field.key;
         out += " = ";
         AppendValue(out, field, copy);

@@ -29,7 +29,7 @@ void SelectionMark(bool selected, bool underline = false) {
 struct CompactFrame {
     CompactFrame() {
         const auto &style = ImGui::GetStyle();
-        const float pad = std::max(1.f, ImGui::GetFontSize() * .225f);
+        const float pad = std::max(1.f, ImGui::GetFontSize() * (detail::CurrentParts().checkHeightScale - 1.f) * .5f);
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {style.FramePadding.x, pad});
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, std::min(style.FrameRounding, 6.f));
     }

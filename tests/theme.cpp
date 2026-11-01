@@ -1,4 +1,5 @@
 #include <imkit/theme.h>
+#include "../src/draw_internal.h"
 
 #include <algorithm>
 #include <array>
@@ -229,6 +230,64 @@ int TestThemeText() {
     return 0;
 }
 
+int TestLayoutTokens() {
+    // A theme that sets no layout token keeps the density's sizes and the components' built-in ratios.
+    auto base = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
+    const auto &m = base.metrics;
+    if (m.controlHeight != 30.f || m.spacingY != 6.f || m.windowPaddingX != 12.f || m.cellPaddingY != 4.f ||
+        m.indent != 18.f || m.scrollbar != 10.f || m.grabMin != 14.f || m.separatorTextPaddingY != 6.f ||
+        m.parts.checkHeightScale != 1.45f || m.parts.toggleHeightScale != 1.75f || m.parts.badgeExtraHeight != 8.f)
+        return 60;
+    if (imkit::SerializeTheme(base).find("layout.") != std::string::npos) // Unset tokens are not written.
+        return 61;
+
+    // Set tokens replace the density's values; spacingX alone moves both axes.
+    auto tight = base;
+    tight.layout.controlHeight = 26.f;
+    tight.layout.spacingX = 5.f;
+    tight.layout.windowPaddingY = 10.f;
+    tight.layout.toggleHeightScale = 1.5f;
+    imkit::ResolveTheme(tight);
+    if (tight.metrics.controlHeight != 26.f || tight.metrics.spacing != 5.f || tight.metrics.spacingY != 5.f ||
+        tight.metrics.windowPaddingY != 10.f || tight.metrics.windowPaddingX != 12.f ||
+        tight.metrics.parts.toggleHeightScale != 1.5f)
+        return 62;
+    // A later density change keeps the overrides.
+    imkit::SetDensity(tight, imkit::Density::Touch);
+    if (tight.metrics.controlHeight != 26.f || tight.metrics.horizontalPadding != 16.f)
+        return 63;
+
+    ImGui::CreateContext();
+    imkit::ApplyTheme(base, 1.f);
+    const float baseFramePad = ImGui::GetStyle().FramePadding.y;
+    {
+        imkit::ThemeScope scope(tight, 1.f);
+        const auto &style = ImGui::GetStyle();
+        if (style.FramePadding.y >= baseFramePad || style.ItemSpacing.x != 5.f || style.ItemSpacing.y != 5.f ||
+            style.WindowPadding.y != 10.f || imkit::detail::CurrentParts().toggleHeightScale != 1.5f) {
+            ImGui::DestroyContext();
+            return 64;
+        }
+    }
+    const bool restored = ImGui::GetStyle().FramePadding.y == baseFramePad &&
+                          imkit::detail::CurrentParts().toggleHeightScale == 1.75f;
+    ImGui::DestroyContext();
+    if (!restored)
+        return 65;
+
+    // Written tokens read back as set; a partial file leaves the rest unset.
+    const std::string text = imkit::SerializeTheme(tight);
+    auto restoredTheme = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
+    const auto result = imkit::ParseTheme(text, restoredTheme);
+    if (result.ignored != 0 || imkit::SerializeTheme(restoredTheme) != text || restoredTheme.metrics.controlHeight != 26.f)
+        return 66;
+    auto partial = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
+    imkit::ParseTheme("layout.control-height = 24\nlayout.toggle-height-scale = 9\n", partial);
+    if (partial.metrics.controlHeight != 24.f || partial.layout.toggleHeightScale.has_value()) // 9 is out of range.
+        return 67;
+    return 0;
+}
+
 int TestWorlds() {
     if (const int failure = TestStyleProjection())
         return failure;
@@ -303,6 +362,8 @@ int main() {
         slate.colors.canvas.x >= slate.colors.surface.x ||
         imkit::ThemePresetFromId("slate") != imkit::ThemePreset::Slate)
         return 14;
+    if (const int failure = TestLayoutTokens())
+        return failure;
     if (const int failure = TestWorlds())
         return failure;
     std::puts("13 theme presets, stable IDs, scale bounds, legacy factories, brand themes, outlines and theme text validated");

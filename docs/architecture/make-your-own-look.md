@@ -133,6 +133,10 @@ Colours are `#RRGGBB[AA]`, numbers are plain decimals, switches are `true` or `f
 | `motion.control-seconds`, `motion.overlay-seconds` | 0 to 10 |
 | `motion.enabled`, `motion.reduced` | Switch |
 | `motion.easing` | `linear`, `ease-out` or `ease-in-out` |
+| `layout.control-height`, `spacing-x`, `spacing-y`, `horizontal-padding`, `window-padding-x`, `window-padding-y`, `cell-padding-y`, `indent`, `scrollbar`, `grab-min`, `separator-text-padding-y` | Optional lengths. Unset keeps the density; an unset line is not written |
+| `layout.check-height-scale`, `toggle-height-scale` | Optional, 1 to 4. Checkbox and Toggle height as a multiple of the font size (defaults 1.45 and 1.75) |
+| `layout.dialog-padding-scale`, `progress-bar-height-scale` | Optional multiples (defaults 1.3 and 0.2) |
+| `layout.badge-extra-height`, `segmented-inset` | Optional pixels (defaults 8 and 3) |
 
 Unknown keys and values out of range are skipped with a warning. Key names are stable: they are never renamed or reused.
 

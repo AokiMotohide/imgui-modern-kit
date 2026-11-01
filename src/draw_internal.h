@@ -7,6 +7,9 @@
 // Small drawing helpers shared by the component implementations. Everything is
 // stateless and draws into the supplied list; nothing here owns ImGui state.
 namespace imkit::detail {
+// Component sizes of the theme applied to the current context; defaults when none was applied.
+const PartMetrics& CurrentParts();
+void SetCurrentParts(const PartMetrics& parts);
 // A frame border of OutlineMinimumWidth or more is an outline, not a hairline (see theme.h). ApplyTheme truncates scaled
 // borders, so the minimum is scaled and truncated the same way. This reads the style, so it works without a Theme.
 inline bool IsOutlined(const ImGuiStyle& style) {

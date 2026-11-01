@@ -294,8 +294,9 @@ bool Toggle(const char *label, bool *value, ComponentOptions options) {
                                ImGuiCol_CheckMark,     ImGuiCol_Border};
     for (auto color : hidden)
         ImGui::PushStyleColor(color, ImVec4(0, 0, 0, 0));
-    // The hit square is 1.75 font heights: a switch needs less height than a 30 px control.
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {ImGui::GetStyle().FramePadding.x, ImGui::GetFontSize() * .375f});
+    // The hit square is toggleHeightScale font heights (1.75 by default): a switch needs less height than a 30 px control.
+    const float toggleScale = detail::CurrentParts().toggleHeightScale;
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {ImGui::GetStyle().FramePadding.x, std::max(1.f, ImGui::GetFontSize() * (toggleScale - 1.f) * .5f)});
     bool changed = imkit::Checkbox(label, value);
     ImGui::PopStyleVar();
     if(SemanticItem(options,label,accessibility::SemanticRole::Toggle,accessibility::SemanticAction::Toggle,*value)) {
@@ -351,7 +352,7 @@ bool Segmented(const char *id, int *selected, std::span<const char *const> label
     if (labels.empty())
         return false;
     const auto &style = ImGui::GetStyle();
-    const float inset = 3.f, height = ImGui::GetFrameHeight();
+    const float inset = detail::CurrentParts().segmentedInset, height = ImGui::GetFrameHeight();
     const int count = static_cast<int>(labels.size());
     std::array<float, 32> widths{}, lefts{};
     float total = 0;
@@ -585,7 +586,7 @@ bool AxisVector3Field(const char *id, const char *label, float *value, const cha
     const char *names[] = {"X", "Y", "Z"};
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5.f);
     ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(7.f, 5.f));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(7.f, std::min(5.f, ImGui::GetStyle().FramePadding.y)));
     bool changed = false;
     for (int axis = 0; axis < 3; ++axis) {
         if (axis && !stacked) ImGui::SameLine(0.f, gap);
@@ -637,7 +638,7 @@ void EndSettingRow() {
 }
 static ImVec2 StatusBadgeSize(const char *text) {
     const float pad = ImGui::GetFontSize() * .75f;
-    return {ImGui::CalcTextSize(text).x + pad * 2 + ImGui::GetFontSize() * .55f, ImGui::GetFontSize() + 8};
+    return {ImGui::CalcTextSize(text).x + pad * 2 + ImGui::GetFontSize() * .55f, ImGui::GetFontSize() + detail::CurrentParts().badgeExtraHeight};
 }
 void StatusBadge(const char *text, StatusKind kind, const Theme *theme) {
     auto p = ImGui::GetCursorScreenPos();
