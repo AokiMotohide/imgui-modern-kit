@@ -685,9 +685,9 @@ void TimeRuler(const char *id, TimeState &s, CanvasState &canvas, std::span<cons
             ImGui::PushID(i);ImGui::Separator();
             if(s.icons) {Icon(*s.icons,IconId::WorkRange,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
             ImGui::TextUnformatted(i?s.rulerLabels.inOut:s.rulerLabels.work);
-            auto &range=i?s.inOut:s.work;double first=Seconds(range.first),last=Seconds(range.last);
-            if(ImGui::InputDouble(s.rulerLabels.start,&first,0,0,"%.3f") && std::isfinite(first)) range.first=std::min(FromSeconds(first),range.last);
-            if(ImGui::InputDouble(s.rulerLabels.end,&last,0,0,"%.3f") && std::isfinite(last)) range.last=std::max(FromSeconds(last),range.first);
+            auto &range=i?s.inOut:s.work;double rangeStart=Seconds(range.first),rangeEnd=Seconds(range.last);
+            if(ImGui::InputDouble(s.rulerLabels.start,&rangeStart,0,0,"%.3f") && std::isfinite(rangeStart)) range.first=std::min(FromSeconds(rangeStart),range.last);
+            if(ImGui::InputDouble(s.rulerLabels.end,&rangeEnd,0,0,"%.3f") && std::isfinite(rangeEnd)) range.last=std::max(FromSeconds(rangeEnd),range.first);
             ImGui::PopID();
         }
         ImGui::EndPopup();

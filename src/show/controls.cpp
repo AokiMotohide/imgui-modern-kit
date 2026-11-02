@@ -151,14 +151,14 @@ ValueEdit Fader(const char* label, float* value, FaderOptions o, ComponentOption
         const float len = u * (isDefault ? .3f : .2f);
         const float off = capB * .5f + 3.f;
         // Ticks sit left of a vertical rail and above a horizontal one.
-        const ImVec2 start{vertical ? q.x - off : q.x, vertical ? q.y : q.y - off};
-        const ImVec2 stop{vertical ? start.x - len : start.x, vertical ? start.y : start.y - len};
-        draw->AddLine(start, stop, U32(isDefault ? c.text : c.muted, isDefault ? .8f : .55f), 1.f);
+        const ImVec2 tickStart{vertical ? q.x - off : q.x, vertical ? q.y : q.y - off};
+        const ImVec2 tickStop{vertical ? tickStart.x - len : tickStart.x, vertical ? tickStart.y : tickStart.y - len};
+        draw->AddLine(tickStart, tickStop, U32(isDefault ? c.text : c.muted, isDefault ? .8f : .55f), 1.f);
         if (o.tickFormat && vertical) {
             char text[24];
             std::snprintf(text, sizeof(text), SafeFormat(o.tickFormat, "fge", "%.0f"), tick);
             const ImVec2 ts = ImGui::CalcTextSize(text);
-            draw->AddText(ImGui::GetFont(), ImGui::GetFontSize() * .8f, {stop.x - ts.x * .8f - 3.f, stop.y - ts.y * .4f}, U32(c.muted), text);
+            draw->AddText(ImGui::GetFont(), ImGui::GetFontSize() * .8f, {tickStop.x - ts.x * .8f - 3.f, tickStop.y - ts.y * .4f}, U32(c.muted), text);
         }
     }
 

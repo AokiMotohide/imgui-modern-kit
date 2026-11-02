@@ -46,7 +46,7 @@ const Field kFields[] = {
     IMKIT_RANGED("layout.check-height-scale", OptFloat, layout.checkHeightScale, 1, 4),
     IMKIT_RANGED("layout.toggle-height-scale", OptFloat, layout.toggleHeightScale, 1, 4),
     IMKIT_RANGED("layout.dialog-padding-scale", OptFloat, layout.dialogPaddingScale, 0, 8),
-    IMKIT_RANGED("layout.progress-bar-height-scale", OptFloat, layout.progressBarHeightScale, 0.01, 2),
+    IMKIT_RANGED("layout.progress-bar-height-scale", OptFloat, layout.progressBarHeightScale, 0.01f, 2),
     IMKIT_RANGED("layout.badge-extra-height", OptFloat, layout.badgeExtraHeight, 0, 64),
     IMKIT_RANGED("layout.segmented-inset", OptFloat, layout.segmentedInset, 0, 32),
     IMKIT_FIELD("semantic.canvas", Color, semantic.canvas),

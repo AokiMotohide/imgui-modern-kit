@@ -850,7 +850,7 @@ CalendarRequest Calendar(const char* id, std::span<const CalendarEvent> events, 
         ImGui::PushStyleColor(ImGuiCol_ChildBg, {0, 0, 0, 0});
         const bool open = ImGui::BeginChild("##grid", {size.x, std::max(u * 8.f, size.y - u * 4.f)}, ImGuiChildFlags_None);
         if (open) {
-            auto* draw = ImGui::GetWindowDrawList(); // The child's list, so drawing is clipped to its viewport.
+            auto* gridDraw = ImGui::GetWindowDrawList(); // The child's list, so drawing is clipped to its viewport.
             if (!state.scrolled) {
                 ImGui::SetScrollY(hourH * 7.5f);
                 state.scrolled = true;
@@ -859,14 +859,14 @@ CalendarRequest Calendar(const char* id, std::span<const CalendarEvent> events, 
             // Hours and lines.
             for (int h = 0; h < 24; ++h) {
                 const float y = origin.y + static_cast<float>(h) * hourH;
-                draw->AddLine({origin.x + gutter, y}, {origin.x + gutter + dayW * static_cast<float>(days), y}, U32(c.border, .6f));
+                gridDraw->AddLine({origin.x + gutter, y}, {origin.x + gutter + dayW * static_cast<float>(days), y}, U32(c.border, .6f));
                 if (h > 0) {
                     const char* label = FrameText("%02d:00", h);
-                    draw->AddText(ImGui::GetFont(), ImGui::GetFontSize() * .82f, {origin.x + gutter - ImGui::CalcTextSize(label).x * .82f - 6.f, y - ImGui::GetTextLineHeight() * .41f}, U32(c.muted), label);
+                    gridDraw->AddText(ImGui::GetFont(), ImGui::GetFontSize() * .82f, {origin.x + gutter - ImGui::CalcTextSize(label).x * .82f - 6.f, y - ImGui::GetTextLineHeight() * .41f}, U32(c.muted), label);
                 }
             }
             for (int i = 0; i <= days; ++i)
-                draw->AddLine({origin.x + gutter + static_cast<float>(i) * dayW, origin.y}, {origin.x + gutter + static_cast<float>(i) * dayW, origin.y + total}, U32(c.border, .6f));
+                gridDraw->AddLine({origin.x + gutter + static_cast<float>(i) * dayW, origin.y}, {origin.x + gutter + static_cast<float>(i) * dayW, origin.y + total}, U32(c.border, .6f));
             // Day backgrounds: drag to create.
             ImGuiStorage* st = ImGui::GetStateStorage();
             for (int i = 0; i < days; ++i) {
@@ -886,9 +886,9 @@ CalendarRequest Calendar(const char* id, std::span<const CalendarEvent> events, 
                     if (hi - lo >= o.snapMinutes * 60) {
                         const float y0 = origin.y + static_cast<float>(lo) / 3600.f * hourH, y1 = origin.y + static_cast<float>(hi) / 3600.f * hourH;
                         const float x0 = origin.x + gutter + static_cast<float>(i) * dayW + 2.f;
-                        draw->AddRectFilled({x0, y0}, {x0 + dayW - 4.f, y1}, U32(c.accent, .25f), round);
-                        draw->AddRect({x0, y0}, {x0 + dayW - 4.f, y1}, U32(c.accent), round, 0, 1.5f);
-                        draw->AddText({x0 + 4.f, y0 + 2.f}, U32(c.text), FrameText("%02d:%02d - %02d:%02d", static_cast<int>(lo / 3600), static_cast<int>(lo / 60 % 60), static_cast<int>(hi / 3600), static_cast<int>(hi / 60 % 60)));
+                        gridDraw->AddRectFilled({x0, y0}, {x0 + dayW - 4.f, y1}, U32(c.accent, .25f), round);
+                        gridDraw->AddRect({x0, y0}, {x0 + dayW - 4.f, y1}, U32(c.accent), round, 0, 1.5f);
+                        gridDraw->AddText({x0 + 4.f, y0 + 2.f}, U32(c.text), FrameText("%02d:%02d - %02d:%02d", static_cast<int>(lo / 3600), static_cast<int>(lo / 60 % 60), static_cast<int>(hi / 3600), static_cast<int>(hi / 60 % 60)));
                     }
                 }
                 if (ImGui::IsItemDeactivated()) {
@@ -969,8 +969,8 @@ CalendarRequest Calendar(const char* id, std::span<const CalendarEvent> events, 
                         if (moved) {
                             const std::int64_t shift = newStart - ev.start;
                             const float gx = a.x + static_cast<float>(dd) * dayW, gy = a.y + static_cast<float>(shift - static_cast<std::int64_t>(dd) * 86400) / 3600.f * hourH;
-                            draw->AddRect({gx, gy}, {gx + (b.x - a.x), gy + (b.y - a.y)}, U32(c.accent), round, 0, 2.f);
-                            draw->AddText({gx + 4.f, gy + 2.f}, U32(c.accent), ClockText(newStart, o.zone));
+                            gridDraw->AddRect({gx, gy}, {gx + (b.x - a.x), gy + (b.y - a.y)}, U32(c.accent), round, 0, 2.f);
+                            gridDraw->AddText({gx + 4.f, gy + 2.f}, U32(c.accent), ClockText(newStart, o.zone));
                         }
                     }
                 }
@@ -989,23 +989,23 @@ CalendarRequest Calendar(const char* id, std::span<const CalendarEvent> events, 
                 ImVec4 fill = Mix(c.surface, tone, selected ? .5f : hovered ? .42f : .32f);
                 if (active && moved)
                     fill = Mix(c.surface, tone, .15f);
-                draw->AddRectFilled(a, b, U32(fill), round);
-                detail::DrawOutline(draw, a, b, round);
-                draw->AddRectFilled(a, {a.x + 3.f, b.y}, U32(tone), 2.f);
+                gridDraw->AddRectFilled(a, b, U32(fill), round);
+                detail::DrawOutline(gridDraw, a, b, round);
+                gridDraw->AddRectFilled(a, {a.x + 3.f, b.y}, U32(tone), 2.f);
                 const bool conflict = conflictIndex[static_cast<std::size_t>(seg.event)] != 0;
                 if (conflict)
-                    detail::DrawDashedRect(draw, a, b, round, U32(c.warning), 1.5f, 4.f);
+                    detail::DrawDashedRect(gridDraw, a, b, round, U32(c.warning), 1.5f, 4.f);
                 else if (selected)
-                    draw->AddRect(a, b, U32(c.accent), round, 0, 2.f);
-                draw->PushClipRect(a, b, true);
-                draw->AddText({a.x + u * .4f, a.y + 2.f}, U32(c.text), Safe(ev.title));
+                    gridDraw->AddRect(a, b, U32(c.accent), round, 0, 2.f);
+                gridDraw->PushClipRect(a, b, true);
+                gridDraw->AddText({a.x + u * .4f, a.y + 2.f}, U32(c.text), Safe(ev.title));
                 if (b.y - a.y > u * 1.8f)
-                    draw->AddText(ImGui::GetFont(), ImGui::GetFontSize() * .85f, {a.x + u * .4f, a.y + 2.f + ImGui::GetTextLineHeight()}, U32(c.muted), FrameText("%s - %s", ClockText(ev.start, o.zone), ClockText(ev.end, o.zone)));
+                    gridDraw->AddText(ImGui::GetFont(), ImGui::GetFontSize() * .85f, {a.x + u * .4f, a.y + 2.f + ImGui::GetTextLineHeight()}, U32(c.muted), FrameText("%s - %s", ClockText(ev.start, o.zone), ClockText(ev.end, o.zone)));
                 if (conflict)
-                    GlyphWarning(draw, {b.x - u * .5f, a.y + u * .5f}, u * .6f, U32(c.warning));
+                    GlyphWarning(gridDraw, {b.x - u * .5f, a.y + u * .5f}, u * .6f, U32(c.warning));
                 if (ev.locked)
-                    GlyphLock(draw, {b.x - u * (conflict ? 1.2f : .5f), a.y + u * .5f}, u * .6f, U32(c.muted), true);
-                draw->PopClipRect();
+                    GlyphLock(gridDraw, {b.x - u * (conflict ? 1.2f : .5f), a.y + u * .5f}, u * .6f, U32(c.muted), true);
+                gridDraw->PopClipRect();
                 SemanticItem(options, EventSummary(ev, o.zone), accessibility::SemanticRole::Button, accessibility::SemanticAction::Select, selected);
                 // Resize handle on the bottom edge.
                 if (!ev.locked && seg.day >= 0) {
@@ -1017,8 +1017,8 @@ CalendarRequest Calendar(const char* id, std::span<const CalendarEvent> events, 
                         const ImVec2 drag = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left, 0.f);
                         const std::int64_t newEnd = std::max(ev.start + o.snapMinutes * 60LL, ev.end + Snap(static_cast<std::int64_t>(drag.y / hourH * 3600.f), o.snapMinutes));
                         const float gy = origin.y + static_cast<float>(newEnd - LocalDayStart(LocalDay(ev.start, o.zone), o.zone)) / 3600.f * hourH;
-                        draw->AddLine({a.x, gy}, {b.x, gy}, U32(c.accent), 2.f);
-                        draw->AddText({a.x + 4.f, gy - ImGui::GetTextLineHeight() - 1.f}, U32(c.accent), ClockText(newEnd, o.zone));
+                        gridDraw->AddLine({a.x, gy}, {b.x, gy}, U32(c.accent), 2.f);
+                        gridDraw->AddText({a.x + 4.f, gy - ImGui::GetTextLineHeight() - 1.f}, U32(c.accent), ClockText(newEnd, o.zone));
                     }
                     if (ImGui::IsItemDeactivated()) {
                         const ImVec2 drag = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left, 0.f);
@@ -1038,8 +1038,8 @@ CalendarRequest Calendar(const char* id, std::span<const CalendarEvent> events, 
                     const LocalTime t = ToLocal(o.now, o.zone);
                     const float y = origin.y + static_cast<float>(t.hour * 3600 + t.minute * 60 + t.second) / 3600.f * hourH;
                     const float x0 = origin.x + gutter + static_cast<float>(nd - firstDay) * dayW;
-                    draw->AddLine({x0, y}, {x0 + dayW, y}, U32(c.error), 2.f);
-                    draw->AddCircleFilled({x0, y}, 4.f, U32(c.error), 12);
+                    gridDraw->AddLine({x0, y}, {x0 + dayW, y}, U32(c.error), 2.f);
+                    gridDraw->AddCircleFilled({x0, y}, 4.f, U32(c.error), 12);
                 }
             }
             ImGui::SetCursorScreenPos(origin);
@@ -1135,7 +1135,7 @@ CalendarRequest Calendar(const char* id, std::span<const CalendarEvent> events, 
         std::sort(order.begin(), order.end(), [&](int a, int b) { return events[static_cast<std::size_t>(a)].start < events[static_cast<std::size_t>(b)].start; });
         ImGui::PushStyleColor(ImGuiCol_ChildBg, c.surface);
         if (ImGui::BeginChild("##agenda", {size.x, size.y}, ImGuiChildFlags_Borders)) {
-            auto* draw = ImGui::GetWindowDrawList();
+            auto* agendaDraw = ImGui::GetWindowDrawList();
             std::int32_t lastDay = INT32_MIN;
             if (order.empty())
                 ImGui::TextColored(c.muted, "%s", Str(options, "show.nothingScheduled", "Nothing scheduled in the next 30 days."));
@@ -1157,14 +1157,14 @@ CalendarRequest Calendar(const char* id, std::span<const CalendarEvent> events, 
                 if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
                     request.activate = ev.id;
                 const ImVec4 tone = c.layer(static_cast<std::size_t>(ev.color));
-                draw->AddRectFilled(a, {a.x + 4.f, a.y + rowH}, U32(tone), 2.f);
-                draw->AddText({a.x + u * .6f, a.y + (rowH - ImGui::GetTextLineHeight()) * .5f}, U32(c.muted), ev.allDay ? "All day" : FrameText("%s - %s", ClockText(ev.start, o.zone), ClockText(ev.end, o.zone)));
-                draw->AddText({a.x + u * 6.f, a.y + (rowH - ImGui::GetTextLineHeight()) * .5f}, U32(c.text), Safe(ev.title));
+                agendaDraw->AddRectFilled(a, {a.x + 4.f, a.y + rowH}, U32(tone), 2.f);
+                agendaDraw->AddText({a.x + u * .6f, a.y + (rowH - ImGui::GetTextLineHeight()) * .5f}, U32(c.muted), ev.allDay ? "All day" : FrameText("%s - %s", ClockText(ev.start, o.zone), ClockText(ev.end, o.zone)));
+                agendaDraw->AddText({a.x + u * 6.f, a.y + (rowH - ImGui::GetTextLineHeight()) * .5f}, U32(c.text), Safe(ev.title));
                 const char* resource = ev.resource >= 0 && ev.resource < static_cast<int>(o.resourceNames.size()) ? o.resourceNames[static_cast<std::size_t>(ev.resource)] : "";
                 if (resource && resource[0])
-                    draw->AddText({a.x + w - ImGui::CalcTextSize(resource).x - u * (conflictIndex[static_cast<std::size_t>(idx)] ? 1.3f : .5f), a.y + (rowH - ImGui::GetTextLineHeight()) * .5f}, U32(c.muted), resource);
+                    agendaDraw->AddText({a.x + w - ImGui::CalcTextSize(resource).x - u * (conflictIndex[static_cast<std::size_t>(idx)] ? 1.3f : .5f), a.y + (rowH - ImGui::GetTextLineHeight()) * .5f}, U32(c.muted), resource);
                 if (conflictIndex[static_cast<std::size_t>(idx)])
-                    GlyphWarning(draw, {a.x + w - u * .5f, a.y + rowH * .5f}, u * .6f, U32(c.warning));
+                    GlyphWarning(agendaDraw, {a.x + w - u * .5f, a.y + rowH * .5f}, u * .6f, U32(c.warning));
                 SemanticItem(options, EventSummary(ev, o.zone), accessibility::SemanticRole::Row, accessibility::SemanticAction::Select, ev.id == state.selected);
                 ImGui::PopID();
             }
