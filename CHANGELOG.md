@@ -4,6 +4,16 @@
 
 ## Unreleased
 
+### Tile map for tiled displays
+
+- `show::TileMap` draws one cell per panel of a tiled display, such as LED wall cabinets. Tiles are coloured by group (the data port or power circuit that feeds them), each group is joined in `order` like its cables, and a dot marks the first tile. `highlightGroup` dims the other groups. The host gets the hovered and clicked tile and writes its own tooltip.
+- `TileMapTile`, `TileMapView`, `TileMapOptions` and `TileMapRequest` are new declarations; existing structures are unchanged.
+
+### タイル状の表示装置のタイルマップ
+
+- `show::TileMap` で、LED ウォールのキャビネットのようなタイル状の表示装置を、パネル1枚を1マスとして描けます。マスはグループ（そのパネルへ給電・送信するデータポートや電源回路）ごとに色分けし、グループ内を `order` の順に線で結んでケーブルの順序を示します。先頭のマスには点を打ちます。`highlightGroup` を指定すると、ほかのグループを薄く表示します。ホストは、ポインタが乗ったマスとクリックしたマスを受け取り、ツールチップを自分で描きます。
+- `TileMapTile`、`TileMapView`、`TileMapOptions`、`TileMapRequest` は新しい宣言です。既存の構造体は変わりません。
+
 ### Adjustable control sizes
 
 - `Theme::layout` (`LayoutTokens`) overrides the sizes that decide how tall controls are: `controlHeight`, `spacingX` / `spacingY`, `horizontalPadding`, window and cell padding, `indent`, `scrollbar`, `grabMin`, `separatorTextPaddingY`, and the component ratios `checkHeightScale`, `toggleHeightScale`, `dialogPaddingScale`, `progressBarHeightScale`, `badgeExtraHeight`, `segmentedInset`. `ResolveTheme` applies them after the density; an unset value keeps the density, so existing themes draw as before.

@@ -188,6 +188,7 @@ struct ShowPages {
         float brightness = .35f;
         std::array<show::PortView, 8> ports{};
         int selectedPort = 0;
+        int selectedTile = -1;
         std::string last = "-";
         bool initialized = false;
     } led;

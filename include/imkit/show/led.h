@@ -156,4 +156,33 @@ struct PortStripOptions {
 };
 // Returns the index of a port that was clicked, or -1. `selected` is the selected port (host-owned, may be null).
 int PortStrip(const char* id, std::span<const PortView> ports, int* selected = nullptr, PortStripOptions layout = {}, ComponentOptions options = {});
+
+// ---- Tile map --------------------------------------------------------------------------------------------------
+// One cell per panel of a tiled display, such as LED wall cabinets or video wall screens. Each tile is coloured by its
+// group (the data port or power circuit that feeds it), and the tiles of a group are joined in `order`, like the
+// cables between them.
+struct TileMapTile {
+    int column = 0, row = 0;    // Grid position; row 0 is the top.
+    int group = -1;             // Layer colour index; negative draws an unassigned tile.
+    int order = -1;             // Position along the group chain; negative leaves the tile out of the line.
+    const char* label = "";     // Short text drawn inside the tile when it fits ("1-3").
+    bool missing = false;       // Planned but absent: drawn as an outline only.
+};
+struct TileMapView {
+    int columns = 0, rows = 0;
+    std::span<const TileMapTile> tiles{};
+    float tileAspect = 1.f;     // Tile width divided by height.
+};
+struct TileMapOptions {
+    ImVec2 size{0, 0};          // Zero fills the width and keeps the tile aspect, up to about 14 frame heights high.
+    bool showWiring = true;     // A line through the tiles of each group in order, with a dot at its first tile.
+    bool showLabels = true;
+    int highlightGroup = -1;    // Dims the other groups; negative shows every group at full strength.
+};
+struct TileMapRequest {
+    int hovered = -1;           // Index into `tiles`.
+    int clicked = -1;
+};
+// `selected` is a host-owned tile index (may be null). Tooltips are left to the host, which knows what a tile is.
+TileMapRequest TileMap(const char* id, const TileMapView& view, int* selected = nullptr, TileMapOptions layout = {}, ComponentOptions options = {});
 } // namespace imkit::show

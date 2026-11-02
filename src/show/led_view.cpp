@@ -5,6 +5,7 @@
 #include <cfloat>
 #include <cmath>
 #include <cstdio>
+#include <vector>
 
 namespace imkit::show {
 using namespace impl;
@@ -429,5 +430,124 @@ int PortStrip(const char* id, std::span<const PortView> ports, int* selected, Po
     ImGui::Dummy({static_cast<float>(std::min<int>(perRow, static_cast<int>(ports.size()))) * (w + gap) - gap, static_cast<float>(rows) * (h + gap) - gap});
     ImGui::PopID();
     return clicked;
+}
+
+// ---- Tile map --------------------------------------------------------------------------------------------------
+TileMapRequest TileMap(const char* id, const TileMapView& view, int* selected, TileMapOptions o, ComponentOptions options) {
+    TileMapRequest request;
+    const ShowColors c = MakeShowColors(options);
+    auto* draw = ImGui::GetWindowDrawList();
+    const float u = Unit();
+    const int cols = std::max(1, view.columns), rows = std::max(1, view.rows);
+    const float aspect = std::isfinite(view.tileAspect) && view.tileAspect > 0 ? std::clamp(view.tileAspect, .05f, 20.f) : 1.f;
+    const float pad = u * .4f;
+    ImVec2 size = o.size;
+    if (size.x <= 0)
+        size.x = std::max(u * 8.f, ImGui::GetContentRegionAvail().x);
+    if (size.y <= 0)
+        size.y = std::clamp((size.x - pad * 2.f) / static_cast<float>(cols) / aspect * static_cast<float>(rows) + pad * 2.f, u * 3.f, u * 14.f);
+    // Tiles keep their aspect inside the frame, centred on the spare axis.
+    const float cellW = std::max(1.f, std::min((size.x - pad * 2.f) / static_cast<float>(cols), (size.y - pad * 2.f) / static_cast<float>(rows) * aspect));
+    const float cellH = cellW / aspect;
+    const float round = ControlRound(options);
+    ImGui::PushID(id);
+    const ImVec2 a = ImGui::GetCursorScreenPos(), b{a.x + size.x, a.y + size.y};
+    const ImVec2 origin{a.x + (size.x - cellW * static_cast<float>(cols)) * .5f, a.y + (size.y - cellH * static_cast<float>(rows)) * .5f};
+    ImGui::InvisibleButton("##tiles", size);
+    const bool hovered = ImGui::IsItemHovered();
+    const int n = static_cast<int>(view.tiles.size());
+    AnnotateText(options, "Tile map", FrameText("%d tiles, %d by %d", n, cols, rows), accessibility::SemanticRole::Status);
+    auto cellMin = [&](const TileMapTile& t) {
+        return ImVec2{origin.x + static_cast<float>(t.column) * cellW, origin.y + static_cast<float>(t.row) * cellH};
+    };
+    auto centre = [&](const TileMapTile& t) {
+        const ImVec2 m = cellMin(t);
+        return ImVec2{m.x + cellW * .5f, m.y + cellH * .5f};
+    };
+
+    if (hovered) {
+        const ImVec2 m = ImGui::GetIO().MousePos;
+        const int col = static_cast<int>(std::floor((m.x - origin.x) / cellW)), row = static_cast<int>(std::floor((m.y - origin.y) / cellH));
+        for (int i = 0; i < n; ++i)
+            if (view.tiles[static_cast<std::size_t>(i)].column == col && view.tiles[static_cast<std::size_t>(i)].row == row) {
+                request.hovered = i;
+                break;
+            }
+    }
+    if (ImGui::IsItemClicked() && request.hovered >= 0) {
+        request.clicked = request.hovered;
+        if (selected)
+            *selected = request.hovered;
+    }
+
+    draw->AddRectFilled(a, b, U32(Recessed(c)), round);
+    draw->AddRect(a, b, U32(c.border, detail::FrameLineAlpha(.8f)), round, 0, detail::FrameLineWidth(1.f));
+    draw->PushClipRect(a, b, true);
+    const float inset = cellW >= 6.f && cellH >= 6.f ? 1.f : 0.f;
+    auto dimmed = [&](int group) { return o.highlightGroup >= 0 && group != o.highlightGroup; };
+    auto fill = [&](int group) { return Mix(c.input, group >= 0 ? c.layer(static_cast<std::size_t>(group)) : c.muted, group >= 0 ? .55f : .15f); };
+    for (const TileMapTile& t : view.tiles) {
+        if (t.column < 0 || t.column >= cols || t.row < 0 || t.row >= rows)
+            continue;
+        const ImVec2 m = cellMin(t), mx{m.x + cellW - inset, m.y + cellH - inset};
+        const float strength = dimmed(t.group) ? .25f : 1.f;
+        if (t.missing) {
+            draw->AddRect(m, mx, U32(c.muted, .7f * strength), 0, 0, 1.f);
+            continue;
+        }
+        draw->AddRectFilled(m, mx, U32(fill(t.group), strength));
+        if (inset > 0)
+            draw->AddRect(m, mx, U32(Mix(fill(t.group), c.border, .4f), .9f * strength), 0, 0, 1.f);
+    }
+    if (o.showWiring) {
+        // Lines follow (group, order); the host may pass tiles in any order.
+        std::vector<int> byOrder;
+        byOrder.reserve(view.tiles.size());
+        for (int i = 0; i < n; ++i) {
+            const TileMapTile& t = view.tiles[static_cast<std::size_t>(i)];
+            if (t.order >= 0 && t.group >= 0 && !t.missing)
+                byOrder.push_back(i);
+        }
+        std::sort(byOrder.begin(), byOrder.end(), [&](int l, int r) {
+            const TileMapTile& x = view.tiles[static_cast<std::size_t>(l)];
+            const TileMapTile& y = view.tiles[static_cast<std::size_t>(r)];
+            return x.group != y.group ? x.group < y.group : x.order < y.order;
+        });
+        const float dot = std::clamp(std::min(cellW, cellH) * .14f, 1.5f, u * .22f);
+        for (std::size_t k = 0; k < byOrder.size(); ++k) {
+            const TileMapTile& t = view.tiles[static_cast<std::size_t>(byOrder[k])];
+            const ImVec4 ink = InkFor(c, fill(t.group));
+            const float alpha = dimmed(t.group) ? .2f : .75f;
+            const bool first = k == 0 || view.tiles[static_cast<std::size_t>(byOrder[k - 1])].group != t.group;
+            if (first)
+                draw->AddCircleFilled(centre(t), dot * 1.6f, U32(ink, alpha), 12);
+            if (k + 1 < byOrder.size()) {
+                const TileMapTile& next = view.tiles[static_cast<std::size_t>(byOrder[k + 1])];
+                if (next.group == t.group)
+                    draw->AddLine(centre(t), centre(next), U32(ink, alpha), std::max(1.f, dot * .6f));
+            }
+        }
+    }
+    if (o.showLabels && cellH >= ImGui::GetFontSize() * 1.1f)
+        for (const TileMapTile& t : view.tiles) {
+            if (!t.label || !t.label[0] || t.missing)
+                continue;
+            const ImVec2 m = cellMin(t);
+            const float fontSize = ImGui::GetFontSize() * .78f;
+            const ImVec2 ts = ImGui::GetFont()->CalcTextSizeA(fontSize, FLT_MAX, 0.f, t.label);
+            if (ts.x + 4.f <= cellW)
+                draw->AddText(ImGui::GetFont(), fontSize, {m.x + 3.f, m.y + 2.f}, U32(InkFor(c, fill(t.group)), dimmed(t.group) ? .35f : .9f), t.label);
+        }
+    for (int pass = 0; pass < 2; ++pass) {
+        const int i = pass == 0 ? request.hovered : (selected ? *selected : -1);
+        if (i < 0 || i >= n)
+            continue;
+        const ImVec2 m = cellMin(view.tiles[static_cast<std::size_t>(i)]);
+        draw->AddRect({m.x - 1.f, m.y - 1.f}, {m.x + cellW + 1.f, m.y + cellH + 1.f}, U32(pass == 0 ? c.text : c.accent, pass == 0 ? .7f : 1.f), 0, 0,
+                      pass == 0 ? 1.f : 2.f);
+    }
+    draw->PopClipRect();
+    ImGui::PopID();
+    return request;
 }
 } // namespace imkit::show

@@ -145,6 +145,15 @@ int main() {
     ChannelMonitorRequest channelRequest;
     AddressMapRequest addressRequest;
     int portClick = -1;
+    std::array<TileMapTile, 6> tiles{};
+    for (int i = 0; i < 6; ++i) {
+        tiles[static_cast<std::size_t>(i)].column = i % 3;
+        tiles[static_cast<std::size_t>(i)].row = i / 3;
+        tiles[static_cast<std::size_t>(i)].group = i / 3;
+        tiles[static_cast<std::size_t>(i)].order = i % 3;
+    }
+    int selectedTile = -1;
+    TileMapRequest tileRequest;
     float budgetAmount = 6.f;
 
     auto frame = [&](bool reduced = false) {
@@ -187,6 +196,13 @@ int main() {
         patternRequest = TestPatternBar("patterns", pattern, {}, options);
         orderRequest = ColorOrderPicker("order", order, false, options);
         portClick = PortStrip("ports", ports, &selectedPort, {}, options);
+        TileMapView tv;
+        tv.columns = 3;
+        tv.rows = 2;
+        tv.tiles = tiles;
+        TileMapOptions to;
+        to.size = {240.f, 80.f};
+        tileRequest = TileMap("tiles", tv, &selectedTile, to, options);
         ImGui::End();
         ImGui::Render();
     };
@@ -288,6 +304,21 @@ int main() {
         release();
     } else
         Check(false, "port node");
+
+    // Tile map: the tile under the pointer is reported and a click selects it.
+    if (const auto* map = find("Tile map")) {
+        Check(map->value == "6 tiles, 3 by 2", "the tile map announces its size");
+        // 3 x 2 tiles in a 240 x 80 frame keep a square aspect; the lower right tile sits right of the centre.
+        const ImVec2 c = centre(*map);
+        io.AddMousePosEvent(c.x + 30.f, c.y + 15.f);
+        frame();
+        Check(tileRequest.hovered == 5, "the lower right tile is under the pointer");
+        io.AddMouseButtonEvent(0, true);
+        frame();
+        Check(tileRequest.clicked == 5 && selectedTile == 5, "clicking a tile selects it");
+        release();
+    } else
+        Check(false, "tile map node");
     ImGui::DestroyContext();
     std::puts(failures ? "show LED tests failed" : "show LED tests passed");
     return failures ? 1 : 0;

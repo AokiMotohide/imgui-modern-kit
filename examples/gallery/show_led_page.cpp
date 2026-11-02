@@ -165,7 +165,7 @@ void ShowPages::Led(GalleryState& host) {
         }
         EndSection(section4);
 
-        const bool section5 = BeginSection(host, "Power and ports", "Current against the supply limit, and the state of every output port.");
+        const bool section5 = BeginSection(host, "Power, ports and tiles", "Current against the supply limit, the state of every output port, and the panels each port feeds.");
         if (section5) {
             ImGui::SetNextItemWidth(u * 10.f);
             ImGui::SliderFloat("Brightness", &s.brightness, 0.f, 1.f, "%.2f");
@@ -185,6 +185,33 @@ void ShowPages::Led(GalleryState& host) {
             Record(host, "led-ports");
             if (clicked >= 0)
                 s.last = "port " + std::to_string(clicked + 1) + " selected";
+            ImGui::Spacing();
+            // An 8 x 4 LED wall fed by four ports, wired in rows that turn back at each end.
+            static std::array<TileMapTile, 32> tiles = [] {
+                std::array<TileMapTile, 32> t{};
+                for (int i = 0; i < 32; ++i) {
+                    const int row = i / 8, column = i % 8;
+                    t[static_cast<std::size_t>(i)].column = column;
+                    t[static_cast<std::size_t>(i)].row = row;
+                    t[static_cast<std::size_t>(i)].group = row;
+                    t[static_cast<std::size_t>(i)].order = (row & 1) ? 7 - column : column;
+                }
+                return t;
+            }();
+            TileMapView tv;
+            tv.columns = 8;
+            tv.rows = 4;
+            tv.tiles = tiles;
+            TileMapOptions to;
+            to.highlightGroup = s.selectedPort < 4 ? s.selectedPort : -1;
+            const TileMapRequest tileRequest = TileMap("tiles", tv, &s.selectedTile, to, o);
+            Record(host, "led-tiles");
+            if (tileRequest.hovered >= 0) {
+                const TileMapTile& t = tiles[static_cast<std::size_t>(tileRequest.hovered)];
+                ImGui::SetTooltip("Column %d, row %d\nPort %d, panel %d", t.column + 1, t.row + 1, t.group + 1, t.order + 1);
+            }
+            if (tileRequest.clicked >= 0)
+                s.last = "tile " + std::to_string(tileRequest.clicked + 1) + " selected";
         }
         EndSection(section5);
         EndGrid();
