@@ -210,8 +210,28 @@ Every node can call `Preview` below its properties. An output holds a borrowed t
 
 ## Styling and panels
 
-- `MakeNodeStyle` derives semantic colors, density, corner and stroke metrics, and motion from the Theme. Edit the returned value for an editor.
+- `MakeNodeStyle` derives semantic colors, density, corner and stroke metrics, and motion from the Theme, then applies `Theme::node`. Edit the returned value for an editor.
 - Override `NodeView::style` for one node, the socket color, shape and side for ports, or the link color, style and width per wire.
+
+**Appearance**
+
+| Setting | Values | Default |
+|---|---|---|
+| `NodeStyle::headerFill` | `Strip` (accent line over a raised header), `Tinted` (category color at `headerTint`), `Flat`, `Gradient`, `None` | `Strip` |
+| `NodeStyle::categories` + `NodeView::category` | Host table of `{id, color, glyph}`. The glyph appears in a tile left of the title | Empty |
+| `NodeView::tint`, `glyph`, `subtitle` | Per-node color, tile glyph and a right-aligned header note | Inherit |
+| `hoverBorderWidth`, `selectedBorderWidth` | Border width for the hovered and the selected node | 1.5, 2 |
+| `linkColor` | `OutputType`, `InputType`, `Gradient`, `Accent`. Type colors come from `SocketTypeView` | `OutputType` |
+| `linkArrow` | `Middle`, `None`, `End` | `Middle` |
+| `highlightConnectedLinks` | Halo on the hovered link and on links of hovered or selected nodes | Off |
+| `hollowUnconnectedPins` | Outline sockets until something connects | Off |
+| `status` | `WhenActive` hides the line of an Idle node with no time or progress; `Always`, `Never` | `WhenActive` |
+
+- A node color resolves as `tint`, then its category, then the accent. `Flat` and `Gradient` headers pick dark or light title ink from that color.
+- A `NodeKind::Reroute` node draws as a 16-unit knot and ignores its stored size. Both sockets sit at its center. Drag the center to move it; drag its ring to start a wire.
+- An unconnected input with `PinCapabilities::required` carries an error mark on its socket.
+- Link labels sit in a pill. The resize grip scales with the zoom.
+- `EditorOptions::locale` translates the status line, the connection verdict and the full-buffer warning. Keys start with `node_editor.`, for example `node_editor.connect.rejected` and `node_editor.status.running`.
 - Ordinary body contents remain native ImGui widgets. `BackgroundImage` and `Annotation` carry host-supplied canvas decoration. Link flow is a display flag, not execution.
 - `NodeInspector`, `ExposedProperties`, `NodeSearch`, `Diagnostics`, `LayoutToolbar` and `Breadcrumbs` can sit in host panels outside the canvas.
 

@@ -4,6 +4,22 @@
 
 ## Unreleased
 
+### Node editor appearance
+
+- `NodeStyle` gains `headerFill` (`Strip`, `Tinted`, `Flat`, `Gradient`, `None`), `headerTint`, hover and selected border widths, `linkColor`, `linkArrow`, `highlightConnectedLinks`, `hollowUnconnectedPins`, `status` and a borrowed `categories` table. `NodeView` gains `category`, `tint`, `subtitle` and `glyph`; a glyph is drawn in a tile left of the title.
+- `Theme::node` (`NodeTokens`) carries the same choices, and theme files read and write `node.*` keys. `MakeNodeStyle` applies them.
+- Behaviour changes: links take the output socket type colour by default (accent without type colours); the status line of an Idle node with no time or progress is hidden; `NodeKind::Reroute` draws as a 16-unit knot with both sockets at its centre; an unconnected required input is marked; link labels sit in a pill; the resize grip scales with the zoom. Set `linkColor = Accent` and `status = Always` for the previous look.
+- `EditorOptions::locale` translates the status line, connection verdicts and the full-buffer warning (`node_editor.*` keys). `EditorFrame::hoveredNode` reports the topmost hovered node.
+- `NodeStyle`, `NodeView`, `EditorOptions`, `EditorFrame` and `Theme` gain members; rebuild code that links ImKit with the new headers.
+
+### ノードエディタの見た目
+
+- `NodeStyle` に、`headerFill`（`Strip`、`Tinted`、`Flat`、`Gradient`、`None`）、`headerTint`、hover 時と選択時の枠幅、`linkColor`、`linkArrow`、`highlightConnectedLinks`、`hollowUnconnectedPins`、`status`、借用の `categories` 表が加わります。`NodeView` に `category`、`tint`、`subtitle`、`glyph` が加わり、glyph はタイトル左のタイルに描きます。
+- `Theme::node`（`NodeTokens`）で同じ設定を持てます。テーマファイルで `node.*` キーを読み書きでき、`MakeNodeStyle` が適用します。
+- 動作の変更: 配線は既定で出力ソケットの型の色になります（型の色がなければ accent）。時間も進捗もない Idle ノードのステータス行は出ません。`NodeKind::Reroute` は 16 単位のノットとして描き、2つのソケットを中心に置きます。必須入力が未接続のとき印を付けます。配線のラベルはピルの中に描きます。リサイズのつまみはズームに合わせて大きさが変わります。以前の見た目に戻すには `linkColor = Accent` と `status = Always` を指定します。
+- `EditorOptions::locale` で、ステータス行、接続の判定、バッファ不足の警告を翻訳できます（`node_editor.*` キー）。`EditorFrame::hoveredNode` は、一番手前の hover 中のノードを返します。
+- `NodeStyle`、`NodeView`、`EditorOptions`、`EditorFrame`、`Theme` にメンバーが加わります。ImKit をリンクするコードは、新しいヘッダーで再ビルドしてください。
+
 ### Tile map for tiled displays
 
 - `show::TileMap` draws one cell per panel of a tiled display, such as LED wall cabinets. Tiles are coloured by group (the data port or power circuit that feeds them), each group is joined in `order` like its cables, and a dot marks the first tile. `highlightGroup` dims the other groups. The host gets the hovered and clicked tile and writes its own tooltip.

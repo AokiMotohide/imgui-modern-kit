@@ -559,6 +559,163 @@ void InputTests() {
     }
     ImGui::DestroyContext();
 }
+
+// Counts draw-list vertices of one exact colour across the rendered frame.
+int CountVertices(ImU32 color) {
+    int count = 0;
+    auto *data = ImGui::GetDrawData();
+    for (int l = 0; data && l < data->CmdListsCount; ++l)
+        for (auto &v : data->CmdLists[l]->VtxBuffer)
+            count += v.col == color;
+    return count;
+}
+void AppearanceTests() {
+    ImGui::CreateContext();
+    auto &io = ImGui::GetIO();
+    io.IniFilename = nullptr;
+    io.DisplaySize = {1000, 700};
+    io.DeltaTime = 1.f / 60;
+    unsigned char *pixels;
+    int w, h;
+    io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);
+
+    // Theme file keys reach the node style and survive a round trip.
+    auto theme = imkit::MakeTheme(imkit::ColorScheme::Dark);
+    auto parsed = imkit::ParseTheme("node.header-fill = tinted\nnode.link-arrow = none\nnode.link-color = gradient\n"
+                                    "node.rounding = 3\nnode.hollow-pins = true\nnode.header-tint = 0.3\n",
+                                    theme);
+    Check(parsed.applied == 6 && parsed.ignored == 0, "node theme keys parse");
+    auto style = MakeNodeStyle(theme);
+    Check(style.headerFill == HeaderFill::Tinted && style.linkArrow == LinkArrow::None &&
+              style.linkColor == LinkColorSource::Gradient && Near(style.rounding, 3) && style.hollowUnconnectedPins &&
+              Near(style.headerTint, .3),
+          "node theme tokens shape MakeNodeStyle");
+    auto text = imkit::SerializeTheme(theme);
+    imkit::Theme restored = imkit::MakeTheme(imkit::ColorScheme::Dark);
+    imkit::ParseTheme(text, restored);
+    Check(imkit::SerializeTheme(restored) == text && text.find("node.header-fill = tinted") != std::string::npos,
+          "node theme tokens round-trip");
+    Check(imkit::SerializeTheme(imkit::MakeTheme()).find("node.rounding") == std::string::npos,
+          "unset node numbers are not written");
+
+    theme = imkit::MakeTheme(imkit::ColorScheme::Dark);
+    style = MakeNodeStyle(theme);
+    Check(style.status == StatusDisplay::WhenActive && style.headerFill == HeaderFill::Strip,
+          "default node look keeps the strip header");
+    const ImVec4 red{1, 0, 0, 1}, blue{0, 0, 1, 1};
+    SocketTypeView types[] = {{1, "Red", "Test", red}, {2, "Blue", "Test", blue}};
+    NodeView nodes[] = {{{1}, {20, 20}, {200, 160}, "Source"},
+                        {{2}, {420, 20}, {200, 160}, "Target"},
+                        {{3}, {300, 300}, {240, 240}, "Knot", {}, {}, {}, NodeKind::Reroute}};
+    PinView pins[] = {{{1}, {1}, "out", PinKind::Output, Side::Right, 60, 1},
+                      {{2}, {2}, "in", PinKind::Input, Side::Left, 60, 2},
+                      {{3}, {2}, "need", PinKind::Input, Side::Left, 100, 2},
+                      {{4}, {3}, "in", PinKind::Input},
+                      {{5}, {3}, "out", PinKind::Output, Side::Right}};
+    pins[2].capabilities.required = true;
+    LinkView links[] = {{{1}, {1}, {2}}};
+    GraphView graph;
+    graph.nodes = nodes;
+    graph.pins = pins;
+    graph.links = links;
+    graph.socketTypes = types;
+    EditorState state;
+    EditRequest events[16];
+    RequestBuffer out{events};
+    struct Lookups {
+        int idle = 0, running = 0;
+    } lookups;
+    imkit::LocaleContext locale;
+    locale.user = &lookups;
+    locale.lookup = [](void *user, std::string_view key, const char *fallback) {
+        auto &l = *static_cast<Lookups *>(user);
+        l.idle += key == "node_editor.status.idle";
+        l.running += key == "node_editor.status.running";
+        return fallback;
+    };
+    EditorOptions options{{960, 640}, true, false, false};
+    options.locale = &locale;
+    ImVec2 knot{};
+    NodeId hovered{};
+    auto frame = [&]() {
+        out.Clear();
+        ImGui::NewFrame();
+        ImGui::SetNextWindowPos({0, 0});
+        ImGui::SetNextWindowSize({1000, 700});
+        ImGui::Begin("test", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
+        auto f = BeginEditor("graph", graph, state, out, style, options);
+        hovered = f.hoveredNode;
+        DrawLinks(f);
+        DrawNodes(f);
+        GetPinPosition(f, {4}, knot);
+        EndEditor(f);
+        ImGui::End();
+        ImGui::Render();
+    };
+    frame();
+    Check(lookups.idle == 0, "idle node without timing hides its status line");
+    nodes[0].status = Status::Running;
+    frame();
+    Check(lookups.running > 0, "running node shows its localised status line");
+    nodes[0].status = Status::Idle;
+    style.status = StatusDisplay::Always;
+    frame();
+    Check(lookups.idle > 0, "StatusDisplay::Always keeps the status line");
+    style.status = StatusDisplay::WhenActive;
+
+    // A reroute is a 16-unit knot whatever size the host stored; both sockets sit at its centre.
+    ImVec2 knotOut{};
+    {
+        ImGui::NewFrame();
+        ImGui::Begin("test", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
+        auto f = BeginEditor("graph", graph, state, out, style, options);
+        GetPinPosition(f, {4}, knot);
+        GetPinPosition(f, {5}, knotOut);
+        const float expectX = f.min.x + float((300 + 8 - state.origin.x) * state.zoom);
+        const float expectY = f.min.y + float((300 + 8 - state.origin.y) * state.zoom);
+        Check(Near(knot.x, expectX) && Near(knot.y, expectY) && Near(knotOut.x, knot.x) && Near(knotOut.y, knot.y),
+              "reroute sockets share the knot centre");
+        EndEditor(f);
+        ImGui::End();
+        ImGui::Render();
+    }
+
+    // Link colour follows the output socket type by default and the accent when asked.
+    style.linkArrow = LinkArrow::None;
+    frame();
+    const int typed = CountVertices(ImGui::GetColorU32(red));
+    style.linkColor = LinkColorSource::Accent;
+    frame();
+    const int accent = CountVertices(ImGui::GetColorU32(red));
+    Check(typed > accent && accent > 0, "links take the output type colour by default");
+    style.linkColor = LinkColorSource::OutputType;
+
+    // An unconnected required input carries an error mark that disappears once connected.
+    const ImU32 error = ImGui::GetColorU32(style.error);
+    frame();
+    const int marked = CountVertices(error);
+    links[0].to = {3};
+    frame();
+    const int satisfied = CountVertices(error);
+    links[0].to = {2};
+    Check(marked > satisfied, "unconnected required input is marked");
+
+    // Hollow sockets draw an outline instead of a disc while unconnected.
+    style.hollowUnconnectedPins = true;
+    frame();
+    const int hollow = CountVertices(ImGui::GetColorU32(blue));
+    style.hollowUnconnectedPins = false;
+    frame();
+    Check(hollow != CountVertices(ImGui::GetColorU32(blue)), "hollow sockets change the unconnected glyph");
+
+    // The topmost node under the mouse is reported for hover styling.
+    io.MousePos = {120, 140};
+    frame();
+    frame();
+    Check(hovered == NodeId{1}, "hovered node is reported");
+    io.MousePos = {-100, -100};
+    ImGui::DestroyContext();
+}
 } // namespace
 int main() {
 #ifdef _MSC_VER
@@ -569,6 +726,7 @@ int main() {
     LayoutTests();
     SocketTests();
     InputTests();
+    AppearanceTests();
     std::printf("node_editor: %d failure(s)\n", failures);
     return failures ? 1 : 0;
 }

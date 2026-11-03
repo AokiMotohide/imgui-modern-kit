@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cctype>
+#include <cfloat>
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -61,7 +62,10 @@ Point Position(const EditorFrame &f, const NodeView &n) {
             return r.after;
     return n.position;
 }
+constexpr double kRerouteSize = 16; // Graph units; a reroute is a knot, not a box.
 Point Size(const EditorFrame &f, const NodeView &n) {
+    if (n.kind == NodeKind::Reroute)
+        return {kRerouteSize, kRerouteSize};
     if (n.collapsed)
         return {n.size.x, Style(f, n).headerHeight};
     for (auto &r : f.state->gesture)
@@ -114,6 +118,67 @@ bool Visible(const EditorFrame &f, const NodeView &n) {
     auto b = Add(a, {float(s.x * f.state->zoom), float(s.y * f.state->zoom)});
     return b.x >= f.min.x && b.y >= f.min.y && a.x <= f.max.x && a.y <= f.max.y;
 }
+const char *Tr(const EditorFrame &f, std::string_view key, const char *fallback) {
+    return f.options.locale ? f.options.locale->Text(key, fallback) : fallback;
+}
+ImVec4 CategoryColor(const NodeStyle &st, const NodeView &n) {
+    if (n.tint.w > 0)
+        return n.tint;
+    if (n.category)
+        for (auto &c : st.categories)
+            if (c.id == n.category && c.color.w > 0)
+                return c.color;
+    return st.accent;
+}
+std::string_view CategoryGlyph(const NodeStyle &st, const NodeView &n) {
+    if (!n.glyph.empty() || !n.category)
+        return n.glyph;
+    for (auto &c : st.categories)
+        if (c.id == n.category)
+            return c.glyph;
+    return {};
+}
+// Dark or light ink, whichever reads on the given fill.
+ImVec4 ReadableOn(ImVec4 fill) {
+    const float luminance = .2126f * fill.x + .7152f * fill.y + .0722f * fill.z;
+    return luminance > .55f ? ImVec4{.07f, .08f, .10f, 1} : ImVec4{1, 1, 1, 1};
+}
+ImVec4 Mix(ImVec4 a, ImVec4 b, float t) {
+    return {a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t, a.w + (b.w - a.w) * t};
+}
+ImVec4 WithAlpha(ImVec4 c, float alpha) {
+    c.w *= alpha;
+    return c;
+}
+// Explicit colour, then socket type colour, then the owning node's accent.
+ImVec4 PinColor(const EditorFrame &f, const PinView &pin) {
+    if (pin.color.w > 0)
+        return pin.color;
+    for (auto &type : f.graph.socketTypes)
+        if (type.id == pin.type && type.color.w > 0)
+            return type.color;
+    auto *n = Find(f, pin.node);
+    return n ? Style(f, *n).accent : f.style.accent;
+}
+bool HasTypeColor(const EditorFrame &f, const PinView &pin) {
+    if (pin.color.w > 0)
+        return true;
+    for (auto &type : f.graph.socketTypes)
+        if (type.id == pin.type && type.color.w > 0)
+            return true;
+    return false;
+}
+// Recolours the vertices added since `start` with a left-to-right gradient, keeping their alpha.
+void ShadeHorizontal(ImDrawList *dl, int start, float x0, float x1, ImVec4 from, ImVec4 to) {
+    const float width = std::max(1.f, x1 - x0);
+    for (int i = start; i < dl->VtxBuffer.Size; ++i) {
+        auto &v = dl->VtxBuffer[i];
+        const float t = std::clamp((v.pos.x - x0) / width, 0.f, 1.f);
+        auto c = ImGui::ColorConvertU32ToFloat4(ImGui::GetColorU32(Mix(from, to, t)));
+        c.w = ImGui::ColorConvertU32ToFloat4(v.col).w;
+        v.col = ImGui::ColorConvertFloat4ToU32(c);
+    }
+}
 ImVec2 PinPosition(const EditorFrame &f, const PinView &pin) {
     auto *n = Find(f, pin.node);
     if (!n)
@@ -130,6 +195,8 @@ ImVec2 PinPosition(const EditorFrame &f, const PinView &pin) {
         parent = p->parent;
     }
     auto p = Position(f, *shown), size = Size(f, *shown);
+    if (shown->kind == NodeKind::Reroute) // Every socket of a knot sits at its centre.
+        return Screen(f, {p.x + size.x / 2, p.y + size.y / 2});
     if (!pin.manualPosition && shown == n && !n->collapsed) {
         for (auto &row : f.state->rowPositions)
             if (row.pin == pin.id)
@@ -166,25 +233,29 @@ ImVec2 Direction(Side side) {
         return {0, 1};
     }
 }
+// Screen radius of a reroute knot. Its centre moves the knot; the ring just outside starts a wire.
+float KnotRadius(double zoom) {
+    return std::max(4.f, 6.5f * float(zoom));
+}
+constexpr float kKnotRing = 8;
 float SegmentDistance(ImVec2 p, ImVec2 a, ImVec2 b) {
     auto v = Sub(b, a);
     float t = std::clamp(Dot(Sub(p, a), v) / std::max(.001f, Dot(v, v)), 0.f, 1.f);
     auto d = Sub(p, Add(a, Mul(v, t)));
     return std::sqrt(Dot(d, d));
 }
+Side PinSide(const EditorFrame &f, const PinView &pin) {
+    auto *n = Find(f, pin.node);
+    if (pin.manualPosition && !(n && n->kind == NodeKind::Reroute))
+        return pin.side;
+    return pin.kind == PinKind::Input ? Side::Left : Side::Right;
+}
 std::array<ImVec2, 25> Curve(const EditorFrame &f, const PinView &a, const PinView &b,
                              const LinkStyle *overrideStyle = nullptr) {
     const auto style = overrideStyle ? *overrideStyle : f.style.linkStyle;
     auto p = PinPosition(f, a), q = PinPosition(f, b);
     float strength = std::max(40.f, float(std::abs(q.x - p.x) + std::abs(q.y - p.y)) * .4f);
-    auto c = Add(p, Mul(Direction(a.manualPosition           ? a.side
-                                  : a.kind == PinKind::Input ? Side::Left
-                                                             : Side::Right),
-                        strength)),
-         d = Add(q, Mul(Direction(b.manualPosition           ? b.side
-                                  : b.kind == PinKind::Input ? Side::Left
-                                                             : Side::Right),
-                        strength));
+    auto c = Add(p, Mul(Direction(PinSide(f, a)), strength)), d = Add(q, Mul(Direction(PinSide(f, b)), strength));
     std::array<ImVec2, 25> points{};
     for (int i = 0; i < 25; ++i) {
         float t = float(i) / 24, u = 1 - t;
@@ -345,6 +416,24 @@ NodeStyle MakeNodeStyle(const Theme &t) {
     s.padding = t.metrics.horizontalPadding;
     s.headerHeight = t.metrics.controlHeight + 4;
     s.animate = t.motion.enabled && !t.motion.reducedMotion;
+    const auto &node = t.node;
+    if (node.canvas.w > 0)
+        s.canvas = node.canvas;
+    if (node.grid.w > 0)
+        s.grid = node.grid;
+    if (node.header.w > 0)
+        s.header = node.header;
+    s.headerFill = node.headerFill;
+    s.linkColor = node.linkColor;
+    s.linkArrow = node.linkArrow;
+    s.highlightConnectedLinks = node.highlightLinks;
+    s.hollowUnconnectedPins = node.hollowPins;
+    s.headerTint = node.headerTint.value_or(s.headerTint);
+    s.rounding = node.rounding.value_or(s.rounding);
+    s.headerHeight = node.headerHeight.value_or(s.headerHeight);
+    s.pinRadius = node.pinRadius.value_or(s.pinRadius);
+    s.linkWidth = node.linkWidth.value_or(s.linkWidth);
+    s.gridSize = node.gridSize.value_or(s.gridSize);
     return s;
 }
 void EditorState::Reserve(std::size_t nodes, std::size_t previewCount) {
@@ -454,6 +543,83 @@ bool FrameNodes(EditorState &s, GraphView g, std::span<const NodeId> ids, Point 
     s.origin = {(b.min.x + b.max.x - size.x / s.zoom) / 2, (b.min.y + b.max.y - size.y / s.zoom) / 2};
     return true;
 }
+namespace {
+void DrawNodeChrome(const EditorFrame &f, const NodeView &n, ImDrawList *dl) {
+    const auto &s = *f.state;
+    const auto &st = Style(f, n);
+    const float z = float(s.zoom);
+    const auto a = Screen(f, Position(f, n));
+    const auto size = Size(f, n);
+    const auto b = Add(a, {float(size.x * z), float(size.y * z)});
+    const bool selected = IsSelected(s, n.id), hovered = f.hoveredNode == n.id;
+    const ImVec4 category = CategoryColor(st, n);
+    if (n.kind == NodeKind::Reroute) {
+        ImVec4 color = category;
+        if (n.tint.w <= 0 && !n.category)
+            for (auto &pin : f.graph.pins)
+                if (pin.node == n.id) {
+                    color = PinColor(f, pin);
+                    break;
+                }
+        const ImVec2 c{(a.x + b.x) * .5f, (a.y + b.y) * .5f};
+        const float r = KnotRadius(s.zoom);
+        auto diamond = [&](float radius, ImU32 col, float thickness) {
+            const ImVec2 p[4] = {{c.x, c.y - radius}, {c.x + radius, c.y}, {c.x, c.y + radius}, {c.x - radius, c.y}};
+            if (thickness <= 0)
+                dl->AddQuadFilled(p[0], p[1], p[2], p[3], col);
+            else
+                dl->AddQuad(p[0], p[1], p[2], p[3], col, thickness);
+        };
+        diamond(r + 2.5f * std::min(z, 1.5f), Color(st.canvas), 0);
+        diamond(r, Color(color), 0);
+        if (selected || hovered)
+            diamond(r + 4, Color(selected ? st.selected : WithAlpha(st.accent, .55f)), selected ? 2.f : 1.5f);
+        return;
+    }
+    const bool group = n.kind == NodeKind::Frame || n.kind == NodeKind::Group;
+    const float header = std::min(float(st.headerHeight * z), b.y - a.y);
+    const ImVec2 headerMax{b.x, a.y + header};
+    if (st.shadows && !group)
+        detail::DrawSoftShadow(dl, a, b, st.rounding, 10.f * z, .14f);
+    ImVec4 body = st.surface;
+    if (group)
+        body = (n.tint.w > 0 || n.category) ? WithAlpha(category, std::max(st.group.w, .06f)) : st.group;
+    dl->AddRectFilled(a, b, Color(body), st.rounding);
+    switch (st.headerFill) {
+    case HeaderFill::Strip:
+        dl->AddRectFilled(a, headerMax, Color(st.header), st.rounding, ImDrawFlags_RoundCornersTop);
+        dl->AddLine({a.x + st.rounding, a.y + 1}, {b.x - st.rounding, a.y + 1}, Color(category), 2);
+        break;
+    case HeaderFill::Tinted:
+        dl->AddRectFilled(a, headerMax, Color(WithAlpha(category, std::clamp(st.headerTint, 0.f, 1.f))),
+                          st.rounding, ImDrawFlags_RoundCornersTop);
+        dl->AddLine({a.x, headerMax.y}, headerMax, Color(WithAlpha(category, .35f)));
+        break;
+    case HeaderFill::Flat:
+        dl->AddRectFilled(a, headerMax, Color(category), st.rounding, ImDrawFlags_RoundCornersTop);
+        break;
+    case HeaderFill::Gradient: {
+        const int start = dl->VtxBuffer.Size;
+        dl->AddRectFilled(a, headerMax, Color(category), st.rounding, ImDrawFlags_RoundCornersTop);
+        ShadeHorizontal(dl, start, a.x, b.x, category, Mix(category, st.header, .85f));
+        break;
+    }
+    case HeaderFill::None:
+        dl->AddLine({a.x, headerMax.y}, headerMax, Color(WithAlpha(st.border, .6f)));
+        break;
+    }
+    float width = st.borderWidth;
+    ImVec4 border = st.border;
+    if (selected) {
+        width = st.selectedBorderWidth > 0 ? st.selectedBorderWidth : st.borderWidth;
+        border = st.accent;
+    } else if (hovered && !group) {
+        width = st.hoverBorderWidth > 0 ? st.hoverBorderWidth : st.borderWidth;
+        border = Mix(st.border, st.accent, .5f);
+    }
+    dl->AddRect(a, b, Color(border), st.rounding, 0, width);
+}
+} // namespace
 EditorFrame BeginEditor(const char *id, GraphView graph, EditorState &s, RequestBuffer &out,
                         const NodeStyle &style, EditorOptions options) {
     EditorFrame f;
@@ -632,24 +798,20 @@ EditorFrame BeginEditor(const char *id, GraphView graph, EditorState &s, Request
             for (double y = f.min.y - std::fmod(s.origin.y * s.zoom, step); y < f.max.y; y += step)
                 dl->AddRectFilled({float(x) - dot, float(y) - dot}, {float(x) + dot, float(y) + dot}, Color(style.grid));
     }
+    // Topmost node under the mouse; later nodes draw above earlier ones.
+    if (f.hovered)
+        for (auto &n : graph.nodes)
+            if (Visible(f, n)) {
+                auto a = Screen(f, Position(f, n));
+                auto size = Size(f, n);
+                if (Inside(io.MousePos, a, Add(a, {float(size.x * s.zoom), float(size.y * s.zoom)})))
+                    f.hoveredNode = n.id;
+            }
     // Draw all node silhouettes before links and interactive child windows.
     auto *dl = ImGui::GetWindowDrawList();
     for (auto &n : graph.nodes)
-        if (Visible(f, n)) {
-            auto &st = Style(f, n);
-            auto a = Screen(f, Position(f, n));
-            auto size = Size(f, n);
-            auto b = Add(a, {float(size.x * s.zoom), float(size.y * s.zoom)});
-            const bool group = n.kind == NodeKind::Frame || n.kind == NodeKind::Group;
-            if (st.shadows && !group)
-                detail::DrawSoftShadow(dl, a, b, st.rounding, 10.f * float(s.zoom), .14f);
-            dl->AddRectFilled(a, b, Color(group ? st.group : st.surface), st.rounding);
-            dl->AddRectFilled(a, {b.x, a.y + float(st.headerHeight * s.zoom)}, Color(st.header), st.rounding,
-                              ImDrawFlags_RoundCornersTop);
-            dl->AddRect(a, b, Color(IsSelected(s, n.id) ? st.accent : st.border), st.rounding,
-                        IsSelected(s, n.id) ? 2 : st.borderWidth, 0);
-            dl->AddLine({a.x + st.rounding, a.y + 1}, {b.x - st.rounding, a.y + 1}, Color(st.accent), 2);
-        }
+        if (Visible(f, n))
+            DrawNodeChrome(f, n, dl);
     return f;
 }
 bool BeginNode(EditorFrame &f, NodeId id) {
@@ -691,18 +853,57 @@ bool BeginNode(EditorFrame &f, NodeId id) {
     }
     f.nodeOpen = true;
     auto *dl = ImGui::GetWindowDrawList();
-    ImGui::SetCursorScreenPos(Add(a, {st.padding * z, 2 * z}));
-    ImGui::InvisibleButton(
-        "##move", {std::max(1.f, px.x - 2 * st.padding * z), std::max(1.f, st.headerHeight * z - 4 * z)});
-    auto title = std::string(n->icon);
-    if (!title.empty())
-        title += ' ';
-    title.append(n->title);
-    dl->PushClipRect(Add(a, {st.padding * z, 0}), {a.x + px.x - st.padding * z, a.y + st.headerHeight * z},
-                     true);
-    dl->AddText(Add(a, {st.padding * z, (st.headerHeight * z - ImGui::GetFontSize()) / 2}), Color(st.text),
-                title.c_str());
-    dl->PopClipRect();
+    const bool reroute = n->kind == NodeKind::Reroute;
+    if (reroute) { // The knot centre is the move handle; the ring outside it belongs to the sockets.
+        const float k = KnotRadius(s.zoom) * .85f;
+        ImGui::SetCursorScreenPos({a.x + px.x / 2 - k, a.y + px.y / 2 - k});
+        ImGui::InvisibleButton("##move", {2 * k, 2 * k});
+    } else {
+        ImGui::SetCursorScreenPos(Add(a, {st.padding * z, 2 * z}));
+        ImGui::InvisibleButton(
+            "##move", {std::max(1.f, px.x - 2 * st.padding * z), std::max(1.f, st.headerHeight * z - 4 * z)});
+    }
+    if (!reroute) {
+        const float header = st.headerHeight * z;
+        const ImVec4 category = CategoryColor(st, *n);
+        const bool onCategory = st.headerFill == HeaderFill::Flat || st.headerFill == HeaderFill::Gradient;
+        const ImVec4 ink = onCategory ? ReadableOn(category) : st.text;
+        float x = a.x + st.padding * z;
+        float right = a.x + px.x - st.padding * z;
+        const auto glyph = CategoryGlyph(st, *n);
+        if (!glyph.empty()) {
+            const float tile = std::max(4.f, std::min(header - 10 * z, 20 * z));
+            const ImVec2 t0{x, a.y + (header - tile) / 2}, t1{x + tile, a.y + (header + tile) / 2};
+            const ImVec4 fill = onCategory ? WithAlpha(ReadableOn(category), .22f) : category;
+            dl->AddRectFilled(t0, t1, Color(fill), std::min(st.rounding, tile * .3f));
+            const std::string g(glyph);
+            const float size = tile * .68f;
+            const auto extent = ImGui::GetFont()->CalcTextSizeA(size, FLT_MAX, 0, g.c_str());
+            dl->AddText(ImGui::GetFont(), size, {(t0.x + t1.x - extent.x) / 2, (t0.y + t1.y - extent.y) / 2},
+                        Color(onCategory ? ink : ReadableOn(category)), g.c_str());
+            x = t1.x + 6 * z;
+        }
+        if (!n->subtitle.empty()) {
+            const std::string sub(n->subtitle);
+            const float size = ImGui::GetFontSize() * .82f;
+            const auto extent = ImGui::GetFont()->CalcTextSizeA(size, FLT_MAX, 0, sub.c_str());
+            const float sx = std::max(x + 24 * z, right - extent.x);
+            const ImVec4 color = onCategory ? WithAlpha(ink, .72f)
+                                 : st.headerFill == HeaderFill::Tinted ? category
+                                                                       : st.muted;
+            dl->PushClipRect({sx, a.y}, {right, a.y + header}, true);
+            dl->AddText(ImGui::GetFont(), size, {sx, a.y + (header - extent.y) / 2}, Color(color), sub.c_str());
+            dl->PopClipRect();
+            right = sx - 6 * z;
+        }
+        auto title = std::string(n->icon);
+        if (!title.empty())
+            title += ' ';
+        title.append(n->title);
+        dl->PushClipRect({x, a.y}, {std::max(x, right), a.y + header}, true);
+        dl->AddText({x, a.y + (header - ImGui::GetFontSize()) / 2}, Color(ink), title.c_str());
+        dl->PopClipRect();
+    }
     if (ImGui::IsItemClicked()) {
         if (!IsSelected(s, id) || ImGui::GetIO().KeyCtrl)
             Select(s, id, ImGui::GetIO().KeyShift, ImGui::GetIO().KeyCtrl);
@@ -711,7 +912,7 @@ bool BeginNode(EditorFrame &f, NodeId id) {
         if (!ImGui::GetIO().KeyCtrl)
             BeginGesture(f, *n, EditKind::Move);
     }
-    if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
+    if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0) && !reroute) {
         Cancel(f);
         if (n->childGraph)
             QueueCommand(f, EditKind::EnterGraph, id);
@@ -723,10 +924,10 @@ bool BeginNode(EditorFrame &f, NodeId id) {
     }
     if (ImGui::IsItemHovered() && !n->description.empty())
         ImGui::SetTooltip("%.*s", int(n->description.size()), n->description.data());
-    if (n->locked)
+    if (n->locked && !reroute)
         dl->AddCircleFilled({a.x + px.x - 6 * z, a.y + 6 * z}, 2 * z, Color(st.muted));
     // A collapsed node has no body item to validate an extended cursor position.
-    if (!n->collapsed)
+    if (!n->collapsed && !reroute)
         ImGui::SetCursorScreenPos(Add(a, {st.padding * z, st.headerHeight * z + st.padding * z}));
     ImGui::PushItemWidth(std::max(1.f, px.x - 2 * st.padding * z));
     ImGui::BeginDisabled(f.options.readOnly || Locked(f, *n) || n->collapsed || s.zoom < st.detailZoom);
@@ -742,31 +943,45 @@ void EndNode(EditorFrame &f) {
     auto a = Screen(f, Position(f, *n));
     auto size = Size(f, *n);
     auto b = Add(a, {float(size.x * z), float(size.y * z)});
-    if (!n->collapsed && f.state->zoom >= st.detailZoom && n->kind != NodeKind::Frame &&
+    const bool reroute = n->kind == NodeKind::Reroute;
+    if (!n->collapsed && !reroute && f.state->zoom >= st.detailZoom && n->kind != NodeKind::Frame &&
         n->kind != NodeKind::Group) {
         auto *dl = ImGui::GetWindowDrawList();
-        const char *names[] = {"Idle",  "Waiting",  "Running",  "Success",
-                               "Error", "Disabled", "Bypassed", "Cached"};
-        auto color = n->status == Status::Error     ? st.error
-                     : n->status == Status::Success ? st.success
-                                                    : st.muted;
-        char text[96];
-        std::snprintf(text, sizeof(text), "%s   %.2f ms", names[int(n->status)], n->milliseconds);
-        dl->AddText({a.x + st.padding * z, b.y - 20 * z}, Color(color), text);
+        const bool active = n->status != Status::Idle || n->milliseconds > 0 || n->progress > 0;
+        if (st.status == StatusDisplay::Always || (st.status == StatusDisplay::WhenActive && active)) {
+            const char *keys[] = {"node_editor.status.idle",     "node_editor.status.waiting",
+                                  "node_editor.status.running",  "node_editor.status.success",
+                                  "node_editor.status.error",    "node_editor.status.disabled",
+                                  "node_editor.status.bypassed", "node_editor.status.cached"};
+            const char *names[] = {"Idle",  "Waiting",  "Running",  "Success",
+                                   "Error", "Disabled", "Bypassed", "Cached"};
+            auto color = n->status == Status::Error     ? st.error
+                         : n->status == Status::Success ? st.success
+                                                        : st.muted;
+            char text[96];
+            std::snprintf(text, sizeof(text), "%s   %.2f ms", Tr(f, keys[int(n->status)], names[int(n->status)]),
+                          n->milliseconds);
+            dl->AddText({a.x + st.padding * z, b.y - 20 * z}, Color(color), text);
+        }
         if (n->status == Status::Running)
             dl->AddLine({a.x, b.y - 2}, {a.x + (b.x - a.x) * std::clamp(n->progress, 0.f, 1.f), b.y - 2},
                         Color(st.accent), 3);
         if (n->breakpoint)
             dl->AddCircleFilled({b.x - 14 * z, a.y + 16 * z}, 4 * z, Color(st.error));
     }
-    if (!n->collapsed && !Locked(f, *n) && !f.options.readOnly) {
-        ImGui::SetCursorScreenPos({b.x - 14, b.y - 14});
-        ImGui::InvisibleButton("##resize", {14, 14});
+    if (!n->collapsed && !reroute && !Locked(f, *n) && !f.options.readOnly) {
+        // The grip follows the zoom but keeps a usable hit area.
+        const float grip = std::clamp(14 * z, 10.f, 24.f);
+        ImGui::SetCursorScreenPos({b.x - grip, b.y - grip});
+        ImGui::InvisibleButton("##resize", {grip, grip});
         if (ImGui::IsItemHovered())
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNWSE);
         if (ImGui::IsItemClicked())
             BeginGesture(f, *n, EditKind::Resize);
-        ImGui::GetWindowDrawList()->AddLine({b.x - 11, b.y - 3}, {b.x - 3, b.y - 11}, Color(st.muted));
+        auto *dl = ImGui::GetWindowDrawList();
+        const ImU32 color = Color(ImGui::IsItemHovered() ? st.accent : st.muted);
+        dl->AddLine({b.x - grip * .8f, b.y - grip * .22f}, {b.x - grip * .22f, b.y - grip * .8f}, color);
+        dl->AddLine({b.x - grip * .5f, b.y - grip * .22f}, {b.x - grip * .22f, b.y - grip * .5f}, color);
     }
     f.blocked = f.blocked || ImGui::IsAnyItemActive();
     if (ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered() && !ImGui::IsAnyItemActive() &&
@@ -1154,30 +1369,102 @@ void Link(EditorFrame &f, const LinkView &link) {
     if (!Find(f, a->node) || !Find(f, b->node))
         return;
     auto points = Curve(f, *a, *b, link.style);
-    auto color = link.color.w ? link.color : f.style.accent;
-    if (f.state->selectedLink == link.id)
-        color = f.style.selected;
+    // The stored direction may be either way round; colour sources speak of the output and the input.
+    const PinView &output = a->kind == PinKind::Output ? *a : *b;
+    const PinView &input = a->kind == PinKind::Output ? *b : *a;
+    auto &s = *f.state;
+    ImVec4 from = f.style.accent, to = f.style.accent;
+    if (link.color.w > 0)
+        from = to = link.color;
+    else
+        switch (f.style.linkColor) {
+        case LinkColorSource::OutputType:
+            if (HasTypeColor(f, output))
+                from = to = PinColor(f, output);
+            break;
+        case LinkColorSource::InputType:
+            if (HasTypeColor(f, input))
+                from = to = PinColor(f, input);
+            break;
+        case LinkColorSource::Gradient:
+            if (HasTypeColor(f, output))
+                from = PinColor(f, output);
+            to = HasTypeColor(f, input) ? PinColor(f, input) : from;
+            if (a->kind != PinKind::Output)
+                std::swap(from, to);
+            break;
+        case LinkColorSource::Accent:
+            break;
+        }
+    const bool selected = s.selectedLink == link.id;
+    if (selected)
+        from = to = f.style.selected;
     auto *dl = ImGui::GetWindowDrawList();
     const float linkWidth = link.width > 0 ? link.width : f.style.linkWidth;
+    bool emphasized = selected;
+    if (f.style.highlightConnectedLinks) {
+        const auto *na = Find(f, a->node), *nb = Find(f, b->node);
+        emphasized = emphasized || IsSelected(s, na->id) || IsSelected(s, nb->id) || f.hoveredNode == na->id ||
+                     f.hoveredNode == nb->id;
+        if (!emphasized && f.hovered && !s.connecting && !f.hoveredNode) {
+            const auto mouse = ImGui::GetIO().MousePos;
+            for (std::size_t i = 1; i < points.size() && !emphasized; ++i)
+                emphasized = SegmentDistance(mouse, points[i - 1], points[i]) < 6;
+        }
+        if (emphasized) // A soft halo under the line keeps the hue and reads in light and dark themes.
+            dl->AddPolyline(points.data(), static_cast<int>(points.size()), Color(WithAlpha(Mix(from, to, .5f), .3f)),
+                            ImDrawFlags_None, linkWidth + 5);
+    }
+    const float width = emphasized && f.style.highlightConnectedLinks ? linkWidth + 1 : linkWidth;
+    const int start = dl->VtxBuffer.Size;
     if (!link.reference) {
         // One polyline keeps joins smooth; per-segment lines show notches at the joints.
-        dl->AddPolyline(points.data(), static_cast<int>(points.size()), Color(color), ImDrawFlags_None, linkWidth);
+        dl->AddPolyline(points.data(), static_cast<int>(points.size()), Color(from), ImDrawFlags_None, width);
     } else {
         for (std::size_t i = 1; i < points.size(); i += 2)
-            dl->AddLine(points[i - 1], points[i], Color(color), linkWidth);
+            dl->AddLine(points[i - 1], points[i], Color(from), width);
     }
-    const auto tip = points[18];
-    auto direction = Sub(points[18], points[17]);
-    const auto length = std::sqrt(Dot(direction, direction));
-    if (length > 0) {
-        direction = Mul(direction, 1 / length);
-        auto normal = ImVec2{-direction.y, direction.x};
-        dl->AddTriangleFilled(tip, Add(Sub(tip, Mul(direction, 7)), Mul(normal, 3)),
-                              Sub(Sub(tip, Mul(direction, 7)), Mul(normal, 3)), Color(color));
+    const bool gradient = from.x != to.x || from.y != to.y || from.z != to.z || from.w != to.w;
+    if (gradient) { // Shade along the dominant axis between the two ends.
+        const auto p = points.front(), q = points.back();
+        const float length = std::max(1.f, std::abs(q.x - p.x));
+        for (int i = start; i < dl->VtxBuffer.Size; ++i) {
+            auto &v = dl->VtxBuffer[i];
+            const float t = std::clamp((v.pos.x - p.x) / (q.x - p.x == 0 ? length : q.x - p.x), 0.f, 1.f);
+            auto c = Mix(from, to, t);
+            c.w *= ImGui::ColorConvertU32ToFloat4(v.col).w / std::max(.001f, from.w);
+            v.col = Color(c);
+        }
     }
-    if (!link.label.empty())
-        dl->AddText(points[12], Color(f.style.muted), link.label.data(),
-                    link.label.data() + link.label.size());
+    if (f.style.linkArrow != LinkArrow::None) {
+        const bool atEnd = f.style.linkArrow == LinkArrow::End;
+        // Arrows point from output to input whatever order the host stored the ends in.
+        const bool forward = a->kind == PinKind::Output;
+        std::size_t i = atEnd ? (forward ? 23 : 1) : 18;
+        auto tip = points[i];
+        auto direction = forward ? Sub(points[i], points[i - 1]) : Sub(points[i - 1], points[i]);
+        const auto length = std::sqrt(Dot(direction, direction));
+        if (length > 0) {
+            direction = Mul(direction, 1 / length);
+            if (atEnd) // Stop short of the socket so the arrow does not cover it.
+                tip = Sub(forward ? points.back() : points.front(),
+                          Mul(direction, f.style.pinRadius * std::clamp(float(s.zoom), .8f, 2.f) + 3));
+            auto normal = ImVec2{-direction.y, direction.x};
+            const auto color = Color(atEnd ? (forward ? to : from) : Mix(from, to, .75f));
+            dl->AddTriangleFilled(tip, Add(Sub(tip, Mul(direction, 7)), Mul(normal, 3)),
+                                  Sub(Sub(tip, Mul(direction, 7)), Mul(normal, 3)), color);
+        }
+    }
+    if (!link.label.empty()) { // A pill keeps the label legible over grid and other links.
+        const auto size = ImGui::CalcTextSize(link.label.data(), link.label.data() + link.label.size());
+        const auto c = points[12];
+        const ImVec2 pad{6, 2};
+        const ImVec2 lo{c.x - size.x / 2 - pad.x, c.y - size.y / 2 - pad.y};
+        const ImVec2 hi{c.x + size.x / 2 + pad.x, c.y + size.y / 2 + pad.y};
+        dl->AddRectFilled(lo, hi, Color(f.style.surface), (hi.y - lo.y) / 2);
+        dl->AddRect(lo, hi, Color(WithAlpha(Mix(from, to, .5f), .6f)), (hi.y - lo.y) / 2);
+        dl->AddText(Add(lo, pad), Color(f.style.muted), link.label.data(), link.label.data() + link.label.size());
+    }
     if (link.active && f.style.animate) {
         auto i = std::size_t(std::fmod(ImGui::GetTime() * 12, 24));
         dl->AddCircleFilled(points[i], 4, Color(f.style.success));
@@ -1189,7 +1476,7 @@ void DrawLinks(EditorFrame &f) {
 void DrawNodes(EditorFrame &f, void (*body)(void *, EditorFrame &, const NodeView &), void *user) {
     for (auto &n : f.graph.nodes)
         if (BeginNode(f, n.id)) {
-            if (!n.collapsed) {
+            if (!n.collapsed && n.kind != NodeKind::Reroute) {
                 if (body)
                     body(user, f, n);
                 else if (n.kind == NodeKind::Note)
@@ -1772,16 +2059,26 @@ void EndEditor(EditorFrame &f) {
             if (!n || pin.hidden || !Visible(f, *n))
                 continue;
             auto p = PinPosition(f, pin);
-            float r = Style(f, *n).pinRadius * std::clamp(float(s.zoom), .8f, 2.f);
-            auto c = Color(pin.color.w ? pin.color : Style(f, *n).accent);
+            const auto &st = Style(f, *n);
+            if (n->kind == NodeKind::Reroute) { // The knot itself is the socket.
+                // While wiring, the knot accepts the direction that completes the wire; otherwise its ring
+                // starts a new wire from the output.
+                const float knot = KnotRadius(s.zoom);
+                const float d = std::hypot(io.MousePos.x - p.x, io.MousePos.y - p.y);
+                const auto *from = s.connecting ? FindPin(f, s.connecting) : nullptr;
+                const bool wanted = from ? from->kind != pin.kind && d <= knot + kKnotRing
+                                         : pin.kind == PinKind::Output && d > knot * .85f && d <= knot + kKnotRing;
+                if (wanted)
+                    hoveredPin = &pin;
+                continue;
+            }
+            float r = st.pinRadius * std::clamp(float(s.zoom), .8f, 2.f);
+            auto c = Color(PinColor(f, pin));
             auto shape = pin.shape;
             for (auto &type : f.graph.socketTypes)
-                if (type.id == pin.type) {
-                    if (!pin.color.w)
-                        c = Color(type.color);
-                    if (pin.inheritTypeStyle)
-                        shape = type.shape;
-                }
+                if (type.id == pin.type && pin.inheritTypeStyle)
+                    shape = type.shape;
+            const bool connected = IsPinConnected(f.graph, pin.id);
             if (s.connecting && s.connecting != pin.id) {
                 auto verdict = CanConnect(f.graph, s.connecting, pin.id, s.reconnecting);
                 auto feedback =
@@ -1796,7 +2093,18 @@ void EndEditor(EditorFrame &f) {
                 dl->AddCircle(p, r + 2, c);
             if (pin.capabilities.group)
                 dl->AddLine(Add(p, {-r, -r - 4}), Add(p, {r, -r - 4}), c, 2);
-            if (shape == PinShape::Square)
+            if (st.hollowUnconnectedPins && !connected) {
+                // Outline only; the thickness stays legible when zoomed out.
+                const float t = std::max(1.2f, r * .32f), q = r - t * .5f;
+                if (shape == PinShape::Square)
+                    dl->AddRect(Sub(p, {q, q}), Add(p, {q, q}), c, 1, 0, t);
+                else if (shape == PinShape::Diamond)
+                    dl->AddQuad(Add(p, {-q, 0}), Add(p, {0, -q}), Add(p, {q, 0}), Add(p, {0, q}), c, t);
+                else if (shape == PinShape::Triangle)
+                    dl->AddTriangle(Add(p, {-q, -q}), Add(p, {q, 0}), Add(p, {-q, q}), c, t);
+                else
+                    dl->AddCircle(p, q, c, 0, t);
+            } else if (shape == PinShape::Square)
                 dl->AddRectFilled(Sub(p, {r, r}), Add(p, {r, r}), c, 1);
             else if (shape == PinShape::Diamond)
                 dl->AddQuadFilled(Add(p, {-r, 0}), Add(p, {0, -r}), Add(p, {r, 0}), Add(p, {0, r}), c);
@@ -1804,6 +2112,12 @@ void EndEditor(EditorFrame &f) {
                 dl->AddTriangleFilled(Add(p, {-r, -r}), Add(p, {r, 0}), Add(p, {-r, r}), c);
             else
                 dl->AddCircleFilled(p, r, c);
+            // A required input that has nothing connected carries a small error mark.
+            if (pin.kind == PinKind::Input && pin.capabilities.required && !connected) {
+                const ImVec2 m = Add(p, {r * .85f, -r * .85f});
+                dl->AddCircleFilled(m, std::max(2.5f, r * .5f) + 1.2f, Color(st.canvas));
+                dl->AddCircleFilled(m, std::max(2.5f, r * .5f), Color(st.error));
+            }
             if (Inside(io.MousePos, Sub(p, {r + 5, r + 5}), Add(p, {r + 5, r + 5})))
                 hoveredPin = &pin;
         }
@@ -1847,9 +2161,10 @@ void EndEditor(EditorFrame &f) {
             if (hoveredPin && hoveredPin->id != s.connecting) {
                 auto verdict = CanConnect(f.graph, s.connecting, hoveredPin->id, s.reconnecting);
                 ImGui::SetTooltip("%s%s%.*s",
-                                  !verdict.allowed                                ? "Rejected"
-                                  : verdict.match == ConnectionMatch::Convertible ? "Convertible"
-                                                                                  : "Exact",
+                                  !verdict.allowed ? Tr(f, "node_editor.connect.rejected", "Rejected")
+                                  : verdict.match == ConnectionMatch::Convertible
+                                      ? Tr(f, "node_editor.connect.convertible", "Convertible")
+                                      : Tr(f, "node_editor.connect.exact", "Exact"),
                                   verdict.reason.empty() ? "" : ": ", int(verdict.reason.size()),
                                   verdict.reason.data());
                 if (ImGui::IsMouseReleased(0)) {
@@ -2082,7 +2397,8 @@ void EndEditor(EditorFrame &f) {
         }
         if (f.requests->overflow) {
             dl->AddText(Add(f.min, {12, 12}), Color(f.style.warning),
-                        "Request buffer full: drain / enlarge it to finish the operation");
+                        Tr(f, "node_editor.request_buffer_full",
+                           "Request buffer full: drain / enlarge it to finish the operation"));
         }
     }
     ImGui::GetWindowDrawList()->PopClipRect();

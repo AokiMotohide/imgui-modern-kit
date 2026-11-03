@@ -1,5 +1,6 @@
 #pragma once
 #include <imkit/editor_core.h>
+#include <imkit/locale.h>
 #include <array>
 #include <cstdint>
 #include <span>
@@ -29,6 +30,18 @@ enum class Side { Left, Right, Top, Bottom };
 enum class PinShape { Circle, Square, Diamond, Triangle };
 enum class LinkStyle { Bezier, Straight, Orthogonal };
 enum class Status { Idle, Waiting, Running, Success, Error, Disabled, Bypassed, Cached };
+// Header and link appearance share their enums with Theme::node, so theme files can choose them.
+using HeaderFill = ::imkit::NodeHeaderFill;
+using LinkColorSource = ::imkit::NodeLinkColor;
+using LinkArrow = ::imkit::NodeLinkArrow;
+// WhenActive hides the status line of an Idle node that reports no time or progress.
+enum class StatusDisplay { WhenActive, Always, Never };
+// Host-defined node category: colour and an optional one-glyph tile shown left of the title.
+struct NodeCategoryStyle {
+    std::uint64_t id = 0;
+    ImVec4 color{};
+    std::string_view glyph{};
+};
 struct NodeStyle {
     ImVec4 canvas{}, grid{}, surface{}, header{}, text{}, muted{}, border{}, selected{}, accent{}, group{},
         preview{}, error{}, warning{}, success{};
@@ -36,6 +49,15 @@ struct NodeStyle {
     float gridSize = 24, minimumWidth = 150, minimumHeight = 90, detailZoom = .55f;
     bool shadows = true, animate = true;
     LinkStyle linkStyle = LinkStyle::Bezier;
+    HeaderFill headerFill = HeaderFill::Strip;
+    float headerTint = .16f;                            // Category colour share for Tinted headers.
+    float hoverBorderWidth = 1.5f, selectedBorderWidth = 2; // Zero keeps borderWidth.
+    LinkColorSource linkColor = LinkColorSource::OutputType; // Falls back to accent without type colours.
+    LinkArrow linkArrow = LinkArrow::Middle;
+    bool highlightConnectedLinks = false; // Thicken links of hovered or selected nodes and the hovered link.
+    bool hollowUnconnectedPins = false;   // Outline-only sockets until something is connected.
+    StatusDisplay status = StatusDisplay::WhenActive;
+    std::span<const NodeCategoryStyle> categories{}; // Borrowed until EndEditor.
 };
 NodeStyle MakeNodeStyle(const Theme &theme);
 enum class ConnectionMatch { Exact, Convertible, Rejected };
@@ -66,6 +88,9 @@ struct NodeView {
     bool breakpoint = false;
     const NodeStyle *style = nullptr; // Borrowed until EndEditor.
     PinCapabilities inputs{}, outputs{};
+    std::uint64_t category = 0;           // Looks up NodeStyle::categories.
+    ImVec4 tint{};                        // Alpha zero inherits the category, then the accent.
+    std::string_view subtitle{}, glyph{}; // Right-aligned header note; tile glyph (overrides the category).
 };
 struct PinView {
     PinId id{};
@@ -320,6 +345,7 @@ struct EditorOptions {
     bool confirmPinImpact = true;
     double minimumZoom = .15, maximumZoom = 3;
     Keymap keys{};
+    const LocaleContext *locale = nullptr; // Optional; keys start with "node_editor.".
 };
 struct EditorFrame {
     GraphView graph;
@@ -335,6 +361,7 @@ struct EditorFrame {
     float fontSize = 14;
     ImGuiContext *context = nullptr;
     ImGuiID editorId = 0;
+    NodeId hoveredNode{}; // Topmost node under the mouse this frame.
 };
 ViewState CaptureView(const EditorState &state);
 void RestoreView(EditorState &state, const ViewState &view);
