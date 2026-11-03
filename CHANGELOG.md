@@ -15,6 +15,9 @@
 - Socket glyphs: `PinView::role` (`Data`, `Flow`), `container` (`Single`, `Array`, `Set`, `Map`), `flags` (`Reference`, `Wildcard`, `Field`, `Optional`, `Unavailable`), `keyType`, `inspect` and `reason`. `DrawPinGlyph` and `PinChromeView` draw them outside the canvas too. Flow links use the text colour, `flowLinkWidth` and chevrons; inputs with `multiple=true` draw as a capsule with the links side by side; `pinSeat` docks sockets into the edge; active links move marks at `flowSpeed` and `flowSpacing`.
 - `CanConnect` rejects an unavailable socket with its reason and a flow-to-data link, and lets a wildcard through without the type check.
 - Node shapes and states: `NodeView::shape` (`Standard`, `Event`, `Compact`, `Variable`, `Boundary`) and `NodeView::diagnostic` (`Severity`, message). Frames and groups draw a label tab and member count, notes a folded card, subgraphs a stacked card with an open button that queues `EnterGraph`. Running, waiting, success, error, bypassed, disabled, cached, breakpoint and locked states each have their own look; `Status::Disabled` disables the body widgets.
+- `MakeNodeStylePreset(theme, NodeStylePreset)` with `Classic`, `Studio` and `Logic`. `NodeStyle::hooks` (`NodeDrawHooks`) lets the host replace the drawing of node backgrounds, title rows, sockets and links; input stays with the editor.
+- `BeginNodePanel` / `EndNodePanel` group rows; a closed panel gathers its sockets (`PinView::panel`) on its title row. `NodeView::hideUnusedPins` hides unconnected sockets.
+- New gestures: Alt-click breaks a socket's links, Ctrl-drag moves them to another socket, double-clicking a link requests `EditKind::InsertReroute`, dropping a single dragged node onto a link inserts it, and `ConnectSelected` links two selected nodes. `Keymap` gains `bypass` (Ctrl+B) and `collapse` (Ctrl+H).
 - Fixed: a node whose body submits no item (for example a locked, empty node) no longer trips Dear ImGui's cursor-extension assertion.
 - `NodeStyle`, `NodeView`, `PinView`, `LinkView`, `EditorOptions`, `EditorFrame` and `Theme` gain members; rebuild code that links ImKit with the new headers.
 
@@ -29,6 +32,9 @@
 - ソケットの記号: `PinView::role`（`Data`、`Flow`）、`container`（`Single`、`Array`、`Set`、`Map`）、`flags`（`Reference`、`Wildcard`、`Field`、`Optional`、`Unavailable`）、`keyType`、`inspect`、`reason` が加わります。`DrawPinGlyph` と `PinChromeView` で、キャンバスの外でも同じ記号を描けます。Flow の配線は文字色、`flowLinkWidth`、山形の刻みで描きます。`multiple=true` の入力は長円で描き、配線を並べて受けます。`pinSeat` でソケットを枠に差し込んだように見せます。実行中の配線では、`flowSpeed` と `flowSpacing` で印が動きます。
 - `CanConnect` は、使えないソケットを理由つきで拒否し、Flow とデータの接続も拒否します。ワイルドカードは型の判定をせずに通します。
 - ノードの形と状態: `NodeView::shape`（`Standard`、`Event`、`Compact`、`Variable`、`Boundary`）と `NodeView::diagnostic`（`Severity` と文言）が加わります。Frame と Group はラベルタブと中のノード数を、Note は角を折ったカードを、サブグラフは重ねたカードと `EnterGraph` を要求する「開く」ボタンを描きます。実行中、待機、成功、エラー、Bypass、無効、キャッシュ、ブレークポイント、ロックの各状態に専用の見た目があります。`Status::Disabled` は本体のウィジェットを無効にします。
+- `MakeNodeStylePreset(theme, NodeStylePreset)` で、`Classic`、`Studio`、`Logic` のプリセットを選べます。`NodeStyle::hooks`（`NodeDrawHooks`）で、ノードの背景、タイトル行、ソケット、配線の描画をホストが置き換えられます。入力はエディタ側に残ります。
+- `BeginNodePanel` / `EndNodePanel` で行をまとめられます。閉じたパネルは、`PinView::panel` が一致するソケットを見出しの行に集めます。`NodeView::hideUnusedPins` は未接続のソケットを隠します。
+- 新しい操作: Altクリックでソケットの配線をすべて外し、Ctrlドラッグで別のソケットへ移します。配線のダブルクリックで `EditKind::InsertReroute` を要求し、1つだけドラッグしたノードを配線の上で離すと挿入します。`ConnectSelected` は選んだ2つのノードをつなぎます。`Keymap` に `bypass`（Ctrl+B）と `collapse`（Ctrl+H）が加わります。
 - 修正: 本体に項目を1つも置かないノード（ロックされた空のノードなど）で、Dear ImGui のカーソル拡張のアサートが出なくなりました。
 - `NodeStyle`、`NodeView`、`PinView`、`LinkView`、`EditorOptions`、`EditorFrame`、`Theme` にメンバーが加わります。ImKit をリンクするコードは、新しいヘッダーで再ビルドしてください。
 

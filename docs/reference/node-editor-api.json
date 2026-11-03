@@ -5,6 +5,11 @@
     "header": "imkit/node_editor.h"
   },
   {
+    "name": "imkit::node_editor::MakeNodeStylePreset",
+    "declaration": "NodeStyle MakeNodeStylePreset(const Theme &theme, NodeStylePreset preset);",
+    "header": "imkit/node_editor.h"
+  },
+  {
     "name": "imkit::node_editor::DrawPinGlyph",
     "declaration": "void DrawPinGlyph(ImDrawList *drawList, const PinChromeView &pin);",
     "header": "imkit/node_editor.h"
@@ -150,6 +155,16 @@
     "header": "imkit/node_editor.h"
   },
   {
+    "name": "imkit::node_editor::BeginNodePanel",
+    "declaration": "bool BeginNodePanel(EditorFrame &frame, std::uint64_t panel, std::string_view label, bool *open = nullptr);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::EndNodePanel",
+    "declaration": "void EndNodePanel(EditorFrame &frame);",
+    "header": "imkit/node_editor.h"
+  },
+  {
     "name": "imkit::node_editor::GetPinPosition",
     "declaration": "bool GetPinPosition(const EditorFrame &frame, PinId pin, ImVec2 &screenPosition);",
     "header": "imkit/node_editor.h"
@@ -177,6 +192,11 @@
   {
     "name": "imkit::node_editor::InsertNode",
     "declaration": "bool InsertNode(EditorFrame &frame, NodeId node, LinkId link);",
+    "header": "imkit/node_editor.h"
+  },
+  {
+    "name": "imkit::node_editor::ConnectSelected",
+    "declaration": "bool ConnectSelected(EditorFrame &frame);",
     "header": "imkit/node_editor.h"
   },
   {

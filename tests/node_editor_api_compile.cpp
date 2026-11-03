@@ -15,6 +15,9 @@ bool (*volatile pinEdits)(ne::GraphView, std::span<const ne::EditRequest>, ne::R
                           std::uint64_t) = &ne::QueuePinEdits;
 void (*volatile pinRow)(ne::EditorFrame &, ne::PinId, ne::PinRowOptions) = &ne::PinRow;
 void (*volatile glyph)(ImDrawList *, const ne::PinChromeView &) = &ne::DrawPinGlyph;
+ne::NodeStyle (*volatile preset)(const imkit::Theme &, ne::NodeStylePreset) = &ne::MakeNodeStylePreset;
+bool (*volatile panel)(ne::EditorFrame &, std::uint64_t, std::string_view, bool *) = &ne::BeginNodePanel;
+bool (*volatile connect)(ne::EditorFrame &) = &ne::ConnectSelected;
 ne::ConnectionVerdict (*volatile validate)(ne::GraphView, const ne::EditRequest &) = &ne::ValidatePinEdit;
 // Appearance types share their enums with the theme file.
 static_assert(std::is_same_v<ne::HeaderFill, imkit::NodeHeaderFill>);
@@ -29,6 +32,9 @@ int main() {
     look.status = ne::StatusDisplay::Never;
     look.categories = categories;
     look.snapDistance = 24;
+    static const ne::NodeDrawHooks hooks{nullptr, nullptr, nullptr,
+                                         [](ImDrawList *, const ne::PinChromeView &, void *) { return false; }};
+    look.hooks = &hooks;
     ne::LinkView flagged{{1}, {1}, {2}};
     flagged.validity = ne::LinkValidity::Invalid;
     flagged.reason = "Type changed";

@@ -62,6 +62,35 @@ struct NodeCategoryStyle {
     ImVec4 color{};
     std::string_view glyph{};
 };
+struct NodeStyle;
+struct NodeView;
+struct LinkView;
+struct PinChromeView;
+// Resolved geometry and colours of one node, handed to NodeDrawHooks.
+struct NodeChromeView {
+    const NodeView *node = nullptr;
+    ImVec2 min{}, max{};
+    float zoom = 1, headerHeight = 0, rounding = 0;
+    ImVec4 category{}, surface{}, header{}, border{}, text{};
+    bool hovered = false, selected = false;
+};
+// Resolved points and colours of one link, handed to NodeDrawHooks.
+struct LinkChromeView {
+    const LinkView *link = nullptr;
+    std::span<const ImVec2> points{};
+    ImVec4 from{}, to{};
+    float width = 2;
+    bool hovered = false, selected = false, flow = false;
+};
+// Optional host drawing per part, on the canvas draw list. Return true to replace the default drawing of that
+// part, false to keep it. Input handling, IDs and hit areas stay with the editor. Borrowed until EndEditor.
+struct NodeDrawHooks {
+    void *user = nullptr;
+    bool (*background)(ImDrawList *, const NodeChromeView &, void *) = nullptr; // Body, header fill and outline.
+    bool (*header)(ImDrawList *, const NodeChromeView &, void *) = nullptr;     // Title row contents.
+    bool (*pin)(ImDrawList *, const PinChromeView &, void *) = nullptr;         // Socket glyph.
+    bool (*link)(ImDrawList *, const LinkChromeView &, void *) = nullptr;       // Link line.
+};
 struct NodeStyle {
     ImVec4 canvas{}, grid{}, surface{}, header{}, text{}, muted{}, border{}, selected{}, accent{}, group{},
         preview{}, error{}, warning{}, success{};
@@ -84,8 +113,14 @@ struct NodeStyle {
     float incompatibleAlpha = .25f, incompatibleNodeAlpha = .5f, snapDistance = 18;
     StatusDisplay status = StatusDisplay::WhenActive;
     std::span<const NodeCategoryStyle> categories{}; // Borrowed until EndEditor.
+    const NodeDrawHooks *hooks = nullptr;            // Borrowed until EndEditor.
 };
 NodeStyle MakeNodeStyle(const Theme &theme);
+// Starting points built on MakeNodeStyle(theme); each sets the appearance choices it names.
+// Classic: the plain theme look. Studio: tinted headers, hollow docked sockets, no arrows (materials,
+// geometry, compositing). Logic: stronger tint, hollow docked sockets, highlighted links (event and flow graphs).
+enum class NodeStylePreset { Classic, Studio, Logic };
+NodeStyle MakeNodeStylePreset(const Theme &theme, NodeStylePreset preset);
 enum class ConnectionMatch { Exact, Convertible, Rejected };
 struct SocketTypeView {
     std::uint64_t id = 0;
@@ -119,6 +154,7 @@ struct NodeView {
     std::string_view subtitle{}, glyph{}; // Right-aligned header note; tile glyph (overrides the category).
     NodeShape shape = NodeShape::Standard;
     NodeDiagnostic diagnostic{};
+    bool hideUnusedPins = false; // Unconnected sockets and their rows disappear.
 };
 struct PinView {
     PinId id{};
@@ -139,6 +175,7 @@ struct PinView {
     PinContainer container = PinContainer::Single;
     std::uint32_t flags = PinFlags_None;
     std::uint64_t keyType = 0;       // Map key type; colours the left half of the glyph.
+    std::uint64_t panel = 0;         // BeginNodePanel group; a closed panel gathers its sockets on its title row.
     std::string_view inspect{};      // Current value shown when hovering the socket.
     std::string_view reason{};       // Why an Unavailable socket cannot be used.
 };
@@ -234,7 +271,8 @@ enum class EditKind {
     ChangePinType,
     SetPinMultiplicity,
     SetPinLimits,
-    SetPinValue
+    SetPinValue,
+    InsertReroute // Double-click on a link: `link` and the graph position in `after`. Host splits it with a knot.
 };
 enum class ValueKind { None, Color, Float, Integer, Boolean, Vector, Enum, Text, Custom };
 struct PinValue {
@@ -351,6 +389,13 @@ struct PreviewState {
     int output = 0, compare = -1;
     float height = 100;
 };
+// Open state and title row of one panel inside one node. UI state, not graph data.
+struct PanelState {
+    NodeId node{};
+    std::uint64_t panel = 0;
+    bool open = true;
+    double row = 0; // Title row centre, graph units below the node's top edge.
+};
 struct EditorState {
     Point origin{};
     double zoom = 1;
@@ -369,6 +414,7 @@ struct EditorState {
     std::vector<Point> lasso;
     std::vector<std::pair<std::uint64_t, std::size_t>> nodeIndex, pinIndex;
     std::vector<PinRowPosition> rowPositions;
+    std::vector<PanelState> panels;
     EditRequest valueEdit{}, pendingPinEdit{};
     std::array<char, 128> pinEditReason{};
     bool paletteWasOpen = false;
@@ -377,6 +423,8 @@ struct EditorState {
     PinId connecting{};
     LinkId reconnecting{};
     bool selecting = false, cutting = false, palette = false, cancelPending = false;
+    bool movingLinks = false; // Ctrl-drag from a socket carries all of its links to another socket.
+    LinkId dropLink{};        // Link under a single dragged node; releasing inserts the node there.
     std::uint64_t nextOperation = 1;
     void Reserve(std::size_t nodes, std::size_t previewCount = 64);
 };
@@ -385,7 +433,8 @@ struct Keymap {
                   copy = ImGuiMod_Ctrl | ImGuiKey_C, cut = ImGuiMod_Ctrl | ImGuiKey_X,
                   paste = ImGuiMod_Ctrl | ImGuiKey_V, undo = ImGuiMod_Ctrl | ImGuiKey_Z,
                   redo = ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_Z, selectAll = ImGuiMod_Ctrl | ImGuiKey_A,
-                  add = ImGuiKey_Tab, frame = ImGuiKey_F, group = ImGuiMod_Ctrl | ImGuiKey_G;
+                  add = ImGuiKey_Tab, frame = ImGuiKey_F, group = ImGuiMod_Ctrl | ImGuiKey_G,
+                  bypass = ImGuiMod_Ctrl | ImGuiKey_B, collapse = ImGuiMod_Ctrl | ImGuiKey_H;
     int panButton = ImGuiMouseButton_Middle;
 };
 struct EditorOptions {
@@ -432,6 +481,11 @@ void BeginPin(EditorFrame &frame, PinId pin);
 void EndPin(EditorFrame &frame);
 void PinRow(EditorFrame &frame, PinId pin, PinRowOptions options = {});
 void PinAddRow(EditorFrame &frame, NodeId node, PinKind kind, std::uint64_t group = 0);
+// Collapsible group of rows inside a node. Submit the panel's rows and EndNodePanel only when it returns true.
+// `open` is optional host storage; without it the editor keeps the state. While closed, sockets whose
+// PinView::panel matches sit on the title row, so their links stay attached.
+bool BeginNodePanel(EditorFrame &frame, std::uint64_t panel, std::string_view label, bool *open = nullptr);
+void EndNodePanel(EditorFrame &frame);
 bool GetPinPosition(const EditorFrame &frame, PinId pin, ImVec2 &screenPosition);
 void Link(EditorFrame &frame, const LinkView &link);
 void DrawLinks(EditorFrame &frame);
@@ -440,6 +494,9 @@ void DrawNodes(EditorFrame &frame, void (*body)(void *, EditorFrame &, const Nod
                void *user = nullptr);
 bool QueueCommand(EditorFrame &frame, EditKind kind, NodeId node = {});
 bool InsertNode(EditorFrame &frame, NodeId node, LinkId link);
+// Links the first free compatible output of the left selected node to the first free compatible input of the
+// right one. Needs exactly two selected nodes; returns false when nothing fits.
+bool ConnectSelected(EditorFrame &frame);
 struct PaletteEntry {
     std::uint64_t type = 0;
     std::string_view title{}, category{}, description{};

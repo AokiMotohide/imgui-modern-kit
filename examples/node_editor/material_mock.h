@@ -495,6 +495,7 @@ struct Page {
     node_gallery::AppearanceEditor appearance;
     Model model;
     ne::EditorState state;
+    ne::NodeStylePreset preset = ne::NodeStylePreset::Studio; // Look picked in the toolbar.
     std::array<ne::EditRequest, 256> storage{};
     struct Candidate {
         Page *page;
@@ -529,7 +530,7 @@ struct Page {
               ne::LinkStyle wire = ne::LinkStyle::Bezier) {
         auto g = model.View();
         ne::RequestBuffer out{storage};
-        auto style = ne::MakeNodeStyle(theme);
+        auto style = ne::MakeNodeStylePreset(theme, preset);
         style.linkStyle = wire;
         node_gallery::StyleNodes(model.nodes, model, style);
         for (auto &view : model.nodes) {
@@ -559,6 +560,16 @@ struct Page {
                            {ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y});
         ImGui::SameLine();
         ne::LayoutToolbar(controls);
+        ImGui::SameLine();
+        {
+            const char *looks[] = {"Classic", "Studio", "Logic"};
+            int look = int(preset);
+            ImGui::SetNextItemWidth(ImGui::CalcTextSize("Classic").x + ImGui::GetFrameHeight() * 2);
+            if (ImGui::Combo("##look", &look, looks, 3))
+                preset = ne::NodeStylePreset(look);
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("Node look preset");
+        }
         ImGui::SameLine();
         if (node_gallery::Action("help", icons, imkit::IconId::Help, "Editing help"))
             ImGui::OpenPopup("Editing help");

@@ -215,6 +215,32 @@ Every node can call `Preview` below its properties. An output holds a borrowed t
 - `MakeNodeStyle` derives semantic colors, density, corner and stroke metrics, and motion from the Theme, then applies `Theme::node`. Edit the returned value for an editor.
 - Override `NodeView::style` for one node, the socket color, shape and side for ports, or the link color, style and width per wire.
 
+**Presets**
+
+`MakeNodeStylePreset(theme, preset)` starts from `MakeNodeStyle(theme)` and sets the appearance choices of a preset:
+
+| Preset | For | Sets |
+|---|---|---|
+| `Classic` | General tools, the previous look | Nothing |
+| `Studio` | Materials, geometry, compositing | Tinted headers, no arrows, hollow docked sockets |
+| `Logic` | Event and flow graphs | Stronger tint, no arrows, hollow docked sockets, highlighted links |
+
+**Draw hooks**
+
+`NodeStyle::hooks` points to a `NodeDrawHooks` with optional `background`, `header`, `pin` and `link` callbacks. Each receives the canvas draw list and a resolved view (`NodeChromeView`, `PinChromeView`, `LinkChromeView`) and returns true to replace the default drawing of that part. Hit areas, IDs and input stay with the editor. `DrawPinGlyph` can be called from a pin hook to keep the default glyph and add to it.
+
+**Panels and unused sockets**
+
+```cpp
+if (ne::BeginNodePanel(frame, kSpecular, "Specular")) {
+    ne::PinRow(frame, specularPin, row);
+    ne::EndNodePanel(frame);
+}
+```
+
+- A closed panel gathers the sockets whose `PinView::panel` matches on its title row and shows how many there are. Links stay attached. Pass `bool* open` to keep the state yourself.
+- `NodeView::hideUnusedPins` removes unconnected sockets and their rows; they cannot be targets while hidden.
+
 **Appearance**
 
 | Setting | Values | Default |
@@ -295,6 +321,12 @@ Compact and Variable nodes have no body; `DrawNodes` skips the callback for them
 | Lasso | Optional |
 | Cut a wire | Alt-drag |
 | Reconnect | Alt-drag an input |
+| Break all links of a socket | Alt-click the socket |
+| Move all links of a socket | Ctrl-drag the socket to another socket of the same direction |
+| Insert a reroute | Double-click a link (`EditKind::InsertReroute`) |
+| Insert a node into a link | Drag a single node onto the link and release |
+| Connect two selected nodes | Context menu, or `ConnectSelected` |
+| Bypass / collapse | Ctrl+B / Ctrl+H |
 
 Native text editing and popups take precedence. The Keymap is replaceable. Read-only mode disables graph edits and keeps navigation. Run and debug controls appear only when the host advertises those capabilities.
 

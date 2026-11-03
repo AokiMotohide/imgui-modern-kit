@@ -234,8 +234,9 @@ void SocketTests() {
     auto view = m.View();
     auto style = MakeNodeStyle(imkit::MakeTheme(imkit::ColorScheme::Dark));
     node_gallery::StyleNodes(m.nodes, m, style);
-    Check(view.nodes.back().style && Near(view.nodes.back().style->header.x, .8),
-          "custom header color is supplied through borrowed per-node style");
+    Check(view.nodes.back().style && view.nodes.back().style->headerFill == HeaderFill::Flat &&
+              Near(view.nodes.back().tint.x, .8),
+          "custom header color is supplied as the node tint with a flat header");
 }
 void InputTests() {
     ImGui::CreateContext();
@@ -829,6 +830,179 @@ void AppearanceTests() {
         nodes[1].childGraph = {};
         io.MousePos = {-100, -100};
         frame();
+    }
+
+    // Presets, hooks and the editing gestures added with them.
+    {
+        auto studio = MakeNodeStylePreset(theme, NodeStylePreset::Studio);
+        auto logic = MakeNodeStylePreset(theme, NodeStylePreset::Logic);
+        auto classic = MakeNodeStylePreset(theme, NodeStylePreset::Classic);
+        Check(studio.headerFill == HeaderFill::Tinted && studio.hollowUnconnectedPins && studio.pinSeat > 0 &&
+                  studio.linkArrow == LinkArrow::None,
+              "Studio preset sets its appearance");
+        Check(logic.highlightConnectedLinks && logic.headerTint > studio.headerTint, "Logic preset sets its appearance");
+        const auto plain = MakeNodeStyle(theme);
+        Check(classic.headerFill == plain.headerFill && classic.linkArrow == plain.linkArrow &&
+                  classic.hollowUnconnectedPins == plain.hollowUnconnectedPins,
+              "Classic preset equals the plain theme style");
+
+        struct Calls {
+            int background = 0, pin = 0;
+        } calls;
+        NodeDrawHooks hooks;
+        hooks.user = &calls;
+        hooks.background = [](ImDrawList *, const NodeChromeView &v, void *user) {
+            ++static_cast<Calls *>(user)->background;
+            return v.node && v.max.x > v.min.x;
+        };
+        hooks.pin = [](ImDrawList *, const PinChromeView &v, void *user) {
+            ++static_cast<Calls *>(user)->pin;
+            return v.pin != nullptr;
+        };
+        style.hooks = &hooks;
+        frame();
+        Check(calls.background > 0 && calls.pin > 0, "draw hooks are called for nodes and sockets");
+        Check(CountVertices(ImGui::GetColorU32(blue)) < 4, "a hook that returns true replaces the socket glyph");
+        style.hooks = nullptr;
+
+        ImVec2 canvas{};
+        auto at = [&](double x, double y) {
+            return ImVec2{canvas.x + float((x - state.origin.x) * state.zoom), canvas.y + float((y - state.origin.y) * state.zoom)};
+        };
+        auto step = [&](ImVec2 mouse, bool down, bool ctrl = false, bool alt = false) {
+            io.MousePos = mouse;
+            io.MouseDown[0] = down;
+            io.AddKeyEvent(ImGuiMod_Ctrl, ctrl);
+            io.AddKeyEvent(ImGuiMod_Alt, alt);
+            out.Clear();
+            ImGui::NewFrame();
+            ImGui::SetNextWindowPos({0, 0});
+            ImGui::SetNextWindowSize({1000, 700});
+            ImGui::Begin("test", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
+            auto f = BeginEditor("graph", graph, state, out, style, options);
+            canvas = f.min;
+            DrawLinks(f);
+            DrawNodes(f);
+            EndEditor(f);
+            ImGui::End();
+            ImGui::Render();
+        };
+        auto has = [&](EditKind kind, auto predicate) {
+            for (auto &r : out.Requests())
+                if (r.kind == kind && predicate(r))
+                    return true;
+            return false;
+        };
+        state.selection.clear();
+        step({-50, -50}, false);
+        ImVec2 inPin{}, needPin{};
+        {
+            ImGui::NewFrame();
+            ImGui::Begin("test", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
+            auto f = BeginEditor("graph", graph, state, out, style, options);
+            GetPinPosition(f, {2}, inPin);
+            GetPinPosition(f, {3}, needPin);
+            EndEditor(f);
+            ImGui::End();
+            ImGui::Render();
+        }
+
+        // Alt-click breaks the socket's links as one operation.
+        step(inPin, false, false, true);
+        step(inPin, true, false, true);
+        Check(has(EditKind::DeleteLink, [](auto &r) { return r.link == LinkId{1}; }) && !state.connecting,
+              "alt-click on a socket deletes its links");
+        step(inPin, false);
+
+        // Ctrl-drag carries the links of a socket to another socket of the same direction.
+        graph.typeCompatibility = [](void *, std::uint64_t, std::uint64_t) { return ConnectionVerdict{}; };
+        step(inPin, false, true);
+        step(inPin, true, true);
+        Check(state.movingLinks && state.connecting == PinId{2}, "ctrl-drag on a linked socket starts moving links");
+        step(needPin, true, true);
+        step(needPin, false, true);
+        Check(has(EditKind::Reconnect,
+                  [](auto &r) { return r.link == LinkId{1} && r.from == PinId{1} && r.to == PinId{3}; }),
+              "dropping moves every link to the new socket");
+        Check(!state.movingLinks && !state.connecting, "moving links ends after the drop");
+        step({-50, -50}, false);
+
+        // Double-clicking a link asks the host for a reroute knot at that point.
+        const ImVec2 mid = at(320, 80);
+        step(mid, false);
+        step(mid, true);
+        step(mid, false);
+        step(mid, true);
+        Check(has(EditKind::InsertReroute, [](auto &r) { return r.link == LinkId{1}; }),
+              "double-clicking a link requests a reroute");
+        step(mid, false);
+        state.selectedLink = {};
+
+        // Two selected nodes connect through their first free compatible sockets.
+        state.selection = {{2}, {1}};
+        pins[0].multiple = true; // The output already feeds the first link.
+        {
+            ImGui::NewFrame();
+            ImGui::Begin("test", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
+            out.Clear();
+            auto f = BeginEditor("graph", graph, state, out, style, options);
+            Check(ConnectSelected(f) &&
+                      has(EditKind::CreateLink, [](auto &r) { return r.from == PinId{1} && r.to == PinId{3}; }),
+                  "ConnectSelected links left output to right free input");
+            EndEditor(f);
+            ImGui::End();
+            ImGui::Render();
+        }
+        state.selection.clear();
+        pins[0].multiple = false;
+
+        // Dropping a node onto a link it can split inserts it there.
+        step({-50, -50}, false);
+        const ImVec2 knot = at(308, 308);
+        step(knot, false);
+        step(knot, true);
+        step(at(316, 200), true);
+        step(mid, true);
+        Check(state.dropLink == LinkId{1}, "a dragged node over a link marks it for insertion");
+        step(mid, false);
+        Check(has(EditKind::Move, [](auto &r) { return r.phase == Phase::Commit && r.node == NodeId{3}; }) &&
+                  has(EditKind::InsertNode, [](auto &r) { return r.node == NodeId{3} && r.link == LinkId{1}; }),
+              "releasing over the link commits the move and inserts the node");
+        step({-50, -50}, false);
+        graph.typeCompatibility = nullptr;
+    }
+
+    // A closed panel gathers its sockets on its title row; hideUnusedPins removes unconnected sockets.
+    {
+        pins[2].panel = 7;
+        bool open = false;
+        ImVec2 gathered{}, titleCenter{};
+        for (int i = 0; i < 2; ++i) { // Second frame: the title row position is known.
+            ImGui::NewFrame();
+            ImGui::Begin("test", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
+            auto f = BeginEditor("graph", graph, state, out, style, options);
+            if (BeginNode(f, {2})) {
+                const auto start = ImGui::GetCursorScreenPos();
+                const float height = std::max(ImGui::GetFrameHeight(), style.headerHeight * float(state.zoom) * .7f);
+                titleCenter = {start.x, start.y + height * .5f};
+                if (BeginNodePanel(f, 7, "More", &open))
+                    EndNodePanel(f);
+                EndNode(f);
+            }
+            GetPinPosition(f, {3}, gathered);
+            EndEditor(f);
+            ImGui::End();
+            ImGui::Render();
+        }
+        Check(Near(gathered.y, titleCenter.y), "closed panel gathers its sockets on the title row");
+        pins[2].panel = 0;
+        const ImU32 blueU = ImGui::GetColorU32(blue);
+        frame();
+        const int shown = CountVertices(blueU);
+        nodes[1].hideUnusedPins = true;
+        frame();
+        Check(CountVertices(blueU) < shown, "hideUnusedPins hides unconnected sockets");
+        nodes[1].hideUnusedPins = false;
     }
 
     // Socket roles and flags take part in connection rules.

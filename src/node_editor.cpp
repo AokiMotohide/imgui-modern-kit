@@ -181,6 +181,19 @@ void ShadeHorizontal(ImDrawList *dl, int start, float x0, float x1, ImVec4 from,
         v.col = ImGui::ColorConvertFloat4ToU32(c);
     }
 }
+const PanelState *FindPanel(const EditorState &s, NodeId node, std::uint64_t panel) {
+    for (auto &p : s.panels)
+        if (p.node == node && p.panel == panel)
+            return &p;
+    return nullptr;
+}
+// Hidden by the host, or an unused socket of a node that hides them.
+bool Concealed(const EditorFrame &f, const PinView &pin) {
+    if (pin.hidden)
+        return true;
+    auto *n = Find(f, pin.node);
+    return n && n->hideUnusedPins && f.state->connecting != pin.id && !IsPinConnected(f.graph, pin.id);
+}
 ImVec2 PinPosition(const EditorFrame &f, const PinView &pin) {
     auto *n = Find(f, pin.node);
     if (!n)
@@ -199,6 +212,9 @@ ImVec2 PinPosition(const EditorFrame &f, const PinView &pin) {
     auto p = Position(f, *shown), size = Size(f, *shown);
     if (shown->kind == NodeKind::Reroute) // Every socket of a knot sits at its centre.
         return Screen(f, {p.x + size.x / 2, p.y + size.y / 2});
+    if (pin.panel && shown == n && !n->collapsed)
+        if (auto *panel = FindPanel(*f.state, n->id, pin.panel); panel && !panel->open)
+            return Screen(f, {p.x + (pin.kind == PinKind::Output ? size.x : 0), p.y + panel->row});
     if (!pin.manualPosition && shown == n && !n->collapsed) {
         for (auto &row : f.state->rowPositions)
             if (row.pin == pin.id)
@@ -301,6 +317,31 @@ ImVec2 LinkEndOffset(const EditorFrame &f, const PinView &pin, LinkId link) {
     const float d = (float(index) - float(count - 1) / 2) * PinRadius(f, pin) * 1.4f;
     const auto side = PinSide(f, pin);
     return side == Side::Left || side == Side::Right ? ImVec2{0, d} : ImVec2{d, 0};
+}
+// Verdict for dropping the dragged wire on `target`: a new connection, or with movingLinks every link of the
+// source socket moving to a socket of the same direction.
+ConnectionVerdict DragVerdict(const EditorFrame &f, PinId target) {
+    const auto &s = *f.state;
+    if (auto *pin = FindPin(f, target); pin && Concealed(f, *pin))
+        return {false, "Socket is hidden"};
+    if (!s.movingLinks)
+        return CanConnect(f.graph, s.connecting, target, s.reconnecting);
+    const auto *source = FindPin(f, s.connecting), *to = FindPin(f, target);
+    if (!source || !to || to->id == source->id)
+        return {false, "Move to another socket"};
+    if (to->kind != source->kind)
+        return {false, "Move to a socket of the same direction"};
+    ConnectionVerdict result;
+    for (auto &link : f.graph.links)
+        if (link.from == source->id || link.to == source->id) {
+            const PinId other = link.from == source->id ? link.to : link.from;
+            auto v = CanConnect(f.graph, other, target, link.id);
+            if (!v.allowed)
+                return v;
+            if (v.match == ConnectionMatch::Convertible)
+                result = v;
+        }
+    return result;
 }
 std::array<ImVec2, 25> LinkCurve(const EditorFrame &f, const LinkView &link, const PinView &a, const PinView &b) {
     return CurvePoints(link.style ? *link.style : f.style.linkStyle, Add(PinPosition(f, a), LinkEndOffset(f, a, link.id)),
@@ -515,6 +556,32 @@ NodeStyle MakeNodeStyle(const Theme &t) {
     s.gridSize = node.gridSize.value_or(s.gridSize);
     s.pinSeat = node.pinSeat.value_or(s.pinSeat);
     s.flowLinkWidth = node.flowLinkWidth.value_or(s.flowLinkWidth);
+    return s;
+}
+NodeStyle MakeNodeStylePreset(const Theme &t, NodeStylePreset preset) {
+    auto s = MakeNodeStyle(t);
+    switch (preset) {
+    case NodeStylePreset::Classic:
+        break;
+    case NodeStylePreset::Studio:
+        s.headerFill = HeaderFill::Tinted;
+        s.headerTint = .16f;
+        s.linkArrow = LinkArrow::None;
+        s.linkColor = LinkColorSource::OutputType;
+        s.hollowUnconnectedPins = true;
+        s.pinSeat = 2.6f;
+        break;
+    case NodeStylePreset::Logic:
+        s.headerFill = HeaderFill::Tinted;
+        s.headerTint = .3f;
+        s.linkArrow = LinkArrow::None;
+        s.linkColor = LinkColorSource::OutputType;
+        s.hollowUnconnectedPins = true;
+        s.pinSeat = 2.2f;
+        s.highlightConnectedLinks = true;
+        s.pinRadius = std::max(s.pinRadius, 5.5f);
+        break;
+    }
     return s;
 }
 void EditorState::Reserve(std::size_t nodes, std::size_t previewCount) {
@@ -803,6 +870,24 @@ void DrawNodeChrome(const EditorFrame &f, const NodeView &n, ImDrawList *dl) {
     const bool subgraph = n.kind == NodeKind::Subgraph || bool(n.childGraph);
     const bool headerless = group || note || n.shape == NodeShape::Compact || n.shape == NodeShape::Variable;
     const float header = headerless ? 0.f : std::min(float(st.headerHeight * z), b.y - a.y);
+    if (st.hooks && st.hooks->background) {
+        NodeChromeView view;
+        view.node = &n;
+        view.min = a;
+        view.max = b;
+        view.zoom = z;
+        view.headerHeight = header;
+        view.rounding = st.rounding;
+        view.category = category;
+        view.surface = st.surface;
+        view.header = st.header;
+        view.border = selected ? st.accent : st.border;
+        view.text = st.text;
+        view.hovered = hovered;
+        view.selected = selected;
+        if (st.hooks->background(dl, view, st.hooks->user))
+            return;
+    }
     const ImVec2 headerMax{b.x, a.y + header};
     const float rounding = n.shape == NodeShape::Variable ? (b.y - a.y) * .5f
                            : n.shape == NodeShape::Compact ? std::min(st.rounding * 1.5f, (b.y - a.y) * .5f)
@@ -887,8 +972,8 @@ void DrawNodeChrome(const EditorFrame &f, const NodeView &n, ImDrawList *dl) {
         if (members > 0 && b.x - t1.x > 60 * z) {
             char count[48];
             std::snprintf(count, sizeof(count), Tr(f, "node_editor.frame.members", "%d nodes"), members);
-            const auto size = ImGui::CalcTextSize(count);
-            dl->AddText({b.x - 10 * z - size.x, t0.y + (tabHeight - size.y) * .5f}, Color(st.muted), count);
+            const auto countSize = ImGui::CalcTextSize(count);
+            dl->AddText({b.x - 10 * z - countSize.x, t0.y + (tabHeight - countSize.y) * .5f}, Color(st.muted), count);
         }
     }
     if (n.shape == NodeShape::Compact) { // A lens with the operator glyph.
@@ -898,9 +983,9 @@ void DrawNodeChrome(const EditorFrame &f, const NodeView &n, ImDrawList *dl) {
         dl->AddCircle(c, lens, Color(WithAlpha(category, .5f)), 0, 1.2f);
         // The operator itself: the node's glyph, else its title; the category glyph is a last resort.
         std::string g(!n.glyph.empty() ? n.glyph : !n.title.empty() ? n.title : CategoryGlyph(st, n));
-        const float size = lens * 1.2f;
-        const auto extent = ImGui::GetFont()->CalcTextSizeA(size, FLT_MAX, 0, g.c_str());
-        dl->AddText(ImGui::GetFont(), size, {c.x - extent.x * .5f, c.y - extent.y * .5f}, Color(category), g.c_str());
+        const float glyphSize = lens * 1.2f;
+        const auto extent = ImGui::GetFont()->CalcTextSizeA(glyphSize, FLT_MAX, 0, g.c_str());
+        dl->AddText(ImGui::GetFont(), glyphSize, {c.x - extent.x * .5f, c.y - extent.y * .5f}, Color(category), g.c_str());
     }
     if (n.shape == NodeShape::Variable) { // Type chip and name.
         ImVec4 chip = category;
@@ -977,6 +1062,7 @@ EditorFrame BeginEditor(const char *id, GraphView graph, EditorState &s, Request
     if (s.graph != graph.id)
         s.rowPositions.clear();
     std::erase_if(s.rowPositions, [&](auto &row) { return !FindPin(graph, row.pin); });
+    std::erase_if(s.panels, [&](auto &panel) { return !Find(graph, panel.node); });
     if (s.valueEditing &&
         (s.valueEdit.graph != graph.id || s.valueEdit.revision != graph.revision || options.readOnly ||
          IsPinConnected(graph, s.valueEdit.from) || !FindPin(graph, s.valueEdit.from))) {
@@ -1062,6 +1148,8 @@ EditorFrame BeginEditor(const char *id, GraphView graph, EditorState &s, Request
         s.connecting = {};
         s.reconnecting = {};
     }
+    if (!s.connecting)
+        s.movingLinks = false;
     ImGui::PushID(id);
     ImGui::PushStyleColor(ImGuiCol_ChildBg, style.canvas);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
@@ -1119,8 +1207,15 @@ EditorFrame BeginEditor(const char *id, GraphView graph, EditorState &s, Request
                 }
             }
             if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-                if (EmitGesture(f, Phase::Commit))
+                const NodeId moved = s.gesture.size() == 1 && s.gesture.front().kind == EditKind::Move
+                                         ? s.gesture.front().node
+                                         : NodeId{};
+                if (EmitGesture(f, Phase::Commit)) {
                     s.gesture.clear();
+                    if (moved && s.dropLink) // Released over a link: insert the node into it.
+                        InsertNode(f, moved, s.dropLink);
+                }
+                s.dropLink = {};
             } else if (delta.x != s.dragDelta.x || delta.y != s.dragDelta.y) {
                 EmitGesture(f, Phase::Update);
                 s.dragDelta = delta;
@@ -1218,6 +1313,24 @@ bool BeginNode(EditorFrame &f, NodeId id) {
         ImGui::InvisibleButton("##move", {std::max(1.f, px.x - 2 * st.padding * z - reserve),
                                           std::max(1.f, header - 4 * z)});
     }
+    bool headerHooked = false;
+    if (titled && st.hooks && st.hooks->header) {
+        NodeChromeView view;
+        view.node = n;
+        view.min = a;
+        view.max = Add(a, px);
+        view.zoom = z;
+        view.headerHeight = st.headerHeight * z;
+        view.rounding = st.rounding;
+        view.category = CategoryColor(st, *n);
+        view.surface = st.surface;
+        view.header = st.header;
+        view.border = IsSelected(s, id) ? st.accent : st.border;
+        view.text = st.text;
+        view.hovered = f.hoveredNode == id;
+        view.selected = IsSelected(s, id);
+        headerHooked = st.hooks->header(dl, view, st.hooks->user);
+    }
     if (titled) {
         const float header = st.headerHeight * z;
         const ImVec4 category = CategoryColor(st, *n);
@@ -1227,15 +1340,15 @@ bool BeginNode(EditorFrame &f, NodeId id) {
         float x = a.x + st.padding * z;
         float right = a.x + px.x - st.padding * z;
         const auto glyph = CategoryGlyph(st, *n);
-        if (!glyph.empty()) {
+        if (!glyph.empty() && !headerHooked) {
             const float tile = std::max(4.f, std::min(header - 10 * z, 20 * z));
             const ImVec2 t0{x, a.y + (header - tile) / 2}, t1{x + tile, a.y + (header + tile) / 2};
             const ImVec4 fill = onCategory ? WithAlpha(ReadableOn(category), .22f) : category;
             dl->AddRectFilled(t0, t1, Color(fill), std::min(st.rounding, tile * .3f));
             const std::string g(glyph);
-            const float size = tile * .68f;
-            const auto extent = ImGui::GetFont()->CalcTextSizeA(size, FLT_MAX, 0, g.c_str());
-            dl->AddText(ImGui::GetFont(), size, {(t0.x + t1.x - extent.x) / 2, (t0.y + t1.y - extent.y) / 2},
+            const float glyphSize = tile * .68f;
+            const auto extent = ImGui::GetFont()->CalcTextSizeA(glyphSize, FLT_MAX, 0, g.c_str());
+            dl->AddText(ImGui::GetFont(), glyphSize, {(t0.x + t1.x - extent.x) / 2, (t0.y + t1.y - extent.y) / 2},
                         Color(onCategory ? ink : ReadableOn(category)), g.c_str());
             x = t1.x + 6 * z;
         }
@@ -1284,12 +1397,12 @@ bool BeginNode(EditorFrame &f, NodeId id) {
         }
         if (n->status == Status::Cached) {
             const char *label = Tr(f, "node_editor.badge.cached", "cached");
-            const float size = ImGui::GetFontSize() * .72f;
-            const auto extent = ImGui::GetFont()->CalcTextSizeA(size, FLT_MAX, 0, label);
+            const float chipSize = ImGui::GetFontSize() * .72f;
+            const auto extent = ImGui::GetFont()->CalcTextSizeA(chipSize, FLT_MAX, 0, label);
             const ImVec2 hi{right, by + extent.y * .5f + 2 * z}, lo{right - extent.x - 10 * z, by - extent.y * .5f - 2 * z};
             if (lo.x > x + 24 * z) {
                 dl->AddRectFilled(lo, hi, Color(WithAlpha(st.success, .2f)), (hi.y - lo.y) * .5f);
-                dl->AddText(ImGui::GetFont(), size, {lo.x + 5 * z, lo.y + 2 * z}, Color(st.success), label);
+                dl->AddText(ImGui::GetFont(), chipSize, {lo.x + 5 * z, lo.y + 2 * z}, Color(st.success), label);
                 right = lo.x - 5 * z;
             }
         }
@@ -1300,16 +1413,16 @@ bool BeginNode(EditorFrame &f, NodeId id) {
             dl->PathArcTo(c, r, -kPi * .5f, -kPi * .5f + kPi * 2 * std::clamp(n->progress, 0.f, 1.f), 20);
             dl->PathStroke(Color(onCategory ? ink : st.accent), 0, std::max(1.5f, 2 * z));
         }
-        if (!n->subtitle.empty()) {
+        if (!n->subtitle.empty() && !headerHooked) {
             const std::string sub(n->subtitle);
-            const float size = ImGui::GetFontSize() * .82f;
-            const auto extent = ImGui::GetFont()->CalcTextSizeA(size, FLT_MAX, 0, sub.c_str());
+            const float subSize = ImGui::GetFontSize() * .82f;
+            const auto extent = ImGui::GetFont()->CalcTextSizeA(subSize, FLT_MAX, 0, sub.c_str());
             const float sx = std::max(x + 24 * z, right - extent.x);
             const ImVec4 color = onCategory ? WithAlpha(ink, .72f)
                                  : st.headerFill == HeaderFill::Tinted ? category
                                                                        : st.muted;
             dl->PushClipRect({sx, a.y}, {right, a.y + header}, true);
-            dl->AddText(ImGui::GetFont(), size, {sx, a.y + (header - extent.y) / 2}, Color(color), sub.c_str());
+            dl->AddText(ImGui::GetFont(), subSize, {sx, a.y + (header - extent.y) / 2}, Color(color), sub.c_str());
             dl->PopClipRect();
             right = sx - 6 * z;
         }
@@ -1317,9 +1430,11 @@ bool BeginNode(EditorFrame &f, NodeId id) {
         if (!title.empty())
             title += ' ';
         title.append(n->title);
-        dl->PushClipRect({x, a.y}, {std::max(x, right), a.y + header}, true);
-        dl->AddText({x, a.y + (header - ImGui::GetFontSize()) / 2}, Color(ink), title.c_str());
-        dl->PopClipRect();
+        if (!headerHooked) {
+            dl->PushClipRect({x, a.y}, {std::max(x, right), a.y + header}, true);
+            dl->AddText({x, a.y + (header - ImGui::GetFontSize()) / 2}, Color(ink), title.c_str());
+            dl->PopClipRect();
+        }
     }
     if (ImGui::IsItemClicked()) {
         if (!IsSelected(s, id) || ImGui::GetIO().KeyCtrl)
@@ -1436,7 +1551,7 @@ void EndNode(EditorFrame &f) {
         for (auto &pin : f.graph.pins)
             if (pin.node == n->id && !pin.hidden &&
                 (pin.id == f.state->connecting ||
-                 CanConnect(f.graph, f.state->connecting, pin.id, f.state->reconnecting).allowed)) {
+                 DragVerdict(f, pin.id).allowed)) {
                 candidate = true;
                 break;
             }
@@ -1689,7 +1804,7 @@ void PinAddRow(EditorFrame &f, NodeId node, PinKind kind, std::uint64_t group) {
 void PinRow(EditorFrame &f, PinId id, PinRowOptions options) {
     IM_ASSERT(f.nodeOpen && !f.pinOpen);
     auto *pin = FindPin(f, id);
-    if (!pin || pin->node != f.node->id || pin->hidden)
+    if (!pin || pin->node != f.node->id || Concealed(f, *pin))
         return;
     auto &s = *f.state;
     ImGui::PushID(std::to_string(id.value).c_str());
@@ -1837,6 +1952,64 @@ void PinRow(EditorFrame &f, PinId id, PinRowOptions options) {
         row->local = {local.x - origin.x, local.y - origin.y};
     ImGui::PopID();
 }
+bool BeginNodePanel(EditorFrame &f, std::uint64_t panel, std::string_view label, bool *open) {
+    IM_ASSERT(f.nodeOpen && !f.pinOpen);
+    auto &s = *f.state;
+    const auto &st = Style(f, *f.node);
+    PanelState *state = nullptr;
+    for (auto &p : s.panels)
+        if (p.node == f.node->id && p.panel == panel)
+            state = &p;
+    if (!state) {
+        s.panels.push_back({f.node->id, panel, open ? *open : true, 0});
+        state = &s.panels.back();
+    }
+    if (open)
+        state->open = *open;
+    char key[48];
+    std::snprintf(key, sizeof(key), "panel-%llu", static_cast<unsigned long long>(panel));
+    ImGui::PushID(key);
+    const auto start = ImGui::GetCursorScreenPos();
+    const float z = float(s.zoom);
+    const float rowHeight = std::max(ImGui::GetFrameHeight(), st.headerHeight * z * .7f);
+    const float width = std::max(1.f, ImGui::GetContentRegionAvail().x);
+    if (ImGui::InvisibleButton("##title", {width, rowHeight})) {
+        state->open = !state->open;
+        if (open)
+            *open = state->open;
+    }
+    const bool hovered = ImGui::IsItemHovered();
+    auto *dl = ImGui::GetWindowDrawList();
+    const float cy = start.y + rowHeight * .5f;
+    dl->AddLine({start.x, start.y}, {start.x + width, start.y}, Color(WithAlpha(st.border, .7f)));
+    const float k = ImGui::GetFontSize() * .26f;
+    const ImU32 ink = Color(hovered ? st.text : st.muted);
+    if (state->open)
+        dl->AddTriangleFilled({start.x, cy - k * .6f}, {start.x + 2 * k, cy - k * .6f}, {start.x + k, cy + k * .9f}, ink);
+    else
+        dl->AddTriangleFilled({start.x + k * .3f, cy - k}, {start.x + k * 1.8f, cy}, {start.x + k * .3f, cy + k}, ink);
+    const std::string text(label);
+    dl->AddText({start.x + 3 * k, cy - ImGui::GetFontSize() * .5f}, Color(st.text), text.c_str());
+    if (!state->open) { // How many sockets wait on the closed row.
+        int count = 0;
+        for (auto &pin : f.graph.pins)
+            count += pin.node == f.node->id && pin.panel == panel && !Concealed(f, pin);
+        if (count) {
+            char number[16];
+            std::snprintf(number, sizeof(number), "%d", count);
+            const auto size = ImGui::CalcTextSize(number);
+            dl->AddText({start.x + width - size.x, cy - size.y * .5f}, Color(st.muted), number);
+        }
+    }
+    state->row = World(f, {start.x, cy}).y - Position(f, *f.node).y;
+    if (!state->open)
+        ImGui::PopID();
+    return state->open;
+}
+void EndNodePanel(EditorFrame &f) {
+    IM_ASSERT(f.nodeOpen && !f.pinOpen);
+    ImGui::PopID();
+}
 void Link(EditorFrame &f, const LinkView &link) {
     if (!f.visible)
         return;
@@ -1900,15 +2073,26 @@ void Link(EditorFrame &f, const LinkView &link) {
                             ImDrawFlags_None, linkWidth + 5);
     }
     const float width = emphasized && f.style.highlightConnectedLinks ? linkWidth + 1 : linkWidth;
+    LinkChromeView chrome;
+    chrome.link = &link;
+    chrome.points = points;
+    chrome.from = from;
+    chrome.to = to;
+    chrome.width = width;
+    chrome.hovered = emphasized && !selected;
+    chrome.selected = selected;
+    chrome.flow = flow;
+    const bool hooked = f.style.hooks && f.style.hooks->link && f.style.hooks->link(dl, chrome, f.style.hooks->user);
     const int start = dl->VtxBuffer.Size;
-    if (invalid) // Long dashes: the broken state reads from the line itself, not only from its colour.
+    if (hooked) { // The host drew the line; markers and labels below still apply.
+    } else if (invalid) // Long dashes: the broken state reads from the line itself, not only from its colour.
         DashedPolyline(dl, points, Color(from), width, 2, 1);
     else if (!link.reference) {
         // One polyline keeps joins smooth; per-segment lines show notches at the joints.
         dl->AddPolyline(points.data(), static_cast<int>(points.size()), Color(from), ImDrawFlags_None, width);
     } else
         DashedPolyline(dl, points, Color(from), width, 1, 1);
-    const bool gradient = from.x != to.x || from.y != to.y || from.z != to.z || from.w != to.w;
+    const bool gradient = !hooked && (from.x != to.x || from.y != to.y || from.z != to.z || from.w != to.w);
     if (gradient) { // Shade along the dominant axis between the two ends.
         const auto p = points.front(), q = points.back();
         const float length = std::max(1.f, std::abs(q.x - p.x));
@@ -1920,12 +2104,12 @@ void Link(EditorFrame &f, const LinkView &link) {
             v.col = Color(c);
         }
     }
-    float length = 0;
+    float curveLength = 0;
     for (std::size_t i = 1; i < points.size(); ++i)
-        length += std::sqrt(Dot(Sub(points[i], points[i - 1]), Sub(points[i], points[i - 1])));
+        curveLength += std::sqrt(Dot(Sub(points[i], points[i - 1]), Sub(points[i], points[i - 1])));
     // Chevrons cut into the line show the direction of execution; a short link keeps only the middle one.
     const std::size_t marks[] = {12, 7, 17};
-    const std::size_t markCount = length > 160 ? 3 : 1;
+    const std::size_t markCount = curveLength > 160 ? 3 : 1;
     if (flow && !invalid && !link.reference)
         for (std::size_t m = 0; m < markCount; ++m) {
             const std::size_t i = marks[m];
@@ -2064,10 +2248,9 @@ bool QueueCommand(EditorFrame &f, EditKind kind, NodeId node) {
         r.operationSize = batch.size();
     return f.requests->PushBatch(batch);
 }
-bool InsertNode(EditorFrame &f, NodeId node, LinkId id) {
-    auto *n = Find(f, node);
-    if (!n || Locked(f, *n) || f.options.readOnly)
-        return false;
+namespace {
+// The node's input and output that can take the two halves of `link`.
+bool FindInsertion(const EditorFrame &f, NodeId node, LinkId id, PinId &in, PinId &out) {
     auto it =
         std::find_if(f.graph.links.begin(), f.graph.links.end(), [&](auto &link) { return link.id == id; });
     if (it == f.graph.links.end())
@@ -2082,10 +2265,43 @@ bool InsertNode(EditorFrame &f, NodeId node, LinkId id) {
             for (auto &output : f.graph.pins)
                 if (output.node == node && output.kind == PinKind::Output &&
                     CanConnect(f.graph, output.id, target->id, id).allowed) {
-                    auto r = Request(f, EditKind::InsertNode, node);
-                    r.link = id;
-                    r.from = input.id;
-                    r.to = output.id;
+                    in = input.id;
+                    out = output.id;
+                    return true;
+                }
+    return false;
+}
+} // namespace
+bool InsertNode(EditorFrame &f, NodeId node, LinkId id) {
+    auto *n = Find(f, node);
+    if (!n || Locked(f, *n) || f.options.readOnly)
+        return false;
+    PinId in{}, out{};
+    if (!FindInsertion(f, node, id, in, out))
+        return false;
+    auto r = Request(f, EditKind::InsertNode, node);
+    r.link = id;
+    r.from = in;
+    r.to = out;
+    return f.requests->Push(r);
+}
+bool ConnectSelected(EditorFrame &f) {
+    auto &sel = f.state->selection;
+    if (f.options.readOnly || sel.size() != 2)
+        return false;
+    auto *a = Find(f, sel[0]), *b = Find(f, sel[1]);
+    if (!a || !b)
+        return false;
+    if (Position(f, *b).x < Position(f, *a).x)
+        std::swap(a, b);
+    for (auto &output : f.graph.pins)
+        if (output.node == a->id && output.kind == PinKind::Output && !output.hidden)
+            for (auto &input : f.graph.pins)
+                if (input.node == b->id && input.kind == PinKind::Input && !input.hidden &&
+                    !IsPinConnected(f.graph, input.id) && CanConnect(f.graph, output.id, input.id).allowed) {
+                    auto r = Request(f, EditKind::CreateLink);
+                    r.from = output.id;
+                    r.to = input.id;
                     return f.requests->Push(r);
                 }
     return false;
@@ -2605,7 +2821,7 @@ void EndEditor(EditorFrame &f) {
         float snapBest = std::max(0.f, f.style.snapDistance);
         for (auto &pin : f.graph.pins) {
             auto *n = Find(f, pin.node);
-            if (!n || pin.hidden || !Visible(f, *n))
+            if (!n || Concealed(f, pin) || !Visible(f, *n))
                 continue;
             auto p = PinPosition(f, pin);
             const auto &st = Style(f, *n);
@@ -2615,7 +2831,9 @@ void EndEditor(EditorFrame &f) {
                 const float knot = KnotRadius(s.zoom);
                 const float d = std::hypot(io.MousePos.x - p.x, io.MousePos.y - p.y);
                 const auto *from = s.connecting ? FindPin(f, s.connecting) : nullptr;
-                const bool wanted = from ? from->kind != pin.kind && d <= knot + kKnotRing
+                const bool wanted = from ? (s.movingLinks ? from->kind == pin.kind && from->id != pin.id
+                                                          : from->kind != pin.kind) &&
+                                               d <= knot + kKnotRing
                                          : pin.kind == PinKind::Output && d > knot * .85f && d <= knot + kKnotRing;
                 if (wanted)
                     hoveredPin = &pin;
@@ -2629,7 +2847,7 @@ void EndEditor(EditorFrame &f) {
                     shape = type.shape;
             const bool connected = IsPinConnected(f.graph, pin.id);
             if (s.connecting && s.connecting != pin.id) {
-                auto verdict = CanConnect(f.graph, s.connecting, pin.id, s.reconnecting);
+                auto verdict = DragVerdict(f, pin.id);
                 if (!verdict.allowed) // Sockets that cannot take the wire step back instead of shouting.
                     tone = WithAlpha(tone, std::clamp(st.incompatibleAlpha, 0.f, 1.f));
                 else {
@@ -2671,7 +2889,8 @@ void EndEditor(EditorFrame &f) {
             if (IsMultiInput(pin))
                 for (auto &link : f.graph.links)
                     glyph.links += link.to == pin.id || link.from == pin.id;
-            DrawPinGlyph(dl, glyph);
+            if (!(st.hooks && st.hooks->pin && st.hooks->pin(dl, glyph, st.hooks->user)))
+                DrawPinGlyph(dl, glyph);
             // A required input that has nothing connected carries a small error mark.
             if (pin.kind == PinKind::Input && pin.capabilities.required && !connected) {
                 const ImVec2 m = Add(p, {r * .85f, -r * .85f});
@@ -2683,6 +2902,28 @@ void EndEditor(EditorFrame &f) {
         }
         if (s.connecting && !hoveredPin && snap)
             hoveredPin = snap;
+        // Dragging one node over a link it could split: the link lights up, and releasing inserts the node.
+        s.dropLink = {};
+        if (s.gesture.size() == 1 && s.gesture.front().kind == EditKind::Move && !f.options.readOnly) {
+            const NodeId moving = s.gesture.front().node;
+            for (auto &link : f.graph.links) {
+                auto *x = FindPin(f, link.from), *y = FindPin(f, link.to);
+                PinId in{}, out{};
+                if (!x || !y || x->node == moving || y->node == moving ||
+                    !FindInsertion(f, moving, link.id, in, out))
+                    continue;
+                const auto points = LinkCurve(f, link, *x, *y);
+                bool near = false;
+                for (std::size_t i = 1; i < points.size() && !near; ++i)
+                    near = SegmentDistance(io.MousePos, points[i - 1], points[i]) < 10;
+                if (near) {
+                    s.dropLink = link.id;
+                    dl->AddPolyline(points.data(), int(points.size()), Color(WithAlpha(f.style.accent, .45f)),
+                                    ImDrawFlags_None, f.style.linkWidth + 6);
+                    break;
+                }
+            }
+        }
         if (f.options.minimap)
             MiniMap(f);
         // Child widgets and popups win over canvas shortcuts and gestures.
@@ -2704,9 +2945,30 @@ void EndEditor(EditorFrame &f) {
                 if (!tip.empty())
                     ImGui::SetTooltip("%s", tip.c_str());
             }
-            if (ImGui::IsMouseClicked(0) && !f.options.readOnly) {
+            const bool linked = IsPinConnected(f.graph, hoveredPin->id);
+            if (ImGui::IsMouseClicked(0) && !f.options.readOnly && io.KeyAlt) {
+                // Alt-click breaks every link of the socket in one operation.
+                std::vector<EditRequest> batch;
+                const auto op = s.nextOperation++;
+                for (auto &link : f.graph.links)
+                    if (link.from == hoveredPin->id || link.to == hoveredPin->id) {
+                        auto r = Request(f, EditKind::DeleteLink);
+                        r.link = link.id;
+                        r.operation = op;
+                        batch.push_back(r);
+                    }
+                for (auto &r : batch)
+                    r.operationSize = batch.size();
+                if (!batch.empty())
+                    f.requests->PushBatch(batch);
+            } else if (ImGui::IsMouseClicked(0) && !f.options.readOnly && io.KeyCtrl && linked) {
+                s.connecting = hoveredPin->id; // Ctrl-drag carries all links to another socket.
+                s.reconnecting = {};
+                s.movingLinks = true;
+            } else if (ImGui::IsMouseClicked(0) && !f.options.readOnly) {
                 s.connecting = hoveredPin->id;
                 s.reconnecting = {};
+                s.movingLinks = false;
                 if (hoveredPin->kind == PinKind::Input)
                     for (auto &link : f.graph.links)
                         if (link.to == hoveredPin->id) {
@@ -2720,7 +2982,7 @@ void EndEditor(EditorFrame &f) {
             auto *from = FindPin(f, s.connecting);
             const bool target = hoveredPin && hoveredPin->id != s.connecting;
             const auto verdict =
-                target ? CanConnect(f.graph, s.connecting, hoveredPin->id, s.reconnecting) : ConnectionVerdict{};
+                target ? DragVerdict(f, hoveredPin->id) : ConnectionVerdict{};
             const bool convertible = verdict.allowed && verdict.match == ConnectionMatch::Convertible;
             if (from) {
                 // The draft wire has the final shape: it leaves the socket like a link and lands on the target.
@@ -2760,7 +3022,27 @@ void EndEditor(EditorFrame &f) {
                 fg->AddRect(lo, hi, Color(WithAlpha(tone, .8f)), (hi.y - lo.y) / 2, 0, 1.2f);
                 fg->AddText({lo.x + 8, lo.y + 3}, Color(tone), text.c_str());
                 fg->PopClipRect();
-                if (ImGui::IsMouseReleased(0)) {
+                if (ImGui::IsMouseReleased(0) && s.movingLinks) {
+                    if (verdict.allowed) { // Every link of the source moves, as one operation.
+                        std::vector<EditRequest> batch;
+                        const auto op = s.nextOperation++;
+                        for (auto &link : f.graph.links)
+                            if (link.from == s.connecting || link.to == s.connecting) {
+                                auto r = Request(f, EditKind::Reconnect);
+                                r.link = link.id;
+                                r.from = link.from == s.connecting ? hoveredPin->id : link.from;
+                                r.to = link.to == s.connecting ? hoveredPin->id : link.to;
+                                r.operation = op;
+                                batch.push_back(r);
+                            }
+                        for (auto &r : batch)
+                            r.operationSize = batch.size();
+                        f.requests->PushBatch(batch);
+                    }
+                    s.connecting = {};
+                    s.reconnecting = {};
+                    s.movingLinks = false;
+                } else if (ImGui::IsMouseReleased(0)) {
                     if (verdict.allowed) {
                         auto r = Request(f, s.reconnecting ? EditKind::Reconnect : EditKind::CreateLink);
                         r.from = s.connecting;
@@ -2774,8 +3056,13 @@ void EndEditor(EditorFrame &f) {
                     s.reconnecting = {};
                 }
             } else if (ImGui::IsMouseReleased(0) && !popup) {
-                s.press = World(f, io.MousePos);
-                s.palette = true;
+                if (s.movingLinks) { // Moving links onto empty canvas does nothing.
+                    s.connecting = {};
+                    s.movingLinks = false;
+                } else {
+                    s.press = World(f, io.MousePos);
+                    s.palette = true;
+                }
             }
             if (ImGui::IsKeyPressed(ImGuiKey_Escape, false)) {
                 s.connecting = {};
@@ -2823,7 +3110,9 @@ void EndEditor(EditorFrame &f) {
                 {f.options.keys.paste, EditKind::Paste},
                 {f.options.keys.undo, EditKind::Undo},
                 {f.options.keys.redo, EditKind::Redo},
-                {f.options.keys.group, EditKind::Group}};
+                {f.options.keys.group, EditKind::Group},
+                {f.options.keys.bypass, EditKind::Bypass},
+                {f.options.keys.collapse, EditKind::Collapse}};
             for (auto [key, kind] : keys)
                 if (Chord(key)) {
                     if (kind == EditKind::DeleteNode && s.selectedLink) {
@@ -2846,6 +3135,12 @@ void EndEditor(EditorFrame &f) {
                         if (SegmentDistance(io.MousePos, points[i - 1], points[i]) < 6) {
                             s.selectedLink = link.id;
                             hit = true;
+                            if (ImGui::IsMouseDoubleClicked(0) && !f.options.readOnly) {
+                                auto r = Request(f, EditKind::InsertReroute);
+                                r.link = link.id;
+                                r.after = World(f, io.MousePos);
+                                f.requests->Push(r);
+                            }
                             break;
                         }
                 }
@@ -2963,6 +3258,8 @@ void EndEditor(EditorFrame &f) {
             if (ImGui::MenuItem("Insert active node into selected wire", nullptr, false,
                                 bool(s.active) && bool(s.selectedLink)))
                 InsertNode(f, s.active, s.selectedLink);
+            if (ImGui::MenuItem("Connect selected", nullptr, false, s.selection.size() == 2))
+                ConnectSelected(f);
             const std::pair<const char *, EditKind> commands[] = {{"Duplicate", EditKind::Duplicate},
                                                                   {"Delete", EditKind::DeleteNode},
                                                                   {"Copy", EditKind::Copy},

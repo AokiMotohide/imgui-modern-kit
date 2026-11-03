@@ -2,7 +2,7 @@
 title: "Node Editor API"
 ---
 
-This generated index contains the **47 declarations** in [`docs/reference/node-editor-api.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/node-editor-api.json) for `<imkit/node_editor.h>`. The header defines the exact types and contract. It is a development API in v4.0.0; graph data, validation, undo and persistence remain with the host.
+This generated index contains the **52 declarations** in [`docs/reference/node-editor-api.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/node-editor-api.json) for `<imkit/node_editor.h>`. The header defines the exact types and contract. It is a development API in v4.0.0; graph data, validation, undo and persistence remain with the host.
 
 Signatures below are declaration listings, not self-contained code examples. For the `BeginEditor` call contract, ownership, return value, and paired-call rules, see the [BeginEditor reference](begin-editor/). The [Node Editor guide](../../features/node-editor/) shows the drawing order.
 
@@ -10,6 +10,8 @@ Signatures below are declaration listings, not self-contained code examples. For
 
 ```cpp
 NodeStyle MakeNodeStyle(const Theme &theme);
+NodeStyle MakeNodeStylePreset(const Theme &theme, NodeStylePreset preset);
+void DrawPinGlyph(ImDrawList *drawList, const PinChromeView &pin);
 ConnectionVerdict CanConnect(GraphView graph, PinId a, PinId b, LinkId replacing = {});
 ConnectionVerdict ValidatePinEdit(GraphView graph, const EditRequest &request);
 bool IsPinConnected(GraphView graph, PinId pin);
@@ -56,9 +58,12 @@ bool GetPinPosition(const EditorFrame &frame, PinId pin, ImVec2 &screenPosition)
 void Link(EditorFrame &frame, const LinkView &link);
 void DrawLinks(EditorFrame &frame);
 void DrawNodes(EditorFrame &frame, void (*body)(void *, EditorFrame &, const NodeView &) = nullptr, void *user = nullptr);
+bool BeginNodePanel(EditorFrame &frame, std::uint64_t panel, std::string_view label, bool *open = nullptr);
+void EndNodePanel(EditorFrame &frame);
 bool QueueCommand(EditorFrame &frame, EditKind kind, NodeId node = {});
 bool QueuePinEdits(GraphView graph, std::span<const EditRequest> edits, RequestBuffer &output, std::uint64_t operation);
 bool InsertNode(EditorFrame &frame, NodeId node, LinkId link);
+bool ConnectSelected(EditorFrame &frame);
 ```
 
 ## Panels and previews
