@@ -799,47 +799,168 @@ void DrawNodeChrome(const EditorFrame &f, const NodeView &n, ImDrawList *dl) {
         return;
     }
     const bool group = n.kind == NodeKind::Frame || n.kind == NodeKind::Group;
-    const float header = std::min(float(st.headerHeight * z), b.y - a.y);
+    const bool note = n.kind == NodeKind::Note;
+    const bool subgraph = n.kind == NodeKind::Subgraph || bool(n.childGraph);
+    const bool headerless = group || note || n.shape == NodeShape::Compact || n.shape == NodeShape::Variable;
+    const float header = headerless ? 0.f : std::min(float(st.headerHeight * z), b.y - a.y);
     const ImVec2 headerMax{b.x, a.y + header};
-    if (st.shadows && !group)
-        detail::DrawSoftShadow(dl, a, b, st.rounding, 10.f * z, .14f);
+    const float rounding = n.shape == NodeShape::Variable ? (b.y - a.y) * .5f
+                           : n.shape == NodeShape::Compact ? std::min(st.rounding * 1.5f, (b.y - a.y) * .5f)
+                                                           : st.rounding;
+    // State colour for the outline: diagnostics first, then the run status.
+    const auto severity = n.diagnostic.severity;
+    ImVec4 state{};
+    if (severity == Severity::Error || (severity == Severity::None && n.status == Status::Error))
+        state = st.error;
+    else if (severity == Severity::Warning)
+        state = st.warning;
+    else if (n.status == Status::Success)
+        state = st.success;
+    if (n.status == Status::Running && !group) // A soft outer glow while the host runs the node.
+        dl->AddRect(Sub(a, {3, 3}), Add(b, {3, 3}), Color(WithAlpha(st.accent, .35f)), rounding + 3, ImDrawFlags_None, 4.f);
+    if (st.shadows && !group && !note)
+        detail::DrawSoftShadow(dl, a, b, rounding, 10.f * z, .14f);
+    if (subgraph && !group) { // A second card behind: there is a graph inside.
+        const ImVec2 o{5 * std::min(z, 1.5f), 5 * std::min(z, 1.5f)};
+        dl->AddRectFilled(Add(a, o), Add(b, o), Color(st.surface), rounding);
+        dl->AddRect(Add(a, o), Add(b, o), Color(st.border), rounding, 0, st.borderWidth);
+    }
+    if (n.shape == NodeShape::Event && !headerless) { // Entry tab on the left edge: execution starts here.
+        const float tab = std::max(6.f, 14 * z);
+        const ImVec2 t0{a.x - tab, a.y + header * .18f}, t1{a.x + rounding, a.y + header * .82f};
+        dl->AddRectFilled(t0, t1, Color(category), std::min(6 * z, (t1.y - t0.y) * .5f), ImDrawFlags_RoundCornersLeft);
+        const float k = (t1.y - t0.y) * .2f;
+        const ImVec2 c{a.x - tab * .5f, (t0.y + t1.y) * .5f};
+        dl->AddTriangleFilled({c.x - k * .7f, c.y - k}, {c.x + k, c.y}, {c.x - k * .7f, c.y + k}, Color(ReadableOn(category)));
+    }
     ImVec4 body = st.surface;
     if (group)
         body = (n.tint.w > 0 || n.category) ? WithAlpha(category, std::max(st.group.w, .06f)) : st.group;
-    dl->AddRectFilled(a, b, Color(body), st.rounding);
-    switch (st.headerFill) {
-    case HeaderFill::Strip:
-        dl->AddRectFilled(a, headerMax, Color(st.header), st.rounding, ImDrawFlags_RoundCornersTop);
-        dl->AddLine({a.x + st.rounding, a.y + 1}, {b.x - st.rounding, a.y + 1}, Color(category), 2);
-        break;
-    case HeaderFill::Tinted:
-        dl->AddRectFilled(a, headerMax, Color(WithAlpha(category, std::clamp(st.headerTint, 0.f, 1.f))),
-                          st.rounding, ImDrawFlags_RoundCornersTop);
-        dl->AddLine({a.x, headerMax.y}, headerMax, Color(WithAlpha(category, .35f)));
-        break;
-    case HeaderFill::Flat:
-        dl->AddRectFilled(a, headerMax, Color(category), st.rounding, ImDrawFlags_RoundCornersTop);
-        break;
-    case HeaderFill::Gradient: {
-        const int start = dl->VtxBuffer.Size;
-        dl->AddRectFilled(a, headerMax, Color(category), st.rounding, ImDrawFlags_RoundCornersTop);
-        ShadeHorizontal(dl, start, a.x, b.x, category, Mix(category, st.header, .85f));
-        break;
+    else if (note)
+        body = Mix(st.surface, (n.tint.w > 0 || n.category) ? category : st.warning, .16f);
+    dl->AddRectFilled(a, b, Color(body), rounding);
+    if (!headerless)
+        switch (st.headerFill) {
+        case HeaderFill::Strip:
+            dl->AddRectFilled(a, headerMax, Color(st.header), rounding, ImDrawFlags_RoundCornersTop);
+            dl->AddLine({a.x + rounding, a.y + 1}, {b.x - rounding, a.y + 1}, Color(category), 2);
+            break;
+        case HeaderFill::Tinted:
+            dl->AddRectFilled(a, headerMax, Color(WithAlpha(category, std::clamp(st.headerTint, 0.f, 1.f))), rounding,
+                              ImDrawFlags_RoundCornersTop);
+            dl->AddLine({a.x, headerMax.y}, headerMax, Color(WithAlpha(category, .35f)));
+            break;
+        case HeaderFill::Flat:
+            dl->AddRectFilled(a, headerMax, Color(category), rounding, ImDrawFlags_RoundCornersTop);
+            break;
+        case HeaderFill::Gradient: {
+            const int start = dl->VtxBuffer.Size;
+            dl->AddRectFilled(a, headerMax, Color(category), rounding, ImDrawFlags_RoundCornersTop);
+            ShadeHorizontal(dl, start, a.x, b.x, category, Mix(category, st.header, .85f));
+            break;
+        }
+        case HeaderFill::None:
+            dl->AddLine({a.x, headerMax.y}, headerMax, Color(WithAlpha(st.border, .6f)));
+            break;
+        }
+    if (note) { // Folded corner.
+        const float fold = std::min(14 * z, (b.y - a.y) * .3f);
+        dl->AddTriangleFilled({b.x - fold, a.y}, {b.x, a.y + fold}, {b.x - fold, a.y + fold},
+                              Color(Mix(body, st.text, .12f)));
     }
-    case HeaderFill::None:
-        dl->AddLine({a.x, headerMax.y}, headerMax, Color(WithAlpha(st.border, .6f)));
-        break;
+    if (group) { // Label tab and member count.
+        const float tabHeight = std::max(10.f, std::min(float(st.headerHeight * z) * .72f, (b.y - a.y) * .5f));
+        const std::string title(n.title);
+        const auto extent = ImGui::CalcTextSize(title.c_str());
+        const ImVec2 t0{a.x + 8 * z, a.y + 6 * z};
+        const ImVec2 t1{std::min(b.x - 8 * z, t0.x + extent.x + 18 * z), t0.y + tabHeight};
+        const ImVec4 tone = (n.tint.w > 0 || n.category) ? category : st.accent;
+        if (t1.x > t0.x) {
+            dl->AddRectFilled(t0, t1, Color(WithAlpha(tone, .9f)), std::min(7 * z, tabHeight * .5f));
+            dl->PushClipRect(t0, t1, true);
+            dl->AddText({t0.x + 9 * z, t0.y + (tabHeight - extent.y) * .5f}, Color(ReadableOn(tone)), title.c_str());
+            dl->PopClipRect();
+        }
+        int members = 0;
+        for (auto &m : f.graph.nodes)
+            members += m.parent == n.id;
+        if (members > 0 && b.x - t1.x > 60 * z) {
+            char count[48];
+            std::snprintf(count, sizeof(count), Tr(f, "node_editor.frame.members", "%d nodes"), members);
+            const auto size = ImGui::CalcTextSize(count);
+            dl->AddText({b.x - 10 * z - size.x, t0.y + (tabHeight - size.y) * .5f}, Color(st.muted), count);
+        }
+    }
+    if (n.shape == NodeShape::Compact) { // A lens with the operator glyph.
+        const ImVec2 c{(a.x + b.x) * .5f, (a.y + b.y) * .5f};
+        const float lens = std::max(4.f, std::min(b.x - a.x, b.y - a.y) * .32f);
+        dl->AddCircleFilled(c, lens, Color(WithAlpha(category, .14f)));
+        dl->AddCircle(c, lens, Color(WithAlpha(category, .5f)), 0, 1.2f);
+        // The operator itself: the node's glyph, else its title; the category glyph is a last resort.
+        std::string g(!n.glyph.empty() ? n.glyph : !n.title.empty() ? n.title : CategoryGlyph(st, n));
+        const float size = lens * 1.2f;
+        const auto extent = ImGui::GetFont()->CalcTextSizeA(size, FLT_MAX, 0, g.c_str());
+        dl->AddText(ImGui::GetFont(), size, {c.x - extent.x * .5f, c.y - extent.y * .5f}, Color(category), g.c_str());
+    }
+    if (n.shape == NodeShape::Variable) { // Type chip and name.
+        ImVec4 chip = category;
+        if (n.tint.w <= 0 && !n.category)
+            for (auto &pin : f.graph.pins)
+                if (pin.node == n.id) {
+                    chip = PinColor(f, pin);
+                    break;
+                }
+        const float h = b.y - a.y, k = h * .44f;
+        const ImVec2 c0{a.x + h * .35f, a.y + (h - k) * .5f};
+        dl->AddRectFilled(c0, {c0.x + k, c0.y + k}, Color(WithAlpha(chip, .85f)), k * .3f);
+        const std::string title(n.title);
+        const auto extent = ImGui::CalcTextSize(title.c_str());
+        dl->PushClipRect(a, b, true);
+        dl->AddText({c0.x + k + 8 * z, a.y + (h - extent.y) * .5f}, Color(st.text), title.c_str());
+        dl->PopClipRect();
+        if (!selected && !hovered && state.w <= 0)
+            state = WithAlpha(chip, .55f);
     }
     float width = st.borderWidth;
-    ImVec4 border = st.border;
+    ImVec4 border = group ? WithAlpha((n.tint.w > 0 || n.category) ? category : st.accent, .45f) : st.border;
+    if (state.w > 0)
+        border = state;
     if (selected) {
         width = st.selectedBorderWidth > 0 ? st.selectedBorderWidth : st.borderWidth;
         border = st.accent;
     } else if (hovered && !group) {
         width = st.hoverBorderWidth > 0 ? st.hoverBorderWidth : st.borderWidth;
-        border = Mix(st.border, st.accent, .5f);
+        if (state.w <= 0)
+            border = Mix(st.border, st.accent, .5f);
     }
-    dl->AddRect(a, b, Color(border), st.rounding, 0, width);
+    if (n.breakpoint && !group) { // Seated on the top-left corner, outside the body clip.
+        const float r = std::max(3.f, 4.5f * z);
+        dl->AddCircleFilled(a, r + 1.5f, Color(st.canvas));
+        dl->AddCircleFilled(a, r, Color(st.error));
+    }
+    const bool dashed = n.shape == NodeShape::Boundary || n.status == Status::Waiting;
+    if (!dashed)
+        dl->AddRect(a, b, Color(border), rounding, 0, width);
+    else { // Straight dashes along the sides; corners stay rounded.
+        const float dash = 6 * std::max(z, .6f), gap = 4 * std::max(z, .6f), r = std::min(rounding, (b.x - a.x) * .5f);
+        auto side = [&](ImVec2 p0, ImVec2 p1) {
+            const auto d = Sub(p1, p0);
+            const float len = std::sqrt(Dot(d, d));
+            if (len <= 0)
+                return;
+            for (float t = 0; t < len; t += dash + gap)
+                dl->AddLine(Add(p0, Mul(d, t / len)), Add(p0, Mul(d, std::min(len, t + dash) / len)), Color(border), width);
+        };
+        side({a.x + r, a.y}, {b.x - r, a.y});
+        side({b.x, a.y + r}, {b.x, b.y - r});
+        side({b.x - r, b.y}, {a.x + r, b.y});
+        side({a.x, b.y - r}, {a.x, a.y + r});
+        for (auto [c, a0] : {std::pair{ImVec2{a.x + r, a.y + r}, kPi}, std::pair{ImVec2{b.x - r, a.y + r}, kPi * 1.5f},
+                             std::pair{ImVec2{b.x - r, b.y - r}, 0.f}, std::pair{ImVec2{a.x + r, b.y - r}, kPi * .5f}}) {
+            dl->PathArcTo(c, r, a0, a0 + kPi * .5f, 6);
+            dl->PathStroke(Color(border), 0, width);
+        }
+    }
 }
 } // namespace
 EditorFrame BeginEditor(const char *id, GraphView graph, EditorState &s, RequestBuffer &out,
@@ -1076,19 +1197,32 @@ bool BeginNode(EditorFrame &f, NodeId id) {
     f.nodeOpen = true;
     auto *dl = ImGui::GetWindowDrawList();
     const bool reroute = n->kind == NodeKind::Reroute;
+    const bool group = n->kind == NodeKind::Frame || n->kind == NodeKind::Group;
+    const bool solid = n->shape == NodeShape::Compact || n->shape == NodeShape::Variable; // No header, no body.
+    const bool titled = !reroute && !group && !solid; // Title drawn here; frames and solid shapes draw their own.
+    ImVec2 enterMin{}, enterMax{};
     if (reroute) { // The knot centre is the move handle; the ring outside it belongs to the sockets.
         const float k = KnotRadius(s.zoom) * .85f;
         ImGui::SetCursorScreenPos({a.x + px.x / 2 - k, a.y + px.y / 2 - k});
         ImGui::InvisibleButton("##move", {2 * k, 2 * k});
+    } else if (solid) { // The whole shape moves it; sockets sit on its edge, outside the button.
+        ImGui::SetCursorScreenPos(Add(a, {2 * z, 2 * z}));
+        ImGui::InvisibleButton("##move", {std::max(1.f, px.x - 4 * z), std::max(1.f, px.y - 4 * z)});
     } else {
+        // The open-subgraph button sits at the right of the header; the move handle stops short of it,
+        // because the first item submitted keeps the hover.
+        const float header = st.headerHeight * z;
+        const bool enter = titled && (n->kind == NodeKind::Subgraph || n->childGraph);
+        const float reserve = enter ? std::max(6.f, std::min(header * .5f, 16 * z)) * 1.2f + 5 * z : 0;
         ImGui::SetCursorScreenPos(Add(a, {st.padding * z, 2 * z}));
-        ImGui::InvisibleButton(
-            "##move", {std::max(1.f, px.x - 2 * st.padding * z), std::max(1.f, st.headerHeight * z - 4 * z)});
+        ImGui::InvisibleButton("##move", {std::max(1.f, px.x - 2 * st.padding * z - reserve),
+                                          std::max(1.f, header - 4 * z)});
     }
-    if (!reroute) {
+    if (titled) {
         const float header = st.headerHeight * z;
         const ImVec4 category = CategoryColor(st, *n);
-        const bool onCategory = st.headerFill == HeaderFill::Flat || st.headerFill == HeaderFill::Gradient;
+        const bool onCategory = n->kind != NodeKind::Note &&
+                                (st.headerFill == HeaderFill::Flat || st.headerFill == HeaderFill::Gradient);
         const ImVec4 ink = onCategory ? ReadableOn(category) : st.text;
         float x = a.x + st.padding * z;
         float right = a.x + px.x - st.padding * z;
@@ -1104,6 +1238,67 @@ bool BeginNode(EditorFrame &f, NodeId id) {
             dl->AddText(ImGui::GetFont(), size, {(t0.x + t1.x - extent.x) / 2, (t0.y + t1.y - extent.y) / 2},
                         Color(onCategory ? ink : ReadableOn(category)), g.c_str());
             x = t1.x + 6 * z;
+        }
+        // Header badges, right to left: open subgraph, lock, diagnostic, cached, progress.
+        const float badge = std::max(6.f, std::min(header * .5f, 16 * z));
+        const float by = a.y + header * .5f;
+        auto slot = [&]() {
+            const float cx = right - badge * .5f;
+            right -= badge + 5 * z;
+            return ImVec2{cx, by};
+        };
+        if (n->kind == NodeKind::Subgraph || n->childGraph) {
+            const auto c = slot();
+            enterMin = {c.x - badge * .6f, c.y - badge * .6f};
+            enterMax = {c.x + badge * .6f, c.y + badge * .6f};
+            const float k = badge * .28f;
+            const ImU32 col = Color(onCategory ? ink : st.muted);
+            dl->AddRect({c.x - k * 1.4f, c.y - k * 1.4f}, {c.x + k * 1.4f, c.y + k * 1.4f}, col, 2 * z, 0, 1.2f);
+            dl->AddLine({c.x - k * .5f, c.y + k * .5f}, {c.x + k * 1.9f, c.y - k * 1.9f}, col, 1.4f);
+            dl->AddLine({c.x + k * .6f, c.y - k * 1.9f}, {c.x + k * 1.9f, c.y - k * 1.9f}, col, 1.4f);
+            dl->AddLine({c.x + k * 1.9f, c.y - k * 1.9f}, {c.x + k * 1.9f, c.y - k * .6f}, col, 1.4f);
+        }
+        if (n->locked) { // Padlock drawn as vectors; the editor owns no icon atlas.
+            const auto c = slot();
+            const float k = badge * .3f;
+            const ImU32 col = Color(onCategory ? WithAlpha(ink, .8f) : st.muted);
+            dl->AddRectFilled({c.x - k, c.y - k * .1f}, {c.x + k, c.y + k * 1.3f}, col, k * .25f);
+            dl->PathArcTo({c.x, c.y - k * .1f}, k * .65f, kPi, kPi * 2, 8);
+            dl->PathStroke(col, 0, std::max(1.f, k * .35f));
+        }
+        if (n->diagnostic.severity != Severity::None) {
+            const auto c = slot();
+            const ImVec4 tone = n->diagnostic.severity == Severity::Error     ? st.error
+                                : n->diagnostic.severity == Severity::Warning ? st.warning
+                                                                              : st.accent;
+            dl->AddCircleFilled(c, badge * .5f, Color(tone));
+            const float k = badge * .5f;
+            const ImU32 inkOn = Color(ReadableOn(tone));
+            if (n->diagnostic.severity == Severity::Info) {
+                dl->AddLine({c.x, c.y - k * .1f}, {c.x, c.y + k * .5f}, inkOn, std::max(1.2f, k * .22f));
+                dl->AddCircleFilled({c.x, c.y - k * .45f}, std::max(.8f, k * .13f), inkOn);
+            } else {
+                dl->AddLine({c.x, c.y - k * .5f}, {c.x, c.y + k * .1f}, inkOn, std::max(1.2f, k * .22f));
+                dl->AddCircleFilled({c.x, c.y + k * .45f}, std::max(.8f, k * .13f), inkOn);
+            }
+        }
+        if (n->status == Status::Cached) {
+            const char *label = Tr(f, "node_editor.badge.cached", "cached");
+            const float size = ImGui::GetFontSize() * .72f;
+            const auto extent = ImGui::GetFont()->CalcTextSizeA(size, FLT_MAX, 0, label);
+            const ImVec2 hi{right, by + extent.y * .5f + 2 * z}, lo{right - extent.x - 10 * z, by - extent.y * .5f - 2 * z};
+            if (lo.x > x + 24 * z) {
+                dl->AddRectFilled(lo, hi, Color(WithAlpha(st.success, .2f)), (hi.y - lo.y) * .5f);
+                dl->AddText(ImGui::GetFont(), size, {lo.x + 5 * z, lo.y + 2 * z}, Color(st.success), label);
+                right = lo.x - 5 * z;
+            }
+        }
+        if (n->status == Status::Running && n->progress > 0) { // Progress ring.
+            const auto c = slot();
+            const float r = badge * .42f;
+            dl->AddCircle(c, r, Color(WithAlpha(onCategory ? ink : st.muted, .35f)), 0, std::max(1.5f, 2 * z));
+            dl->PathArcTo(c, r, -kPi * .5f, -kPi * .5f + kPi * 2 * std::clamp(n->progress, 0.f, 1.f), 20);
+            dl->PathStroke(Color(onCategory ? ink : st.accent), 0, std::max(1.5f, 2 * z));
         }
         if (!n->subtitle.empty()) {
             const std::string sub(n->subtitle);
@@ -1144,15 +1339,21 @@ bool BeginNode(EditorFrame &f, NodeId id) {
         } else
             QueueCommand(f, EditKind::Collapse, id);
     }
-    if (ImGui::IsItemHovered() && !n->description.empty())
+    if (ImGui::IsItemHovered() && !n->description.empty() && n->kind != NodeKind::Note)
         ImGui::SetTooltip("%.*s", int(n->description.size()), n->description.data());
-    if (n->locked && !reroute)
-        dl->AddCircleFilled({a.x + px.x - 6 * z, a.y + 6 * z}, 2 * z, Color(st.muted));
+    if (enterMax.x > enterMin.x) { // Open-subgraph button in the header.
+        ImGui::SetCursorScreenPos(enterMin);
+        if (ImGui::InvisibleButton("##enter", Sub(enterMax, enterMin)))
+            QueueCommand(f, EditKind::EnterGraph, id);
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("%s", Tr(f, "node_editor.subgraph.open", "Open subgraph"));
+    }
     // A collapsed node has no body item to validate an extended cursor position.
-    if (!n->collapsed && !reroute)
+    if (!n->collapsed && !reroute && !solid)
         ImGui::SetCursorScreenPos(Add(a, {st.padding * z, st.headerHeight * z + st.padding * z}));
     ImGui::PushItemWidth(std::max(1.f, px.x - 2 * st.padding * z));
-    ImGui::BeginDisabled(f.options.readOnly || Locked(f, *n) || n->collapsed || s.zoom < st.detailZoom);
+    ImGui::BeginDisabled(f.options.readOnly || Locked(f, *n) || n->collapsed || s.zoom < st.detailZoom ||
+                         n->status == Status::Disabled);
     return true;
 }
 void EndNode(EditorFrame &f) {
@@ -1166,9 +1367,47 @@ void EndNode(EditorFrame &f) {
     auto size = Size(f, *n);
     auto b = Add(a, {float(size.x * z), float(size.y * z)});
     const bool reroute = n->kind == NodeKind::Reroute;
-    if (!n->collapsed && !reroute && f.state->zoom >= st.detailZoom && n->kind != NodeKind::Frame &&
-        n->kind != NodeKind::Group) {
-        auto *dl = ImGui::GetWindowDrawList();
+    const bool group = n->kind == NodeKind::Frame || n->kind == NodeKind::Group;
+    const bool solid = n->shape == NodeShape::Compact || n->shape == NodeShape::Variable;
+    auto *body = ImGui::GetWindowDrawList();
+    const bool detailed = !n->collapsed && !reroute && !group && f.state->zoom >= st.detailZoom;
+    if (n->status == Status::Bypassed && !reroute && !group) {
+        // Faint hatching over the body, and the data passing straight through.
+        body->PushClipRect(a, b, true);
+        const float step = 12 * std::max(z, .5f), top = solid ? a.y : a.y + float(st.headerHeight * z);
+        for (float x = a.x - (b.y - top); x < b.x; x += step)
+            body->AddLine({x, b.y}, {x + (b.y - top), top}, Color(WithAlpha(st.warning, .12f)), 4 * std::max(z, .5f));
+        body->PopClipRect();
+        const PinView *in = nullptr, *out = nullptr;
+        for (auto &pin : f.graph.pins)
+            if (pin.node == n->id && !pin.hidden && pin.role == PinRole::Data) {
+                if (pin.kind == PinKind::Input && !in)
+                    in = &pin;
+                if (pin.kind == PinKind::Output && !out && (!in || !pin.type || pin.type == in->type))
+                    out = &pin;
+            }
+        if (in && out) {
+            const auto p = PinPosition(f, *in), q = PinPosition(f, *out);
+            const auto points = CurvePoints(LinkStyle::Bezier, p, {1, 0}, q, {-1, 0});
+            DashedPolyline(body, points, Color(st.warning), std::max(1.f, st.linkWidth), 2, 1);
+        }
+    }
+    float footer = b.y; // Bottom edge available to the status line.
+    if (detailed && n->diagnostic.severity != Severity::None && !n->diagnostic.message.empty() && !solid) {
+        const ImVec4 tone = n->diagnostic.severity == Severity::Error     ? st.error
+                            : n->diagnostic.severity == Severity::Warning ? st.warning
+                                                                          : st.accent;
+        const float band = ImGui::GetFontSize() + 8 * z;
+        footer = b.y - band;
+        body->AddRectFilled({a.x, footer}, b, Color(WithAlpha(tone, .18f)), st.rounding, ImDrawFlags_RoundCornersBottom);
+        body->AddLine({a.x, footer}, {b.x, footer}, Color(WithAlpha(tone, .5f)));
+        const std::string message(n->diagnostic.message);
+        body->PushClipRect({a.x, footer}, {b.x - 16 * z, b.y}, true);
+        body->AddText({a.x + st.padding * z, footer + 4 * z}, Color(tone), message.c_str());
+        body->PopClipRect();
+    }
+    if (detailed && !solid && n->kind != NodeKind::Note) {
+        auto *dl = body;
         const bool active = n->status != Status::Idle || n->milliseconds > 0 || n->progress > 0;
         if (st.status == StatusDisplay::Always || (st.status == StatusDisplay::WhenActive && active)) {
             const char *keys[] = {"node_editor.status.idle",     "node_editor.status.waiting",
@@ -1183,14 +1422,14 @@ void EndNode(EditorFrame &f) {
             char text[96];
             std::snprintf(text, sizeof(text), "%s   %.2f ms", Tr(f, keys[int(n->status)], names[int(n->status)]),
                           n->milliseconds);
-            dl->AddText({a.x + st.padding * z, b.y - 20 * z}, Color(color), text);
+            dl->AddText({a.x + st.padding * z, footer - 20 * z}, Color(color), text);
         }
         if (n->status == Status::Running)
-            dl->AddLine({a.x, b.y - 2}, {a.x + (b.x - a.x) * std::clamp(n->progress, 0.f, 1.f), b.y - 2},
+            dl->AddLine({a.x, footer - 2}, {a.x + (b.x - a.x) * std::clamp(n->progress, 0.f, 1.f), footer - 2},
                         Color(st.accent), 3);
-        if (n->breakpoint)
-            dl->AddCircleFilled({b.x - 14 * z, a.y + 16 * z}, 4 * z, Color(st.error));
     }
+    if (n->status == Status::Disabled && !reroute)
+        body->AddRectFilled(a, b, Color(WithAlpha(st.canvas, .5f)), st.rounding);
     if (f.state->connecting && !reroute && n->kind != NodeKind::Frame && n->kind != NodeKind::Group) {
         // While wiring, a node that offers no socket for the wire steps back.
         bool candidate = false;
@@ -1223,6 +1462,9 @@ void EndNode(EditorFrame &f) {
     if (ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered() && !ImGui::IsAnyItemActive() &&
         ImGui::IsMouseClicked(0))
         Select(*f.state, n->id, ImGui::GetIO().KeyShift, ImGui::GetIO().KeyCtrl);
+    // An empty body (locked, solid shapes) leaves the cursor set without an item; settle it inside the node.
+    ImGui::SetCursorScreenPos(a);
+    ImGui::Dummy({0, 0});
     ImGui::EndChild();
     ImGui::PopFont();
     ImGui::PopStyleColor();
@@ -1780,7 +2022,8 @@ void DrawLinks(EditorFrame &f) {
 void DrawNodes(EditorFrame &f, void (*body)(void *, EditorFrame &, const NodeView &), void *user) {
     for (auto &n : f.graph.nodes)
         if (BeginNode(f, n.id)) {
-            if (!n.collapsed && n.kind != NodeKind::Reroute) {
+            if (!n.collapsed && n.kind != NodeKind::Reroute && n.shape != NodeShape::Compact &&
+                n.shape != NodeShape::Variable) {
                 if (body)
                     body(user, f, n);
                 else if (n.kind == NodeKind::Note)

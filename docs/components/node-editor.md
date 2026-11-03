@@ -233,6 +233,32 @@ Every node can call `Preview` below its properties. An output holds a borrowed t
 - A `NodeKind::Reroute` node draws as a 16-unit knot and ignores its stored size. Both sockets sit at its center. Drag the center to move it; drag its ring to start a wire.
 - An unconnected input with `PinCapabilities::required` carries an error mark on its socket.
 - Link labels sit in a pill. The resize grip scales with the zoom.
+**Node shapes and states**
+
+| Node | Look |
+|---|---|
+| `NodeShape::Standard` | Header and body |
+| `NodeShape::Event` | Adds an entry tab on the left edge: execution starts here |
+| `NodeShape::Compact` | No header; the glyph, else the title, in a lens. For operators |
+| `NodeShape::Variable` | A pill with a type chip and the title |
+| `NodeShape::Boundary` | Dashed outline, for subgraph inputs and outputs |
+| `NodeKind::Frame`, `Group` | Tinted area with a label tab and a member count |
+| `NodeKind::Note` | Tinted card with a folded corner; `DrawNodes` shows the description |
+| `NodeKind::Subgraph` or `childGraph` | A second card behind, and an open button in the header that queues `EnterGraph` |
+
+| State | Look |
+|---|---|
+| `NodeView::diagnostic` | Header badge, a message band at the bottom and an outline in the error, warning or accent color |
+| `Status::Running` | Outer glow; a progress ring in the header when `progress` is set |
+| `Status::Waiting` | Dashed outline |
+| `Status::Success` / `Error` | Success / error outline |
+| `Status::Bypassed` | Hatched body and a dashed pass-through from the first data input to the first matching output |
+| `Status::Disabled` | Dimmed node; body widgets are disabled |
+| `Status::Cached` | A "cached" chip in the header |
+| `breakpoint` / `locked` | A dot on the top-left corner / a padlock in the header |
+
+Compact and Variable nodes have no body; `DrawNodes` skips the callback for them, and the whole shape is the move handle.
+
 **Socket glyphs**
 
 `PinView::role`, `container` and `flags` choose the glyph. `DrawPinGlyph` draws the same glyph from a `PinChromeView`, for host panels and legends.

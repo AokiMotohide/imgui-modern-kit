@@ -41,6 +41,15 @@ enum PinFlags : std::uint32_t {
 };
 enum class LinkStyle { Bezier, Straight, Orthogonal };
 enum class Status { Idle, Waiting, Running, Success, Error, Disabled, Bypassed, Cached };
+// Silhouette of a NodeKind::Node. Frames, groups, notes, reroutes and subgraphs take theirs from NodeKind.
+// Event: an entry tab marks where execution starts. Compact: no header, a large glyph (operators).
+// Variable: a pill with a type chip. Boundary: a dashed outline for subgraph inputs and outputs.
+enum class NodeShape { Standard, Event, Compact, Variable, Boundary };
+enum class Severity { None, Info, Warning, Error };
+struct NodeDiagnostic {
+    Severity severity = Severity::None;
+    std::string_view message{}; // Shown in a band at the bottom of the node.
+};
 // Header and link appearance share their enums with Theme::node, so theme files can choose them.
 using HeaderFill = ::imkit::NodeHeaderFill;
 using LinkColorSource = ::imkit::NodeLinkColor;
@@ -108,6 +117,8 @@ struct NodeView {
     std::uint64_t category = 0;           // Looks up NodeStyle::categories.
     ImVec4 tint{};                        // Alpha zero inherits the category, then the accent.
     std::string_view subtitle{}, glyph{}; // Right-aligned header note; tile glyph (overrides the category).
+    NodeShape shape = NodeShape::Standard;
+    NodeDiagnostic diagnostic{};
 };
 struct PinView {
     PinId id{};

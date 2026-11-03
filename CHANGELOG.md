@@ -14,6 +14,8 @@
 - `LinkView::validity` (`Valid`, `Converted`, `Invalid`, `Cycle`) and `LinkView::reason` draw the host's verdict on existing links: a marker in the middle, and for `Invalid` the error colour, long dashes and a ring on the receiving input.
 - Socket glyphs: `PinView::role` (`Data`, `Flow`), `container` (`Single`, `Array`, `Set`, `Map`), `flags` (`Reference`, `Wildcard`, `Field`, `Optional`, `Unavailable`), `keyType`, `inspect` and `reason`. `DrawPinGlyph` and `PinChromeView` draw them outside the canvas too. Flow links use the text colour, `flowLinkWidth` and chevrons; inputs with `multiple=true` draw as a capsule with the links side by side; `pinSeat` docks sockets into the edge; active links move marks at `flowSpeed` and `flowSpacing`.
 - `CanConnect` rejects an unavailable socket with its reason and a flow-to-data link, and lets a wildcard through without the type check.
+- Node shapes and states: `NodeView::shape` (`Standard`, `Event`, `Compact`, `Variable`, `Boundary`) and `NodeView::diagnostic` (`Severity`, message). Frames and groups draw a label tab and member count, notes a folded card, subgraphs a stacked card with an open button that queues `EnterGraph`. Running, waiting, success, error, bypassed, disabled, cached, breakpoint and locked states each have their own look; `Status::Disabled` disables the body widgets.
+- Fixed: a node whose body submits no item (for example a locked, empty node) no longer trips Dear ImGui's cursor-extension assertion.
 - `NodeStyle`, `NodeView`, `PinView`, `LinkView`, `EditorOptions`, `EditorFrame` and `Theme` gain members; rebuild code that links ImKit with the new headers.
 
 ### ノードエディタの見た目
@@ -26,6 +28,8 @@
 - `LinkView::validity`（`Valid`、`Converted`、`Invalid`、`Cycle`）と `LinkView::reason` で、既存の配線に対するホストの判定を描きます。中央に印を付け、`Invalid` はエラーの色と長い破線で描き、受け側の入力に輪を付けます。
 - ソケットの記号: `PinView::role`（`Data`、`Flow`）、`container`（`Single`、`Array`、`Set`、`Map`）、`flags`（`Reference`、`Wildcard`、`Field`、`Optional`、`Unavailable`）、`keyType`、`inspect`、`reason` が加わります。`DrawPinGlyph` と `PinChromeView` で、キャンバスの外でも同じ記号を描けます。Flow の配線は文字色、`flowLinkWidth`、山形の刻みで描きます。`multiple=true` の入力は長円で描き、配線を並べて受けます。`pinSeat` でソケットを枠に差し込んだように見せます。実行中の配線では、`flowSpeed` と `flowSpacing` で印が動きます。
 - `CanConnect` は、使えないソケットを理由つきで拒否し、Flow とデータの接続も拒否します。ワイルドカードは型の判定をせずに通します。
+- ノードの形と状態: `NodeView::shape`（`Standard`、`Event`、`Compact`、`Variable`、`Boundary`）と `NodeView::diagnostic`（`Severity` と文言）が加わります。Frame と Group はラベルタブと中のノード数を、Note は角を折ったカードを、サブグラフは重ねたカードと `EnterGraph` を要求する「開く」ボタンを描きます。実行中、待機、成功、エラー、Bypass、無効、キャッシュ、ブレークポイント、ロックの各状態に専用の見た目があります。`Status::Disabled` は本体のウィジェットを無効にします。
+- 修正: 本体に項目を1つも置かないノード（ロックされた空のノードなど）で、Dear ImGui のカーソル拡張のアサートが出なくなりました。
 - `NodeStyle`、`NodeView`、`PinView`、`LinkView`、`EditorOptions`、`EditorFrame`、`Theme` にメンバーが加わります。ImKit をリンクするコードは、新しいヘッダーで再ビルドしてください。
 
 ### Tile map for tiled displays

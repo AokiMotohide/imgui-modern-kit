@@ -41,6 +41,8 @@ int main() {
     ne::NodeView nodes[] = {{ids[0], {0, 0}, {240, 240}, "Example"}};
     nodes[0].category = 7;
     nodes[0].subtitle = "Math";
+    nodes[0].shape = ne::NodeShape::Compact;
+    nodes[0].diagnostic = {ne::Severity::Warning, "Unused input"};
     (void)look;
     (void)options;
     ne::GraphView graph;

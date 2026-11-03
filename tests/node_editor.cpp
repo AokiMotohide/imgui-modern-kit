@@ -766,6 +766,71 @@ void AppearanceTests() {
     pins[0].multiple = false;
     io.MousePos = {-100, -100};
 
+    // Node states: an empty locked node closes cleanly, a diagnostic draws a band, Disabled disables the body,
+    // and the open-subgraph button queues EnterGraph.
+    {
+        nodes[1].locked = true;
+        frame(); // Would assert if the body cursor were left unsettled.
+        nodes[1].locked = false;
+        frame();
+        const int plain = CountVertices(error);
+        nodes[1].diagnostic = {Severity::Error, "Missing input"};
+        frame();
+        Check(CountVertices(error) > plain, "error diagnostic draws a badge, band and outline");
+        nodes[1].diagnostic = {};
+        bool disabledBody = false;
+        nodes[0].status = Status::Disabled;
+        out.Clear();
+        ImGui::NewFrame();
+        ImGui::Begin("test", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
+        {
+            auto f = BeginEditor("graph", graph, state, out, style, options);
+            if (BeginNode(f, {1})) {
+                ImGui::Dummy({1, 1});
+                disabledBody = (ImGui::GetItemFlags() & ImGuiItemFlags_Disabled) != 0;
+                EndNode(f);
+            }
+            EndEditor(f);
+        }
+        ImGui::End();
+        ImGui::Render();
+        nodes[0].status = Status::Idle;
+        Check(disabledBody, "a Disabled node disables its body widgets");
+
+        nodes[1].childGraph = {9};
+        auto click = [&](ImVec2 at, bool down) {
+            io.MousePos = at;
+            io.MouseDown[0] = down;
+            frame();
+        };
+        ImVec2 origin{};
+        {
+            ImGui::NewFrame();
+            ImGui::Begin("test", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
+            auto f = BeginEditor("graph", graph, state, out, style, options);
+            origin = f.min;
+            EndEditor(f);
+            ImGui::End();
+            ImGui::Render();
+        }
+        const float z = float(state.zoom), header = style.headerHeight * z;
+        const float badge = std::max(6.f, std::min(header * .5f, 16 * z));
+        const ImVec2 button{origin.x + float((420 + 200 - state.origin.x) * z) - style.padding * z - badge * .5f,
+                            origin.y + float((20 - state.origin.y) * z) + header * .5f};
+        click(button, false);
+        click(button, true);
+        bool entered = false;
+        for (auto &r : out.Requests())
+            entered = entered || (r.kind == EditKind::EnterGraph && r.node == NodeId{2});
+        click(button, false);
+        for (auto &r : out.Requests())
+            entered = entered || (r.kind == EditKind::EnterGraph && r.node == NodeId{2});
+        Check(entered, "the header button of a subgraph queues EnterGraph");
+        nodes[1].childGraph = {};
+        io.MousePos = {-100, -100};
+        frame();
+    }
+
     // Socket roles and flags take part in connection rules.
     {
         NodeView rn[] = {{{1}, {0, 0}, {100, 100}, "A"}, {{2}, {300, 0}, {100, 100}, "B"}};
