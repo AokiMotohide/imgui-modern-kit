@@ -127,6 +127,7 @@ figcaption code { font-size: 11.5px; }
 <nav class="toc" aria-label="目次">
   <p>Contents</p>
   <ol>
+    <li><a href="#status">実装状況</a></li>
     <li><a href="#summary">結論</a></li>
     <li><a href="#identity">見た目の方針</a></li>
     <li><a href="#anatomy">ノードの構造</a></li>
@@ -152,6 +153,34 @@ figcaption code { font-size: 11.5px; }
   <p class="lead">シェーダーやジオメトリのノード、ゲームロジックのブループリント、汎用のデータフローを、1つのUI部品で組めるようにするための計画です。各項目を「現行の動作」と「提案」で並べています。実装はまだ行っていません。</p>
   <div class="meta"><span>対象: include/imkit/node_editor.h</span><span>src/node_editor.cpp</span><span>src/node_layout.cpp</span><span>基準コミット 871f3b5</span><span>2026-11-03</span></div>
 </header>
+
+<section id="status">
+  <h2>実装状況</h2>
+  <p>この計画の Phase 1〜5 を <code>Version4.1</code> に実装しました。下の表は計画との対応です。以降の節は計画時の記述のまま残しています。</p>
+  <div class="table-wrap"><table class="diff">
+    <thead><tr><th>Phase</th><th>状態</th><th>計画から変えた点</th></tr></thead>
+    <tbody>
+      <tr><td>1. 土台と不具合</td><td><span class="tag ok">実装</span></td><td>既定の見た目は Classic のままで、不具合の修正だけ既定を変えた（配線は型の色、Idle のステータス行は非表示）。<code>Theme::node</code> と .theme の <code>node.*</code> キーを追加</td></tr>
+      <tr><td>2. 接続のフィードバック</td><td><span class="tag ok">実装</span></td><td>循環の判定は今までどおりホストの <code>canConnect</code> に任せ、ライブラリは判定と <code>LinkView::validity</code> を描くだけ</td></tr>
+      <tr><td>3. ピン記号と配線</td><td><span class="tag ok">実装</span></td><td><code>DrawPinGlyph</code> と <code>PinChromeView</code> を公開。ワイルドカードは型の判定を省き、使用不可のピンは理由つきで拒否する</td></tr>
+      <tr><td>4. ノード形状と状態</td><td><span class="tag ok">実装</span></td><td><code>NodeShape</code> は Standard / Event / Compact / Variable / Boundary。Comment・Note・Subgraph は既存の <code>NodeKind</code> で見た目が決まる。Success は一瞬の点灯ではなく、Success の間だけ緑の枠</td></tr>
+      <tr><td>5. 操作・フック・プリセット</td><td><span class="tag ok">実装</span></td><td>プリセットの関数名は <code>MakeNodeStylePreset</code>。<code>PushNodeStyle</code> / <code>PopNodeStyle</code> は見送り（外枠は <code>BeginEditor</code> でまとめて描くため、途中の切り替えが効かない。ノード単位は <code>NodeView::style</code> を使う）</td></tr>
+    </tbody>
+  </table></div>
+  <h3>まだ入れていないもの</h3>
+  <ul>
+    <li>複数入力の中での配線の並べ替え（<code>ReorderLinkInput</code>）</li>
+    <li>値の欄とピンの表示の切り替え（<code>ToggleValueSocket</code>）</li>
+    <li>ノードを揺すって配線を外す操作（<code>shakeToDisconnect</code>）</li>
+    <li>2ノード接続の既定キー（右クリックメニューと <code>ConnectSelected</code> だけ）</li>
+  </ul>
+  <h3>検証</h3>
+  <ul>
+    <li>Linux（GCC）で <code>imkit_node_editor_test</code> と API compile fixture が通過。各 Phase の動作は、公開IO操作と描画頂点を使うテストで確認</li>
+    <li>見た目は、ImGui の描画データをソフトウェアで画像にして確認（Classic / Tinted / Flat / Gradient、ドラッグ中、形と状態、ライトとダークのテーマ）</li>
+    <li>未実施: Windows / macOS の native Gallery のビルドと capture、GPU、IME。Linux では <code>src/show/schedule_ui.cpp</code> の元からあるコンパイルエラーにより、show モジュールと consumer テストはビルドできない</li>
+  </ul>
+</section>
 
 <section id="summary">
   <h2>結論</h2>
