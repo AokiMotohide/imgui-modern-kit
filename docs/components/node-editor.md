@@ -192,7 +192,9 @@ ne::EndEditor(frame); // draws the links using this frame's measured row positio
 **Wiring**
 
 - Dragging an occupied input rewires its existing link. A rejected connection leaves the original link untouched.
-- Compatible targets show semantic feedback rings, and convertible targets get an extra mark.
+- While a wire is dragged, sockets that can take it get a ring (success color, or warning when convertible). Other sockets fade to `incompatibleAlpha`, and nodes with no candidate fade to `incompatibleNodeAlpha`.
+- The draft wire has the final link shape. It snaps to the nearest candidate within `snapDistance` pixels, and a pill next to the cursor shows the verdict reason from the host, or Exact, Convertible or Rejected.
+- `LinkView::validity` carries the host's verdict on an existing link. `Converted` and `Cycle` add a marker in the middle; `Invalid` draws the link in the error color with long dashes and a cross marker, and rings the receiving input. Hovering a marker shows `LinkView::reason`. The editor never removes or repairs such links.
 - Palette entries need a `compatible` callback to appear during connection-drop filtering. A CreateNode request carries its source pin and replacement link, and the host creates and auto-connects atomically. `InsertNode` identifies the candidate input and output and the existing link for atomic host application.
 - Set `inheritTypeStyle=false` to use an explicit pin shape instead of the type metadata. Custom value callbacks return Begin, Update, Commit or Cancel explicitly.
 

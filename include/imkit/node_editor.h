@@ -56,6 +56,9 @@ struct NodeStyle {
     LinkArrow linkArrow = LinkArrow::Middle;
     bool highlightConnectedLinks = false; // Thicken links of hovered or selected nodes and the hovered link.
     bool hollowUnconnectedPins = false;   // Outline-only sockets until something is connected.
+    // While wiring: sockets that cannot accept the wire fade to incompatibleAlpha, nodes without any
+    // candidate fade to incompatibleNodeAlpha, and the nearest candidate within snapDistance pixels is taken.
+    float incompatibleAlpha = .25f, incompatibleNodeAlpha = .5f, snapDistance = 18;
     StatusDisplay status = StatusDisplay::WhenActive;
     std::span<const NodeCategoryStyle> categories{}; // Borrowed until EndEditor.
 };
@@ -108,6 +111,8 @@ struct PinView {
     bool inheritTypeStyle = true; // False preserves explicit shape even when type metadata is present.
     bool manualPosition = true;   // Set false when submitting standard PinRow.
 };
+// Host verdict on an existing link. The editor only draws it; it never removes or repairs links.
+enum class LinkValidity { Valid, Converted, Invalid, Cycle };
 struct LinkView {
     LinkId id{};
     PinId from{}, to{};
@@ -116,6 +121,8 @@ struct LinkView {
     ImVec4 color{};
     const LinkStyle *style = nullptr;
     float width = 0; // Zero inherits the editor width.
+    LinkValidity validity = LinkValidity::Valid;
+    std::string_view reason{}; // Shown when hovering the link's marker.
 };
 struct ConnectionVerdict {
     bool allowed = true;

@@ -27,6 +27,11 @@ int main() {
     look.linkArrow = ne::LinkArrow::None;
     look.status = ne::StatusDisplay::Never;
     look.categories = categories;
+    look.snapDistance = 24;
+    ne::LinkView flagged{{1}, {1}, {2}};
+    flagged.validity = ne::LinkValidity::Invalid;
+    flagged.reason = "Type changed";
+    (void)flagged;
     ne::EditorOptions options;
     options.locale = nullptr;
     ne::EditorState state;

@@ -713,6 +713,57 @@ void AppearanceTests() {
     frame();
     frame();
     Check(hovered == NodeId{1}, "hovered node is reported");
+
+    // Link markers: an invalid link turns to the error colour with a cross, a converted one gets a marker.
+    io.MousePos = {-100, -100};
+    const ImU32 warning = ImGui::GetColorU32(style.warning);
+    frame();
+    const int validError = CountVertices(error), validWarning = CountVertices(warning);
+    links[0].validity = LinkValidity::Invalid;
+    frame();
+    Check(CountVertices(error) > validError + 20, "invalid link is drawn in the error colour with a marker");
+    links[0].validity = LinkValidity::Converted;
+    frame();
+    Check(CountVertices(warning) > validWarning, "converted link carries a marker");
+    links[0].validity = LinkValidity::Valid;
+
+    // Wiring snaps to the nearest compatible socket and fades the others.
+    graph.typeCompatibility = [](void *, std::uint64_t, std::uint64_t) {
+        return ConnectionVerdict{ConnectionMatch::Convertible, "Host conversion"};
+    };
+    ImVec2 source{}, target{};
+    auto wire = [&](ImVec2 mouse, bool down) {
+        io.MousePos = mouse;
+        io.MouseDown[0] = down;
+        out.Clear();
+        ImGui::NewFrame();
+        ImGui::SetNextWindowPos({0, 0});
+        ImGui::SetNextWindowSize({1000, 700});
+        ImGui::Begin("test", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
+        auto f = BeginEditor("graph", graph, state, out, style, options);
+        DrawLinks(f);
+        DrawNodes(f);
+        GetPinPosition(f, {1}, source);
+        GetPinPosition(f, {3}, target);
+        EndEditor(f);
+        ImGui::End();
+        ImGui::Render();
+    };
+    state.selection.clear();
+    pins[0].multiple = true; // The source already feeds one link.
+    wire({-100, -100}, false);
+    wire(source, false);
+    wire(source, true);
+    Check(state.connecting == PinId{1}, "pressing an output starts a wire");
+    wire({target.x - 15, target.y + 2}, true); // Outside the socket's own hit box, inside the snap radius.
+    wire({target.x - 15, target.y + 2}, false);
+    bool created = false;
+    for (auto &r : out.Requests())
+        created = created || (r.kind == EditKind::CreateLink && r.from == PinId{1} && r.to == PinId{3});
+    Check(created, "releasing near a compatible socket snaps the wire to it");
+    Check(!state.connecting, "wire ends after the drop");
+    graph.typeCompatibility = nullptr;
+    pins[0].multiple = false;
     io.MousePos = {-100, -100};
     ImGui::DestroyContext();
 }

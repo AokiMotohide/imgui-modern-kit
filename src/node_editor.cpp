@@ -250,12 +250,10 @@ Side PinSide(const EditorFrame &f, const PinView &pin) {
         return pin.side;
     return pin.kind == PinKind::Input ? Side::Left : Side::Right;
 }
-std::array<ImVec2, 25> Curve(const EditorFrame &f, const PinView &a, const PinView &b,
-                             const LinkStyle *overrideStyle = nullptr) {
-    const auto style = overrideStyle ? *overrideStyle : f.style.linkStyle;
-    auto p = PinPosition(f, a), q = PinPosition(f, b);
+// Link geometry between two points leaving along dp and arriving against dq.
+std::array<ImVec2, 25> CurvePoints(LinkStyle style, ImVec2 p, ImVec2 dp, ImVec2 q, ImVec2 dq) {
     float strength = std::max(40.f, float(std::abs(q.x - p.x) + std::abs(q.y - p.y)) * .4f);
-    auto c = Add(p, Mul(Direction(PinSide(f, a)), strength)), d = Add(q, Mul(Direction(PinSide(f, b)), strength));
+    auto c = Add(p, Mul(dp, strength)), d = Add(q, Mul(dq, strength));
     std::array<ImVec2, 25> points{};
     for (int i = 0; i < 25; ++i) {
         float t = float(i) / 24, u = 1 - t;
@@ -274,6 +272,58 @@ std::array<ImVec2, 25> Curve(const EditorFrame &f, const PinView &a, const PinVi
                             Add(Mul(d, 3 * u * t * t), Mul(q, t * t * t)));
     }
     return points;
+}
+std::array<ImVec2, 25> Curve(const EditorFrame &f, const PinView &a, const PinView &b,
+                             const LinkStyle *overrideStyle = nullptr) {
+    return CurvePoints(overrideStyle ? *overrideStyle : f.style.linkStyle, PinPosition(f, a),
+                       Direction(PinSide(f, a)), PinPosition(f, b), Direction(PinSide(f, b)));
+}
+// Draws every segment whose index falls in the "on" part of an on/off pattern.
+void DashedPolyline(ImDrawList *dl, const std::array<ImVec2, 25> &points, ImU32 color, float width, int on,
+                    int off) {
+    for (std::size_t i = 1; i < points.size(); ++i)
+        if (int(i - 1) % (on + off) < on)
+            dl->AddLine(points[i - 1], points[i], color, width);
+}
+// Marker in the middle of a link that the host flagged: converted (two arrows), invalid (cross) or cycle (loop).
+float BeadRadius(double zoom) {
+    return 7 * std::clamp(float(zoom), .8f, 1.4f);
+}
+void DrawBead(ImDrawList *dl, ImVec2 c, LinkValidity validity, const NodeStyle &st, double zoom) {
+    const float r = BeadRadius(zoom), k = r / 7;
+    switch (validity) {
+    case LinkValidity::Valid:
+        return;
+    case LinkValidity::Converted: {
+        const ImU32 ink = ImGui::GetColorU32(st.warning);
+        dl->AddCircleFilled(c, r, ImGui::GetColorU32(st.surface));
+        dl->AddCircle(c, r, ink, 0, 1.4f);
+        const float w = 1.3f;
+        dl->AddLine({c.x - 3.5f * k, c.y - 1.6f * k}, {c.x + 3.2f * k, c.y - 1.6f * k}, ink, w);
+        dl->AddLine({c.x + 1.2f * k, c.y - 3.6f * k}, {c.x + 3.4f * k, c.y - 1.6f * k}, ink, w);
+        dl->AddLine({c.x + 3.5f * k, c.y + 1.8f * k}, {c.x - 3.2f * k, c.y + 1.8f * k}, ink, w);
+        dl->AddLine({c.x - 1.2f * k, c.y + 3.8f * k}, {c.x - 3.4f * k, c.y + 1.8f * k}, ink, w);
+        return;
+    }
+    case LinkValidity::Invalid: {
+        dl->AddCircleFilled(c, r, ImGui::GetColorU32(st.error));
+        const ImU32 ink = ImGui::GetColorU32(ReadableOn(st.error));
+        dl->AddLine({c.x - 2.8f * k, c.y - 2.8f * k}, {c.x + 2.8f * k, c.y + 2.8f * k}, ink, 1.8f);
+        dl->AddLine({c.x + 2.8f * k, c.y - 2.8f * k}, {c.x - 2.8f * k, c.y + 2.8f * k}, ink, 1.8f);
+        return;
+    }
+    case LinkValidity::Cycle: {
+        const ImU32 ink = ImGui::GetColorU32(st.error);
+        dl->AddCircleFilled(c, r, ImGui::GetColorU32(st.surface));
+        dl->AddCircle(c, r, ink, 0, 1.4f);
+        dl->PathArcTo(c, 3.6f * k, -1.2f, 4.2f, 12);
+        dl->PathStroke(ink, 0, 1.4f);
+        const ImVec2 tip{c.x + 3.6f * k * std::cos(-1.2f), c.y + 3.6f * k * std::sin(-1.2f)};
+        dl->AddTriangleFilled({tip.x - 2.2f * k, tip.y - 1.6f * k}, {tip.x + 1.8f * k, tip.y - 0.6f * k},
+                              {tip.x - 0.4f * k, tip.y + 2.4f * k}, ink);
+        return;
+    }
+    }
 }
 EditRequest Request(EditorFrame &f, EditKind kind, NodeId node = {}) {
     EditRequest r;
@@ -969,6 +1019,20 @@ void EndNode(EditorFrame &f) {
         if (n->breakpoint)
             dl->AddCircleFilled({b.x - 14 * z, a.y + 16 * z}, 4 * z, Color(st.error));
     }
+    if (f.state->connecting && !reroute && n->kind != NodeKind::Frame && n->kind != NodeKind::Group) {
+        // While wiring, a node that offers no socket for the wire steps back.
+        bool candidate = false;
+        for (auto &pin : f.graph.pins)
+            if (pin.node == n->id && !pin.hidden &&
+                (pin.id == f.state->connecting ||
+                 CanConnect(f.graph, f.state->connecting, pin.id, f.state->reconnecting).allowed)) {
+                candidate = true;
+                break;
+            }
+        if (!candidate)
+            ImGui::GetWindowDrawList()->AddRectFilled(
+                a, b, Color(WithAlpha(st.canvas, std::clamp(1 - st.incompatibleNodeAlpha, 0.f, 1.f))), st.rounding);
+    }
     if (!n->collapsed && !reroute && !Locked(f, *n) && !f.options.readOnly) {
         // The grip follows the zoom but keeps a usable hit area.
         const float grip = std::clamp(14 * z, 10.f, 24.f);
@@ -1397,8 +1461,11 @@ void Link(EditorFrame &f, const LinkView &link) {
             break;
         }
     const bool selected = s.selectedLink == link.id;
+    const bool invalid = link.validity == LinkValidity::Invalid;
     if (selected)
         from = to = f.style.selected;
+    else if (invalid)
+        from = to = f.style.error;
     auto *dl = ImGui::GetWindowDrawList();
     const float linkWidth = link.width > 0 ? link.width : f.style.linkWidth;
     bool emphasized = selected;
@@ -1417,13 +1484,13 @@ void Link(EditorFrame &f, const LinkView &link) {
     }
     const float width = emphasized && f.style.highlightConnectedLinks ? linkWidth + 1 : linkWidth;
     const int start = dl->VtxBuffer.Size;
-    if (!link.reference) {
+    if (invalid) // Long dashes: the broken state reads from the line itself, not only from its colour.
+        DashedPolyline(dl, points, Color(from), width, 2, 1);
+    else if (!link.reference) {
         // One polyline keeps joins smooth; per-segment lines show notches at the joints.
         dl->AddPolyline(points.data(), static_cast<int>(points.size()), Color(from), ImDrawFlags_None, width);
-    } else {
-        for (std::size_t i = 1; i < points.size(); i += 2)
-            dl->AddLine(points[i - 1], points[i], Color(from), width);
-    }
+    } else
+        DashedPolyline(dl, points, Color(from), width, 1, 1);
     const bool gradient = from.x != to.x || from.y != to.y || from.z != to.z || from.w != to.w;
     if (gradient) { // Shade along the dominant axis between the two ends.
         const auto p = points.front(), q = points.back();
@@ -1455,9 +1522,28 @@ void Link(EditorFrame &f, const LinkView &link) {
                                   Sub(Sub(tip, Mul(direction, 7)), Mul(normal, 3)), color);
         }
     }
+    const bool bead = link.validity != LinkValidity::Valid;
+    if (bead) {
+        DrawBead(dl, points[12], link.validity, f.style, s.zoom);
+        const auto mouse = ImGui::GetIO().MousePos;
+        const float r = BeadRadius(s.zoom) + 2;
+        const bool popup = ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel);
+        if (f.hovered && !popup && !s.connecting && Inside(mouse, Sub(points[12], {r, r}), Add(points[12], {r, r}))) {
+            const char *fallback = link.validity == LinkValidity::Invalid  ? "Invalid link"
+                                   : link.validity == LinkValidity::Cycle ? "Creates a cycle"
+                                                                          : "Converted";
+            const char *key = link.validity == LinkValidity::Invalid  ? "node_editor.link.invalid"
+                              : link.validity == LinkValidity::Cycle ? "node_editor.link.cycle"
+                                                                     : "node_editor.link.converted";
+            if (link.reason.empty())
+                ImGui::SetTooltip("%s", Tr(f, key, fallback));
+            else
+                ImGui::SetTooltip("%s: %.*s", Tr(f, key, fallback), int(link.reason.size()), link.reason.data());
+        }
+    }
     if (!link.label.empty()) { // A pill keeps the label legible over grid and other links.
         const auto size = ImGui::CalcTextSize(link.label.data(), link.label.data() + link.label.size());
-        const auto c = points[12];
+        const auto c = points[bead ? 7 : 12];
         const ImVec2 pad{6, 2};
         const ImVec2 lo{c.x - size.x / 2 - pad.x, c.y - size.y / 2 - pad.y};
         const ImVec2 hi{c.x + size.x / 2 + pad.x, c.y + size.y / 2 + pad.y};
@@ -2054,6 +2140,8 @@ void EndEditor(EditorFrame &f) {
                 Link(f, link);
         auto *dl = ImGui::GetWindowDrawList();
         const PinView *hoveredPin = nullptr;
+        const PinView *snap = nullptr; // Nearest compatible socket while wiring.
+        float snapBest = std::max(0.f, f.style.snapDistance);
         for (auto &pin : f.graph.pins) {
             auto *n = Find(f, pin.node);
             if (!n || pin.hidden || !Visible(f, *n))
@@ -2081,14 +2169,24 @@ void EndEditor(EditorFrame &f) {
             const bool connected = IsPinConnected(f.graph, pin.id);
             if (s.connecting && s.connecting != pin.id) {
                 auto verdict = CanConnect(f.graph, s.connecting, pin.id, s.reconnecting);
-                auto feedback =
-                    verdict.allowed
-                        ? (verdict.match == ConnectionMatch::Convertible ? f.style.warning : f.style.success)
-                        : f.style.error;
-                dl->AddCircle(p, r + 4, Color(feedback), 0, verdict.allowed ? 2.f : 1.f);
-                if (verdict.match == ConnectionMatch::Convertible)
-                    dl->AddLine(Add(p, {-r, r + 7}), Add(p, {r, r + 7}), Color(feedback));
+                if (!verdict.allowed) // Sockets that cannot take the wire step back instead of shouting.
+                    c = Color(WithAlpha(PinColor(f, pin), std::clamp(st.incompatibleAlpha, 0.f, 1.f)));
+                else {
+                    const bool convertible = verdict.match == ConnectionMatch::Convertible;
+                    dl->AddCircle(p, r + 4, Color(convertible ? f.style.warning : f.style.success), 0, 2.f);
+                    const float distance = std::hypot(io.MousePos.x - p.x, io.MousePos.y - p.y);
+                    if (distance <= snapBest) {
+                        snapBest = distance;
+                        snap = &pin;
+                    }
+                }
             }
+            for (auto &link : f.graph.links) // An input fed by a link the host marked invalid shows it.
+                if (link.validity == LinkValidity::Invalid && pin.kind == PinKind::Input &&
+                    (link.to == pin.id || link.from == pin.id)) {
+                    dl->AddCircle(p, r + 3, Color(f.style.error), 0, 2.f);
+                    break;
+                }
             if (pin.multiple)
                 dl->AddCircle(p, r + 2, c);
             if (pin.capabilities.group)
@@ -2121,6 +2219,8 @@ void EndEditor(EditorFrame &f) {
             if (Inside(io.MousePos, Sub(p, {r + 5, r + 5}), Add(p, {r + 5, r + 5})))
                 hoveredPin = &pin;
         }
+        if (s.connecting && !hoveredPin && snap)
+            hoveredPin = snap;
         if (f.options.minimap)
             MiniMap(f);
         // Child widgets and popups win over canvas shortcuts and gestures.
@@ -2128,7 +2228,8 @@ void EndEditor(EditorFrame &f) {
         bool popup = ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel);
         bool available = f.hovered && !popup && !f.blocked && !widgetActive;
         if (hoveredPin && f.hovered && !popup && !widgetActive) {
-            ImGui::SetTooltip("%.*s", int(hoveredPin->label.size()), hoveredPin->label.data());
+            if (!s.connecting)
+                ImGui::SetTooltip("%.*s", int(hoveredPin->label.size()), hoveredPin->label.data());
             if (ImGui::IsMouseClicked(0) && !f.options.readOnly) {
                 s.connecting = hoveredPin->id;
                 s.reconnecting = {};
@@ -2143,30 +2244,48 @@ void EndEditor(EditorFrame &f) {
         }
         if (s.connecting) {
             auto *from = FindPin(f, s.connecting);
+            const bool target = hoveredPin && hoveredPin->id != s.connecting;
+            const auto verdict =
+                target ? CanConnect(f.graph, s.connecting, hoveredPin->id, s.reconnecting) : ConnectionVerdict{};
+            const bool convertible = verdict.allowed && verdict.match == ConnectionMatch::Convertible;
             if (from) {
-                auto verdict = hoveredPin ? CanConnect(f.graph, s.connecting, hoveredPin->id, s.reconnecting)
-                                          : ConnectionVerdict{};
-                auto color = !hoveredPin                                     ? f.style.accent
-                             : !verdict.allowed                              ? f.style.error
-                             : verdict.match == ConnectionMatch::Convertible ? f.style.warning
-                                                                             : f.style.success;
-                auto a = PinPosition(f, *from), delta = Sub(io.MousePos, a);
-                int segments = !verdict.allowed ? 40 : verdict.match == ConnectionMatch::Convertible ? 20 : 1;
-                for (int i = 0; i < segments; ++i)
-                    if (segments == 1 || i % 2 == 0)
-                        dl->AddLine(Add(a, Mul(delta, float(i) / segments)),
-                                    Add(a, Mul(delta, float(i + 1) / segments)), Color(color),
+                // The draft wire has the final shape: it leaves the socket like a link and lands on the target.
+                const auto a = PinPosition(f, *from);
+                const auto da = Direction(PinSide(f, *from));
+                const auto q = target ? PinPosition(f, *hoveredPin) : io.MousePos;
+                const auto dq = target ? Direction(PinSide(f, *hoveredPin)) : Mul(da, -1);
+                const auto points = CurvePoints(f.style.linkStyle, a, da, q, dq);
+                const ImVec4 color = !verdict.allowed ? f.style.error : convertible ? f.style.warning : PinColor(f, *from);
+                if (!target)
+                    DashedPolyline(dl, points, Color(color), f.style.linkWidth, 2, 1);
+                else if (!verdict.allowed)
+                    DashedPolyline(dl, points, Color(color), std::max(1.f, f.style.linkWidth * .75f), 1, 1);
+                else if (convertible)
+                    DashedPolyline(dl, points, Color(color), f.style.linkWidth, 3, 1);
+                else
+                    dl->AddPolyline(points.data(), int(points.size()), Color(color), ImDrawFlags_None,
                                     f.style.linkWidth);
+                if (target && verdict.allowed) { // The socket that will receive the wire.
+                    const float r = f.style.pinRadius * std::clamp(float(s.zoom), .8f, 2.f);
+                    dl->AddCircle(q, r + 8, Color(WithAlpha(color, .35f)), 0, 3.f);
+                }
             }
-            if (hoveredPin && hoveredPin->id != s.connecting) {
-                auto verdict = CanConnect(f.graph, s.connecting, hoveredPin->id, s.reconnecting);
-                ImGui::SetTooltip("%s%s%.*s",
-                                  !verdict.allowed ? Tr(f, "node_editor.connect.rejected", "Rejected")
-                                  : verdict.match == ConnectionMatch::Convertible
-                                      ? Tr(f, "node_editor.connect.convertible", "Convertible")
-                                      : Tr(f, "node_editor.connect.exact", "Exact"),
-                                  verdict.reason.empty() ? "" : ": ", int(verdict.reason.size()),
-                                  verdict.reason.data());
+            if (target) {
+                // The verdict sits next to the cursor, above the nodes, in the host's own words when given.
+                const char *label = !verdict.allowed ? Tr(f, "node_editor.connect.rejected", "Rejected")
+                                    : convertible   ? Tr(f, "node_editor.connect.convertible", "Convertible")
+                                                    : Tr(f, "node_editor.connect.exact", "Exact");
+                std::string text = verdict.reason.empty() ? std::string(label) : std::string(verdict.reason);
+                auto *fg = ImGui::GetForegroundDrawList();
+                fg->PushClipRect(f.min, f.max, true);
+                const auto size = ImGui::CalcTextSize(text.c_str());
+                const ImVec2 lo{io.MousePos.x + 14, io.MousePos.y + 18};
+                const ImVec2 hi{lo.x + size.x + 16, lo.y + size.y + 6};
+                const ImVec4 tone = !verdict.allowed ? f.style.error : convertible ? f.style.warning : f.style.success;
+                fg->AddRectFilled(lo, hi, Color(f.style.surface), (hi.y - lo.y) / 2);
+                fg->AddRect(lo, hi, Color(WithAlpha(tone, .8f)), (hi.y - lo.y) / 2, 0, 1.2f);
+                fg->AddText({lo.x + 8, lo.y + 3}, Color(tone), text.c_str());
+                fg->PopClipRect();
                 if (ImGui::IsMouseReleased(0)) {
                     if (verdict.allowed) {
                         auto r = Request(f, s.reconnecting ? EditKind::Reconnect : EditKind::CreateLink);
