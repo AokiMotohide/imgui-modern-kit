@@ -76,7 +76,18 @@ td.c { text-align: center; font-family: var(--font-mono); white-space: nowrap; }
 .summary p { font-size: 14px; color: var(--ink-2); margin: 0; }
 .tag { display: inline-block; font-family: var(--font-mono); font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; margin-right: 6px; vertical-align: 1px; }
 .tag.ok { color: var(--ok); } .tag.warn { color: var(--warn); } .tag.bad { color: var(--bad); }
-.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 14px; }
+.glyphs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 10px; }
+.glyph { display: grid; grid-template-columns: 60px minmax(0,1fr); gap: 12px; align-items: center; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 8px 8px; }
+.glyph svg { width: 60px; height: 60px; display: block; }
+.glyph b { display: block; font-size: 13.5px; line-height: 1.4; }
+.glyph span { display: block; font-size: 12px; color: var(--ink-2); line-height: 1.5; }
+.diff td:nth-child(2) { color: var(--ink-2); }
+.diff td:nth-child(3) { font-weight: 500; }
+.principles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 12px; }
+.principles div { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.principles b { display: block; margin-bottom: 4px; }
+.principles p { font-size: 13.5px; color: var(--ink-2); margin: 0; }
 figure { margin: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: grid; }
 figure svg { display: block; width: 100%; height: auto; background: var(--canvas); }
 figcaption { padding: 10px 14px 12px; font-size: 13px; line-height: 1.55; color: var(--ink-2); }
@@ -98,7 +109,7 @@ figcaption code { font-size: 11.5px; }
 .ask { background: var(--accent-soft); border: 1px solid var(--line); border-radius: 10px; padding: 16px 20px; }
 .ask ol { margin: 6px 0 0; padding-left: 1.3em; }
 .ask li { margin: 6px 0; }
-.flow { stroke-dasharray: 4 10; animation: flow 1.2s linear infinite; }
+.flow { animation: flow 1.2s linear infinite; }
 @keyframes flow { to { stroke-dashoffset: -14; } }
 @media (prefers-reduced-motion: reduce) { .flow { animation: none; } }
 @media (max-width: 860px) {
@@ -108,30 +119,27 @@ figcaption code { font-size: 11.5px; }
   .phase { grid-template-columns: minmax(0,1fr); gap: 4px; }
 }
 </style>
-
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#2c313a"/></pattern>
-    <linearGradient id="g-type" x1="0" x2="1"><stop offset="0" stop-color="#e8b44a"/><stop offset="1" stop-color="#8fb8de"/></linearGradient>
-    <linearGradient id="g-event" x1="0" x2="1"><stop offset="0" stop-color="#b8443c"/><stop offset="1" stop-color="#5a2a2a"/></linearGradient>
-    <linearGradient id="g-func" x1="0" x2="1"><stop offset="0" stop-color="#3a64b0"/><stop offset="1" stop-color="#2a3550"/></linearGradient>
-    <linearGradient id="g-pure" x1="0" x2="1"><stop offset="0" stop-color="#4b8a4a"/><stop offset="1" stop-color="#2b3a2b"/></linearGradient>
-  </defs>
-</svg>
-
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#2a2f38"/></pattern>
+<linearGradient id="gconv" x1="0" x2="1"><stop offset="0" stop-color="#8fb3d9"/><stop offset="1" stop-color="#e6c14a"/></linearGradient>
+</defs></svg>
 <div class="shell">
 <nav class="toc" aria-label="目次">
   <p>Contents</p>
   <ol>
     <li><a href="#summary">結論</a></li>
-    <li><a href="#current">現行の構成</a></li>
-    <li><a href="#compare">3系統との比較</a></li>
-    <li><a href="#issues">確認した問題</a></li>
-    <li><a href="#nodes">ノード形状カタログ</a></li>
-    <li><a href="#pins">ピンと配線</a></li>
-    <li><a href="#custom">カスタマイズ層</a></li>
+    <li><a href="#identity">見た目の方針</a></li>
+    <li><a href="#anatomy">ノードの構造</a></li>
+    <li><a href="#shapes">ノード形状</a></li>
+    <li><a href="#pins">ピン記号</a></li>
+    <li><a href="#feedback">接続のフィードバック</a></li>
+    <li><a href="#links">配線</a></li>
+    <li><a href="#states">ノードの状態</a></li>
+    <li><a href="#interaction">操作</a></li>
+    <li><a href="#custom">カスタマイズ</a></li>
     <li><a href="#api">API案</a></li>
-    <li><a href="#presets">見た目プリセット</a></li>
+    <li><a href="#presets">プリセット</a></li>
+    <li><a href="#issues">現行の不具合</a></li>
     <li><a href="#plan">段階計画</a></li>
     <li><a href="#decide">確認事項</a></li>
   </ol>
@@ -139,417 +147,367 @@ figcaption code { font-size: 11.5px; }
 
 <main>
 <header class="hero">
-  <div class="eyebrow">imgui-modern-kit · imkit::node_editor · Version4.1 時点の調査</div>
+  <div class="eyebrow">imgui-modern-kit · imkit::node_editor · Version4.1 時点の調査（第2版）</div>
   <h1>Node Editor 刷新計画</h1>
-  <p class="lead">Blenderのシェーダー／ジオメトリノード、Unrealのブループリント、imgui-node-editorのような使い方を、1つのUI部品で組めるようにするための現状調査と改善案です。実装はまだ行っていません。</p>
-  <div class="meta"><span>対象: include/imkit/node_editor.h (415行)</span><span>src/node_editor.cpp (2093行)</span><span>src/node_layout.cpp (531行)</span><span>調査日 2026-11-03</span></div>
+  <p class="lead">シェーダーやジオメトリのノード、ゲームロジックのブループリント、汎用のデータフローを、1つのUI部品で組めるようにするための計画です。各項目を「現行の動作」と「提案」で並べています。実装はまだ行っていません。</p>
+  <div class="meta"><span>対象: include/imkit/node_editor.h</span><span>src/node_editor.cpp</span><span>src/node_layout.cpp</span><span>基準コミット 871f3b5</span><span>2026-11-03</span></div>
 </header>
 
 <section id="summary">
   <h2>結論</h2>
-  <p>グラフ編集の「中身」はすでに実用水準です。足りないのは、ノードとピンの<strong>見た目の語彙</strong>と、ホストが描画を<strong>差し替える口</strong>です。</p>
+  <p>編集の仕組みはすでに実用水準です。足りないのは<strong>見た目の語彙</strong>（形・記号・状態）、<strong>つなげない・壊れている接続を見せる表現</strong>、<strong>他のimkit部品と同じ深さのカスタマイズ</strong>の3つです。</p>
   <div class="summary">
-    <div><h3><span class="tag ok">強い</span>編集の契約</h3><p>型付きID、完全な編集要求バッチ、Begin/Update/Commit/Cancel、3段階の接続判定、動的・可変長ソケット、整列と自動配置、サブグラフ、プレビュー需要の通知。</p></div>
-    <div><h3><span class="tag warn">弱い</span>見た目の自由度</h3><p>ノードは常に「角丸矩形＋ヘッダー帯＋上端の線」1種類。Reroute・Note・Subgraphにも専用の外観がない。ヘッダー色をノード単位・カテゴリ単位で指定する項目がない。</p></div>
-    <div><h3><span class="tag bad">不足</span>実行フローの表現</h3><p>実行ピン（白い矢印型）、配列・参照・ワイルドカード、複数入力ソケット、未接続の中空表示、配線ハイライト、実行中の流れ表示がない。Unreal系の分岐ノードを素直に描けない。</p></div>
+    <div><h3><span class="tag ok">維持</span>編集の契約</h3><p>型付きID、完全な編集要求バッチ、Begin/Update/Commit/Cancel、3段階の接続判定、動的・可変長ソケット、整列と自動配置、サブグラフ、プレビュー需要の通知はそのまま使います。</p></div>
+    <div><h3><span class="tag warn">追加</span>形・記号・状態</h3><p>ノード形状を1種類から9種類へ、ピン記号を4種類から15種類＋配線ビーズ3種類へ増やします。記号はすべて新しく作り、DrawListで描くベクター図形にします。</p></div>
+    <div><h3><span class="tag bad">新規</span>接続の可否と異常の表示</h3><p>ドラッグ中の候補の強調と減光、理由の表示、無効になった配線・循環・変換・必須入力の未接続を、色だけでなく線種と記号でも区別します。</p></div>
   </div>
 </section>
 
-<section id="current">
-  <h2>現行の構成</h2>
-  <p>公開APIはすべて <code>imkit::node_editor</code> にあり、グラフはホストが所有して毎フレーム <code>GraphView</code> として貸し出します。見た目に関わる型だけを抜き出すと次のとおりです。</p>
-  <div class="table-wrap"><table>
-    <thead><tr><th>型</th><th>見た目に関わる項目</th><th>評価</th></tr></thead>
+<section id="identity">
+  <h2>見た目の方針</h2>
+  <p>参考にするのは他ソフトの<strong>機能と情報の出し方</strong>です。形と色はimkitのテーマから作ります。製品名、アイコン、配色、特徴的な輪郭はそのまま使いません。</p>
+  <div class="principles">
+    <div><b>テーマが主役</b><p>ノードの面、枠、文字は他の部品と同じ意味tokenから作ります。カテゴリ色は薄く敷くだけなので、どのworldに切り替えても浮きません。</p></div>
+    <div><b>色だけに頼らない</b><p>接続できない、無効、変換、循環は、色に加えて線種（破線・点線）と記号（✕・⇄・↻）でも区別します。色覚の違いがあっても読めます。</p></div>
+    <div><b>記号は自作のベクター</b><p>ピン記号と配線ビーズは新しく設計し、ズームしても崩れないDrawList図形で描きます。画像やフォントは追加しないので、第三者素材の扱いは発生しません。</p></div>
+    <div><b>既定は控えめ</b><p>強い効果（グラデーション、光彩、流れ表示）は選択肢として用意し、既定では使いません。情報量の多い画面でも疲れない見た目にします。</p></div>
+  </div>
+  <h3>参考元の典型的な見た目と、imkitでの表現</h3>
+  <div class="table-wrap"><table class="diff">
+    <thead><tr><th>参考にする機能</th><th>よく見る表現</th><th>imkitでの表現</th></tr></thead>
     <tbody>
-      <tr><td><code>NodeStyle</code></td><td>色14種（canvas, grid, surface, header, text, muted, border, selected, accent, group, preview, error, warning, success）、rounding, borderWidth, padding, headerHeight, pinRadius, linkWidth, gridSize, minimumWidth/Height, detailZoom, shadows, animate, linkStyle</td><td>基本は揃う。hover／選択時の枠幅、ヘッダーの塗り方、ピンの塗り方、配線の色の出どころを選べない</td></tr>
-      <tr><td><code>NodeView</code></td><td>title, description, icon, kind（Node/Frame/Group/Subgraph/Note/Reroute）, status, progress, milliseconds, breakpoint, <code>style</code>（ノード単位で NodeStyle を丸ごと差し替え）</td><td>ヘッダー色・サブタイトル・カテゴリの項目がない。kind が描画に反映されるのは Frame/Group の塗りと Note の本文だけ</td></tr>
-      <tr><td><code>PinView</code></td><td>side, offset, type, multiple, hidden, shape（Circle/Square/Diamond/Triangle）, color, inheritTypeStyle</td><td>形は4種。データと実行フローの区別、コンテナ種別、接続状態による塗り分けがない</td></tr>
-      <tr><td><code>SocketTypeView</code></td><td>id, name, category, color, shape</td><td>型→色・形の対応は良い設計。配線の色には使われていない</td></tr>
-      <tr><td><code>LinkView</code></td><td>label, reference（破線）, active（流れる点）, color, style, width</td><td>個別指定はできる。既定色が型色ではなく accent</td></tr>
-      <tr><td><code>MakeNodeStyle(theme)</code></td><td>Theme の意味token から NodeStyle を作る</td><td>他部品と同じ流儀で良い。ヘッダーは常に surfaceRaised になる</td></tr>
-      <tr><td><code>Skin</code>（theme.h / skin.h）</td><td>SkinPart は Button / Badge / Card のみ</td><td>ノード・ピン・配線を差し替える口がない</td></tr>
-    </tbody>
-  </table></div>
-  <p>補助部品として <code>NodePalette</code>（Tabで開く追加メニュー、接続ドロップ時の絞り込み）、<code>MiniMap</code>、<code>NodeSearch</code>、<code>NodeInspector</code>、<code>Breadcrumbs</code>、<code>LayoutToolbar</code>、<code>Preview</code>／<code>DrawDetachedPreviews</code>、<code>PinRow</code>／<code>PinAddRow</code> があります。Alt+ドラッグの配線カット、範囲選択、ブックマーク、表示履歴も実装済みです。</p>
-</section>
-
-<section id="compare">
-  <h2>3系統との比較</h2>
-  <p>参照先の「機能の型」だけを比較します。各製品の名称、図柄、配色をそのまま再現するのではなく、同じ操作と表現をホストが組める部品として用意することが目標です。</p>
-  <div class="table-wrap"><table>
-    <thead><tr><th>機能</th><th>Blender系</th><th>Unreal系</th><th>imgui-node-editor</th><th>imkit 現行</th></tr></thead>
-    <tbody>
-      <tr><td>カテゴリ別ヘッダー色</td><td class="c">必須</td><td class="c">必須</td><td class="c">例で実装</td><td class="c"><span class="p">△</span> NodeStyle丸ごと差替</td></tr>
-      <tr><td>実行ピン（フロー）と分岐ノード</td><td class="c">—</td><td class="c">必須</td><td class="c">例で実装</td><td class="c"><span class="n">×</span></td></tr>
-      <tr><td>ヘッダーなしの小型ノード（演算子）</td><td class="c">—</td><td class="c">必須</td><td class="c">可能</td><td class="c"><span class="n">×</span></td></tr>
-      <tr><td>変数ノード（ピル型）</td><td class="c">—</td><td class="c">必須</td><td class="c">可能</td><td class="c"><span class="n">×</span></td></tr>
-      <tr><td>Reroute（配線上の点）</td><td class="c">必須</td><td class="c">必須</td><td class="c">—</td><td class="c"><span class="p">△</span> kindのみ、外観は通常ノード</td></tr>
-      <tr><td>コメント枠・フレーム</td><td class="c">必須</td><td class="c">必須</td><td class="c">Group</td><td class="c"><span class="p">△</span> 塗りのみ、タイトル帯なし</td></tr>
-      <tr><td>ソケット上の値編集</td><td class="c">必須</td><td class="c">必須</td><td class="c">ホスト任せ</td><td class="c"><span class="y">◯</span> PinRow</td></tr>
-      <tr><td>ノード内の折りたたみパネル</td><td class="c">必須</td><td class="c">Advanced展開</td><td class="c">—</td><td class="c"><span class="n">×</span></td></tr>
-      <tr><td>未使用ソケットの非表示</td><td class="c">必須</td><td class="c">—</td><td class="c">—</td><td class="c"><span class="p">△</span> HidePin要求のみ</td></tr>
-      <tr><td>複数入力ソケット（長円）</td><td class="c">必須</td><td class="c">—</td><td class="c">—</td><td class="c"><span class="n">×</span></td></tr>
-      <tr><td>配列・Set・Map・参照・ワイルドカード</td><td class="c">Field型</td><td class="c">必須</td><td class="c">—</td><td class="c"><span class="n">×</span></td></tr>
-      <tr><td>未接続ピンを中空で表示</td><td class="c">—</td><td class="c">必須</td><td class="c">例で実装</td><td class="c"><span class="n">×</span></td></tr>
-      <tr><td>配線を型の色で描く</td><td class="c">必須</td><td class="c">必須</td><td class="c">個別指定</td><td class="c"><span class="p">△</span> 個別指定のみ</td></tr>
-      <tr><td>配線のhover強調・接続線強調</td><td class="c">あり</td><td class="c">あり</td><td class="c">あり</td><td class="c"><span class="n">×</span></td></tr>
-      <tr><td>実行中の流れ表示</td><td class="c">—</td><td class="c">デバッグ時</td><td class="c">Flow()</td><td class="c"><span class="p">△</span> 点1つ</td></tr>
-      <tr><td>Bypass（ミュート）時の素通し線</td><td class="c">必須</td><td class="c">無効化表示</td><td class="c">—</td><td class="c"><span class="n">×</span></td></tr>
-      <tr><td>スタイルの一時変更（Push/Pop）</td><td class="c">—</td><td class="c">—</td><td class="c">必須</td><td class="c"><span class="p">△</span> ノード単位のポインタ</td></tr>
-      <tr><td>描画の差し替え（独自ヘッダー等）</td><td class="c">—</td><td class="c">—</td><td class="c">DrawList直描き</td><td class="c"><span class="n">×</span></td></tr>
-      <tr><td>型付き編集要求・Undo単位</td><td class="c">内部</td><td class="c">内部</td><td class="c">ホスト任せ</td><td class="c"><span class="y">◯</span> imkitの強み</td></tr>
-      <tr><td>自動整列・配置</td><td class="c">一部</td><td class="c">一部</td><td class="c">—</td><td class="c"><span class="y">◯</span></td></tr>
+      <tr><td>カテゴリ別ヘッダー色</td><td>彩度の高い色でヘッダーを塗りつぶす</td><td>カテゴリ色を16%で薄く敷き、左に記号タイルを置く</td></tr>
+      <tr><td>強いヘッダー</td><td>光沢のある左右グラデーション</td><td>既定では使わない。<code>HeaderFill::Gradient</code> を選んだときだけ描く</td></tr>
+      <tr><td>実行ピン</td><td>白い五角形の矢印</td><td>角丸四角から山形を切り抜いた Flow 記号</td></tr>
+      <tr><td>実行配線</td><td>白く太い単色の線</td><td>テーマの文字色の線に、進む向きを示す山形の刻み</td></tr>
+      <tr><td>イベントノード</td><td>右上の角を大きく丸めたヘッダー</td><td>ノードの左に突き出した Entry タブ</td></tr>
+      <tr><td>要素ごとの値（Field）</td><td>菱形のソケット</td><td>輪の中に小さな菱形</td></tr>
+      <tr><td>無効な配線</td><td>赤い実線</td><td>エラー色の破線と、中央の ✕ ビーズ</td></tr>
+      <tr><td>ミュート・Bypass</td><td>赤い素通し線</td><td>警告色の破線の素通し線と、本体に薄い斜線</td></tr>
+      <tr><td>Reroute</td><td>小さな円</td><td>角丸の菱形のノット</td></tr>
+      <tr><td>コメント枠</td><td>全幅のタイトル帯</td><td>左上に出るラベルタブと、中のノード数</td></tr>
+      <tr><td>ソケット</td><td>枠の上に塗りつぶした円</td><td>枠を切り欠いた輪。接続済みは芯が入る</td></tr>
     </tbody>
   </table></div>
 </section>
 
-<section id="issues">
-  <h2>確認した問題</h2>
-  <p>コードを読んで確認した具体的な不足と不具合です。行番号は Version4.1（<code>871f3b5</code>）時点です。</p>
-  <div class="issues">
-    <div class="issue"><span class="sev h">高</span><b>Reroute・Note・Subgraph が通常ノードと同じ矩形で描かれる</b><p><code>src/node_editor.cpp:636-651</code> の背景描画は Frame/Group かどうかしか見ていない。Reroute は240×240の空ノードになり、配線の中継点として使えない。</p></div>
-    <div class="issue"><span class="sev h">高</span><b>実行フロー用のピンと配線がない</b><p><code>PinShape</code> は Circle/Square/Diamond/Triangle の4種。実行ピンの形、太い白い配線、分岐ノードの True/False 出力をデータピンと区別して描く手段がない。</p></div>
-    <div class="issue"><span class="sev h">高</span><b>ノード・ピン・配線の描画を差し替える口がない</b><p>見た目を変える方法は <code>NodeView::style</code> で NodeStyle を丸ごと渡すことだけ。<code>SkinPart</code> にもノード系の部位がなく、他部品と同じ水準のカスタマイズができない。</p></div>
-    <div class="issue"><span class="sev m">中</span><b>ステータス行が常に表示される</b><p><code>EndNode</code>（<code>src/node_editor.cpp:741-758</code>）が、status を使わないホストでも「Idle 0.00 ms」をノード下端に描く。素材ノードや設定ノードでは雑音になる。</p></div>
-    <div class="issue"><span class="sev m">中</span><b>配線の既定色が型色ではなく accent</b><p><code>Link</code>（<code>:1157</code>）は <code>link.color</code> が空なら accent。ピンは <code>SocketTypeView</code> の色を使うので、ピンと配線の色が食い違う。</p></div>
-    <div class="issue"><span class="sev m">中</span><b>すべての配線に矢印が付く</b><p>曲線の75%地点に固定の三角を描く（<code>:1166-1174</code>）。データフロー系のエディタでは通常付けないが、消す設定がない。</p></div>
-    <div class="issue"><span class="sev m">中</span><b>ヘッダー色をノード単位で指定できない</b><p><code>MakeNodeStyle</code> はヘッダーを常に <code>surfaceRaised</code> にし、上端に accent の線を引く。Galleryの色変更はホスト側で NodeStyle を作り直している。</p></div>
-    <div class="issue"><span class="sev m">中</span><b>Bypass・Disabled の状態が見た目に出ない</b><p>状態はステータス行の文字だけ。ノード全体の減光、素通し線、無効化の斜線などがない。</p></div>
-    <div class="issue"><span class="sev l">低</span><b>リサイズつまみがズームに追従しない</b><p><code>EndNode</code>（<code>:760-767</code>）の14pxは画面座標固定。拡大時は小さく、縮小時はノードに対して大きすぎる。</p></div>
-    <div class="issue"><span class="sev l">低</span><b>配線ラベルに背景がない</b><p>ラベルは曲線中央に muted 色の文字だけを描くので、グリッドや他の配線と重なると読めない。</p></div>
-  </div>
+<section id="anatomy">
+  <h2>ノードの構造</h2>
+  <p>標準ノードの各部位です。番号の部位は、どれもスタイルかフックで差し替えられます。</p>
+  <figure class="wide"><svg viewBox="0 0 640 220" role="img" aria-label="提案するノードの構造"><rect width="640" height="220" fill="#191c22"/><rect width="640" height="220" fill="url(#dots)"/><g><rect x="210" y="40" width="230" height="166" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><path d="M210 49a9 9 0 0 1 9 -9h212a9 9 0 0 1 9 9v21H210z" fill="#e6a23c" fill-opacity=".16"/><line x1="210" y1="70" x2="440" y2="70" stroke="#e6a23c" stroke-opacity=".35"/><rect x="217" y="46.0" width="18" height="18" rx="5" fill="#e6a23c"/><text x="226.0" y="59.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">N</text><text x="241" y="59.0" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Noise</text><text x="431" y="58.5" fill="#e6a23c" font-size="9" font-weight="500" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Texture</text></g><text x="426" y="91.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Color</text><circle cx="440" cy="88" r="7.6" fill="#191c22"/><g><circle cx="440" cy="88" r="5" fill="none" stroke="#e6c14a" stroke-width="1.7"/><circle cx="440" cy="88" r="2.60" fill="#e6c14a"/></g><text x="426" y="113.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Factor</text><circle cx="440" cy="110" r="7.6" fill="#191c22"/><g><circle cx="440" cy="110" r="5" fill="none" stroke="#8fb3d9" stroke-width="1.7"/></g><rect x="222" y="128" width="206" height="16" rx="4" fill="#2b3039"/><rect x="222" y="128" width="87" height="16" rx="4" fill="#6b8cff" fill-opacity=".45"/><text x="228" y="139.5" fill="#e6e8ee" font-size="9.5" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Scale</text><text x="422" y="139.5" fill="#e6e8ee" font-size="9.5" font-weight="400" text-anchor="end" font-family="JetBrains Mono, monospace">0.42</text><circle cx="210" cy="136" r="7.6" fill="#191c22"/><g><circle cx="210" cy="136" r="5" fill="none" stroke="#8fb3d9" stroke-width="1.7"/></g><text x="224" y="163.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Vector</text><circle cx="210" cy="160" r="7.6" fill="#191c22"/><g><circle cx="210" cy="160" r="5" fill="none" stroke="#a68cf0" stroke-width="1.7"/><circle cx="210" cy="160" r="2.60" fill="#a68cf0"/></g><text x="222" y="194" fill="#9aa1b0" font-size="9.5" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">▸ Detail</text><path d="M110 160C160.0 160 160.0 160 210 160" fill="none" stroke="#a68cf0" stroke-width="2.2" stroke-linecap="round"/><g><circle cx="110" cy="160" r="5.0" fill="none" stroke="#a68cf0" stroke-width="1.7"/><circle cx="110" cy="160" r="2.60" fill="#a68cf0"/></g><line x1="226" y1="55" x2="190" y2="22" stroke="#6b8cff" stroke-opacity=".7"/><circle cx="226" cy="55" r="2.5" fill="#6b8cff"/><text x="186" y="25.5" fill="#c8d3ff" font-size="10" font-weight="500" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">① 記号タイル</text><line x1="310" y1="46" x2="470" y2="20" stroke="#6b8cff" stroke-opacity=".7"/><circle cx="310" cy="46" r="2.5" fill="#6b8cff"/><text x="474" y="23.5" fill="#c8d3ff" font-size="10" font-weight="500" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">② 薄いヘッダー</text><line x1="416" y1="55" x2="470" y2="44" stroke="#6b8cff" stroke-opacity=".7"/><circle cx="416" cy="55" r="2.5" fill="#6b8cff"/><text x="474" y="47.5" fill="#c8d3ff" font-size="10" font-weight="500" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">③ サブタイトル</text><line x1="440" y1="88" x2="470" y2="70" stroke="#6b8cff" stroke-opacity=".7"/><circle cx="440" cy="88" r="2.5" fill="#6b8cff"/><text x="474" y="73.5" fill="#c8d3ff" font-size="10" font-weight="500" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">④ 切り欠きソケット（接続済み）</text><line x1="440" y1="110" x2="470" y2="96" stroke="#6b8cff" stroke-opacity=".7"/><circle cx="440" cy="110" r="2.5" fill="#6b8cff"/><text x="474" y="99.5" fill="#c8d3ff" font-size="10" font-weight="500" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">⑤ 未接続は輪だけ</text><line x1="360" y1="136" x2="470" y2="122" stroke="#6b8cff" stroke-opacity=".7"/><circle cx="360" cy="136" r="2.5" fill="#6b8cff"/><text x="474" y="125.5" fill="#c8d3ff" font-size="10" font-weight="500" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">⑥ 未接続入力の値欄</text><line x1="240" y1="191" x2="470" y2="172" stroke="#6b8cff" stroke-opacity=".7"/><circle cx="240" cy="191" r="2.5" fill="#6b8cff"/><text x="474" y="175.5" fill="#c8d3ff" font-size="10" font-weight="500" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">⑦ 折りたたみパネル</text><line x1="432" y1="200" x2="470" y2="198" stroke="#6b8cff" stroke-opacity=".7"/><circle cx="432" cy="200" r="2.5" fill="#6b8cff"/><text x="474" y="201.5" fill="#c8d3ff" font-size="10" font-weight="500" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">⑧ 状態行は必要時のみ</text><line x1="130" y1="160" x2="130" y2="196" stroke="#6b8cff" stroke-opacity=".7"/><circle cx="130" cy="160" r="2.5" fill="#6b8cff"/><text x="134" y="199.5" fill="#c8d3ff" font-size="10" font-weight="500" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">接続済みの配線</text></svg><figcaption><b>提案する標準ノード</b>現行との違いは、記号タイル、薄いヘッダー、切り欠きソケット、接続状態による塗り分け、パネル、必要なときだけ出るステータス行です。</figcaption></figure>
+  <figure class="wide"><svg viewBox="0 0 560 190" role="img" aria-label="標準ノード 現行と提案"><rect width="560" height="190" fill="#191c22"/><rect width="560" height="190" fill="url(#dots)"/><g><rect x="40" y="36" width="190" height="140" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M40 43a7 7 0 0 1 7 -7h176a7 7 0 0 1 7 7v25H40z" fill="#30353e"/><line x1="47" y1="37" x2="223" y2="37" stroke="#6b8cff" stroke-width="2"/><text x="50" y="56" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Noise Texture</text><text x="50" y="168" fill="#6a7181" font-size="9" font-weight="400" text-anchor="start" font-family="JetBrains Mono, monospace">Idle   0.00 ms</text><path d="M219 173L227 165" stroke="#6a7181"/><circle cx="40" cy="80" r="5" fill="#8fb3d9"/><text x="52" y="84" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Scale</text><circle cx="230" cy="80" r="5" fill="#e6c14a"/><text x="218" y="84" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Color</text><circle cx="230" cy="104" r="5" fill="#8fb3d9"/><text x="218" y="108" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Factor</text></g><g transform="translate(280.0 0)"><g><rect x="40" y="36" width="190" height="140" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><path d="M40 45a9 9 0 0 1 9 -9h172a9 9 0 0 1 9 9v21H40z" fill="#e6a23c" fill-opacity=".16"/><line x1="40" y1="66" x2="230" y2="66" stroke="#e6a23c" stroke-opacity=".35"/><rect x="47" y="42.0" width="18" height="18" rx="5" fill="#e6a23c"/><text x="56.0" y="55.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">N</text><text x="71" y="55.0" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Noise</text><text x="221" y="54.5" fill="#e6a23c" font-size="9" font-weight="500" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Texture</text></g><text x="216" y="83.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Color</text><circle cx="230" cy="80" r="7.6" fill="#191c22"/><g><circle cx="230" cy="80" r="5" fill="none" stroke="#e6c14a" stroke-width="1.7"/><circle cx="230" cy="80" r="2.60" fill="#e6c14a"/></g><text x="216" y="107.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Factor</text><circle cx="230" cy="104" r="7.6" fill="#191c22"/><g><circle cx="230" cy="104" r="5" fill="none" stroke="#8fb3d9" stroke-width="1.7"/></g><rect x="52" y="124" width="166" height="16" rx="4" fill="#2b3039"/><rect x="52" y="124" width="70" height="16" rx="4" fill="#6b8cff" fill-opacity=".45"/><text x="58" y="135.5" fill="#e6e8ee" font-size="9.5" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Scale</text><text x="212" y="135.5" fill="#e6e8ee" font-size="9.5" font-weight="400" text-anchor="end" font-family="JetBrains Mono, monospace">0.42</text><circle cx="40" cy="132" r="7.6" fill="#191c22"/><g><circle cx="40" cy="132" r="5" fill="none" stroke="#8fb3d9" stroke-width="1.7"/></g></g><line x1="280.0" y1="0" x2="280.0" y2="190" stroke="#2f343e" stroke-width="2"/><rect x="8" y="8" width="38" height="17" rx="8.5" fill="#2f343e"/><text x="27" y="20" fill="#9aa1b0" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">現行</text><rect x="288.0" y="8" width="38" height="17" rx="8.5" fill="#6b8cff" fill-opacity=".25"/><text x="307.0" y="20" fill="#c8d3ff" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">提案</text></svg><figcaption><b>同じノードの現行と提案</b>現行はヘッダーが常に surfaceRaised、上端に accent の線、ソケットは常に塗りつぶし、ステータス行が常に出ます。</figcaption></figure>
 </section>
 
-<section id="nodes">
-  <h2>ノード形状カタログ</h2>
-  <p>追加・整理したいノードの形です。1枚目が現行の唯一の形で、残りは新しく描けるようにする形です。すべて <code>NodeShape</code> と意味tokenで切り替え、色はテーマとカテゴリから決まります。</p>
+<section id="shapes">
+  <h2>ノード形状</h2>
+  <p>現行で描ける形は1種類です。<code>NodeKind</code>（グラフ上の意味）とは別に <code>NodeShape</code>（見た目）を持たせます。</p>
+  <div class="table-wrap"><table class="diff">
+    <thead><tr><th>形</th><th>現行</th><th>提案</th></tr></thead>
+    <tbody>
+      <tr><td>Standard</td><td>角丸矩形＋ヘッダー帯＋上端の線</td><td>記号タイル、薄いヘッダー、サブタイトル、パネル</td></tr>
+      <tr><td>Event</td><td>なし。Standard で代用</td><td>Entry タブ付き。入力の Flow ピンを持たない</td></tr>
+      <tr><td>Branch / Sequence / Switch</td><td>実行ピンを区別できない</td><td>Flow ピンで出力を並べる。<code>PinAddRow</code> で出力を増やす</td></tr>
+      <tr><td>Compact</td><td>なし。最小 150×90 の Standard</td><td>ヘッダーなし、中央に記号のレンズ</td></tr>
+      <tr><td>Variable</td><td>なし</td><td>ピル型。型色の縁取りと、get / set の小さな表示</td></tr>
+      <tr><td>Reroute</td><td><code>NodeKind::Reroute</code> はあるが、240×240 の空ノードで描かれる</td><td>角丸の菱形のノット。配線のダブルクリックで挿入</td></tr>
+      <tr><td>Comment / Frame</td><td>accent を10%で塗った矩形。ヘッダーは通常ノードと同じ</td><td>ラベルタブ、ノード数、枠色、ズームアウト時の文字拡大</td></tr>
+      <tr><td>Note</td><td>Standard の本文に文字を出すだけ</td><td>付箋型。ヘッダーなし、角を少し折る</td></tr>
+      <tr><td>Subgraph</td><td><code>childGraph</code> があればダブルクリックで入れる。外観は Standard</td><td>枠を2重にして「中がある」ことを示し、ヘッダーに「開く」ボタン</td></tr>
+      <tr><td>Boundary（入出力）</td><td>なし。サブグラフの公開ピンは <code>internal</code> の対応だけ</td><td>片側だけにピンを持つ入出力ノード。末尾の「＋」でピンを公開</td></tr>
+    </tbody>
+  </table></div>
   <div class="gallery">
-
-    <figure>
-      <svg viewBox="0 0 260 160" role="img" aria-label="現行の標準ノード">
-        <rect width="260" height="160" fill="url(#dots)"/>
-        <rect x="40" y="18" width="180" height="124" rx="7" fill="#262a31" stroke="#3a404b"/>
-        <path d="M40 25a7 7 0 0 1 7-7h166a7 7 0 0 1 7 7v15H40z" fill="#30353e"/>
-        <line x1="47" y1="19" x2="213" y2="19" stroke="#6b8cff" stroke-width="2"/>
-        <text x="52" y="34" fill="#e7e9ee" font-size="11" font-family="sans-serif">Noise Texture</text>
-        <circle cx="40" cy="64" r="5" fill="#8fb8de"/><text x="52" y="68" fill="#a3aab8" font-size="10" font-family="sans-serif">Scale</text>
-        <circle cx="220" cy="64" r="5" fill="#e8b44a"/><text x="174" y="68" fill="#a3aab8" font-size="10" font-family="sans-serif">Color</text>
-        <text x="52" y="134" fill="#6d7483" font-size="9" font-family="monospace">Idle   0.00 ms</text>
-      </svg>
-      <figcaption><b>現行: Standard（唯一の形）</b>角丸矩形、ヘッダー帯、上端の accent 線、常時表示のステータス行。</figcaption>
-    </figure>
-
-    <figure>
-      <svg viewBox="0 0 260 160" role="img" aria-label="イベントノード">
-        <rect width="260" height="160" fill="url(#dots)"/>
-        <path d="M40 30a10 10 0 0 1 10-10h150q20 0 20 20v80a8 8 0 0 1-8 8H48a8 8 0 0 1-8-8z" fill="#22252b" stroke="#3a404b"/>
-        <path d="M40 30a10 10 0 0 1 10-10h150q20 0 20 20v6H40z" fill="url(#g-event)"/>
-        <text x="52" y="38" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif">◆ On Start</text>
-        <path d="M206 66l8 0 6 6-6 6-8 0z" fill="#f2f2f2"/>
-        <circle cx="213" cy="98" r="5" fill="none" stroke="#7fd0c0" stroke-width="2"/><text x="160" y="102" fill="#a3aab8" font-size="10" font-family="sans-serif">Delta</text>
-      </svg>
-      <figcaption><b>Event</b>右上を大きく丸めたヘッダーで「起点」を示す。入力の実行ピンを持たない。<code>NodeShape::Event</code></figcaption>
-    </figure>
-
-    <figure>
-      <svg viewBox="0 0 260 160" role="img" aria-label="分岐ノード">
-        <rect width="260" height="160" fill="url(#dots)"/>
-        <rect x="40" y="20" width="180" height="112" rx="8" fill="#22252b" stroke="#3a404b"/>
-        <path d="M40 28a8 8 0 0 1 8-8h164a8 8 0 0 1 8 8v18H40z" fill="url(#g-func)"/>
-        <text x="52" y="38" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif">⎇ Branch</text>
-        <path d="M36 62l8 0 6 6-6 6-8 0z" fill="#f2f2f2"/>
-        <circle cx="42" cy="98" r="5" fill="#c94b4b"/><text x="54" y="102" fill="#a3aab8" font-size="10" font-family="sans-serif">Condition</text>
-        <path d="M210 62l8 0 6 6-6 6-8 0z" fill="#f2f2f2"/><text x="180" y="72" fill="#d7dae0" font-size="10" font-family="sans-serif">True</text>
-        <path d="M210 88l8 0 6 6-6 6-8 0z" fill="none" stroke="#f2f2f2" stroke-width="1.5"/><text x="178" y="98" fill="#d7dae0" font-size="10" font-family="sans-serif">False</text>
-      </svg>
-      <figcaption><b>Branch / Sequence / Switch</b>実行出力を複数持つ。Sequence と Switch は既存の <code>PinAddRow</code> で出力を増やせる。未接続の実行ピンは中空。</figcaption>
-    </figure>
-
-    <figure>
-      <svg viewBox="0 0 260 160" role="img" aria-label="純粋関数ノード">
-        <rect width="260" height="160" fill="url(#dots)"/>
-        <rect x="40" y="26" width="180" height="100" rx="8" fill="#22252b" stroke="#3a404b"/>
-        <path d="M40 34a8 8 0 0 1 8-8h164a8 8 0 0 1 8 8v14H40z" fill="url(#g-pure)"/>
-        <text x="52" y="41" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif">ƒ Lerp</text>
-        <text x="200" y="41" fill="#cfe8cf" font-size="9" font-family="sans-serif" text-anchor="end">Math</text>
-        <circle cx="40" cy="66" r="5" fill="#7fd0c0"/><text x="52" y="70" fill="#a3aab8" font-size="10" font-family="sans-serif">A</text>
-        <circle cx="40" cy="86" r="5" fill="#7fd0c0"/><text x="52" y="90" fill="#a3aab8" font-size="10" font-family="sans-serif">B</text>
-        <circle cx="40" cy="106" r="5" fill="none" stroke="#7fd0c0" stroke-width="2"/><text x="52" y="110" fill="#a3aab8" font-size="10" font-family="sans-serif">Alpha</text>
-        <circle cx="220" cy="66" r="5" fill="#7fd0c0"/><text x="186" y="70" fill="#a3aab8" font-size="10" font-family="sans-serif">Out</text>
-      </svg>
-      <figcaption><b>Pure / Function</b>実行ピンを持たない計算ノード。ヘッダー色はカテゴリから決まり、右端に小さなサブタイトルを置ける。</figcaption>
-    </figure>
-
-    <figure>
-      <svg viewBox="0 0 260 160" role="img" aria-label="小型演算ノード">
-        <rect width="260" height="160" fill="url(#dots)"/>
-        <rect x="80" y="48" width="100" height="64" rx="14" fill="#2a2e36" stroke="#3a404b"/>
-        <text x="130" y="91" fill="#5f6675" font-size="34" font-weight="700" text-anchor="middle" font-family="sans-serif">+</text>
-        <circle cx="80" cy="66" r="5" fill="#7fd0c0"/><circle cx="80" cy="94" r="5" fill="#7fd0c0"/>
-        <circle cx="180" cy="80" r="5" fill="#7fd0c0"/>
-      </svg>
-      <figcaption><b>Compact</b>ヘッダーもラベルもなく、中央に大きな記号だけを置く演算子ノード。<code>NodeShape::Compact</code> と <code>NodeView::glyph</code></figcaption>
-    </figure>
-
-    <figure>
-      <svg viewBox="0 0 260 160" role="img" aria-label="変数ノード">
-        <rect width="260" height="160" fill="url(#dots)"/>
-        <rect x="56" y="62" width="148" height="34" rx="17" fill="#2a2e36" stroke="#d26ac0" stroke-opacity=".55"/>
-        <text x="76" y="83" fill="#e7e9ee" font-size="11" font-family="sans-serif">Health</text>
-        <circle cx="204" cy="79" r="5" fill="#d26ac0"/>
-        <rect x="56" y="112" width="148" height="28" rx="14" fill="#2a2e36" stroke="#3a404b"/>
-        <text x="76" y="130" fill="#a3aab8" font-size="10" font-family="sans-serif">Get Target</text>
-        <circle cx="204" cy="126" r="4" fill="#5aa0ff"/>
-      </svg>
-      <figcaption><b>Variable（ピル型）</b>変数の取得。型色の縁取りで値の種類を示す。代入（Set）は Standard に実行ピンを付けて描く。</figcaption>
-    </figure>
-
-    <figure>
-      <svg viewBox="0 0 260 160" role="img" aria-label="Reroute">
-        <rect width="260" height="160" fill="url(#dots)"/>
-        <path d="M20 40C80 40 80 84 128 84" stroke="#e8b44a" stroke-width="2.5" fill="none"/>
-        <path d="M132 84C180 84 180 128 240 128" stroke="#e8b44a" stroke-width="2.5" fill="none"/>
-        <path d="M132 84C180 84 180 44 240 44" stroke="#e8b44a" stroke-width="2.5" fill="none"/>
-        <circle cx="130" cy="84" r="7" fill="#e8b44a" stroke="#1c1f25" stroke-width="2"/>
-      </svg>
-      <figcaption><b>Reroute</b>配線上の小さな点。配線のダブルクリックで挿入し、1入力・多出力で中継する。現行は kind があるのに矩形で描かれる。</figcaption>
-    </figure>
-
-    <figure>
-      <svg viewBox="0 0 260 160" role="img" aria-label="コメント枠">
-        <rect width="260" height="160" fill="url(#dots)"/>
-        <rect x="18" y="16" width="224" height="128" rx="6" fill="#5aa0ff" fill-opacity=".09" stroke="#5aa0ff" stroke-opacity=".5"/>
-        <path d="M18 22a6 6 0 0 1 6-6h212a6 6 0 0 1 6 6v18H18z" fill="#5aa0ff" fill-opacity=".35"/>
-        <text x="28" y="33" fill="#e7e9ee" font-size="11" font-weight="700" font-family="sans-serif">Damage calculation</text>
-        <rect x="44" y="62" width="70" height="44" rx="6" fill="#262a31" stroke="#3a404b"/>
-        <rect x="146" y="76" width="70" height="44" rx="6" fill="#262a31" stroke="#3a404b"/>
-      </svg>
-      <figcaption><b>Comment / Frame</b>半透明の囲みとタイトル帯。タイトル文字の大きさ、枠色、ズームアウト時の文字拡大を指定できる。中身ごと移動する動作は既存の parent を使う。</figcaption>
-    </figure>
-
-    <figure>
-      <svg viewBox="0 0 260 200" role="img" aria-label="パネル付きシェーダーノード">
-        <rect width="260" height="200" fill="url(#dots)"/>
-        <rect x="40" y="10" width="180" height="180" rx="5" fill="#2b2b2b" stroke="#1a1a1a"/>
-        <path d="M40 15a5 5 0 0 1 5-5h170a5 5 0 0 1 5 5v15H40z" fill="#4f7a45"/>
-        <text x="50" y="24" fill="#fff" font-size="10.5" font-family="sans-serif">▾ Surface BSDF</text>
-        <circle cx="220" cy="42" r="4.5" fill="#63c763"/><text x="208" y="45" fill="#ccc" font-size="9.5" text-anchor="end" font-family="sans-serif">BSDF</text>
-        <rect x="50" y="54" width="160" height="16" rx="3" fill="#545454"/><text x="56" y="65" fill="#ddd" font-size="9" font-family="sans-serif">Multiscatter GGX ▾</text>
-        <circle cx="40" cy="86" r="4.5" fill="#c7c729"/><rect x="50" y="78" width="160" height="16" rx="3" fill="#d0d0d0"/><text x="56" y="89" fill="#222" font-size="9" font-family="sans-serif">Base Color</text>
-        <circle cx="40" cy="108" r="4.5" fill="#a1a1a1"/><rect x="50" y="100" width="160" height="16" rx="3" fill="#545454"/><rect x="50" y="100" width="72" height="16" rx="3" fill="#4772b3"/><text x="56" y="111" fill="#eee" font-size="9" font-family="sans-serif">Roughness 0.45</text>
-        <text x="50" y="136" fill="#bbb" font-size="9.5" font-family="sans-serif">▸ Specular</text>
-        <line x1="50" y1="142" x2="210" y2="142" stroke="#3a3a3a"/>
-        <text x="50" y="158" fill="#bbb" font-size="9.5" font-family="sans-serif">▾ Emission</text>
-        <circle cx="40" cy="176" r="4.5" fill="#c7c729"/><text x="50" y="179" fill="#ccc" font-size="9.5" font-family="sans-serif">Color</text>
-      </svg>
-      <figcaption><b>Panel 付きノード</b>出力→プロパティ→入力の順に積み、ソケット群を折りたたみパネルにまとめる。閉じたパネルのソケットは見出し行に集約される。<code>BeginNodePanel</code></figcaption>
-    </figure>
-
-    <figure>
-      <svg viewBox="0 0 260 160" role="img" aria-label="複数入力ソケット">
-        <rect width="260" height="160" fill="url(#dots)"/>
-        <path d="M10 40C70 40 70 66 130 66" stroke="#2fc6a6" stroke-width="2" fill="none"/>
-        <path d="M10 80C70 80 70 78 130 78" stroke="#2fc6a6" stroke-width="2" fill="none"/>
-        <path d="M10 124C70 124 70 90 130 90" stroke="#2fc6a6" stroke-width="2" fill="none"/>
-        <rect x="130" y="26" width="110" height="100" rx="5" fill="#2b2b2b" stroke="#1a1a1a"/>
-        <path d="M130 31a5 5 0 0 1 5-5h100a5 5 0 0 1 5 5v13H130z" fill="#2f6f63"/>
-        <text x="140" y="39" fill="#fff" font-size="10" font-family="sans-serif">Join</text>
-        <rect x="125" y="60" width="10" height="36" rx="5" fill="#2fc6a6"/>
-        <text x="144" y="81" fill="#ccc" font-size="9.5" font-family="sans-serif">Geometry</text>
-      </svg>
-      <figcaption><b>Multi-input ソケット</b>1つの入力が複数の配線を受け、つながった本数だけ縦に伸びる長円で描く。配線の順序は並び順として要求に載せる。</figcaption>
-    </figure>
-
+    <svg viewBox="0 0 560 190" role="img" aria-label="Event ノード"><rect width="560" height="190" fill="#191c22"/><rect width="560" height="190" fill="url(#dots)"/><g><rect x="50" y="40" width="180" height="110" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M50 47a7 7 0 0 1 7 -7h166a7 7 0 0 1 7 7v25H50z" fill="#30353e"/><line x1="57" y1="41" x2="223" y2="41" stroke="#6b8cff" stroke-width="2"/><text x="60" y="60" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">On Start</text><text x="60" y="142" fill="#6a7181" font-size="9" font-weight="400" text-anchor="start" font-family="JetBrains Mono, monospace">Idle   0.00 ms</text><path d="M219 147L227 139" stroke="#6a7181"/><path d="M225 79L235 84L225 89Z" fill="#f2f2f2"/><text x="218" y="88" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Exec</text></g><g transform="translate(280.0 0)"><path d="M30 52a6 6 0 0 1 6-6h14v32h-14a6 6 0 0 1-6-6z" fill="#f0607a"/><text x="40" y="67" fill="#191c22" font-size="10" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">▶</text><g><rect x="50" y="40" width="180" height="110" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><path d="M50 49a9 9 0 0 1 9 -9h162a9 9 0 0 1 9 9v21H50z" fill="#f0607a" fill-opacity=".16"/><line x1="50" y1="70" x2="230" y2="70" stroke="#f0607a" stroke-opacity=".35"/><rect x="57" y="46.0" width="18" height="18" rx="5" fill="#f0607a"/><text x="66.0" y="59.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">⚡</text><text x="81" y="59.0" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">On Start</text><text x="221" y="58.5" fill="#f0607a" font-size="9" font-weight="500" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Event</text></g><text x="216" y="87.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif"></text><circle cx="230" cy="84" r="7.6" fill="#191c22"/><g><rect x="224.75" y="78.75" width="10.5" height="10.5" rx="2.2" fill="#e6e8ee"/><path d="M228.4 81.2L231.6 84L228.4 86.8" fill="none" stroke="#191c22" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g><text x="216" y="115.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Delta</text><circle cx="230" cy="112" r="7.6" fill="#191c22"/><g><circle cx="230" cy="112" r="5" fill="none" stroke="#8fb3d9" stroke-width="1.7"/><circle cx="230" cy="112" r="2.60" fill="#8fb3d9"/></g></g><line x1="280.0" y1="0" x2="280.0" y2="190" stroke="#2f343e" stroke-width="2"/><rect x="8" y="8" width="38" height="17" rx="8.5" fill="#2f343e"/><text x="27" y="20" fill="#9aa1b0" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">現行</text><rect x="288.0" y="8" width="38" height="17" rx="8.5" fill="#6b8cff" fill-opacity=".25"/><text x="307.0" y="20" fill="#c8d3ff" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">提案</text></svg>
+    <svg viewBox="0 0 560 190" role="img" aria-label="分岐ノード"><rect width="560" height="190" fill="#191c22"/><rect width="560" height="190" fill="url(#dots)"/><g><rect x="50" y="34" width="180" height="130" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M50 41a7 7 0 0 1 7 -7h166a7 7 0 0 1 7 7v25H50z" fill="#30353e"/><line x1="57" y1="35" x2="223" y2="35" stroke="#6b8cff" stroke-width="2"/><text x="60" y="54" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Branch</text><text x="60" y="156" fill="#6a7181" font-size="9" font-weight="400" text-anchor="start" font-family="JetBrains Mono, monospace">Idle   0.00 ms</text><path d="M219 161L227 153" stroke="#6a7181"/><path d="M45 73L55 78L45 83Z" fill="#f2f2f2"/><circle cx="50" cy="104" r="5" fill="#ef7a7a"/><text x="62" y="108" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Condition</text><path d="M225 73L235 78L225 83Z" fill="#f2f2f2"/><text x="218" y="82" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">True</text><path d="M225 99L235 104L225 109Z" fill="#f2f2f2"/><text x="218" y="108" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">False</text></g><g transform="translate(280.0 0)"><g><rect x="50" y="34" width="180" height="130" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><path d="M50 43a9 9 0 0 1 9 -9h162a9 9 0 0 1 9 9v21H50z" fill="#9b7bff" fill-opacity=".16"/><line x1="50" y1="64" x2="230" y2="64" stroke="#9b7bff" stroke-opacity=".35"/><rect x="57" y="40.0" width="18" height="18" rx="5" fill="#9b7bff"/><text x="66.0" y="53.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">⑂</text><text x="81" y="53.0" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Branch</text><text x="221" y="52.5" fill="#9b7bff" font-size="9" font-weight="500" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Flow</text></g><text x="64" y="81.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif"></text><circle cx="50" cy="78" r="7.6" fill="#191c22"/><g><rect x="44.75" y="72.75" width="10.5" height="10.5" rx="2.2" fill="#e6e8ee"/><path d="M48.4 75.2L51.6 78L48.4 80.8" fill="none" stroke="#191c22" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g><text x="64" y="107.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Condition</text><circle cx="50" cy="104" r="7.6" fill="#191c22"/><g><circle cx="50" cy="104" r="5" fill="none" stroke="#ef7a7a" stroke-width="1.7"/><circle cx="50" cy="104" r="2.60" fill="#ef7a7a"/></g><text x="216" y="81.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">True</text><circle cx="230" cy="78" r="7.6" fill="#191c22"/><g><rect x="224.75" y="72.75" width="10.5" height="10.5" rx="2.2" fill="#e6e8ee"/><path d="M228.4 75.2L231.6 78L228.4 80.8" fill="none" stroke="#191c22" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g><text x="216" y="107.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">False</text><circle cx="230" cy="104" r="7.6" fill="#191c22"/><g><rect x="224.75" y="98.75" width="10.5" height="10.5" rx="2.2" fill="none" stroke="#e6e8ee" stroke-width="1.6"/><path d="M228.4 101.2L231.6 104L228.4 106.8" fill="none" stroke="#e6e8ee" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g><text x="64" y="150" fill="#6a7181" font-size="9.5" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">+ 出力を追加</text></g><line x1="280.0" y1="0" x2="280.0" y2="190" stroke="#2f343e" stroke-width="2"/><rect x="8" y="8" width="38" height="17" rx="8.5" fill="#2f343e"/><text x="27" y="20" fill="#9aa1b0" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">現行</text><rect x="288.0" y="8" width="38" height="17" rx="8.5" fill="#6b8cff" fill-opacity=".25"/><text x="307.0" y="20" fill="#c8d3ff" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">提案</text></svg>
+    <svg viewBox="0 0 560 190" role="img" aria-label="小型演算ノード"><rect width="560" height="190" fill="#191c22"/><rect width="560" height="190" fill="url(#dots)"/><g><rect x="60" y="45" width="160" height="100" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M60 52a7 7 0 0 1 7 -7h146a7 7 0 0 1 7 7v25H60z" fill="#30353e"/><line x1="67" y1="46" x2="213" y2="46" stroke="#6b8cff" stroke-width="2"/><text x="70" y="65" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Add</text><text x="70" y="137" fill="#6a7181" font-size="9" font-weight="400" text-anchor="start" font-family="JetBrains Mono, monospace">Idle   0.00 ms</text><path d="M209 142L217 134" stroke="#6a7181"/><circle cx="60" cy="86" r="5" fill="#8fb3d9"/><circle cx="60" cy="110" r="5" fill="#8fb3d9"/><circle cx="220" cy="98" r="5" fill="#8fb3d9"/></g><g transform="translate(280.0 0)"><rect x="80" y="62" width="120" height="68" rx="12" fill="#242830" stroke="#3a404c"/><circle cx="140" cy="96" r="20" fill="#36c2ad" fill-opacity=".14" stroke="#36c2ad" stroke-opacity=".5"/><text x="140" y="104" fill="#36c2ad" font-size="22" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">+</text><circle cx="80" cy="82" r="7.6" fill="#191c22"/><g><circle cx="80" cy="82" r="5.0" fill="none" stroke="#8fb3d9" stroke-width="1.7"/><circle cx="80" cy="82" r="2.60" fill="#8fb3d9"/></g><circle cx="80" cy="110" r="7.6" fill="#191c22"/><g><circle cx="80" cy="110" r="5.0" fill="none" stroke="#8fb3d9" stroke-width="1.7"/><circle cx="80" cy="110" r="2.60" fill="#8fb3d9"/></g><circle cx="200" cy="96" r="7.6" fill="#191c22"/><g><circle cx="200" cy="96" r="5.0" fill="none" stroke="#8fb3d9" stroke-width="1.7"/><circle cx="200" cy="96" r="2.60" fill="#8fb3d9"/></g></g><line x1="280.0" y1="0" x2="280.0" y2="190" stroke="#2f343e" stroke-width="2"/><rect x="8" y="8" width="38" height="17" rx="8.5" fill="#2f343e"/><text x="27" y="20" fill="#9aa1b0" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">現行</text><rect x="288.0" y="8" width="38" height="17" rx="8.5" fill="#6b8cff" fill-opacity=".25"/><text x="307.0" y="20" fill="#c8d3ff" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">提案</text></svg>
+    <svg viewBox="0 0 560 190" role="img" aria-label="変数ノード"><rect width="560" height="190" fill="#191c22"/><rect width="560" height="190" fill="url(#dots)"/><g><rect x="60" y="50" width="160" height="90" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M60 57a7 7 0 0 1 7 -7h146a7 7 0 0 1 7 7v25H60z" fill="#30353e"/><line x1="67" y1="51" x2="213" y2="51" stroke="#6b8cff" stroke-width="2"/><text x="70" y="70" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Health</text><text x="70" y="132" fill="#6a7181" font-size="9" font-weight="400" text-anchor="start" font-family="JetBrains Mono, monospace">Idle   0.00 ms</text><path d="M209 137L217 129" stroke="#6a7181"/><circle cx="220" cy="95" r="5" fill="#e88fc4"/></g><g transform="translate(280.0 0)"><rect x="64" y="80" width="150" height="30" rx="15" fill="#242830" stroke="#e88fc4" stroke-opacity=".55"/><rect x="72" y="88" width="14" height="14" rx="4" fill="#e88fc4" fill-opacity=".85"/><text x="94" y="99" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Health</text><text x="194" y="99" fill="#6a7181" font-size="9" font-weight="400" text-anchor="end" font-family="JetBrains Mono, monospace">get</text><circle cx="214" cy="95" r="7.6" fill="#191c22"/><g><circle cx="214" cy="95" r="5.0" fill="none" stroke="#e88fc4" stroke-width="1.7"/><circle cx="214" cy="95" r="2.60" fill="#e88fc4"/></g></g><line x1="280.0" y1="0" x2="280.0" y2="190" stroke="#2f343e" stroke-width="2"/><rect x="8" y="8" width="38" height="17" rx="8.5" fill="#2f343e"/><text x="27" y="20" fill="#9aa1b0" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">現行</text><rect x="288.0" y="8" width="38" height="17" rx="8.5" fill="#6b8cff" fill-opacity=".25"/><text x="307.0" y="20" fill="#c8d3ff" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">提案</text></svg>
+    <svg viewBox="0 0 560 190" role="img" aria-label="Reroute"><rect width="560" height="190" fill="#191c22"/><rect width="560" height="190" fill="url(#dots)"/><g><path d="M10 60C40.0 60 20.0 95 50 95" fill="none" stroke="#e6c14a" stroke-width="2.2" stroke-linecap="round"/><rect x="50" y="40" width="120" height="110" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M50 47a7 7 0 0 1 7 -7h106a7 7 0 0 1 7 7v25H50z" fill="#30353e"/><line x1="57" y1="41" x2="163" y2="41" stroke="#6b8cff" stroke-width="2"/><text x="60" y="60" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Reroute</text><text x="60" y="142" fill="#6a7181" font-size="9" font-weight="400" text-anchor="start" font-family="JetBrains Mono, monospace">Idle   0.00 ms</text><path d="M159 147L167 139" stroke="#6a7181"/><circle cx="50" cy="95" r="5" fill="#e6c14a"/><circle cx="170" cy="95" r="5" fill="#e6c14a"/><path d="M170 95C220.0 95 220.0 150 270 150" fill="none" stroke="#e6c14a" stroke-width="2.2" stroke-linecap="round"/><path d="M170 95C220.0 95 220.0 40 270 40" fill="none" stroke="#e6c14a" stroke-width="2.2" stroke-linecap="round"/></g><g transform="translate(280.0 0)"><path d="M10 60C71.0 60 71.0 100 132 100" fill="none" stroke="#e6c14a" stroke-width="2.2" stroke-linecap="round"/><path d="M140 100C205.0 100 205.0 150 270 150" fill="none" stroke="#e6c14a" stroke-width="2.2" stroke-linecap="round"/><path d="M140 100C205.0 100 205.0 40 270 40" fill="none" stroke="#e6c14a" stroke-width="2.2" stroke-linecap="round"/><rect x="130" y="90" width="20" height="20" rx="6" transform="rotate(45 140 100)" fill="#191c22"/><rect x="133.5" y="93.5" width="13" height="13" rx="4" transform="rotate(45 140 100)" fill="#e6c14a"/></g><line x1="280.0" y1="0" x2="280.0" y2="190" stroke="#2f343e" stroke-width="2"/><rect x="8" y="8" width="38" height="17" rx="8.5" fill="#2f343e"/><text x="27" y="20" fill="#9aa1b0" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">現行</text><rect x="288.0" y="8" width="38" height="17" rx="8.5" fill="#6b8cff" fill-opacity=".25"/><text x="307.0" y="20" fill="#c8d3ff" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">提案</text></svg>
+    <svg viewBox="0 0 560 190" role="img" aria-label="コメント枠"><rect width="560" height="190" fill="#191c22"/><rect width="560" height="190" fill="url(#dots)"/><g><rect x="20" y="34" width="240" height="140" rx="7" fill="#6b8cff" fill-opacity="0.12" stroke="#3a404b"/><path d="M20 41a7 7 0 0 1 7 -7h226a7 7 0 0 1 7 7v25H20z" fill="#30353e"/><line x1="27" y1="35" x2="253" y2="35" stroke="#6b8cff" stroke-width="2"/><text x="30" y="54" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Damage</text><path d="M249 171L257 163" stroke="#6a7181"/><rect x="50" y="90" width="80" height="56" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M50 97a7 7 0 0 1 7 -7h66a7 7 0 0 1 7 7v25H50z" fill="#30353e"/><line x1="57" y1="91" x2="123" y2="91" stroke="#6b8cff" stroke-width="2"/><text x="60" y="110" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">A</text><path d="M119 143L127 135" stroke="#6a7181"/><rect x="150" y="100" width="80" height="56" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M150 107a7 7 0 0 1 7 -7h66a7 7 0 0 1 7 7v25H150z" fill="#30353e"/><line x1="157" y1="101" x2="223" y2="101" stroke="#6b8cff" stroke-width="2"/><text x="160" y="120" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">B</text><path d="M219 153L227 145" stroke="#6a7181"/></g><g transform="translate(280.0 0)"><rect x="20" y="48" width="240" height="126" rx="10" fill="#5b8cff" fill-opacity=".07" stroke="#5b8cff" stroke-opacity=".45" stroke-dasharray="0"/><path d="M20 58a10 10 0 0 1 10-10h0v-0h0" fill="none"/><rect x="28" y="36" width="124" height="22" rx="7" fill="#5b8cff" fill-opacity=".9"/><text x="38" y="51" fill="#191c22" font-size="10" font-weight="700" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Damage calculation</text><text x="250" y="70" fill="#6a7181" font-size="9" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">3 nodes</text><rect x="50" y="90" width="80" height="56" rx="8" fill="#242830" stroke="#3a404c"/><rect x="150" y="100" width="80" height="56" rx="8" fill="#242830" stroke="#3a404c"/></g><line x1="280.0" y1="0" x2="280.0" y2="190" stroke="#2f343e" stroke-width="2"/><rect x="8" y="8" width="38" height="17" rx="8.5" fill="#2f343e"/><text x="27" y="20" fill="#9aa1b0" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">現行</text><rect x="288.0" y="8" width="38" height="17" rx="8.5" fill="#6b8cff" fill-opacity=".25"/><text x="307.0" y="20" fill="#c8d3ff" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">提案</text></svg>
+    <svg viewBox="0 0 560 210" role="img" aria-label="パネル付きノード"><rect width="560" height="210" fill="#191c22"/><rect width="560" height="210" fill="url(#dots)"/><g><rect x="40" y="26" width="200" height="168" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M40 33a7 7 0 0 1 7 -7h186a7 7 0 0 1 7 7v25H40z" fill="#30353e"/><line x1="47" y1="27" x2="233" y2="27" stroke="#6b8cff" stroke-width="2"/><text x="50" y="46" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Surface</text><text x="50" y="186" fill="#6a7181" font-size="9" font-weight="400" text-anchor="start" font-family="JetBrains Mono, monospace">Idle   0.00 ms</text><path d="M229 191L237 183" stroke="#6a7181"/><circle cx="40" cy="64" r="5" fill="#e6c14a"/><text x="52" y="68" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Base</text><circle cx="40" cy="86" r="5" fill="#8fb3d9"/><text x="52" y="90" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Rough</text><circle cx="40" cy="108" r="5" fill="#8fb3d9"/><text x="52" y="112" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Spec</text><circle cx="40" cy="130" r="5" fill="#e6c14a"/><text x="52" y="134" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Tint</text><circle cx="40" cy="152" r="5" fill="#e6c14a"/><text x="52" y="156" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Emit</text></g><g transform="translate(280.0 0)"><g><rect x="40" y="26" width="200" height="168" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><path d="M40 35a9 9 0 0 1 9 -9h182a9 9 0 0 1 9 9v21H40z" fill="#5b8cff" fill-opacity=".16"/><line x1="40" y1="56" x2="240" y2="56" stroke="#5b8cff" stroke-opacity=".35"/><rect x="47" y="32.0" width="18" height="18" rx="5" fill="#5b8cff"/><text x="56.0" y="45.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">S</text><text x="71" y="45.0" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Surface</text><text x="231" y="44.5" fill="#5b8cff" font-size="9" font-weight="500" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Shader</text></g><text x="226" y="73.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Shader</text><circle cx="240" cy="70" r="7.6" fill="#191c22"/><g><circle cx="240" cy="70" r="5" fill="none" stroke="#3fc7b0" stroke-width="1.7"/><circle cx="240" cy="70" r="2.60" fill="#3fc7b0"/></g><text x="54" y="97.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Base</text><circle cx="40" cy="94" r="7.6" fill="#191c22"/><g><circle cx="40" cy="94" r="5" fill="none" stroke="#e6c14a" stroke-width="1.7"/><circle cx="40" cy="94" r="2.60" fill="#e6c14a"/></g><rect x="52" y="108" width="176" height="16" rx="4" fill="#2b3039"/><rect x="52" y="108" width="79" height="16" rx="4" fill="#6b8cff" fill-opacity=".45"/><text x="58" y="119.5" fill="#e6e8ee" font-size="9.5" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Rough</text><text x="222" y="119.5" fill="#e6e8ee" font-size="9.5" font-weight="400" text-anchor="end" font-family="JetBrains Mono, monospace">0.45</text><circle cx="40" cy="116" r="7.6" fill="#191c22"/><g><circle cx="40" cy="116" r="5" fill="none" stroke="#8fb3d9" stroke-width="1.7"/></g><text x="52" y="142" fill="#e6e8ee" font-size="10" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">▸ Specular</text><text x="228" y="142" fill="#6a7181" font-size="9" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">2</text><circle cx="40" cy="138" r="6.6" fill="#191c22"/><g><circle cx="40" cy="138" r="4" fill="none" stroke="#8fb3d9" stroke-width="1.7"/><circle cx="40" cy="138" r="2.08" fill="#8fb3d9"/></g><line x1="50" y1="152" x2="230" y2="152" stroke="#3a404c"/><text x="52" y="170" fill="#e6e8ee" font-size="10" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">▸ Emission</text><circle cx="40" cy="166" r="6.6" fill="#191c22"/><g><circle cx="40" cy="166" r="4" fill="none" stroke="#e6c14a" stroke-width="1.7"/></g></g><line x1="280.0" y1="0" x2="280.0" y2="210" stroke="#2f343e" stroke-width="2"/><rect x="8" y="8" width="38" height="17" rx="8.5" fill="#2f343e"/><text x="27" y="20" fill="#9aa1b0" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">現行</text><rect x="288.0" y="8" width="38" height="17" rx="8.5" fill="#6b8cff" fill-opacity=".25"/><text x="307.0" y="20" fill="#c8d3ff" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">提案</text></svg>
+    <svg viewBox="0 0 560 190" role="img" aria-label="複数入力ソケット"><rect width="560" height="190" fill="#191c22"/><rect width="560" height="190" fill="url(#dots)"/><g><path d="M10 50C85.0 50 85.0 100 160 100" fill="none" stroke="#3fc7b0" stroke-width="2.2" stroke-linecap="round"/><path d="M10 100C85.0 100 85.0 100 160 100" fill="none" stroke="#3fc7b0" stroke-width="2.2" stroke-linecap="round"/><path d="M10 150C85.0 150 85.0 100 160 100" fill="none" stroke="#3fc7b0" stroke-width="2.2" stroke-linecap="round"/><rect x="160" y="50" width="110" height="100" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M160 57a7 7 0 0 1 7 -7h96a7 7 0 0 1 7 7v25H160z" fill="#30353e"/><line x1="167" y1="51" x2="263" y2="51" stroke="#6b8cff" stroke-width="2"/><text x="170" y="70" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Join</text><path d="M259 147L267 139" stroke="#6a7181"/><circle cx="160" cy="100" r="5" fill="#3fc7b0"/><circle cx="160" cy="100" r="7" fill="none" stroke="#3fc7b0"/></g><g transform="translate(280.0 0)"><path d="M10 50C85.0 50 85.0 90 160 90" fill="none" stroke="#3fc7b0" stroke-width="2.2" stroke-linecap="round"/><path d="M10 100C85.0 100 85.0 100 160 100" fill="none" stroke="#3fc7b0" stroke-width="2.2" stroke-linecap="round"/><path d="M10 150C85.0 150 85.0 110 160 110" fill="none" stroke="#3fc7b0" stroke-width="2.2" stroke-linecap="round"/><g><rect x="160" y="50" width="110" height="100" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><path d="M160 59a9 9 0 0 1 9 -9h92a9 9 0 0 1 9 9v21H160z" fill="#4fb6e8" fill-opacity=".16"/><line x1="160" y1="80" x2="270" y2="80" stroke="#4fb6e8" stroke-opacity=".35"/><rect x="167" y="56.0" width="18" height="18" rx="5" fill="#4fb6e8"/><text x="176.0" y="69.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">J</text><text x="191" y="69.0" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Join</text></g><g><rect x="152.4" y="85.9" width="15.2" height="28.2" rx="7.6" fill="#191c22"/><rect x="155.0" y="88.5" width="10.0" height="23" rx="5.0" fill="none" stroke="#3fc7b0" stroke-width="1.7"/><circle cx="160" cy="93.0" r="1.9" fill="#3fc7b0"/><circle cx="160" cy="100.0" r="1.9" fill="#3fc7b0"/><circle cx="160" cy="107.0" r="1.9" fill="#3fc7b0"/></g><text x="176" y="104" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Geometry</text></g><line x1="280.0" y1="0" x2="280.0" y2="190" stroke="#2f343e" stroke-width="2"/><rect x="8" y="8" width="38" height="17" rx="8.5" fill="#2f343e"/><text x="27" y="20" fill="#9aa1b0" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">現行</text><rect x="288.0" y="8" width="38" height="17" rx="8.5" fill="#6b8cff" fill-opacity=".25"/><text x="307.0" y="20" fill="#c8d3ff" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">提案</text></svg>
   </div>
+  <p>図の左が現行の描画、右が提案です。Branch の現行図は、ホストが三角のピンで代用した場合の見え方です。複数入力は現行でも <code>multiple=true</code> の入力で受けられますが、どの順でつながっているかが見えません。</p>
 </section>
 
 <section id="pins">
-  <h2>ピンと配線</h2>
-  <h3>ピンの種類</h3>
-  <p>形（Shape）とは別に、<strong>役割</strong>（データか実行フローか）と<strong>入れ物</strong>（単体・配列・Set・Map）と<strong>修飾</strong>（参照・ワイルドカード・Field）を持たせます。未接続のピンは中空にするかどうかをスタイルで選べます。</p>
-  <figure class="wide">
-    <svg viewBox="0 0 900 140" role="img" aria-label="ピン種類の一覧">
-      <rect width="900" height="140" fill="url(#dots)"/>
-      <g font-family="sans-serif" font-size="11" fill="#a3aab8" text-anchor="middle">
-        <circle cx="50" cy="56" r="7" fill="#8fb8de"/><text x="50" y="96">Data</text><text x="50" y="112" font-size="9.5" fill="#6d7483">接続済み</text>
-        <circle cx="130" cy="56" r="7" fill="none" stroke="#8fb8de" stroke-width="2"/><text x="130" y="96">Data</text><text x="130" y="112" font-size="9.5" fill="#6d7483">未接続</text>
-        <path d="M200 48h10l9 8-9 8h-10z" fill="#f2f2f2"/><text x="210" y="96">Flow</text><text x="210" y="112" font-size="9.5" fill="#6d7483">実行ピン</text>
-        <g fill="#e8b44a"><rect x="279" y="48" width="4" height="4"/><rect x="285" y="48" width="4" height="4"/><rect x="291" y="48" width="4" height="4"/><rect x="279" y="54" width="4" height="4"/><rect x="285" y="54" width="4" height="4"/><rect x="291" y="54" width="4" height="4"/><rect x="279" y="60" width="4" height="4"/><rect x="285" y="60" width="4" height="4"/><rect x="291" y="60" width="4" height="4"/></g><text x="287" y="96">Array</text>
-        <text x="370" y="62" font-size="18" fill="#d26ac0">{ }</text><text x="370" y="96">Set</text>
-        <path d="M444 49a7 7 0 0 0 0 14z" fill="#5aa0ff"/><path d="M446 49a7 7 0 0 1 0 14z" fill="#e8b44a"/><text x="445" y="96">Map</text>
-        <path d="M520 49l7 7-7 7-7-7z" fill="#7fd0c0"/><text x="520" y="96">Reference</text>
-        <circle cx="600" cy="56" r="7" fill="none" stroke="#9aa0aa" stroke-width="2" stroke-dasharray="3 2.5"/><text x="600" y="96">Wildcard</text><text x="600" y="112" font-size="9.5" fill="#6d7483">接続で型が決まる</text>
-        <path d="M680 49l7 7-7 7-7-7z" fill="#a1a1a1"/><circle cx="680" cy="56" r="2" fill="#1c1f25"/><text x="680" y="96">Field</text><text x="680" y="112" font-size="9.5" fill="#6d7483">要素ごとの値</text>
-        <rect x="755" y="40" width="10" height="32" rx="5" fill="#2fc6a6"/><text x="760" y="96">Multi-input</text>
-        <circle cx="840" cy="56" r="7" fill="#8fb8de"/><circle cx="840" cy="56" r="11" fill="none" stroke="#8fb8de" stroke-opacity=".6"/><text x="840" y="96">Hover</text><text x="840" y="112" font-size="9.5" fill="#6d7483">接続候補</text>
-      </g>
-    </svg>
-    <figcaption><b>PinRole × PinContainer × PinFlags</b>形は <code>SocketTypeView</code> から引き継ぎ、役割と入れ物で描き分ける。既存の <code>PinShape</code> と <code>inheritTypeStyle</code> はそのまま残す。</figcaption>
-  </figure>
+  <h2>ピン記号</h2>
+  <p>現行の記号は Circle / Square / Diamond / Triangle の4種類で、接続の有無は見た目に出ません。役割（Data / Flow）、入れ物（Single / Array / Set / Map）、修飾（参照・ワイルドカード・Field・必須・任意・使用不可）を組み合わせて描く、次の記号を新しく作りました。</p>
+  <div class="glyphs"><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="Data（接続済み）"><rect width="60" height="60" rx="8" fill="#191c22"/><g transform="translate(30 30) scale(1.6) translate(-30 -30)"><circle cx="30" cy="30" r="8.6" fill="#191c22"/><g><circle cx="30" cy="30" r="6" fill="none" stroke="#8fb3d9" stroke-width="1.7"/><circle cx="30" cy="30" r="3.12" fill="#8fb3d9"/></g></g></svg><div><b>Data（接続済み）</b><span>輪＋芯。芯の半径は輪の52%</span></div></div><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="Data（未接続）"><rect width="60" height="60" rx="8" fill="#191c22"/><g transform="translate(30 30) scale(1.6) translate(-30 -30)"><circle cx="30" cy="30" r="8.6" fill="#191c22"/><g><circle cx="30" cy="30" r="6" fill="none" stroke="#8fb3d9" stroke-width="1.7"/></g></g></svg><div><b>Data（未接続）</b><span>輪だけ。未接続入力は値欄を出す</span></div></div><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="Flow（接続済み）"><rect width="60" height="60" rx="8" fill="#191c22"/><g transform="translate(30 30) scale(1.6) translate(-30 -30)"><circle cx="30" cy="30" r="8.6" fill="#191c22"/><g><rect x="23.7" y="23.7" width="12.600000000000001" height="12.600000000000001" rx="2.6" fill="#e6e8ee"/><path d="M28.4 27.2L31.6 30L28.4 32.8" fill="none" stroke="#191c22" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g></g></svg><div><b>Flow（接続済み）</b><span>角丸四角に切り抜きの山形</span></div></div><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="Flow（未接続）"><rect width="60" height="60" rx="8" fill="#191c22"/><g transform="translate(30 30) scale(1.6) translate(-30 -30)"><circle cx="30" cy="30" r="8.6" fill="#191c22"/><g><rect x="23.7" y="23.7" width="12.600000000000001" height="12.600000000000001" rx="2.6" fill="none" stroke="#e6e8ee" stroke-width="1.6"/><path d="M28.4 27.2L31.6 30L28.4 32.8" fill="none" stroke="#e6e8ee" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g></g></svg><div><b>Flow（未接続）</b><span>線だけの角丸四角＋山形</span></div></div><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="Array"><rect width="60" height="60" rx="8" fill="#191c22"/><g transform="translate(30 30) scale(1.6) translate(-30 -30)"><circle cx="30" cy="30" r="8.6" fill="#191c22"/><g><circle cx="27.8" cy="27.8" r="5.4" fill="none" stroke="#8fb3d9" stroke-opacity=".45" stroke-width="1.4"/><circle cx="30" cy="30" r="6" fill="#191c22" stroke="#8fb3d9" stroke-width="1.7"/><circle cx="30" cy="30" r="3.0" fill="#8fb3d9"/></g></g></svg><div><b>Array</b><span>後ろに薄い輪を重ねて「複数」を示す</span></div></div><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="Set"><rect width="60" height="60" rx="8" fill="#191c22"/><g transform="translate(30 30) scale(1.6) translate(-30 -30)"><circle cx="30" cy="30" r="8.6" fill="#191c22"/><g><rect x="24" y="24" width="12" height="12" rx="2.1" fill="none" stroke="#8fb3d9" stroke-width="1.7"/><circle cx="30" cy="30" r="1.6" fill="#8fb3d9"/></g></g></svg><div><b>Set</b><span>角丸四角＋中央点。重複なしの集合</span></div></div><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="Map"><rect width="60" height="60" rx="8" fill="#191c22"/><g transform="translate(30 30) scale(1.6) translate(-30 -30)"><circle cx="30" cy="30" r="8.6" fill="#191c22"/><g><path d="M30 24A6 6 0 0 0 30 36Z" fill="#5aa0ff"/><path d="M30 24A6 6 0 0 1 30 36Z" fill="#8fb3d9"/><line x1="30" y1="23" x2="30" y2="37" stroke="#191c22" stroke-width="1.4"/></g></g></svg><div><b>Map</b><span>左＝キー型、右＝値型で塗り分け</span></div></div><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="Reference"><rect width="60" height="60" rx="8" fill="#191c22"/><g transform="translate(30 30) scale(1.6) translate(-30 -30)"><circle cx="30" cy="30" r="8.6" fill="#191c22"/><g><polygon points="35.6,33.2 30.0,36.5 24.4,33.2 24.4,26.8 30.0,23.5 35.6,26.8" fill="none" stroke="#8fb3d9" stroke-width="1.7" stroke-linejoin="round"/><circle cx="30" cy="30" r="2.7" fill="#8fb3d9"/></g></g></svg><div><b>Reference</b><span>六角形。値ではなく参照を渡す</span></div></div><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="Wildcard"><rect width="60" height="60" rx="8" fill="#191c22"/><g transform="translate(30 30) scale(1.6) translate(-30 -30)"><circle cx="30" cy="30" r="8.6" fill="#191c22"/><g><circle cx="30" cy="30" r="6" fill="none" stroke="#aab0bc" stroke-width="1.6" stroke-dasharray="2.6 2"/><path d="M27.8 30H32.2M30 27.8V32.2" stroke="#aab0bc" stroke-width="1.4" stroke-linecap="round"/></g></g></svg><div><b>Wildcard</b><span>破線の輪＋十字。接続で型が決まる</span></div></div><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="Field"><rect width="60" height="60" rx="8" fill="#191c22"/><g transform="translate(30 30) scale(1.6) translate(-30 -30)"><circle cx="30" cy="30" r="8.6" fill="#191c22"/><g><circle cx="30" cy="30" r="6" fill="none" stroke="#8fb3d9" stroke-width="1.7"/><path d="M30 27.4L32.6 30L30 32.6L27.4 30Z" fill="#8fb3d9"/></g></g></svg><div><b>Field</b><span>輪＋内側の菱形。要素ごとの値</span></div></div><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="Multi-input"><rect width="60" height="60" rx="8" fill="#191c22"/><g transform="translate(30 30) scale(1.6) translate(-30 -30)"><g><rect x="21.4" y="15.9" width="17.2" height="28.2" rx="8.6" fill="#191c22"/><rect x="24" y="18.5" width="12" height="23" rx="6" fill="none" stroke="#8fb3d9" stroke-width="1.7"/><circle cx="30" cy="23.0" r="1.9" fill="#8fb3d9"/><circle cx="30" cy="30.0" r="1.9" fill="#8fb3d9"/><circle cx="30" cy="37.0" r="1.9" fill="#8fb3d9"/></g></g></svg><div><b>Multi-input</b><span>つながった本数だけ縦に伸び、点で本数を示す</span></div></div><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="Optional"><rect width="60" height="60" rx="8" fill="#191c22"/><g transform="translate(30 30) scale(1.6) translate(-30 -30)"><circle cx="30" cy="30" r="8.6" fill="#191c22"/><g><path d="M33.00 24.80A6 6 0 1 1 35.91 28.96" fill="none" stroke="#8fb3d9" stroke-width="1.7" stroke-linecap="round"/></g></g></svg><div><b>Optional</b><span>一部が欠けた輪。未接続でも動く</span></div></div><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="Required（未接続）"><rect width="60" height="60" rx="8" fill="#191c22"/><g transform="translate(30 30) scale(1.6) translate(-30 -30)"><circle cx="30" cy="30" r="8.6" fill="#191c22"/><g><circle cx="30" cy="30" r="6" fill="none" stroke="#8fb3d9" stroke-width="1.7"/><circle cx="35.4" cy="24.6" r="2.6" fill="#ef5f5f" stroke="#191c22" stroke-width="1.2"/></g></g></svg><div><b>Required（未接続）</b><span>右上に赤い点。接続か値が必要</span></div></div><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="Unavailable"><rect width="60" height="60" rx="8" fill="#191c22"/><g transform="translate(30 30) scale(1.6) translate(-30 -30)"><circle cx="30" cy="30" r="8.6" fill="#191c22"/><g><circle cx="30" cy="30" r="6" fill="none" stroke="#8fb3d9" stroke-opacity=".35" stroke-width="1.5"/><line x1="25.8" y1="34.2" x2="34.2" y2="25.8" stroke="#8fb3d9" stroke-opacity=".5" stroke-width="1.4"/></g></g></svg><div><b>Unavailable</b><span>薄い輪＋斜線。今の設定では使えない</span></div></div><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="Error"><rect width="60" height="60" rx="8" fill="#191c22"/><g transform="translate(30 30) scale(1.6) translate(-30 -30)"><circle cx="30" cy="30" r="8.6" fill="#191c22"/><g><circle cx="30" cy="30" r="6" fill="none" stroke="#ef5f5f" stroke-width="1.9"/><circle cx="30" cy="30" r="3.0" fill="#ef5f5f"/></g></g></svg><div><b>Error</b><span>エラー色の輪＋芯。接続先と矛盾している</span></div></div><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="変換"><rect width="60" height="60" rx="8" fill="#191c22"/><line x1="6" y1="30" x2="54" y2="30" stroke="#e7a849" stroke-width="2.2"/><circle cx="30" cy="30" r="7.5" fill="#2b3039" stroke="#e7a849" stroke-width="1.4"/><path d="M26.5 28.5H33M31 26.5L33.2 28.5L31 30.5M33.5 31.8H27M29 33.8L26.8 31.8L29 29.8" fill="none" stroke="#e7a849" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg><div><b>配線ビーズ：変換</b><span>型変換が入る配線の中央に置く</span></div></div><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="無効"><rect width="60" height="60" rx="8" fill="#191c22"/><line x1="6" y1="30" x2="54" y2="30" stroke="#ef5f5f" stroke-width="2.2"/><circle cx="30" cy="30" r="7.5" fill="#ef5f5f"/><path d="M27.2 27.2L32.8 32.8M32.8 27.2L27.2 32.8" stroke="#191c22" stroke-width="1.8" stroke-linecap="round"/></svg><div><b>配線ビーズ：無効</b><span>ホストが無効と判断した配線</span></div></div><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="循環"><rect width="60" height="60" rx="8" fill="#191c22"/><line x1="6" y1="30" x2="54" y2="30" stroke="#ef5f5f" stroke-width="2.2"/><circle cx="30" cy="30" r="7.5" fill="#2b3039" stroke="#ef5f5f" stroke-width="1.4"/><path d="M33.4 29.5A3.6 3.6 0 1 1 31.2 26.6" fill="none" stroke="#ef5f5f" stroke-width="1.4" stroke-linecap="round"/><path d="M30.2 24.8L32.2 26.6L30.2 28.4" fill="none" stroke="#ef5f5f" stroke-width="1.3" stroke-linecap="round"/></svg><div><b>配線ビーズ：循環</b><span>循環を作る配線</span></div></div><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="Reroute ノット"><rect width="60" height="60" rx="8" fill="#191c22"/><line x1="6" y1="30" x2="54" y2="30" stroke="#e6c14a" stroke-width="2.2"/><rect x="20" y="20" width="20" height="20" rx="6" transform="rotate(45 30 30)" fill="#191c22"/><rect x="23.5" y="23.5" width="13" height="13" rx="4" transform="rotate(45 30 30)" fill="#e6c14a"/></svg><div><b>Reroute ノット</b><span>角丸の菱形。円の Reroute と区別する</span></div></div><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="Entry タブ"><rect width="60" height="60" rx="8" fill="#191c22"/><path d="M14 18a6 6 0 0 1 6-6h26v36H20a6 6 0 0 1-6-6z" fill="#f0607a"/><text x="30" y="35" fill="#191c22" font-size="12" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">▶</text></svg><div><b>Entry タブ</b><span>Event ノードの左に出るタブ。実行の起点</span></div></div><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="カテゴリタイル"><rect width="60" height="60" rx="8" fill="#191c22"/><rect x="19" y="19" width="22" height="22" rx="5" fill="#e6a23c"/><text x="30.0" y="34.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">N</text></svg><div><b>カテゴリタイル</b><span>ヘッダー左の記号タイル。文字1つかアイコン</span></div></div><div class="glyph"><svg viewBox="0 0 60 60" role="img" aria-label="Bypass 斜線"><rect width="60" height="60" rx="8" fill="#191c22"/><line x1="-14" y1="52" x2="12" y2="8" stroke="#e7a849" stroke-opacity=".35" stroke-width="4"/><line x1="-2" y1="52" x2="24" y2="8" stroke="#e7a849" stroke-opacity=".35" stroke-width="4"/><line x1="10" y1="52" x2="36" y2="8" stroke="#e7a849" stroke-opacity=".35" stroke-width="4"/><line x1="22" y1="52" x2="48" y2="8" stroke="#e7a849" stroke-opacity=".35" stroke-width="4"/><line x1="34" y1="52" x2="60" y2="8" stroke="#e7a849" stroke-opacity=".35" stroke-width="4"/><line x1="46" y1="52" x2="72" y2="8" stroke="#e7a849" stroke-opacity=".35" stroke-width="4"/><line x1="58" y1="52" x2="84" y2="8" stroke="#e7a849" stroke-opacity=".35" stroke-width="4"/></svg><div><b>Bypass 斜線</b><span>ノード本体に薄く敷く斜線</span></div></div></div>
+  <h3>描画の決まり</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>項目</th><th>決まり</th></tr></thead>
+    <tbody>
+      <tr><td>切り欠き</td><td>記号の外側に canvas 色の輪（半径＋2.6px）を描き、ノードの枠に差し込んだように見せる。幅は <code>pinSeat</code> で調整</td></tr>
+      <tr><td>線幅</td><td>輪は1.7px、山形は1.8px。ズーム0.8〜2.0倍で記号ごと拡縮し、線幅は1.2px未満にしない</td></tr>
+      <tr><td>色</td><td><code>SocketTypeView::color</code>。Flow は既定でテーマの文字色、エラーと必須の点は error 色</td></tr>
+      <tr><td>既存の形との関係</td><td><code>PinShape</code> と <code>inheritTypeStyle</code> は残す。新しい記号は <code>PinRole</code>・<code>PinContainer</code>・<code>PinFlags</code> から選ばれ、ホストのフックで置き換えられる</td></tr>
+      <tr><td>状態バッジ</td><td>ノードヘッダーの警告・エラー・ロック・監視は、既存の <code>IconId</code>（Warning, Error, Lock, Eye, Pin）を使う</td></tr>
+    </tbody>
+  </table></div>
+</section>
 
-  <h3>配線の表現</h3>
-  <figure class="wide">
-    <svg viewBox="0 0 900 170" role="img" aria-label="配線表現の一覧">
-      <rect width="900" height="170" fill="url(#dots)"/>
-      <g font-family="sans-serif" font-size="11" fill="#a3aab8" text-anchor="middle">
-        <path d="M20 40C80 40 80 110 150 110" stroke="#e8b44a" stroke-width="2.5" fill="none"/><text x="85" y="150">型の色</text>
-        <path d="M190 40C250 40 250 110 320 110" stroke="url(#g-type)" stroke-width="2.5" fill="none"/><text x="255" y="150">出力→入力のグラデーション</text>
-        <path d="M360 40C420 40 420 110 490 110" stroke="#f2f2f2" stroke-width="4" fill="none"/><text x="425" y="150">実行フロー（太線）</text>
-        <path d="M530 40C590 40 590 110 660 110" stroke="#f2f2f2" stroke-opacity=".35" stroke-width="4" fill="none"/>
-        <path class="flow" d="M530 40C590 40 590 110 660 110" stroke="#ffffff" stroke-width="4" stroke-linecap="round" fill="none"/><text x="595" y="150">実行中の流れ</text>
-        <rect x="720" y="40" width="80" height="70" rx="6" fill="#262a31" stroke="#3a404b" opacity=".55"/>
-        <path d="M700 75H820" stroke="#c94b4b" stroke-width="2.5" fill="none"/>
-        <text x="760" y="60" font-size="9.5" fill="#6d7483">Bypassed</text><text x="760" y="150">Bypass の素通し線</text>
-      </g>
-    </svg>
-    <figcaption><b>LinkColorSource / LinkArrow / flow / bypass</b>既定は「出力ピンの型色」。矢印は None / Middle / End を選べ、hover 中の配線と選択ノードにつながる配線は太く明るくする。</figcaption>
-  </figure>
+<section id="feedback">
+  <h2>接続のフィードバック</h2>
+  <p>つなげない接続や、壊れた接続を見せる表現です。現行は接続をドラッグしている間だけ判定し、確定後の配線はすべて同じ見た目になります。</p>
+  <div class="table-wrap"><table class="diff">
+    <thead><tr><th>場面</th><th>現行</th><th>提案</th></tr></thead>
+    <tbody>
+      <tr><td>ドラッグ中の候補</td><td>すべてのピンに緑か赤の輪。プレビューは直線</td><td>接続できるピンだけに光の輪。接続できないピンは25%、候補のないノードは本体ごと50%に減光。プレビューは本番と同じ曲線</td></tr>
+      <tr><td>近くの候補への吸着</td><td>なし。ピンの上に正確に乗せる必要がある</td><td><code>snapDistance</code> 以内の最も近い候補に吸着し、輪を大きくする</td></tr>
+      <tr><td>接続できない理由</td><td>ImGui の tooltip に「Rejected: …」と英語で出る</td><td>カーソルの横に理由のピル。文言はホストの <code>reason</code> をそのまま出す</td></tr>
+      <tr><td>接続できないピンに乗せたとき</td><td>赤い点線の直線</td><td>エラー色の細い点線と、ピンの赤い輪。離しても元の配線は変えない（現行と同じ）</td></tr>
+      <tr><td>変換が入る接続</td><td>ドラッグ中だけ黄色の破線と下線</td><td>確定後も配線の中央に変換ビーズ（⇄）。配線は出力から入力への型色グラデーション</td></tr>
+      <tr><td>あとから無効になった配線</td><td>表示なし。型を変えても正常な配線のまま</td><td><code>LinkView::validity = Invalid</code> でエラー色の破線、中央に ✕ ビーズ、受け側のピンを Error 記号。hover で理由を出す</td></tr>
+      <tr><td>循環</td><td>ホストの <code>canConnect</code> で拒否するだけ</td><td>ドラッグ中は「循環になります」。許可された循環の配線には ↻ ビーズ</td></tr>
+      <tr><td>必須入力が未接続</td><td><code>PinRow</code> のラベルに「*」が付くだけ。未接続でも警告は出ない</td><td>Required 記号（赤い点）。ヘッダー右に未解決の数</td></tr>
+      <tr><td>今の設定では使えないピン</td><td><code>hidden</code> で消すしかない</td><td>Unavailable 記号。候補から外し、hover で理由を出す</td></tr>
+      <tr><td>複数入力の上限</td><td>上限に達すると「Socket already occupied」</td><td>長円の点が上限まで埋まり、ドラッグ中は「上限 4 本」と出す</td></tr>
+    </tbody>
+  </table></div>
+  <div class="gallery">
+    <svg viewBox="0 0 560 190" role="img" aria-label="接続ドラッグ中の表示"><rect width="560" height="190" fill="#191c22"/><rect width="560" height="190" fill="url(#dots)"/><g><rect x="20" y="50" width="110" height="80" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M20 57a7 7 0 0 1 7 -7h96a7 7 0 0 1 7 7v25H20z" fill="#30353e"/><line x1="27" y1="51" x2="123" y2="51" stroke="#6b8cff" stroke-width="2"/><text x="30" y="70" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Noise</text><path d="M119 127L127 119" stroke="#6a7181"/><circle cx="130" cy="96" r="5" fill="#e6c14a"/><rect x="170" y="20" width="100" height="66" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M170 27a7 7 0 0 1 7 -7h86a7 7 0 0 1 7 7v25H170z" fill="#30353e"/><line x1="177" y1="21" x2="263" y2="21" stroke="#6b8cff" stroke-width="2"/><text x="180" y="40" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Mix</text><path d="M259 83L267 75" stroke="#6a7181"/><circle cx="170" cy="62" r="5" fill="#e6c14a"/><circle cx="170" cy="62" r="9" fill="none" stroke="#45c48c" stroke-width="2"/><rect x="170" y="110" width="100" height="70" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M170 117a7 7 0 0 1 7 -7h86a7 7 0 0 1 7 7v25H170z" fill="#30353e"/><line x1="177" y1="111" x2="263" y2="111" stroke="#6b8cff" stroke-width="2"/><text x="180" y="130" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Count</text><path d="M259 177L267 169" stroke="#6a7181"/><circle cx="170" cy="152" r="5" fill="#ef7a7a"/><circle cx="170" cy="152" r="9" fill="none" stroke="#ef5f5f" stroke-width="1"/><line x1="130" y1="96" x2="168" y2="64" stroke="#45c48c" stroke-width="2"/><rect x="180" y="72" width="80" height="18" fill="#3a3f4a"/><text x="184" y="85" fill="#e6e8ee" font-size="9.5" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Exact</text></g><g transform="translate(280.0 0)"><g><rect x="20" y="50" width="110" height="80" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><path d="M20 59a9 9 0 0 1 9 -9h92a9 9 0 0 1 9 9v21H20z" fill="#e6a23c" fill-opacity=".16"/><line x1="20" y1="80" x2="130" y2="80" stroke="#e6a23c" stroke-opacity=".35"/><rect x="27" y="56.0" width="18" height="18" rx="5" fill="#e6a23c"/><text x="36.0" y="69.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">N</text><text x="51" y="69.0" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Noise</text></g><text x="116" y="99.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Color</text><circle cx="130" cy="96" r="7.6" fill="#191c22"/><g><circle cx="130" cy="96" r="5" fill="none" stroke="#e6c14a" stroke-width="1.7"/><circle cx="130" cy="96" r="2.60" fill="#e6c14a"/></g><g><rect x="170" y="20" width="100" height="66" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><path d="M170 29a9 9 0 0 1 9 -9h82a9 9 0 0 1 9 9v21H170z" fill="#36c2ad" fill-opacity=".16"/><line x1="170" y1="50" x2="270" y2="50" stroke="#36c2ad" stroke-opacity=".35"/><rect x="177" y="26.0" width="18" height="18" rx="5" fill="#36c2ad"/><text x="186.0" y="39.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">M</text><text x="201" y="39.0" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Mix</text></g><text x="184" y="65.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">A</text><circle cx="170" cy="62" r="7.6" fill="#191c22"/><g><circle cx="170" cy="62" r="5" fill="none" stroke="#e6c14a" stroke-width="1.7"/></g><circle cx="170" cy="62" r="11" fill="none" stroke="#45c48c" stroke-width="2"/><circle cx="170" cy="62" r="15" fill="none" stroke="#45c48c" stroke-opacity=".3" stroke-width="3"/><g opacity="0.35"><rect x="170" y="110" width="100" height="70" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><path d="M170 119a9 9 0 0 1 9 -9h82a9 9 0 0 1 9 9v21H170z" fill="#8a94a8" fill-opacity=".16"/><line x1="170" y1="140" x2="270" y2="140" stroke="#8a94a8" stroke-opacity=".35"/><rect x="177" y="116.0" width="18" height="18" rx="5" fill="#8a94a8"/><text x="186.0" y="129.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">#</text><text x="201" y="129.0" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Count</text></g><text x="184" y="155.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">N</text><circle cx="170" cy="152" r="7.6" fill="#191c22"/><g><circle cx="170" cy="152" r="5" fill="none" stroke="#ef7a7a" stroke-width="1.7"/></g><path d="M130 96C160.0 96 136.0 64 166 64" fill="none" stroke="#e6c14a" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="5 4"/><rect x="28.1" y="150" width="103.8" height="20" rx="10" fill="#2b3039" stroke="#45c48c" stroke-opacity=".7"/><text x="80.0" y="163.5" fill="#45c48c" font-size="9.5" font-weight="500" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">Color → Color</text></g><line x1="280.0" y1="0" x2="280.0" y2="190" stroke="#2f343e" stroke-width="2"/><rect x="8" y="8" width="38" height="17" rx="8.5" fill="#2f343e"/><text x="27" y="20" fill="#9aa1b0" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">現行</text><rect x="288.0" y="8" width="38" height="17" rx="8.5" fill="#6b8cff" fill-opacity=".25"/><text x="307.0" y="20" fill="#c8d3ff" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">提案</text></svg>
+    <svg viewBox="0 0 560 190" role="img" aria-label="接続できない場合"><rect width="560" height="190" fill="#191c22"/><rect width="560" height="190" fill="url(#dots)"/><g><rect x="20" y="60" width="110" height="70" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M20 67a7 7 0 0 1 7 -7h96a7 7 0 0 1 7 7v25H20z" fill="#30353e"/><line x1="27" y1="61" x2="123" y2="61" stroke="#6b8cff" stroke-width="2"/><text x="30" y="80" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Noise</text><path d="M119 127L127 119" stroke="#6a7181"/><circle cx="130" cy="100" r="5" fill="#e6c14a"/><rect x="170" y="60" width="100" height="70" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M170 67a7 7 0 0 1 7 -7h86a7 7 0 0 1 7 7v25H170z" fill="#30353e"/><line x1="177" y1="61" x2="263" y2="61" stroke="#6b8cff" stroke-width="2"/><text x="180" y="80" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Count</text><path d="M259 127L267 119" stroke="#6a7181"/><circle cx="170" cy="100" r="5" fill="#ef7a7a"/><circle cx="170" cy="100" r="9" fill="none" stroke="#ef5f5f"/><line x1="130" y1="100" x2="131" y2="100" stroke="#ef5f5f" stroke-width="2"/><line x1="132" y1="100" x2="133" y2="100" stroke="#ef5f5f" stroke-width="2"/><line x1="134" y1="100" x2="135" y2="100" stroke="#ef5f5f" stroke-width="2"/><line x1="136" y1="100" x2="137" y2="100" stroke="#ef5f5f" stroke-width="2"/><line x1="138" y1="100" x2="139" y2="100" stroke="#ef5f5f" stroke-width="2"/><line x1="140" y1="100" x2="141" y2="100" stroke="#ef5f5f" stroke-width="2"/><line x1="142" y1="100" x2="143" y2="100" stroke="#ef5f5f" stroke-width="2"/><line x1="144" y1="100" x2="145" y2="100" stroke="#ef5f5f" stroke-width="2"/><line x1="146" y1="100" x2="147" y2="100" stroke="#ef5f5f" stroke-width="2"/><line x1="148" y1="100" x2="149" y2="100" stroke="#ef5f5f" stroke-width="2"/><line x1="150" y1="100" x2="151" y2="100" stroke="#ef5f5f" stroke-width="2"/><line x1="152" y1="100" x2="153" y2="100" stroke="#ef5f5f" stroke-width="2"/><line x1="154" y1="100" x2="155" y2="100" stroke="#ef5f5f" stroke-width="2"/><line x1="156" y1="100" x2="157" y2="100" stroke="#ef5f5f" stroke-width="2"/><line x1="158" y1="100" x2="159" y2="100" stroke="#ef5f5f" stroke-width="2"/><line x1="160" y1="100" x2="161" y2="100" stroke="#ef5f5f" stroke-width="2"/><line x1="162" y1="100" x2="163" y2="100" stroke="#ef5f5f" stroke-width="2"/><line x1="164" y1="100" x2="165" y2="100" stroke="#ef5f5f" stroke-width="2"/><line x1="166" y1="100" x2="167" y2="100" stroke="#ef5f5f" stroke-width="2"/><line x1="168" y1="100" x2="169" y2="100" stroke="#ef5f5f" stroke-width="2"/><rect x="150" y="112" width="120" height="18" fill="#3a3f4a"/><text x="154" y="125" fill="#e6e8ee" font-size="9.5" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Rejected: Different…</text></g><g transform="translate(280.0 0)"><g><rect x="20" y="60" width="110" height="70" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><path d="M20 69a9 9 0 0 1 9 -9h92a9 9 0 0 1 9 9v21H20z" fill="#e6a23c" fill-opacity=".16"/><line x1="20" y1="90" x2="130" y2="90" stroke="#e6a23c" stroke-opacity=".35"/><rect x="27" y="66.0" width="18" height="18" rx="5" fill="#e6a23c"/><text x="36.0" y="79.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">N</text><text x="51" y="79.0" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Noise</text></g><text x="116" y="103.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Color</text><circle cx="130" cy="100" r="7.6" fill="#191c22"/><g><circle cx="130" cy="100" r="5" fill="none" stroke="#e6c14a" stroke-width="1.7"/><circle cx="130" cy="100" r="2.60" fill="#e6c14a"/></g><g><rect x="170" y="60" width="100" height="70" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><path d="M170 69a9 9 0 0 1 9 -9h82a9 9 0 0 1 9 9v21H170z" fill="#8a94a8" fill-opacity=".16"/><line x1="170" y1="90" x2="270" y2="90" stroke="#8a94a8" stroke-opacity=".35"/><rect x="177" y="66.0" width="18" height="18" rx="5" fill="#8a94a8"/><text x="186.0" y="79.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">#</text><text x="201" y="79.0" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Count</text></g><text x="184" y="103.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">N</text><circle cx="170" cy="100" r="7.6" fill="#191c22"/><g><circle cx="170" cy="100" r="5" fill="none" stroke="#ef7a7a" stroke-width="1.7"/></g><circle cx="170" cy="100" r="11" fill="none" stroke="#ef5f5f" stroke-width="2"/><path d="M130 100C160.0 100 136.0 100 166 100" fill="none" stroke="#ef5f5f" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="2 4"/><rect x="71.7" y="142" width="156.6" height="20" rx="10" fill="#2b3039" stroke="#ef5f5f" stroke-opacity=".7"/><text x="150.0" y="155.5" fill="#ef5f5f" font-size="9.5" font-weight="500" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">Color は Bool に変換できません</text></g><line x1="280.0" y1="0" x2="280.0" y2="190" stroke="#2f343e" stroke-width="2"/><rect x="8" y="8" width="38" height="17" rx="8.5" fill="#2f343e"/><text x="27" y="20" fill="#9aa1b0" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">現行</text><rect x="288.0" y="8" width="38" height="17" rx="8.5" fill="#6b8cff" fill-opacity=".25"/><text x="307.0" y="20" fill="#c8d3ff" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">提案</text></svg>
+    <svg viewBox="0 0 560 190" role="img" aria-label="無効になった既存配線"><rect width="560" height="190" fill="#191c22"/><rect width="560" height="190" fill="url(#dots)"/><g><rect x="14" y="50" width="100" height="80" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M14 57a7 7 0 0 1 7 -7h86a7 7 0 0 1 7 7v25H14z" fill="#30353e"/><line x1="21" y1="51" x2="107" y2="51" stroke="#6b8cff" stroke-width="2"/><text x="24" y="70" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Points</text><path d="M103 127L111 119" stroke="#6a7181"/><path d="M109 96L114 91L119 96L114 101Z" fill="#3fc7b0"/><rect x="170" y="50" width="100" height="80" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M170 57a7 7 0 0 1 7 -7h86a7 7 0 0 1 7 7v25H170z" fill="#30353e"/><line x1="177" y1="51" x2="263" y2="51" stroke="#6b8cff" stroke-width="2"/><text x="180" y="70" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Value</text><path d="M259 127L267 119" stroke="#6a7181"/><circle cx="170" cy="96" r="5" fill="#8fb3d9"/><path d="M114 96C144.0 96 140.0 96 170 96" fill="none" stroke="#6b8cff" stroke-width="2.2" stroke-linecap="round"/><text x="142" y="152" fill="#6a7181" font-size="9.5" font-weight="400" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">見た目は正常な配線と同じ</text></g><g transform="translate(280.0 0)"><g><rect x="14" y="50" width="100" height="80" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><path d="M14 59a9 9 0 0 1 9 -9h82a9 9 0 0 1 9 9v21H14z" fill="#4fb6e8" fill-opacity=".16"/><line x1="14" y1="80" x2="114" y2="80" stroke="#4fb6e8" stroke-opacity=".35"/><rect x="21" y="56.0" width="18" height="18" rx="5" fill="#4fb6e8"/><text x="30.0" y="69.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">P</text><text x="45" y="69.0" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Points</text></g><text x="100" y="99.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Field</text><circle cx="114" cy="96" r="7.6" fill="#191c22"/><g><circle cx="114" cy="96" r="5" fill="none" stroke="#3fc7b0" stroke-width="1.7"/><path d="M114 93.4L116.6 96L114 98.6L111.4 96Z" fill="#3fc7b0"/></g><g><rect x="170" y="50" width="100" height="80" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><path d="M170 59a9 9 0 0 1 9 -9h82a9 9 0 0 1 9 9v21H170z" fill="#8a94a8" fill-opacity=".16"/><line x1="170" y1="80" x2="270" y2="80" stroke="#8a94a8" stroke-opacity=".35"/><rect x="177" y="56.0" width="18" height="18" rx="5" fill="#8a94a8"/><text x="186.0" y="69.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">V</text><text x="201" y="69.0" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Value</text></g><text x="184" y="99.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Single</text><circle cx="170" cy="96" r="7.6" fill="#191c22"/><g><circle cx="170" cy="96" r="5" fill="none" stroke="#ef5f5f" stroke-width="1.9"/><circle cx="170" cy="96" r="2.5" fill="#ef5f5f"/></g><path d="M114 96C144.0 96 140.0 96 170 96" fill="none" stroke="#ef5f5f" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="7 4"/><circle cx="142" cy="96" r="7.5" fill="#ef5f5f"/><path d="M139.2 93.2L144.8 98.8M144.8 93.2L139.2 98.8" stroke="#191c22" stroke-width="1.8" stroke-linecap="round"/><rect x="90.1" y="142" width="103.8" height="20" rx="10" fill="#2b3039" stroke="#ef5f5f" stroke-opacity=".7"/><text x="142.0" y="155.5" fill="#ef5f5f" font-size="9.5" font-weight="500" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">要素ごとの値を単一値に接続</text></g><line x1="280.0" y1="0" x2="280.0" y2="190" stroke="#2f343e" stroke-width="2"/><rect x="8" y="8" width="38" height="17" rx="8.5" fill="#2f343e"/><text x="27" y="20" fill="#9aa1b0" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">現行</text><rect x="288.0" y="8" width="38" height="17" rx="8.5" fill="#6b8cff" fill-opacity=".25"/><text x="307.0" y="20" fill="#c8d3ff" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">提案</text></svg>
+    <svg viewBox="0 0 560 190" role="img" aria-label="変換される配線と循環"><rect width="560" height="190" fill="#191c22"/><rect width="560" height="190" fill="url(#dots)"/><g><rect x="14" y="26" width="100" height="60" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M14 33a7 7 0 0 1 7 -7h86a7 7 0 0 1 7 7v25H14z" fill="#30353e"/><line x1="21" y1="27" x2="107" y2="27" stroke="#6b8cff" stroke-width="2"/><text x="24" y="46" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Mask</text><path d="M103 83L111 75" stroke="#6a7181"/><circle cx="114" cy="64" r="5" fill="#8fb3d9"/><rect x="170" y="26" width="100" height="60" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M170 33a7 7 0 0 1 7 -7h86a7 7 0 0 1 7 7v25H170z" fill="#30353e"/><line x1="177" y1="27" x2="263" y2="27" stroke="#6b8cff" stroke-width="2"/><text x="180" y="46" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Tint</text><path d="M259 83L267 75" stroke="#6a7181"/><circle cx="170" cy="64" r="5" fill="#e6c14a"/><path d="M114 64C144.0 64 140.0 64 170 64" fill="none" stroke="#6b8cff" stroke-width="2.2" stroke-linecap="round"/><rect x="14" y="112" width="100" height="60" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M14 119a7 7 0 0 1 7 -7h86a7 7 0 0 1 7 7v25H14z" fill="#30353e"/><line x1="21" y1="113" x2="107" y2="113" stroke="#6b8cff" stroke-width="2"/><text x="24" y="132" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Step A</text><path d="M103 169L111 161" stroke="#6a7181"/><circle cx="114" cy="150" r="5" fill="#5aa0ff"/><rect x="170" y="112" width="100" height="60" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M170 119a7 7 0 0 1 7 -7h86a7 7 0 0 1 7 7v25H170z" fill="#30353e"/><line x1="177" y1="113" x2="263" y2="113" stroke="#6b8cff" stroke-width="2"/><text x="180" y="132" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Step B</text><path d="M259 169L267 161" stroke="#6a7181"/><circle cx="170" cy="150" r="5" fill="#5aa0ff"/><path d="M114 150C144.0 150 140.0 150 170 150" fill="none" stroke="#6b8cff" stroke-width="2.2" stroke-linecap="round"/></g><g transform="translate(280.0 0)"><g><rect x="14" y="26" width="100" height="60" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><path d="M14 35a9 9 0 0 1 9 -9h82a9 9 0 0 1 9 9v21H14z" fill="#e6a23c" fill-opacity=".16"/><line x1="14" y1="56" x2="114" y2="56" stroke="#e6a23c" stroke-opacity=".35"/><rect x="21" y="32.0" width="18" height="18" rx="5" fill="#e6a23c"/><text x="30.0" y="45.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">M</text><text x="45" y="45.0" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Mask</text></g><text x="100" y="67.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Fac</text><circle cx="114" cy="64" r="7.6" fill="#191c22"/><g><circle cx="114" cy="64" r="5" fill="none" stroke="#8fb3d9" stroke-width="1.7"/><circle cx="114" cy="64" r="2.60" fill="#8fb3d9"/></g><g><rect x="170" y="26" width="100" height="60" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><path d="M170 35a9 9 0 0 1 9 -9h82a9 9 0 0 1 9 9v21H170z" fill="#36c2ad" fill-opacity=".16"/><line x1="170" y1="56" x2="270" y2="56" stroke="#36c2ad" stroke-opacity=".35"/><rect x="177" y="32.0" width="18" height="18" rx="5" fill="#36c2ad"/><text x="186.0" y="45.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">T</text><text x="201" y="45.0" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Tint</text></g><text x="184" y="67.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Color</text><circle cx="170" cy="64" r="7.6" fill="#191c22"/><g><circle cx="170" cy="64" r="5" fill="none" stroke="#e6c14a" stroke-width="1.7"/><circle cx="170" cy="64" r="2.60" fill="#e6c14a"/></g><path d="M114 64C144.0 64 140.0 64 170 64" fill="none" stroke="url(#gconv)" stroke-width="2.2" stroke-linecap="round"/><circle cx="142" cy="64" r="7.5" fill="#2b3039" stroke="#e7a849" stroke-width="1.4"/><path d="M138.5 62.5H145M143 60.5L145.2 62.5L143 64.5M145.5 65.8H139M141 67.8L138.8 65.8L141 63.8" fill="none" stroke="#e7a849" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><g><rect x="14" y="112" width="100" height="60" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><path d="M14 121a9 9 0 0 1 9 -9h82a9 9 0 0 1 9 9v21H14z" fill="#9b7bff" fill-opacity=".16"/><line x1="14" y1="142" x2="114" y2="142" stroke="#9b7bff" stroke-opacity=".35"/><rect x="21" y="118.0" width="18" height="18" rx="5" fill="#9b7bff"/><text x="30.0" y="131.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">A</text><text x="45" y="131.0" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Step A</text></g><text x="100" y="153.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Out</text><circle cx="114" cy="150" r="7.6" fill="#191c22"/><g><circle cx="114" cy="150" r="5" fill="none" stroke="#5aa0ff" stroke-width="1.7"/><circle cx="114" cy="150" r="2.60" fill="#5aa0ff"/></g><text x="28" y="153.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">In</text><circle cx="14" cy="150" r="7.6" fill="#191c22"/><g><circle cx="14" cy="150" r="5" fill="none" stroke="#5aa0ff" stroke-width="1.7"/><circle cx="14" cy="150" r="2.60" fill="#5aa0ff"/></g><g><rect x="170" y="112" width="100" height="60" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><path d="M170 121a9 9 0 0 1 9 -9h82a9 9 0 0 1 9 9v21H170z" fill="#9b7bff" fill-opacity=".16"/><line x1="170" y1="142" x2="270" y2="142" stroke="#9b7bff" stroke-opacity=".35"/><rect x="177" y="118.0" width="18" height="18" rx="5" fill="#9b7bff"/><text x="186.0" y="131.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">B</text><text x="201" y="131.0" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Step B</text></g><text x="256" y="153.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Out</text><circle cx="270" cy="150" r="7.6" fill="#191c22"/><g><circle cx="270" cy="150" r="5" fill="none" stroke="#5aa0ff" stroke-width="1.7"/><circle cx="270" cy="150" r="2.60" fill="#5aa0ff"/></g><text x="184" y="153.5" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">In</text><circle cx="170" cy="150" r="7.6" fill="#191c22"/><g><circle cx="170" cy="150" r="5" fill="none" stroke="#5aa0ff" stroke-width="1.7"/><circle cx="170" cy="150" r="2.60" fill="#5aa0ff"/></g><path d="M114 150C144.0 150 140.0 150 170 150" fill="none" stroke="#ef5f5f" stroke-width="2.2" stroke-linecap="round"/><circle cx="142" cy="150" r="7.5" fill="#2b3039" stroke="#ef5f5f" stroke-width="1.4"/><path d="M145.4 149.5A3.6 3.6 0 1 1 143.2 146.6" fill="none" stroke="#ef5f5f" stroke-width="1.4" stroke-linecap="round"/><path d="M142.2 144.8L144.2 146.6L142.2 148.4" fill="none" stroke="#ef5f5f" stroke-width="1.3" stroke-linecap="round"/></g><line x1="280.0" y1="0" x2="280.0" y2="190" stroke="#2f343e" stroke-width="2"/><rect x="8" y="8" width="38" height="17" rx="8.5" fill="#2f343e"/><text x="27" y="20" fill="#9aa1b0" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">現行</text><rect x="288.0" y="8" width="38" height="17" rx="8.5" fill="#6b8cff" fill-opacity=".25"/><text x="307.0" y="20" fill="#c8d3ff" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">提案</text></svg>
+  </div>
+  <p>判定そのものは今までどおりホストの責務です。ライブラリは <code>ConnectionVerdict</code> と、新しく追加する <code>LinkView::validity</code> と <code>reason</code> を描くだけで、配線を勝手に消したり直したりしません。</p>
+</section>
+
+<section id="links">
+  <h2>配線</h2>
+  <div class="table-wrap"><table class="diff">
+    <thead><tr><th>項目</th><th>現行</th><th>提案</th></tr></thead>
+    <tbody>
+      <tr><td>既定の色</td><td>accent。ピンの型色と食い違う</td><td>出力ピンの型色。入力の型色、グラデーション、accent から選べる</td></tr>
+      <tr><td>矢印</td><td>曲線の75%地点に必ず三角</td><td>None / Middle / End。データ配線の既定は None</td></tr>
+      <tr><td>実行フロー</td><td>データ配線と同じ</td><td>太さ <code>flowLinkWidth</code>、テーマの文字色、山形の刻み</td></tr>
+      <tr><td>実行中の表示</td><td><code>active</code> で点が1つ流れる</td><td>流れる破線。速さと間隔は <code>flowSpeed</code> と <code>flowSpacing</code>、動きを減らす設定では止める</td></tr>
+      <tr><td>hover と選択</td><td>選択した配線の色だけ変わる</td><td>hover 中の配線と、選択ノードにつながる配線を太く明るくする</td></tr>
+      <tr><td>ラベル</td><td>muted 色の文字だけ</td><td>面色のピルに入れて、配線やグリッドと重なっても読める</td></tr>
+      <tr><td>線の種類</td><td>Bezier / Straight / Orthogonal</td><td>Orthogonal の角を丸める <code>orthogonalRadius</code>、曲がり具合 <code>curvature</code> を追加</td></tr>
+      <tr><td>描く順番</td><td>ノードの後ろ固定</td><td>ノードの後ろか前かを選べる</td></tr>
+    </tbody>
+  </table></div>
+  <figure class="wide"><svg viewBox="0 0 560 196" role="img" aria-label="配線の表現"><rect width="560" height="196" fill="#191c22"/><rect width="560" height="196" fill="url(#dots)"/><g><path d="M20 40C70.0 40 70.0 80 120 80" fill="none" stroke="#6b8cff" stroke-width="2" stroke-linecap="round"/><path d="M0 0L-7 3L-7 -3Z" transform="translate(90.3 73.8) rotate(27)" fill="#6b8cff"/><path d="M150 40C205.0 40 205.0 80 260 80" fill="none" stroke="#6b8cff" stroke-width="2" stroke-linecap="round"/><path d="M0 0L-7 3L-7 -3Z" transform="translate(227.3 73.8) rotate(25)" fill="#6b8cff"/><path d="M20 130C70.0 130 70.0 165 120 165" fill="none" stroke="#6b8cff" stroke-width="2" stroke-linecap="round"/><path d="M0 0L-7 3L-7 -3Z" transform="translate(90.3 159.5) rotate(24)" fill="#6b8cff"/><path d="M150 130C205.0 130 205.0 165 260 165" fill="none" stroke="#6b8cff" stroke-width="2" stroke-linecap="round"/><path d="M0 0L-7 3L-7 -3Z" transform="translate(227.3 159.5) rotate(22)" fill="#6b8cff"/><circle cx="230" cy="160" r="4" fill="#45c48c"/><text x="140" y="186" fill="#6a7181" font-size="9.5" font-weight="400" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">すべて accent 色、矢印つき</text></g><g transform="translate(280.0 0)"><path d="M20 40C70.0 40 70.0 80 120 80" fill="none" stroke="#e6c14a" stroke-width="2.4" stroke-linecap="round"/><g><circle cx="20" cy="40" r="5.0" fill="none" stroke="#e6c14a" stroke-width="1.7"/><circle cx="20" cy="40" r="2.60" fill="#e6c14a"/></g><g><circle cx="120" cy="80" r="5.0" fill="none" stroke="#e6c14a" stroke-width="1.7"/><circle cx="120" cy="80" r="2.60" fill="#e6c14a"/></g><path d="M150 40C205.0 40 205.0 80 260 80" fill="none" stroke="#e6c14a" stroke-width="4.2" stroke-linecap="round" stroke-opacity="0.35"/><path d="M150 40C205.0 40 205.0 80 260 80" fill="none" stroke="#e6c14a" stroke-width="2.4" stroke-linecap="round"/><text x="205" y="100" fill="#9aa1b0" font-size="9" font-weight="400" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">hover で強調</text><path d="M20 130C70.0 130 70.0 165 120 165" fill="none" stroke="#e6e8ee" stroke-width="3.4" stroke-linecap="round"/><path d="M-2.5 -3.5L1.5 0L-2.5 3.5" transform="translate(54.2 137.6) rotate(27)" fill="none" stroke="#191c22" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M-2.5 -3.5L1.5 0L-2.5 3.5" transform="translate(70.0 147.5) rotate(35)" fill="none" stroke="#191c22" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M-2.5 -3.5L1.5 0L-2.5 3.5" transform="translate(85.8 157.4) rotate(26)" fill="none" stroke="#191c22" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M150 130C205.0 130 205.0 165 260 165" fill="none" stroke="#e6e8ee" stroke-width="3.4" stroke-linecap="round" stroke-opacity="0.35"/><path d="M150 130C205.0 130 205.0 165 260 165" fill="none" stroke="#e6e8ee" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="3 11" class="flow"/><text x="70" y="186" fill="#9aa1b0" font-size="9" font-weight="400" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">実行フロー</text><text x="205" y="186" fill="#9aa1b0" font-size="9" font-weight="400" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">実行中</text><text x="70" y="100" fill="#9aa1b0" font-size="9" font-weight="400" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">型の色</text></g><line x1="280.0" y1="0" x2="280.0" y2="196" stroke="#2f343e" stroke-width="2"/><rect x="8" y="8" width="38" height="17" rx="8.5" fill="#2f343e"/><text x="27" y="20" fill="#9aa1b0" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">現行</text><rect x="288.0" y="8" width="38" height="17" rx="8.5" fill="#6b8cff" fill-opacity=".25"/><text x="307.0" y="20" fill="#c8d3ff" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">提案</text></svg><figcaption><b>配線の現行と提案</b>右の「実行中」は流れる破線のアニメーションです。</figcaption></figure>
+</section>
+
+<section id="states">
+  <h2>ノードの状態</h2>
+  <p>現行は状態をノード下端の文字（例: 「Error   0.00 ms」）で示すだけで、使っていなくても「Idle」が出ます。状態ごとに見た目を変えます。</p>
+  <div class="table-wrap"><table class="diff">
+    <thead><tr><th>状態</th><th>現行</th><th>提案</th></tr></thead>
+    <tbody>
+      <tr><td>Idle</td><td>「Idle 0.00 ms」を常に表示</td><td>表示しない</td></tr>
+      <tr><td>Waiting</td><td>文字のみ</td><td>枠を点線にする</td></tr>
+      <tr><td>Running</td><td>文字と下端の進捗線</td><td>外側に accent の光、ヘッダーに進捗リング、下端に割合と時間</td></tr>
+      <tr><td>Success</td><td>緑の文字</td><td>枠が一瞬だけ緑になり、元に戻る</td></tr>
+      <tr><td>Error / Warning</td><td>赤い文字のみ。Warning はない</td><td>ヘッダーにバッジ、下端にメッセージ帯、枠の色。<code>NodeView::diagnostic</code> で文言を渡す</td></tr>
+      <tr><td>Disabled</td><td>文字のみ</td><td>本体を40%に減光し、値の編集を止める</td></tr>
+      <tr><td>Bypassed</td><td>文字のみ</td><td>本体に斜線、警告色の破線の素通し線</td></tr>
+      <tr><td>Cached</td><td>文字のみ</td><td>ヘッダーに「cached」のチップ</td></tr>
+      <tr><td>Breakpoint</td><td>右上に赤い点</td><td>左上の角に切り欠きの赤い点。現在止まっているノードは枠を太くする</td></tr>
+      <tr><td>Locked</td><td>右上に小さな点</td><td>ヘッダーに Lock アイコン</td></tr>
+      <tr><td>Hover / 選択 / Active</td><td>選択時だけ枠が accent で2px</td><td>hover 1.5px、選択 2px、Active はさらに外側に薄い輪</td></tr>
+    </tbody>
+  </table></div>
+  <div class="gallery">
+    <svg viewBox="0 0 560 170" role="img" aria-label="ノードの状態表示 エラーとBypass"><rect width="560" height="170" fill="#191c22"/><rect width="560" height="170" fill="url(#dots)"/><g><rect x="12" y="34" width="120" height="92" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M12 41a7 7 0 0 1 7 -7h106a7 7 0 0 1 7 7v25H12z" fill="#30353e"/><line x1="19" y1="35" x2="125" y2="35" stroke="#6b8cff" stroke-width="2"/><text x="22" y="54" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Sample</text><text x="22" y="118" fill="#ef5f5f" font-size="9" font-weight="400" text-anchor="start" font-family="JetBrains Mono, monospace">Error   0.00 ms</text><path d="M121 123L129 115" stroke="#6a7181"/><rect x="150" y="34" width="120" height="92" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M150 41a7 7 0 0 1 7 -7h106a7 7 0 0 1 7 7v25H150z" fill="#30353e"/><line x1="157" y1="35" x2="263" y2="35" stroke="#6b8cff" stroke-width="2"/><text x="160" y="54" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Blur</text><text x="160" y="118" fill="#6a7181" font-size="9" font-weight="400" text-anchor="start" font-family="JetBrains Mono, monospace">Bypassed   0.00 ms</text><path d="M259 123L267 115" stroke="#6a7181"/><text x="72" y="150" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">エラー</text><text x="210" y="150" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">Bypass</text></g><g transform="translate(280.0 0)"><g><rect x="12" y="34" width="120" height="92" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><path d="M12 43a9 9 0 0 1 9 -9h102a9 9 0 0 1 9 9v21H12z" fill="#e6a23c" fill-opacity=".16"/><line x1="12" y1="64" x2="132" y2="64" stroke="#e6a23c" stroke-opacity=".35"/><rect x="19" y="40.0" width="18" height="18" rx="5" fill="#e6a23c"/><text x="28.0" y="53.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">S</text><text x="43" y="53.0" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Sample</text><circle cx="120" cy="49" r="7" fill="#ef5f5f"/><text x="120" y="53" fill="#191c22" font-size="10" font-weight="800" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">!</text><path d="M12 104h120v13a9 9 0 0 1-9 9H21a9 9 0 0 1-9-9z" fill="#ef5f5f" fill-opacity=".18"/><text x="20" y="119" fill="#ef5f5f" font-size="9" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">画像が見つかりません</text></g><rect x="12" y="34" width="120" height="92" rx="9" fill="none" stroke="#ef5f5f" stroke-opacity=".7"/><clipPath id="bpclip"><rect x="150" y="64" width="120" height="62" rx="0"/></clipPath><g opacity="0.6"><rect x="150" y="34" width="120" height="92" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><path d="M150 43a9 9 0 0 1 9 -9h102a9 9 0 0 1 9 9v21H150z" fill="#e6a23c" fill-opacity=".16"/><line x1="150" y1="64" x2="270" y2="64" stroke="#e6a23c" stroke-opacity=".35"/><rect x="157" y="40.0" width="18" height="18" rx="5" fill="#e6a23c"/><text x="166.0" y="53.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">B</text><text x="181" y="53.0" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Blur</text><text x="261" y="52.5" fill="#e6a23c" font-size="9" font-weight="500" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">bypass</text></g><g clip-path="url(#bpclip)"><line x1="130" y1="126" x2="160" y2="64" stroke="#e7a849" stroke-opacity=".12" stroke-width="5"/><line x1="144" y1="126" x2="174" y2="64" stroke="#e7a849" stroke-opacity=".12" stroke-width="5"/><line x1="158" y1="126" x2="188" y2="64" stroke="#e7a849" stroke-opacity=".12" stroke-width="5"/><line x1="172" y1="126" x2="202" y2="64" stroke="#e7a849" stroke-opacity=".12" stroke-width="5"/><line x1="186" y1="126" x2="216" y2="64" stroke="#e7a849" stroke-opacity=".12" stroke-width="5"/><line x1="200" y1="126" x2="230" y2="64" stroke="#e7a849" stroke-opacity=".12" stroke-width="5"/><line x1="214" y1="126" x2="244" y2="64" stroke="#e7a849" stroke-opacity=".12" stroke-width="5"/><line x1="228" y1="126" x2="258" y2="64" stroke="#e7a849" stroke-opacity=".12" stroke-width="5"/><line x1="242" y1="126" x2="272" y2="64" stroke="#e7a849" stroke-opacity=".12" stroke-width="5"/><line x1="256" y1="126" x2="286" y2="64" stroke="#e7a849" stroke-opacity=".12" stroke-width="5"/></g><path d="M150 92C210.0 92 210.0 92 270 92" fill="none" stroke="#e7a849" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="4 4"/><circle cx="150" cy="92" r="7.6" fill="#191c22"/><g><circle cx="150" cy="92" r="5.0" fill="none" stroke="#e6c14a" stroke-width="1.7"/><circle cx="150" cy="92" r="2.60" fill="#e6c14a"/></g><circle cx="270" cy="92" r="7.6" fill="#191c22"/><g><circle cx="270" cy="92" r="5.0" fill="none" stroke="#e6c14a" stroke-width="1.7"/><circle cx="270" cy="92" r="2.60" fill="#e6c14a"/></g><text x="72" y="150" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">エラー</text><text x="210" y="150" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">Bypass</text></g><line x1="280.0" y1="0" x2="280.0" y2="170" stroke="#2f343e" stroke-width="2"/><rect x="8" y="8" width="38" height="17" rx="8.5" fill="#2f343e"/><text x="27" y="20" fill="#9aa1b0" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">現行</text><rect x="288.0" y="8" width="38" height="17" rx="8.5" fill="#6b8cff" fill-opacity=".25"/><text x="307.0" y="20" fill="#c8d3ff" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">提案</text></svg>
+    <svg viewBox="0 0 560 170" role="img" aria-label="実行中とキャッシュの表示"><rect width="560" height="170" fill="#191c22"/><rect width="560" height="170" fill="url(#dots)"/><g><rect x="12" y="34" width="120" height="92" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M12 41a7 7 0 0 1 7 -7h106a7 7 0 0 1 7 7v25H12z" fill="#30353e"/><line x1="19" y1="35" x2="125" y2="35" stroke="#6b8cff" stroke-width="2"/><text x="22" y="54" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Solve</text><text x="22" y="118" fill="#6a7181" font-size="9" font-weight="400" text-anchor="start" font-family="JetBrains Mono, monospace">Running   0.00 ms</text><path d="M121 123L129 115" stroke="#6a7181"/><line x1="12" y1="124" x2="86" y2="124" stroke="#6b8cff" stroke-width="3"/><rect x="150" y="34" width="120" height="92" rx="7" fill="#262a31" fill-opacity="1" stroke="#3a404b"/><path d="M150 41a7 7 0 0 1 7 -7h106a7 7 0 0 1 7 7v25H150z" fill="#30353e"/><line x1="157" y1="35" x2="263" y2="35" stroke="#6b8cff" stroke-width="2"/><text x="160" y="54" fill="#e6e8ee" font-size="11" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Cache</text><text x="160" y="118" fill="#6a7181" font-size="9" font-weight="400" text-anchor="start" font-family="JetBrains Mono, monospace">Cached   0.00 ms</text><path d="M259 123L267 115" stroke="#6a7181"/><circle cx="256" cy="50" r="4" fill="#ef5f5f"/><text x="72" y="150" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">実行中</text><text x="210" y="150" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">キャッシュ＋ブレーク</text></g><g transform="translate(280.0 0)"><rect x="8" y="30" width="128" height="100" rx="12" fill="none" stroke="#6b8cff" stroke-opacity=".35" stroke-width="4"/><g><rect x="12" y="34" width="120" height="92" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><path d="M12 43a9 9 0 0 1 9 -9h102a9 9 0 0 1 9 9v21H12z" fill="#9b7bff" fill-opacity=".16"/><line x1="12" y1="64" x2="132" y2="64" stroke="#9b7bff" stroke-opacity=".35"/><rect x="19" y="40.0" width="18" height="18" rx="5" fill="#9b7bff"/><text x="28.0" y="53.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">S</text><text x="43" y="53.0" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Solve</text><circle cx="120" cy="49" r="6" fill="none" stroke="#3a404c" stroke-width="2"/><path d="M120 43A6 6 0 0 1 125.2 52" fill="none" stroke="#6b8cff" stroke-width="2" stroke-linecap="round"/><text x="20" y="118" fill="#9aa1b0" font-size="9" font-weight="400" text-anchor="start" font-family="JetBrains Mono, monospace">62% · 12.4 ms</text></g><g><rect x="150" y="34" width="120" height="92" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><path d="M150 43a9 9 0 0 1 9 -9h102a9 9 0 0 1 9 9v21H150z" fill="#8a94a8" fill-opacity=".16"/><line x1="150" y1="64" x2="270" y2="64" stroke="#8a94a8" stroke-opacity=".35"/><rect x="157" y="40.0" width="18" height="18" rx="5" fill="#8a94a8"/><text x="166.0" y="53.0" fill="#191c22" font-size="11" font-weight="700" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">C</text><text x="181" y="53.0" fill="#e6e8ee" font-size="11" font-weight="600" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Cache</text><rect x="232" y="42" width="30" height="14" rx="7" fill="#45c48c" fill-opacity=".2"/><text x="247" y="52" fill="#45c48c" font-size="8" font-weight="400" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">cached</text><circle cx="150" cy="34" r="6" fill="#ef5f5f" stroke="#191c22" stroke-width="2"/></g><text x="72" y="150" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">実行中</text><text x="210" y="150" fill="#9aa1b0" font-size="10" font-weight="400" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">キャッシュ＋ブレーク</text></g><line x1="280.0" y1="0" x2="280.0" y2="170" stroke="#2f343e" stroke-width="2"/><rect x="8" y="8" width="38" height="17" rx="8.5" fill="#2f343e"/><text x="27" y="20" fill="#9aa1b0" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">現行</text><rect x="288.0" y="8" width="38" height="17" rx="8.5" fill="#6b8cff" fill-opacity=".25"/><text x="307.0" y="20" fill="#c8d3ff" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">提案</text></svg>
+  </div>
+</section>
+
+<section id="interaction">
+  <h2>操作</h2>
+  <p>入力の扱いはライブラリが持ち、結果は今までどおり編集要求として返します。キーはすべて <code>Keymap</code> で変えられます。</p>
+  <div class="table-wrap"><table class="diff">
+    <thead><tr><th>操作</th><th>現行</th><th>提案</th></tr></thead>
+    <tbody>
+      <tr><td>配線を切る</td><td>Alt＋ドラッグ（実装済み）</td><td>維持。切る軌跡と、切られる配線の強調を描く</td></tr>
+      <tr><td>入力の配線を付け替える</td><td>入力側をドラッグ（実装済み）</td><td>維持</td></tr>
+      <tr><td>出力の配線をまとめて移す</td><td>なし</td><td>Ctrl＋ドラッグで、そのピンの全配線を別のピンへ</td></tr>
+      <tr><td>ピンの配線をすべて外す</td><td>なし</td><td>Alt＋クリック</td></tr>
+      <tr><td>Reroute を入れる</td><td>なし</td><td>配線をダブルクリック</td></tr>
+      <tr><td>ノードを配線の上に落として挿入</td><td>右クリックメニューの「Insert active node into selected wire」</td><td>ドラッグ中に配線が光り、離すと挿入。周りのノードを少し押し広げる設定</td></tr>
+      <tr><td>配線から新しいノード</td><td>空き地に離すと候補を絞ったパレット（実装済み）</td><td>維持</td></tr>
+      <tr><td>選んだ2つのノードをつなぐ</td><td>なし</td><td>互換のある最初のピン同士をつなぐ <code>ConnectSelected</code></td></tr>
+      <tr><td>ノードを揺すって外す</td><td>なし</td><td><code>shakeToDisconnect</code> で有効にする（既定は無効）</td></tr>
+      <tr><td>ピンの値をのぞく</td><td>ピン名の tooltip のみ</td><td>hover で型名と、ホストが渡した現在値</td></tr>
+      <tr><td>値の欄とピンの切り替え</td><td>なし</td><td>未接続入力の値の欄を隠してピンだけにする、またはその逆</td></tr>
+      <tr><td>Bypass・折りたたみのキー</td><td>メニューのみ</td><td><code>Keymap</code> に bypass と collapse を追加</td></tr>
+    </tbody>
+  </table></div>
 </section>
 
 <section id="custom">
-  <h2>カスタマイズ層</h2>
-  <p>他の部品と同じ3段で見た目を決めます。上の段ほど簡単で、下の段ほど自由です。</p>
+  <h2>カスタマイズ</h2>
+  <p>ノードエディタも、ボタンや表と同じ4段階で見た目を変えられるようにします。上の段ほど手軽で、下の段ほど自由です。</p>
   <div class="table-wrap"><table>
-    <thead><tr><th>段</th><th>ホストがすること</th><th>使う型</th><th>例</th></tr></thead>
+    <thead><tr><th>段</th><th>ホストがすること</th><th>使う型</th></tr></thead>
     <tbody>
-      <tr><td>1. テーマ</td><td>Theme を変えるだけ。ノードもボタンや表と同じ意味tokenで描かれる</td><td><code>MakeNodeStyle(theme)</code></td><td>Gallery の既存 world（blueprint, pastel-pop, sticker）がノードにもそのまま効く</td></tr>
-      <tr><td>2. スタイル</td><td>NodeStyle の値、カテゴリ表、ノード単位の上書きを渡す</td><td><code>NodeStyle</code>, <code>NodeCategoryStyle</code>, <code>NodeView::tint</code>, <code>PushNodeStyle</code></td><td>シェーダー系は緑、テクスチャ系は橙、入力は赤のヘッダーにする</td></tr>
-      <tr><td>3. 描画フック</td><td>部位ごとの描画関数を差し込み、false を返した部位は既定描画に戻る</td><td><code>NodeDrawHooks</code>（背景・ヘッダー・ピン・配線）</td><td>ヘッダーに画像を敷く、独自のピン図形を描く、配線に模様を付ける</td></tr>
+      <tr><td>1. テーマ</td><td>Theme を変えるだけ。.theme ファイルに node の項目を足せば、コードを書かずに world ごとに変わる</td><td><code>MakeNodeStyle(theme)</code></td></tr>
+      <tr><td>2. スタイル</td><td>NodeStyle の値とカテゴリ表を渡す。ノード・ピン・配線ごとに上書きする</td><td><code>NodeStyle</code>, <code>NodeCategoryStyle</code>, <code>NodeView::tint</code>, <code>LinkView::color</code></td></tr>
+      <tr><td>3. スタイルの一時変更</td><td>一部のノードだけ別のスタイルにする</td><td><code>PushNodeStyle</code> / <code>PopNodeStyle</code></td></tr>
+      <tr><td>4. 描画フック</td><td>部位ごとに描画を差し替える。false を返した部位は既定の描画に戻る</td><td><code>NodeDrawHooks</code></td></tr>
     </tbody>
   </table></div>
-  <p>描画フックは <code>Skin</code> と同じ流儀にします。関数ポインタと <code>void* user</code> を受け取り、ライブラリは所有しません。渡すのは位置、大きさ、ズーム、状態（hover・選択・接続中・無効）と解決済みの色で、ホストは公開DrawListに描きます。入力処理とIDはライブラリ側に残るので、フックを入れても選択、ドラッグ、接続の動作は変わりません。</p>
+  <figure class="wide"><svg viewBox="0 0 560 170" role="img" aria-label="同じノードを3つのテーマで表示"><g transform="translate(10 10)"><rect width="170" height="150" rx="10" fill="#191c22"/><rect x="20" y="22" width="130" height="96" rx="9" fill="#242830" stroke="#3a404c" stroke-width="1"/><rect x="20" y="22" width="130" height="28" rx="9" fill="#e6a23c" fill-opacity="0.16"/><rect x="20" y="36" width="130" height="14" fill="#e6a23c" fill-opacity="0.16"/><rect x="27" y="27" width="18" height="18" rx="6" fill="#e6a23c"/><text x="52" y="40" fill="#e6e8ee" font-size="11" font-weight="700" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Noise</text><circle cx="150" cy="70" r="7.5" fill="#191c22"/><circle cx="150" cy="70" r="5" fill="none" stroke="#e6a23c" stroke-width="1.7"/><circle cx="150" cy="70" r="2.6" fill="#e6a23c"/><text x="138" y="74" fill="#9aa1b0" font-size="9.5" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Color</text><circle cx="20" cy="96" r="7.5" fill="#191c22"/><circle cx="20" cy="96" r="5" fill="none" stroke="#9aa1b0" stroke-width="1.7"/><text x="32" y="100" fill="#9aa1b0" font-size="9.5" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Scale</text><text x="85" y="140" fill="#9aa1b0" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">既定（dark）</text></g><g transform="translate(195 10)"><rect width="170" height="150" rx="10" fill="#fbf6ff"/><rect x="20" y="22" width="130" height="96" rx="16" fill="#ffffff" stroke="#e4dcef" stroke-width="2"/><rect x="20" y="22" width="130" height="28" rx="16" fill="#ff8fb1" fill-opacity="0.35"/><rect x="20" y="36" width="130" height="14" fill="#ff8fb1" fill-opacity="0.35"/><rect x="27" y="27" width="18" height="18" rx="6" fill="#ff8fb1"/><text x="52" y="40" fill="#3d3150" font-size="11" font-weight="700" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Noise</text><circle cx="150" cy="70" r="7.5" fill="#fbf6ff"/><circle cx="150" cy="70" r="5" fill="none" stroke="#ff8fb1" stroke-width="1.7"/><circle cx="150" cy="70" r="2.6" fill="#ff8fb1"/><text x="138" y="74" fill="#8b7ea0" font-size="9.5" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Color</text><circle cx="20" cy="96" r="7.5" fill="#fbf6ff"/><circle cx="20" cy="96" r="5" fill="none" stroke="#8b7ea0" stroke-width="1.7"/><text x="32" y="100" fill="#8b7ea0" font-size="9.5" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Scale</text><text x="85" y="140" fill="#8b7ea0" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">pastel-pop</text></g><g transform="translate(380 10)"><rect width="170" height="150" rx="10" fill="#f2e9cf"/><rect x="20" y="22" width="130" height="96" rx="4" fill="#fffbe8" stroke="#1d1d1d" stroke-width="1"/><rect x="20" y="22" width="130" height="28" rx="4" fill="#2f7cf6" fill-opacity="0.9"/><rect x="20" y="36" width="130" height="14" fill="#2f7cf6" fill-opacity="0.9"/><rect x="27" y="27" width="18" height="18" rx="4" fill="#2f7cf6"/><text x="52" y="40" fill="#1d1d1d" font-size="11" font-weight="700" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Noise</text><circle cx="150" cy="70" r="7.5" fill="#f2e9cf"/><circle cx="150" cy="70" r="5" fill="none" stroke="#2f7cf6" stroke-width="1.7"/><circle cx="150" cy="70" r="2.6" fill="#2f7cf6"/><text x="138" y="74" fill="#4a4a4a" font-size="9.5" font-weight="400" text-anchor="end" font-family="IBM Plex Sans JP, sans-serif">Color</text><circle cx="20" cy="96" r="7.5" fill="#f2e9cf"/><circle cx="20" cy="96" r="5" fill="none" stroke="#4a4a4a" stroke-width="1.7"/><text x="32" y="100" fill="#4a4a4a" font-size="9.5" font-weight="400" text-anchor="start" font-family="IBM Plex Sans JP, sans-serif">Scale</text><text x="85" y="140" fill="#4a4a4a" font-size="9.5" font-weight="600" text-anchor="middle" font-family="IBM Plex Sans JP, sans-serif">sticker</text></g></svg><figcaption><b>同じノードを3つのテーマで</b>Gallery の既存 world（pastel-pop, sticker）の色と角丸を当てた例です。ノード側のコードは同じです。</figcaption></figure>
+  <h3>変えられる項目</h3>
+  <div class="table-wrap"><table class="diff">
+    <thead><tr><th>部位</th><th>現行</th><th>追加</th></tr></thead>
+    <tbody>
+      <tr><td>ノード本体</td><td>surface, border, rounding, borderWidth, padding, shadows, 最小サイズ</td><td>hover・選択時の枠幅、Active の輪、影の大きさと濃さ、形ごとの角丸、ノードごとの色</td></tr>
+      <tr><td>ヘッダー</td><td>header の色, headerHeight</td><td>塗り方（Flat / Tinted / Gradient / Strip / None）、色の濃さ、記号タイルの有無と大きさ、サブタイトル、文字色の自動調整</td></tr>
+      <tr><td>ピン</td><td>pinRadius、型ごとの形と色</td><td>役割・入れ物・修飾ごとの記号、切り欠きの幅、未接続の中空表示、ラベルとの間隔、値の欄の位置、記号フック</td></tr>
+      <tr><td>配線</td><td>linkWidth, linkStyle、配線ごとの色と太さ</td><td>色の出どころ、グラデーション、矢印、実行配線の太さ、曲がり具合、直角の角丸、強調時の太さ、ラベルのピル、描く順番、配線フック</td></tr>
+      <tr><td>フィードバック</td><td>success / warning / error の色</td><td>候補の輪、減光の濃さ、吸着の距離、理由のピル、無効配線の線種、ビーズの記号</td></tr>
+      <tr><td>状態</td><td>文字の色だけ</td><td>ステータス行の表示条件、エラー帯、Bypass の斜線、実行中の光、バッジ</td></tr>
+      <tr><td>動き</td><td>animate の有無</td><td>流れの速さと間隔、hover のフェード時間。テーマの reducedMotion を優先</td></tr>
+      <tr><td>canvas</td><td>canvas, grid, gridSize（点のグリッド）</td><td>グリッドの種類（点・線・十字・なし）、N目盛りごとの太線</td></tr>
+    </tbody>
+  </table></div>
+  <p>描画フックは <code>Skin</code> と同じ流儀にします。関数ポインタと <code>void* user</code> を受け取り、ライブラリは所有しません。渡すのは位置、大きさ、ズーム、状態、解決済みの色で、ホストは公開DrawListに描きます。入力処理とIDはライブラリ側に残るので、フックを入れても選択、ドラッグ、接続の動作は変わりません。グローバルな登録先は作りません。</p>
 </section>
 
 <section id="api">
   <h2>API案</h2>
-  <p>既存の型の末尾に項目を足し、既定値では現在に近い見た目を保ちます。<span class="new">緑</span>が新規です。名前は案です。</p>
-<pre><code><span class="cmt">// ノードの形。NodeKind（グラフ上の意味）とは別に、見た目だけを決める。</span>
-<span class="new">enum class NodeShape</span> { Standard, Event, Compact, Variable, Reroute, Comment, Note };
-<span class="new">enum class HeaderFill</span> { Flat, Tinted, Gradient, Strip, None };
+  <p>既存の型の末尾に項目を足し、既定値では今の動作を保ちます。<span class="new">緑</span>が新規です。名前は案です。</p>
+<pre><code><span class="new">enum class NodeShape</span> { Standard, Event, Compact, Variable, Reroute, Comment, Note, Subgraph, Boundary };
+<span class="new">enum class HeaderFill</span> { Tinted, Flat, Gradient, Strip, None };
+<span class="new">enum class Severity</span> { None, Info, Warning, Error };
+<span class="new">struct NodeDiagnostic</span> { Severity severity = Severity::None; std::string_view message{}; };
+<span class="new">struct NodeCategoryStyle</span> { std::uint64_t id = 0; ImVec4 color{}; std::string_view glyph{}; };
 
-<span class="new">struct NodeCategoryStyle</span> {      <span class="cmt">// カテゴリIDから色を引く表。ホストが所有して貸し出す</span>
-    std::uint64_t id = 0;
-    ImVec4 header{}, accent{};
-    std::string_view icon{};
-};
-
-<span class="kw">struct NodeView</span> {
-    ...既存の項目...
+<span class="kw">struct NodeView</span> {                    <span class="cmt">// 既存の項目はそのまま</span>
     <span class="new">NodeShape shape = NodeShape::Standard;</span>
-    <span class="new">std::uint64_t category = 0;</span>     <span class="cmt">// NodeCategoryStyle を引く</span>
-    <span class="new">ImVec4 tint{};</span>                  <span class="cmt">// alpha 0 ならカテゴリ→テーマの順に継承</span>
-    <span class="new">std::string_view subtitle{}, glyph{};</span>  <span class="cmt">// ヘッダー右の補足、Compact の中央記号</span>
+    <span class="new">std::uint64_t category = 0;</span>        <span class="cmt">// NodeCategoryStyle を引く</span>
+    <span class="new">ImVec4 tint{};</span>                     <span class="cmt">// alpha 0 ならカテゴリ→テーマの順に継承</span>
+    <span class="new">std::string_view subtitle{}, glyph{};</span>
+    <span class="new">NodeDiagnostic diagnostic{};</span>
     <span class="new">bool hideUnusedPins = false;</span>
 };
 
 <span class="new">enum class PinRole</span> { Data, Flow };
 <span class="new">enum class PinContainer</span> { Single, Array, Set, Map };
-<span class="new">enum PinFlags : std::uint32_t</span> { PinFlags_None = 0, PinFlags_Reference = 1, PinFlags_Wildcard = 2,
-                               PinFlags_Field = 4, PinFlags_MultiInput = 8, PinFlags_Optional = 16 };
+<span class="new">enum PinFlags : std::uint32_t</span> { PinFlags_None = 0, PinFlags_Reference = 1 &lt;&lt; 0, PinFlags_Wildcard = 1 &lt;&lt; 1,
+    PinFlags_Field = 1 &lt;&lt; 2, PinFlags_Optional = 1 &lt;&lt; 3, PinFlags_Unavailable = 1 &lt;&lt; 4 };
 <span class="kw">struct PinView</span> {
-    ...既存の項目...
     <span class="new">PinRole role = PinRole::Data;</span>
     <span class="new">PinContainer container = PinContainer::Single;</span>
     <span class="new">std::uint32_t flags = PinFlags_None;</span>
-    <span class="new">std::uint64_t panel = 0;</span>        <span class="cmt">// 所属する折りたたみパネル</span>
+    <span class="new">std::uint64_t panel = 0, keyType = 0;</span>   <span class="cmt">// 所属パネル、Map のキー型</span>
+    <span class="new">std::string_view inspect{}, reason{};</span>     <span class="cmt">// hover で出す現在値、使えない理由</span>
 };
 
-<span class="new">enum class LinkColorSource</span> { OutputType, InputType, Gradient, Accent };
-<span class="new">enum class LinkArrow</span> { None, Middle, End };
+<span class="new">enum class LinkValidity</span> { Valid, Converted, Invalid, Cycle };
+<span class="kw">struct LinkView</span> {
+    <span class="new">LinkValidity validity = LinkValidity::Valid;</span>
+    <span class="new">std::string_view reason{};</span>
+};
+
+<span class="new">enum class LinkColorSource</span> { Accent, OutputType, InputType, Gradient };
+<span class="new">enum class LinkArrow</span> { Middle, None, End };
+<span class="new">enum class StatusDisplay</span> { Always, WhenActive, Never };
 <span class="kw">struct NodeStyle</span> {
-    ...既存の項目...
-    <span class="new">float hoverBorderWidth = 1.5f, selectedBorderWidth = 2;</span>
-    <span class="new">HeaderFill headerFill = HeaderFill::Strip;</span>   <span class="cmt">// 現行の「上端の線」</span>
+    <span class="new">float hoverBorderWidth = 1.5f, selectedBorderWidth = 2, pinSeat = 2.6f;</span>
+    <span class="new">HeaderFill headerFill = HeaderFill::Strip;</span>     <span class="cmt">// 既定は現行と同じ見た目</span>
+    <span class="new">float headerTint = .16f;</span>
     <span class="new">bool hollowUnconnectedPins = false;</span>
-    <span class="new">float flowLinkWidth = 3.5f;</span>
-    <span class="new">LinkColorSource linkColor = LinkColorSource::OutputType;</span>
+    <span class="new">LinkColorSource linkColor = LinkColorSource::Accent;</span>
     <span class="new">LinkArrow linkArrow = LinkArrow::Middle;</span>
-    <span class="new">bool highlightConnectedLinks = true;</span>
+    <span class="new">float flowLinkWidth = 3.5f, curvature = .5f, orthogonalRadius = 0;</span>
+    <span class="new">bool highlightConnectedLinks = false;</span>
+    <span class="new">float incompatibleAlpha = .25f, snapDistance = 18;</span>
     <span class="new">float flowSpeed = 1, flowSpacing = 14;</span>
-    <span class="new">StatusDisplay status = StatusDisplay::WhenActive;</span>  <span class="cmt">// Idle かつ 0ms なら出さない</span>
+    <span class="new">StatusDisplay status = StatusDisplay::Always;</span>
     <span class="new">std::span&lt;const NodeCategoryStyle&gt; categories{};</span>
     <span class="new">const NodeDrawHooks *hooks = nullptr;</span>
 };
 
-<span class="cmt">// 描画フック。false を返すと既定の描画に戻る。入力とIDはライブラリが保持する。</span>
-<span class="new">struct NodeChromeView</span> { const NodeView *node; ImVec2 min, max; float zoom, headerHeight;
-                         ImVec4 header, surface, border; bool hovered, selected, disabled; };
-<span class="new">struct PinChromeView</span>  { const PinView *pin; ImVec2 center; float radius; ImVec4 color;
-                         bool connected, hovered, candidate; };
-<span class="new">struct LinkChromeView</span> { const LinkView *link; std::span&lt;const ImVec2&gt; points; ImVec4 from, to;
-                         float width; bool hovered, selected, flowing; };
+<span class="cmt">// 描画フック。false を返すと既定の描画に戻る。</span>
 <span class="new">struct NodeDrawHooks</span> {
     void *user = nullptr;
-    bool (*background)(ImDrawList *, const NodeChromeView &, void *) = nullptr;
-    bool (*header)(ImDrawList *, const NodeChromeView &, void *) = nullptr;
-    bool (*pin)(ImDrawList *, const PinChromeView &, void *) = nullptr;
-    bool (*link)(ImDrawList *, const LinkChromeView &, void *) = nullptr;
+    bool (*background)(ImDrawList *, const NodeChromeView &amp;, void *) = nullptr;
+    bool (*header)(ImDrawList *, const NodeChromeView &amp;, void *) = nullptr;
+    bool (*pin)(ImDrawList *, const PinChromeView &amp;, void *) = nullptr;
+    bool (*link)(ImDrawList *, const LinkChromeView &amp;, void *) = nullptr;
+    bool (*bead)(ImDrawList *, const LinkChromeView &amp;, void *) = nullptr;
 };
 
-<span class="cmt">// 新しい部品</span>
-<span class="new">bool BeginNodePanel</span>(EditorFrame &amp;frame, std::uint64_t panel, std::string_view label, bool *open);
-<span class="new">void EndNodePanel</span>(EditorFrame &amp;frame);
-<span class="new">void PushNodeStyle</span>(EditorFrame &amp;frame, const NodeStyle &amp;style);   <span class="cmt">// 以降のノードに適用</span>
-<span class="new">void PopNodeStyle</span>(EditorFrame &amp;frame);
-<span class="new">bool InsertReroute</span>(EditorFrame &amp;frame, LinkId link, Point at);    <span class="cmt">// 要求を積むだけ</span>
-<span class="new">NodeStyle MakeNodeStylePreset</span>(const Theme &amp;theme, NodeStylePreset preset);</code></pre>
+<span class="new">bool BeginNodePanel</span>(EditorFrame &amp;, std::uint64_t panel, std::string_view label, bool *open);
+<span class="new">void EndNodePanel</span>(EditorFrame &amp;);
+<span class="new">void PushNodeStyle</span>(EditorFrame &amp;, const NodeStyle &amp;);
+<span class="new">void PopNodeStyle</span>(EditorFrame &amp;);
+<span class="new">void DrawPinGlyph</span>(ImDrawList *, const PinChromeView &amp;);   <span class="cmt">// フックから既定の記号を呼べる</span>
+<span class="new">NodeStyle MakeNodeStylePreset</span>(const Theme &amp;, NodeStylePreset);</code></pre>
   <h3>追加する編集要求</h3>
   <div class="table-wrap"><table>
     <thead><tr><th>EditKind</th><th>発生する操作</th><th>ホストの責務</th></tr></thead>
     <tbody>
-      <tr><td><code>InsertReroute</code></td><td>配線のダブルクリック、またはメニュー</td><td>Reroute ノードを作り、元の配線を2本に置き換える。1操作として Undo</td></tr>
-      <tr><td><code>ReorderLinkInput</code></td><td>Multi-input ソケット上で配線をドラッグ</td><td>受け側の配線順を並べ替える</td></tr>
-      <tr><td><code>TogglePanel</code></td><td>パネル見出しのクリック</td><td>開閉状態を保存するならホストが持つ。保存しないなら UI 状態として EditorState に残す</td></tr>
-      <tr><td><code>ResolveWildcard</code></td><td>Wildcard ピンへの接続</td><td>接続先の型を採用するかを決める。既存の <code>typeCompatibility</code> で判定する</td></tr>
+      <tr><td><code>InsertReroute</code></td><td>配線のダブルクリック</td><td>Reroute を作り、元の配線を2本に置き換える。1操作として Undo</td></tr>
+      <tr><td><code>MoveLinks</code></td><td>Ctrl＋ドラッグ</td><td>指定ピンの全配線を移す。全部移すか、何もしないか</td></tr>
+      <tr><td><code>BreakLinks</code></td><td>Alt＋クリック</td><td>指定ピンの全配線を消す</td></tr>
+      <tr><td><code>ReorderLinkInput</code></td><td>複数入力の長円の中でドラッグ</td><td>受け側の配線順を並べ替える</td></tr>
+      <tr><td><code>ConnectSelected</code></td><td>キーまたはメニュー</td><td>提案された配線を作るか拒否する</td></tr>
+      <tr><td><code>ToggleValueSocket</code></td><td>値の欄の右クリック</td><td>値の欄とピンの表示を切り替える</td></tr>
     </tbody>
   </table></div>
 </section>
 
 <section id="presets">
-  <h2>見た目プリセット</h2>
-  <p>ライブラリには3つの出発点を用意し、Galleryではそれぞれを使ったデモグラフを置きます。参照製品の名称・アイコン・配色はそのまま使わず、構成と密度だけを合わせます。</p>
+  <h2>プリセット</h2>
+  <p>3つの出発点をライブラリで用意します。名前は用途で付け、参照製品の名前は使いません。</p>
   <div class="table-wrap"><table>
     <thead><tr><th>プリセット</th><th>想定用途</th><th>主な設定</th></tr></thead>
     <tbody>
-      <tr><td><code>Material</code></td><td>シェーダー、ジオメトリ、合成（Blender系）</td><td>角丸小、HeaderFill::Flat でカテゴリ色、矢印なし、パネルあり、ソケット上の値編集、Multi-input、Bypass の素通し線</td></tr>
-      <tr><td><code>Script</code></td><td>ゲームロジック、イベント処理（Unreal系）</td><td>HeaderFill::Gradient、Flow ピンと太い白線、未接続ピンを中空、Event / Compact / Variable、実行中の流れ表示、ブレークポイント</td></tr>
-      <tr><td><code>Classic</code></td><td>汎用ツール、データ処理（imgui-node-editor系）</td><td>現行に近い Standard、HeaderFill::Strip、Bezier、hover と接続線の強調、PushNodeStyle による一時変更</td></tr>
+      <tr><td><code>Studio</code></td><td>シェーダー、ジオメトリ、合成、画像処理</td><td>Tinted ヘッダー、矢印なし、型色の配線、パネル、値の欄、複数入力、Bypass の素通し線、中空ピン</td></tr>
+      <tr><td><code>Logic</code></td><td>ゲームロジック、イベント処理、自動化</td><td>Flow ピンと刻み付き配線、Event / Compact / Variable、実行中の流れ、ブレークポイント、接続線の強調</td></tr>
+      <tr><td><code>Classic</code></td><td>汎用ツール、データ処理（現行の見た目）</td><td>Strip ヘッダー、Bezier、accent の配線、矢印あり。現行のホストはこのまま</td></tr>
     </tbody>
   </table></div>
 </section>
 
+<section id="issues">
+  <h2>現行の不具合</h2>
+  <p>今回の計画とは別に、コードで確認した不具合です。行番号は <code>871f3b5</code> 時点です。</p>
+  <div class="issues">
+    <div class="issue"><span class="sev h">高</span><b>Reroute が 240×240 の空ノードで描かれる</b><p><code>src/node_editor.cpp:636-651</code> の背景描画が Frame / Group しか見ていない。</p></div>
+    <div class="issue"><span class="sev m">中</span><b>使っていなくてもステータス行が出る</b><p><code>EndNode</code>（<code>:741-758</code>）が「Idle 0.00 ms」を常に描く。</p></div>
+    <div class="issue"><span class="sev m">中</span><b>配線とピンの色が合わない</b><p><code>Link</code>（<code>:1157</code>）は型色ではなく accent を使う。</p></div>
+    <div class="issue"><span class="sev m">中</span><b>必須入力の未接続が分からない</b><p><code>PinCapabilities::required</code> は <code>PinRow</code> のラベルに「*」を付けるだけで（<code>:1016</code>）、ソケットやノードには何も出ない。</p></div>
+    <div class="issue"><span class="sev l">低</span><b>リサイズつまみがズームに追従しない</b><p><code>EndNode</code>（<code>:760-767</code>）の14pxが画面座標固定。</p></div>
+    <div class="issue"><span class="sev l">低</span><b>接続理由の tooltip が英語固定</b><p>「Rejected」「Exact」などの文言が直書きで、locale の仕組みを通っていない。</p></div>
+  </div>
+</section>
+
 <section id="plan">
   <h2>段階計画</h2>
-  <p>各段階は単独でビルドとテストが通る単位にします。公開APIが変わるため、段階1に入る前に下の確認事項を決めてください。</p>
+  <p>各段階は単独でビルドとテストが通る単位にします。</p>
   <div class="phases">
-    <div class="phase"><div class="no">Phase<strong>1</strong></div><div><b>見た目の土台と不具合</b><ul>
-      <li>NodeStyle の拡張（枠幅、HeaderFill、配線色の出どころ、矢印、ステータス表示）</li>
-      <li>NodeView::tint / category / subtitle と NodeCategoryStyle</li>
-      <li>ステータス行の常時表示、配線既定色、リサイズつまみのズーム追従、配線ラベル背景を直す</li>
-      <li>hover 中と選択ノードの配線強調</li></ul></div></div>
-    <div class="phase"><div class="no">Phase<strong>2</strong></div><div><b>ノード形状</b><ul>
-      <li>NodeShape: Event / Compact / Variable / Reroute / Comment / Note の描画とヒット判定</li>
-      <li>InsertReroute 要求と配線ダブルクリック</li>
-      <li>Bypass・Disabled の減光と素通し線</li></ul></div></div>
-    <div class="phase"><div class="no">Phase<strong>3</strong></div><div><b>ピンの語彙と実行フロー</b><ul>
-      <li>PinRole::Flow と太い実行配線、中空表示、Array / Set / Map / Reference / Wildcard / Field の描画</li>
-      <li>Multi-input ソケットと ReorderLinkInput</li>
-      <li>実行中の流れ表示（速度・間隔を NodeStyle で調整）</li></ul></div></div>
-    <div class="phase"><div class="no">Phase<strong>4</strong></div><div><b>本文レイアウトと描画フック</b><ul>
-      <li>BeginNodePanel / EndNodePanel、閉じたパネルのソケット集約、hideUnusedPins</li>
-      <li>NodeDrawHooks と PushNodeStyle / PopNodeStyle</li></ul></div></div>
-    <div class="phase"><div class="no">Phase<strong>5</strong></div><div><b>プリセット、Gallery、文書</b><ul>
-      <li>MakeNodeStylePreset（Material / Script / Classic）と Gallery の3デモ</li>
-      <li>英日の node-editor 文書、API inventory、API compile fixture、consumer test の更新</li>
-      <li>native Gallery の実 capture で docs/images を差し替え</li></ul></div></div>
+    <div class="phase"><div class="no">Phase<strong>1</strong></div><div><b>土台と不具合</b><ul>
+      <li>NodeStyle の拡張、カテゴリ表、ノードごとの色、ヘッダーの塗り方、ステータス行の表示条件</li>
+      <li>上の不具合6件の修正</li>
+      <li>.theme ファイルに node の項目を追加</li></ul></div></div>
+    <div class="phase"><div class="no">Phase<strong>2</strong></div><div><b>接続のフィードバック</b><ul>
+      <li>候補の強調と減光、吸着、理由のピル</li>
+      <li><code>LinkView::validity</code> と変換・無効・循環のビーズ、Error / Required / Unavailable の記号</li></ul></div></div>
+    <div class="phase"><div class="no">Phase<strong>3</strong></div><div><b>ピン記号と配線</b><ul>
+      <li>切り欠きソケットと15種類の記号、Flow ピンと刻み付き配線、流れの表示</li>
+      <li>配線の色の出どころ、矢印、強調、ラベルのピル、複数入力</li></ul></div></div>
+    <div class="phase"><div class="no">Phase<strong>4</strong></div><div><b>ノード形状と状態</b><ul>
+      <li>Event / Compact / Variable / Reroute / Comment / Note / Subgraph / Boundary</li>
+      <li>状態ごとの表示、パネル、未使用ピンの非表示</li></ul></div></div>
+    <div class="phase"><div class="no">Phase<strong>5</strong></div><div><b>操作、フック、プリセット</b><ul>
+      <li>Reroute 挿入、配線の一括移動と解除、2ノード接続、配線上への挿入</li>
+      <li>NodeDrawHooks と PushNodeStyle、Studio / Logic / Classic</li>
+      <li>Gallery の3デモ、英日文書、API inventory、compile fixture、consumer test、native capture</li></ul></div></div>
   </div>
   <h3>各段階の検証</h3>
   <div class="table-wrap"><table>
     <thead><tr><th>対象</th><th>確認方法</th></tr></thead>
     <tbody>
-      <tr><td>ヒット判定、要求の内容、配線色の解決</td><td><code>tests/node_editor.cpp</code> に公開IO操作のテストを追加</td></tr>
+      <tr><td>ヒット判定、吸着、要求の内容、色の解決</td><td><code>tests/node_editor.cpp</code> に公開IO操作のテストを追加</td></tr>
       <tr><td>公開APIの形</td><td><code>tests/node_editor_api_compile.cpp</code> と consumer test</td></tr>
-      <tr><td>見た目</td><td>native Gallery の capture を目視で確認。GPU capture は実施した場合だけ記録する</td></tr>
+      <tr><td>見た目</td><td>native Gallery の capture を目視で確認</td></tr>
       <tr><td>文書</td><td><code>python tools/check_docs.py</code> と website の検証</td></tr>
     </tbody>
   </table></div>
@@ -560,10 +518,10 @@ figcaption code { font-size: 11.5px; }
   <div class="ask">
     <p>実装に入る前に、次の4点を決めてください。</p>
     <ol>
-      <li><b>ABI の扱い。</b>NodeView・PinView・NodeStyle の末尾に項目を足すと、構造体の大きさが変わります。node_editor は「development API」扱いなので許容する案です。</li>
-      <li><b>既定の見た目を変えてよいか。</b>ステータス行を「Idle かつ 0ms なら非表示」にし、配線の既定色を型色にすると、既存ホストの見た目が変わります。現行の見た目を保つ設定も残します。</li>
-      <li><b>プリセットの置き場所。</b>Material / Script / Classic をライブラリの関数にするか、Gallery の例コードに留めるか。汎用の出発点なのでライブラリ側を推奨します。</li>
-      <li><b>着手範囲。</b>Phase 1 から順に進めるか、Unreal 系の実行フロー（Phase 3）を先に行うか。</li>
+      <li><b>ABI の扱い。</b>NodeView・PinView・LinkView・NodeStyle の末尾に項目を足すと、構造体の大きさが変わります。node_editor は development API なので許容する案です。</li>
+      <li><b>既定の見た目。</b>この案では既定値を現行と同じ（Classic）にし、新しい見た目はプリセットで選ぶ形にしています。既定を Studio に変えてもよいか。</li>
+      <li><b>.theme ファイルへの node 項目の追加。</b>テーマの書式が増えます。追加してよいか。</li>
+      <li><b>着手順。</b>Phase 1 から順に進めるか、接続のフィードバック（Phase 2）とピン記号（Phase 3）を先に行うか。</li>
     </ol>
   </div>
 </section>
