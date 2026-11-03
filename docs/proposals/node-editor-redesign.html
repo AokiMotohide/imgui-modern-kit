@@ -90,6 +90,10 @@ td.c { text-align: center; font-family: var(--font-mono); white-space: nowrap; }
 .principles p { font-size: 13.5px; color: var(--ink-2); margin: 0; }
 figure { margin: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: grid; }
 figure svg { display: block; width: 100%; height: auto; background: var(--canvas); }
+figure video { display: block; width: 100%; height: auto; background: var(--canvas); }
+.films { display: grid; gap: 18px; }
+.films figcaption ul { margin: 6px 0 0; padding-left: 1.2em; }
+.films figcaption li { margin: 2px 0; }
 figcaption { padding: 10px 14px 12px; font-size: 13px; line-height: 1.55; color: var(--ink-2); }
 figcaption b { color: var(--ink); display: block; font-size: 14px; margin-bottom: 2px; }
 figcaption code { font-size: 11.5px; }
@@ -127,6 +131,7 @@ figcaption code { font-size: 11.5px; }
 <nav class="toc" aria-label="目次">
   <p>Contents</p>
   <ol>
+    <li><a href="#films">ビフォーアフター</a></li>
     <li><a href="#status">実装状況</a></li>
     <li><a href="#summary">結論</a></li>
     <li><a href="#identity">見た目の方針</a></li>
@@ -154,6 +159,22 @@ figcaption code { font-size: 11.5px; }
   <div class="meta"><span>対象: include/imkit/node_editor.h</span><span>src/node_editor.cpp</span><span>src/node_layout.cpp</span><span>基準コミット 871f3b5</span><span>2026-11-03</span></div>
 </header>
 
+<section id="films">
+  <h2>ビフォーアフター</h2>
+  <p>同じグラフに同じマウス操作を与え、左は変更前（v4.0、<code>871f3b5</code>）、右は変更後のノードエディタで描いた動画です。変更前の機能で表現できない部分は、当時ホストができた最善の代用（白い三角のピンなど）で描いています。</p>
+  <p>Dear ImGui の描画データをソフトウェアで画像にしたもので、Gallery の実キャプチャではありません。見た目の比較用です。</p>
+  <div class="films">
+    <figure><video src="media/node-editor-material.mp4" autoplay muted loop playsinline controls preload="auto" aria-label="マテリアル系のグラフ"></video>
+      <figcaption><b>マテリアル系のグラフ</b><ul><li>右: カテゴリ色を薄く敷いたヘッダーと記号タイル、サブタイトル、型の色の配線（変更前は全配線が同じ青）</li><li>Reroute が小さなノットになり、無効な配線は赤の破線と ✕ の印で示される</li><li>選択したノードにつながる配線が強調され、使っていないステータス行（Idle 0.00 ms）は出ない</li></ul></figcaption></figure>
+    <figure><video src="media/node-editor-wiring.mp4" autoplay muted loop playsinline controls preload="auto" aria-label="配線の作成"></video>
+      <figcaption><b>配線の作成</b><ul><li>同じ軌跡で Bool の入力へ寄せる: 左は赤い直線と tooltip、右はつなげないノードが薄くなり、理由がカーソル横のピルに出る</li><li>ピンから15px外れた位置で離す: 左は当たらず配線されない、右は近くの「B」に吸着して配線される（変換が入るので ⇄ の判定とピル）</li><li>右では、ドラッグ中の配線が確定後と同じ曲線で描かれる</li></ul></figcaption></figure>
+    <figure><video src="media/node-editor-logic.mp4" autoplay muted loop playsinline controls preload="auto" aria-label="ロジック（実行フロー）のグラフ"></video>
+      <figcaption><b>ロジック（実行フロー）のグラフ</b><ul><li>左は白い三角のピンで代用した実行フロー。右は Flow ピン（角丸四角＋山形）と、刻みの入った太い配線</li><li>実行中の配線（True → Spawn）は、右では印が出力から入力へ流れる</li><li>Event ノードの起点タブ、Variable のピル型、複数入力の長円（Join に2本並んで入る）</li></ul></figcaption></figure>
+    <figure><video src="media/node-editor-states.mp4" autoplay muted loop playsinline controls preload="auto" aria-label="ノードの形と状態"></video>
+      <figcaption><b>ノードの形と状態</b><ul><li>左下の赤いメッセージは、変更前の不具合（本体が空のロック中ノードで ImGui がエラーを出す）。右では出ない</li><li>右: エラーの文言帯とバッジ、Bypass の斜線と素通し線、実行中の光と進捗リング、cached のチップ、ブレークポイントとロック</li><li>Frame のラベルタブとノード数、Compact の「+」、Subgraph の重ねたカードと開くボタン、Waiting の点線枠</li></ul></figcaption></figure>
+  </div>
+</section>
+
 <section id="status">
   <h2>実装状況</h2>
   <p>この計画の Phase 1〜5 を <code>Version4.1</code> に実装しました。下の表は計画との対応です。以降の節は計画時の記述のまま残しています。</p>
@@ -177,7 +198,7 @@ figcaption code { font-size: 11.5px; }
   <h3>検証</h3>
   <ul>
     <li>Linux（GCC）で <code>imkit_node_editor_test</code> と API compile fixture が通過。各 Phase の動作は、公開IO操作と描画頂点を使うテストで確認</li>
-    <li>見た目は、ImGui の描画データをソフトウェアで画像にして確認（Classic / Tinted / Flat / Gradient、ドラッグ中、形と状態、ライトとダークのテーマ）</li>
+    <li>見た目は、ImGui の描画データをソフトウェアで画像にして確認（Classic / Tinted / Flat / Gradient、ドラッグ中、形と状態、ライトとダークのテーマ）。上のビフォーアフター動画も同じ方法で、変更前と変更後をそれぞれビルドして描いた</li>
     <li>未実施: Windows / macOS の native Gallery のビルドと capture、GPU、IME。Linux では <code>src/show/schedule_ui.cpp</code> の元からあるコンパイルエラーにより、show モジュールと consumer テストはビルドできない</li>
   </ul>
 </section>
