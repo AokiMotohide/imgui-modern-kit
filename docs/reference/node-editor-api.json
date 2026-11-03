@@ -5,6 +5,11 @@
     "header": "imkit/node_editor.h"
   },
   {
+    "name": "imkit::node_editor::DrawPinGlyph",
+    "declaration": "void DrawPinGlyph(ImDrawList *drawList, const PinChromeView &pin);",
+    "header": "imkit/node_editor.h"
+  },
+  {
     "name": "imkit::node_editor::AlignNodes",
     "declaration": "LayoutResult AlignNodes(GraphView graph, std::span<const NodeId> selection, std::span<PositionChange> output, AlignOptions options = {});",
     "header": "imkit/node_editor.h"

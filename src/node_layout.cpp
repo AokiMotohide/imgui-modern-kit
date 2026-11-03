@@ -394,6 +394,11 @@ ConnectionVerdict CanConnect(GraphView g, PinId a, PinId b, LinkId replacing) {
     auto *ny = Find(g, y->node);
     if (!nx || !ny || nx->locked || ny->locked || x->hidden || y->hidden)
         return {false, "Socket is unavailable"};
+    for (auto *pin : {x, y})
+        if (pin->flags & PinFlags_Unavailable)
+            return {false, pin->reason.empty() ? std::string_view("Socket is unavailable") : pin->reason};
+    if (x->role != y->role)
+        return {false, x->role == PinRole::Flow ? "Flow connects only to flow" : "Data connects only to data"};
     for (auto *node : {nx, ny}) {
         auto parent = node->parent;
         for (std::size_t depth = 0; parent; ++depth) {
@@ -412,6 +417,8 @@ ConnectionVerdict CanConnect(GraphView g, PinId a, PinId b, LinkId replacing) {
         }
     if (g.canConnect)
         return g.canConnect(g.user, x->id, y->id);
+    if ((x->flags | y->flags) & PinFlags_Wildcard)
+        return {}; // The host resolves the wildcard's type when it applies the link.
     if (g.typeCompatibility)
         return g.typeCompatibility(g.user, x->type, y->type);
     if (x->type && y->type && x->type != y->type)

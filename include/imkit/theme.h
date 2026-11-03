@@ -114,7 +114,7 @@ struct NodeTokens {
     NodeLinkColor linkColor = NodeLinkColor::OutputType;
     NodeLinkArrow linkArrow = NodeLinkArrow::Middle;
     ImVec4 canvas{}, grid{}, header{};
-    std::optional<float> headerTint, rounding, headerHeight, pinRadius, linkWidth, gridSize;
+    std::optional<float> headerTint, rounding, headerHeight, pinRadius, linkWidth, gridSize, pinSeat, flowLinkWidth;
     bool hollowPins = false, highlightLinks = false;
 };
 struct Theme {

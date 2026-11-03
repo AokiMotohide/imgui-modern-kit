@@ -233,6 +233,24 @@ Every node can call `Preview` below its properties. An output holds a borrowed t
 - A `NodeKind::Reroute` node draws as a 16-unit knot and ignores its stored size. Both sockets sit at its center. Drag the center to move it; drag its ring to start a wire.
 - An unconnected input with `PinCapabilities::required` carries an error mark on its socket.
 - Link labels sit in a pill. The resize grip scales with the zoom.
+**Socket glyphs**
+
+`PinView::role`, `container` and `flags` choose the glyph. `DrawPinGlyph` draws the same glyph from a `PinChromeView`, for host panels and legends.
+
+| Socket | Glyph |
+|---|---|
+| `PinRole::Data` | The type's `PinShape`. With `hollowUnconnectedPins`, a ring that gains a core once connected |
+| `PinRole::Flow` | Rounded square with a chevron, outlined while unconnected. Flow links use the text color, `flowLinkWidth` and chevron marks, and connect only to flow |
+| `PinContainer::Array` / `Set` / `Map` | A fainter ring behind / rounded square with a dot / halves in the `keyType` and value colors |
+| `PinFlags_Reference` / `Wildcard` / `Field` / `Optional` | Hexagon / dashed ring with a plus / ring with a diamond / open ring |
+| `PinFlags_Unavailable` | Faded ring with a slash; rejected as a target with `PinView::reason` |
+| Input with `multiple=true` | A capsule that grows with its links. The links land side by side, in graph order |
+
+- A wildcard socket skips the built-in type check; the host resolves its type when it applies the link.
+- `pinSeat` draws a canvas-colored ring around each socket so it reads as docked into the edge.
+- Hovering a socket shows its label, its type name and `PinView::inspect`.
+- `LinkView::active` moves marks along the link from output to input, at `flowSpeed` × 60 px/s and `flowSpacing` px apart. They hold still when `animate` is off.
+
 - `EditorOptions::locale` translates the status line, the connection verdict and the full-buffer warning. Keys start with `node_editor.`, for example `node_editor.connect.rejected` and `node_editor.status.running`.
 - Ordinary body contents remain native ImGui widgets. `BackgroundImage` and `Annotation` carry host-supplied canvas decoration. Link flow is a display flag, not execution.
 - `NodeInspector`, `ExposedProperties`, `NodeSearch`, `Diagnostics`, `LayoutToolbar` and `Breadcrumbs` can sit in host panels outside the canvas.

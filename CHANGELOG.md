@@ -12,7 +12,9 @@
 - `EditorOptions::locale` translates the status line, connection verdicts and the full-buffer warning (`node_editor.*` keys). `EditorFrame::hoveredNode` reports the topmost hovered node.
 - Wiring feedback: sockets that can take the dragged wire get a ring, the others fade (`incompatibleAlpha`) and nodes without a candidate fade (`incompatibleNodeAlpha`). The draft wire has the final link shape, snaps to the nearest candidate within `snapDistance`, and a pill by the cursor shows the verdict reason instead of a tooltip.
 - `LinkView::validity` (`Valid`, `Converted`, `Invalid`, `Cycle`) and `LinkView::reason` draw the host's verdict on existing links: a marker in the middle, and for `Invalid` the error colour, long dashes and a ring on the receiving input.
-- `NodeStyle`, `NodeView`, `LinkView`, `EditorOptions`, `EditorFrame` and `Theme` gain members; rebuild code that links ImKit with the new headers.
+- Socket glyphs: `PinView::role` (`Data`, `Flow`), `container` (`Single`, `Array`, `Set`, `Map`), `flags` (`Reference`, `Wildcard`, `Field`, `Optional`, `Unavailable`), `keyType`, `inspect` and `reason`. `DrawPinGlyph` and `PinChromeView` draw them outside the canvas too. Flow links use the text colour, `flowLinkWidth` and chevrons; inputs with `multiple=true` draw as a capsule with the links side by side; `pinSeat` docks sockets into the edge; active links move marks at `flowSpeed` and `flowSpacing`.
+- `CanConnect` rejects an unavailable socket with its reason and a flow-to-data link, and lets a wildcard through without the type check.
+- `NodeStyle`, `NodeView`, `PinView`, `LinkView`, `EditorOptions`, `EditorFrame` and `Theme` gain members; rebuild code that links ImKit with the new headers.
 
 ### ノードエディタの見た目
 
@@ -22,7 +24,9 @@
 - `EditorOptions::locale` で、ステータス行、接続の判定、バッファ不足の警告を翻訳できます（`node_editor.*` キー）。`EditorFrame::hoveredNode` は、一番手前の hover 中のノードを返します。
 - 配線中のフィードバック: ドラッグ中の配線を受けられるソケットに輪を付け、ほかのソケット（`incompatibleAlpha`）と受け先のないノード（`incompatibleNodeAlpha`）を薄くします。ドラッグ中の配線は確定後と同じ形で描き、`snapDistance` 以内の最も近い候補に吸着します。判定の理由は tooltip ではなく、カーソル横のピルに出します。
 - `LinkView::validity`（`Valid`、`Converted`、`Invalid`、`Cycle`）と `LinkView::reason` で、既存の配線に対するホストの判定を描きます。中央に印を付け、`Invalid` はエラーの色と長い破線で描き、受け側の入力に輪を付けます。
-- `NodeStyle`、`NodeView`、`LinkView`、`EditorOptions`、`EditorFrame`、`Theme` にメンバーが加わります。ImKit をリンクするコードは、新しいヘッダーで再ビルドしてください。
+- ソケットの記号: `PinView::role`（`Data`、`Flow`）、`container`（`Single`、`Array`、`Set`、`Map`）、`flags`（`Reference`、`Wildcard`、`Field`、`Optional`、`Unavailable`）、`keyType`、`inspect`、`reason` が加わります。`DrawPinGlyph` と `PinChromeView` で、キャンバスの外でも同じ記号を描けます。Flow の配線は文字色、`flowLinkWidth`、山形の刻みで描きます。`multiple=true` の入力は長円で描き、配線を並べて受けます。`pinSeat` でソケットを枠に差し込んだように見せます。実行中の配線では、`flowSpeed` と `flowSpacing` で印が動きます。
+- `CanConnect` は、使えないソケットを理由つきで拒否し、Flow とデータの接続も拒否します。ワイルドカードは型の判定をせずに通します。
+- `NodeStyle`、`NodeView`、`PinView`、`LinkView`、`EditorOptions`、`EditorFrame`、`Theme` にメンバーが加わります。ImKit をリンクするコードは、新しいヘッダーで再ビルドしてください。
 
 ### Tile map for tiled displays
 

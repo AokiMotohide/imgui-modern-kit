@@ -11,6 +11,7 @@
 
 namespace imkit::node_editor {
 namespace {
+constexpr float kPi = 3.14159265358979f;
 ImVec2 Add(ImVec2 a, ImVec2 b) {
     return {a.x + b.x, a.y + b.y};
 }
@@ -158,7 +159,8 @@ ImVec4 PinColor(const EditorFrame &f, const PinView &pin) {
         if (type.id == pin.type && type.color.w > 0)
             return type.color;
     auto *n = Find(f, pin.node);
-    return n ? Style(f, *n).accent : f.style.accent;
+    const auto &st = n ? Style(f, *n) : f.style;
+    return pin.role == PinRole::Flow ? st.text : st.accent; // Flow sockets match their links.
 }
 bool HasTypeColor(const EditorFrame &f, const PinView &pin) {
     if (pin.color.w > 0)
@@ -277,6 +279,33 @@ std::array<ImVec2, 25> Curve(const EditorFrame &f, const PinView &a, const PinVi
                              const LinkStyle *overrideStyle = nullptr) {
     return CurvePoints(overrideStyle ? *overrideStyle : f.style.linkStyle, PinPosition(f, a),
                        Direction(PinSide(f, a)), PinPosition(f, b), Direction(PinSide(f, b)));
+}
+bool IsMultiInput(const PinView &pin) {
+    return pin.kind == PinKind::Input && pin.multiple && pin.role == PinRole::Data;
+}
+float PinRadius(const EditorFrame &f, const PinView &pin) {
+    auto *n = Find(f, pin.node);
+    return (n ? Style(f, *n) : f.style).pinRadius * std::clamp(float(f.state->zoom), .8f, 2.f);
+}
+// Links into a multi-input socket land side by side along it, in graph order.
+ImVec2 LinkEndOffset(const EditorFrame &f, const PinView &pin, LinkId link) {
+    if (!IsMultiInput(pin))
+        return {};
+    int count = 0, index = 0;
+    for (auto &l : f.graph.links)
+        if (l.to == pin.id || l.from == pin.id) {
+            if (l.id == link)
+                index = count;
+            ++count;
+        }
+    const float d = (float(index) - float(count - 1) / 2) * PinRadius(f, pin) * 1.4f;
+    const auto side = PinSide(f, pin);
+    return side == Side::Left || side == Side::Right ? ImVec2{0, d} : ImVec2{d, 0};
+}
+std::array<ImVec2, 25> LinkCurve(const EditorFrame &f, const LinkView &link, const PinView &a, const PinView &b) {
+    return CurvePoints(link.style ? *link.style : f.style.linkStyle, Add(PinPosition(f, a), LinkEndOffset(f, a, link.id)),
+                       Direction(PinSide(f, a)), Add(PinPosition(f, b), LinkEndOffset(f, b, link.id)),
+                       Direction(PinSide(f, b)));
 }
 // Draws every segment whose index falls in the "on" part of an on/off pattern.
 void DashedPolyline(ImDrawList *dl, const std::array<ImVec2, 25> &points, ImU32 color, float width, int on,
@@ -484,6 +513,8 @@ NodeStyle MakeNodeStyle(const Theme &t) {
     s.pinRadius = node.pinRadius.value_or(s.pinRadius);
     s.linkWidth = node.linkWidth.value_or(s.linkWidth);
     s.gridSize = node.gridSize.value_or(s.gridSize);
+    s.pinSeat = node.pinSeat.value_or(s.pinSeat);
+    s.flowLinkWidth = node.flowLinkWidth.value_or(s.flowLinkWidth);
     return s;
 }
 void EditorState::Reserve(std::size_t nodes, std::size_t previewCount) {
@@ -592,6 +623,147 @@ bool FrameNodes(EditorState &s, GraphView g, std::span<const NodeId> ids, Point 
                         .15, 3.);
     s.origin = {(b.min.x + b.max.x - size.x / s.zoom) / 2, (b.min.y + b.max.y - size.y / s.zoom) / 2};
     return true;
+}
+void DrawPinGlyph(ImDrawList *dl, const PinChromeView &v) {
+    if (!dl)
+        return;
+    static const PinView plain{};
+    const PinView &pin = v.pin ? *v.pin : plain;
+    const ImVec2 p = v.center;
+    const float r = std::max(1.f, v.radius);
+    const ImU32 c = ImGui::GetColorU32(v.color), canvas = ImGui::GetColorU32(v.canvas);
+    const float t = std::max(1.2f, r * .34f); // Stroke stays legible when zoomed out.
+    const float q = r - t * .5f;               // Stroke centre radius, so outlines keep the glyph size.
+    const bool multi = IsMultiInput(pin);
+    const bool vertical = !(pin.manualPosition && (pin.side == Side::Top || pin.side == Side::Bottom));
+    const int links = std::max(1, v.links);
+    const float spacing = r * 1.4f;
+    const float half = multi ? std::max(r, links * spacing / 2 + r * .25f) : r; // Capsule half length.
+    const ImVec2 extent = vertical ? ImVec2{r, half} : ImVec2{half, r};
+    if (v.seat > 0) { // Canvas-coloured cut-out: the socket reads as docked into the node edge.
+        if (multi)
+            dl->AddRectFilled(Sub(p, Add(extent, {v.seat, v.seat})), Add(p, Add(extent, {v.seat, v.seat})), canvas,
+                              r + v.seat);
+        else
+            dl->AddCircleFilled(p, r + v.seat, canvas);
+    }
+    if (pin.flags & PinFlags_Unavailable) {
+        const ImU32 faint = ImGui::GetColorU32(WithAlpha(v.color, .4f));
+        dl->AddCircle(p, q, faint, 0, t * .8f);
+        dl->AddLine({p.x - q * .7f, p.y + q * .7f}, {p.x + q * .7f, p.y - q * .7f}, faint, t * .8f);
+        return;
+    }
+    if (pin.role == PinRole::Flow) { // Rounded square with a chevron cut into it.
+        const float w = r * 1.05f;
+        const ImVec2 lo{p.x - w, p.y - w}, hi{p.x + w, p.y + w};
+        if (v.connected)
+            dl->AddRectFilled(lo, hi, c, w * .42f);
+        else
+            dl->AddRect({lo.x + t * .5f, lo.y + t * .5f}, {hi.x - t * .5f, hi.y - t * .5f}, c, w * .42f, 0, t * .9f);
+        const ImVec2 chevron[3] = {{p.x - w * .3f, p.y - w * .52f}, {p.x + w * .3f, p.y}, {p.x - w * .3f, p.y + w * .52f}};
+        dl->AddPolyline(chevron, 3, v.connected ? canvas : c, ImDrawFlags_None, std::max(1.2f, w * .32f));
+        return;
+    }
+    if (multi) { // A capsule that grows with its links; one dot per link.
+        dl->AddRect(Sub(p, {extent.x - t * .5f, extent.y - t * .5f}), Add(p, {extent.x - t * .5f, extent.y - t * .5f}), c,
+                    r, 0, t);
+        for (int i = 0; i < v.links; ++i) {
+            const float d = (float(i) - float(v.links - 1) / 2) * spacing;
+            dl->AddCircleFilled(vertical ? ImVec2{p.x, p.y + d} : ImVec2{p.x + d, p.y}, r * .34f, c);
+        }
+        return;
+    }
+    const bool solid = !v.hollow; // Classic look: filled glyphs whatever the connection state.
+    const bool core = solid || v.connected;
+    if (pin.container == PinContainer::Array) // A fainter ring behind: more than one.
+        dl->AddCircle({p.x - r * .42f, p.y - r * .42f}, q * .92f, ImGui::GetColorU32(WithAlpha(v.color, .45f)), 0,
+                      t * .8f);
+    if (pin.container == PinContainer::Set) {
+        dl->AddRect({p.x - q, p.y - q}, {p.x + q, p.y + q}, c, r * .35f, 0, t);
+        dl->AddCircleFilled(p, r * .3f, c);
+        return;
+    }
+    if (pin.container == PinContainer::Map) { // Key colour on the left, value colour on the right.
+        const ImU32 key = ImGui::GetColorU32(v.keyColor.w > 0 ? v.keyColor : v.color);
+        dl->PathArcTo(p, r, kPi * .5f, kPi * 1.5f, 12);
+        dl->PathFillConvex(key);
+        dl->PathArcTo(p, r, -kPi * .5f, kPi * .5f, 12);
+        dl->PathFillConvex(c);
+        dl->AddLine({p.x, p.y - r - 1}, {p.x, p.y + r + 1}, canvas, std::max(1.f, r * .25f));
+        return;
+    }
+    if (pin.flags & PinFlags_Wildcard) { // Dashed ring and a plus: any type until resolved.
+        for (int i = 0; i < 8; ++i) {
+            const float a0 = i * kPi / 4, a1 = a0 + kPi / 6.5f;
+            dl->PathArcTo(p, q, a0, a1, 4);
+            dl->PathStroke(c, 0, t * .9f);
+        }
+        dl->AddLine({p.x - r * .45f, p.y}, {p.x + r * .45f, p.y}, c, t * .8f);
+        dl->AddLine({p.x, p.y - r * .45f}, {p.x, p.y + r * .45f}, c, t * .8f);
+        return;
+    }
+    if (pin.flags & PinFlags_Reference) { // Hexagon: a reference, not a value.
+        if (solid)
+            dl->AddNgonFilled(p, r * 1.08f, c, 6);
+        else {
+            dl->AddNgon(p, q * 1.08f, c, 6, t);
+            if (core)
+                dl->AddCircleFilled(p, r * .45f, c);
+        }
+        return;
+    }
+    if (pin.flags & PinFlags_Field) { // Ring with an inner diamond: one value per element.
+        dl->AddCircle(p, q, c, 0, t);
+        const float d = r * .5f;
+        dl->AddQuadFilled({p.x, p.y - d}, {p.x + d, p.y}, {p.x, p.y + d}, {p.x - d, p.y}, c);
+        return;
+    }
+    if (pin.flags & PinFlags_Optional) { // Open ring: fine to leave unconnected.
+        dl->PathArcTo(p, q, -kPi / 3, kPi * 1.6f, 20);
+        dl->PathStroke(c, 0, t);
+        if (v.connected)
+            dl->AddCircleFilled(p, r * .5f, c);
+        return;
+    }
+    if (solid) {
+        switch (v.shape) {
+        case PinShape::Square:
+            dl->AddRectFilled(Sub(p, {r, r}), Add(p, {r, r}), c, 1);
+            break;
+        case PinShape::Diamond:
+            dl->AddQuadFilled(Add(p, {-r, 0}), Add(p, {0, -r}), Add(p, {r, 0}), Add(p, {0, r}), c);
+            break;
+        case PinShape::Triangle:
+            dl->AddTriangleFilled(Add(p, {-r, -r}), Add(p, {r, 0}), Add(p, {-r, r}), c);
+            break;
+        case PinShape::Circle:
+            dl->AddCircleFilled(p, r, c);
+            break;
+        }
+        return;
+    }
+    switch (v.shape) { // Ring, plus a core once something is connected.
+    case PinShape::Square:
+        dl->AddRect(Sub(p, {q, q}), Add(p, {q, q}), c, 1, 0, t);
+        if (core)
+            dl->AddRectFilled(Sub(p, {r * .45f, r * .45f}), Add(p, {r * .45f, r * .45f}), c);
+        break;
+    case PinShape::Diamond:
+        dl->AddQuad(Add(p, {-q, 0}), Add(p, {0, -q}), Add(p, {q, 0}), Add(p, {0, q}), c, t);
+        if (core)
+            dl->AddQuadFilled(Add(p, {-r * .45f, 0}), Add(p, {0, -r * .45f}), Add(p, {r * .45f, 0}), Add(p, {0, r * .45f}), c);
+        break;
+    case PinShape::Triangle:
+        dl->AddTriangle(Add(p, {-q, -q}), Add(p, {q, 0}), Add(p, {-q, q}), c, t);
+        if (core)
+            dl->AddTriangleFilled(Add(p, {-r * .4f, -r * .4f}), Add(p, {r * .45f, 0}), Add(p, {-r * .4f, r * .4f}), c);
+        break;
+    case PinShape::Circle:
+        dl->AddCircle(p, q, c, 0, t);
+        if (core)
+            dl->AddCircleFilled(p, r * .52f, c);
+        break;
+    }
 }
 namespace {
 void DrawNodeChrome(const EditorFrame &f, const NodeView &n, ImDrawList *dl) {
@@ -1432,7 +1604,7 @@ void Link(EditorFrame &f, const LinkView &link) {
         return;
     if (!Find(f, a->node) || !Find(f, b->node))
         return;
-    auto points = Curve(f, *a, *b, link.style);
+    auto points = LinkCurve(f, link, *a, *b);
     // The stored direction may be either way round; colour sources speak of the output and the input.
     const PinView &output = a->kind == PinKind::Output ? *a : *b;
     const PinView &input = a->kind == PinKind::Output ? *b : *a;
@@ -1460,6 +1632,9 @@ void Link(EditorFrame &f, const LinkView &link) {
         case LinkColorSource::Accent:
             break;
         }
+    const bool flow = output.role == PinRole::Flow;
+    if (flow && link.color.w <= 0) // Execution order reads apart from data: the text colour, thicker.
+        from = to = f.style.text;
     const bool selected = s.selectedLink == link.id;
     const bool invalid = link.validity == LinkValidity::Invalid;
     if (selected)
@@ -1467,7 +1642,7 @@ void Link(EditorFrame &f, const LinkView &link) {
     else if (invalid)
         from = to = f.style.error;
     auto *dl = ImGui::GetWindowDrawList();
-    const float linkWidth = link.width > 0 ? link.width : f.style.linkWidth;
+    const float linkWidth = link.width > 0 ? link.width : flow ? f.style.flowLinkWidth : f.style.linkWidth;
     bool emphasized = selected;
     if (f.style.highlightConnectedLinks) {
         const auto *na = Find(f, a->node), *nb = Find(f, b->node);
@@ -1503,7 +1678,30 @@ void Link(EditorFrame &f, const LinkView &link) {
             v.col = Color(c);
         }
     }
-    if (f.style.linkArrow != LinkArrow::None) {
+    float length = 0;
+    for (std::size_t i = 1; i < points.size(); ++i)
+        length += std::sqrt(Dot(Sub(points[i], points[i - 1]), Sub(points[i], points[i - 1])));
+    // Chevrons cut into the line show the direction of execution; a short link keeps only the middle one.
+    const std::size_t marks[] = {12, 7, 17};
+    const std::size_t markCount = length > 160 ? 3 : 1;
+    if (flow && !invalid && !link.reference)
+        for (std::size_t m = 0; m < markCount; ++m) {
+            const std::size_t i = marks[m];
+            const bool forward = a->kind == PinKind::Output;
+            auto d = forward ? Sub(points[i + 1], points[i - 1]) : Sub(points[i - 1], points[i + 1]);
+            const float len = std::sqrt(Dot(d, d));
+            if (len <= 0)
+                continue;
+            d = Mul(d, 1 / len);
+            const ImVec2 n{-d.y, d.x};
+            const float k = std::max(2.f, width * .8f);
+            const auto c = points[i];
+            dl->AddPolyline(std::array<ImVec2, 3>{Add(Sub(c, Mul(d, k * .6f)), Mul(n, k)), Add(c, Mul(d, k * .6f)),
+                                                  Sub(Sub(c, Mul(d, k * .6f)), Mul(n, k))}
+                                .data(),
+                            3, Color(f.style.canvas), ImDrawFlags_None, std::max(1.2f, width * .45f));
+        }
+    if (f.style.linkArrow != LinkArrow::None && !flow) {
         const bool atEnd = f.style.linkArrow == LinkArrow::End;
         // Arrows point from output to input whatever order the host stored the ends in.
         const bool forward = a->kind == PinKind::Output;
@@ -1551,9 +1749,29 @@ void Link(EditorFrame &f, const LinkView &link) {
         dl->AddRect(lo, hi, Color(WithAlpha(Mix(from, to, .5f), .6f)), (hi.y - lo.y) / 2);
         dl->AddText(Add(lo, pad), Color(f.style.muted), link.label.data(), link.label.data() + link.label.size());
     }
-    if (link.active && f.style.animate) {
-        auto i = std::size_t(std::fmod(ImGui::GetTime() * 12, 24));
-        dl->AddCircleFilled(points[i], 4, Color(f.style.success));
+    if (link.active) { // Marks travel from output to input; they hold still when motion is off.
+        std::array<float, 25> along{};
+        for (std::size_t i = 1; i < points.size(); ++i) {
+            const auto d = Sub(points[i], points[i - 1]);
+            along[i] = along[i - 1] + std::sqrt(Dot(d, d));
+        }
+        const float spacing = std::max(4.f, f.style.flowSpacing);
+        const float travelled = f.style.animate ? float(ImGui::GetTime()) * 60 * f.style.flowSpeed : 0;
+        const bool forward = a->kind == PinKind::Output;
+        const ImU32 mark = Color(flow ? f.style.accent : f.style.success);
+        const float radius = std::max(1.5f, width * .65f);
+        std::size_t segment = 1;
+        for (float d = std::fmod(travelled, spacing); d < along.back(); d += spacing) {
+            const float at = forward ? d : along.back() - d;
+            while (segment + 1 < points.size() && along[segment] < at)
+                ++segment;
+            while (segment > 1 && along[segment - 1] > at)
+                --segment;
+            const float span = std::max(.001f, along[segment] - along[segment - 1]);
+            const float t = std::clamp((at - along[segment - 1]) / span, 0.f, 1.f);
+            dl->AddCircleFilled(Add(points[segment - 1], Mul(Sub(points[segment], points[segment - 1]), t)), radius,
+                                mark);
+        }
     }
 }
 void DrawLinks(EditorFrame &f) {
@@ -2161,7 +2379,7 @@ void EndEditor(EditorFrame &f) {
                 continue;
             }
             float r = st.pinRadius * std::clamp(float(s.zoom), .8f, 2.f);
-            auto c = Color(PinColor(f, pin));
+            ImVec4 tone = PinColor(f, pin);
             auto shape = pin.shape;
             for (auto &type : f.graph.socketTypes)
                 if (type.id == pin.type && pin.inheritTypeStyle)
@@ -2170,7 +2388,7 @@ void EndEditor(EditorFrame &f) {
             if (s.connecting && s.connecting != pin.id) {
                 auto verdict = CanConnect(f.graph, s.connecting, pin.id, s.reconnecting);
                 if (!verdict.allowed) // Sockets that cannot take the wire step back instead of shouting.
-                    c = Color(WithAlpha(PinColor(f, pin), std::clamp(st.incompatibleAlpha, 0.f, 1.f)));
+                    tone = WithAlpha(tone, std::clamp(st.incompatibleAlpha, 0.f, 1.f));
                 else {
                     const bool convertible = verdict.match == ConnectionMatch::Convertible;
                     dl->AddCircle(p, r + 4, Color(convertible ? f.style.warning : f.style.success), 0, 2.f);
@@ -2187,29 +2405,30 @@ void EndEditor(EditorFrame &f) {
                     dl->AddCircle(p, r + 3, Color(f.style.error), 0, 2.f);
                     break;
                 }
-            if (pin.multiple)
+            const ImU32 c = Color(tone);
+            if (pin.multiple && !IsMultiInput(pin))
                 dl->AddCircle(p, r + 2, c);
             if (pin.capabilities.group)
                 dl->AddLine(Add(p, {-r, -r - 4}), Add(p, {r, -r - 4}), c, 2);
-            if (st.hollowUnconnectedPins && !connected) {
-                // Outline only; the thickness stays legible when zoomed out.
-                const float t = std::max(1.2f, r * .32f), q = r - t * .5f;
-                if (shape == PinShape::Square)
-                    dl->AddRect(Sub(p, {q, q}), Add(p, {q, q}), c, 1, 0, t);
-                else if (shape == PinShape::Diamond)
-                    dl->AddQuad(Add(p, {-q, 0}), Add(p, {0, -q}), Add(p, {q, 0}), Add(p, {0, q}), c, t);
-                else if (shape == PinShape::Triangle)
-                    dl->AddTriangle(Add(p, {-q, -q}), Add(p, {q, 0}), Add(p, {-q, q}), c, t);
-                else
-                    dl->AddCircle(p, q, c, 0, t);
-            } else if (shape == PinShape::Square)
-                dl->AddRectFilled(Sub(p, {r, r}), Add(p, {r, r}), c, 1);
-            else if (shape == PinShape::Diamond)
-                dl->AddQuadFilled(Add(p, {-r, 0}), Add(p, {0, -r}), Add(p, {r, 0}), Add(p, {0, r}), c);
-            else if (shape == PinShape::Triangle)
-                dl->AddTriangleFilled(Add(p, {-r, -r}), Add(p, {r, 0}), Add(p, {-r, r}), c);
-            else
-                dl->AddCircleFilled(p, r, c);
+            PinChromeView glyph;
+            glyph.pin = &pin;
+            glyph.center = p;
+            glyph.radius = r;
+            glyph.seat = st.pinSeat * std::clamp(float(s.zoom), .8f, 2.f);
+            glyph.color = tone;
+            glyph.canvas = st.canvas;
+            glyph.shape = shape;
+            glyph.connected = connected;
+            glyph.hollow = st.hollowUnconnectedPins;
+            glyph.hovered = Inside(io.MousePos, Sub(p, {r + 5, r + 5}), Add(p, {r + 5, r + 5}));
+            if (pin.keyType)
+                for (auto &type : f.graph.socketTypes)
+                    if (type.id == pin.keyType)
+                        glyph.keyColor = type.color;
+            if (IsMultiInput(pin))
+                for (auto &link : f.graph.links)
+                    glyph.links += link.to == pin.id || link.from == pin.id;
+            DrawPinGlyph(dl, glyph);
             // A required input that has nothing connected carries a small error mark.
             if (pin.kind == PinKind::Input && pin.capabilities.required && !connected) {
                 const ImVec2 m = Add(p, {r * .85f, -r * .85f});
@@ -2228,8 +2447,20 @@ void EndEditor(EditorFrame &f) {
         bool popup = ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel);
         bool available = f.hovered && !popup && !f.blocked && !widgetActive;
         if (hoveredPin && f.hovered && !popup && !widgetActive) {
-            if (!s.connecting)
-                ImGui::SetTooltip("%.*s", int(hoveredPin->label.size()), hoveredPin->label.data());
+            if (!s.connecting) { // Name, type and the host's current value or the reason it is unavailable.
+                std::string tip(hoveredPin->label);
+                for (auto &type : f.graph.socketTypes)
+                    if (type.id == hoveredPin->type && !type.name.empty()) {
+                        tip += tip.empty() ? "" : "  \xC2\xB7  ";
+                        tip += type.name;
+                    }
+                if (!hoveredPin->inspect.empty())
+                    tip.append("\n").append(hoveredPin->inspect);
+                if ((hoveredPin->flags & PinFlags_Unavailable) && !hoveredPin->reason.empty())
+                    tip.append("\n").append(hoveredPin->reason);
+                if (!tip.empty())
+                    ImGui::SetTooltip("%s", tip.c_str());
+            }
             if (ImGui::IsMouseClicked(0) && !f.options.readOnly) {
                 s.connecting = hoveredPin->id;
                 s.reconnecting = {};
@@ -2367,7 +2598,7 @@ void EndEditor(EditorFrame &f) {
                     auto *b = FindPin(f, link.to);
                     if (!a || !b)
                         continue;
-                    auto points = Curve(f, *a, *b, link.style);
+                    auto points = LinkCurve(f, link, *a, *b);
                     for (std::size_t i = 1; i < points.size(); ++i)
                         if (SegmentDistance(io.MousePos, points[i - 1], points[i]) < 6) {
                             s.selectedLink = link.id;
@@ -2427,7 +2658,7 @@ void EndEditor(EditorFrame &f) {
                         auto *y = FindPin(f, link.to);
                         if (!x || !y)
                             continue;
-                        auto points = Curve(f, *x, *y, link.style);
+                        auto points = LinkCurve(f, link, *x, *y);
                         bool hit = false;
                         for (std::size_t q = 1; q < s.lasso.size(); ++q)
                             for (std::size_t i = 1; i < points.size(); ++i) {

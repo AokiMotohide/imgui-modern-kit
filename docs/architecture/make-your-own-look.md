@@ -143,6 +143,7 @@ Colours are `#RRGGBB[AA]`, numbers are plain decimals, switches are `true` or `f
 | `node.canvas`, `node.grid`, `node.header` | Colours; alpha zero follows the semantic colours |
 | `node.header-tint` | Optional, 0 to 1 |
 | `node.rounding`, `header-height`, `pin-radius`, `link-width`, `grid-size` | Optional; 0 to 64, 8 to 200, 1 to 32, 0.5 to 16, 4 to 400 |
+| `node.pin-seat`, `node.flow-link-width` | Optional; 0 to 12, 0.5 to 16 |
 | `node.hollow-pins`, `node.highlight-links` | Switch |
 
 Unknown keys and values out of range are skipped with a warning. Key names are stable: they are never renamed or reused.

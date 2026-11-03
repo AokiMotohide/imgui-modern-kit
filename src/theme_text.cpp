@@ -104,6 +104,8 @@ const Field kFields[] = {
     IMKIT_RANGED("node.pin-radius", OptFloat, node.pinRadius, 1, 32),
     IMKIT_RANGED("node.link-width", OptFloat, node.linkWidth, 0.5f, 16),
     IMKIT_RANGED("node.grid-size", OptFloat, node.gridSize, 4, 400),
+    IMKIT_RANGED("node.pin-seat", OptFloat, node.pinSeat, 0, 12),
+    IMKIT_RANGED("node.flow-link-width", OptFloat, node.flowLinkWidth, 0.5f, 16),
     IMKIT_FIELD("node.hollow-pins", Bool, node.hollowPins),
     IMKIT_FIELD("node.highlight-links", Bool, node.highlightLinks),
 };

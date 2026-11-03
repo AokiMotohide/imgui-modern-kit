@@ -14,6 +14,7 @@ void (*volatile preview)(ne::EditorFrame &, std::span<const ne::PreviewOutput>,
 bool (*volatile pinEdits)(ne::GraphView, std::span<const ne::EditRequest>, ne::RequestBuffer &,
                           std::uint64_t) = &ne::QueuePinEdits;
 void (*volatile pinRow)(ne::EditorFrame &, ne::PinId, ne::PinRowOptions) = &ne::PinRow;
+void (*volatile glyph)(ImDrawList *, const ne::PinChromeView &) = &ne::DrawPinGlyph;
 ne::ConnectionVerdict (*volatile validate)(ne::GraphView, const ne::EditRequest &) = &ne::ValidatePinEdit;
 // Appearance types share their enums with the theme file.
 static_assert(std::is_same_v<ne::HeaderFill, imkit::NodeHeaderFill>);

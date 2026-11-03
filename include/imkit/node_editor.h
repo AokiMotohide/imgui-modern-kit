@@ -28,6 +28,17 @@ enum class NodeKind { Node, Frame, Group, Subgraph, Note, Reroute };
 enum class PinKind { Input, Output };
 enum class Side { Left, Right, Top, Bottom };
 enum class PinShape { Circle, Square, Diamond, Triangle };
+// What a socket carries. Flow sockets order execution and draw as a chevron; their links are thicker.
+enum class PinRole { Data, Flow };
+enum class PinContainer { Single, Array, Set, Map };
+enum PinFlags : std::uint32_t {
+    PinFlags_None = 0,
+    PinFlags_Reference = 1u << 0,   // Passes a reference, not a value (hexagon).
+    PinFlags_Wildcard = 1u << 1,    // Any type until the host resolves it (dashed ring); skips type checks.
+    PinFlags_Field = 1u << 2,       // A value per element (ring with an inner diamond).
+    PinFlags_Optional = 1u << 3,    // Works unconnected (open ring).
+    PinFlags_Unavailable = 1u << 4, // Not usable in the current mode: faded, rejected as a target.
+};
 enum class LinkStyle { Bezier, Straight, Orthogonal };
 enum class Status { Idle, Waiting, Running, Success, Error, Disabled, Bypassed, Cached };
 // Header and link appearance share their enums with Theme::node, so theme files can choose them.
@@ -49,6 +60,9 @@ struct NodeStyle {
     float gridSize = 24, minimumWidth = 150, minimumHeight = 90, detailZoom = .55f;
     bool shadows = true, animate = true;
     LinkStyle linkStyle = LinkStyle::Bezier;
+    float pinSeat = 0;         // Canvas-coloured ring around sockets, so they read as docked into the edge.
+    float flowLinkWidth = 3.5f; // Links leaving a Flow socket.
+    float flowSpeed = 1, flowSpacing = 14; // Moving marks on active links: multiples of 60 px/s, and pixels.
     HeaderFill headerFill = HeaderFill::Strip;
     float headerTint = .16f;                            // Category colour share for Tinted headers.
     float hoverBorderWidth = 1.5f, selectedBorderWidth = 2; // Zero keeps borderWidth.
@@ -110,7 +124,25 @@ struct PinView {
     PinCapabilities capabilities{};
     bool inheritTypeStyle = true; // False preserves explicit shape even when type metadata is present.
     bool manualPosition = true;   // Set false when submitting standard PinRow.
+    PinRole role = PinRole::Data;
+    PinContainer container = PinContainer::Single;
+    std::uint32_t flags = PinFlags_None;
+    std::uint64_t keyType = 0;       // Map key type; colours the left half of the glyph.
+    std::string_view inspect{};      // Current value shown when hovering the socket.
+    std::string_view reason{};       // Why an Unavailable socket cannot be used.
 };
+// Everything needed to draw one socket glyph; also handed to host draw hooks.
+struct PinChromeView {
+    const PinView *pin = nullptr;
+    ImVec2 center{};
+    float radius = 5, seat = 0;
+    ImVec4 color{}, keyColor{}, canvas{};
+    PinShape shape = PinShape::Circle;
+    bool connected = false, hollow = false, hovered = false;
+    int links = 0; // Links into a multi-input socket (an input with multiple=true).
+};
+// Draws the default glyph for a socket: role, container and flags decide the symbol.
+void DrawPinGlyph(ImDrawList *drawList, const PinChromeView &pin);
 // Host verdict on an existing link. The editor only draws it; it never removes or repairs links.
 enum class LinkValidity { Valid, Converted, Invalid, Cycle };
 struct LinkView {

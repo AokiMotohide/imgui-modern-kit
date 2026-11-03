@@ -765,6 +765,85 @@ void AppearanceTests() {
     graph.typeCompatibility = nullptr;
     pins[0].multiple = false;
     io.MousePos = {-100, -100};
+
+    // Socket roles and flags take part in connection rules.
+    {
+        NodeView rn[] = {{{1}, {0, 0}, {100, 100}, "A"}, {{2}, {300, 0}, {100, 100}, "B"}};
+        PinView rp[] = {{{1}, {1}, "out", PinKind::Output, Side::Right, 50, 1},
+                        {{2}, {2}, "in", PinKind::Input, Side::Left, 50, 2},
+                        {{3}, {1}, "then", PinKind::Output, Side::Right, 70}};
+        rp[2].role = PinRole::Flow;
+        GraphView rg;
+        rg.nodes = rn;
+        rg.pins = rp;
+        Check(!CanConnect(rg, {1}, {2}).allowed, "different types are rejected without a callback");
+        rp[1].flags = PinFlags_Wildcard;
+        Check(CanConnect(rg, {1}, {2}).allowed, "a wildcard socket accepts any type");
+        Check(!CanConnect(rg, {3}, {2}).allowed, "flow does not connect to data");
+        rp[1].flags = PinFlags_Unavailable;
+        rp[1].reason = "Only in volume mode";
+        auto verdict = CanConnect(rg, {1}, {2});
+        Check(!verdict.allowed && verdict.reason == "Only in volume mode", "unavailable socket reports its reason");
+    }
+
+    // Every glyph draws, and the state it encodes changes the drawing.
+    {
+        ImGui::NewFrame();
+        ImGui::Begin("glyphs", nullptr, ImGuiWindowFlags_NoSavedSettings);
+        auto *dl = ImGui::GetWindowDrawList();
+        auto draw = [&](PinView pin, bool connected, bool hollow, int links = 0) {
+            const int before = dl->VtxBuffer.Size;
+            PinChromeView v;
+            v.pin = &pin;
+            v.center = {50, 50};
+            v.radius = 6;
+            v.seat = 2;
+            v.color = {1, 1, 1, 1};
+            v.canvas = {0, 0, 0, 1};
+            v.connected = connected;
+            v.hollow = hollow;
+            v.links = links;
+            DrawPinGlyph(dl, v);
+            return dl->VtxBuffer.Size - before;
+        };
+        PinView flow{};
+        flow.role = PinRole::Flow;
+        Check(draw(flow, true, false) > 0 && draw(flow, true, false) != draw(flow, false, false),
+              "flow glyph shows whether it is connected");
+        PinView data{};
+        Check(draw(data, false, true) != draw(data, true, true), "hollow data glyph gains a core when connected");
+        PinView multi{};
+        multi.multiple = true;
+        Check(draw(multi, true, false, 3) > draw(multi, true, false, 1), "multi-input glyph shows one dot per link");
+        PinView single{}, array{}, set{};
+        array.container = PinContainer::Array;
+        set.container = PinContainer::Set;
+        const int singleCount = draw(single, true, true);
+        Check(draw(array, true, true) > singleCount && draw(set, true, true) != singleCount,
+              "array and set glyphs differ from a single value");
+        PinView map{};
+        map.container = PinContainer::Map;
+        const ImU32 key = ImGui::GetColorU32(ImVec4{1, 0, 0, 1});
+        const int before = dl->VtxBuffer.Size;
+        PinChromeView mv;
+        mv.pin = &map;
+        mv.center = {50, 50};
+        mv.radius = 6;
+        mv.color = {1, 1, 1, 1};
+        mv.keyColor = {1, 0, 0, 1};
+        DrawPinGlyph(dl, mv);
+        int keyed = 0;
+        for (int i = before; i < dl->VtxBuffer.Size; ++i)
+            keyed += dl->VtxBuffer[i].col == key;
+        Check(keyed > 0, "map glyph shows the key type colour");
+        for (auto flag : {PinFlags_Reference, PinFlags_Wildcard, PinFlags_Field, PinFlags_Optional, PinFlags_Unavailable}) {
+            PinView flagged{};
+            flagged.flags = flag;
+            Check(draw(flagged, true, true) > 0, "flag glyph draws");
+        }
+        ImGui::End();
+        ImGui::Render();
+    }
     ImGui::DestroyContext();
 }
 } // namespace
