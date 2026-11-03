@@ -1,5 +1,6 @@
 ---
-title: "アプリケーションShell部品"
+title: "シェル部品"
+description: "ImKitは、ツールや制作環境の外枠（クローム）を構成するためのホスト主導型ビルディングブロックを提供します。"
 ---
 
 ImKitは、ツールや制作環境の外枠（クローム）を構成するためのホスト主導型ビルディングブロックを提供します。
@@ -27,26 +28,26 @@ ImKitは、ツールや制作環境の外枠（クローム）を構成するた
 
 ```cpp
 #include <imkit/imkit.h>
+#include <vector>
 
-// AppBar の描画とアクションディスパッチ
-void RenderAppHeader(MyAppState& state) {
-    std::vector<imkit::CommandItem> commands = {
-        {"file_save", "保存", true, "Ctrl+S"},
-        {"file_export", "エクスポート", state.hasSelection, ""}
+// AppBarを描き、押された操作を受け取る
+void RenderAppHeader(MyAppState& state, imkit::ToolbarState& toolbar) {
+    const std::vector<imkit::Command> commands = {
+        {1, "保存", "Ctrl+S"},
+        {2, "エクスポート", "", !state.hasSelection},   // StableId, label, shortcut, disabled
     };
 
-    imkit::AppBarView view{
-        "MyStudio",           // アプリ名
-        "scene_01.proj",      // プロジェクト名
-        "READY",              // モード・バッジ
-        "変更なし",           // ステータス
-        false,                // 変更フラグ (dirty)
-        imkit::FeedbackKind::Success,
-        commands
-    };
+    imkit::AppBarView view;
+    view.product = "MyStudio";          // アプリ名
+    view.document = "scene_01.proj";    // プロジェクト名
+    view.context = "READY";             // モード・バッジ
+    view.status = "変更なし";               // 状態の文
+    view.dirty = false;                 // 未保存の変更
+    view.statusKind = imkit::FeedbackKind::Success;
+    view.actions = commands;
 
-    if (auto action = imkit::AppBar("main_app_bar", view, myToolbar, myOptions)) {
-        DispatchAction(action);
+    if (const auto action = imkit::AppBar("main_app_bar", view, toolbar)) {   // 押された操作のStableId。0なら何も押されていない
+        state.Run(action);              // アプリが、その操作を実行する
     }
 }
 ```

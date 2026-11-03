@@ -1,0 +1,131 @@
+---
+title: "利用ガイド"
+description: "ImKitをDear ImGuiアプリに組み込むときの要点です。所有の分担、テーマの適用、使える部品、リンクの方法を説明します。最初の3節は一度通して読み、残りは必要なときに引いてください。"
+---
+
+ImKitをDear ImGuiアプリに組み込むときの要点です。所有の分担、テーマの適用、使える部品、リンクの方法を説明します。最初の3節は一度通して読み、残りは必要なときに引いてください。
+
+## 誰が何を持つか
+
+`imkit::imkit` はC++20の静的ターゲットです。Dear ImGui本体、すべてのContext、`NewFrame` と `Render`、バックエンド、OSのウィンドウ、フォント、編集するデータは、アプリが持ちます。ImKitは、現在有効なContextに対して、そのGUIスレッドから働き、Begin/Endの契約とネイティブの入力の意味を変えません。
+
+| ヘッダー | 役割 |
+| --- | --- |
+| `theme.h` | 複製できるセマンティックな値。プリセット、パレット、metrics、フォント、動き |
+| `native.h` | 公開のDear ImGuiヘッダーから取り込む、正確なオーバーロード群 |
+| `widgets.h` | 選択やタブの装飾を含む、互換のラッパー |
+| `components.h` | ボタン、トグル、バッジ、セグメントなど、小さな組み合わせ部品 |
+
+隠れたレジストリ、現在のテーマを持つシングルトン、ワーカー、プラグインマネージャーはありません。拡張するときは、セマンティックトークンか、明示的なオプション値を足します。編集はホスト側に置き、入力にはネイティブの部品を使います。
+
+## テーマを適用する
+
+フレームごとに1回、`NewFrame()` の前にテーマを適用します。
+
+```cpp
+auto theme = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
+theme.fonts = {regularFont, emphasisFont}; // 所有しない。読み込みはホストが行う
+
+imkit::ApplyTheme(theme, 1.25f);           // ImGui::NewFrame() より前
+ImGui::NewFrame();
+```
+
+`ApplyTheme` は、拡大前のトークンからスタイルを作り直します。毎フレーム呼んでも、寸法は積み重なりません。既定の倍率は125%、対応する範囲は50%〜250%です。`io.FontDefault` は変えません。
+
+ウィンドウやダイアログ1つだけに別のテーマを使うときは、`ThemeScope` を使います。
+
+```cpp
+{
+    imkit::ThemeScope scope(lightTheme, 1.0f); // 終わると、スタイルとフォントを元に戻す
+    if (imkit::Begin("Preview")) {
+        imkit::TextUnformatted("ライトテーマで描かれる");
+    }
+    imkit::End();
+}
+```
+
+スコープは、`Begin` の前か、テーマが必要な部品の前に作ります。入れ子にできます。破棄は、作ったときと同じ生きているContextで、そのContextを破棄する前に行います。
+
+### 寸法、アクセント、フォント
+
+| 項目 | 規則 |
+| --- | --- |
+| 基準値（論理ピクセル） | コントロールの高さ30、間隔6、角丸はコントロール8とカード・オーバーレイ12、本文14、見出し18 |
+| レイアウト | ネイティブの部品は、フォントの高さに余白を足すので、大きなフォントでは部品が高くなる。行内のボタン、メニュー行、表、複数行テキストは、30pxに揃えず、ネイティブのレイアウトに従う |
+| 倍率 | アプリの倍率は `scale` 引数で渡す。ImKitの外で、寸法をもう一度かけない。モニターのDPIは、ホストの担当 |
+| アクセント | `SetAccent` は、アクセント、対になる文字色、フォーカス、そこから導く選択色を更新する。ほかの色は独立している。任意の編集で、コントラストが保証されるわけではない |
+| フォント | Galleryは、Inter 4.1を先に、その後ろにNoto Sans JP 2.004 Regularをマージして使う。フォールバックからはラテン文字U+0020〜U+024Fを除く。日本語はRegularのままで、擬似太字は使わない。フォントは、ライブラリに埋め込まず、ホストが用意する任意の資産 |
+| 文字入力 | 文字列はUTF-8。フォントとプラットフォームのIMEコールバックは、ホストで設定する。ImKitはOSのフォント探索をしない |
+
+## 部品
+
+| API | 契約 |
+| --- | --- |
+| `ActionButton` | Primary、Secondary、Ghost、Destructive。配色と動きを明示するには、`ComponentOptions{&theme, &animation}` を渡す |
+| `IconActionButton` | アイコン1つと短いラベル、説明または無効の理由、操作の種類 |
+| `IconButton` | ネイティブの矢印ボタンと同じ意味で、ツールチップのラベル付き |
+| `Toggle` / `Switch` | ネイティブのチェックボックスと同じ当たり判定・編集・キーボード操作で、スイッチの軌道を描く |
+| `IndeterminateCheckbox` | 混在はチェック済みに変わる。チェック済みと未チェックは、ふつうに切り替わる |
+| `Segmented` | ラベルのspanに対する、ホストが選ぶ安定したインデックス |
+| `SearchableCombo` | ホストが持つUTF-8の検索バッファと選択、無効にするインデックス（任意）、ASCIIは大小無視、ASCII以外は完全一致 |
+| `InputScalarWithUnit` | ネイティブの数値解析と精度。単位は別のラベル |
+| `DragFloatWithUnit`、`InputVector3WithUnit`、`DragVector3WithUnit` | ネイティブの編集に、明示した単位と、X/Y/Zのラベル付き欄。幅が狭いと縦に積む |
+| `BeginSettingRow` / `EndSettingRow` | 2列のテーブル。Endは、Beginがtrueを返したときだけ呼ぶ |
+| `StatusBadge` | 状態の色に、文字と印の形を補う |
+| `NotificationCard` | 期限と削除はホストが持つ。消去の要求を返す。期限0は残り続ける |
+| `BeginToolbar` / `EndToolbar` | 子レイアウト。Endは必ず呼ぶ |
+| `ValidationMessage` | 不正の枠線とツールチップだけを描く。入力のすぐあとに呼ぶ |
+| `OverlayDecoration` | 現在のポップアップに、内側の影を付ける。ポップアップの内側でクリップする |
+
+範囲入力のネイティブ版は `DragFloatRange2` と `DragIntRange2` です。数値とベクトルのオーバーロードは、すべて[API一覧](../../api/native/)にあります。標準のラッパーは、現在の `ImGuiStyle` を使い、テーマの引数は要りません。DrawListに足す装飾は項目を追加しないので、`IsItem*` は、これまでどおり部品を指します。単位つき入力やセグメントのようなグループ部品は、ネイティブのグループの状態を公開します。
+
+## 動きの寿命
+
+- `AnimationState` はホストが持ち、固定の256スロットです。生きているContextごとに1つ使い、Contextを破棄するか再利用するときは、自分の世代トークンでリセットします。Contextのポインタは保持しません。
+- IDは、ネイティブのIDスタックに従います。`Prune(frame)` は、120フレーム見られなかった項目を捨てます。スロットが尽きると、いちばん古い項目を置き換えます。新しい項目は目標値から始まるので、頼んでいない動きは出ません。`Reset` は、すべての遷移を捨てます。
+- ネイティブのラッパーは、すぐに反応します。操作の輪郭、スイッチの動き、オーバーレイの装飾は、テーマの動き（既定は、コントロール140 ms、オーバーレイ200 ms）を使います。状態がない、動きを無効にした、長さが0のときは、正しい状態がすぐに出ます。動きが編集値を遅らせることはありません。
+
+## ImKitをリンクする
+
+ソースから組み込むときは、アプリがすでに持つDear ImGuiのターゲットを、ImKitに教えます。
+
+```cmake
+add_library(host_imgui STATIC
+    ${IMGUI_SOURCE_DIR}/imgui.cpp
+    ${IMGUI_SOURCE_DIR}/imgui_draw.cpp
+    ${IMGUI_SOURCE_DIR}/imgui_tables.cpp
+    ${IMGUI_SOURCE_DIR}/imgui_widgets.cpp)
+target_include_directories(host_imgui PUBLIC ${IMGUI_SOURCE_DIR})
+set(IMKIT_IMGUI_TARGET host_imgui)
+add_subdirectory(external/imgui-modern-kit)
+target_link_libraries(your_app PRIVATE imkit::imkit)
+```
+
+Dear ImGuiは、docking のコミット `367b2c24f399988ddafc0bb4628da0106bcc09be` を、参加するすべてのターゲットで、そのまま使います。それより前のフォント、スタイル、APIの契約には対応しません。ホストの更新は、意図して行ってください。
+
+インストール済みのSDKを使うときは、先に、合致する `host_imgui` を作ります。
+
+```cmake
+set(IMKIT_IMGUI_TARGET host_imgui)
+set(IMKIT_SDK_ABI_CONFIRMED ON) # マニフェストと設定を確かめたあとだけ
+find_package(imkit 4.0 CONFIG REQUIRED)
+target_link_libraries(your_app PRIVATE imkit::imkit)
+```
+
+`-DCMAKE_PREFIX_PATH=/path/to/sdk` を付けて構成します。パッケージは、アプリのターゲットへの、インポートしたアダプターを使い、元のビルドパスを含みません。
+
+- パッケージは、Windows x64、Windows Arm64、macOS arm64、macOS x86_64、macOS Universal 2の5種類です。マニフェストに、OS、アーキテクチャ、コンパイラ、Dear ImGuiのコミットが記録されています。
+- コンパイル定義と `imconfig.h` は、すべての翻訳単位で合わせます。ライブラリのアーカイブに、Dear ImGuiのコアは**含まれません**。
+- ヘッダーのガードは、ほかのDear ImGuiの版番号を拒否します。ABIの明示的な確認は、マニフェストと型の設定を確かめる作業も求めます。バイナリを自動で調べる仕組みではありません。
+- バイナリの設定が合わないときは、ソースから組み込んでください。`examples/consumer` は、どちらの形にも対応します。
+
+## 次に読むもの
+
+| 知りたいこと | 読むもの |
+| --- | --- |
+| Galleryと、各画面で見えるもの | [Galleryガイド](../gallery/) |
+| セマンティックトークン、ロケール、プロバイダーの契約 | [デザインシステム](../../features/design-system/) |
+| ウィザード、インスペクター、プレビュータイル、トースト | [ワークフロー部品](../../features/workflow/) |
+| タイムライン、曲線、3Dビュー | [エディタスイート](../../features/editor-suite/) |
+| 4.0で増えたもの | [4.0追加API](../../api/v4-0/) |
+| 検証の根拠と範囲 | [検証記録](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/検証記録.md)、[第三者通知](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/THIRD_PARTY_NOTICES.md) |

@@ -1,23 +1,23 @@
 ---
 title: APIリファレンス
-description: 生成元と公開範囲を明示したAPI宣言一覧、契約説明、ヘッダーへの入口。
+description: 公開ヘッダーの宣言の一覧と、呼び出しの契約への入口。
 ---
 
 ## APIを探す
 
-ImKitの公開ヘッダーにある宣言と、利用時に重要な契約をまとめています。正確なsignatureと条件の一次資料は各公開headerです。
+ImKitの公開ヘッダーにある宣言と、使うときに大事な契約をまとめています。署名と条件の一次資料は、各公開ヘッダーです。
 
-- [Node Editor API](./node-editor/) — `BeginEditor`の呼び出し例、戻り値、寿命、終了呼び出しの詳細も掲載。
-- [Dear ImGui native API](./native/) — `<imkit/native.h>`が公開する`included: true`の宣言。host lifecycle/debug APIは除外。
-- [Editor SuiteのAPI契約](./editor-suite/) — 選択、Canvas、Timeline、Video、CGの契約資料への導線。
-- [Design-system header一覧](./design-system/) — header/type metadata。完全な関数signature一覧ではありません。
-- [WindowFrame API map](./window-frame/) — type/function名とoptional platform target。signatureはheaderを参照。
-- [部品一覧](./widgets/) — 公開component inventoryへの導線。
+- [Node Editor API](./node-editor/): `BeginEditor`の呼び出し例、戻り値、寿命、対になる終了の呼び出し。
+- [Dear ImGui native API](./native/): `<imkit/native.h>`が公開する、`included: true`の宣言。ホストのライフサイクルやデバッグのAPIは除きます。
+- [Editor SuiteのAPI](./editor-suite/): 選択、キャンバス、タイムライン、ビデオ、CGの契約。
+- [Design-system API](./design-system/): ヘッダーと型の一覧です。関数の署名をすべて並べたものではありません。
+- [WindowFrame API](./window-frame/): 型と関数の名前、任意のプラットフォームのターゲット。署名はヘッダーを参照してください。
+- [部品一覧](./widgets/): 公開コンポーネントの一覧。
+
+## バージョン別の追加
+
+[4.0](./v4-0/) · [3.3](./v3-3/) · [3.2](./v3-2/)
 
 ## 使い始める
 
-[導入ガイド](../getting-started/)ではCMake統合と対応条件を、[できること一覧](../features/)では利用場面、実画面、最小例を確認できます。
-
-## ImKit 3.2
-
-[3.2 API](./v3-2/) · [Toast guide](../features/toasts/)
+CMakeでの組み込みと対応条件は[導入ガイド](../getting-started/)に、利用場面と実画面は[機能の一覧](../features/)にあります。

@@ -1,86 +1,79 @@
 ---
 title: "Themes"
+description: "ImKit has thirteen named presets and a set of functions to adjust or build your own."
 ---
 
-## Use this when
+ImKit has thirteen named presets and a set of functions to adjust or build your own. A `Theme` is a plain value that your application owns, and `ApplyTheme` writes it into the current Dear ImGui context.
 
-Start with a named preset, then adjust semantic colors and metrics for the host application. Theme values are copied and remain under application ownership.
+![Picking a theme in the Gallery changes the colours of every component](/imgui-modern-kit/docs-images/v4-themes-poster.png)
 
-## Gallery capture
+[Open native GIF](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-themes.gif)
 
-![Native comparison of ImKit theme presets in the Gallery.](../../../../assets/captures/v4-themes-poster.png)
+## Built-in presets
 
-Themes — light and dark palettes · [Open the native Gallery animation](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-themes.gif)
+`ThemePresets()` returns the presets in a stable display order. Each `ThemePresetInfo` holds the enum value, a stable lowercase ID for saving (for example `"precision-dark"`), an English display name and the Light or Dark scheme.
 
-## Minimum drawing example
+| Scheme | Preset | Character |
+| --- | --- | --- |
+| Dark | `PrecisionDark` | The standard dark theme: neutral grey with a blue accent |
+| | `Graphite` | Near-black grey with a mint accent |
+| | `Midnight` | Deep navy with a lavender-blue accent |
+| | `Ocean` | Dark teal with a cyan accent |
+| | `Forest` | Deep green with a green accent |
+| | `Violet` | Dark purple with a purple accent |
+| | `Slate` | Blue-grey canvas and surfaces |
+| | `HighContrastDark` | Raised contrast for legibility |
+| Light | `PrecisionLight` | The standard light theme: white and pale grey |
+| | `WarmSand` | Sand beige with a brown accent |
+| | `Rose` | Pale pink with a rose accent |
+| | `Solar` | Warm cream with an olive-gold accent |
+| | `HighContrastLight` | Raised contrast for legibility |
+
+`PrecisionLight`, `PrecisionDark`, `Slate` and the two high-contrast presets have hand-tuned palettes. The other eight are built by `MakeBrandTheme` from four colours: canvas, surface, text and accent. They also show what an application can do with the same function (see [Make your own look](../make-your-own-look/)).
+
+## Choose and restore a theme
+
+Save the stable ID, not the enum value, and resolve it again with `ThemePresetFromId`. An unknown or differently cased ID returns `std::nullopt`, so you choose the fallback.
 
 ```cpp
 #include <imkit/theme.h>
 
-imkit::Theme MakeForestTheme() {
-    auto theme = imkit::MakeTheme(imkit::ThemePreset::Forest);
-    imkit::SetAccent(theme, {0.20f, 0.62f, 0.46f, 1.0f});
-    return theme;
-}
-```
+// From a preset
+imkit::Theme theme = imkit::MakeTheme(imkit::ThemePreset::Forest);
 
-**Example type:** Complete function example. Keep the returned Theme value with the application, then apply it to a live context before `NewFrame`.
-
-## Integrate with the application
-
-Call `ApplyTheme(theme, scale)` on the active ImGui context before starting the frame. The host loads fonts into its own atlas and controls their lifetime.
-
-## Scope
-
-Theme applies styling values; it does not create contexts, load OS fonts or guarantee contrast for arbitrary custom edits.
-
-## Related API and guides
-
-- [Design-system API map](../../api/design-system/)
-- [Native API index](../../api/native/)
-
----
-
-## Named presets
-
-`ThemePresets()` returns thirteen entries in a stable display order. Each `ThemePresetInfo` contains an enum value, a stable lowercase ID for host persistence, an English display name and its Light/Dark scheme.
-
-| Light | Dark |
-|---|---|
-| Precision Light, Warm Sand, Rose, Solar, High Contrast Light | Precision Dark, Graphite, Midnight, Ocean, Forest, Violet, High Contrast Dark, Slate |
-
-```cpp
-auto theme = imkit::MakeTheme(imkit::ThemePreset::Forest);
-```
-
-Persist the stable ID and resolve it without relying on enum order. Unknown and differently-cased IDs return `std::nullopt`, so the host can apply its own migration or fallback policy.
-
-```cpp
+// From a saved ID, with a fallback
 const auto preset = imkit::ThemePresetFromId(savedPresetId)
-    .value_or(imkit::ThemePreset::Graphite);
-auto theme = imkit::MakeTheme(preset);
+    .value_or(imkit::ThemePreset::PrecisionDark);
+imkit::Theme current = imkit::MakeTheme(preset);
 ```
 
-`MakePrecisionTheme(Light/Dark)` remains source-compatible and produces the same Precision Light/Dark values.
+`MakePrecisionTheme(Light/Dark)` is kept for source compatibility and gives the same Precision values.
 
-## Customization
+## Customize
 
-Precision Light, Precision Dark, Slate and the two high-contrast presets have hand-tuned palettes. The other eight (Graphite, Midnight, Ocean, Forest, Violet, Warm Sand, Rose and Solar) are each built by `MakeBrandTheme` from four colours: canvas, surface, text and accent. They are also examples of what a host can do with the same function; see [Make your own look](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/architecture/make-your-own-look.md).
+```cpp
+// Change the accent. Buttons, focus rings and selection follow.
+imkit::SetAccent(theme, ImVec4(1.0f, 0.5f, 0.0f, 1.0f));
+```
 
-`SetAccent` updates accent, focus, contrasting on-accent text and selection. `semantic`, `typography`, `radius`, `stroke`, `elevation` and `opacity` are the source of truth; `colors` and `metrics` are projections that `ResolveTheme` rebuilds, so edits made directly to them are overwritten by the next `ResolveTheme` or `SetDensity`. Edit `motion` or `editor` fields explicitly when needed. Arbitrary edits are not automatically contrast-corrected.
+| Field | Role |
+| --- | --- |
+| `semantic`, `typography`, `radius`, `stroke`, `elevation`, `opacity` | The source of truth. Edit these, then call `ResolveTheme(theme)`. |
+| `colors`, `metrics` | Projections that `ResolveTheme` and `SetDensity` rebuild. Direct edits are overwritten. |
+| `layout` | Optional size overrides: control height, spacing, padding, and the ratios for Checkbox, Toggle, badge and dialog. Applied after the density. A value you leave unset keeps the density, so a theme that sets nothing draws as before. |
+| `motion`, `editor` | Edit explicitly when you need to. |
 
-Shipped presets validate normal text at 4.5:1 or better against canvas, surface, input and raised surfaces. Muted text validates at 3:1 or better. Accent and destructive foreground pairs validate at 4.5:1 or better.
+`SetAccent` updates the accent, focus colour, contrasting text on the accent and the selection. Arbitrary edits are not contrast-corrected automatically.
 
-## Ownership and persistence
+The shipped presets keep normal text at 4.5:1 or better against canvas, surface, input and raised surfaces, muted text at 3:1 or better, and accent and destructive foreground pairs at 4.5:1 or better. Check your own theme with `ValidateContrast`.
 
-`Theme` is a copyable host-owned value. ImKit has no current-theme registry and writes no files. Store a preset ID or a complete customized value in the host's own settings model, then reconstruct or reapply it explicitly.
+## What `ApplyTheme` does
 
-For applications that consume a pinned Git submodule but also develop ImKit beside the host, expose a host-owned CMake cache path and pass either the submodule or that explicit path to `add_subdirectory`. Keep the override out of project files and release manifests; both routes must still set `IMKIT_IMGUI_TARGET` before adding ImKit.
+`ApplyTheme` replaces the whole `ImGuiStyle` of the current context, except `Alpha` and `FontScaleDpi`. Make your adjustments in the `Theme`, not in `ImGuiStyle`, because the next `ApplyTheme` overwrites style edits you made directly.
 
-Fonts in `FontSet` are non-owning. Load glyphs into the host atlas before the frame. ImKit does not discover OS fonts or provide IME callbacks.
-
-## Scale and scope
-
-`ApplyTheme(theme, scale)` derives a fresh style from unscaled metrics, so repeated calls do not compound dimensions. `ThemeScope` restores the previous style and font on destruction and supports nesting on the same live context.
-
-The shared application-scale contract is 50% through 250%, with 125% as the default. `ThemeScaleMinimum`, `ThemeScaleDefault`, and `ThemeScaleMaximum` expose those values to hosts. Omitting the scale argument from `ApplyTheme` or `ThemeScope` uses the 125% default; monitor DPI adaptation remains host-owned.
+| Topic | Rule |
+| --- | --- |
+| Scale | `ApplyTheme(theme, scale)` rebuilds the style from unscaled values, so repeated calls never compound sizes. The range is 50% to 250% and the default is 125% (`ThemeScaleMinimum`, `ThemeScaleDefault`, `ThemeScaleMaximum`). Monitor DPI is your application's job. |
+| Scope | `ThemeScope` applies a theme for a block and restores the previous style and font when it ends. Scopes nest on the same live context. |
+| Fonts | `FontSet` holds borrowed pointers. Load glyphs into your atlas before the frame. ImKit does not find OS fonts or provide IME callbacks. |
+| Ownership | `Theme` is a copyable value. ImKit has no current-theme registry and writes no files. Store a preset ID, or a complete customized value, in your own settings, and apply it again when needed. |

@@ -4,6 +4,8 @@
 
 `imkit::show` is an optional target for media servers, VJ tools and show control. Link `imkit::show` (it also pulls in `imkit::editor_core` for timecode) and include `imkit/show.h`; it is not part of `imkit/imkit.h`. Every component draws and reports input only. The host owns values, clocks, devices, files and persistence. The library never reads the system clock or a time-zone database, never opens MIDI/OSC/DMX, and never parses or runs a script.
 
+<img src="../images/v4-show.gif" alt="The Gallery Live page: cue list, clip launcher, master bar and mixer" width="960">
+
 ## Conventions
 
 | Rule | Detail |
@@ -65,6 +67,8 @@ if (r.analyze) worker.Analyse(text);                 // Return diagnostics and d
 if (r.import) host.Import(text);
 ```
 
+<img src="../images/v4-surface.gif" alt="A control surface with faders, knobs, keys and pictures, laid out freely" width="960">
+
 ```cpp
 std::vector<imkit::show::SurfaceItem> items = host.SurfaceItems();   // Host-owned layout model.
 const auto r = imkit::show::ControlSurface("console", items, surfaceState, {.columns = 24, .rows = 12}, options);
@@ -80,6 +84,20 @@ if (r.clearImage) host.ClearPicture(key1);
 if (r.pressed) host.Trigger(key1);
 ```
 
+```cpp
+const std::array<imkit::show::TileMapTile, 4> tiles{{
+    {0, 0, 0, 0, "1-1"}, {1, 0, 0, 1, "1-2"},     // column, row, group, order, label
+    {0, 1, 1, 0, "2-1"}, {1, 1, 1, 1, "2-2"},
+}};
+imkit::show::TileMapView wall;
+wall.columns = 2;
+wall.rows = 2;
+wall.tiles = tiles;
+const auto r = imkit::show::TileMap("wall", wall, &selectedTile, {.highlightGroup = -1}, {&theme});
+if (r.hovered >= 0) ImGui::SetTooltip("Cabinet %s", tiles[r.hovered].label);   // the library draws no tooltip
+if (r.clicked >= 0) host.SelectCabinet(r.clicked);
+```
+
 ## Behaviour notes
 
 - **Gallery.** Pages 25-33 show every component against simulated data (cues, a launcher, a mixer, a rule, a schedule with conflicts, decks and a pasted shader). The Gallery is the host there; it reads the clock and applies the requests.
@@ -91,6 +109,7 @@ if (r.pressed) host.Trigger(key1);
 - **Surface.** The surface only draws and reports: moves and resizes arrive as snapped rectangles (`layout.items`) with `started/changed/finished/cancelled` phases, and the host applies them. Edit mode blocks the real controls and overlays selection, handles and alignment guides; arrow keys nudge by the snap step (Shift: one cell), Delete asks for removal, Ctrl+D for duplication, Ctrl+A selects all and Escape cancels a gesture. Locked items cannot move. The selection holds at most 32 items.
 - **Pictures.** The library never loads files or owns textures. A drop of an OS file is the backend's event; use `ImageButtonRequest::hovered` to choose the button it belongs to. In-app drags use an ImGui payload (`dropPayload`). Alpha hit testing needs a callback because the library cannot read texture pixels.
 - **LED parts.** `AddressMap` and `FindOverlaps` treat slots as 1-based like DMX addresses; overlaps are drawn with hatching, a mark and a count. `EstimateLedCurrent` takes the per-pixel current from the host (datasheets differ). `KelvinToRgb` covers 1667-25000 K. `PixelPreview` draws up to about ten thousand pixels per call, and the wiring overlay is limited to 2000 pixels.
+- **Tile map.** `TileMap` draws one cell per panel of a tiled display, such as LED wall cabinets. Tiles are coloured by `group` (the data port or power circuit that feeds them). Each group is joined in `order` like its cables, with a dot on the first tile, and `highlightGroup` dims the other groups. `missing` draws a planned but absent tile as an outline. A zero `size` fills the width and keeps `tileAspect`, up to about 14 frame heights high. You get the hovered and clicked tile index and write any tooltip yourself.
 - **Not covered.** Real MIDI/OSC/DMX/NDI devices, a system time-zone database, media playback and audio analysis stay with the host.
 
 ## Verification scope

@@ -8,7 +8,7 @@ Use the [design-system guide](../../features/design-system/) and each public hea
 
 | Public header | Type groups recorded in the metadata |
 |---|---|
-| [`include/imkit/theme.h`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/theme.h) | `ColorScheme`, `ContrastMode`, `Density`, `Easing`, `Typography`, `SpacingTokens`, `Radius`, `Stroke`, `Elevation`, `Opacity`, `StateColors`, `SemanticColors`, `Palette`, `Metrics`, `Motion`, `FontSet`, `EditorPalette`, `Theme`, `ThemeScope`, `AnimationState`, `ThemePreset` |
+| [`include/imkit/theme.h`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/theme.h) | `ColorScheme`, `ContrastMode`, `Density`, `Easing`, `Typography`, `SpacingTokens`, `Radius`, `Stroke`, `Elevation`, `Opacity`, `StateColors`, `SemanticColors`, `Palette`, `PartMetrics`, `Metrics`, `LayoutTokens`, `Motion`, `FontSet`, `EditorPalette`, `Theme`, `ThemeScope`, `AnimationState`, `ThemePreset` |
 | [`include/imkit/accessibility.h`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/accessibility.h) | `SemanticRole`, `SemanticAction`, `SemanticState`, `SemanticNode`, `AccessibilityTree`, `AccessibilitySink`, `ActionRequest`, `ActionQueue`, `AccessibilityFrame` |
 | [`include/imkit/accessibility_win32.h`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/accessibility_win32.h) |  |
 | [`include/imkit/locale.h`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/locale.h) | `TextDirection`, `LocaleContext` |

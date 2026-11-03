@@ -1,22 +1,45 @@
 # Getting started
 
-[日本語](導入ガイド.md) · [Documentation index](../README.md)
+[日本語](導入ガイド.md) · [Documentation index](../README.md) · [How ImKit works](how-it-works.md)
 
-ImKit is a C++20 static library layered over one Dear ImGui implementation supplied by the host. It does not create a context, renderer, backend or frame loop.
+ImKit is a C++20 static library that you link into an application that already uses Dear ImGui. It does not create a context, renderer, backend or frame loop. This page takes you from a clean project to the first themed frame.
 
 ## Requirements
 
-- Dear ImGui docking commit `367b2c24f399988ddafc0bb4628da0106bcc09be` (1.93.0 WIP)
-- CMake 3.20 or newer
-- Package matrix: Windows x64/Arm64 with MSVC, macOS 15+ arm64/x86_64 with Apple Clang
+| Item | Requirement |
+| --- | --- |
+| C++ | C++20 |
+| Dear ImGui | `docking` branch, commit `367b2c24f399988ddafc0bb4628da0106bcc09be` (1.93.0 WIP) |
+| Build system | CMake 3.20 or newer |
+| Platforms | Windows x64 / Arm64 with MSVC, macOS 15 or later (arm64 / x86_64) with Apple Clang |
 
-## Fastest evaluation
+Your application supplies the Dear ImGui sources. See [Dependencies](../architecture/dependencies.md) for why the revision is pinned.
 
-Download the matching [v3.3.0 package](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v3.3.0), extract it, then run the Gallery and Node Editor Gallery in `bin/` on Windows or the two `.app` bundles on macOS. Universal 2 is the default macOS choice when one archive must run on both CPU families.
+## Choose how to start
 
-## Source integration
+| Goal | Path |
+| --- | --- |
+| See what ImKit looks like | [Run the Gallery](#run-the-gallery) |
+| Use it in a CMake project | [Add ImKit from source](#add-imkit-from-source) |
+| Use the prebuilt libraries | [Use the SDK package](#use-the-sdk-package) |
 
-Create the Dear ImGui target first, expose its include directory, then name it before adding ImKit.
+## Run the Gallery
+
+Download the [latest release package](https://github.com/AokiMotohide/imgui-modern-kit/releases/latest) for your platform and extract it.
+
+- **Windows:** run `imkit_gallery.exe` and `imkit_node_editor_gallery.exe` in `bin/`.
+- **macOS:** open the two `.app` bundles. Use the Universal 2 package if one archive must run on both Apple Silicon and Intel. The packages are unsigned and not notarized.
+
+<img src="../images/v4-start.gif" alt="The Gallery Start page: the same controls before and after an ImKit theme, then the whole Gallery changing theme" width="960">
+
+The Gallery is built only from the public components that your application links, so its source in `examples/gallery/` is a working reference.
+
+## Add ImKit from source
+
+1. Build Dear ImGui as a CMake target in your project.
+2. Set `IMKIT_IMGUI_TARGET` to that target's name.
+3. Add ImKit with `add_subdirectory`.
+4. Link `imkit::imkit` to your application.
 
 ```cmake
 add_library(host_imgui STATIC
@@ -27,58 +50,79 @@ add_library(host_imgui STATIC
 target_include_directories(host_imgui PUBLIC ${IMGUI_SOURCE_DIR})
 
 set(IMKIT_IMGUI_TARGET host_imgui)
-add_subdirectory(external/imgui-modern-kit)
-target_link_libraries(your_app PRIVATE imkit::imkit)
-imkit_copy_font_assets(your_app "assets/fonts")
-```
-
-The copy helper stages the optional Inter and Noto Sans JP files only. The host
-must load them into its own atlas and retain font/context lifetime ownership.
-
-Configure optional ImKit targets before `add_subdirectory` when it is embedded:
-
-```cmake
-set(IMKIT_BUILD_GALLERY OFF)
+set(IMKIT_BUILD_GALLERY OFF)          # skip the samples and tests when embedding
 set(IMKIT_BUILD_DESIGN_GALLERY OFF)
 set(IMKIT_BUILD_TESTS OFF)
+add_subdirectory(external/imgui-modern-kit)
+
+target_link_libraries(your_app PRIVATE imkit::imkit)
+imkit_copy_font_assets(your_app "assets/fonts")   # optional
 ```
 
-## First frame
+`IMKIT_IMGUI_TARGET` must name an existing target. ImKit then downloads nothing and does not compile Dear ImGui. `imkit_copy_font_assets` only copies the optional Inter and Noto Sans JP files beside your executable. Loading them into the font atlas, and keeping the atlas and context alive, is your application's job.
+
+### Optional modules
+
+| Need | Link |
+| --- | --- |
+| Themes, controls, workflow, charts, PTZ, icons | `imkit::imkit` |
+| Timeline, curves, inspector, preview monitors | `imkit::editor_suite` (or the narrower `imkit::video`, `imkit::cg`) |
+| Node graph | `imkit::node_editor` |
+| Show control | `imkit::show` |
+| Custom title bar | `imkit::window_frame_win32` / `imkit::window_frame_macos` |
+| OpenGL or Metal preview | `imkit::preview_opengl3` / `imkit::preview_metal` |
+
+## Draw the first frame
+
+Apply a theme on the live context before `NewFrame`, then draw inside a normal window.
 
 ```cpp
-auto theme = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
-theme.fonts = {regularFont, emphasisFont}; // non-owning
-imkit::ApplyTheme(theme, applicationScale); // before NewFrame
+#include <imkit/imkit.h>
 
+// Once, after the Dear ImGui context exists
+imkit::Theme theme = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
+// theme.fonts = {regularFont, emphasisFont};   // optional, borrowed pointers
+
+// Every frame
+imkit::ApplyTheme(theme);          // before ImGui::NewFrame()
 ImGui::NewFrame();
+
 if (imkit::Begin("Settings")) {
-    imkit::TextUnformatted("Ready");
+    imkit::TextUnformatted("ImKit is running");
+    if (imkit::ActionButton("Test", imkit::ActionVariant::Primary)) {
+        // your code
+    }
 }
 imkit::End();
+
 ImGui::Render();
+// your backend submits ImGui::GetDrawData()
 ```
 
-Call `ApplyTheme` on the current live context. A `ThemeScope` may be used inside a frame and must be destroyed on that same context before context destruction.
+- `ApplyTheme(theme, scale)` takes your application scale. The default is 125%, and the supported range is 50% to 250%.
+- To give one window its own theme, create an `imkit::ThemeScope` before the widgets. Destroy it on the same context, before that context is destroyed.
 
-## Installed SDK
+## Use the SDK package
 
-Create the matching host ImGui target first, configure with the SDK prefix, and explicitly confirm the documented ABI after checking compiler, CRT, architecture, ImGui revision and `imconfig.h`.
+Use the installed SDK only when you have confirmed that the compiler, CRT, architecture, Dear ImGui revision and `imconfig.h` all match the package. Set the confirmation flag yourself.
 
 ```cmake
 set(IMKIT_IMGUI_TARGET host_imgui)
+set(CMAKE_PREFIX_PATH "path/to/imkit-sdk" ${CMAKE_PREFIX_PATH})
 set(IMKIT_SDK_ABI_CONFIRMED ON)
 find_package(imkit 4.0 CONFIG REQUIRED)
 target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
 
-Use source integration whenever the binary conditions differ. The archive does not contain Dear ImGui core.
-
-Link `imkit::node_editor` only when the host needs the independent Node Editor. Its graph snapshot, edit validation, evaluation, Undo and persistence remain host-owned.
+If any condition differs, build from source. The package does not contain Dear ImGui.
 
 ## Next steps
 
-- Choose and customize a [theme](../architecture/themes.md).
-- Copy practical [component recipes](../components/components.md).
-- Explore the native [Gallery](gallery.md).
-- Integrate the host-owned [Node Editor](../components/node-editor.md).
-- Diagnose configuration failures with [Troubleshooting](../reference/troubleshooting.md).
+| Read | For |
+| --- | --- |
+| [How ImKit works](how-it-works.md) | The frame model and who owns what |
+| [Build your first app](../tutorials/build-first-app.md) | A complete walkthrough |
+| [Themes](../architecture/themes.md) | Choosing and customizing a theme |
+| [Components](../components/components.md) | The controls and a full settings panel |
+| [Gallery guide](gallery.md) | Finding each component's source in the Gallery |
+| [Troubleshooting](../reference/troubleshooting.md) | Build, link and runtime errors |

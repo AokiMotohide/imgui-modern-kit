@@ -52,7 +52,7 @@ void DrawGraph(ne::GraphView graph, ne::EditorState& state,
 }
 ```
 
-**Example type:** this function excerpt is called from an existing host. The caller provides `graph`, `state`, `requests`, and `style`, and calls it inside the host’s active Dear ImGui frame.
+Your application provides `graph`, `state`, `requests` and `style`, and calls this function inside its active Dear ImGui frame.
 
 <Aside type="caution" title="Paired calls">
 `EndEditor(frame)` is required even when `frame.visible == false`. If you call `BeginNode(frame, id)` directly, call `EndNode(frame)` only when `BeginNode` returns true.
@@ -64,13 +64,14 @@ void DrawGraph(ne::GraphView graph, ne::EditorState& state,
 
 The host owns `EditorState` and passes it back to this editor on the same live context across frames. `RequestBuffer` writes only within its supplied span capacity. Never apply a partial operation: the host checks graph ID/revision and accepts or rejects each operation as a whole.
 
-## API status
+## Scope
 
-The current v3.2.0 contract labels the Node Editor API as under development. Compiling `BeginEditor` does not establish host-model validation, undo, native OS/IME, DPI, or installed-SDK acceptance; those belong to the host or separate verification scope.
+Compiling a `BeginEditor` call does not validate your graph model, Undo, native OS and IME behaviour, DPI handling or an installed SDK. Those belong to your application or to a separate verification scope. [Build a node editor](../../../tutorials/node-editor/) walks through a complete model that applies the returned requests.
 
 ## Related pages
 
-- [Using the Node Editor](../../../features/node-editor/)
+- [Node Editor](../../../features/node-editor/)
+- [Build a node editor](../../../tutorials/node-editor/)
 - [Getting started](../../../getting-started/)
 - [Public header](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/node_editor.h)
 - [Node Editor API inventory](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/node-editor-api.json)

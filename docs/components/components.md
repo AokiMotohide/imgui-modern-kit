@@ -4,6 +4,8 @@
 
 ImKit components are small compositions over public Dear ImGui behavior. Edited values, lifetime and persistence remain in the host. The recipe below shows a complete frame-level settings panel; the smaller examples that follow highlight individual controls.
 
+<img src="../images/v4-compare.gif" alt="Plain Dear ImGui and ImKit editing the same values side by side" width="960">
+
 ## Complete settings panel
 
 Keep the values in application state and draw the panel during the host's existing Dear ImGui frame. The function returns a save request; it does not write a file or own a notification queue.
@@ -134,6 +136,6 @@ Each action can be disabled independently; its disabled reason appears in that b
 
 `NotificationCard` returns a dismiss request. A zero `expiresAt` means it remains visible until the host removes it; a nonzero expiration is compared with the `now` value supplied by the host.
 
-## ImKit 3.2 workspace
+## Try it in the Gallery
 
-Open **Workspace** in the Gallery to use WorkspaceTabs, HierarchyGroupHeader/HierarchyRow, BeginInspectorCard/EndInspectorCard, SettingToggleRow, DragVector3WithUnit, ChoiceGroup and CompactActionRow together. Requests update Gallery-owned values; the same pattern works in an existing ImGui frame. See the [3.2 declarations and lifetime rules](../reference/v3.2-api.md). All 321 runtime icons and 13 themes are available without introducing a new context or application framework.
+Open **Workspace** in the Gallery to see WorkspaceTabs, hierarchy rows, inspector cards, `SettingToggleRow`, `DragVector3WithUnit`, `ChoiceGroup` and `CompactActionRow` used together. The returned requests update Gallery-owned values, and the same pattern works in an existing ImGui frame. The parts are described in [Workflow components](workflow-components.md), and the declarations and lifetime rules are in the [3.2 additions](../reference/v3.2-api.md).

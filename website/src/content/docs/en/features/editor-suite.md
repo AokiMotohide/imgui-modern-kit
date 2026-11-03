@@ -1,47 +1,6 @@
 ---
 title: "Editor Suite"
----
-
-## Use this when
-
-Choose Editor Core, Video or CG surfaces when a production tool needs editing controls over data and resources already owned by its application.
-
-## Gallery capture
-
-![Native Gallery capture of the ImKit timeline editing surface.](../../../../assets/captures/v4-timeline-poster.png)
-
-Editor Suite — timeline and editing surfaces · [Open the native Gallery animation](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-timeline.gif)
-
-## Minimum drawing example
-
-```cpp
-#include <imkit/video.h>
-#include <imkit/editor_core.h>
-
-void DrawTimeline(const imkit::video::TimelineProvider& provider,
-                  imkit::video::TimelineState& state,
-                  imkit::editor::Selection& selection,
-                  imkit::editor::EventBuffer& events,
-                  const imkit::Theme& theme) {
-    imkit::video::Timeline("timeline", provider, state, selection, events, theme);
-}
-```
-
-**Example type:** Host-state function excerpt. The application supplies provider, selection, event storage and Theme, then validates and applies events.
-
-## Integrate with the application
-
-Link `imkit::editor_suite` or the narrower `imkit::video` target and keep every provider span valid during the call.
-
-## Scope
-
-The editing surfaces do not decode or play media, render arbitrary 3D scenes, own undo or load project files.
-
-## Related API and guides
-
-- [Editor API contracts](../../api/editor-suite/)
-- [Timeline editing guide](../timeline/)
-
+description: "ImKit's Editor Suite provides professional UI components built on the pinned Dear ImGui 1.93.0 WIP docking commit, tailored for creative applications…"
 ---
 
 ImKit's Editor Suite provides professional UI components built on the pinned Dear ImGui 1.93.0 WIP docking commit, tailored for creative applications such as DCC tools, video editors, and audio sequencers.
@@ -132,6 +91,6 @@ cmake --build --preset windows-debug --target imkit_gallery --parallel
 
 ## Scope
 
-- For the graph and workflow companion module, see [Node Editor](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/components/node-editor.md).
+- For the graph and workflow companion module, see [Node Editor](../node-editor/).
 - ImKit provides immediate-mode UI controls; it is **not** a media decoder, audio resampler, color management pipeline, UV unwrapper, physics engine, or 3D asset file loader.
 - Historical validation records and interaction design notes are preserved in [Validation Records](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/archive/editor-validation.md) and [Editor Refresh Design](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/archive/editor-refresh.md).

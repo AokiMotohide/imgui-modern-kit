@@ -4,6 +4,8 @@
 
 The independent `imkit::node_editor` target provides native Dear ImGui node editing, context-free layout utilities and host-driven previews. `imkit::editor_suite` includes it, and it can also be linked on its own. Include `<imkit/node_editor.h>`. The baseline is the pinned Dear ImGui 1.93.0 WIP docking commit and C++20.
 
+<img src="../images/v4-node-editor.gif" alt="The Node Editor Gallery: nodes with dynamic sockets and links" width="960">
+
 This is an original implementation. `imgui-node-editor` is an API and interaction reference, not a source, build or runtime dependency, and no third-party assets were added. The standalone demo optionally loads the installed Windows Segoe UI font; the library neither redistributes nor loads it.
 
 Status: development API. [Checks and limits](#checks-and-limits) lists what is verified.

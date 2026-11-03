@@ -1,5 +1,6 @@
 ---
 title: "Galleryガイド"
+description: "ImKit Galleryは、導入する前にImKitを試せるデスクトップアプリです。アプリが組み込むのと同じ公開ライブラリで作ってあり、画面に出る部品に、デモ専用のものはありません。"
 ---
 
 ImKit Galleryは、導入する前にImKitを試せるデスクトップアプリです。アプリが組み込むのと同じ公開ライブラリで作ってあり、画面に出る部品に、デモ専用のものはありません。
@@ -33,7 +34,7 @@ cmake --build --preset macos-universal --target imkit_gallery --parallel
 # アプリバンドルは build/macos-universal に作られます。
 ```
 
-Windows版のリリースアーカイブには、`imkit_gallery.exe`、`design-assets`、ライセンス、第三者通知が入っています。サービスは登録せず、利用者の設定ファイルも作りません。`imkit_gallery --theme-file my.theme` は、起動時にテーマファイルを適用し、以後の編集にも追従します（[自分の世界観を作る](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/architecture/世界観を作る.md)）。
+Windows版のリリースアーカイブには、`imkit_gallery.exe`、`design-assets`、ライセンス、第三者通知が入っています。サービスは登録せず、利用者の設定ファイルも作りません。`imkit_gallery --theme-file my.theme` は、起動時にテーマファイルを適用し、以後の編集にも追従します（[自分の世界観を作る](../../features/make-your-own-look/)）。
 
 ## 画面一覧
 

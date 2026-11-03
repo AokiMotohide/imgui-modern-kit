@@ -1,245 +1,259 @@
-# Build a timeline editor
+# Build a timeline
 
 [日本語](タイムラインの作成.md) · [Documentation index](../README.md) · [How ImKit works](../getting-started/how-it-works.md)
 
-The video timeline is ImKit's professional NLE surface: multi-track editing, fades, transitions, ripple/roll/slide/slip moves, track management, envelope keyframes, and a preview monitor. It is a host-owned, immediate-mode widget. You supply a `TimelineProvider` (your tracks and clips, as borrowed views each frame), a persistent `TimelineState` (pan/zoom/gestures), and an event buffer that the timeline fills with committed edits. The library never decodes media, owns files, or holds your clip list — it draws and reports.
+The video timeline shows tracks and clips and lets the user trim, move, split and fade them. It is an immediate-mode widget. Each frame you give it a provider that returns your tracks and clips, and it reports the edits the user made as events.
 
-![Multi-track timeline with clips, tracks, and overview](../images/v4-timeline.gif)
+The library does not decode media, open files or keep your clip list.
 
-## The core pattern
+This tutorial builds a model with one track and two clips, draws it, and applies move, trim and split events.
 
-Each frame the relationship between you and ImKit is three steps:
+<img src="../images/v4-timeline.gif" alt="The Gallery timeline: clips on several tracks with trim, move and split edits" width="960">
 
-1. **Provide the view.** A `TimelineProvider` returns your `TrackView`s and `ClipView`s (host-owned) and a `revision` you stamp.
+## The pattern
+
+Each frame has three steps:
+
+1. **Provide.** A `TimelineProvider` returns your `TrackView` and `ClipView` values and a `revision`.
 2. **Draw.** Call `video::Timeline(id, provider, state, selection, events, theme, size)`.
-3. **Apply out.** After `ImGui::Render()`, iterate `events.Events()` and commit only events whose `revision` matches your current frame.
+3. **Apply.** Pass the returned events to your model. Apply only events whose `revision` matches this frame.
 
-The host owns every clip, track, and undo entry. The timeline emits `editor::Event`s; it does not mutate your data.
+The timeline never changes your data. It emits `editor::Event` values, and you decide what to do with them.
 
-## What you need
+## Before you start
 
-1. A Dear ImGui context and a window (your own app or the Gallery).
-2. The `imkit::video` target linked into your app.
-3. A host model: tracks, clips, and an undo history you own.
+- A Dear ImGui context and a window (your application or the Gallery).
+- `imkit::video` linked.
+- A model that owns the tracks, clips and Undo history.
 
-## What you'll build
+## Step 1: Keep the data in your own model
 
-- A host-owned model: `TrackView`s and `ClipView`s (ImKit's view types, filled with your data).
-- A `TimelineProvider` whose `tracks`/`clips` callbacks return those views.
-- A persistent `TimelineState` and a clip `Selection`.
-- An `Apply` step that commits trims, splits, fades, transitions, track edits, and ripple deletes.
-
-## The model (host-owned data)
-
-ImKit's `TrackView` and `ClipView` are plain host-owned value types. Fill them from your media, and keep a `revision` you increment whenever the data changes.
+`TrackView` and `ClipView` are plain value types that you fill from your media. Keep a `revision` and increase it whenever the data changes.
 
 ```cpp
+#include <imgui.h>
+#include <imkit/imkit.h>
+#include <imkit/video.h>
+#include <algorithm>
+#include <array>
+#include <span>
+#include <vector>
+
 namespace editor = imkit::editor;
 namespace video = imkit::video;
 
-struct Model {
+// Everything in this struct belongs to your application.
+struct TimelineModel {
     std::vector<video::TrackView> tracks;
-    std::vector<video::ClipView> clips;        // keep clips for a track contiguous
-    std::uint64_t revision = 1;
-    std::uint32_t nextTrack = 400, nextClip = 800;
+    std::vector<video::ClipView> clips;                  // keep the clips of one track together, in time order
+    std::array<editor::StableId, 64> selectedStorage{};
+    editor::Selection selection{selectedStorage};        // the timeline writes it, you read it back
+    video::TimelineState state;                          // pan, zoom and gestures: keep it across frames
+    std::uint64_t revision = 1;                          // increase it whenever the data changes
+    editor::StableId nextClip = 900;
 
-    // Persistent: it holds gesture/drag state across frames.
-    video::TimelineState state{};
-    // Host-owned clip selection; the timeline writes it, you read it back.
-    std::vector<editor::StableId> selectedClipIds;
-    editor::Selection selection;
-
-    void Init() {
-        tracks.push_back(video::TrackView{ nextTrack, "Video A",
-                              video::TrackKind::Video, 64, true });
-        clips.push_back(MakeClip(nextClip++, 400, "Intro"));
-        selection.storage = selectedClipIds.data();
-        selection.count = 0;
+    TimelineModel() {
+        video::TrackView track;
+        track.id = 400;
+        track.label = "Video A";
+        tracks.push_back(track);
+        clips.push_back(MakeClip(800, 400, "Intro", 0, 3));
+        clips.push_back(MakeClip(801, 400, "Main", 3, 5));
     }
 
-    video::ClipView MakeClip(std::uint32_t id, std::uint32_t track, const char *label) {
-        video::ClipView c;
-        c.id = id; c.track = track; c.label = label;
-        c.start = editor::FromSeconds(0);
-        c.duration = editor::FromSeconds(3);
-        c.sourceIn = 0;
-        c.speed = 1;
-        return c;
+    static video::ClipView MakeClip(editor::StableId id, editor::StableId track, const char* label,
+                                    double startSeconds, double seconds) {
+        video::ClipView clip;
+        clip.id = id;
+        clip.track = track;
+        clip.label = label;
+        clip.start = editor::FromSeconds(startSeconds);
+        clip.duration = editor::FromSeconds(seconds);
+        clip.sourceIn = editor::FromSeconds(startSeconds);   // this tutorial uses one long source
+        return clip;
     }
 
-    // Media handles and the minimum clip length. The library validates against these.
-    video::ClipConstraints Constraints(const video::ClipView &c) const {
-        video::ClipConstraints b;
-        b.mediaFirst = 0;
-        b.mediaLast = editor::FromSeconds(3600);   // from your media
-        b.minimumDuration = editor::FromSeconds(0.083);
-        return b;
+    // The limits of the media behind a clip. EditClip and SplitClip check against them.
+    static video::ClipConstraints Constraints() {
+        video::ClipConstraints limits;
+        limits.mediaFirst = 0;
+        limits.mediaLast = editor::FromSeconds(3600);
+        limits.minimumDuration = editor::FromSeconds(1.0 / 12);
+        return limits;
+    }
+
+    video::ClipView* Find(editor::StableId id) {
+        for (video::ClipView& clip : clips)
+            if (clip.id == id) return &clip;
+        return nullptr;
     }
 
     video::TimelineProvider Provider() {
-        video::TimelineProvider p;
-        p.user = this;
-        p.revision = revision;
-        p.trackCount = (int)tracks.size();
-        p.tracks = [](void *u, int, int) {
-            auto *m = static_cast<Model *>(u);
-            return std::span<const video::TrackView>(m->tracks.data(), m->tracks.size());
+        video::TimelineProvider provider;
+        provider.user = this;
+        provider.revision = revision;
+        provider.trackCount = static_cast<int>(tracks.size());
+        provider.tracks = [](void* user, int, int) {
+            auto& self = *static_cast<TimelineModel*>(user);
+            return std::span<const video::TrackView>(self.tracks);
         };
-        // Clips for one track, in order, within the visible range.
-        p.clips = [](void *u, editor::StableId track, editor::Range) {
-            auto *m = static_cast<Model *>(u);
-            int i = 0, n = (int)m->clips.size();
-            while (i < n && m->clips[i].track != track) ++i;
-            int j = i;
-            while (j < n && m->clips[j].track == track) ++j;
-            return std::span<const video::ClipView>(m->clips.data() + i, j - i);
+        provider.clips = [](void* user, editor::StableId track, editor::Range) {
+            auto& self = *static_cast<TimelineModel*>(user);
+            auto first = std::find_if(self.clips.begin(), self.clips.end(),
+                                      [&](const video::ClipView& c) { return c.track == track; });
+            auto last = std::find_if_not(first, self.clips.end(),
+                                         [&](const video::ClipView& c) { return c.track == track; });
+            return std::span<const video::ClipView>(&*first, static_cast<std::size_t>(last - first));
         };
-        return p;
+        provider.constraints = [](void*, editor::StableId) { return Constraints(); };
+        return provider;
     }
+    // Split(), MoveOrTrim() and Apply() are added in step 4.
 };
 ```
 
-The provider borrows your data for the duration of one `Timeline` call. The `revision` you stamp is what makes an event applicable: the timeline tags every committed event with it, and `Apply` below drops anything that does not match the current frame.
+The `TimelineState` holds pan, zoom and gestures in progress. Keep one for the life of the timeline, because creating a new one each frame resets the gestures. The `Selection` is also yours. The timeline writes to it and you read it back.
 
-## The per-frame draw
+## Step 2: Build the provider
 
-Inside your Dear ImGui frame loop (after `NewFrame`):
+`Provider()` returns callbacks that give the timeline your tracks and the clips of one track. The callbacks run during `Timeline()` and borrow your data for that call only. The `revision` is what makes an event applicable: the timeline copies it into every event, and `Apply` drops any event that does not match.
 
-```cpp
-auto provider = model.Provider();
-// model.state persists across frames; it carries pan/zoom and in-progress gestures.
-// model.selection is persistent; Timeline writes it in place and you read it back.
+## Step 3: Draw the timeline
 
-std::array<editor::Event, 16> eventStorage{};
-editor::EventBuffer events{eventStorage};
-
-video::Timeline("timeline", provider, model.state, model.selection,
-                events, theme, ImVec2(0, 300));
-
-ImGui::Render();
-model.Apply(events.Events());   // commit this frame's events
-```
-
-`ImVec2(0, 300)` sizes the widget (height 300 px). The `Timeline` also draws the tool bar, zoom controls, overview strip, and, if you provide `provider.waveform`/`provider.externalDrops`/`provider.drawClipOverlay`, waveforms, external-asset drops, and per-clip overlays.
-
-## Applying events
-
-`Apply` must:
-
-- Ignore any event whose `phase != editor::Phase::Commit` or whose `revision` is stale.
-- Map each event's `Value` fields to a model change. The header documents the fields per kind; the public helpers (`EditClip`, `SplitClip`, `RippleDeletePosition`, `RollClips`, `SlideClip`) validate the change against your media before you apply it.
-- Increment `revision` when anything changed, so the next frame stamps a new value.
-
-A representative `Apply` (the same shape covers the other kinds):
+Call this between `NewFrame()` and `Render()`.
 
 ```cpp
-void Model::Apply(std::span<const editor::Event> events) {
-    const auto frameRevision = revision;
-    bool changed = false;
-    auto *clip = [this](editor::StableId id) {
-        for (auto &c : clips) if (c.id == id) return &c;
-        return nullptr;
-    };
-    for (auto &e : events) {
-        if (e.phase != editor::Phase::Commit || e.revision != frameRevision)
-            continue;                          // stale event: drop
-        switch (e.kind) {
-        // first/last = start / start+duration. delta = proposed - original.
-        case editor::EditKind::TrimStart:
-        case editor::EditKind::TrimEnd:
-        case editor::EditKind::Move: {
-            auto *c = clip(e.target);
-            if (!c) break;
-            const Tick delta = e.proposed.first - e.original.first;
-            auto edit = video::EditClip(*c, e.kind, delta, Constraints(*c));
-            if (!edit.valid) break;            // host rejects out-of-media edits
-            c->start = edit.start; c->duration = edit.duration;
-            c->sourceIn = edit.sourceIn;
-            if (edit.rippleDelta != 0) RippleFollowing(c->track, c, edit.rippleDelta); // host helper
-            changed = true;
-            break;
-        }
-        case editor::EditKind::Split: {        // razor
-            auto *c = clip(e.target);
-            if (!c) break;
-            auto sr = video::SplitClip(*c, e.proposed.first, Constraints(*c));
-            if (!sr.valid) break;
-            ReplaceClip(*c, sr.left, sr.right); // host helper: two clips take the original's slot
-            changed = true;
-            break;
-        }
-        case editor::EditKind::ClipFades: {    // first/last = in/out duration; x/y = curve
-            auto *c = clip(e.target);
-            if (!c) break;
-            c->fades.inDuration  = e.original.first;
-            c->fades.outDuration = e.original.last;
-            c->fades.inCurve  = static_cast<video::FadeCurve>(e.original.x);
-            c->fades.outCurve = static_cast<video::FadeCurve>(e.original.y);
-            changed = true;
-            break;
-        }
-        case editor::EditKind::CutTransition: { // target=left, parent=right; first=duration, x=kind
-            auto *c = clip(e.target);
-            if (!c) break;
-            c->outgoingTransition = video::CutTransitionView{
-                e.target, e.parent, e.original.first, 0,
-                static_cast<video::TransitionKind>(e.original.x), false, ""};
-            changed = true;
-            break;
-        }
-        case editor::EditKind::RippleDelete: { // related clips arrive as one batch
-            // Rebuild the track from the surviving clips; close the gap.
-            // RebuildTrack(e.target, e.operationSize); // host helper: close the gap from the batch
-            changed = true;
-            break;
-        }
-        case editor::EditKind::TrackEdit: {    // offset=TrackAction, parent=before-track, x=kind
-            auto action = static_cast<video::TrackAction>(e.offset);
-            if (action == video::TrackAction::Add) {
-                auto t = video::TrackView{ nextTrack, "", video::TrackKind::Video, 64 };
-                auto before = e.parent == 0 ? 0 :
-                    (int)(std::find_if(tracks.begin(), tracks.end(),
-                        [e](const auto &tr){ return tr.id == e.parent; }) - tracks.begin());
-                tracks.insert(tracks.begin() + before, t);
-            } else if (action == video::TrackAction::Remove) {
-                std::erase_if(tracks, [e](const auto &tr){ return tr.id == e.parent; });
-            } else { /* Reorder / Duplicate: same shape. */ }
-            changed = true;
-            break;
-        }
-        default:
-            break;   // Roll/Slide/Slip: video::RollClips / SlideClip / EditClip;
-                     // CaptionInsert / AudioEnvelope / Clipboard: host semantics.
-        }
-    }
-    if (changed) ++revision;
+void DrawTimeline(TimelineModel& model, const imkit::Theme& theme) {
+    const video::TimelineProvider provider = model.Provider();
+
+    std::array<editor::Event, 16> eventStorage{};
+    editor::EventBuffer events{eventStorage};
+
+    video::Timeline("timeline", provider, model.state, model.selection, events, theme, ImVec2(0, 300));
+
+    model.Apply(events.Events());
 }
 ```
 
-Selection events (`Select`, `BoxSelect`, `LassoSelect`, and track-row edits) are already reflected in the `Selection` you passed; read `selection.count` / `selection.Contains(id)` after `Timeline()` rather than processing those events.
+`ImVec2(0, 300)` sets the widget size: the full width and 300 pixels of height. The timeline also draws its tool bar, zoom controls and overview. With `provider.waveform`, `provider.externalDrops` and `provider.drawClipOverlay` set, it draws waveforms, accepts external drops and draws per-clip overlays.
 
-## How to run it
+## Step 4: Apply the events
 
-- The main Gallery hosts the timeline (`imkit_gallery` target). Build it and open the Timeline page to see the full surface at scale.
-- `tests/video.cpp` is the headless verification: it drives the same `Timeline()` API with a synthetic model and asserts trim/split/transition/ripple behavior. Run it as a test to see the event contract in action.
+Add these members to `TimelineModel`.
 
-## What just happened
+```cpp
+    // Cuts a clip in two at the event's tick.
+    bool Split(const editor::Event& e) {
+        video::ClipView* clip = Find(e.target);
+        if (!clip || clip->locked) return false;
+        const video::SplitResult split = video::SplitClip(*clip, e.proposed.first, Constraints());
+        if (!split.valid) return false;
 
-- Your `Model` owned the tracks, clips, and revision; ImKit never mutated them directly.
-- Each frame stamped a provider with the current `revision` and drew the timeline.
-- The timeline returned committed events; `Apply` accepted only those matching the frame's revision.
-- `revision` incremented, so the next snapshot reflects the edit.
+        video::ClipView second = *clip;                      // the new second half
+        second.id = nextClip++;
+        second.start = split.right.start;
+        second.duration = split.right.duration;
+        second.sourceIn = split.right.sourceIn;
+        clip->start = split.left.start;
+        clip->duration = split.left.duration;
+        clip->sourceIn = split.left.sourceIn;
+        clips.insert(clips.begin() + (clip - clips.data()) + 1, second);
+        return true;
+    }
 
-## The rules that keep it safe
+    // Moves or trims every clip of one gesture. Applies all of them or none.
+    bool MoveOrTrim(std::span<const editor::Event> batch) {
+        struct Planned { editor::StableId id; video::ClipEdit edit; };
+        std::vector<Planned> planned;
+        for (const editor::Event& e : batch) {
+            video::ClipView* clip = Find(e.target);
+            if (!clip || clip->locked) return false;
+            const editor::Tick delta = e.kind == editor::EditKind::TrimEnd
+                ? e.proposed.last - e.original.last          // the end moved
+                : e.proposed.first - e.original.first;       // the start moved
+            const video::ClipEdit edit = video::EditClip(*clip, e.kind, delta, Constraints());
+            if (!edit.valid) return false;                   // outside the media or too short
+            planned.push_back({clip->id, edit});
+        }
+        for (const Planned& p : planned) {
+            video::ClipView* clip = Find(p.id);
+            clip->start = p.edit.start;
+            clip->duration = p.edit.duration;
+            clip->sourceIn = p.edit.sourceIn;
+        }
+        return !planned.empty();
+    }
 
-- **Revision-gate every event.** A stale event from an earlier frame must be dropped, not applied.
-- **Validate against your media.** Use `EditClip`/`SplitClip`/`RollClips`/`SlideClip` before applying; the library's helpers enforce media handles and minimum lengths.
-- **Own the state.** `TimelineState` must persist across frames; recreating it resets in-progress gestures.
-- **Borrow, don't store.** Provider views are valid only for the current `Timeline` call.
-- **Undo is host-owned.** There is no Undo event from the timeline; keep your own undo history and replay it into your model.
+    // Applies the events of one frame. Stale events change nothing.
+    void Apply(std::span<const editor::Event> events) {
+        const std::uint64_t frameRevision = revision;
+        bool changed = false;
+        for (std::size_t i = 0; i < events.size();) {
+            const std::size_t count = std::max<std::size_t>(1, events[i].operationSize);   // one gesture = one batch
+            if (i + count > events.size()) break;                                           // incomplete batch
+            const auto batch = events.subspan(i, count);
+            i += count;
+
+            const editor::Event& first = batch.front();
+            if (first.phase != editor::Phase::Commit || first.revision != frameRevision)
+                continue;                                                                   // a preview, or an older frame
+
+            switch (first.kind) {
+            case editor::EditKind::Move:
+            case editor::EditKind::TrimStart:
+            case editor::EditKind::TrimEnd:
+                changed |= MoveOrTrim(batch);
+                break;
+            case editor::EditKind::Split:
+                changed |= Split(first);
+                break;
+            default:
+                break;                                                                      // handle the kinds you support
+            }
+        }
+        if (changed) ++revision;                                                            // the next frame stamps a new value
+    }
+```
+
+| Rule | Reason |
+| --- | --- |
+| Skip events whose `phase` is not `Commit` | `Begin` and `Update` are previews of a drag in progress |
+| Skip events whose `revision` differs from the frame | They were built from older data |
+| Walk the events in batches of `operationSize` | Moving several clips is one gesture and one Undo step |
+| Apply a batch completely or not at all | A half-applied gesture leaves the timeline inconsistent |
+| Let `EditClip` and `SplitClip` check the media | They enforce the media limits and the minimum length |
+| Increase `revision` after any change | The next frame then differs from the one the user saw |
+
+Selection events (`Select`, `BoxSelect`, `LassoSelect`) are already reflected in the `Selection` you passed in. Read `selection.count` and `selection.Contains(id)` after `Timeline()` instead of handling them. Other kinds, such as fades, transitions, ripple delete, track edits and keyframes, follow the same shape. The [full reference](../components/timeline-editing.md) lists the fields of each.
+
+## Step 5: Check the logic without a window
+
+`Apply` is plain C++. Feed it events directly:
+
+```cpp
+editor::Event move;
+move.kind = editor::EditKind::Move;
+move.target = 800;
+move.revision = model.revision;                       // built for the current frame
+move.original = {editor::FromSeconds(0), editor::FromSeconds(3)};
+move.proposed = {editor::FromSeconds(1), editor::FromSeconds(4)};
+model.Apply({&move, 1});                              // the clip now starts at 1 s, revision becomes 2
+
+model.Apply({&move, 1});                              // stale: ignored, nothing changes
+```
+
+The Gallery's Timeline page shows the full surface, and `tests/video.cpp` drives the same API headlessly. Undo is not an event of the timeline. Keep your own history and replay it into the model.
+
+## Rules
+
+- Check the `revision` of every event, and drop stale ones.
+- Validate edits against your media with `EditClip`, `SplitClip`, `RollClips` and `SlideClip` before you apply them.
+- Keep `TimelineState` across frames. Recreating it resets the gestures in progress.
+- Provider data is valid for one `Timeline` call. Do not store the spans.
+- Undo belongs to your application.
 
 ## Next
 
-- [Timeline editing (full reference)](../components/timeline-editing.md)
-- [Editor API reference](../reference/editor-api.md)
-- [Author a custom component](custom-component.md)
+- [Timeline editing](../components/timeline-editing.md): the full reference.
+- [Editor API](../reference/editor-api.md)
+- [Build a custom component](custom-component.md)

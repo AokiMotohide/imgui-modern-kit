@@ -1,5 +1,6 @@
 ---
 title: "Architecture"
+description: "ImKit is a C++20 static UI library for tools built on Dear ImGui."
 ---
 
 ImKit is a C++20 static UI library for tools built on Dear ImGui. This page covers the module layout, the platform boundary, who owns theme and state, how extensions are accepted, and what the editor and show modules leave to the host.
@@ -8,47 +9,7 @@ ImKit is a C++20 static UI library for tools built on Dear ImGui. This page cove
 
 Public headers live in `include/imkit/`, implementation in `src/`, tests in `tests/`, and the Gallery and other samples in `examples/`.
 
-```mermaid
-graph TD
-    Consumer["Host application"]
-
-    subgraph ImKit["ImKit modules (C++20 static libraries)"]
-        Core["imkit::imkit<br/>(themes, controls, workflow)"]
-        EditorCore["imkit::editor_core<br/>(time axis, canvas, gizmo, splitter)"]
-        Video["imkit::video<br/>(timeline, monitor, waveform)"]
-        CG["imkit::cg<br/>(3D viewport, outliner, UV)"]
-        NodeEditor["imkit::node_editor<br/>(graph canvas, sockets)"]
-        Show["imkit::show<br/>(live, rules, schedule, surface)"]
-        WindowFrame["imkit::window_frame<br/>(custom title bar)"]
-        PreviewGL["imkit::preview_opengl3<br/>(optional preview)"]
-    end
-
-    subgraph HostOwned["Owned by the host"]
-        ImGui["Dear ImGui (pinned docking commit)"]
-        Backend["Graphics backend (OpenGL, Metal, ...)"]
-        OS["Native window and message loop"]
-    end
-
-    Consumer --> Core
-    Consumer --> NodeEditor
-    Consumer --> Video
-    Consumer --> CG
-    Consumer --> Show
-    Consumer --> WindowFrame
-
-    Video --> EditorCore
-    CG --> EditorCore
-    Show --> EditorCore
-    EditorCore --> Core
-    Show --> Core
-    PreviewGL --> CG
-
-    Core --> ImGui
-    NodeEditor --> ImGui
-    WindowFrame --> ImGui
-    Backend -.-> ImGui
-    OS -.-> Backend
-```
+![Module map: ImKit modules, what each builds on, and what the application owns](/imgui-modern-kit/docs-images/modules-en.svg)
 
 Nothing depends on `imkit::show`; it needs `imkit::editor_core` only for timecode. The base `imkit` does not depend on Editor Core. Image and preview components belong to Editor Core and reuse its canvas, selection and splitter. The [workflow components](../../features/workflow/) extend the patterns in the base library.
 
@@ -62,7 +23,7 @@ Nothing depends on `imkit::show`; it needs `imkit::editor_core` only for timecod
 | `node_editor.h`, `node_layout.cpp` | Graph snapshots, bounded requests and deterministic layout; no graph storage or evaluation |
 | Gallery host | Context, fonts, GLFW/OpenGL, image capture and representative input |
 
-The cross-cutting design-system additions, the explicit semantic frame, and the locale and provider contracts are in [the design system](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/architecture/design-system.md). The legacy palette and metrics are rendering projections of the semantic tokens when you use `MakeTheme` or `ResolveTheme`. Precision Layers separates semantic design, native behavior and host state.
+The cross-cutting design-system additions, the explicit semantic frame, and the locale and provider contracts are in [the design system](../../features/design-system/). The legacy palette and metrics are rendering projections of the semantic tokens when you use `MakeTheme` or `ResolveTheme`. Precision Layers separates semantic design, native behavior and host state.
 
 ## What the library never does
 
@@ -117,4 +78,4 @@ The optional `imkit::show` target (`imkit/show.h`) sits beside Editor Core. Comp
 | Calendar | Request structs for moves |
 | Control surface | Snapped rectangles for moves and resizes |
 
-The host owns every value, texture and picture file (picture buttons ask for a file and never load one), the surface layout model, the clock (UTC seconds plus a time-zone callback), MIDI, OSC and DMX devices, media playback, script analysis and persistence. Pure functions (`EvaluateRule`, `NextOccurrences`, `ParseCron`, `SolarEvents`, `FindConflicts`, `DetectDelimiter` and others) carry the logic, so it can be tested without a context. Colours derive from semantic theme tokens; there is no Show-specific theme field. See the [Show module](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/components/show.md).
+The host owns every value, texture and picture file (picture buttons ask for a file and never load one), the surface layout model, the clock (UTC seconds plus a time-zone callback), MIDI, OSC and DMX devices, media playback, script analysis and persistence. Pure functions (`EvaluateRule`, `NextOccurrences`, `ParseCron`, `SolarEvents`, `FindConflicts`, `DetectDelimiter` and others) carry the logic, so it can be tested without a context. Colours derive from semantic theme tokens; there is no Show-specific theme field. See the [Show module](../../features/show/).

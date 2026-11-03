@@ -1,5 +1,6 @@
 ---
-title: "トースト通知"
+title: "トースト"
+description: "ToastViewport は、ホストウィンドウが属するviewportに色付きカードを表示します。カードが出るときにフォーカスは奪いません。imkit/toast.h または imkit/imkit.h をincludeします。既存の ToastRegion は変わりません。"
 ---
 
 `ToastViewport` は、ホストウィンドウが属するviewportに色付きカードを表示します。カードが出るときにフォーカスは奪いません。`imkit/toast.h` または `imkit/imkit.h` をincludeします。既存の `ToastRegion` は変わりません。状態、本文、context、font、renderer、実処理はホストが持ちます。React依存、グローバル管理、worker、永続化は導入しません。
@@ -94,6 +95,6 @@ toast.action = "詳細を表示"; // ToastEvent::Action と通知IDを返しま�
 
 ![実際のGalleryでLoadingからSuccessへ変わるトースト](/imgui-modern-kit/docs-images/v4-toasts-poster.png)
 
-[操作GIFを開く](/imgui-modern-kit/docs-images/v4-toasts.gif)
+[操作GIFを開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-toasts.gif)
 
 `imkit.toast` は、期限、停止、待機、更新、バッファの上限、重複ID、配置、公開のマウス入力の要求を検証します。`imkit.toast_api_compile` と外部のconsumerは、公開の署名を確かめます。GalleryのGPUキャプチャは、ネイティブのOS/IME、読み上げ、複数モニターのDPI、macOSの受け入れとは別です。

@@ -1,106 +1,89 @@
 # How ImKit works
 
-[日本語](仕組みと設計思想.md) · [Documentation index](../README.md) · [User guide](guide.md)
+[日本語](仕組みと設計思想.md) · [Documentation index](../README.md) · [Getting started](getting-started.md)
 
-ImKit sits **on top of** Dear ImGui, not beside it and not instead of it. The single most useful thing for using ImKit correctly is the mental model: how a Dear ImGui frame works, and **who owns what**. This page explains that model in approachable terms; [Architecture](../architecture/architecture.md) is the authoritative, formal reference for ownership and design.
+ImKit is a layer on top of Dear ImGui. It adds themes, controls and editor widgets that you call from your own Dear ImGui frame. To use it correctly you only need to know how a frame runs and who owns what. This page covers both. [Architecture](../architecture/architecture.md) is the formal reference.
 
-## What ImKit is (and is not)
+## What ImKit does and does not do
 
-ImKit is a C++20 static library. It:
+| ImKit does | ImKit does not |
+| --- | --- |
+| Wrap Dear ImGui widgets with themed versions (`imkit::imkit`) | Create or own the Dear ImGui context, backend, renderer or frame loop |
+| Provide composite widgets: workflow panels, charts, a node editor, a timeline, a show module | Decode or play media, or run simulations |
+| Provide named themes, 321 icons and a token model for building your own look | Keep your data, selection, Undo history or saved files |
 
-- Reuses Dear ImGui's own widgets and extends them with themed variants (`imkit::imkit`).
-- Adds higher-level composites: the node editor, video timelines, workflow panels, and application chrome.
-- Provides named themes, an icon set, and a design-system token model.
+Because ImKit owns none of the Dear ImGui machinery, you can add it to an application that already has a context without changing how that application works.
 
-It does **not**:
+## One Dear ImGui frame
 
-- Create or own a Dear ImGui context, backend, renderer, or frame loop.
-- Decode or play media, run simulations, or own your application's data.
-- Persist anything. Every piece of state lives in your application.
+Dear ImGui is an immediate-mode library: the interface is rebuilt every frame.
 
-That separation is deliberate. Because ImKit never owns the Dear ImGui machinery, it can be dropped into an application that already has a context, and your ownership, undo, and persistence semantics are untouched.
+1. Your loop calls `ImGui::NewFrame()`.
+2. Your code calls widget functions in any order. ImKit functions are widget functions too.
+3. Your code calls `ImGui::Render()`, which hands the draw lists to your backend.
+4. The next frame starts from an empty state.
 
-## How a Dear ImGui frame works
+No widget objects survive between frames. Text, selections and flags live in your application's data, and each frame reads and updates them.
 
-Dear ImGui is **immediate mode**. Every frame, your application redraws the entire interface from scratch. The pattern is:
+## Who owns what
 
-1. Your frame loop calls `ImGui::NewFrame()`.
-2. Your code issues drawing calls in any order; ImKit calls are just more of these.
-3. Your code calls `ImGui::Render()`, which hands the accumulated drawing to the backend.
-4. The next frame starts again, from a clean slate.
+![ImKit draws and reports; the application owns data, state and the Dear ImGui setup](../diagrams/ownership-en.svg)
 
-There is no persistent widget tree. Every call re-creates the widget. State (text, selections, toggles) must live **outside** the frame loop, in your application's model, and be read by each frame.
+| Item | Owner | Notes |
+| --- | --- | --- |
+| Dear ImGui context, backend, renderer, frame loop | Your application | ImKit never creates or destroys them |
+| Fonts and the font atlas | Your application | `Theme::fonts` holds borrowed pointers |
+| Documents, scenes, graphs, media, settings | Your application | ImKit does not copy or keep them |
+| Selection, Undo/Redo, saving | Your application | |
+| The `Theme` value and when it is applied | Your application | |
+| What appears on screen | ImKit | Drawn from the data you pass in |
+| What a click, drag or connection means | Your application | ImKit returns a request; you validate and apply it |
 
-## Where ImKit fits
+When ImKit returns something, such as a pressed button, a dragged clip or a connection request, it is a request. Your code decides what it means and updates your data.
 
-![Native Gallery overview](../images/v4-start.gif)
+## One frame with ImKit
 
-Think of ImKit as a thin layer of themed widgets and composites drawn inside your existing Dear ImGui frame:
+The Before / After page of the Gallery edits the same values with plain Dear ImGui on the left and ImKit on the right.
 
-```
-Your application
-  └── Dear ImGui context + backend (GLFW/OpenGL, Metal, ...)
-       └── Your frame loop
-            ├── ImGui::NewFrame()
-            │    ├── plain Dear ImGui widgets
-            │    └── ImKit themed widgets and composites
-            ├── ImGui::Render()
-            └── next frame
-```
-
-ImKit calls operate on the **current** Dear ImGui context. They never create one, and they never outlive the frame in which they are drawn.
-
-## Who owns what (the ownership model)
-
-This is the rule to memorize. **ImKit returns requests; it never acts on your data by itself.**
-
-| Thing | Owner |
-|---|---|
-| Dear ImGui context, backend, renderer, frame loop | **You (the host)** |
-| Fonts and the font atlas | **You** |
-| The data you display and edit (documents, scene, media, graph) | **You** |
-| Selection, undo/redo, persistence, settings | **You** |
-| The `Theme` value and when it is applied | **You** |
-| The drawing that appears on screen | ImKit, *given* your context and data |
-| The result of a button press, drag, or selection | **You**, via the returned request |
-
-In one line: **you own everything; ImKit only draws and reports.** When ImKit gives you something back — a clicked button ID, a dragged clip, a requested edit — it is **your** code that decides what it means and what to do with it.
-
-## A frame with ImKit, line by line
+<img src="../images/v4-compare.gif" alt="Plain Dear ImGui and ImKit editing the same values side by side" width="960">
 
 ```cpp
-// One-time setup, outside the frame loop:
-auto theme = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
+#include <imkit/imkit.h>
 
-// Per frame:
-imkit::ApplyTheme(theme, 1.0f);          // before ImGui::NewFrame()
+// Once, outside the frame loop
+imkit::Theme theme = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
+
+// Your application state
+bool verbose = false;
+
+// Every frame
+imkit::ApplyTheme(theme);          // before ImGui::NewFrame()
 ImGui::NewFrame();
 
-// Draw your UI. ImKit calls are just more drawing calls.
 if (imkit::Begin("Settings")) {
-    imkit::ToggleButton("Verbose", &verbose);             // reads/writes your bool
-    imkit::ActionButton("Save", imkit::ActionVariant::Primary);  // true when pressed
+    imkit::Toggle("Verbose", &verbose);                        // reads and writes your bool
+    if (imkit::ActionButton("Save", imkit::ActionVariant::Primary)) {
+        SaveSettings(verbose);                                 // your code decides what Save does
+    }
 }
 imkit::End();
 
 ImGui::Render();
 ```
 
-Three things to notice:
+- `ApplyTheme` writes the theme into the current context's style. Call it before `NewFrame`. It rebuilds the style from unscaled tokens, so calling it every frame does not compound sizes.
+- ImKit widgets read values you own (`&verbose`) and return results you handle (`ActionButton` returns `bool`).
+- `Begin` and `End` follow Dear ImGui's rule: always call `End`, even when `Begin` returns false.
 
-- `ApplyTheme` is applied to the **current** context, once, before `NewFrame`.
-- ImKit widgets **read** values you own (`&verbose`) and **return** results you handle (`ActionButton` returns a `bool`).
-- `Begin`/`End` bracket a group of ImKit calls; they are a drawing scope, not an object with a lifetime.
+## Summary
 
-## Key takeaways
-
-- ImKit draws inside your Dear ImGui frame; it never creates or owns the context.
-- Every frame is redrawn from scratch; your model owns all state.
-- ImKit returns requests — your code is the one that acts on them.
-- Keep theme application before `NewFrame` and `Begin`/`End` balanced.
+- ImKit draws inside your Dear ImGui frame and never creates or owns the context.
+- Every frame is redrawn from your data. Your application keeps all state.
+- ImKit returns requests, and your code applies them.
+- Apply the theme before `NewFrame`, and keep `Begin` and `End` paired.
 
 ## Next
 
-- [Getting started](getting-started.md) — set up your first project.
-- [Build your first ImKit app](../tutorials/build-first-app.md) — a full, runnable walkthrough.
-- [Architecture](../architecture/architecture.md) — the authoritative ownership and design reference.
+- [Getting started](getting-started.md): set up a project.
+- [Build your first app](../tutorials/build-first-app.md): a complete walkthrough.
+- [Architecture](../architecture/architecture.md): ownership rules and module boundaries.

@@ -1,47 +1,34 @@
 ---
 title: "トラブルシューティング"
+description: "症状を探し、原因と対処を読みます。"
 ---
 
-ImKitのビルド時や実行時に発生しやすい問題とその解決方法をまとめた逆引きガイドです。
+症状を探し、原因と対処を読みます。
 
-## `IMKIT_IMGUI_TARGET is required`
+## ビルドとリンク
 
-- **原因**: CMakeスクリプトで `add_subdirectory(path/to/imkit)` を呼び出す前に、ホスト側のDear ImGuiターゲットが定義されていないか、ターゲット名が正しく渡されていません。
-- **対処法**: ホスト側の `CMakeLists.txt` において、`add_subdirectory` より前にDear ImGuiのライブラリターゲットを作成し、その正確なターゲット名を `IMKIT_IMGUI_TARGET` 変数に設定してください。ImKitはプロジェクト内に重複したImGuiインスタンスを暗黙に追加することを防ぐため、この設定を必須としています。
+| 症状 | 原因 | 対処 |
+| --- | --- | --- |
+| CMakeが`IMKIT_IMGUI_TARGET is required`で止まる | `add_subdirectory`の前に、Dear ImGuiのターゲットがないか、名前が違う | 先にDear ImGuiのCMakeターゲットを作り、その正確な名前を`IMKIT_IMGUI_TARGET`に設定します。ImKitは、組み込み先のプロジェクトに、2つ目のDear ImGuiを追加することはありません。 |
+| ヘッダーが、Dear ImGuiのバージョンについてのエラーで止まる | Dear ImGuiのバージョン、またはドッキング、ビューポート、動的テクスチャへの対応が合っていない | 固定した`docking`のコミットを使います（[依存関係](../dependencies/)を参照）。ガードを外しても、スタイルのフィールドと公開シグネチャが違うので、ほかのリビジョンと互換にはなりません。 |
+| CMakeが、SDKのABIの確認を求めて止まる | インストール済みのSDKは、`IMKIT_SDK_ABI_CONFIRMED=ON`が必要 | アーキテクチャ、MSVCのツールセット、DebugかReleaseのCRT、Dear ImGuiのリビジョン、コンパイル定義、`imconfig.h`を確認してから、フラグを設定します。1つでも違うときは、ソースからビルドします。 |
+| Galleryのビルドが、`imkit_gallery.exe`を上書きできない | Galleryが実行中で、Windowsは、実行中の実行ファイルをリンカーが置き換えるのを許さない | Galleryを終了して、同じ差分ビルドをもう一度行います。 |
 
-```cmake
-# 正しい指定例
-add_library(my_imgui STATIC ${IMGUI_SOURCES})
-set(IMKIT_IMGUI_TARGET my_imgui CACHE STRING "" FORCE)
-add_subdirectory(extern/imgui-modern-kit)
+## 実行時
+
+```cpp
+// アサート: "Backend does not support ImGuiBackendFlags_RendererHasTextures, and font atlas is not built!"
 ```
 
-## ImGui版をheaderに拒否される
+| 症状 | 原因 | 対処 |
+| --- | --- | --- |
+| レンダラーのバックエンドがないプログラムで、`NewFrame`に上のアサートが出る | フォントアトラスを、だれも構築していない | `io.Fonts->GetTexDataAsRGBA32(...)`を1回呼びます。[最初のアプリを作る](../../tutorials/first-app/)のとおりです。実際のバックエンドは、これを代わりに行います。 |
+| `ThemeScope`の破棄時にアサートが出る | スコープがContextより長く生きたか、別のContextで破棄された | すべてのスコープを、`DestroyContext()`の前に、作ったContextで終えます。 |
+| テーマは正しいが、日本語が表示されない | テーマはフォントを読み込まないので、アトラスに日本語のグリフがない | フォントアトラスにグリフの範囲を加え、テキスト入力にIMEが必要なら、プラットフォームのIMEのコールバックも用意します。Galleryの代替フォントは、任意の素材で、ライブラリの機能ではありません。 |
+| テーマを適用するたびに、サイズが大きくなる | `Theme::metrics`を自分で拡大し、さらにスケールも渡している | アプリのスケールは、`ApplyTheme(theme, scale)`か`ThemeScope(theme, scale)`だけに渡します。ImKitは、いつも、スケール前の値からスタイルを作り直します。 |
+| `ImGuiStyle`に加えた変更が消える | `ApplyTheme`は、`Alpha`と`FontScaleDpi`を除いて、スタイル全体を置き換える | 変更は、[テーマ](../../features/themes/)の説明のとおり、`Theme`の側で行います。 |
+| 部品は描かれるが、クリックしても何も起きない | 返された結果は要求で、アプリのコードが適用していない | 戻り値、または返された要求を読み、アプリ自身のデータを更新します。 |
 
-- **原因**: 組み込まれているDear ImGuiのバージョンまたはリビジョンが、ImKitが要求する固定コミット（`367b2c24f399988ddafc0bb4628da0106bcc09be`）と一致していません。
-- **対処法**: サポート対象として固定された指定リビジョンのDear ImGui（dockingブランチ）を使用してください。ヘッダーのバージョンガードマクロを無理に解除しても、内部スタイル構造体や関数シグネチャの不一致により、コンパイルエラーや未定義動作（ABI不整合）を引き起こします。
+## 結果の確かめ方
 
-## Installed SDKをlinkできない
-
-- **原因**: 事前ビルドされたインストール版SDKと、ホスト側のビルド設定（アーキテクチャ、コンパイラ、ランタイムライブラリ等）が不整合を起こしています。
-- **対処法**: CPUアーキテクチャ（x64/Arm64）、MSVCツールセットのバージョン、Debug/Release CRT（`/MD` vs `/MDd`）、Dear ImGuiのコミット、および `imconfig.h` のABIマクロ設定を再確認してください。バイナリ構成が1つでも異なる場合は、SDKリンクではなくCMakeのソースコード直接組み込み（`add_subdirectory`）を使用してください。
-
-## Themeは表示されるが日本語が欠ける
-
-- **原因**: ホスト側で生成したDear ImGuiのフォントアトラスに、日本語グリフ（ひらがな・カタカナ・漢字）が含まれていません。
-- **対処法**: ImKitのテーマエンジンはUIのスタイリングのみを行い、フォントファイルの読み込みやテクスチャの生成は行いません。ホスト側の初期化コードで、`ImFontConfig` および日本語グリフレンジ（`GetGlyphRangesJapanese()`）を指定してフォントをロードしてください。日本語IME入力を行う場合はOSのIMEメッセージ連携も必要です。
-
-## Themeを再適用すると寸法が大きくなる
-
-- **原因**: アプリケーションの表示倍率（DPIスケール等）を、`Theme::metrics` に事前に乗算した上で `ApplyTheme` や `ThemeScope` に渡しています。
-- **対処法**: スケール値は `ApplyTheme(theme, scale)` または `ThemeScope(theme, scale)` の引数としてのみ渡してください。元の `Theme::metrics` 自体を事前に書き換えないでください。ImKitは常に未スケーリングの基準メトリクスからスタイル構造体を再計算します。
-
-## Gallery executableを上書きできない
-
-- **原因**: ビルド済みの `imkit_gallery.exe` が実行中（起動したまま）の状態で、再ビルドを実行しています。
-- **対処法**: 実行中の `imkit_gallery.exe` を終了させてから、ビルドコマンドを再実行してください。Windows環境では実行中のバイナリファイルをリンカーが上書き置換できないため、ファイルロックによるアクセス拒否エラーが発生します。
-
-## Screenshotだけで組み込み完了と判断できない
-
-- **原因**: 画面キャプチャの見た目だけで統合が完全であると判断し、イベント処理や入力処理の検証が不足しています。
-- **対処法**: [検証記録](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/検証記録.md) を参照し、コンパイル/リンク検証、仮想ImGui IOによる操作検証、GPUレンダリングキャプチャ、および実機OS/IME入力テストを明確に区別して検証を行ってください。
+スクリーンショットだけでは、組み込みが動くことの証明になりません。[検証記録](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/検証記録.md)は、コンパイルとリンクの確認、公開IOによる操作、GPUキャプチャ、インストール済みの利用側、ネイティブのアプリでの受け入れを分けているので、ある主張が、どれに基づくかを判断できます。

@@ -1,36 +1,59 @@
 ---
 title: "Examples and recipes"
+description: "Find the area you want to build, then follow the header, the CMake target, and the Gallery page whose source you can read."
 ---
 
-Use the Gallery as a live specimen, then follow the public header and implementation linked below. Its examples run inside the Gallery host; they are not standalone widgets or a replacement for a host application's data and runtime. The shared rules are simple: link the module target, call draw APIs between `ImGui::NewFrame()` and `ImGui::Render()`, and keep the ImGui context, renderer, fonts, application state, persistence, undo and workers in the host.
+Find the area you want to build, then follow the header, the CMake target, and the Gallery page whose source you can read. The Gallery runs the same public components that your application links, so its source is a working reference. It is not a replacement for your application's data and runtime.
+
+Three rules apply to every area:
+
+1. Link the module target, and call the draw functions between `ImGui::NewFrame()` and `ImGui::Render()`.
+2. Your application owns the Dear ImGui context, renderer, fonts, state, saving, Undo and workers.
+3. Labels, spans and views are borrowed for the call. Results come back as return values or requests.
 
 ## Recipes
 
-| Module and purpose | Include and CMake target | Frame call and owned state | Gallery page, source, and next reading | Scope and constraints |
-|---|---|---|---|---|
-| [Components](../../features/components/): controls and settings rows | `<imkit/components.h>` · `imkit::imkit` | `imkit::ActionButton("Apply", imkit::ActionVariant::Primary);` State and IDs are host-owned. | **Basic controls** · [`gallery.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/gallery.cpp) · [Components recipes](../../features/components/) | Uses native ImGui item/input contracts. Views and labels are borrowed for the draw call. |
-| [Icons and theme](../../features/themes/): consistent appearance and symbols | `<imkit/theme.h>`, `<imkit/icons.h>` · `imkit::imkit` | Build a host-owned theme with `imkit::MakeTheme(...)`; apply it in the host's frame scope. The host owns theme lifetime and font atlas. | **Icons**, Appearance in the header · [`gallery.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/gallery.cpp) · [Themes](../../features/themes/), [Icons](../../features/icons/) | Theme selection and persistence remain host-owned; icon atlas upload is the host's responsibility. |
-| [Workflow and shell](../../features/workflow/), [shell components](../../features/shell/): guide multi-step tools and application chrome | `<imkit/workflow.h>`, `<imkit/components.h>` · `imkit::imkit` | Draw the selected component in the frame and handle returned requests in the host. Providers, model data, UI state and command dispatch belong to the host. | **Workspace shell**, **Progress and states**, **Preview tiles** · [`workflow_pages.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/workflow_pages.cpp), [`gallery.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/gallery.cpp) · [Workflow guide](../../features/workflow/) | These are UI building blocks. They do not implement persistence, background work, navigation policy or application services. |
-| [Node Editor](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/components/node-editor.md): render graph snapshots and collect edits | `<imkit/node_editor.h>` · `imkit::node_editor` | Use `BeginEditor`, `DrawNodes`, and `EndEditor` during the frame with a current snapshot and caller-owned request buffer. The host validates revisions and applies requests. | Separate **Node Editor Gallery** · [`examples/node_editor/main.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/node_editor/main.cpp) · [Node Editor integration](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/components/node-editor.md) | Graph storage, socket policy, evaluation, undo and persistence stay in the host. The companion material graph is a specimen. |
-| [Editor Suite](../../features/editor-suite/): reusable editing surfaces | `<imkit/editor_suite.h>` or a narrower module header · `imkit::editor_suite` | Draw with host-owned providers and event buffers inside the frame. The host applies edits and owns selection, media, undo, clocks and workers. | **Editor Core**, **Video**, **CG** · [`editor_workspaces.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/editor_workspaces.cpp) · [Editor Suite](../../features/editor-suite/), [Editor API](../../api/editor-suite/) | Video does not decode or play media; CG does not provide a general renderer. See module contracts for capacity and provider rules. |
-| [Timeline editing](../../features/timeline/): fades, transitions and grouped moves | `<imkit/video.h>` · `imkit::video` (or `imkit::editor_suite`) | Call Video drawing in the frame with a host-owned `TimelineEditingProvider`; validate and commit its events in the host. | **Video** · [`editor_workspaces.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/editor_workspaces.cpp) · [Timeline editing](../../features/timeline/) | Provider and event storage must remain valid for the call. Collision policy, persistence and undo are host-owned. |
-| [Window frame](../../features/window-frame/): draw a themed title area and return window operations | `<imkit/window_frame.h>` · `imkit::imkit`; optional `<imkit/window_frame_win32.h>` or `<imkit/window_frame_macos.h>` · matching OS target | Draw with explicit style/content/state in the frame; execute the returned operation in the host. The host owns the native window and event loop. | **Window frame** · [`gallery.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/gallery.cpp) · [WindowFrame guide](../../features/window-frame/) | Core drawing does not own a native window. Win32/Cocoa integration is an optional platform target; platform input behavior needs native acceptance. |
+| I want to build | Header and target | Gallery page and source | Read |
+| --- | --- | --- | --- |
+| Settings rows, buttons, inputs | `<imkit/components.h>` · `imkit::imkit` | **Basic controls**, **Rows and palette** · `examples/gallery/gallery.cpp` | [Components](../../features/components/) |
+| A theme, brand colours, a custom look | `<imkit/theme.h>`, `<imkit/skin.h>` · `imkit::imkit` | **Theme Studio**, **Skins** · `examples/gallery/look_pages.cpp` | [Themes](../../features/themes/), [Make your own look](../../features/make-your-own-look/) |
+| Icons | `<imkit/icons.h>` · `imkit::imkit` | **Icons** · `examples/gallery/gallery.cpp` | [Icons](../../features/icons/) |
+| Charts: donut, bar, gauge, sparkline | `<imkit/charts.h>` · `imkit::imkit` | **Charts** · `examples/gallery/charts_page.cpp` | [Charts](../../features/charts/) |
+| PTZ camera control, range slider | `<imkit/ptz.h>`, `<imkit/range_slider.h>` · `imkit::imkit` | **PTZ camera**, **Numbers and units** · `examples/gallery/ptz_page.cpp` | [PTZ and range sliders](../../features/ptz/) |
+| Steps, tabs, hierarchy, progress, empty states | `<imkit/workflow.h>` · `imkit::imkit` | **Workspace**, **Progress and states**, **Workspace shell**, **Preview tiles** · `examples/gallery/workflow_pages.cpp` | [Workflow components](../../features/workflow/), [Shell components](../../features/shell/) |
+| Toast notifications | `<imkit/toast.h>` · `imkit::imkit` | **Toasts** · `examples/gallery/gallery.cpp` | [Toasts](../../features/toasts/) |
+| A node graph | `<imkit/node_editor.h>` · `imkit::node_editor` | **Node Editor Gallery** · `examples/node_editor/main.cpp` | [Build a node editor](../../tutorials/node-editor/), [Node Editor](../../features/node-editor/) |
+| A timeline, curves, an inspector, previews | `<imkit/video.h>`, `<imkit/cg.h>` · `imkit::editor_suite` (or `imkit::video`, `imkit::cg`) | **Editor Core**, **Video**, **CG** · `examples/gallery/editor_workspaces.cpp` | [Build a timeline](../../tutorials/timeline/), [Editor Suite](../../features/editor-suite/) |
+| A live-show control surface, cue list, LED tools | `<imkit/show.h>` · `imkit::show` | **Show** group: **Live**, **Surface**, **LED** and more · `examples/gallery/show_*_page.cpp` | [Show module](../../features/show/) |
+| A themed title bar | `<imkit/window_frame.h>` · `imkit::imkit`, optionally `imkit::window_frame_win32` or `imkit::window_frame_macos` | **Window frame** · `examples/gallery/gallery.cpp` | [WindowFrame](../../features/window-frame/) |
 
-## A small integration shape
+## Two short shapes
 
-The following is a placement sketch, not a complete application or build file. It uses the public `ActionButton` call; see the Gallery source for a complete compile-checked implementation.
+Place a control in your frame:
 
 ```cpp
-// The host has already created the matching Dear ImGui context and backends.
+// Your application has already created the Dear ImGui context and backend.
 ImGui::NewFrame();
 if (imkit::ActionButton("Apply", imkit::ActionVariant::Primary)) {
-    // Handle the request using host-owned application state.
+    // Handle the request with your own state.
 }
 ImGui::Render();
 ```
 
-For exact overloads, defaults and ABI requirements use [Public API coverage](../../api/native/) and [Dependencies](../../platform/dependencies/). For buildable consumer integration use [Getting started](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/getting-started/getting-started.md) and [`examples/consumer`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/consumer/CMakeLists.txt). The consumer target is a compile/link smoke example; the Gallery is the interactive learning example.
+Draw a chart from values you already hold:
 
-## ImKit 3.2 workspace
+```cpp
+const std::array<imkit::ChartDatum, 3> usage{{{"Render", 42}, {"Cache", 24}, {"Other", 6}}};
+imkit::DonutChartView view;
+view.segments = usage;
+view.value = "72 GB";            // borrowed for the frame
+view.caption = "Used";
+const int clicked = imkit::DonutChart("storage", view, {}, {&theme, &animation});
+if (clicked >= 0) { /* your code decides what the click means */ }
+```
 
-Open **Workspace** in the Gallery to use WorkspaceTabs, HierarchyGroupHeader/HierarchyRow, BeginInspectorCard/EndInspectorCard, SettingToggleRow, DragVector3WithUnit, ChoiceGroup and CompactActionRow together. Requests update Gallery-owned values; the same pattern works in an existing ImGui frame. See the [3.2 declarations and lifetime rules](../../api/v3-2/). All 321 runtime icons and 13 themes are available without introducing a new context or application framework.
+## Where to go next
+
+- Exact overloads and defaults: [Public API coverage](../../api/native/).
+- Build and ABI requirements: [Dependencies](../../platform/dependencies/).
+- A buildable integration: [Getting started](../../getting-started/) and [`examples/consumer`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/consumer/CMakeLists.txt). The consumer target is a compile and link smoke test, and the Gallery is the interactive example.

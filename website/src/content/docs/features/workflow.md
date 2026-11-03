@@ -1,101 +1,101 @@
 ---
 title: "Workflow部品"
+description: "imkit/workflow.h（imkit/imkit.hから取り込まれます）は、ツールの作業画面に使う部品をまとめています。ナビゲーション、まとまった設定、階層の行、フィードバック、進捗、プレビュータイルを備えた画像ビューアです。imkit::imkitをリンクします。"
 ---
 
-## 用途
+`imkit/workflow.h`（`imkit/imkit.h`から取り込まれます）は、ツールの作業画面に使う部品をまとめています。ナビゲーション、まとまった設定、階層の行、フィードバック、進捗、プレビュータイルを備えた画像ビューアです。`imkit::imkit`をリンクします。画像ビューアは、エディタのキャンバス、選択、スプリッターを使うので、`imkit/editor_canvas.h`と`imkit::editor_core`も必要です。
 
-アプリ側で管理する処理に進捗、空・利用不可状態、通知、navigation、responsive toolbarを加える部品です。
+![GalleryのWorkspace画面。タブ、階層、インスペクターカード、設定が1画面に並ぶ](/imgui-modern-kit/docs-images/v4-workspace-poster.png)
 
-## Galleryの画面
+[操作GIFを開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-workspace.gif)
 
-![進捗と状態表示を含むWorkflow部品の画面。](../../../assets/captures/v4-progress-poster.png)
+## 部品の一覧
 
-Workflow — 進捗と状態の表示 · [Galleryの操作映像を開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-progress.gif)
+どの部品も、要求を返します。渡した値を、部品が書き換えることはありません。
 
-## 最小描画例
+| 分類 | 部品 | 役割 |
+| --- | --- | --- |
+| ナビゲーション | `StepNavigator`、`NavigationRail` | 借用した`StepItem`のspanに対する、ステップバーと縦のレール。選択の要求を返します |
+| | `WorkspaceTabs` | アイコンとラベルのタブ。幅が狭いと、コンボに縮みます |
+| | `ChoiceGroup` | 見出し付きの枠に、ラジオ形式の選択肢を1〜3列で並べます。選ばれた安定IDを返します |
+| 階層と設定 | `HierarchyGroupHeader`、`HierarchyRow` | シーングラフのような行。行の全幅で選択でき、長いラベルは省略され、`accentColor`で色の線を付けられます。選択、表示、ロック、グループの操作は要求です。使えない表示やロックの操作は、省略できます |
+| | `BeginInspectorCard` / `EndInspectorCard` | 関連する部品を、高さが自動で決まる枠付きのカードにまとめます。必ず対にします |
+| | `BeginCollapsibleInspectorCard` / `EndCollapsibleInspectorCard` | 開閉の状態をアプリが持つ同じカードです。Endは、Beginがtrueを返したときだけ呼びます。閉じた中身は描かれません |
+| | `SettingToggleRow` | ラベル、説明、任意の無効の理由を持ち、トグルの要求を返します |
+| | `FilterChip`、`SectionHeader` | 選択や開閉の状態を明示して渡し、標準の操作で切り替えます |
+| フィードバック | `NotificationCard`、`InlineAlert`、`PersistentBanner` | 意味のある状態と、閉じる要求です。バナーは、アプリが外すまで残ります |
+| | `SelectNotifications` | 期限切れを除き、優先度で並べます。重複は、最後のものが勝ちます |
+| | `ToastRegion` | アプリが持つキューと時刻で動き、作業領域に収まるスタックを表示し、フォーカスを奪いません。色付きのカードは、[トースト](../toasts/)を参照してください |
+| | `EmptyState`、`UnavailableState`、`RetryState` | 見出し、説明、任意のアイコンと操作を持ち、要求を返します |
+| | `MultiSelectionBar`、`HelpCallout`、`ValidationSummary` | アプリが持つ件数、コマンド、問題を表示します。検証の仕組みはありません |
+| 進捗 | `Progress`、`ProgressTrack`、`StageProgress`、`TaskProgressCard`、`CircularProgress` | [進捗](#進捗)を参照してください |
+| レイアウト | `BeginCard` / `EndCard` | Beginがfalseを返しても、必ず対にします |
+| | `ResponsiveToolbar` | あふれたときのメニュー、アイコンのラベル、無効の理由、標準のキーボードフォーカスに対応します |
+| | `ResolveRightSidePanelLayout`、`RightSidePanelHandle` | 端のハンドルと、マウスやキーボードでの幅の変更を備えた、折りたためる側面パネルです |
+| 画像ビューア | `BeginImageViewport` / `EndImageViewport` | 借用したテクスチャに対する、パンと一様なズームです。必ず対にします |
+| | `ZoomToolbar`、`DrawOverlay` | Fit、Fill、1:1と、ズーム、パン。点、折れ線、矩形、円、ラベルのオーバーレイは、表示領域で切り取られます |
+| | `ResolveImagePlacement`、`FitImage`、`ClampImage`、`ImageGeometryValid`、`PixelToNormalized`、`NormalizedToPixel` | テクスチャを必要としない、純粋な幾何計算です |
+| | `PreviewTile`、`ResizableTileStrip` | 借用したプレビューと操作、縦横のスクロール、最小のサイズを備えます |
+
+これらのAPIのコンパイルとリンクの一覧は、`tests/workflow_api_compile.cpp`です。ソースとSDKを再配置した利用側のビルドでも、これをビルドします。Dear ImGuiのエイリアスは、`docs/reference/api-inventory.json`に別に載せています。
+
+## 所有と寿命
+
+- ラベル、テクスチャ、候補のビュー、作業用のバッファーは、呼び出しの間だけ借用します。状態とキューは、アプリが持ちます。
+- IDは、0でなく、インスタンスごとに一意でなければなりません。通知だけは例外で、重複したときは、最後のものが勝ちます。
+- `ChoiceGroup`は、候補と任意の`IconAtlas`を借用します。返されたIDは要求で、現在の値を変えることはありません。
+- ここにある部品は、テクスチャのアップロードも、ワーカーの起動もしません。保存、レジストリ、Undoの仕組みもありません。
+- スコープは、Contextを破棄する前に、すべて終えます。アクセシビリティ用に公開した文字は、アプリがフレームを公開するまで有効に保ちます。
+- イベントバッファーは、毎フレームリセットします。いっぱいになると、`overflow`が立ちます。キーボードでタイルの大きさを変えるには、Begin、Update、Commitの3つの空きが要ります。マウスで取り消すと、隣り合う両方の大きさが元に戻り、終了のイベントは、バッファーがいっぱいのときに、再送されます。
+- タイルの大きさは、IDをキーにした、アプリが持つ項目です。通知の並べ替えは、渡された添字用の作業領域を使い、その容量と要求した最大数の小さいほうまでを返します。
+- テーマ、ロケール、意味の公開には、`ComponentOptions`を渡します。描画だけのオーバーレイは、操作できるノードを作らないので、編集対象のオブジェクトは、アプリが記述します。ステップの矢印は、無効な項目を飛ばし、標準のTab、Shift+Tab、操作の確定は、そのまま使えます。動きを減らす設定のときは、遷移の代わりに、静止した表示を使います。
+
+## 進捗
+
+`ProgressTrackView`は、工程名、状態の文、割合（または`valueText`）、丸みのあるバー、補足の文の、共通の元になります。`Progress`と`TaskProgressCard`はこれを再利用するので、カードやトーストが、割合や状態の文を別に組み立てることはありません。
+
+| 項目 | 動作 |
+| --- | --- |
+| `ProgressStatus` | `Queued`、`Running`、`Paused`、`Succeeded`、`Failed`、`Cancelled` |
+| 不定 | 割合が負または非有限のとき。短い区間が動くのは、`Running`のときだけで、動きは、`Theme.motion.enabled`、`reducedMotion`、アプリの`AnimationState`で決まります |
+| `Progress` | インライン、子ウィンドウのオーバーレイ、モーダルのいずれか。キャンセルの要求を返します |
+| `StageProgress` | 渡した工程と現在のIDを表示するだけです。幅が狭いと、現在の工程と`n/total`を表示します |
+| `TaskProgressCard` | 通常、またはコンパクト（`TaskProgressCardOptions::compact`）の概要です。押された`Command.id`を返し、0は要求なしです。文字列と操作のspanは、そのフレームの間だけ借用します |
+| `CircularProgress` | 借用した割合、値、ラベル。割合が負または非有限なら、値なしです。しきい値はなく、状態も持ちません |
 
 ```cpp
-#include <imkit/workflow.h>
-
-void DrawImportProgress() {
-    const imkit::CircularProgressView progress{
-        0.42f, "42%", "素材を読み込み中"
-    };
-    imkit::CircularProgress("asset-import", progress);
-}
+imkit::ProgressTrackView progress;
+progress.fraction = fraction;     // 負または非有限なら、不定
+progress.status = imkit::ProgressStatus::Running;
+progress.label = "Inspecting files";
+progress.supplemental = "The host owns progress updates.";
+imkit::ProgressTrack("import-progress", progress, {&theme, &animation});
 ```
 
-**例の種別:** 公開headerの型を使う完結した関数例です。アプリのImGuiフレーム中に呼び、表示文字列は描画が終わるまで保持します。
+![Galleryの進捗トラック、段階表示、タスクカード](/imgui-modern-kit/docs-images/v4-progress-poster.png)
 
-## アプリへ組み込む
+[操作GIFを開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-progress.gif)
 
-`imkit::imkit`をlinkします。進捗値、取消、通知queue、texture、保存はアプリ側で管理します。
+## 画像ビューア
 
-## 範囲
+画像の座標は、左上が原点で、xは右へ、yは下へ増えます。キャンバスの単位は画像のピクセルで、デスクトップの画面座標とは、`ToScreen`と`FromScreen`で変換します。
 
-状態を描画する部品です。worker実行、完了判定、通知の保存は行いません。
+| モード | 結果 |
+| --- | --- |
+| Fit | 画像の全体が見える |
+| Fill | 画像が表示領域を埋め、はみ出す部分が切り取られる |
+| 1:1 | 画像の1ピクセルが、ImGuiの座標の1単位になる。物理的な1ピクセルとは限らない |
 
-## 関連APIとガイド
+`ClampImage`は、小さい画像を中央に置き、大きい画像は、端の範囲に収めます。カーソルを基点にしたズームは、端での補正が必要になるまで保たれ、大きさを変えると、手動でないモードは、収め直されます。矩形選択と投げ縄選択は、`CanvasSelection`が行います。
 
-- [Workflowガイド](./)
-- [Application shellガイド](../shell/)
+`ResolveImagePlacement`は、使える領域の左上を原点とする、ローカルの座標で動きます。Fitは、中央に置いた出力先と、全体のUVを返し、Fillは、出力先の全体と、中央を切り取ったUVを返し、Stretchは、両方の領域の全体を使います。テクスチャもレンダラーも持たず、正でない、非有限、描画できない形状には、`valid = false`を返します。
 
----
+## 右の側面パネル
 
-`<imkit/workflow.h>` は、マルチステップのウィザード、進捗表示、画像ビューア、レスポンシブツールバー、および通知システムなど、制作ツールのワークフローを支える汎用UIコンポーネント群を提供します。
+`ResolveRightSidePanelLayout`は、内容、常に見えている端のハンドル、任意のパネルの、それぞれの幅を返します。この順に描き、同じ使える範囲を`RightSidePanelHandle`に渡します。`N`のようなキーを`toggleRequested`にするかは、アプリが決めます。そのため、ライブラリが、ほかのエディタのテキスト入力やショートカットを奪うことはありません。折りたたんでいる間も、ハンドルは見え、パネルは、内容を覆わずに、内容の幅を狭めます。
 
----
+## Galleryで試す
 
-## 所有モデル
+**Workspace**、**Workspace shell**、**Progress and states**、**Preview tiles**の画面を開きます。**Workspace**では、WorkspaceTabs、階層の行、インスペクターカード、`SettingToggleRow`、`DragVector3WithUnit`、`ChoiceGroup`、`CompactActionRow`を組み合わせ、返った要求で、Galleryが持つ値を更新しています。同じ形は、既存のImGuiのフレームでも使えます。[3.2の宣言と寿命の規則](../../api/v3-2/)を参照してください。ソースは`examples/gallery/workflow_pages.cpp`です。
 
-- **データとキューはホスト所有**: 表示ラベル、画像テクスチャ、進捗率、通知キューはすべてホスト側が所有し、ImKit は描画時に借用（非所有ポインタ/参照）します。`ChoiceGroup`も候補と任意の`IconAtlas`を借用し、現在の選択値は変更せず、候補IDによる要求だけを返します。
-- **イベントのバッファリング**: ユーザー操作（ステップの切替、タイルのリサイズ等）はホスト提供のイベントバッファに書き込まれ、フレーム終了後にホストが処理します。
-
----
-
-## 提供コンポーネント一覧
-
-| カテゴリ | コンポーネント / API | 主な役割と動作仕様 |
-|---|---|---|
-| **ナビゲーション** | `StepNavigator`<br>`NavigationRail` | ステップ形式の進行バー、縦型ナビゲーションレール。選択要求を返却 |
-| | `WorkspaceTabs` | アイコンとラベル付きのワークスペースタブ。狭幅時は自動でコンボボックスへ縮約 |
-| | `ChoiceGroup` | 見出し付きカードに候補を1〜3列で表示。列数を幅に合わせ、選択要求の安定IDを返す |
-| **ツリー・設定** | `HierarchyGroupHeader`<br>`HierarchyRow` | シーングラフ等の階層行。表示/非表示、ロック、選択状態のトグル。行全幅で選択でき、長い名前は省略表示。`accentColor` で種類ごとの色線を指定できる |
-| | `BeginInspectorCard`<br>`EndInspectorCard` | 関連コントロールを美しくまとめる境界線付きカードコンテナ |
-| | `BeginCollapsibleInspectorCard`<br>`EndCollapsibleInspectorCard` | 開閉状態をホストが持つインスペクターカード。Beginがtrueを返したときだけEndを呼ぶ。閉じた内容は描画しない |
-| **フィードバック** | `StatusBadge`<br>`InlineAlert` | 成功・警告・エラーを色とアイコンで示すアラートコンポーネント |
-| | `ToastRegion` | 画面隅にスタック表示されるトースト通知領域（フォーカスを奪わない設計） |
-| | `EmptyState`<br>`UnavailableState` | データが存在しない時やオフライン時の案内画面（アイコン・見出し・再試行ボタン） |
-| | `Progress`<br>`ProgressTrack` | 状態・割合・補足を共通表示する細い丸角バー。不定時は短い区間を表示 |
-| | `StageProgress` | 段階の状態を表示し、狭幅では現在工程と `n/total` に縮約 |
-| | `TaskProgressCard` | 通常・compactの処理概要カード。操作の安定IDをホストへ返す |
-| | `CircularProgress` | 円型の進捗インジケータ。値が負または非有限なら値なし表示 |
-| **画像・ビューア** | `BeginImageViewport`<br>`EndImageViewport` | パン・ズーム対応の画像表示キャンバス |
-| | `ResolveImagePlacement` | 画像の Fit（全体表示）/ Fill（全域切り抜き）/ Stretch（引き伸ばし）の座標・UV計算 |
-| | `DrawOverlay` | 画像上の点、ポリライン、矩形、円、ラベル等の注釈描画 |
-| | `PreviewTile`<br>`ResizableTileStrip` | 水平/垂直スクロール可能なリサイズ対応プレビュータイル列 |
-
-`ChoiceGroup`のボタン高は通常の入力欄と同じで、カードの内側には8pxの余白を取ります。最長のラベル、任意のアイコン、選択マークが収まらない場合は列数を減らします。ラベル内の`##`以降はImGui/UIテスト用IDとして使い、表示文字・ツールチップ・アクセシビリティ名から除きます。説明と利用不可理由はホバーまたはフォーカス時に表示します。公開API compile fixtureは[`tests/workflow_api_compile.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/tests/workflow_api_compile.cpp)で確認します。Dear ImGui aliasのAPI一覧とは分けて管理します。
-
-## 進捗表示
-
-`ProgressTrackView` が工程名、状態、割合またはホスト指定値、バー、補足文の共通表示を担います。`Progress`、`TaskProgressCard`、`ToastViewport` はこの表示を再利用し、割合や状態文を個別に組み立てません。状態は `Queued`、`Running`、`Paused`、`Succeeded`、`Failed`、`Cancelled` です。割合が負または非有限なら不定表示になり、短い区間が動くのは `Running` の場合だけです。`Theme.motion.enabled`、`reducedMotion` とホスト所有の `AnimationState` に従います。
-
-`StageProgress` は渡された工程と現在IDの表示専用です。幅が狭いと現在の工程名と `n/total` を表示します。`TaskProgressCardView` の文字列と操作配列は描画中だけ借用し、`TaskProgressCard` は押された `Command.id`（要求なしは0）を返します。実際の更新はホスト側で行います。`TaskProgressCardOptions::compact` は説明を省き、操作ボタンの余白を詰めます。
-
----
-
-## Gallery での確認
-
-6位置、操作、進行表示に対応した色付きカードは[トースト](../toasts/)を参照してください。既存の `ToastRegion` の挙動は維持します。
-
-Gallery アプリの以下の画面で実際の挙動を確認できます：
-- **Workspace shell** (ページID: 15): 接続方式のChoiceGroup、ナビゲーション、ツールバー、画像ビューア、オーバーレイの統合例。
-- **Progress and states**: 各種アラート、プログレスバー、エンプティステートの表示例。
-- **Preview tiles**: 可変サイズプレビュータイルの操作例。
-
-実装コードは [`examples/gallery/workflow_pages.cpp`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/examples/gallery/workflow_pages.cpp) を参照してください。
-
-## ImKit 3.2の作業画面
-
-Galleryの **Workspace** では、WorkspaceTabs、HierarchyGroupHeader／HierarchyRow、BeginInspectorCard／EndInspectorCard、SettingToggleRow、DragVector3WithUnit、ChoiceGroup、CompactActionRowを組み合わせて操作できます。要求を受けてGallery側の値を更新する実装は、既存のImGuiフレームでも利用できます。[3.2の宣言と寿命の規則](../../api/v3-2/)を参照してください。321アイコンと13テーマを利用でき、Contextやアプリのフレーム管理は引き続きホストが担当します。
+`--verify-workflow --output <ディレクトリ>`は、公開IOの確認を行い、36通りの画面とテーマの組み合わせと、日本語で幅が狭い例と無効の例の2つをキャプチャします。これらは、ネイティブのGPUキャプチャで、ネイティブのOS、IME、スクリーンリーダーのテストとは別のものです。

@@ -1,47 +1,6 @@
 ---
-title: "Editor Suite"
----
-
-## 用途
-
-アプリが持つデータとresourceに、編集用のCanvas、Timeline、Video、CG部品を加えるときに使います。
-
-## Galleryの画面
-
-![ImKitのTimeline編集画面。](../../../assets/captures/v4-timeline-poster.png)
-
-Editor Suite — Timelineと編集画面 · [Galleryの操作映像を開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-timeline.gif)
-
-## 最小描画例
-
-```cpp
-#include <imkit/video.h>
-#include <imkit/editor_core.h>
-
-void DrawTimeline(const imkit::video::TimelineProvider& provider,
-                  imkit::video::TimelineState& state,
-                  imkit::editor::Selection& selection,
-                  imkit::editor::EventBuffer& events,
-                  const imkit::Theme& theme) {
-    imkit::video::Timeline("timeline", provider, state, selection, events, theme);
-}
-```
-
-**例の種別:** アプリの状態を引数に取る関数例です。provider、選択、event buffer、Themeはアプリ側で用意し、eventは検証してから適用します。
-
-## アプリへ組み込む
-
-`imkit::editor_suite`または`imkit::video` targetをlinkし、providerの参照先は呼び出し中に有効に保ちます。
-
-## 範囲
-
-編集画面はmediaのdecode・再生、任意の3D描画、Undo、project file読み込みを担当しません。
-
-## 関連APIとガイド
-
-- [Editor API契約](../../api/editor-suite/)
-- [Timeline編集ガイド](../timeline/)
-
+title: "エディタスイート"
+description: "ImKit のエディタスイートは、固定リビジョンの Dear ImGui 1.93.0 WIP docking 上で動作する、プロフェッショナルな制作ツール（DCCツール、動画編集ソフト、シーケンサ等）向けの高機能UIコンポーネント群です。"
 ---
 
 ImKit のエディタスイートは、固定リビジョンの Dear ImGui 1.93.0 WIP docking 上で動作する、プロフェッショナルな制作ツール（DCCツール、動画編集ソフト、シーケンサ等）向けの高機能UIコンポーネント群です。

@@ -1,49 +1,59 @@
 ---
 title: Features
-description: Choose an ImKit module from its screen and use, then follow a small example to its API.
+description: Choose ImKit components from real screens and by purpose.
 ---
 
-import overview from '../../../../assets/captures/v4-start-poster.png';
+import compare from '../../../../assets/captures/v4-compare-poster.png';
 import themes from '../../../../assets/captures/v4-themes-poster.png';
-import workflow from '../../../../assets/captures/v4-progress-poster.png';
+import charts from '../../../../assets/captures/v4-charts-poster.png';
+import workspace from '../../../../assets/captures/v4-workspace-poster.png';
 import nodeEditor from '../../../../assets/captures/v4-node-editor-poster.png';
 import timeline from '../../../../assets/captures/v4-timeline-poster.png';
+import show from '../../../../assets/captures/v4-show-poster.png';
 import icons from '../../../../assets/captures/v4-icons-poster.png';
 
-## Choose by use
+## Choose by purpose
 
-Start with the screen closest to your task. Each guide explains when to use the module, shows a small drawing example, and links its integration contract and API.
+Pick the feature closest to what you want to build. Each page explains how to use it and which contracts to keep.
 
 <div class="feature-grid">
   <article class="feature-card">
-    <a class="feature-card-image" href="./components/"><img src={overview.src} width={overview.width} height={overview.height} alt="ImKit Gallery with settings, input, and feedback controls." loading="lazy" /></a>
-    <div class="feature-card-copy"><p class="eyebrow">INPUT · FEEDBACK</p><h2><a href="./components/">Controls and themes</a></h2><p>Add buttons, inputs, selection, feedback, and a theme to an existing settings view.</p><p class="feature-card-links"><a href="./components/#complete-settings-panel">Settings panel example</a><a href="./components/">Browse controls</a><a href="../api/native/">Native API</a></p></div>
+    <a class="feature-card-image" href="./components/#complete-settings-panel"><img src={compare.src} width={compare.width} height={compare.height} alt="Plain Dear ImGui and ImKit editing the same values." loading="lazy" /></a>
+    <div class="feature-card-copy"><p class="eyebrow">Controls</p><h2><a href="./components/#complete-settings-panel">Components</a></h2><p>Add buttons, inputs, choices, tables and status displays to an existing settings screen.</p><p class="feature-card-links"><a href="./components/#complete-settings-panel">Settings panel example</a><a href="./components/">Components</a><a href="../api/native/">Native API</a></p></div>
   </article>
   <article class="feature-card">
-    <a class="feature-card-image" href="./themes/"><img src={themes.src} width={themes.width} height={themes.height} alt="Light and dark theme presets compared in the Gallery." loading="lazy" /></a>
-    <div class="feature-card-copy"><p class="eyebrow">THEME · STYLE</p><h2><a href="./themes/">Themes and design</a></h2><p>Start from a preset and tune semantic colors and metrics for your application.</p><p class="feature-card-links"><a href="./themes/">Choose a theme</a><a href="../api/design-system/">Header map</a></p></div>
+    <a class="feature-card-image" href="./themes/"><img src={themes.src} width={themes.width} height={themes.height} alt="Switching themes in the Gallery recolours every component." loading="lazy" /></a>
+    <div class="feature-card-copy"><p class="eyebrow">Look</p><h2><a href="./themes/">Themes and look</a></h2><p>Start from 13 presets, build a brand theme from four colours, and refine it with outlines, shadows and skins.</p><p class="feature-card-links"><a href="./themes/">Themes</a><a href="./make-your-own-look/">Make your own look</a><a href="./design-system/">Design system</a></p></div>
   </article>
   <article class="feature-card">
-    <a class="feature-card-image" href="./workflow/"><img src={workflow.src} width={workflow.width} height={workflow.height} alt="Workflow controls showing progress and task status." loading="lazy" /></a>
-    <div class="feature-card-copy"><p class="eyebrow">WORKFLOW · SHELL</p><h2><a href="./workflow/">Workflow and app shell</a></h2><p>Combine progress, empty states, notifications, navigation, and toolbars.</p><p class="feature-card-links"><a href="./workflow/">Workflow controls</a><a href="./shell/">App shell</a></p></div>
+    <a class="feature-card-image" href="./charts/"><img src={charts.src} width={charts.width} height={charts.height} alt="Donut, bar, gauge and sparkline charts." loading="lazy" /></a>
+    <div class="feature-card-copy"><p class="eyebrow">Data</p><h2><a href="./charts/">Charts and PTZ control</a></h2><p>Draw donut, bar, gauge and sparkline charts from values you already hold. PTZ control and range sliders are included.</p><p class="feature-card-links"><a href="./charts/">Charts</a><a href="./ptz/">PTZ and range sliders</a></p></div>
   </article>
   <article class="feature-card">
-    <a class="feature-card-image" href="./node-editor/"><img src={nodeEditor.src} width={nodeEditor.width} height={nodeEditor.height} alt="Node Editor graph with connections, sockets, and previews." loading="lazy" /></a>
-    <div class="feature-card-copy"><p class="eyebrow">GRAPH · EDIT REQUESTS</p><h2><a href="./node-editor/">Node Editor</a></h2><p>Draw a host-owned graph and collect bounded, typed edit requests.</p><p class="feature-card-links"><a href="./node-editor/">Integration guide</a><a href="../api/node-editor/">Node API</a></p></div>
+    <a class="feature-card-image" href="./workflow/"><img src={workspace.src} width={workspace.width} height={workspace.height} alt="A workspace with tabs, hierarchy, settings and choices." loading="lazy" /></a>
+    <div class="feature-card-copy"><p class="eyebrow">Workspace</p><h2><a href="./workflow/">Workflow and shell</a></h2><p>Combine navigation, hierarchy, inspector cards, progress, empty states and an app bar.</p><p class="feature-card-links"><a href="./workflow/">Workflow components</a><a href="./shell/">Shell components</a><a href="./toasts/">Toasts</a></p></div>
   </article>
   <article class="feature-card">
-    <a class="feature-card-image" href="./timeline/"><img src={timeline.src} width={timeline.width} height={timeline.height} alt="Timeline with tracks, clips, and editing controls." loading="lazy" /></a>
-    <div class="feature-card-copy"><p class="eyebrow">EDITOR SUITE · TIMELINE</p><h2><a href="./editor-suite/">Editor Suite and Timeline</a></h2><p>Add selection, canvas, clip, and track editing surfaces over host data.</p><p class="feature-card-links"><a href="./editor-suite/">Editor Suite</a><a href="../api/editor-suite/">API contracts</a></p></div>
+    <a class="feature-card-image" href="./node-editor/"><img src={nodeEditor.src} width={nodeEditor.width} height={nodeEditor.height} alt="The Node Editor with nodes, links, previews and a minimap." loading="lazy" /></a>
+    <div class="feature-card-copy"><p class="eyebrow">Graph</p><h2><a href="./node-editor/">Node Editor</a></h2><p>Draw a graph your application owns and receive bounded edit requests.</p><p class="feature-card-links"><a href="./node-editor/">Integration guide</a><a href="../tutorials/node-editor/">Tutorial</a><a href="../api/node-editor/">Node API</a></p></div>
   </article>
   <article class="feature-card">
-    <a class="feature-card-image" href="./window-frame/"><img src={icons.src} width={icons.width} height={icons.height} alt="Gallery icon atlas and labeled icon buttons." loading="lazy" /></a>
-    <div class="feature-card-copy"><p class="eyebrow">WINDOW · ICONS</p><h2><a href="./window-frame/">WindowFrame and icons</a></h2><p>Add a title area and common action icons while keeping native windows and GPU resources with the host.</p><p class="feature-card-links"><a href="./window-frame/">WindowFrame</a><a href="./icons/">Icons</a><a href="../api/window-frame/">API map</a></p></div>
+    <a class="feature-card-image" href="./editor-suite/"><img src={timeline.src} width={timeline.width} height={timeline.height} alt="A timeline with tracks, clips and editing gestures." loading="lazy" /></a>
+    <div class="feature-card-copy"><p class="eyebrow">Editing</p><h2><a href="./editor-suite/">Timeline and Editor Suite</a></h2><p>Lay track and clip editing, canvases, curves and previews over your own data.</p><p class="feature-card-links"><a href="./editor-suite/">Editor Suite</a><a href="./timeline/">Timeline editing</a><a href="../tutorials/timeline/">Tutorial</a></p></div>
+  </article>
+  <article class="feature-card">
+    <a class="feature-card-image" href="./show/"><img src={show.src} width={show.width} height={show.height} alt="A cue list and clip launcher running a live show." loading="lazy" /></a>
+    <div class="feature-card-copy"><p class="eyebrow">Show</p><h2><a href="./show/">Show module</a></h2><p>A cue list, mixer, control surface, schedule, LED tools and tile map for media servers.</p><p class="feature-card-links"><a href="./show/">Show module</a></p></div>
+  </article>
+  <article class="feature-card">
+    <a class="feature-card-image" href="./icons/"><img src={icons.src} width={icons.width} height={icons.height} alt="The Gallery icon list and labelled buttons." loading="lazy" /></a>
+    <div class="feature-card-copy"><p class="eyebrow">Icons and window</p><h2><a href="./icons/">Icons and window frame</a></h2><p>Add 321 icons and a themed title bar. Your application manages the OS window and GPU resources.</p><p class="feature-card-links"><a href="./icons/">Icons</a><a href="./window-frame/">Window frame</a><a href="../api/window-frame/">API map</a></p></div>
   </article>
 </div>
 
-## Start building
+## Try it first
 
-- [Getting started](../getting-started/) — source integration, SDK conditions, and the first frame
-- [Settings panel recipe](./components/) — a complete controls example
-- [Examples and recipes](../guides/examples/) — code and structure by task
-- [API index](../api/) — public declarations and contract pages
+- [Getting started](../getting-started/): source integration, SDK conditions and the first frame
+- [Build your first app](../tutorials/first-app/): the smallest program that draws one frame
+- [Examples and recipes](../guides/examples/): header, target and Gallery page for each area
+- [API reference](../api/): public declarations and call contracts

@@ -1,48 +1,14 @@
 ---
-title: "コンポーネント"
----
-
-## 用途
-
-設定行、ボタン、入力欄、状態表示を揃えたいときに使います。Dear ImGuiのContextとアプリの値はそのままアプリ側で管理します。
-
-## Galleryの画面
-
-![ImKit Galleryに表示されたUI部品の画面。](../../../assets/captures/v4-start-poster.png)
-
-Components — 設定、選択、状態表示 · [Galleryの操作映像を開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-start.gif)
-
-## 最小描画例
-
-```cpp
-#include <imkit/imkit.h>
-
-void DrawApplyButton() {
-    if (imkit::ActionButton("Apply", imkit::ActionVariant::Primary)) {
-        // The application validates and applies its own document state.
-    }
-}
-```
-
-**例の種別:** 既存アプリのフレーム内で呼ぶ関数例です。`NewFrame`から`Render`までの間に呼び、戻り値の操作はアプリ側で処理します。
-
-## アプリへ組み込む
-
-`imkit::imkit`をlinkします。編集値とIDはアプリ側で保持し、戻り値を操作要求として扱います。
-
-## 範囲
-
-即時モードの入力部品です。アプリのデータモデル、保存機能、command dispatcherは提供しません。
-
-## 関連APIとガイド
-
-- [Native API一覧](../../api/native/)
-- [部品一覧](../../api/widgets/)
-
+title: "基本コンポーネント"
+description: "ImKit のコンポーネントは、Dear ImGui 標準の振る舞いの上に構築された軽量な合成ウィジェットです。 編集されるデータ値、コンポーネントの寿命、および設定の永続化はすべてホストアプリケーションが所有します。"
 ---
 
 ImKit のコンポーネントは、Dear ImGui 標準の振る舞いの上に構築された軽量な合成ウィジェットです。
 編集されるデータ値、コンポーネントの寿命、および設定の永続化はすべてホストアプリケーションが所有します。
+
+![素のDear ImGuiとImKitが、同じ値を左右で編集する](/imgui-modern-kit/docs-images/v4-compare-poster.png)
+
+[操作GIFを開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-compare.gif)
 
 ## 完全な設定パネルの例
 
@@ -176,6 +142,6 @@ case imkit::CompactActionRowRequest::None: break;
 `CompactActionRow` は状態と二つの操作を描画し、操作要求だけを返します。接続状態、コマンド実行、設定画面の寿命はホスト側で管理します。横幅が足りない場合は状態と操作を複数行に折り返します。
 各操作は個別に無効化でき、無効理由はそのボタンのツールチップに表示します。`SubtleDestructive` は停止など、取り消し可能な危険操作に使います。
 
-## ImKit 3.2の作業画面
+## Galleryで試す
 
-Galleryの **Workspace** では、WorkspaceTabs、HierarchyGroupHeader／HierarchyRow、BeginInspectorCard／EndInspectorCard、SettingToggleRow、DragVector3WithUnit、ChoiceGroup、CompactActionRowを組み合わせて操作できます。要求を受けてGallery側の値を更新する実装は、既存のImGuiフレームでも利用できます。[3.2の宣言と寿命の規則](../../api/v3-2/)を参照してください。321アイコンと13テーマを利用でき、Contextやアプリのフレーム管理は引き続きホストが担当します。
+Galleryの **Workspace** では、WorkspaceTabs、階層の行、インスペクターカード、`SettingToggleRow`、`DragVector3WithUnit`、`ChoiceGroup`、`CompactActionRow`を組み合わせて使う様子を見られます。返った要求で、Galleryが持つ値を更新していて、同じ形は、既存のImGuiのフレームでも使えます。各部品は[Workflow部品](../workflow/)に、宣言と寿命の規則は[3.2追加API](../../api/v3-2/)にあります。

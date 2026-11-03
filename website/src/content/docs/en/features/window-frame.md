@@ -1,47 +1,6 @@
 ---
-title: "WindowFrame"
----
-
-## Use this when
-
-WindowFrame is for drawing a themed title area and returning typed window operations while the application keeps its native window and event loop.
-
-## Gallery capture
-
-![Native Gallery overview with its application shell and content regions.](../../../../assets/captures/v4-start-poster.png)
-
-Gallery overview — application shell and content · [Open the native Gallery animation](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-start.gif)
-
-## Minimum drawing example
-
-```cpp
-#include <imkit/window_frame.h>
-
-imkit::WindowFrameResult DrawTitleArea(const imkit::Theme& theme,
-                                       const imkit::WindowFrameContent& content,
-                                       float widthPixels) {
-    const auto style = imkit::MakeWindowFrameStyle(
-        imkit::WindowFramePreset::Workspace, theme);
-    const auto layout = imkit::LayoutWindowFrame(widthPixels, style);
-    return imkit::DrawWindowFrame(style, content, layout);
-}
-```
-
-**Example type:** Complete function example. The host supplies the current Theme, borrowed content and window width, then applies the returned operation.
-
-## Integrate with the application
-
-The optional Win32 and macOS targets adapt native title-bar interaction; core drawing has no native-window ownership.
-
-## Scope
-
-Icon atlases and GPU textures are also application resources; the library does not create platform windows or upload textures.
-
-## Related API and guides
-
-- [WindowFrame API map](../../api/window-frame/)
-- [Icons guide](../icons/)
-
+title: "Window frame"
+description: "imkit/windowframe.h is a cross-platform, value-based drawing and layout API."
 ---
 
 `imkit/window_frame.h` is a cross-platform, value-based drawing and layout API. It enables custom title bars and non-client frame decorations aligned with the ImKit design system.
@@ -88,10 +47,12 @@ platformAdapter.SetLayout(layout);
 
 // 4. Render title bar and handle results
 auto result = imkit::DrawWindowFrame(style, content, layout, state);
-if (result.action == imkit::WindowFrameAction::Close) {
+const imkit::WindowFrameEvent& event = result.event;
+if (event.type == imkit::WindowFrameEventType::Operation &&
+    event.operation == imkit::WindowFrameOperation::Close) {
     RequestAppExit();
-} else if (result.hasWorkspaceSelection) {
-    selectedWorkspace = result.selectedWorkspace;
+} else if (event.type == imkit::WindowFrameEventType::WorkspaceSelected) {
+    selectedWorkspace = event.workspace;
 }
 ```
 

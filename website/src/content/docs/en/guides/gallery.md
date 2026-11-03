@@ -1,5 +1,6 @@
 ---
 title: "Gallery guide"
+description: "The Gallery is the fastest way to see ImKit before you integrate it."
 ---
 
 The Gallery is the fastest way to see ImKit before you integrate it. It is a desktop app built on the same public library you link, so nothing on screen is a demo-only widget.
@@ -33,7 +34,7 @@ cmake --build --preset macos-universal --target imkit_gallery --parallel
 # The app bundle is produced in build/macos-universal.
 ```
 
-The Windows release archive holds `imkit_gallery.exe`, the `design-assets` directory, the license and third-party notices. It installs no service and writes no user configuration. `imkit_gallery --theme-file my.theme` applies a theme file at start-up and follows later edits to it ([Make your own look](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/architecture/make-your-own-look.md)).
+The Windows release archive holds `imkit_gallery.exe`, the `design-assets` directory, the license and third-party notices. It installs no service and writes no user configuration. `imkit_gallery --theme-file my.theme` applies a theme file at start-up and follows later edits to it ([Make your own look](../../features/make-your-own-look/)).
 
 ## Page map
 

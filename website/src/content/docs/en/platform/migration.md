@@ -1,5 +1,6 @@
 ---
 title: "Migrate from v2"
+description: "1. Update the host to Dear ImGui docking commit 367b2c24f399988ddafc0bb4628da0106bcc09be, including matching official backends and Test Engine sources…"
 ---
 
 1. Update the host to Dear ImGui `docking` commit
