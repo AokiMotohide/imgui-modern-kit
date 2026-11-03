@@ -1,0 +1,571 @@
+<title>Node Editor 刷新計画</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&family=Zen+Kaku+Gothic+New:wght@700;900&display=swap">
+<style>
+/* Layout: 左に目次レール、右に本文。ノード図は常に暗いグラフcanvas上に描く（実エディタと同じ見え方）。 */
+:root {
+  --bg: #f4f5f7;
+  --paper: #ffffff;
+  --ink: #1b1e24;
+  --ink-2: #4b5260;
+  --line: #d9dde4;
+  --accent: #3d6df2;
+  --accent-soft: #e6edff;
+  --ok: #1f8a5b;
+  --warn: #b7791f;
+  --bad: #c2413a;
+  --code-bg: #eef0f4;
+  --canvas: #1c1f25;
+  --canvas-dot: #2c313a;
+  --font-display: "Zen Kaku Gothic New", "IBM Plex Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+  --font-body: "IBM Plex Sans JP", "Hiragino Sans", "Yu Gothic", "Meiryo", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12141a; --paper: #1a1d24; --ink: #e7e9ee; --ink-2: #a3aab8; --line: #2e333d;
+    --accent: #7c9cff; --accent-soft: #232c45; --ok: #4cc28a; --warn: #e0a84a; --bad: #f07a70;
+    --code-bg: #232731; --canvas: #15171c; --canvas-dot: #262a32; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12141a; --paper: #1a1d24; --ink: #e7e9ee; --ink-2: #a3aab8; --line: #2e333d;
+  --accent: #7c9cff; --accent-soft: #232c45; --ok: #4cc28a; --warn: #e0a84a; --bad: #f07a70;
+  --code-bg: #232731; --canvas: #15171c; --canvas-dot: #262a32; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.75;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+}
+.shell { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 40px; }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; font-size: 13px; }
+nav.toc p { font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); font-size: 11px; margin: 0 0 8px; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; counter-reset: toc; }
+nav.toc a { display: block; padding: 4px 10px; border-radius: 6px; color: var(--ink-2); text-decoration: none; }
+nav.toc a:hover, nav.toc a:focus-visible { background: var(--accent-soft); color: var(--ink); outline: none; }
+main { min-width: 0; display: grid; gap: 56px; }
+header.hero { display: grid; gap: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; color: var(--accent); letter-spacing: .06em; }
+h1 { font-family: var(--font-display); font-weight: 900; font-size: clamp(30px, 4.4vw, 46px); line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--font-display); font-weight: 900; font-size: 26px; line-height: 1.35; margin: 0 0 6px; text-wrap: balance; }
+h3 { font-family: var(--font-display); font-weight: 700; font-size: 18px; margin: 24px 0 8px; }
+p { margin: 0 0 12px; max-width: 72ch; }
+.lead { font-size: 17px; color: var(--ink-2); max-width: 70ch; }
+section { display: grid; gap: 8px; scroll-margin-top: 24px; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; font-family: var(--font-mono); color: var(--ink-2); }
+.meta span { border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; background: var(--paper); }
+code { font-family: var(--font-mono); font-size: .88em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+pre { margin: 0; background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.6; }
+pre code { background: none; padding: 0; font-size: inherit; }
+.cmt { color: var(--ink-2); }
+.kw { color: var(--accent); font-weight: 600; }
+.new { color: var(--ok); font-weight: 600; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; line-height: 1.55; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+th { font-size: 12px; letter-spacing: .04em; color: var(--ink-2); background: var(--code-bg); font-weight: 700; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.c { text-align: center; font-family: var(--font-mono); white-space: nowrap; }
+.y { color: var(--ok); font-weight: 700; } .p { color: var(--warn); font-weight: 700; } .n { color: var(--bad); font-weight: 700; }
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.summary div { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+.summary h3 { margin: 0 0 6px; font-size: 15px; }
+.summary p { font-size: 14px; color: var(--ink-2); margin: 0; }
+.tag { display: inline-block; font-family: var(--font-mono); font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; margin-right: 6px; vertical-align: 1px; }
+.tag.ok { color: var(--ok); } .tag.warn { color: var(--warn); } .tag.bad { color: var(--bad); }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+figure { margin: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: grid; }
+figure svg { display: block; width: 100%; height: auto; background: var(--canvas); }
+figcaption { padding: 10px 14px 12px; font-size: 13px; line-height: 1.55; color: var(--ink-2); }
+figcaption b { color: var(--ink); display: block; font-size: 14px; margin-bottom: 2px; }
+figcaption code { font-size: 11.5px; }
+.wide svg { max-width: 100%; }
+.issues { display: grid; gap: 10px; counter-reset: iss; }
+.issue { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; display: grid; grid-template-columns: auto minmax(0,1fr); gap: 4px 14px; }
+.issue .sev { grid-row: span 2; font-family: var(--font-mono); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 6px; align-self: start; color: var(--paper); }
+.sev.h { background: var(--bad); } .sev.m { background: var(--warn); } .sev.l { background: var(--ink-2); }
+.issue b { font-size: 14.5px; }
+.issue p { margin: 0; font-size: 13.5px; color: var(--ink-2); }
+.phases { display: grid; gap: 12px; }
+.phase { display: grid; grid-template-columns: 92px minmax(0,1fr); gap: 16px; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+.phase .no { font-family: var(--font-mono); font-size: 12px; color: var(--accent); font-weight: 600; }
+.phase .no strong { display: block; font-family: var(--font-display); font-size: 22px; color: var(--ink); }
+.phase ul { margin: 6px 0 0; padding-left: 1.2em; font-size: 14px; }
+.phase li { margin: 2px 0; }
+.ask { background: var(--accent-soft); border: 1px solid var(--line); border-radius: 10px; padding: 16px 20px; }
+.ask ol { margin: 6px 0 0; padding-left: 1.3em; }
+.ask li { margin: 6px 0; }
+.flow { stroke-dasharray: 4 10; animation: flow 1.2s linear infinite; }
+@keyframes flow { to { stroke-dashoffset: -14; } }
+@media (prefers-reduced-motion: reduce) { .flow { animation: none; } }
+@media (max-width: 860px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  nav.toc { position: static; }
+  nav.toc ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .phase { grid-template-columns: minmax(0,1fr); gap: 4px; }
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#2c313a"/></pattern>
+    <linearGradient id="g-type" x1="0" x2="1"><stop offset="0" stop-color="#e8b44a"/><stop offset="1" stop-color="#8fb8de"/></linearGradient>
+    <linearGradient id="g-event" x1="0" x2="1"><stop offset="0" stop-color="#b8443c"/><stop offset="1" stop-color="#5a2a2a"/></linearGradient>
+    <linearGradient id="g-func" x1="0" x2="1"><stop offset="0" stop-color="#3a64b0"/><stop offset="1" stop-color="#2a3550"/></linearGradient>
+    <linearGradient id="g-pure" x1="0" x2="1"><stop offset="0" stop-color="#4b8a4a"/><stop offset="1" stop-color="#2b3a2b"/></linearGradient>
+  </defs>
+</svg>
+
+<div class="shell">
+<nav class="toc" aria-label="目次">
+  <p>Contents</p>
+  <ol>
+    <li><a href="#summary">結論</a></li>
+    <li><a href="#current">現行の構成</a></li>
+    <li><a href="#compare">3系統との比較</a></li>
+    <li><a href="#issues">確認した問題</a></li>
+    <li><a href="#nodes">ノード形状カタログ</a></li>
+    <li><a href="#pins">ピンと配線</a></li>
+    <li><a href="#custom">カスタマイズ層</a></li>
+    <li><a href="#api">API案</a></li>
+    <li><a href="#presets">見た目プリセット</a></li>
+    <li><a href="#plan">段階計画</a></li>
+    <li><a href="#decide">確認事項</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">imgui-modern-kit · imkit::node_editor · Version4.1 時点の調査</div>
+  <h1>Node Editor 刷新計画</h1>
+  <p class="lead">Blenderのシェーダー／ジオメトリノード、Unrealのブループリント、imgui-node-editorのような使い方を、1つのUI部品で組めるようにするための現状調査と改善案です。実装はまだ行っていません。</p>
+  <div class="meta"><span>対象: include/imkit/node_editor.h (415行)</span><span>src/node_editor.cpp (2093行)</span><span>src/node_layout.cpp (531行)</span><span>調査日 2026-11-03</span></div>
+</header>
+
+<section id="summary">
+  <h2>結論</h2>
+  <p>グラフ編集の「中身」はすでに実用水準です。足りないのは、ノードとピンの<strong>見た目の語彙</strong>と、ホストが描画を<strong>差し替える口</strong>です。</p>
+  <div class="summary">
+    <div><h3><span class="tag ok">強い</span>編集の契約</h3><p>型付きID、完全な編集要求バッチ、Begin/Update/Commit/Cancel、3段階の接続判定、動的・可変長ソケット、整列と自動配置、サブグラフ、プレビュー需要の通知。</p></div>
+    <div><h3><span class="tag warn">弱い</span>見た目の自由度</h3><p>ノードは常に「角丸矩形＋ヘッダー帯＋上端の線」1種類。Reroute・Note・Subgraphにも専用の外観がない。ヘッダー色をノード単位・カテゴリ単位で指定する項目がない。</p></div>
+    <div><h3><span class="tag bad">不足</span>実行フローの表現</h3><p>実行ピン（白い矢印型）、配列・参照・ワイルドカード、複数入力ソケット、未接続の中空表示、配線ハイライト、実行中の流れ表示がない。Unreal系の分岐ノードを素直に描けない。</p></div>
+  </div>
+</section>
+
+<section id="current">
+  <h2>現行の構成</h2>
+  <p>公開APIはすべて <code>imkit::node_editor</code> にあり、グラフはホストが所有して毎フレーム <code>GraphView</code> として貸し出します。見た目に関わる型だけを抜き出すと次のとおりです。</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>型</th><th>見た目に関わる項目</th><th>評価</th></tr></thead>
+    <tbody>
+      <tr><td><code>NodeStyle</code></td><td>色14種（canvas, grid, surface, header, text, muted, border, selected, accent, group, preview, error, warning, success）、rounding, borderWidth, padding, headerHeight, pinRadius, linkWidth, gridSize, minimumWidth/Height, detailZoom, shadows, animate, linkStyle</td><td>基本は揃う。hover／選択時の枠幅、ヘッダーの塗り方、ピンの塗り方、配線の色の出どころを選べない</td></tr>
+      <tr><td><code>NodeView</code></td><td>title, description, icon, kind（Node/Frame/Group/Subgraph/Note/Reroute）, status, progress, milliseconds, breakpoint, <code>style</code>（ノード単位で NodeStyle を丸ごと差し替え）</td><td>ヘッダー色・サブタイトル・カテゴリの項目がない。kind が描画に反映されるのは Frame/Group の塗りと Note の本文だけ</td></tr>
+      <tr><td><code>PinView</code></td><td>side, offset, type, multiple, hidden, shape（Circle/Square/Diamond/Triangle）, color, inheritTypeStyle</td><td>形は4種。データと実行フローの区別、コンテナ種別、接続状態による塗り分けがない</td></tr>
+      <tr><td><code>SocketTypeView</code></td><td>id, name, category, color, shape</td><td>型→色・形の対応は良い設計。配線の色には使われていない</td></tr>
+      <tr><td><code>LinkView</code></td><td>label, reference（破線）, active（流れる点）, color, style, width</td><td>個別指定はできる。既定色が型色ではなく accent</td></tr>
+      <tr><td><code>MakeNodeStyle(theme)</code></td><td>Theme の意味token から NodeStyle を作る</td><td>他部品と同じ流儀で良い。ヘッダーは常に surfaceRaised になる</td></tr>
+      <tr><td><code>Skin</code>（theme.h / skin.h）</td><td>SkinPart は Button / Badge / Card のみ</td><td>ノード・ピン・配線を差し替える口がない</td></tr>
+    </tbody>
+  </table></div>
+  <p>補助部品として <code>NodePalette</code>（Tabで開く追加メニュー、接続ドロップ時の絞り込み）、<code>MiniMap</code>、<code>NodeSearch</code>、<code>NodeInspector</code>、<code>Breadcrumbs</code>、<code>LayoutToolbar</code>、<code>Preview</code>／<code>DrawDetachedPreviews</code>、<code>PinRow</code>／<code>PinAddRow</code> があります。Alt+ドラッグの配線カット、範囲選択、ブックマーク、表示履歴も実装済みです。</p>
+</section>
+
+<section id="compare">
+  <h2>3系統との比較</h2>
+  <p>参照先の「機能の型」だけを比較します。各製品の名称、図柄、配色をそのまま再現するのではなく、同じ操作と表現をホストが組める部品として用意することが目標です。</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>機能</th><th>Blender系</th><th>Unreal系</th><th>imgui-node-editor</th><th>imkit 現行</th></tr></thead>
+    <tbody>
+      <tr><td>カテゴリ別ヘッダー色</td><td class="c">必須</td><td class="c">必須</td><td class="c">例で実装</td><td class="c"><span class="p">△</span> NodeStyle丸ごと差替</td></tr>
+      <tr><td>実行ピン（フロー）と分岐ノード</td><td class="c">—</td><td class="c">必須</td><td class="c">例で実装</td><td class="c"><span class="n">×</span></td></tr>
+      <tr><td>ヘッダーなしの小型ノード（演算子）</td><td class="c">—</td><td class="c">必須</td><td class="c">可能</td><td class="c"><span class="n">×</span></td></tr>
+      <tr><td>変数ノード（ピル型）</td><td class="c">—</td><td class="c">必須</td><td class="c">可能</td><td class="c"><span class="n">×</span></td></tr>
+      <tr><td>Reroute（配線上の点）</td><td class="c">必須</td><td class="c">必須</td><td class="c">—</td><td class="c"><span class="p">△</span> kindのみ、外観は通常ノード</td></tr>
+      <tr><td>コメント枠・フレーム</td><td class="c">必須</td><td class="c">必須</td><td class="c">Group</td><td class="c"><span class="p">△</span> 塗りのみ、タイトル帯なし</td></tr>
+      <tr><td>ソケット上の値編集</td><td class="c">必須</td><td class="c">必須</td><td class="c">ホスト任せ</td><td class="c"><span class="y">◯</span> PinRow</td></tr>
+      <tr><td>ノード内の折りたたみパネル</td><td class="c">必須</td><td class="c">Advanced展開</td><td class="c">—</td><td class="c"><span class="n">×</span></td></tr>
+      <tr><td>未使用ソケットの非表示</td><td class="c">必須</td><td class="c">—</td><td class="c">—</td><td class="c"><span class="p">△</span> HidePin要求のみ</td></tr>
+      <tr><td>複数入力ソケット（長円）</td><td class="c">必須</td><td class="c">—</td><td class="c">—</td><td class="c"><span class="n">×</span></td></tr>
+      <tr><td>配列・Set・Map・参照・ワイルドカード</td><td class="c">Field型</td><td class="c">必須</td><td class="c">—</td><td class="c"><span class="n">×</span></td></tr>
+      <tr><td>未接続ピンを中空で表示</td><td class="c">—</td><td class="c">必須</td><td class="c">例で実装</td><td class="c"><span class="n">×</span></td></tr>
+      <tr><td>配線を型の色で描く</td><td class="c">必須</td><td class="c">必須</td><td class="c">個別指定</td><td class="c"><span class="p">△</span> 個別指定のみ</td></tr>
+      <tr><td>配線のhover強調・接続線強調</td><td class="c">あり</td><td class="c">あり</td><td class="c">あり</td><td class="c"><span class="n">×</span></td></tr>
+      <tr><td>実行中の流れ表示</td><td class="c">—</td><td class="c">デバッグ時</td><td class="c">Flow()</td><td class="c"><span class="p">△</span> 点1つ</td></tr>
+      <tr><td>Bypass（ミュート）時の素通し線</td><td class="c">必須</td><td class="c">無効化表示</td><td class="c">—</td><td class="c"><span class="n">×</span></td></tr>
+      <tr><td>スタイルの一時変更（Push/Pop）</td><td class="c">—</td><td class="c">—</td><td class="c">必須</td><td class="c"><span class="p">△</span> ノード単位のポインタ</td></tr>
+      <tr><td>描画の差し替え（独自ヘッダー等）</td><td class="c">—</td><td class="c">—</td><td class="c">DrawList直描き</td><td class="c"><span class="n">×</span></td></tr>
+      <tr><td>型付き編集要求・Undo単位</td><td class="c">内部</td><td class="c">内部</td><td class="c">ホスト任せ</td><td class="c"><span class="y">◯</span> imkitの強み</td></tr>
+      <tr><td>自動整列・配置</td><td class="c">一部</td><td class="c">一部</td><td class="c">—</td><td class="c"><span class="y">◯</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="issues">
+  <h2>確認した問題</h2>
+  <p>コードを読んで確認した具体的な不足と不具合です。行番号は Version4.1（<code>871f3b5</code>）時点です。</p>
+  <div class="issues">
+    <div class="issue"><span class="sev h">高</span><b>Reroute・Note・Subgraph が通常ノードと同じ矩形で描かれる</b><p><code>src/node_editor.cpp:636-651</code> の背景描画は Frame/Group かどうかしか見ていない。Reroute は240×240の空ノードになり、配線の中継点として使えない。</p></div>
+    <div class="issue"><span class="sev h">高</span><b>実行フロー用のピンと配線がない</b><p><code>PinShape</code> は Circle/Square/Diamond/Triangle の4種。実行ピンの形、太い白い配線、分岐ノードの True/False 出力をデータピンと区別して描く手段がない。</p></div>
+    <div class="issue"><span class="sev h">高</span><b>ノード・ピン・配線の描画を差し替える口がない</b><p>見た目を変える方法は <code>NodeView::style</code> で NodeStyle を丸ごと渡すことだけ。<code>SkinPart</code> にもノード系の部位がなく、他部品と同じ水準のカスタマイズができない。</p></div>
+    <div class="issue"><span class="sev m">中</span><b>ステータス行が常に表示される</b><p><code>EndNode</code>（<code>src/node_editor.cpp:741-758</code>）が、status を使わないホストでも「Idle 0.00 ms」をノード下端に描く。素材ノードや設定ノードでは雑音になる。</p></div>
+    <div class="issue"><span class="sev m">中</span><b>配線の既定色が型色ではなく accent</b><p><code>Link</code>（<code>:1157</code>）は <code>link.color</code> が空なら accent。ピンは <code>SocketTypeView</code> の色を使うので、ピンと配線の色が食い違う。</p></div>
+    <div class="issue"><span class="sev m">中</span><b>すべての配線に矢印が付く</b><p>曲線の75%地点に固定の三角を描く（<code>:1166-1174</code>）。データフロー系のエディタでは通常付けないが、消す設定がない。</p></div>
+    <div class="issue"><span class="sev m">中</span><b>ヘッダー色をノード単位で指定できない</b><p><code>MakeNodeStyle</code> はヘッダーを常に <code>surfaceRaised</code> にし、上端に accent の線を引く。Galleryの色変更はホスト側で NodeStyle を作り直している。</p></div>
+    <div class="issue"><span class="sev m">中</span><b>Bypass・Disabled の状態が見た目に出ない</b><p>状態はステータス行の文字だけ。ノード全体の減光、素通し線、無効化の斜線などがない。</p></div>
+    <div class="issue"><span class="sev l">低</span><b>リサイズつまみがズームに追従しない</b><p><code>EndNode</code>（<code>:760-767</code>）の14pxは画面座標固定。拡大時は小さく、縮小時はノードに対して大きすぎる。</p></div>
+    <div class="issue"><span class="sev l">低</span><b>配線ラベルに背景がない</b><p>ラベルは曲線中央に muted 色の文字だけを描くので、グリッドや他の配線と重なると読めない。</p></div>
+  </div>
+</section>
+
+<section id="nodes">
+  <h2>ノード形状カタログ</h2>
+  <p>追加・整理したいノードの形です。1枚目が現行の唯一の形で、残りは新しく描けるようにする形です。すべて <code>NodeShape</code> と意味tokenで切り替え、色はテーマとカテゴリから決まります。</p>
+  <div class="gallery">
+
+    <figure>
+      <svg viewBox="0 0 260 160" role="img" aria-label="現行の標準ノード">
+        <rect width="260" height="160" fill="url(#dots)"/>
+        <rect x="40" y="18" width="180" height="124" rx="7" fill="#262a31" stroke="#3a404b"/>
+        <path d="M40 25a7 7 0 0 1 7-7h166a7 7 0 0 1 7 7v15H40z" fill="#30353e"/>
+        <line x1="47" y1="19" x2="213" y2="19" stroke="#6b8cff" stroke-width="2"/>
+        <text x="52" y="34" fill="#e7e9ee" font-size="11" font-family="sans-serif">Noise Texture</text>
+        <circle cx="40" cy="64" r="5" fill="#8fb8de"/><text x="52" y="68" fill="#a3aab8" font-size="10" font-family="sans-serif">Scale</text>
+        <circle cx="220" cy="64" r="5" fill="#e8b44a"/><text x="174" y="68" fill="#a3aab8" font-size="10" font-family="sans-serif">Color</text>
+        <text x="52" y="134" fill="#6d7483" font-size="9" font-family="monospace">Idle   0.00 ms</text>
+      </svg>
+      <figcaption><b>現行: Standard（唯一の形）</b>角丸矩形、ヘッダー帯、上端の accent 線、常時表示のステータス行。</figcaption>
+    </figure>
+
+    <figure>
+      <svg viewBox="0 0 260 160" role="img" aria-label="イベントノード">
+        <rect width="260" height="160" fill="url(#dots)"/>
+        <path d="M40 30a10 10 0 0 1 10-10h150q20 0 20 20v80a8 8 0 0 1-8 8H48a8 8 0 0 1-8-8z" fill="#22252b" stroke="#3a404b"/>
+        <path d="M40 30a10 10 0 0 1 10-10h150q20 0 20 20v6H40z" fill="url(#g-event)"/>
+        <text x="52" y="38" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif">◆ On Start</text>
+        <path d="M206 66l8 0 6 6-6 6-8 0z" fill="#f2f2f2"/>
+        <circle cx="213" cy="98" r="5" fill="none" stroke="#7fd0c0" stroke-width="2"/><text x="160" y="102" fill="#a3aab8" font-size="10" font-family="sans-serif">Delta</text>
+      </svg>
+      <figcaption><b>Event</b>右上を大きく丸めたヘッダーで「起点」を示す。入力の実行ピンを持たない。<code>NodeShape::Event</code></figcaption>
+    </figure>
+
+    <figure>
+      <svg viewBox="0 0 260 160" role="img" aria-label="分岐ノード">
+        <rect width="260" height="160" fill="url(#dots)"/>
+        <rect x="40" y="20" width="180" height="112" rx="8" fill="#22252b" stroke="#3a404b"/>
+        <path d="M40 28a8 8 0 0 1 8-8h164a8 8 0 0 1 8 8v18H40z" fill="url(#g-func)"/>
+        <text x="52" y="38" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif">⎇ Branch</text>
+        <path d="M36 62l8 0 6 6-6 6-8 0z" fill="#f2f2f2"/>
+        <circle cx="42" cy="98" r="5" fill="#c94b4b"/><text x="54" y="102" fill="#a3aab8" font-size="10" font-family="sans-serif">Condition</text>
+        <path d="M210 62l8 0 6 6-6 6-8 0z" fill="#f2f2f2"/><text x="180" y="72" fill="#d7dae0" font-size="10" font-family="sans-serif">True</text>
+        <path d="M210 88l8 0 6 6-6 6-8 0z" fill="none" stroke="#f2f2f2" stroke-width="1.5"/><text x="178" y="98" fill="#d7dae0" font-size="10" font-family="sans-serif">False</text>
+      </svg>
+      <figcaption><b>Branch / Sequence / Switch</b>実行出力を複数持つ。Sequence と Switch は既存の <code>PinAddRow</code> で出力を増やせる。未接続の実行ピンは中空。</figcaption>
+    </figure>
+
+    <figure>
+      <svg viewBox="0 0 260 160" role="img" aria-label="純粋関数ノード">
+        <rect width="260" height="160" fill="url(#dots)"/>
+        <rect x="40" y="26" width="180" height="100" rx="8" fill="#22252b" stroke="#3a404b"/>
+        <path d="M40 34a8 8 0 0 1 8-8h164a8 8 0 0 1 8 8v14H40z" fill="url(#g-pure)"/>
+        <text x="52" y="41" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif">ƒ Lerp</text>
+        <text x="200" y="41" fill="#cfe8cf" font-size="9" font-family="sans-serif" text-anchor="end">Math</text>
+        <circle cx="40" cy="66" r="5" fill="#7fd0c0"/><text x="52" y="70" fill="#a3aab8" font-size="10" font-family="sans-serif">A</text>
+        <circle cx="40" cy="86" r="5" fill="#7fd0c0"/><text x="52" y="90" fill="#a3aab8" font-size="10" font-family="sans-serif">B</text>
+        <circle cx="40" cy="106" r="5" fill="none" stroke="#7fd0c0" stroke-width="2"/><text x="52" y="110" fill="#a3aab8" font-size="10" font-family="sans-serif">Alpha</text>
+        <circle cx="220" cy="66" r="5" fill="#7fd0c0"/><text x="186" y="70" fill="#a3aab8" font-size="10" font-family="sans-serif">Out</text>
+      </svg>
+      <figcaption><b>Pure / Function</b>実行ピンを持たない計算ノード。ヘッダー色はカテゴリから決まり、右端に小さなサブタイトルを置ける。</figcaption>
+    </figure>
+
+    <figure>
+      <svg viewBox="0 0 260 160" role="img" aria-label="小型演算ノード">
+        <rect width="260" height="160" fill="url(#dots)"/>
+        <rect x="80" y="48" width="100" height="64" rx="14" fill="#2a2e36" stroke="#3a404b"/>
+        <text x="130" y="91" fill="#5f6675" font-size="34" font-weight="700" text-anchor="middle" font-family="sans-serif">+</text>
+        <circle cx="80" cy="66" r="5" fill="#7fd0c0"/><circle cx="80" cy="94" r="5" fill="#7fd0c0"/>
+        <circle cx="180" cy="80" r="5" fill="#7fd0c0"/>
+      </svg>
+      <figcaption><b>Compact</b>ヘッダーもラベルもなく、中央に大きな記号だけを置く演算子ノード。<code>NodeShape::Compact</code> と <code>NodeView::glyph</code></figcaption>
+    </figure>
+
+    <figure>
+      <svg viewBox="0 0 260 160" role="img" aria-label="変数ノード">
+        <rect width="260" height="160" fill="url(#dots)"/>
+        <rect x="56" y="62" width="148" height="34" rx="17" fill="#2a2e36" stroke="#d26ac0" stroke-opacity=".55"/>
+        <text x="76" y="83" fill="#e7e9ee" font-size="11" font-family="sans-serif">Health</text>
+        <circle cx="204" cy="79" r="5" fill="#d26ac0"/>
+        <rect x="56" y="112" width="148" height="28" rx="14" fill="#2a2e36" stroke="#3a404b"/>
+        <text x="76" y="130" fill="#a3aab8" font-size="10" font-family="sans-serif">Get Target</text>
+        <circle cx="204" cy="126" r="4" fill="#5aa0ff"/>
+      </svg>
+      <figcaption><b>Variable（ピル型）</b>変数の取得。型色の縁取りで値の種類を示す。代入（Set）は Standard に実行ピンを付けて描く。</figcaption>
+    </figure>
+
+    <figure>
+      <svg viewBox="0 0 260 160" role="img" aria-label="Reroute">
+        <rect width="260" height="160" fill="url(#dots)"/>
+        <path d="M20 40C80 40 80 84 128 84" stroke="#e8b44a" stroke-width="2.5" fill="none"/>
+        <path d="M132 84C180 84 180 128 240 128" stroke="#e8b44a" stroke-width="2.5" fill="none"/>
+        <path d="M132 84C180 84 180 44 240 44" stroke="#e8b44a" stroke-width="2.5" fill="none"/>
+        <circle cx="130" cy="84" r="7" fill="#e8b44a" stroke="#1c1f25" stroke-width="2"/>
+      </svg>
+      <figcaption><b>Reroute</b>配線上の小さな点。配線のダブルクリックで挿入し、1入力・多出力で中継する。現行は kind があるのに矩形で描かれる。</figcaption>
+    </figure>
+
+    <figure>
+      <svg viewBox="0 0 260 160" role="img" aria-label="コメント枠">
+        <rect width="260" height="160" fill="url(#dots)"/>
+        <rect x="18" y="16" width="224" height="128" rx="6" fill="#5aa0ff" fill-opacity=".09" stroke="#5aa0ff" stroke-opacity=".5"/>
+        <path d="M18 22a6 6 0 0 1 6-6h212a6 6 0 0 1 6 6v18H18z" fill="#5aa0ff" fill-opacity=".35"/>
+        <text x="28" y="33" fill="#e7e9ee" font-size="11" font-weight="700" font-family="sans-serif">Damage calculation</text>
+        <rect x="44" y="62" width="70" height="44" rx="6" fill="#262a31" stroke="#3a404b"/>
+        <rect x="146" y="76" width="70" height="44" rx="6" fill="#262a31" stroke="#3a404b"/>
+      </svg>
+      <figcaption><b>Comment / Frame</b>半透明の囲みとタイトル帯。タイトル文字の大きさ、枠色、ズームアウト時の文字拡大を指定できる。中身ごと移動する動作は既存の parent を使う。</figcaption>
+    </figure>
+
+    <figure>
+      <svg viewBox="0 0 260 200" role="img" aria-label="パネル付きシェーダーノード">
+        <rect width="260" height="200" fill="url(#dots)"/>
+        <rect x="40" y="10" width="180" height="180" rx="5" fill="#2b2b2b" stroke="#1a1a1a"/>
+        <path d="M40 15a5 5 0 0 1 5-5h170a5 5 0 0 1 5 5v15H40z" fill="#4f7a45"/>
+        <text x="50" y="24" fill="#fff" font-size="10.5" font-family="sans-serif">▾ Surface BSDF</text>
+        <circle cx="220" cy="42" r="4.5" fill="#63c763"/><text x="208" y="45" fill="#ccc" font-size="9.5" text-anchor="end" font-family="sans-serif">BSDF</text>
+        <rect x="50" y="54" width="160" height="16" rx="3" fill="#545454"/><text x="56" y="65" fill="#ddd" font-size="9" font-family="sans-serif">Multiscatter GGX ▾</text>
+        <circle cx="40" cy="86" r="4.5" fill="#c7c729"/><rect x="50" y="78" width="160" height="16" rx="3" fill="#d0d0d0"/><text x="56" y="89" fill="#222" font-size="9" font-family="sans-serif">Base Color</text>
+        <circle cx="40" cy="108" r="4.5" fill="#a1a1a1"/><rect x="50" y="100" width="160" height="16" rx="3" fill="#545454"/><rect x="50" y="100" width="72" height="16" rx="3" fill="#4772b3"/><text x="56" y="111" fill="#eee" font-size="9" font-family="sans-serif">Roughness 0.45</text>
+        <text x="50" y="136" fill="#bbb" font-size="9.5" font-family="sans-serif">▸ Specular</text>
+        <line x1="50" y1="142" x2="210" y2="142" stroke="#3a3a3a"/>
+        <text x="50" y="158" fill="#bbb" font-size="9.5" font-family="sans-serif">▾ Emission</text>
+        <circle cx="40" cy="176" r="4.5" fill="#c7c729"/><text x="50" y="179" fill="#ccc" font-size="9.5" font-family="sans-serif">Color</text>
+      </svg>
+      <figcaption><b>Panel 付きノード</b>出力→プロパティ→入力の順に積み、ソケット群を折りたたみパネルにまとめる。閉じたパネルのソケットは見出し行に集約される。<code>BeginNodePanel</code></figcaption>
+    </figure>
+
+    <figure>
+      <svg viewBox="0 0 260 160" role="img" aria-label="複数入力ソケット">
+        <rect width="260" height="160" fill="url(#dots)"/>
+        <path d="M10 40C70 40 70 66 130 66" stroke="#2fc6a6" stroke-width="2" fill="none"/>
+        <path d="M10 80C70 80 70 78 130 78" stroke="#2fc6a6" stroke-width="2" fill="none"/>
+        <path d="M10 124C70 124 70 90 130 90" stroke="#2fc6a6" stroke-width="2" fill="none"/>
+        <rect x="130" y="26" width="110" height="100" rx="5" fill="#2b2b2b" stroke="#1a1a1a"/>
+        <path d="M130 31a5 5 0 0 1 5-5h100a5 5 0 0 1 5 5v13H130z" fill="#2f6f63"/>
+        <text x="140" y="39" fill="#fff" font-size="10" font-family="sans-serif">Join</text>
+        <rect x="125" y="60" width="10" height="36" rx="5" fill="#2fc6a6"/>
+        <text x="144" y="81" fill="#ccc" font-size="9.5" font-family="sans-serif">Geometry</text>
+      </svg>
+      <figcaption><b>Multi-input ソケット</b>1つの入力が複数の配線を受け、つながった本数だけ縦に伸びる長円で描く。配線の順序は並び順として要求に載せる。</figcaption>
+    </figure>
+
+  </div>
+</section>
+
+<section id="pins">
+  <h2>ピンと配線</h2>
+  <h3>ピンの種類</h3>
+  <p>形（Shape）とは別に、<strong>役割</strong>（データか実行フローか）と<strong>入れ物</strong>（単体・配列・Set・Map）と<strong>修飾</strong>（参照・ワイルドカード・Field）を持たせます。未接続のピンは中空にするかどうかをスタイルで選べます。</p>
+  <figure class="wide">
+    <svg viewBox="0 0 900 140" role="img" aria-label="ピン種類の一覧">
+      <rect width="900" height="140" fill="url(#dots)"/>
+      <g font-family="sans-serif" font-size="11" fill="#a3aab8" text-anchor="middle">
+        <circle cx="50" cy="56" r="7" fill="#8fb8de"/><text x="50" y="96">Data</text><text x="50" y="112" font-size="9.5" fill="#6d7483">接続済み</text>
+        <circle cx="130" cy="56" r="7" fill="none" stroke="#8fb8de" stroke-width="2"/><text x="130" y="96">Data</text><text x="130" y="112" font-size="9.5" fill="#6d7483">未接続</text>
+        <path d="M200 48h10l9 8-9 8h-10z" fill="#f2f2f2"/><text x="210" y="96">Flow</text><text x="210" y="112" font-size="9.5" fill="#6d7483">実行ピン</text>
+        <g fill="#e8b44a"><rect x="279" y="48" width="4" height="4"/><rect x="285" y="48" width="4" height="4"/><rect x="291" y="48" width="4" height="4"/><rect x="279" y="54" width="4" height="4"/><rect x="285" y="54" width="4" height="4"/><rect x="291" y="54" width="4" height="4"/><rect x="279" y="60" width="4" height="4"/><rect x="285" y="60" width="4" height="4"/><rect x="291" y="60" width="4" height="4"/></g><text x="287" y="96">Array</text>
+        <text x="370" y="62" font-size="18" fill="#d26ac0">{ }</text><text x="370" y="96">Set</text>
+        <path d="M444 49a7 7 0 0 0 0 14z" fill="#5aa0ff"/><path d="M446 49a7 7 0 0 1 0 14z" fill="#e8b44a"/><text x="445" y="96">Map</text>
+        <path d="M520 49l7 7-7 7-7-7z" fill="#7fd0c0"/><text x="520" y="96">Reference</text>
+        <circle cx="600" cy="56" r="7" fill="none" stroke="#9aa0aa" stroke-width="2" stroke-dasharray="3 2.5"/><text x="600" y="96">Wildcard</text><text x="600" y="112" font-size="9.5" fill="#6d7483">接続で型が決まる</text>
+        <path d="M680 49l7 7-7 7-7-7z" fill="#a1a1a1"/><circle cx="680" cy="56" r="2" fill="#1c1f25"/><text x="680" y="96">Field</text><text x="680" y="112" font-size="9.5" fill="#6d7483">要素ごとの値</text>
+        <rect x="755" y="40" width="10" height="32" rx="5" fill="#2fc6a6"/><text x="760" y="96">Multi-input</text>
+        <circle cx="840" cy="56" r="7" fill="#8fb8de"/><circle cx="840" cy="56" r="11" fill="none" stroke="#8fb8de" stroke-opacity=".6"/><text x="840" y="96">Hover</text><text x="840" y="112" font-size="9.5" fill="#6d7483">接続候補</text>
+      </g>
+    </svg>
+    <figcaption><b>PinRole × PinContainer × PinFlags</b>形は <code>SocketTypeView</code> から引き継ぎ、役割と入れ物で描き分ける。既存の <code>PinShape</code> と <code>inheritTypeStyle</code> はそのまま残す。</figcaption>
+  </figure>
+
+  <h3>配線の表現</h3>
+  <figure class="wide">
+    <svg viewBox="0 0 900 170" role="img" aria-label="配線表現の一覧">
+      <rect width="900" height="170" fill="url(#dots)"/>
+      <g font-family="sans-serif" font-size="11" fill="#a3aab8" text-anchor="middle">
+        <path d="M20 40C80 40 80 110 150 110" stroke="#e8b44a" stroke-width="2.5" fill="none"/><text x="85" y="150">型の色</text>
+        <path d="M190 40C250 40 250 110 320 110" stroke="url(#g-type)" stroke-width="2.5" fill="none"/><text x="255" y="150">出力→入力のグラデーション</text>
+        <path d="M360 40C420 40 420 110 490 110" stroke="#f2f2f2" stroke-width="4" fill="none"/><text x="425" y="150">実行フロー（太線）</text>
+        <path d="M530 40C590 40 590 110 660 110" stroke="#f2f2f2" stroke-opacity=".35" stroke-width="4" fill="none"/>
+        <path class="flow" d="M530 40C590 40 590 110 660 110" stroke="#ffffff" stroke-width="4" stroke-linecap="round" fill="none"/><text x="595" y="150">実行中の流れ</text>
+        <rect x="720" y="40" width="80" height="70" rx="6" fill="#262a31" stroke="#3a404b" opacity=".55"/>
+        <path d="M700 75H820" stroke="#c94b4b" stroke-width="2.5" fill="none"/>
+        <text x="760" y="60" font-size="9.5" fill="#6d7483">Bypassed</text><text x="760" y="150">Bypass の素通し線</text>
+      </g>
+    </svg>
+    <figcaption><b>LinkColorSource / LinkArrow / flow / bypass</b>既定は「出力ピンの型色」。矢印は None / Middle / End を選べ、hover 中の配線と選択ノードにつながる配線は太く明るくする。</figcaption>
+  </figure>
+</section>
+
+<section id="custom">
+  <h2>カスタマイズ層</h2>
+  <p>他の部品と同じ3段で見た目を決めます。上の段ほど簡単で、下の段ほど自由です。</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>段</th><th>ホストがすること</th><th>使う型</th><th>例</th></tr></thead>
+    <tbody>
+      <tr><td>1. テーマ</td><td>Theme を変えるだけ。ノードもボタンや表と同じ意味tokenで描かれる</td><td><code>MakeNodeStyle(theme)</code></td><td>Gallery の既存 world（blueprint, pastel-pop, sticker）がノードにもそのまま効く</td></tr>
+      <tr><td>2. スタイル</td><td>NodeStyle の値、カテゴリ表、ノード単位の上書きを渡す</td><td><code>NodeStyle</code>, <code>NodeCategoryStyle</code>, <code>NodeView::tint</code>, <code>PushNodeStyle</code></td><td>シェーダー系は緑、テクスチャ系は橙、入力は赤のヘッダーにする</td></tr>
+      <tr><td>3. 描画フック</td><td>部位ごとの描画関数を差し込み、false を返した部位は既定描画に戻る</td><td><code>NodeDrawHooks</code>（背景・ヘッダー・ピン・配線）</td><td>ヘッダーに画像を敷く、独自のピン図形を描く、配線に模様を付ける</td></tr>
+    </tbody>
+  </table></div>
+  <p>描画フックは <code>Skin</code> と同じ流儀にします。関数ポインタと <code>void* user</code> を受け取り、ライブラリは所有しません。渡すのは位置、大きさ、ズーム、状態（hover・選択・接続中・無効）と解決済みの色で、ホストは公開DrawListに描きます。入力処理とIDはライブラリ側に残るので、フックを入れても選択、ドラッグ、接続の動作は変わりません。</p>
+</section>
+
+<section id="api">
+  <h2>API案</h2>
+  <p>既存の型の末尾に項目を足し、既定値では現在に近い見た目を保ちます。<span class="new">緑</span>が新規です。名前は案です。</p>
+<pre><code><span class="cmt">// ノードの形。NodeKind（グラフ上の意味）とは別に、見た目だけを決める。</span>
+<span class="new">enum class NodeShape</span> { Standard, Event, Compact, Variable, Reroute, Comment, Note };
+<span class="new">enum class HeaderFill</span> { Flat, Tinted, Gradient, Strip, None };
+
+<span class="new">struct NodeCategoryStyle</span> {      <span class="cmt">// カテゴリIDから色を引く表。ホストが所有して貸し出す</span>
+    std::uint64_t id = 0;
+    ImVec4 header{}, accent{};
+    std::string_view icon{};
+};
+
+<span class="kw">struct NodeView</span> {
+    ...既存の項目...
+    <span class="new">NodeShape shape = NodeShape::Standard;</span>
+    <span class="new">std::uint64_t category = 0;</span>     <span class="cmt">// NodeCategoryStyle を引く</span>
+    <span class="new">ImVec4 tint{};</span>                  <span class="cmt">// alpha 0 ならカテゴリ→テーマの順に継承</span>
+    <span class="new">std::string_view subtitle{}, glyph{};</span>  <span class="cmt">// ヘッダー右の補足、Compact の中央記号</span>
+    <span class="new">bool hideUnusedPins = false;</span>
+};
+
+<span class="new">enum class PinRole</span> { Data, Flow };
+<span class="new">enum class PinContainer</span> { Single, Array, Set, Map };
+<span class="new">enum PinFlags : std::uint32_t</span> { PinFlags_None = 0, PinFlags_Reference = 1, PinFlags_Wildcard = 2,
+                               PinFlags_Field = 4, PinFlags_MultiInput = 8, PinFlags_Optional = 16 };
+<span class="kw">struct PinView</span> {
+    ...既存の項目...
+    <span class="new">PinRole role = PinRole::Data;</span>
+    <span class="new">PinContainer container = PinContainer::Single;</span>
+    <span class="new">std::uint32_t flags = PinFlags_None;</span>
+    <span class="new">std::uint64_t panel = 0;</span>        <span class="cmt">// 所属する折りたたみパネル</span>
+};
+
+<span class="new">enum class LinkColorSource</span> { OutputType, InputType, Gradient, Accent };
+<span class="new">enum class LinkArrow</span> { None, Middle, End };
+<span class="kw">struct NodeStyle</span> {
+    ...既存の項目...
+    <span class="new">float hoverBorderWidth = 1.5f, selectedBorderWidth = 2;</span>
+    <span class="new">HeaderFill headerFill = HeaderFill::Strip;</span>   <span class="cmt">// 現行の「上端の線」</span>
+    <span class="new">bool hollowUnconnectedPins = false;</span>
+    <span class="new">float flowLinkWidth = 3.5f;</span>
+    <span class="new">LinkColorSource linkColor = LinkColorSource::OutputType;</span>
+    <span class="new">LinkArrow linkArrow = LinkArrow::Middle;</span>
+    <span class="new">bool highlightConnectedLinks = true;</span>
+    <span class="new">float flowSpeed = 1, flowSpacing = 14;</span>
+    <span class="new">StatusDisplay status = StatusDisplay::WhenActive;</span>  <span class="cmt">// Idle かつ 0ms なら出さない</span>
+    <span class="new">std::span&lt;const NodeCategoryStyle&gt; categories{};</span>
+    <span class="new">const NodeDrawHooks *hooks = nullptr;</span>
+};
+
+<span class="cmt">// 描画フック。false を返すと既定の描画に戻る。入力とIDはライブラリが保持する。</span>
+<span class="new">struct NodeChromeView</span> { const NodeView *node; ImVec2 min, max; float zoom, headerHeight;
+                         ImVec4 header, surface, border; bool hovered, selected, disabled; };
+<span class="new">struct PinChromeView</span>  { const PinView *pin; ImVec2 center; float radius; ImVec4 color;
+                         bool connected, hovered, candidate; };
+<span class="new">struct LinkChromeView</span> { const LinkView *link; std::span&lt;const ImVec2&gt; points; ImVec4 from, to;
+                         float width; bool hovered, selected, flowing; };
+<span class="new">struct NodeDrawHooks</span> {
+    void *user = nullptr;
+    bool (*background)(ImDrawList *, const NodeChromeView &, void *) = nullptr;
+    bool (*header)(ImDrawList *, const NodeChromeView &, void *) = nullptr;
+    bool (*pin)(ImDrawList *, const PinChromeView &, void *) = nullptr;
+    bool (*link)(ImDrawList *, const LinkChromeView &, void *) = nullptr;
+};
+
+<span class="cmt">// 新しい部品</span>
+<span class="new">bool BeginNodePanel</span>(EditorFrame &amp;frame, std::uint64_t panel, std::string_view label, bool *open);
+<span class="new">void EndNodePanel</span>(EditorFrame &amp;frame);
+<span class="new">void PushNodeStyle</span>(EditorFrame &amp;frame, const NodeStyle &amp;style);   <span class="cmt">// 以降のノードに適用</span>
+<span class="new">void PopNodeStyle</span>(EditorFrame &amp;frame);
+<span class="new">bool InsertReroute</span>(EditorFrame &amp;frame, LinkId link, Point at);    <span class="cmt">// 要求を積むだけ</span>
+<span class="new">NodeStyle MakeNodeStylePreset</span>(const Theme &amp;theme, NodeStylePreset preset);</code></pre>
+  <h3>追加する編集要求</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>EditKind</th><th>発生する操作</th><th>ホストの責務</th></tr></thead>
+    <tbody>
+      <tr><td><code>InsertReroute</code></td><td>配線のダブルクリック、またはメニュー</td><td>Reroute ノードを作り、元の配線を2本に置き換える。1操作として Undo</td></tr>
+      <tr><td><code>ReorderLinkInput</code></td><td>Multi-input ソケット上で配線をドラッグ</td><td>受け側の配線順を並べ替える</td></tr>
+      <tr><td><code>TogglePanel</code></td><td>パネル見出しのクリック</td><td>開閉状態を保存するならホストが持つ。保存しないなら UI 状態として EditorState に残す</td></tr>
+      <tr><td><code>ResolveWildcard</code></td><td>Wildcard ピンへの接続</td><td>接続先の型を採用するかを決める。既存の <code>typeCompatibility</code> で判定する</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="presets">
+  <h2>見た目プリセット</h2>
+  <p>ライブラリには3つの出発点を用意し、Galleryではそれぞれを使ったデモグラフを置きます。参照製品の名称・アイコン・配色はそのまま使わず、構成と密度だけを合わせます。</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>プリセット</th><th>想定用途</th><th>主な設定</th></tr></thead>
+    <tbody>
+      <tr><td><code>Material</code></td><td>シェーダー、ジオメトリ、合成（Blender系）</td><td>角丸小、HeaderFill::Flat でカテゴリ色、矢印なし、パネルあり、ソケット上の値編集、Multi-input、Bypass の素通し線</td></tr>
+      <tr><td><code>Script</code></td><td>ゲームロジック、イベント処理（Unreal系）</td><td>HeaderFill::Gradient、Flow ピンと太い白線、未接続ピンを中空、Event / Compact / Variable、実行中の流れ表示、ブレークポイント</td></tr>
+      <tr><td><code>Classic</code></td><td>汎用ツール、データ処理（imgui-node-editor系）</td><td>現行に近い Standard、HeaderFill::Strip、Bezier、hover と接続線の強調、PushNodeStyle による一時変更</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="plan">
+  <h2>段階計画</h2>
+  <p>各段階は単独でビルドとテストが通る単位にします。公開APIが変わるため、段階1に入る前に下の確認事項を決めてください。</p>
+  <div class="phases">
+    <div class="phase"><div class="no">Phase<strong>1</strong></div><div><b>見た目の土台と不具合</b><ul>
+      <li>NodeStyle の拡張（枠幅、HeaderFill、配線色の出どころ、矢印、ステータス表示）</li>
+      <li>NodeView::tint / category / subtitle と NodeCategoryStyle</li>
+      <li>ステータス行の常時表示、配線既定色、リサイズつまみのズーム追従、配線ラベル背景を直す</li>
+      <li>hover 中と選択ノードの配線強調</li></ul></div></div>
+    <div class="phase"><div class="no">Phase<strong>2</strong></div><div><b>ノード形状</b><ul>
+      <li>NodeShape: Event / Compact / Variable / Reroute / Comment / Note の描画とヒット判定</li>
+      <li>InsertReroute 要求と配線ダブルクリック</li>
+      <li>Bypass・Disabled の減光と素通し線</li></ul></div></div>
+    <div class="phase"><div class="no">Phase<strong>3</strong></div><div><b>ピンの語彙と実行フロー</b><ul>
+      <li>PinRole::Flow と太い実行配線、中空表示、Array / Set / Map / Reference / Wildcard / Field の描画</li>
+      <li>Multi-input ソケットと ReorderLinkInput</li>
+      <li>実行中の流れ表示（速度・間隔を NodeStyle で調整）</li></ul></div></div>
+    <div class="phase"><div class="no">Phase<strong>4</strong></div><div><b>本文レイアウトと描画フック</b><ul>
+      <li>BeginNodePanel / EndNodePanel、閉じたパネルのソケット集約、hideUnusedPins</li>
+      <li>NodeDrawHooks と PushNodeStyle / PopNodeStyle</li></ul></div></div>
+    <div class="phase"><div class="no">Phase<strong>5</strong></div><div><b>プリセット、Gallery、文書</b><ul>
+      <li>MakeNodeStylePreset（Material / Script / Classic）と Gallery の3デモ</li>
+      <li>英日の node-editor 文書、API inventory、API compile fixture、consumer test の更新</li>
+      <li>native Gallery の実 capture で docs/images を差し替え</li></ul></div></div>
+  </div>
+  <h3>各段階の検証</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>対象</th><th>確認方法</th></tr></thead>
+    <tbody>
+      <tr><td>ヒット判定、要求の内容、配線色の解決</td><td><code>tests/node_editor.cpp</code> に公開IO操作のテストを追加</td></tr>
+      <tr><td>公開APIの形</td><td><code>tests/node_editor_api_compile.cpp</code> と consumer test</td></tr>
+      <tr><td>見た目</td><td>native Gallery の capture を目視で確認。GPU capture は実施した場合だけ記録する</td></tr>
+      <tr><td>文書</td><td><code>python tools/check_docs.py</code> と website の検証</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="decide">
+  <h2>確認事項</h2>
+  <div class="ask">
+    <p>実装に入る前に、次の4点を決めてください。</p>
+    <ol>
+      <li><b>ABI の扱い。</b>NodeView・PinView・NodeStyle の末尾に項目を足すと、構造体の大きさが変わります。node_editor は「development API」扱いなので許容する案です。</li>
+      <li><b>既定の見た目を変えてよいか。</b>ステータス行を「Idle かつ 0ms なら非表示」にし、配線の既定色を型色にすると、既存ホストの見た目が変わります。現行の見た目を保つ設定も残します。</li>
+      <li><b>プリセットの置き場所。</b>Material / Script / Classic をライブラリの関数にするか、Gallery の例コードに留めるか。汎用の出発点なのでライブラリ側を推奨します。</li>
+      <li><b>着手範囲。</b>Phase 1 から順に進めるか、Unreal 系の実行フロー（Phase 3）を先に行うか。</li>
+    </ol>
+  </div>
+</section>
+</main>
+</div>
