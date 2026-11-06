@@ -1,6 +1,6 @@
 # ImKit
 
-**Modern UI for Dear ImGui. Familiar workflow.**
+**Themes, controls and editor components for Dear ImGui.**
 
 ImKit is a C++20 static library that gives an existing Dear ImGui app a modern look and richer controls. Add one theme, keep your frame loop, and link only the modules you need.
 
@@ -8,12 +8,12 @@ ImKit is a C++20 static library that gives an existing Dear ImGui app a modern l
 
 [![ImKit film: the same app before and after a theme](website/public/media/imkit-poster.jpg)](https://aokimotohide.github.io/imgui-modern-kit/en/#film)
 
-## Why ImKit
+## Overview
 
-- **A new look, the same workflow.** Add a theme and your existing app picks up rounded controls, soft shadows and smooth motion. Call shapes and values stay as they are.
-- **Make it yours.** Build a theme from four colours, add corners, an outline and a shadow, or replace component frames with your own skin. 13 themes are built in.
-- **More than widgets.** Workspaces, a timeline, a node editor, charts, a PTZ pad, 321 icons, and an optional `show` module for media servers.
-- **Your app stays yours.** The Dear ImGui context, backend, renderer, fonts, data, undo history and persistence remain in your application.
+- **A new look, the same calls.** Add a theme, and your existing controls get rounded corners, soft shadows and short transitions. Call shapes and values stay as they are.
+- **Your own look.** Build a theme from four colours, add corners, an outline and a shadow, or replace component frames with a skin. 13 themes are built in.
+- **Beyond basic widgets.** Workspace parts, a timeline, a node editor, charts, a PTZ pad, 321 icons, and an optional `show` module for media servers.
+- **Your application keeps control.** The Dear ImGui context, backend, renderer, fonts, data, undo history and persistence stay in your application.
 
 <img src="docs/images/v4-start.gif" alt="The same controls before and after an ImKit theme, then the whole Gallery changing theme" width="960">
 
@@ -75,6 +75,7 @@ The [module recipes](docs/getting-started/examples-recipes.md) list the header, 
 | --- | --- |
 | <img src="docs/images/v4-themes.gif" alt="Wearing a theme: the whole Gallery changes colour" width="470"><br>Pick a theme and everything follows. | <img src="docs/images/v4-studio.gif" alt="Theme Studio loading blueprint, pastel-pop and sticker looks" width="470"><br>Load a whole look, then change corners and shadow. |
 | <img src="docs/images/v4-workspace.gif" alt="Workspace with tabs, hierarchy, settings and choices" width="470"><br>Tabs, hierarchy and settings in one screen. | <img src="docs/images/v4-show.gif" alt="Cue list and clip launcher running a live show" width="470"><br>Run a live show with GO. |
+| <img src="docs/images/v4-charts.gif" alt="Donut, bar, gauge and sparkline charts reacting to the pointer" width="470"><br>Donut, bar, gauge and sparkline charts. | <img src="docs/images/v4-surface.gif" alt="A control surface with faders, knobs, keys and pictures" width="470"><br>Lay out faders, knobs and keys like a console. |
 
 ## What is new in 4.1
 
@@ -98,6 +99,14 @@ The v4 ABI targets Dear ImGui 1.93.0 WIP docking commit `367b2c24f399988ddafc0bb
 ## Documentation
 
 [Documentation index](docs/README.md) · [Getting started](docs/getting-started/getting-started.md) · [Components](docs/getting-started/guide.md) · [Gallery guide](docs/getting-started/gallery.md) · [Node Editor](docs/components/node-editor.md) · [Architecture](docs/architecture/architecture.md) · [Changelog](CHANGELOG.md)
+
+## Acknowledgements
+
+**ImKit stands on [Dear ImGui](https://github.com/ocornut/imgui).** Thank you to Omar Cornut, and to every contributor and sponsor who maintains it, for a library that made tool UI in C++ fast to build and pleasant to use. ImKit is a layer on top of that work and does not replace it.
+
+- ImKit uses only Dear ImGui's public API. It does not fork, patch or recompile Dear ImGui, and it does not use `imgui_internal.h`. Your application supplies the Dear ImGui sources, and the Gallery builds the unmodified upstream `docking` branch at the pinned commit.
+- Dear ImGui is MIT licensed, copyright Omar Cornut. [GLFW](https://www.glfw.org/) runs the Gallery window, and [Inter](https://rsms.me/inter/) and [Noto Sans JP](https://github.com/notofonts/noto-cjk) are optional fonts. Their licenses and hashes are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- The design references we studied are listed there as well. No code or assets were copied from them.
 
 ## License
 

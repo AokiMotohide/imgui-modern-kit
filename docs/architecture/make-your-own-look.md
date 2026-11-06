@@ -4,6 +4,8 @@
 
 A look in ImKit is one value, `imkit::Theme`: colours, corners, outline, shadow, type sizes and an optional skin. Apply it once with `ApplyTheme` and both plain `ImGui::` widgets and ImKit components follow it. The five steps below go from shallow to deep. Start at the shallowest one that does what you need; each step builds on the one before.
 
+<img src="../images/v4-studio.gif" alt="Theme Studio loading the blueprint, pastel-pop and sticker looks" width="960">
+
 ## The five steps
 
 | Step | You write | You get |

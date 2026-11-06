@@ -1,82 +1,47 @@
 ---
-title: "Timeline編集"
+title: "タイムライン編集"
+description: "imkit::videoのタイムラインは、トラックとクリップを表示し、編集をイベントとして報告します。任意のTimelineEditingProviderを実装すると、クリップごとに独立したフェード、カットのトランジション、矩形選択、トラック間の検証つきの移動が使えます。"
 ---
 
-## 用途
+`imkit::video`のタイムラインは、トラックとクリップを表示し、編集をイベントとして報告します。任意の`TimelineEditingProvider`を実装すると、クリップごとに独立したフェード、カットのトランジション、矩形選択、トラック間の検証つきの移動が使えます。プロバイダーがないときは、従来のトランジションの操作が残ります。プロバイダー、借用したビュー、クリップボード、Undoの履歴は、アプリが持ちます。
 
-アプリ側のmedia modelに、track、clip、keyframe、編集操作を表示する場合に使います。
+![Galleryのタイムライン。複数のトラックのクリップを、トリム、移動、分割で編集する](/imgui-modern-kit/docs-images/v4-timeline-poster.png)
 
-## Galleryの画面
+[操作GIFを開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-timeline.gif)
 
-![clip、track、編集操作を表示するTimeline画面。](../../../assets/captures/v4-timeline-poster.png)
+## 入力
 
-Timeline — clip、track、編集操作 · [Galleryの操作映像を開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-timeline.gif)
+| 対象 | 操作 | 結果 |
+| --- | --- | --- |
+| フェード | クリップの上側のハンドルをドラッグ。長さ0からでもよい | フェードを作成または変更します。ハンドルを右クリックすると、長さの設定、Linear、Ease in、Ease outの選択、削除ができます |
+| トランジション | `TransitionShelf`から、隣り合うカットへ、DissolveまたはCrossfadeをドラッグ | 挿入します。帯をドラッグして大きさを変え、コンテキストメニューで長さの設定や削除をします。Dissolveはビデオ用、Crossfadeはオーディオ用です。ビデオでは、Dip to black（`TransitionKind::Fade`）も選べます。最初の1秒の長さと、その後の編集は、プロバイダーが返す素材の余白の範囲に収まります |
+| クリップの選択 | 何もない場所をドラッグ | 触れたクリップを選択します。Shiftで追加し、Ctrlで切り替えます |
+| クリップの移動 | 選択したクリップをドラッグ | 選択を保ち、すべてのメンバーを同じトラックの差で動かします。移動先のコールバックが各メンバーを対応づけ、`canMove`が全体を検証します |
+| トラックの選択 | トラック名をクリック | 行を選択します。Shiftで追加し、Ctrlで切り替えます |
+| トラックの並べ替え | 選択した名前を、別の名前へドラッグ | 選択した行を、元の順序のまま、その前に挿入します。名前の上半分は行の前に、下半分は行の後ろに挿入します。`trackAfter`コールバックがあれば、最後の行の下半分は、末尾に追加します |
+| トラックのメニュー | Tracksメニュー | トラックの追加、複製、削除を行います。空でないトラックの削除は、確認が出ます |
+| ズーム | Ctrl + ホイール、または`+` / `-` | ポインターを中心に、キーの場合は表示の中央を中心に、ズームします |
+| スクロール | ホイール、Shift + ホイール、中ボタンのドラッグ | 縦のスクロール、横のスクロール、横のパンです。操作の途中は、表示領域の端でもスクロールします |
+| 表示の移動 | Fit、Fit selection、概要の範囲ハンドル | 表示範囲を、明示的に変える操作です |
+| クリップボード | Edit clipsメニュー | Copy、Cut、Pasteの要求を送ります。Pasteは、再生ヘッドと有効なトラックを使い、相対的な時間とトラックの差を保ちます。InsertまたはOverwriteはアプリが実装し、合わない移動先は、まとめて拒否します |
 
-## 最小描画例
+## イベントの契約
 
-```cpp
-#include <imkit/video.h>
-#include <imkit/editor_core.h>
+| イベント | 対象とフィールド |
+| --- | --- |
+| `ClipFades` | 対象はクリップ。`first`と`last`は、イン、アウトの長さ（tick）。`x`と`y`は、`FadeCurve`の値 |
+| `CutTransition` | 対象は左のクリップ。`parent`は右のクリップ、`first`は全体の長さ、`x`は`TransitionKind`。長さ0は、トランジションの削除 |
+| `TrackEdit` | `offset`は`TrackAction`。`parent`は、その前に挿入するトラック（0なら末尾）。追加のときの`x`は`TrackKind` |
+| `Clipboard` | `offset`は`ClipboardAction`、`first`は再生ヘッド、`parent`は移動先のトラック、`x`は`PlacementMode` |
 
-void DrawTimeline(const imkit::video::TimelineProvider& provider,
-                  imkit::video::TimelineState& state,
-                  imkit::editor::Selection& selection,
-                  imkit::editor::EventBuffer& events,
-                  const imkit::Theme& theme) {
-    imkit::video::Timeline("timeline", provider, state, selection, events, theme);
-}
-```
+カットのトランジションは、同じ、ロックされていないトラックの、隣り合うクリップに掛け、両側に十分な素材が必要です。`EvaluateFade`は、クリップ内のフェードのゲインを計算します。メディアのデコードや効果の適用はしません。
 
-**例の種別:** アプリの状態を引数に取る関数例です。provider dataとevent buffer、編集反映はアプリ側が所有します。
+タイムラインは、描画と報告だけを行います。合成、メディアのデコード、保存、Undo/Redoは、アプリが担当します。
 
-## アプリへ組み込む
+公開構造体には、末尾にフィールドが加わります。以前にコンパイルした構造体とのバイナリ互換性は、保証しないので、利用側をすべて再ビルドしてください。既存のenumの値と関数のシグネチャの意味は変わらず、バックエンドとDear ImGuiのバージョンも変わりません。
 
-Begin/Update/Commit/Cancel eventをまとめて処理し、model変更前にrevisionとcollisionを検証します。
+## 検証
 
-## 範囲
+Galleryの「Video」画面で、手で編集を試せます。`--verify-timeline-ui`は、公開IOを通して、ネイティブのOpenGLの確認を行います。フェードの作成、プレビューと確定、Undo、複数トラックの選択、追加と並べ替えが対象です。10万クリップの場合も、見えている行とクリップの問い合わせは、小さく保たれます（確認した1フレームあたり、64行未満、1,000クリップ未満）。
 
-Timelineは編集UIです。再生engine、media decoder、project保存機能ではありません。
-
-## 関連APIとガイド
-
-- [Timeline操作契約](./)
-- [Editor APIリファレンス](../../api/editor-suite/)
-
----
-
-`imkit::video` モジュールは、プロ向けのマルチトラックタイムラインエディタ機能を提供します。
-`TimelineEditingProvider` を実装することで、クリップのフェードイン/アウト、トランジション（Crossfade / Dissolve）、複数クリップの矩形選択、トラック間移動や並べ替えなどの高度な編集操作が有効になります。
-
----
-
-## 編集ジェスチャとマウス操作 (Input)
-
-| 操作対象 | マウス・キーボード操作 | 動作仕様 |
-|---|---|---|
-| **フェードイン / アウト** | クリップ上端のハンドルをドラッグ | フェード時間の調整。ハンドル右クリックでカーブ形状（Linear / EaseIn / EaseOut）を選択 |
-| **トランジション** | `TransitionShelf` から隣接クリップの境界へドラッグ | Dissolve（ビデオ向け）または Crossfade（オーディオ向け）を挿入。ドラッグで長さを調整 |
-| **クリップ選択** | 空白領域をドラッグ | ラバーバンド（矩形）選択。Shiftキーで追加選択、Ctrlキーでトグル選択 |
-| **クリップ移動** | 選択クリップをドラッグ | 選択された複数クリップの相対位置を保ったままトラック間を移動 |
-| **ズーム & パン** | `Ctrl + マウスホイール`<br>`Shift + マウスホイール`<br>`中ボタンドラッグ` | マウスポインタ位置を中心としたズーム<br>横方向スクロール<br>タイムライン全体のパン操作 |
-| **トラックの並べ替え** | トラックヘッダーをドラッグ | 行の前後へトラックを挿入・並べ替え |
-
----
-
-## イベント契約仕様 (Event contract)
-
-タイムライン操作が発生すると、以下の `editor::Event` が発行されます：
-
-- **`ClipFades`**: クリップのフェードイン／アウト長さ、およびイージングカーブ。
-- **`CutTransition`**: 隣接クリップ間のトランジション種別と継続時間。
-- **`TrackEdit`**: トラックの追加、削除、複製、順序変更。
-- **`Clipboard`**: クリップのコピー・カット・ペースト要求（再生ヘッド位置を基準にペースト）。
-
-> [!IMPORTANT]
-> タイムラインは描画と操作イベントの生成のみを行います。実際の音声/映像の合成処理、メディアデコード、ファイルへの保存、および Undo/Redo のスタック管理はホストアプリケーション側で行ってください。
-
----
-
-## 検証とGallery (Verification)
-
-Gallery の **Video** 画面（ページID: 8）で対話的に動作を検証できます。また、コマンドラインオプション `--verify-timeline-ui` を指定して起動することで、フェード作成、プレビュー/確定、Undo、マルチトラック選択、10万クリップ時の可視範囲クエリの負荷検証を自動実行できます。
-実機メディアの再生・デコードやOSネイティブIME連携はホスト側の検証対象です。
+これらの確認では、ネイティブのOSとIMEの動作、実際のメディア処理、ほかのアプリへの統合は、確かめていません。実施した内容と、していない内容は、[検証記録](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/検証記録.md)にあります。

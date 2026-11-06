@@ -1,73 +1,40 @@
 ---
 title: "Icons"
+description: "ImKit ships 321 outline icons in 21 categories."
 ---
 
-## Use this when
+ImKit ships 321 outline icons in 21 categories. The library draws them from texture atlases that your application uploads, so it needs no image decoder, file lookup or renderer of its own.
 
-Use the bundled icon catalog for common tool actions while keeping atlas upload and GPU resources with the renderer.
+![The Gallery Icons page: category and name search, sizes, tint and button states](/imgui-modern-kit/docs-images/v4-icons-poster.png)
 
-## Gallery capture
+[Open native GIF](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-icons.gif)
 
-![Native Gallery capture displaying ImKit's icon atlas and icon buttons.](../../../../assets/captures/v4-icons-poster.png)
+## Summary
 
-Icons — atlas and labeled actions · [Open the native Gallery animation](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-icons.gif)
+| Item | Value |
+| --- | --- |
+| Icons | 321 in 21 categories, listed in `assets/icons/catalog.json` |
+| Raster sizes | 12, 16, 20, 24, 32, 48 and 64 px, one atlas per size |
+| Colour | White glyphs with alpha, so any tint works on light and dark UI |
+| Header | `<imkit/imkit.h>` or `<imkit/icons.h>` |
+| Owner of GPU textures | Your application |
 
-## Minimum drawing example
+## Use the icons
 
-```cpp
-#include <imkit/icons.h>
-
-bool DrawSaveAction(imkit::IconAtlas& icons) {
-    return imkit::IconButton("save", icons, imkit::IconId::Save, "Save document");
-}
-```
-
-**Example type:** Complete function example. The host binds atlas textures before drawing and handles the returned action.
-
-## Integrate with the application
-
-Upload one of the seven supported atlas sizes through the host renderer, bind it to `IconAtlas` and release GPU resources after drawing completes.
-
-## Scope
-
-Icons do not add a renderer, image decoder, file lookup or operating-system accessibility bridge.
-
-## Related API and guides
-
-- [WindowFrame guide](../window-frame/)
-- [Public icon header](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/include/imkit/icons.h)
-
----
-
-The timeline/3D extension appends 32 IDs, including Empty, Frustum, Camera3D,
-Projector3D, geometric primitives and light types. `cg::ObjectView::icon` lets hosts
-select a semantic glyph without extending ObjectKind. The existing IDs retain their order.
-
-The icon catalog holds 321 entries in 21 categories: 238 ImageGen-generated monochrome
-glyphs plus 82 code-authored native control and drawing representations (including the 32 LED and live-surface icons added in 4.0) that need no source bitmaps.
-The artwork is distributed with this repository under its MIT license. The original
-generations and their prompts are retained in `assets/icons/originals` and
-`assets/icons/prompts`; `provenance.json` records source hashes. Original images use
-black strokes because that produced cleaner alpha edges. Packaged PNGs and embedded
-atlases use white RGB with the generated alpha, so any tint works on light or dark UI.
-
-## Host integration
-
-Include `<imkit/imkit.h>` (or `<imkit/icons.h>`). There is no new renderer dependency,
-context creation, image decoder, file lookup, or runtime download in the library.
+Upload one atlas per size, bind each to an `IconAtlas`, then draw inside a normal frame.
 
 ```cpp
-imkit::IconAtlas icons; // Owned alongside your renderer resources.
+imkit::IconAtlas icons;                       // keep it with your renderer resources
 for (int size : imkit::IconPixelSizes) {
     const auto pixels = imkit::GetIconAtlasPixels(size);
-    // Your renderer: upload pixels.width x pixels.height RGBA8, straight alpha.
-    // Use linear filtering, clamp-to-edge, no mipmaps. Retain the GPU resource.
+    // Upload pixels.width x pixels.height RGBA8 with straight alpha.
+    // Use linear filtering, clamp-to-edge and no mipmaps. Keep the GPU resource alive.
     ImTextureRef texture = UploadRgbaTexture(pixels.width, pixels.height, pixels.rgba);
     icons.SetTexture(size, texture);
 }
 
-// Within the host's usual ImGui frame/window:
-imkit::Icon(icons, imkit::IconId::Search); // 20 logical pixels; current text color.
+// In your usual ImGui frame and window:
+imkit::Icon(icons, imkit::IconId::Search);                         // 20 logical pixels, current text colour
 imkit::Icon(icons, imkit::IconId::Warning,
             {.size = 24, .color = ImVec4(0.9f, 0.6f, 0.1f, 1)});
 if (imkit::IconButton("save", icons, imkit::IconId::Save, "Save document")) {
@@ -80,78 +47,46 @@ ImGui::BeginDisabled();
 imkit::IconButton("delete", icons, imkit::IconId::Delete, "Delete selection");
 ImGui::EndDisabled();
 
-// After the last draw submission using these resources has completed:
+// After the last draw call that uses these textures has finished:
 icons.Clear();
-// Destroy your six GPU resources using the renderer's normal lifetime rules.
+// Then destroy your GPU textures by your renderer's normal rules.
 ```
 
-`UploadRgbaTexture`, `SaveDocument` and `OpenDocument` above are host functions,
-not ImKit APIs. See `examples/gallery/main.cpp` for the concrete OpenGL upload.
-The existing `IconButton(id, ImGuiDir, accessibleLabel)` overload is unchanged.
+`UploadRgbaTexture`, `SaveDocument` and `OpenDocument` are your functions, not ImKit APIs. `examples/gallery/main.cpp` has a concrete OpenGL upload. An `IconButton(id, ImGuiDir, accessibleLabel)` overload for arrow buttons also exists.
 
-## API behavior
+## Behaviour
 
-- `GetIconCatalog()` returns stable IDs, English names and categories; `GetIconInfo`
-  returns null for invalid IDs. The 321 entries follow `assets/icons/catalog.json`.
-- `GetIconAtlasPixels` accepts exactly 12, 16, 20, 24, 32, 48 or 64. The returned CPU data
-  is immutable with process lifetime; unsupported sizes return an empty view.
-- `GetIconRegion` returns the corresponding normalized UV rectangle. Two transparent
-  pixels around each atlas cell prevent adjacent glyphs bleeding with linear filtering.
-- Upload and bind all seven sizes. Rendering selects the smallest level sufficient for
-  `options.size * max(DisplayFramebufferScale)`, capped at 64. Sizes above 64 physical
-  pixels upscale the bitmap and can look soft. `options.size` defaults to 20; invalid
-  or nonpositive values use that default. Application UI scaling should scale this
-  logical size too; the Gallery demonstrates it.
-- An absent color inherits `ImGuiCol_Text`. Explicit tint affects the glyph; button
-  text keeps the theme text color. Both honor style alpha, including disabled state.
-- Buttons use native Dear ImGui button hit testing, focus, hover, active and disabled
-  behavior. Supply a stable non-null `id`; each control owns an ImGui ID scope.
-  Labels provide hover/focus tooltips. This is not an operating-system accessibility
-  bridge. Label text after `##` is not drawn.
-- An invalid ID or an unbound selected raster level draws no glyph. `Icon` still
-  reserves its layout space; buttons are disabled rather than allowing blank actions.
-- Each renderer or independently managed context should own an `IconAtlas`. Nothing
-  is globally registered. `Clear` only unbinds; it does not delete GPU resources.
+| Topic | Rule |
+| --- | --- |
+| Catalog | `GetIconCatalog()` returns stable IDs, English names and categories. `GetIconInfo` returns null for an invalid ID. |
+| Atlas data | `GetIconAtlasPixels` accepts exactly 12, 16, 20, 24, 32, 48 or 64. The CPU data is immutable and lives for the whole process. Other sizes return an empty view. |
+| UVs | `GetIconRegion` returns the normalized rectangle. Two transparent pixels around each cell stop neighbours bleeding under linear filtering. |
+| Size selection | Bind all seven sizes. Drawing picks the smallest level that covers `options.size * max(DisplayFramebufferScale)`, up to 64. Larger physical sizes enlarge the 64 px bitmap and look softer. `options.size` defaults to 20 logical pixels. Scale it with your UI scale. |
+| Colour | With no colour set, the icon uses `ImGuiCol_Text`. A tint changes the glyph only. Button text keeps the theme text colour. Style alpha applies, including the disabled state. |
+| Buttons | They use native Dear ImGui hit testing, focus, hover, active and disabled behaviour. Give each a stable, non-null `id`. The label is the hover and focus tooltip, and text after `##` is not drawn. It is not an operating-system accessibility bridge. |
+| Missing data | An invalid ID or an unbound size draws no glyph. `Icon` still reserves its space, and buttons become disabled instead of doing nothing. |
+| Lifetime | Give each renderer or independent context its own `IconAtlas`. Nothing is registered globally. `Clear` only unbinds and deletes no GPU resource. |
 
-## Assets and reproduction
+`cg::ObjectView::icon` lets a 3D outliner pick any catalog glyph without extending `ObjectKind`.
 
-`assets/icons/{12,16,20,24,32,48,64}` contains 2016 individual transparent PNGs.
-`assets/icons/atlases` contains seven atlas PNGs. All are included by CMake install
-under `share/imkit/icons`. Headers and compiled embedded data are installed normally.
-Original large images are kept in the source checkout, not copied into the SDK.
+## Assets and rebuilding
 
-The built-in image generation tool was used individually for each asset; no API key
-or generation tool is required by consumers. `assets/icons/prompts` records the exact
-generation prompts. Generated raster geometry is approximate, not a mathematically
-identical stroke system or a vector icon font.
+| Location | Content |
+| --- | --- |
+| `assets/icons/{12,16,20,24,32,48,64}` | 321 transparent PNGs per size, 2,247 in total |
+| `assets/icons/atlases` | The seven atlas PNGs |
+| `assets/icons/originals`, `assets/icons/prompts` | The 238 source images and the prompts that generated them. They stay in the source tree and are not copied into the SDK. |
+| `assets/icons/provenance.json` | Source file hashes |
+| `share/imkit/icons` | Where CMake install places the PNGs and atlases |
 
-To rebuild derived assets after replacing an original, install Pillow in your authoring
-Python environment and run `python tools/build_icons.py`. This preserves source images,
-normalizes their visual extent, converts RGB to white without replacing alpha shapes,
-and produces PNG variants plus `src/icons_data.inc`. Missing originals are errors.
-Run `python tools/build_icons.py --check` for image/atlas validation. Python and Pillow
-are not build or runtime dependencies for C++ consumers.
+The raster artwork was generated with an image generation tool, one asset at a time. Its geometry is approximate, not a mathematically identical stroke system or an icon font. The other icons are drawn by code and need no source bitmap. The artwork is part of this repository and uses its MIT license.
 
-Atlas rows are derived from catalog length. `metadata.json` records dimensions,
-categories and asset counts, and the C++ UV calculations use the generated layout.
-`stable-ids.json` freezes the original 120 names in order; new IDs must be appended.
-The generator checks the complete public enum against the catalog and validates
-original hashes, every derived image and every atlas region.
+Consumers need no generation tool, key or Python. To rebuild the derived files after replacing an original, install Pillow and run `python tools/build_icons.py`. It keeps the source images, normalizes their extent, converts RGB to white without changing the alpha shape, and writes the PNG variants and `src/icons_data.inc`. `python tools/build_icons.py --check` validates every original, hash, image and atlas region.
 
+The first 120 names are frozen in `stable-ids.json`, and new IDs are only appended, so existing IDs keep their order.
 
-## Native Gallery
+## Check it in the Gallery
 
-The Icons page provides category/name search, seven sizes, tint and interaction states.
-The final catalog has 321 icons (120 stable existing IDs + 200 additions): 238
-ImageGen originals plus 82 native representations, 2240 size variants and seven
-atlases. The operation map records 250 uses, including 55
-native control/drawing representations that do not need separate bitmaps.
+The Icons page lets you search by category and name, switch between the seven sizes, and try tint and interaction states. The image below shows editor icons at 150% scale.
 
-
-Additional 3D symbols are available through `ObjectView::icon` and the searchable catalog.
-Current checks are recorded in [timeline editing](../timeline/). Generation
-validates every original/hash/size/atlas. The image below and
-[Editor 1.0 acceptance](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/archive/editor-validation.md) are the previous baseline.
-
-
-![Editor icons at 150%](/imgui-modern-kit/docs-images/editor-icons-1.0.png)
+![Editor icons at 150% scale](/imgui-modern-kit/docs-images/editor-icons-1.0.png)

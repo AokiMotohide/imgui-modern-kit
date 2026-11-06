@@ -1,5 +1,6 @@
 ---
 title: "アーキテクチャ"
+description: "ImKitは、Dear ImGuiで作る制作ツール向けの、C++20の静的UIライブラリです。この文書は、モジュールの構成、プラットフォームの境界、テーマと状態の所有、拡張の受け入れ方、エディタとShowモジュールがホストに残すものをまとめます。"
 ---
 
 ImKitは、Dear ImGuiで作る制作ツール向けの、C++20の静的UIライブラリです。この文書は、モジュールの構成、プラットフォームの境界、テーマと状態の所有、拡張の受け入れ方、エディタとShowモジュールがホストに残すものをまとめます。
@@ -8,47 +9,7 @@ ImKitは、Dear ImGuiで作る制作ツール向けの、C++20の静的UIライ�
 
 公開ヘッダーは `include/imkit/`、実装は `src/`、テストは `tests/`、Galleryなどのサンプルは `examples/` にあります。
 
-```mermaid
-graph TD
-    Consumer["ホストアプリ"]
-
-    subgraph ImKit["ImKitのモジュール（C++20の静的ライブラリ）"]
-        Core["imkit::imkit<br/>(テーマ、基本部品、ワークフロー)"]
-        EditorCore["imkit::editor_core<br/>(時間軸、キャンバス、ギズモ、分割)"]
-        Video["imkit::video<br/>(タイムライン、モニター、波形)"]
-        CG["imkit::cg<br/>(3Dビューポート、アウトライナー、UV)"]
-        NodeEditor["imkit::node_editor<br/>(グラフキャンバス、ソケット)"]
-        Show["imkit::show<br/>(ライブ、ルール、スケジュール、サーフェス)"]
-        WindowFrame["imkit::window_frame<br/>(カスタムタイトルバー)"]
-        PreviewGL["imkit::preview_opengl3<br/>(任意のプレビュー)"]
-    end
-
-    subgraph HostOwned["ホストが持つもの"]
-        ImGui["Dear ImGui（docking、固定コミット）"]
-        Backend["グラフィックスバックエンド（OpenGL、Metalなど）"]
-        OS["ネイティブウィンドウとメッセージループ"]
-    end
-
-    Consumer --> Core
-    Consumer --> NodeEditor
-    Consumer --> Video
-    Consumer --> CG
-    Consumer --> Show
-    Consumer --> WindowFrame
-
-    Video --> EditorCore
-    CG --> EditorCore
-    Show --> EditorCore
-    EditorCore --> Core
-    Show --> Core
-    PreviewGL --> CG
-
-    Core --> ImGui
-    NodeEditor --> ImGui
-    WindowFrame --> ImGui
-    Backend -.-> ImGui
-    OS -.-> Backend
-```
+![モジュールの関係: ImKitのモジュールと、それぞれが使うもの、アプリが持つもの](/imgui-modern-kit/docs-images/modules-ja.svg)
 
 `imkit::show` に依存するものはありません。`imkit::editor_core` が必要なのは、タイムコードだけです。基本の `imkit` はEditor Coreに依存しません。画像とプレビューの部品はEditor Coreに属し、そのキャンバス、選択、スプリッターを再利用します。[ワークフロー部品](../../features/workflow/)は、基本ライブラリのパターンを拡張したものです。
 
@@ -62,7 +23,7 @@ graph TD
 | `node_editor.h`、`node_layout.cpp` | グラフのスナップショット、容量付きの要求、決定的なレイアウト。グラフの保持と評価はしない |
 | Galleryホスト | Context、フォント、GLFW/OpenGL、画像の撮影、代表的な入力 |
 
-デザインシステムに共通する追加、明示的なセマンティックの枠、ロケールとプロバイダーの契約は、[デザインシステム](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/architecture/デザインシステム.md)にあります。`MakeTheme` や `ResolveTheme` を使うとき、従来のパレットとmetricsは、セマンティックトークンから導く描画用の射影です。Precision Layersは、意味のデザイン、ネイティブの挙動、ホストの状態を分けます。
+デザインシステムに共通する追加、明示的なセマンティックの枠、ロケールとプロバイダーの契約は、[デザインシステム](../../features/design-system/)にあります。`MakeTheme` や `ResolveTheme` を使うとき、従来のパレットとmetricsは、セマンティックトークンから導く描画用の射影です。Precision Layersは、意味のデザイン、ネイティブの挙動、ホストの状態を分けます。
 
 ## ライブラリがしないこと
 
@@ -117,4 +78,4 @@ CGのトランスフォームは、向きのある非一様スケールのため
 | カレンダー | 移動の要求構造体 |
 | コントロールサーフェス | 移動とサイズ変更を、スナップ済みの矩形で |
 
-ホストが持つのは、すべての値、テクスチャ、画像ファイル（画像ボタンはファイルを要求するだけで、読み込みません）、サーフェスの配置モデル、時計（UTC秒とタイムゾーンのコールバック）、MIDI・OSC・DMXの機器、メディア再生、スクリプトの解析、保存です。`EvaluateRule`、`NextOccurrences`、`ParseCron`、`SolarEvents`、`FindConflicts`、`DetectDelimiter` などの純関数が論理を担うので、Contextなしで試験できます。色はテーマのセマンティックトークンから導き、Show専用のテーマ項目はありません。[Showモジュール](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/components/ショーモジュール.md)を参照してください。
+ホストが持つのは、すべての値、テクスチャ、画像ファイル（画像ボタンはファイルを要求するだけで、読み込みません）、サーフェスの配置モデル、時計（UTC秒とタイムゾーンのコールバック）、MIDI・OSC・DMXの機器、メディア再生、スクリプトの解析、保存です。`EvaluateRule`、`NextOccurrences`、`ParseCron`、`SolarEvents`、`FindConflicts`、`DetectDelimiter` などの純関数が論理を担うので、Contextなしで試験できます。色はテーマのセマンティックトークンから導き、Show専用のテーマ項目はありません。[Showモジュール](../../features/show/)を参照してください。

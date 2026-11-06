@@ -1,141 +1,120 @@
-# Author a custom component
+# Build a custom component
 
 [日本語](カスタムコンポーネントの作成.md) · [Documentation index](../README.md) · [How ImKit works](../getting-started/how-it-works.md)
 
-ImKit components are small compositions over Dear ImGui behavior: a `ThemeScope`, semantic colors from your theme, host-owned state, and a returned request. Once you follow that shape, you can add a control that fits the design system without touching the library. This page shows the rules and a complete, minimal custom control — a "chip" toggle.
+ImKit's own controls are small compositions: a Dear ImGui item for the interaction, theme tokens for colour and size, a value that the caller owns, and a returned result. A control you write the same way follows the theme without any change to the library. This tutorial builds a pill-shaped toggle, `ChipToggle`.
 
-![Themed panels in the Gallery](../images/v4-start.gif)
+<img src="../images/v4-themes.gif" alt="Picking a theme in the Gallery recolours every component that reads semantic colours" width="960">
 
-## The core pattern
+## The pattern
 
-Every custom component obeys the same four moves:
+1. **Let Dear ImGui handle the interaction.** Use an item such as `InvisibleButton`. Hover, focus, keyboard navigation, IDs and disabled state then stay native.
+2. **Read colours from `theme.semantic`.** The control then follows light and dark themes, contrast and custom accents. Take sizes from the themed frame height, not from literals.
+3. **The caller owns the state.** The control edits a value through a pointer and never stores it.
+4. **Return the result.** Return true when the user changed the value. The caller decides what that means.
 
-1. **Wrap in a `ThemeScope`.** The control is drawn in the active theme and restores the previous context when the block ends.
-2. **Read semantic colors, not raw hex.** Pull colors from `theme.semantic.*` so the control automatically follows light/dark, contrast, and custom accents.
-3. **Own the state on the host.** The control reads/writes a value your model holds. ImKit never retains it.
-4. **Report, don't act.** Return a request (`true` when something changed). Your code decides what the change means.
+## Before you start
 
-## What you'll build
+A Dear ImGui context and window, a `Theme` from `MakeTheme`, and `imkit::imkit` linked.
 
-- A small toggle chip: a label, an on/off dot, and a click.
-- A `ThemeScope` and semantic colors so it themes itself.
-- A host `bool` and a `StableId` for focus.
-- A returned toggle request.
-
-## What you need
-
-1. A Dear ImGui context and window.
-2. A `Theme` (from `MakeTheme`/`MakePrecisionTheme`).
-3. CMake linking the `imkit::imkit` target (and `accessibility` for the optional a11y step).
-
-## Own the state
+## Step 1: Write the control
 
 ```cpp
+#include <imgui.h>
 #include <imkit/imkit.h>
-#include <imkit/accessibility.h>
 
-struct ChipState {
-    bool on = false;
-    const char *label = "Notifications";
-    imkit::StableId id = 1001;   // nonzero: focus + accessibility identity
-    bool disabled = false;
-};
-```
+namespace a11y = imkit::accessibility;
 
-`id` is a 64-bit stable value you assign (never `ImGui::GetID` for the a11y path, which must survive frame churn). Keep it alive for the control's lifetime.
+// A pill-shaped toggle. It edits *on and returns true on the frame the user changes it.
+bool ChipToggle(const char* label, bool* on, const imkit::Theme& theme,
+                a11y::AccessibilityFrame* access = nullptr, a11y::StableId id = 0) {
+    const ImGuiStyle& style = ImGui::GetStyle();
+    const imkit::SemanticColors& color = theme.semantic;
 
-## Theme it and draw it
+    // Size from the themed frame height, so the chip follows density and scale.
+    const float height = ImGui::GetFrameHeight();
+    const ImVec2 textSize = ImGui::CalcTextSize(label);
+    const ImVec2 size{height + textSize.x + style.FramePadding.x, height};
 
-The control is a `ThemeScope` + a few semantic colors + Dear ImGui primitives. Notice the colors come from `theme.semantic`, so the chip re-skins itself when the theme changes.
+    // Dear ImGui provides the hit test, hover, focus and disabled behaviour.
+    const bool pressed = ImGui::InvisibleButton(label, size);
+    if (pressed) *on = !*on;
 
-```cpp
-bool DrawChip(const ChipState &s,
-              const imkit::Theme &theme,
-              imkit::ComponentOptions options = {}) {
-    imkit::ThemeScope scope(theme);                 // 1. theme; restores context
+    if (access) {                                    // optional: describe the item to assistive technology
+        a11y::SemanticNode node;
+        node.id = id;
+        node.role = a11y::SemanticRole::Toggle;
+        node.name = label;
+        node.state.checked = *on;
+        node.actions = a11y::SemanticAction::Toggle;
+        a11y::AnnotateLastItem(*access, node);
+    }
 
-    // 2. semantic colors (auto light/dark, contrast, custom accent)
-    ImVec4 bg   = s.on ? theme.semantic.accent : theme.semantic.surfaceRaised;
-    ImVec4 ink  = s.disabled ? theme.semantic.textDisabled : theme.semantic.text;
-    float r      = theme.metrics.radius;
-    ImVec2 size  = { 96.f, theme.metrics.controlHeight };   // from theme metrics
+    // Draw with semantic colours only.
+    const ImVec2 min = ImGui::GetItemRectMin(), max = ImGui::GetItemRectMax();
+    const ImVec4 fill = *on ? color.accent : (ImGui::IsItemHovered() ? color.surfaceRaised : color.surface);
+    const ImVec4 ink = *on ? color.onAccent : color.text;
+    const float round = height * 0.5f;
 
-    bool pressed = !s.disabled && ImGui::InvisibleButton("##chip", size);
-    if (pressed) s.on = !s.on;                              // 3. host value flips
-
-    // 4. draw the pill + label with theme colors only
-    ImGuiDrawList *dl = ImGui::GetWindowDrawList();
-    ImVec2 p = ImGui::GetItemRectMin();
-    dl->AddRoundedRect(p, p + size, r,
-                       (ImU32)ImGui::ColorImVec4(theme.semantic.border), bg);
-    ImGui::SetCursorScreenPos(p + ImVec2(size.x * .36f, size.y * .5f));
-    ImGui::PushStyleColorV3(ImGuiCol_Text, ink);
-    ImGui::TextUnformatted(s.label);
-    ImGui::PopStyleColorV3(1);
-    // A dot: dl->AddCircle(p + ImVec2(size.x * .24f, size.y * .5f), 4.f,
-    //                     s.on ? theme.semantic.onAccent : theme.semantic.border, 32);
-
-    // Advanced: read options.accessibility / options.parent / options.locale /
-    // options.animation here for focus, a11y, localized strings, motion.
-    (void)options;
-
-    return pressed;                    // 5. report; the caller decides what it means
+    ImDrawList* draw = ImGui::GetWindowDrawList();
+    draw->AddRectFilled(min, max, ImGui::GetColorU32(fill), round);
+    draw->AddRect(min, max, ImGui::GetColorU32(color.border), round);
+    draw->AddCircleFilled({min.x + round, min.y + round}, height * 0.14f, ImGui::GetColorU32(ink));
+    draw->AddText({min.x + height, min.y + (height - textSize.y) * 0.5f}, ImGui::GetColorU32(ink), label);
+    if (ImGui::IsItemFocused())
+        draw->AddRect(min, max, ImGui::GetColorU32(ImGuiCol_NavCursor), round, ImDrawFlags_None, 2.0f);
+    return pressed;
 }
 ```
 
-The visual details (pill, dot, label) are up to you. The important parts are that **all colors come from the theme** and **all state is the host's**. Swap in `theme.semantic.success` for a "ready" chip, `theme.semantic.error` for a fault indicator, and `ThemeScope` keeps the surrounding context untouched.
+| Part | Why |
+| --- | --- |
+| `ImGui::GetFrameHeight()` | The height follows the theme's density and the application scale |
+| `ImGui::InvisibleButton(label, size)` | Gives the item an ID, hit test, hover, focus and disabled behaviour |
+| `color.accent`, `onAccent`, `surface`, `surfaceRaised`, `text`, `border` | Semantic colours, so a theme change recolours the chip |
+| `ImGui::GetColorU32(ImVec4)` | Applies the style alpha, so the chip dims inside `BeginDisabled` |
+| `ImGui::IsItemFocused()` | Draws a focus ring for keyboard and gamepad navigation |
 
-The visual details (pill, dot, label) are up to you. The important part is that **all colors come from the theme** and **all state is the host's**. Swap in `theme.semantic.success` for a "ready" chip, `theme.semantic.error` for a fault indicator, and `ThemeScope` keeps the surrounding context untouched.
+The label must not contain `##`. To draw a different label from the ID, build the text yourself before the call.
 
-## Report, don't act
-
-```cpp
-// In your frame, after NewFrame():
-if (DrawChip(chip, theme, { .disabledReason = "Locked" })) {
-    chip.on ? PushEvent(chip.id, "on") : PushEvent(chip.id, "off"); // your code
-}
-```
-
-The returned `true` means "user clicked." Your code decides what that means — persisting, toggling a global, firing an event. The `ComponentOptions` struct carries the extras a control may need: `theme`, `animation`, `accessibility`, `parent` (StableId), `locale`, and `disabledReason`.
-
-## Optional: accessibility annotations
-
-For larger controls, expose them to screen readers and native a11y. Build an `AccessibilityFrame` once, then annotate the item you just drew:
+## Step 2: Use it
 
 ```cpp
-imkit::accessibility::AccessibilityFrame frame(storage, actions);   // host-owned storage/queue
-frame.Begin(generation);
-// ... draw the control ...
-frame.Add({
-    .id = s.id,
-    .parent = parentId,
-    .role = imkit::accessibility::SemanticRole::Toggle,
-    .name = s.label,
-    .value = s.on ? "on" : "off",
-    .state = { .checked = s.on, .disabled = s.disabled, .focused = false },
-    .actions = imkit::accessibility::SemanticAction::Press,
-});
-frame.Publish(sink);
+    bool notifications = true;   // your value
+
+    // Inside the frame
+    if (ChipToggle("Notifications", &notifications, theme)) {
+        SaveNotificationSetting(notifications);   // your code decides what the change means
+    }
 ```
 
-The node fields are borrowed until the host publishes the frame. Use `AnnotateLastItem` when attaching to an immediately-previous ImGui item. This is how you make a custom control participate in keyboard focus, screen readers, and high-contrast mode.
+Wrap the call in `imkit::ThemeScope` when one panel should use another theme. Call `imkit::BeginDisabled(true)` before the chip to disable it. The chip then ignores input and draws dimmed.
 
-## How to run it
+## Step 3: Describe it to assistive technology (optional)
 
-- Drop `DrawChip` into the Gallery or your own app and call it in a frame. It themes itself against the active `Theme`.
-- In `tests/design_system.cpp`-style fixtures you can assert the chip's colors follow `ThemePresets()` and that `ThemeScope` restores the prior context.
+`AnnotateLastItem` attaches a semantic node to the item you just drew. It submits no new item. The host owns the node storage and publishes the frame to its platform bridge.
 
-## The rules that keep it right
+```cpp
+std::array<imkit::accessibility::SemanticNode, 64> storage;   // host-owned
+imkit::accessibility::AccessibilityFrame access(storage);
 
-- **ThemeScope always.** No component escapes the active theme.
-- **Semantic colors only.** Never bake `ImVec4{...}` hex literals into a control; read `theme.semantic.*`.
-- **Host owns state.** The control writes your value and returns a request; it never persists, allocates, or keeps pointers across frames.
-- **Stable `id`.** Use a nonzero `StableId` for focus and a11y. Don't reuse a value from `ImGui::GetID`.
-- **Gate on `disabled`.** Skip input when `disabled` is set, and surface `disabledReason` to the user.
-- **Balance every scope.** `ThemeScope` is a RAII block; `Begin`/`End` pairs close even when they returned false.
+access.Begin(generation);                                    // once per frame, before drawing
+ChipToggle("Notifications", &notifications, theme, &access, 1001);
+access.Publish(sink);                                        // after drawing, to your platform bridge
+```
+
+Give each control a nonzero `StableId` that you choose. Do not use `ImGui::GetID` for it, because the identity must stay the same between frames. The node's text is borrowed until you publish the frame.
+
+## Rules
+
+- Take colours from `theme.semantic` and sizes from the themed frame. Do not write colour literals into a control.
+- Keep interaction in Dear ImGui items so focus, IDs, `Begin`/`End` pairing and disabled state stay native.
+- The caller owns the value. The control must not store it, allocate, or keep pointers across frames.
+- Return a result and let the caller act.
+- Use a stable, nonzero `StableId` for accessibility.
 
 ## Next
 
-- [Components and recipes (per-control reference)](../components/components.md)
-- [Design system](../architecture/design-system.md)
+- [Components](../components/components.md): the library's own controls.
+- [Design system](../architecture/design-system.md): the tokens in detail.
 - [Architecture](../architecture/architecture.md)

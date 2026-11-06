@@ -18,7 +18,7 @@ const { title = data.title, tagline, actions = [] } = data.hero ?? {};
 	<div class="imkit-hero-image imkit-film" id="film">
         <video controls playsinline preload="metadata"
             poster={`${base}/media/imkit-poster.jpg?v=${revision}`}
-            aria-label={english ? `ImKit ${edition}: Modern UI. Familiar workflow. Three-minute film with music.` : `ImKit ${edition}の紹介動画（約3分）。BGM付き。`}>
+            aria-label={english ? `ImKit ${edition} introduction film, about three minutes, with music.` : `ImKit ${edition}の紹介動画（約3分）。BGM付き。`}>
             <source src={`${base}/media/${film}?v=${revision}`} type="video/mp4" />
         </video>
         <p>{english ? `ImKit ${edition} film · About 3 minutes · Recorded in the Gallery · Music: "Laserpack" by Kevin MacLeod ft. DarkNES (CC BY 4.0)` : `ImKit ${edition}の紹介動画 · 約3分 · Galleryを実際に操作して録画 · 音楽: Kevin MacLeod ft. DarkNES「Laserpack」（CC BY 4.0）`}</p>

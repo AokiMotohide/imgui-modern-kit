@@ -1,34 +1,38 @@
 ---
 title: よくある質問
-description: Dear ImGui、font、Theme、SDKとGalleryに関する導入時の確認事項。
+description: Dear ImGui、フォント、テーマ、SDK、Galleryについて、導入時によくある質問。
 ---
 
-## Dear ImGuiはImKitが用意しますか？
+## Dear ImGuiは、ImKitが用意しますか。
 
-いいえ。Dear ImGuiのContext、backend、renderer、font atlas、フレームループはアプリ側が用意します。source integrationでは既存のDear ImGui targetを`IMKIT_IMGUI_TARGET`に設定します。詳細は[依存関係](../dependencies/)を参照してください。
+いいえ。Dear ImGuiのContext、バックエンド、レンダラー、フォントアトラス、フレームループは、アプリが用意します。ソースから組み込むときは、すでにあるDear ImGuiのターゲットを、`IMKIT_IMGUI_TARGET`に指定します。詳しくは、[依存関係](../dependencies/)を参照してください。
 
-## 配布SDKを使えますか？
+## ImKitは、Dear ImGuiを改変しますか。
 
-compiler、architecture、CRT、Dear ImGui revision、compile definitions、`imconfig.h`がSDKと一致すると確認できる場合に利用できます。不一致ならsource integrationを選びます。[導入ガイド](../../getting-started/)のSDK手順とABI条件を確認してください。
+いいえ。ImKitが使うのは、Dear ImGuiの公開APIだけで、`imgui_internal.h`は使いません。Dear ImGuiをフォークせず、パッチも当てず、ビルドし直すこともしません。
 
-## 日本語の文字やIMEが動きません
+## ビルド済みのSDKを使えますか。
 
-Themeはfontを読み込みません。必要なglyph rangeをアプリのfont atlasへ追加し、文字入力に必要なplatform IME callbackをアプリ側で用意します。
+コンパイラ、アーキテクチャ、CRT、Dear ImGuiのリビジョン、コンパイル定義、`imconfig.h`が、SDKと一致すると確認できたときに使えます。1つでも違うときは、ソースから組み込みます。手順とABIの条件は、[導入ガイド](../../getting-started/)にあります。
 
-## Themeを何度も適用すると寸法が大きくなります
+## 日本語の文字やIMEが動きません。
 
-scaleは`ApplyTheme`または`ThemeScope`へ渡し、`Theme::metrics`を別に事前scaleしないでください。Themeは未scaleの寸法からstyleを導出します。
+テーマは、フォントを読み込みません。必要なグリフの範囲をアプリのフォントアトラスに加え、文字入力に必要なプラットフォームのIMEのコールバックも、アプリで用意します。
 
-## Galleryを組み込みビルドで起動できますか？
+## テーマを何度も適用すると、サイズが大きくなります。
 
-Galleryを無効にするsubdirectory buildでは、既存のDear ImGui targetを指定します。Galleryを含むstandalone buildは固定したDear ImGuiとGLFW revisionを取得します。必要条件とtarget構成は[依存関係](../dependencies/)を参照してください。
+スケールは、`ApplyTheme`か`ThemeScope`にだけ渡してください。`Theme::metrics`を、別に拡大してはいけません。テーマは、スケール前の寸法から、スタイルを作り直します。
 
-## API宣言の件数は個別に動作確認した関数数ですか？
+## 組み込んだビルドで、Galleryを動かせますか。
 
-いいえ。件数はinventoryにある公開宣言行です。signature一覧は呼び出し例ではなく、Dear ImGui API行ごとの操作確認数も表しません。利用ガイドと各公開headerで契約を確認してください。
+Galleryを無効にしてサブディレクトリとして組み込むときは、既存のDear ImGuiのターゲットを指定します。Galleryを含む単体ビルドは、固定したリビジョンのDear ImGuiとGLFWを取得します。条件は、[依存関係](../dependencies/)を参照してください。
+
+## APIの宣言の件数は、動作確認した関数の数ですか。
+
+いいえ。件数は、一覧にある公開宣言の行数です。署名の一覧は、呼び出しの例ではなく、行ごとに操作を確認した数でもありません。契約は、各ページと公開ヘッダーで確認してください。
 
 ## 関連ページ
 
 - [トラブルシューティング](../troubleshooting/)
-- [依存関係と対応環境](../dependencies/)
+- [依存関係](../dependencies/)
 - [v2からの移行](../migration/)

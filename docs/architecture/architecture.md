@@ -8,47 +8,7 @@ ImKit is a C++20 static UI library for tools built on Dear ImGui. This page cove
 
 Public headers live in `include/imkit/`, implementation in `src/`, tests in `tests/`, and the Gallery and other samples in `examples/`.
 
-```mermaid
-graph TD
-    Consumer["Host application"]
-
-    subgraph ImKit["ImKit modules (C++20 static libraries)"]
-        Core["imkit::imkit<br/>(themes, controls, workflow)"]
-        EditorCore["imkit::editor_core<br/>(time axis, canvas, gizmo, splitter)"]
-        Video["imkit::video<br/>(timeline, monitor, waveform)"]
-        CG["imkit::cg<br/>(3D viewport, outliner, UV)"]
-        NodeEditor["imkit::node_editor<br/>(graph canvas, sockets)"]
-        Show["imkit::show<br/>(live, rules, schedule, surface)"]
-        WindowFrame["imkit::window_frame<br/>(custom title bar)"]
-        PreviewGL["imkit::preview_opengl3<br/>(optional preview)"]
-    end
-
-    subgraph HostOwned["Owned by the host"]
-        ImGui["Dear ImGui (pinned docking commit)"]
-        Backend["Graphics backend (OpenGL, Metal, ...)"]
-        OS["Native window and message loop"]
-    end
-
-    Consumer --> Core
-    Consumer --> NodeEditor
-    Consumer --> Video
-    Consumer --> CG
-    Consumer --> Show
-    Consumer --> WindowFrame
-
-    Video --> EditorCore
-    CG --> EditorCore
-    Show --> EditorCore
-    EditorCore --> Core
-    Show --> Core
-    PreviewGL --> CG
-
-    Core --> ImGui
-    NodeEditor --> ImGui
-    WindowFrame --> ImGui
-    Backend -.-> ImGui
-    OS -.-> Backend
-```
+![Module map: ImKit modules, what each builds on, and what the application owns](../diagrams/modules-en.svg)
 
 Nothing depends on `imkit::show`; it needs `imkit::editor_core` only for timecode. The base `imkit` does not depend on Editor Core. Image and preview components belong to Editor Core and reuse its canvas, selection and splitter. The [workflow components](../components/workflow-components.md) extend the patterns in the base library.
 

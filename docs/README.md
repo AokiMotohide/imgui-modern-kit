@@ -1,104 +1,92 @@
 # ImKit documentation
 
+[日本語](目次.md) · [Project overview](../README.md) · [Changelog](../CHANGELOG.md)
 
-[4.1 additions: tile map, control sizes, sprites, PTZ capabilities and the node editor look](reference/v4.1-api.md) · [4.0 additions: brand themes, charts, PTZ, range sliders and the show module](reference/v4.0-api.md) · [Migrating to 4.0 and 4.1](reference/migration-v4.md)
-[3.3 additions: progress tracks, stages and task cards](reference/v3.3-api.md)
-[日本語](目次.md) · [Project overview](../README.md)
+ImKit is a C++20 static library of themes, controls and editor components for Dear ImGui applications. Every page here exists in English and Japanese with the same content. The [documentation catalog](reference/documentation-catalog.md) lists each page with its audience and source headers.
 
-ImKit's documentation is organized in structured categories to help Dear ImGui developers quickly find what they need:
+## Start here
 
-- **Getting Started (`getting-started/`)** — the mental model, ownership principles, installation, and usage guide.
-- **Tutorials (`tutorials/`)** — runnable codelabs from your first themed window to full node editors and timelines.
-- **Architecture (`architecture/`)** — authoritative ownership model, design tokens, themes, and dependencies.
-- **Components (`components/`)** — detailed guides for individual components and modules.
-- **Reference (`reference/`)** — API signatures, widget inventory, migration guides, and validation records.
+| If you want to | Read |
+| --- | --- |
+| See what ImKit looks like before you integrate it | [Gallery guide](getting-started/gallery.md) |
+| Add ImKit to a CMake project and draw a first frame | [Getting started](getting-started/getting-started.md) |
+| Understand the frame model and who owns what | [How ImKit works](getting-started/how-it-works.md) |
+| Build something step by step | [Tutorials](#tutorials) |
+| Find the header and target for a feature | [Examples and recipes](getting-started/examples-recipes.md) |
+| Give your application its own look | [Themes](architecture/themes.md), then [Make your own look](architecture/make-your-own-look.md) |
+| Upgrade from an earlier version | [Migration to 4.0 and 4.1](reference/migration-v4.md) |
+| Fix a build or runtime problem | [Troubleshooting](reference/troubleshooting.md) |
 
-For the complete bilingual page map, audience, and source mapping, see the [documentation catalog](reference/documentation-catalog.md). For practical recipes, see [examples and recipes](getting-started/examples-recipes.md).
+## Documents
 
----
+### Getting started
 
-## 🗺️ Learning Roadmap
+| Page | Content |
+| --- | --- |
+| [Getting started](getting-started/getting-started.md) | Requirements, CMake integration, the first frame |
+| [How ImKit works](getting-started/how-it-works.md) | The immediate-mode frame and the ownership model |
+| [User guide](getting-started/guide.md) | Applying a theme, the control families, linking |
+| [Gallery guide](getting-started/gallery.md) | Running the Gallery and finding each page's source |
+| [Examples and recipes](getting-started/examples-recipes.md) | Header, target and Gallery page for each area |
 
-```mermaid
-flowchart TD
-    Start["Want to use ImKit?"] --> Choice{"What is your goal?"}
+### Tutorials
 
-    Choice -->|"Quick evaluation / First app"| QuickPath["1. Getting Started"]
-    QuickPath --> GS["getting-started/getting-started.md"]
-    GS --> FA["tutorials/build-first-app.md"]
-    FA --> Gallery["getting-started/gallery.md"]
+| Page | You build |
+| --- | --- |
+| [Build your first app](tutorials/build-first-app.md) | A one-frame program with a theme, a toggle and a button |
+| [Build a settings screen](tutorials/build-settings-screen.md) | A form with validation, saving and a notification |
+| [Build a node editor](tutorials/build-node-editor.md) | A graph model that applies edit requests, with Undo |
+| [Build a timeline](tutorials/build-timeline.md) | Tracks and clips with move, trim and split |
+| [Build a custom component](tutorials/custom-component.md) | A themed control written the way ImKit's own are |
 
-    Choice -->|"Deep dive into architecture"| DeepPath["2. Design & Architecture"]
-    DeepPath --> HIW["getting-started/how-it-works.md"]
-    HIW --> Arch["architecture/architecture.md"]
-    Arch --> DS["architecture/design-system.md"]
+### Architecture
 
-    Choice -->|"Build a specific UI"| FeaturePath["3. Codelabs & Features"]
-    FeaturePath --> FEAT{"Which UI?"}
-    FEAT -->|"Node Editor"| NodeEd["components/node-editor.md"]
-    FEAT -->|"Video Timeline"| TL["components/timeline-editing.md"]
-    FEAT -->|"Settings screen"| SetSc["tutorials/build-settings-screen.md"]
-    FEAT -->|"Custom widget"| CustomComp["tutorials/custom-component.md"]
+| Page | Content |
+| --- | --- |
+| [Architecture](architecture/architecture.md) | Modules, ownership and the platform boundary |
+| [Design system](architecture/design-system.md) | Semantic tokens, typography and contrast |
+| [Themes](architecture/themes.md) | The 13 presets, customization and `ThemeScope` |
+| [Make your own look](architecture/make-your-own-look.md) | Brand colours, theme files, outlines, shadows, skins and sprites |
+| [Icons](architecture/icons.md) | 321 icons, atlases and GPU upload |
+| [Dependencies](architecture/dependencies.md) | Dear ImGui and GLFW, the pinned revision, CMake resolution |
 
-    Choice -->|"Troubleshooting / API lookup"| RefPath["4. Reference & Fixes"]
-    RefPath --> Trouble["reference/troubleshooting.md"]
-    RefPath --> API["reference/api-coverage.md"]
-    RefPath --> Migration["reference/migration-v3.md"]
-```
+### Components
 
----
+| Page | Content |
+| --- | --- |
+| [Components](components/components.md) | Themed controls and a full settings panel |
+| [Charts](components/charts.md) | Donut, bar, gauge and sparkline |
+| [PTZ and range sliders](components/ptz.md) | Camera control and two-handle sliders |
+| [Toasts](components/toasts.md) | Notification cards, positions, actions and progress |
+| [Workflow components](components/workflow-components.md) | Navigation, hierarchy, feedback, progress and an image viewer |
+| [Shell components](components/shell-components.md) | App bars, workspace headers and drawers |
+| [Node editor](components/node-editor.md) | The snapshot and request model for graphs |
+| [Timeline editing](components/timeline-editing.md) | Fades, transitions, selection and track moves |
+| [Editor suite](components/editor-suite.md) | Editor core, video and CG surfaces |
+| [Show module](components/show.md) | Live, rules, schedule, surface, LED and tile map |
+| [Window frame](components/gallery-window-frame.md) | A themed title bar and OS adapters |
 
-## 📂 Documentation by Category
+### Reference
 
-### Getting Started (`getting-started/`)
-- [Getting started](getting-started/getting-started.md) — Prerequisites, CMake integration, and first calls.
-- [User guide](getting-started/guide.md) — Host–library split, basic usage, and first themed controls.
-- [How ImKit works](getting-started/how-it-works.md) — Ownership model, immediate mode frame loop, and Dear ImGui relation.
-- [Gallery guide](getting-started/gallery.md) — Exploring the native Gallery and code locations.
-- [Examples and recipes](getting-started/examples-recipes.md) — Practical code snippets and patterns.
+| Page | Content |
+| --- | --- |
+| [Public API coverage](reference/api-coverage.md) | Every wrapped Dear ImGui overload and ImKit function |
+| [Editor API](reference/editor-api.md) | Editor suite types, signatures and provider contracts |
+| [Widget inventory](reference/widget-inventory.md) | The component list and the audit decisions |
+| [4.1 additions](reference/v4.1-api.md) | What 4.1 added, by header |
+| [4.0 additions](reference/v4.0-api.md) | What 4.0 added, by header |
+| [3.3 additions](reference/v3.3-api.md) and [3.2 additions](reference/v3.2-api.md) | Progress tracks, stages, task cards, workspace parts |
+| [Migration to 4.0 and 4.1](reference/migration-v4.md), [from v2](reference/migration-v3.md) | Rebuild notes, changed defaults, deprecated spellings |
+| [Validation](reference/validation.md) | What was verified, and what was not |
+| [Troubleshooting](reference/troubleshooting.md) | Build, link and runtime problems |
 
-### Tutorials (`tutorials/`)
-- [Build your first ImKit app](tutorials/build-first-app.md) — Minimal host-owned application setup.
-- [Build a settings screen](tutorials/build-settings-screen.md) — Host state, setting rows, and save/validation.
-- [Build a node editor](tutorials/build-node-editor.md) — Graph snapshot in, edit requests out.
-- [Build a timeline](tutorials/build-timeline.md) — Multi-track timeline, clips, and playhead.
-- [Build a custom component](tutorials/custom-component.md) — Using `ThemeScope` and tokens for custom widgets.
+## Versions
 
-### Architecture (`architecture/`)
-- [Architecture](architecture/architecture.md) — Authoritative ownership model, module split, and host boundary.
-- [Design system](architecture/design-system.md) — Semantic design tokens, typography, and contrast invariants.
-- [Themes](architecture/themes.md) — 13 built-in presets, palette customization, and `ThemeScope`.
-- [Make your own look](architecture/make-your-own-look.md) — From four brand colours to a theme file, outlines, shadows and custom skins.
-- [Icons](architecture/icons.md) — Procedural outline icons, multi-size atlases, and GPU upload.
-- [Dependencies](architecture/dependencies.md) — Pinned Dear ImGui docking commit, compiler flags, and options.
+| Version | Where |
+| --- | --- |
+| In development (`main`) | [Changelog, Unreleased](../CHANGELOG.md): tile map, sprites, adjustable control sizes, PTZ capabilities |
+| 4.1 | [4.1 additions](reference/v4.1-api.md), [migration guide](reference/migration-v4.md#upgrading-from-40-to-41) |
+| 4.0 | [4.0 additions](reference/v4.0-api.md), [migration guide](reference/migration-v4.md) |
+| 3.3 and 3.2 | [3.3 additions](reference/v3.3-api.md), [3.2 additions](reference/v3.2-api.md) |
 
-### Components (`components/`)
-- [Components](components/components.md) — Themed Dear ImGui controls and composite widgets.
-- [Node editor](components/node-editor.md) — Snapshot/request node canvas and editor widgets.
-- [Timeline editing](components/timeline-editing.md) — Track actions, roll/slide gestures, and external drop.
-- [Editor suite](components/editor-suite.md) — Professional workspace modules (Core, Video, CG).
-- [Workflow components](components/workflow-components.md) — Multi-step workflows, wizards, feedback, and cards.
-- [Shell components](components/shell-components.md) — Top chrome, header bars, and bottom action bars.
-- [Window frame](components/gallery-window-frame.md) — Modern custom title bars and OS window frame integration.
-
-### Reference (`reference/`)
-- [Public API coverage](reference/api-coverage.md) — Full coverage table of Dear ImGui overloads.
-- [Editor API](reference/editor-api.md) — Accurate signature reference for all Editor Suite modules.
-- [Widget inventory](reference/widget-inventory.md) — Complete widget list and audit rationale.
-- [Documentation catalog](reference/documentation-catalog.md) — Complete page index, audience, and source mapping.
-- [Validation](reference/validation.md) — Automated gate and acceptance evidence.
-- [Migration to 4.0](reference/migration-v4.md) — Upgrading from 3.x: rebuild, changed defaults and deprecated spellings.
-- [Migration v3](reference/migration-v3.md) — Upgrading from ImKit v2 to v3.
-- [Troubleshooting](reference/troubleshooting.md) — Solutions to common integration and build issues.
-
----
-
-## 💡 The Core Mental Model: You Own Everything
-
-There is only one essential principle to remember when using ImKit:
-
-> **"You own everything; ImKit only draws and reports events."**
-
-The Dear ImGui context, allocations, persistence, undo/redo history, and business models all belong strictly to **your host application**. ImKit never stores mutable document state or silently alters your data. Instead, it renders your models and returns typed requests that you validate and commit.
-
-For details, see [How ImKit works](getting-started/how-it-works.md).
+`docs/archive/` keeps design notes and audits from earlier milestones. They explain past decisions and do not promise any API.

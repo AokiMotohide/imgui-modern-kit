@@ -1,5 +1,6 @@
 ---
 title: "Component inventory"
+description: "Dear ImGui standard widgets styled with the ImKit Precision Layers design system:"
 ---
 
 **Precision Layers** is the selected implementation. The authoritative overload-level mapping is [api-coverage.md](../native/), backed by [api-inventory.json](../native/) and `tests/api_compile.cpp`.
@@ -21,8 +22,7 @@ Dear ImGui standard widgets styled with the ImKit Precision Layers design system
 | Switch, mixed checkbox, segments, searchable combo | Native input composition; explicit host-owned values | Composites / Basic |
 | Unit scalar/vector, setting row, badge, notification, toolbar | Small compositions with theme/font-derived dimensions | Composite controls / Numeric / Overlay |
 
-> [!NOTE]
-> Legacy column helpers are available, but Dear ImGui native tables are preferred for new implementations.
+> **Note:** Legacy column helpers are available, but Dear ImGui native tables are preferred for new implementations.
 
 ## Editor extension inventory
 

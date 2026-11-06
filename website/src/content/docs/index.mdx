@@ -1,10 +1,10 @@
 ---
 title: ImKit
-description: 既存のDear ImGuiアプリに、現代的な見た目と使いやすい部品を足します。アプリ側の管理は変わりません。
+description: テーマ、部品、編集画面を、既存のDear ImGuiアプリに追加するC++20の静的ライブラリ。
 template: splash
 hero:
-  title: "Dear ImGuiのまま、<br />現代的なUIへ。"
-  tagline: "テーマを1つ足すだけで始め、作業画面、グラフ、ショー向けの操作部品、321個のアイコンを加えられます。フレーム、データ、Undoはアプリが持ち続けます。"
+  title: "Dear ImGui向けの<br />UIライブラリ"
+  tagline: "テーマ、部品、編集画面を、既存のDear ImGuiアプリに追加するC++20の静的ライブラリです。フレーム、データ、Undoは、アプリが持ち続けます。"
   image:
     file: ../../assets/captures/v4-start-poster.png
     alt: "ImKit GalleryのStart画面。素のDear ImGuiとImKitの切り替えと、テーマの選択。"
@@ -13,7 +13,7 @@ hero:
       link: ./getting-started/
       icon: right-arrow
       variant: primary
-    - text: "できることを見る"
+    - text: "機能を見る"
       link: ./features/
       icon: open-book
       variant: secondary
@@ -27,6 +27,10 @@ import studioCapture from '../../../../docs/images/v4-studio.gif';
 import studioPoster from '../../assets/captures/v4-studio-poster.png';
 import workspaceCapture from '../../../../docs/images/v4-workspace.gif';
 import workspacePoster from '../../assets/captures/v4-workspace-poster.png';
+import chartsCapture from '../../../../docs/images/v4-charts.gif';
+import chartsPoster from '../../assets/captures/v4-charts-poster.png';
+import surfaceCapture from '../../../../docs/images/v4-surface.gif';
+import surfacePoster from '../../assets/captures/v4-surface-poster.png';
 import showCapture from '../../../../docs/images/v4-show.gif';
 import showPoster from '../../assets/captures/v4-show-poster.png';
 import compareCapture from '../../../../docs/images/v4-compare.gif';
@@ -34,46 +38,54 @@ import comparePoster from '../../assets/captures/v4-compare-poster.png';
 
 <div class="imkit-home">
 
-## 4.0の新機能：見た目を作る、現場まで届く
+## 使い方の概要
 
-既定の見た目を刷新し、4色から作るブランドテーマ、スキン、グラフ、PTZ操作、メディアサーバー向けの `show` モジュールを加えました。再ビルドが必要です。[追加API](./api/v4-0/)と[移行ガイド](./platform/migration-v4/)を確認してください。
-
-[v4.0.0 SDK](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v4.0.0)
-
-上の動画（約3分）で、これらの機能を使う様子を続けて見られます。
-
-## 既存アプリに組み込む
-
-通常の入力部品はアプリ側の値を読み書きし、Node Editorなどの編集画面は参照データを受け取って操作要求を返します。テーマ、保存状態、Dear ImGuiのContextと描画処理はアプリ側が管理します。
+ImKitは、アプリが持つDear ImGuiのContextの中で呼び出します。通常の入力部品はアプリの値を読み書きし、Node Editorなどの編集画面は、参照データを受け取って、操作の要求を返します。テーマ、保存、Undo、Contextとバックエンドは、アプリが管理します。
 
 <div class="home-points">
-  <div><span class="point-index">01</span><strong>使う部品を選ぶ</strong><p>テーマ、Workflow、Editor Suite、Node Editor、Showを必要に応じて組み合わせます。</p></div>
-  <div><span class="point-index">02</span><strong>データと状態はアプリ側に</strong><p>入力部品はアプリの値を読み書きし、編集画面は参照データと容量付きの操作要求で連携します。</p></div>
-  <div><span class="point-index">03</span><strong>Dear ImGuiと共存</strong><p>ImKitの部品を既存のDear ImGui操作と組み合わせ、アプリのフレーム内で描画します。</p></div>
+  <div><span class="point-index">01</span><strong>必要な部品を選ぶ</strong><p>基本部品、Workflow、グラフ、Editor Suite、Node Editor、Showから、使うモジュールだけをリンクします。</p></div>
+  <div><span class="point-index">02</span><strong>データと状態はアプリが持つ</strong><p>入力部品は、アプリの値を読み書きします。編集画面は、参照データと、容量を決めた操作の要求でやり取りします。</p></div>
+  <div><span class="point-index">03</span><strong>Dear ImGuiの呼び出しと混ぜて使う</strong><p>ImKitの部品は、アプリのフレームの中で、素のDear ImGuiの呼び出しと並べて描きます。</p></div>
 </div>
 
-## 動きで見る機能
+## 動作の様子
 
-同梱Galleryの操作映像です。最初は静止画で表示され、再生を選ぶと動きます。
+同梱のGalleryを操作した映像です。最初は静止画で、再生を選ぶと動きます。
 
 <div class="capture-showcase">
-  <CapturePlayer source={themesCapture} poster={themesPoster} alt="テーマを選ぶと、Gallery全体の配色が変わる。" caption="テーマを選ぶと、画面全体が着替える" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
-  <CapturePlayer source={studioCapture} poster={studioPoster} alt="Theme Studioでblueprint、pastel-pop、stickerの見た目を読み込む。" caption="Theme Studio — 見た目を丸ごと読み込む" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
-  <CapturePlayer source={workspaceCapture} poster={workspacePoster} alt="タブ、階層、設定、選択部品を1画面にまとめた作業画面。" caption="Workspace — タブ、階層、設定" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
-  <CapturePlayer source={showCapture} poster={showPoster} alt="キューリストとクリップランチャーでライブ演出を動かす。" caption="Show — GOでライブ演出を動かす" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
-  <CapturePlayer source={compareCapture} poster={comparePoster} alt="素のDear ImGuiとImKitが、同じ値を編集する。" caption="Before / After — 同じ値を左右で編集" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
+  <CapturePlayer source={themesCapture} poster={themesPoster} alt="テーマを選ぶと、Gallery全体の配色が変わる。" caption="テーマを選ぶと、画面全体の配色が変わる" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
+  <CapturePlayer source={studioCapture} poster={studioPoster} alt="Theme Studioでblueprint、pastel-pop、stickerの見た目を読み込む。" caption="Theme Studio: 見た目を丸ごと読み込む" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
+  <CapturePlayer source={workspaceCapture} poster={workspacePoster} alt="タブ、階層、設定、選択部品を1画面にまとめた作業画面。" caption="Workspace: タブ、階層、設定" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
+  <CapturePlayer source={chartsCapture} poster={chartsPoster} alt="ドーナツ、棒、ゲージ、スパークラインのグラフ。" caption="Charts: ドーナツ、棒、ゲージ、スパークライン" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
+  <CapturePlayer source={surfaceCapture} poster={surfacePoster} alt="フェーダー、ノブ、キー、画像を並べたコントロールサーフェス。" caption="Surface: 操作卓のように並べる" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
+  <CapturePlayer source={showCapture} poster={showPoster} alt="キューリストとクリップランチャーでライブ演出を動かす。" caption="Show: キューリストとクリップランチャー" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
+  <CapturePlayer source={compareCapture} poster={comparePoster} alt="素のDear ImGuiとImKitが、同じ値を編集する。" caption="Before / After: 同じ値を左右で編集" playLabel="再生" stopLabel="停止" playingLabel="再生中" pausedLabel="静止画を表示中" reducedMotionLabel="動きを減らす設定。再生は手動です" />
 </div>
 
 ## 目的から読む
 
 <CardGrid>
-  <LinkCard title="3.xから4.0へ移行する" description="再ビルド、変わった既定値、非推奨の置き換え。" href="./platform/migration-v4/" />
-  <LinkCard title="機能カタログを見る" description="部品、テーマ、Workflow、編集画面を用途と実画面から探す。" href="./features/" />
-  <LinkCard title="最初の画面を描く" description="Dear ImGuiのビルド先を指定し、テーマとImKitを呼び出す。" href="./getting-started/" />
-  <LinkCard title="Node Editorを統合する" description="グラフの参照データ、編集要求、接続端子、プレビューを確認。" href="./features/node-editor/" />
-  <LinkCard title="GitHubリポジトリ" description="ソース、リリース、実際に動作するGalleryはこちら。" href="https://github.com/AokiMotohide/imgui-modern-kit" />
+  <LinkCard title="最初のアプリを描く" description="Dear ImGuiのターゲットを指定し、テーマと部品を呼び出します。" href="./getting-started/" />
+  <LinkCard title="手順を追って作る" description="設定画面、ノードエディタ、タイムライン、カスタム部品のチュートリアル。" href="./tutorials/first-app/" />
+  <LinkCard title="機能を探す" description="部品、テーマ、グラフ、Workflow、編集画面、Showを、実画面から探します。" href="./features/" />
+  <LinkCard title="4.0・4.1へ移行する" description="再ビルド、変わった既定値、非推奨の書き換え。" href="./platform/migration-v4/" />
+  <LinkCard title="APIを調べる" description="公開宣言の一覧と、呼び出しの契約。" href="./api/" />
+  <LinkCard title="GitHubリポジトリ" description="ソース、リリース、動作するGallery。" href="https://github.com/AokiMotohide/imgui-modern-kit" />
 </CardGrid>
 
-<p class="home-footnote">C++20と、指定バージョンのDear ImGui docking版に対応します。対応OSとABI条件は<a href="./getting-started/">導入ガイド</a>で確認できます。</p>
+## バージョンの状況
+
+| バージョン | 内容 |
+| --- | --- |
+| 4.0（公開済み） | 既定の見た目の刷新、4色から作るブランドテーマ、スキン、グラフ、PTZ操作、範囲スライダー、`show`モジュール。再ビルドが必要です。[追加API](./api/v4-0/)と[移行ガイド](./platform/migration-v4/)を参照してください。 |
+| 4.1（公開済み） | 作り直したノードエディタ、`show::TileMap`、調整できるコントロールの寸法、スプライトの再生と進捗のつまみ、PTZの機能の切り替え。再ビルドが必要で、既定の見た目が変わるのはノードエディタだけです。[4.1追加API](./api/v4-1/)と[移行ガイド](./platform/migration-v4/)を参照してください。 |
+
+[v4.1.0のSDK](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v4.1.0)
+
+## 謝辞
+
+ImKitは、[Dear ImGui](https://github.com/ocornut/imgui)の公開APIの上に作られています。Dear ImGuiを作り、育てているOmar Cornut氏と、すべての貢献者、スポンサーの皆さまに感謝します。ImKitは、Dear ImGuiを改変せず、その代わりにもなりません。
+
+<p class="home-footnote">C++20と、固定したバージョンのDear ImGui docking版に対応します。対応環境とABIの条件は、<a href="./getting-started/">導入ガイド</a>にあります。</p>
 
 </div>

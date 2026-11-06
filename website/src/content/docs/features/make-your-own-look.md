@@ -1,0 +1,161 @@
+---
+title: "自分の世界観を作る"
+description: "ImKit の見た目は、imkit::Theme という1つの値で決まります。色、角丸、縁取り、影、文字サイズ、そして任意の Skin です。ApplyTheme を1回呼ぶだけで、素の ImGui:: ウィジェットも ImKit の部品も、そのテーマに従います。"
+---
+
+ImKit の見た目は、`imkit::Theme` という1つの値で決まります。色、角丸、縁取り、影、文字サイズ、そして任意の Skin です。`ApplyTheme` を1回呼ぶだけで、素の `ImGui::` ウィジェットも ImKit の部品も、そのテーマに従います。下の5つの段階は、浅いものから深いものへ並んでいます。目的を満たす一番浅い段階から始めてください。各段階は前の段階の上に載ります。
+
+![Theme Studioで、blueprint、pastel-pop、stickerの見た目を読み込む](/imgui-modern-kit/docs-images/v4-studio-poster.png)
+
+[操作GIFを開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-studio.gif)
+
+## 5つの段階
+
+| 段階 | 書くもの | できること |
+|---|---|---|
+| 1 | `MakeTheme(ThemePreset::…)` | 13種のプリセットから選ぶ |
+| 2 | 4色の `BrandPalette` と `SetCornerStyle` | ブランド色から完全なテーマを作る |
+| 3 | 数行の `key = value` | 縁取り・影・密度・各トークンを、再ビルドなしで変える |
+| 4 | `Theme` のフィールド | すべてのトークンを直接編集する |
+| 5 | `Skin`、`DrawNineSlice`、`DrawBackdropPattern` | 枠と背景を独自の描画に差し替える |
+
+## 段階2：4色と角丸
+
+```cpp
+imkit::BrandPalette brand;
+brand.canvas  = ImVec4(1.00f, 0.91f, 0.66f, 1);   // ウィンドウの背景
+brand.surface = ImVec4(1.00f, 0.96f, 0.84f, 1);   // パネルやカード
+brand.text    = ImVec4(0.29f, 0.16f, 0.09f, 1);
+brand.accent  = ImVec4(0.70f, 0.33f, 0.18f, 1);   // 主ボタン、フォーカス、選択
+imkit::Theme theme = imkit::MakeBrandTheme(brand);
+imkit::SetCornerStyle(theme, imkit::CornerStyle::Round);
+imkit::ApplyTheme(theme, scale);                  // ImGui::NewFrame() の前
+```
+
+`raised`、`border`、`textSecondary`、`success`、`warning`、`error` は省略できます。alpha を 0 のままにした色は導出されます。コントロールの状態色と選択色は、4色から決まります。補助文字とボーダーは、載る面すべてに対するコントラストを保つように導出されます。ライト/ダークは canvas の明るさで決まります。
+
+テーマを作ったら `ValidateContrast(theme)` で確認してください。`false` は警告です。テーマは適用でき、表示するかどうかは呼び出し側が決めます。文字サイズ、モーション、密度は既定値のままなので、返された値の上で変更します。
+
+## 段階3：テーマファイル
+
+`ParseTheme` は、土台のテーマの上に `key = value` の行を適用します。書いたキーだけが変わるので、ファイルは数行で足ります。
+
+```
+# my.theme
+preset = warm-sand
+corner = round
+stroke.border = 3
+elevation.hard = true
+elevation.offset = 0 3
+semantic.shadow = #4a2a18
+```
+
+```cpp
+const std::string text = ReadWholeFile("my.theme");     // ファイルはホストが読む
+const imkit::ThemeParseResult result = imkit::ParseTheme(text, theme);
+if (!result.warnings.empty()) Log(result.warnings);     // 不正な行は飛ばされ、止まらない
+imkit::ApplyTheme(theme, scale);
+```
+
+適用の順序は、`preset`（土台を置き換える。フォントと Skin は保たれる）、`brand.*`（色トークンを作り直す）、その他のキー（上から順）です。`corner = sharp | soft | round | pill` は `SetCornerStyle` の短縮形です。`#` で始まる行はコメントです。色は `#RRGGBB` または `#RRGGBBAA` で書きます。`brand.*` は `brand.canvas`、`brand.surface`、`brand.text`、`brand.accent` がそろっているときだけ適用されます。足りないときは、どれも適用されず警告が返ります。
+
+ImKit はファイルを読み書きせず、変更も監視しません。開発中は、ファイルの更新時刻が変わったら、新しい土台のテーマに対して `ParseTheme` を呼び直してください。リリースでは、文字列リテラルとして埋め込めます。`SerializeTheme(theme)` はパーサが読めるすべてのトークンを書き出すので、ファイルを作り始めるのに便利です。
+
+## 縁取り・角丸・影
+
+- **縁取り**：`theme.stroke.border` が 2 デザインpx 以上なら縁取りになります。ウィンドウ、ポップアップ、フレーム、すべてのボタンで、全強度のボーダー色で描かれます。2 未満では、従来どおりの淡いヘアラインのままです。区切り線、ツリーの線、表の線は 1 を超えません。
+- **縁取りに従う部品**：窓とボタンのほか、進捗バー、円形進捗とドーナツチャート（縁取りつきのトラック）、ステージの丸とつなぎ線、タイムラインのクリップ、棒グラフの棒、ステップシーケンサーのセル、スケジュールの予定、範囲スライダーのレール、Show モジュールの細い枠です。1px の線を描いていた部品は、縁取りの太さを全強度で描きます。
+- **角丸**：`SetCornerStyle` が `radius.subtle`、`control`、`overlay` をまとめて設定します。Sharp、Soft（既定）、Round、Pill です。Pill は、どの密度でも部品を高さの半分まで丸めます。ウィンドウと画像は overlay の半径を超える半径を使わないので、control の半径をとても大きくしても、カプセル形にはなりません。
+- **影**：`elevation.hard` を有効にすると、ぼかしの影が、図形を `elevation.offset` だけずらした塗りつぶしのコピー（色は `semantic.shadow`）に変わります。自前の図形には `DrawShadow`、ポップアップには `OverlayDecoration` が使います。テーマを受け取るボタンは、枠の後ろにこの影を描き、押している間はオフセット分だけ下がります。
+
+## 文字の役割とフォント
+
+`PushTextRole(theme, TextRole::Heading)` は、`theme.typography` のサイズを選びます。見出しとタイトルでは、フォントを `theme.fonts.display`（なければ `emphasis`、`regular` の順）から選びます。`PopTextRole()` と対で使います。ImKit はフォントを読み込みません。グリフを自分のアトラスに入れ、そのポインタを `theme.fonts` に渡してください。
+
+## 段階5：Skin と背景
+
+`Skin` は、ImKit の部品の枠と背景を、独自の描画に差し替えます。ラベル、アイコン、フォーカス表示、アクセシビリティ、ツールチップ、入力、戻り値は、ライブラリが担当し続けます。
+
+```cpp
+static bool DrawFrame(const imkit::SkinFrame& frame, void* user) {
+    if (frame.part != imkit::SkinPart::Button)
+        return false;                                  // それ以外は既定の見た目のまま
+    frame.draw->AddRectFilled(frame.min, frame.max, fill, frame.rounding);
+    frame.draw->AddRect(frame.min, frame.max, ink, frame.rounding, 0, 3.f);
+    return true;
+}
+imkit::Skin skin{&DrawFrame, nullptr};
+theme.skin = &skin;                                    // 所有しない（theme.fonts と同じ）
+imkit::ActionButton("Go", imkit::ActionVariant::Primary, {}, {&theme});
+```
+
+`SkinFrame` は、矩形、角丸、部品（`Button`、`Badge`、`Card`）、種別（variant または status）、操作状態、補間済みの `hover` 値を持ちます。`DrawNineSlice` は、読み込んだ画像を、角のサイズを保ったまま矩形へ引き伸ばします。`NineSliceQuads` は、描かずに同じ分割だけを返します。`DrawBackdropPattern` は、矩形を `Dots`、`Stripes`、`Rays` の柄で埋めます。どちらもテクスチャを読み込まず、所有しません。
+
+### 動く絵と進捗のつまみ
+
+`Sprite` は、同じ大きさのコマを1枚のテクスチャに並べたシートを再生します。シートは `SpriteSheet`（セルの大きさ、列数、コマ数、fps、`Loop`・`Once`・`HoldLast`、`restFrame`）で記述し、`SpriteState` を1つの絵ごとに持ち、ホストの単調な時刻を渡してください。
+
+```cpp
+imkit::SpriteSheet walk;
+walk.texture = walkTexture;                       // ホストが読み込み、所有する
+walk.sheetPixels = {1920, 640};
+walk.cellPixels = {160, 128};
+walk.columns = 12;
+walk.frames = 36;
+walk.fps = 24.f;
+walk.restFrame = 0;                               // reducedMotion のとき表示する
+static imkit::SpriteState state;
+const bool animate = theme.motion.enabled && !theme.motion.reducedMotion;
+imkit::Sprite("walk", walk, state, ImGui::GetTime(), {80, 64}, animate);
+```
+
+`SpriteFrameAt` と `SpriteFrameUV` は、Dear ImGui のコンテキストなしで、コマ番号とテクスチャ座標を返します。`DrawSprite` は、任意の矩形に1コマを描きます。`ProgressTrackView::thumb` を使うと、進捗の塗りの先頭に、たとえば塗りに乗る絵のような、ホストの描画を重ねられます。コールバックは、描画リスト、トラックの矩形、先頭の位置、表示中の割合を受け取ります。`thumbHeight` は、トラックの上にレイアウトの高さを確保し、絵が見出しに重ならないようにします。
+
+## テーマだけで効く範囲
+
+`ApplyTheme` は `ImGuiStyle` を書き込むので、色、角丸、縁取りは、素の `ImGui::` ウィジェットと、オプションなしで呼んだ ImKit の部品に届きます。Skin、ボタンの硬い影、文字の役割は、テーマそのものが必要です。`ComponentOptions::theme`（`{&theme}`）または関数の引数として渡してください。ImKit は「現在のテーマ」をグローバルに持ちません。多くの場所で部品を呼ぶホストは、通常、一度だけ包みます。
+
+## テーマファイルのキー
+
+色は `#RRGGBB[AA]`、数値は小数、スイッチは `true` / `false` です。
+
+| キー | 値 |
+|---|---|
+| `preset` | `warm-sand` などのプリセットID |
+| `corner` | `sharp`、`soft`、`round`、`pill` |
+| `scheme`、`contrast`、`density` | `light` / `dark`、`standard` / `high-contrast`、`compact` / `comfortable` / `touch` |
+| `brand.canvas`、`brand.surface`、`brand.text`、`brand.accent` | 4つがそろって必要。色 |
+| `brand.raised`、`brand.border`、`brand.text-secondary`、`brand.success`、`brand.warning`、`brand.error` | 任意の色 |
+| `semantic.canvas`、`surface`、`surface-raised`、`overlay`、`text`、`text-secondary`、`text-disabled`、`border`、`accent`、`on-accent`、`success`、`warning`、`error`、`shadow` | 色 |
+| `semantic.control.rest`、`hover`、`pressed`、`focused`、`selected`、`disabled` | 色 |
+| `typography.caption`、`body`、`label`、`heading`、`title`、`monospace` | サイズ。1〜200 |
+| `radius.subtle`、`control`、`overlay` | 0〜1000 |
+| `stroke.border`、`stroke.focus` | 0〜32 |
+| `elevation.surface`、`raised`、`overlay` | 0〜128 |
+| `elevation.offset` | `0 3` のように2つの数値。−64〜64 |
+| `elevation.hard` | スイッチ |
+| `opacity.disabled`、`opacity.scrim` | 0〜1 |
+| `motion.control-seconds`、`motion.overlay-seconds` | 0〜10 |
+| `motion.enabled`、`motion.reduced` | スイッチ |
+| `motion.easing` | `linear`、`ease-out`、`ease-in-out` |
+| `layout.control-height`、`spacing-x`、`spacing-y`、`horizontal-padding`、`window-padding-x`、`window-padding-y`、`cell-padding-y`、`indent`、`scrollbar`、`grab-min`、`separator-text-padding-y` | 省略可能な長さ。未指定なら密度の値のまま。未指定の行は書き出さない |
+| `layout.check-height-scale`、`toggle-height-scale` | 省略可能、1〜4。チェックボックスとトグルの高さ（フォントサイズの倍率。既定は1.45と1.75） |
+| `layout.dialog-padding-scale`、`progress-bar-height-scale` | 省略可能な倍率（既定は1.3と0.2） |
+| `layout.badge-extra-height`、`segmented-inset` | 省略可能なピクセル数（既定は8と3） |
+| `node.header-fill` | `strip`、`tinted`、`flat`、`gradient`、`none` |
+| `node.link-color` | `output-type`、`input-type`、`gradient`、`accent` |
+| `node.link-arrow` | `middle`、`none`、`end` |
+| `node.canvas`、`node.grid`、`node.header` | 色。アルファ0ならセマンティックな色に従う |
+| `node.header-tint` | 省略可能、0〜1 |
+| `node.rounding`、`header-height`、`pin-radius`、`link-width`、`grid-size` | 省略可能。0〜64、8〜200、1〜32、0.5〜16、4〜400 |
+| `node.pin-seat`、`node.flow-link-width` | 省略可能。0〜12、0.5〜16 |
+| `node.hollow-pins`、`node.highlight-links` | スイッチ |
+
+未知のキーと範囲外の値は、警告つきで飛ばされます。キー名は安定しており、変更も再利用もしません。
+
+## 制約
+
+- Skin とボタンの影は、上で述べたとおり、テーマを受け取る部品にだけ届きます。
+- `editor` の色（クリップ、軸、マーカー）はテーマファイルの対象外です。`MakeBrandTheme` は、導出しないものを Precision の値のままにします。
+- フォント、テクスチャ、ファイル、Skin の寿命は、ホストのものです。
+- 背景は毎フレーム描き直されます。大きく細かいハーフトーンは、テクスチャを作って画像として描いてください。

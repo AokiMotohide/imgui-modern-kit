@@ -29,26 +29,26 @@ and lifecycle decisions remain on the host side.
 
 ```cpp
 #include <imkit/imkit.h>
+#include <vector>
 
-// Rendering AppBar and dispatching triggered actions
-void RenderAppHeader(MyAppState& state) {
-    std::vector<imkit::CommandItem> commands = {
-        {"file_save", "Save", true, "Ctrl+S"},
-        {"file_export", "Export", state.hasSelection, ""}
+// Draw the AppBar and receive the pressed action
+void RenderAppHeader(MyAppState& state, imkit::ToolbarState& toolbar) {
+    const std::vector<imkit::Command> commands = {
+        {1, "Save", "Ctrl+S"},
+        {2, "Export", "", !state.hasSelection},   // StableId, label, shortcut, disabled
     };
 
-    imkit::AppBarView view{
-        "MyStudio",           // Application name
-        "scene_01.proj",      // Project name
-        "READY",              // Mode / badge
-        "All changes saved",  // Status message
-        false,                // Dirty flag
-        imkit::FeedbackKind::Success,
-        commands
-    };
+    imkit::AppBarView view;
+    view.product = "MyStudio";          // Application name
+    view.document = "scene_01.proj";    // Project name
+    view.context = "READY";             // Mode or badge
+    view.status = "All changes saved";               // Status text
+    view.dirty = false;                 // Unsaved changes
+    view.statusKind = imkit::FeedbackKind::Success;
+    view.actions = commands;
 
-    if (auto action = imkit::AppBar("main_app_bar", view, myToolbar, myOptions)) {
-        DispatchAction(action);
+    if (const auto action = imkit::AppBar("main_app_bar", view, toolbar)) {   // StableId of the pressed action, or 0
+        state.Run(action);              // your code runs the action
     }
 }
 ```

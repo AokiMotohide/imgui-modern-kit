@@ -1,5 +1,6 @@
 ---
 title: "Editor API"
+description: "These are custom Editor Suite APIs designed for professional creative tools, separate from the native Dear ImGui overload inventory."
 ---
 
 These are custom Editor Suite APIs designed for professional creative tools, separate from the native Dear ImGui overload inventory.

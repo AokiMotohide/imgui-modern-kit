@@ -1,31 +1,33 @@
 # Troubleshooting
 
-[日本語](トラブルシューティング.md)
+[日本語](トラブルシューティング.md) · [Getting started](../getting-started/getting-started.md) · [Documentation catalog](documentation-catalog.md)
 
-## `IMKIT_IMGUI_TARGET is required`
+Find the symptom, then read the cause and the fix.
 
-Create the host Dear ImGui CMake target before `add_subdirectory`, then set `IMKIT_IMGUI_TARGET` to that exact target name. ImKit intentionally does not inject another ImGui copy into an embedded project.
+## Build and link
 
-## Header rejects the ImGui version
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| CMake stops with `IMKIT_IMGUI_TARGET is required` | The Dear ImGui target does not exist before `add_subdirectory`, or the name is wrong | Create the Dear ImGui CMake target first, then set `IMKIT_IMGUI_TARGET` to that exact name. ImKit never adds a second copy of Dear ImGui to an embedded project. |
+| A header stops with an error about the Dear ImGui version | The Dear ImGui version, or its docking, viewport and dynamic-texture support, does not match | Use the pinned `docking` commit (see [Dependencies](../architecture/dependencies.md)). Removing the guard does not make other revisions compatible, because style fields and public signatures differ. |
+| CMake stops asking you to confirm the SDK ABI | The installed SDK needs `IMKIT_SDK_ABI_CONFIRMED=ON` | Check the architecture, MSVC toolset, Debug or Release CRT, Dear ImGui revision, compile definitions and `imconfig.h`, then set the flag. If any of them differs, build from source. |
+| The Gallery build cannot overwrite `imkit_gallery.exe` | The Gallery is still running, and Windows will not let the linker replace a running executable | Close the Gallery and run the same incremental build again. |
 
-Use the pinned supported revision. Relaxing the guard does not establish source or ABI compatibility because style fields and public signatures can differ.
+## Runtime
 
-## Installed SDK does not link
+```cpp
+// Assertion: "Backend does not support ImGuiBackendFlags_RendererHasTextures, and font atlas is not built!"
+```
 
-Confirm x64, MSVC toolset, Debug/Release CRT, Dear ImGui revision, compile definitions and `imconfig.h`. Use source integration if any binary setting differs.
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| The assertion above fires at `NewFrame` in a program with no renderer backend | Nothing built the font atlas | Call `io.Fonts->GetTexDataAsRGBA32(...)` once, as in [Build your first app](../tutorials/build-first-app.md). A real backend does this for you. |
+| An assertion fires when a `ThemeScope` is destroyed | The scope outlived its context, or was destroyed on another context | End every scope before `DestroyContext()`, on the context it was created on. |
+| The theme looks right, but Japanese text is missing | Themes do not load fonts, so the atlas has no Japanese glyphs | Add the glyph ranges to your font atlas, and provide platform IME callbacks if text input needs them. The Gallery's fallback font is an optional asset, not library behaviour. |
+| Sizes grow each time the theme is applied | You scaled `Theme::metrics` yourself and also passed a scale | Pass the application scale only to `ApplyTheme(theme, scale)` or `ThemeScope(theme, scale)`. ImKit always rebuilds the style from unscaled values. |
+| Changes you made to `ImGuiStyle` disappear | `ApplyTheme` replaces the whole style, except `Alpha` and `FontScaleDpi` | Make the change in the `Theme`, as described in [Themes](../architecture/themes.md). |
+| A control draws but nothing happens when you click it | The returned result is a request, and your code did not apply it | Read the return value or the returned request and update your own data. |
 
-## Theme looks correct but Japanese text is missing
+## Checking the result
 
-Themes do not load fonts. Add the required glyph ranges to the host font atlas and provide platform IME callbacks when text input needs them. The Gallery's fallback font is an optional host asset, not library behavior.
-
-## Theme size grows after repeated application
-
-Pass the application scale only to `ApplyTheme` or `ThemeScope`. Do not also pre-scale `Theme::metrics`. ImKit always derives style from the stored unscaled metrics.
-
-## Gallery build cannot overwrite the executable
-
-Close the running `imkit_gallery.exe`, then run the same incremental target once. Windows prevents the linker from replacing a running executable.
-
-## A screenshot is not proof of integration
-
-Use [Validation](validation.md) to distinguish compile/link, public-IO interaction, GPU capture, installed consumer and native application acceptance.
+A screenshot does not prove that an integration works. [Validation](validation.md) separates compile and link checks, public-IO interaction, GPU capture, installed consumers and native application acceptance, so you can tell which of them a claim rests on.

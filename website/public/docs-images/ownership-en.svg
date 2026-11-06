@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-labelledby="t d">
+<title id="t">Who owns what</title><desc id="d">Your application owns the data, state, theme value and Dear ImGui setup. ImKit draws controls and returns requests. Dear ImGui provides the public API both build on.</desc>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#52606d"/></marker></defs>
+<rect width="960" height="500" rx="14" fill="#f7f8fa"/>
+<text x="32" y="40" font-family="-apple-system,'Segoe UI','Hiragino Sans','Yu Gothic UI','Noto Sans JP',Meiryo,sans-serif" font-size="20" font-weight="700" fill="#1f2933" text-anchor="start">Who owns what</text>
+<rect x="32" y="60" width="896" height="150" rx="12" fill="#e6eefb" stroke="#2f5fb3" stroke-width="2"/>
+<text x="52" y="92" font-family="-apple-system,'Segoe UI','Hiragino Sans','Yu Gothic UI','Noto Sans JP',Meiryo,sans-serif" font-size="17" font-weight="700" fill="#2f5fb3" text-anchor="start">Your application (the host)</text>
+<text x="52" y="114" font-family="-apple-system,'Segoe UI','Hiragino Sans','Yu Gothic UI','Noto Sans JP',Meiryo,sans-serif" font-size="13.5" font-weight="400" fill="#52606d" text-anchor="start">Owns everything that matters</text>
+<rect x="52" y="130" width="272" height="30" rx="8" fill="#ffffff" stroke="#2f5fb3" stroke-width="1.2"/>
+<text x="188.0" y="150" font-family="-apple-system,'Segoe UI','Hiragino Sans','Yu Gothic UI','Noto Sans JP',Meiryo,sans-serif" font-size="13.5" font-weight="500" fill="#1f2933" text-anchor="middle">Documents and data</text>
+<rect x="340" y="130" width="272" height="30" rx="8" fill="#ffffff" stroke="#2f5fb3" stroke-width="1.2"/>
+<text x="476.0" y="150" font-family="-apple-system,'Segoe UI','Hiragino Sans','Yu Gothic UI','Noto Sans JP',Meiryo,sans-serif" font-size="13.5" font-weight="500" fill="#1f2933" text-anchor="middle">Selection and Undo</text>
+<rect x="628" y="130" width="272" height="30" rx="8" fill="#ffffff" stroke="#2f5fb3" stroke-width="1.2"/>
+<text x="764.0" y="150" font-family="-apple-system,'Segoe UI','Hiragino Sans','Yu Gothic UI','Noto Sans JP',Meiryo,sans-serif" font-size="13.5" font-weight="500" fill="#1f2933" text-anchor="middle">Saving and loading</text>
+<rect x="52" y="168" width="272" height="30" rx="8" fill="#ffffff" stroke="#2f5fb3" stroke-width="1.2"/>
+<text x="188.0" y="188" font-family="-apple-system,'Segoe UI','Hiragino Sans','Yu Gothic UI','Noto Sans JP',Meiryo,sans-serif" font-size="13.5" font-weight="500" fill="#1f2933" text-anchor="middle">Theme value</text>
+<rect x="340" y="168" width="272" height="30" rx="8" fill="#ffffff" stroke="#2f5fb3" stroke-width="1.2"/>
+<text x="476.0" y="188" font-family="-apple-system,'Segoe UI','Hiragino Sans','Yu Gothic UI','Noto Sans JP',Meiryo,sans-serif" font-size="13.5" font-weight="500" fill="#1f2933" text-anchor="middle">Fonts and atlas</text>
+<rect x="628" y="168" width="272" height="30" rx="8" fill="#ffffff" stroke="#2f5fb3" stroke-width="1.2"/>
+<text x="764.0" y="188" font-family="-apple-system,'Segoe UI','Hiragino Sans','Yu Gothic UI','Noto Sans JP',Meiryo,sans-serif" font-size="13.5" font-weight="500" fill="#1f2933" text-anchor="middle">Context, backend, frame loop</text>
+<rect x="32" y="270" width="896" height="100" rx="12" fill="#e0f5f4" stroke="#0f8b8d" stroke-width="2"/>
+<text x="52" y="302" font-family="-apple-system,'Segoe UI','Hiragino Sans','Yu Gothic UI','Noto Sans JP',Meiryo,sans-serif" font-size="17" font-weight="700" fill="#0f8b8d" text-anchor="start">ImKit</text>
+<text x="52" y="324" font-family="-apple-system,'Segoe UI','Hiragino Sans','Yu Gothic UI','Noto Sans JP',Meiryo,sans-serif" font-size="13.5" font-weight="400" fill="#52606d" text-anchor="start">Draws themed controls and editors, and reports what the user did</text>
+<rect x="52" y="336" width="272" height="30" rx="8" fill="#ffffff" stroke="#0f8b8d" stroke-width="1.2"/>
+<text x="188.0" y="356" font-family="-apple-system,'Segoe UI','Hiragino Sans','Yu Gothic UI','Noto Sans JP',Meiryo,sans-serif" font-size="13.5" font-weight="500" fill="#1f2933" text-anchor="middle">Draws into your frame</text>
+<rect x="340" y="336" width="272" height="30" rx="8" fill="#ffffff" stroke="#0f8b8d" stroke-width="1.2"/>
+<text x="476.0" y="356" font-family="-apple-system,'Segoe UI','Hiragino Sans','Yu Gothic UI','Noto Sans JP',Meiryo,sans-serif" font-size="13.5" font-weight="500" fill="#1f2933" text-anchor="middle">Returns clicks and edit requests</text>
+<rect x="32" y="420" width="896" height="64" rx="12" fill="#eceff3" stroke="#9aa5b1" stroke-width="2"/>
+<text x="52" y="450" font-family="-apple-system,'Segoe UI','Hiragino Sans','Yu Gothic UI','Noto Sans JP',Meiryo,sans-serif" font-size="17" font-weight="700" fill="#1f2933" text-anchor="start">Dear ImGui (public API only)</text>
+<text x="52" y="472" font-family="-apple-system,'Segoe UI','Hiragino Sans','Yu Gothic UI','Noto Sans JP',Meiryo,sans-serif" font-size="13.5" font-weight="400" fill="#52606d" text-anchor="start">Widgets, DrawList, IDs and input. ImKit does not modify it.</text>
+<line x1="250" y1="212" x2="250" y2="268" stroke="#52606d" stroke-width="1.8" marker-end="url(#a)"/>
+<text x="262" y="244" font-family="-apple-system,'Segoe UI','Hiragino Sans','Yu Gothic UI','Noto Sans JP',Meiryo,sans-serif" font-size="13" font-weight="500" fill="#52606d" text-anchor="start">Each frame: your values go in</text>
+<line x1="700" y1="268" x2="700" y2="212" stroke="#52606d" stroke-width="1.8" marker-end="url(#a)"/>
+<text x="712" y="244" font-family="-apple-system,'Segoe UI','Hiragino Sans','Yu Gothic UI','Noto Sans JP',Meiryo,sans-serif" font-size="13" font-weight="500" fill="#52606d" text-anchor="start">Requests come back; you decide what they mean</text>
+<line x1="480" y1="372" x2="480" y2="418" stroke="#52606d" stroke-width="1.8" marker-end="url(#a)" marker-start="url(#a)"/>
+</svg>

@@ -1,34 +1,38 @@
 ---
 title: FAQ
-description: Common questions about Dear ImGui, fonts, themes, SDKs, and the Gallery.
+description: Common questions about Dear ImGui, fonts, themes, the SDK and the Gallery.
 ---
 
 ## Does ImKit provide Dear ImGui?
 
-No. The application owns its Dear ImGui context, backend, renderer, font atlas, and frame loop. For source integration, set `IMKIT_IMGUI_TARGET` to the existing Dear ImGui target. See [dependencies](../dependencies/).
+No. Your application provides the Dear ImGui context, backend, renderer, font atlas and frame loop. When you build from source, set `IMKIT_IMGUI_TARGET` to your existing Dear ImGui target. See [Dependencies](../dependencies/).
 
-## Can I use the packaged SDK?
+## Does ImKit modify Dear ImGui?
 
-Use it only when compiler, architecture, CRT, Dear ImGui revision, compile definitions, and `imconfig.h` match the package. Otherwise use source integration. See the [SDK steps and ABI conditions](../../getting-started/).
+No. ImKit uses only the public API of Dear ImGui and does not use `imgui_internal.h`. It does not fork, patch or recompile Dear ImGui.
 
-## Japanese glyphs or IME input are missing
+## Can I use the prebuilt SDK?
 
-Themes do not load fonts. Add the needed glyph ranges to the application's font atlas and provide platform IME callbacks when text entry requires them.
+Yes, when you have confirmed that the compiler, architecture, CRT, Dear ImGui revision, compile definitions and `imconfig.h` all match the SDK. If any of them differs, build from source. The steps and the ABI conditions are in [Getting started](../../getting-started/).
 
-## Theme sizes grow after repeated application
+## Japanese text or the IME does not work.
 
-Pass scale to `ApplyTheme` or `ThemeScope`; do not pre-scale `Theme::metrics` separately. The theme derives style from its unscaled metrics.
+Themes do not load fonts. Add the glyph ranges you need to your application's font atlas, and provide the platform IME callbacks that text input needs.
 
-## Can I build the Gallery in an embedded project?
+## Sizes grow every time I apply a theme.
 
-For a subdirectory build with Gallery disabled, provide the existing Dear ImGui target. A standalone build with Gallery enabled fetches the pinned Dear ImGui and GLFW revisions. See [dependencies](../dependencies/) for requirements and target setup.
+Pass the scale only to `ApplyTheme` or `ThemeScope`. Do not also scale `Theme::metrics` yourself. A theme rebuilds the style from unscaled sizes.
 
-## Do the API row counts mean every function was individually tested?
+## Can I run the Gallery from an embedded build?
 
-No. Counts refer to public declaration rows in the inventories. Signature listings are not call examples and do not represent per-row interactive tests. Check the usage guides and public headers for the contract.
+When you embed ImKit as a subdirectory with the Gallery off, point it at your existing Dear ImGui target. A standalone build that includes the Gallery fetches the pinned Dear ImGui and GLFW revisions. See [Dependencies](../dependencies/).
+
+## Is the number of API declarations the number of functions that were tested?
+
+No. The number is the count of public declaration rows in the listing. A signature listing is not a call example, and it does not count how many rows had their interaction checked. Check the contract in each page and in the public header.
 
 ## Related pages
 
 - [Troubleshooting](../troubleshooting/)
-- [Dependencies and supported configurations](../dependencies/)
-- [Migration from v2](../migration/)
+- [Dependencies](../dependencies/)
+- [Migrate from v2](../migration/)

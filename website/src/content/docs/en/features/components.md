@@ -1,47 +1,13 @@
 ---
 title: "Components"
----
-
-## Use this when
-
-Use the components module when a creative tool needs consistent settings rows, buttons, inputs and feedback while keeping its existing Dear ImGui context and application values.
-
-## Gallery capture
-
-![Native ImKit Gallery capture showing the integrated toolkit interface.](../../../../assets/captures/v4-start-poster.png)
-
-Components — settings, selection and feedback · [Open the native Gallery animation](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-start.gif)
-
-## Minimum drawing example
-
-```cpp
-#include <imkit/imkit.h>
-
-void DrawApplyButton() {
-    if (imkit::ActionButton("Apply", imkit::ActionVariant::Primary)) {
-        // The application validates and applies its own document state.
-    }
-}
-```
-
-**Example type:** Function excerpt for an existing application frame. Call it between `NewFrame` and `Render`, then handle the returned activation in the application.
-
-## Integrate with the application
-
-Link `imkit::imkit`. Edited values and stable IDs stay in the application; use the returned boolean as an action request.
-
-## Scope
-
-These are immediate-mode controls, not an application model, persistence layer or command dispatcher.
-
-## Related API and guides
-
-- [Native API index](../../api/native/)
-- [Component inventory](../../api/widgets/)
-
+description: "ImKit components are small compositions over public Dear ImGui behavior. Edited values, lifetime and persistence remain in the host."
 ---
 
 ImKit components are small compositions over public Dear ImGui behavior. Edited values, lifetime and persistence remain in the host. The recipe below shows a complete frame-level settings panel; the smaller examples that follow highlight individual controls.
+
+![Plain Dear ImGui and ImKit editing the same values side by side](/imgui-modern-kit/docs-images/v4-compare-poster.png)
+
+[Open native GIF](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-compare.gif)
 
 ## Complete settings panel
 
@@ -173,6 +139,6 @@ Each action can be disabled independently; its disabled reason appears in that b
 
 `NotificationCard` returns a dismiss request. A zero `expiresAt` means it remains visible until the host removes it; a nonzero expiration is compared with the `now` value supplied by the host.
 
-## ImKit 3.2 workspace
+## Try it in the Gallery
 
-Open **Workspace** in the Gallery to use WorkspaceTabs, HierarchyGroupHeader/HierarchyRow, BeginInspectorCard/EndInspectorCard, SettingToggleRow, DragVector3WithUnit, ChoiceGroup and CompactActionRow together. Requests update Gallery-owned values; the same pattern works in an existing ImGui frame. See the [3.2 declarations and lifetime rules](../../api/v3-2/). All 321 runtime icons and 13 themes are available without introducing a new context or application framework.
+Open **Workspace** in the Gallery to see WorkspaceTabs, hierarchy rows, inspector cards, `SettingToggleRow`, `DragVector3WithUnit`, `ChoiceGroup` and `CompactActionRow` used together. The returned requests update Gallery-owned values, and the same pattern works in an existing ImGui frame. The parts are described in [Workflow components](../workflow/), and the declarations and lifetime rules are in the [3.2 additions](../../api/v3-2/).

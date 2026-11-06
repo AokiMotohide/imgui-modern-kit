@@ -1,5 +1,6 @@
 ---
-title: "Toast notifications"
+title: "Toasts"
+description: "ToastViewport draws colored cards in the current host window's viewport, without taking focus when a card appears."
 ---
 
 `ToastViewport` draws colored cards in the current host window's viewport, without taking focus when a card appears. Include `imkit/toast.h` or `imkit/imkit.h`. The existing `ToastRegion` overloads are unchanged. The host owns state, content, context, fonts, renderer and application operations; no React dependency, global registry, worker or persistence is introduced.
@@ -94,6 +95,6 @@ Open **Toasts** (page 20): six positions, timing overrides, queue bursts, same-I
 
 ![Native Loading to Success toast interaction](/imgui-modern-kit/docs-images/v4-toasts-poster.png)
 
-[Open native GIF](/imgui-modern-kit/docs-images/v4-toasts.gif)
+[Open native GIF](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-toasts.gif)
 
 `imkit.toast` covers timing, pauses, queues, updates, buffer bounds, duplicate IDs, layout and public mouse requests. `imkit.toast_api_compile` and the external consumer cover public signatures. Gallery GPU capture is separate from native OS/IME, screen-reader, multi-monitor DPI and macOS acceptance.

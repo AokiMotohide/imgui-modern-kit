@@ -1,5 +1,6 @@
 ---
 title: "Migrate from v3"
+description: "To keep the 3.3 look, set the old values after you build the theme. ResolveTheme recomputes the metrics from the density, so assign them last:"
 ---
 
 **Who needs this:** every application that links ImKit 3.x. Source changes are small. Rebuilding is mandatory, and the default look changes unless you set the old values yourself.

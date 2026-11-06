@@ -15,6 +15,7 @@ from urllib.parse import unquote, urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 BASE = "/imgui-modern-kit/"
+FEATURE_CARDS = 8
 
 
 class PageParser(HTMLParser):
@@ -190,8 +191,8 @@ def main() -> None:
 
     for catalog in (DIST / "features/index.html", DIST / "en/features/index.html"):
         parser = parsed_pages.get(catalog)
-        if parser is None or parser.feature_cards != 6:
-            errors.append(f"{catalog.relative_to(DIST)}: expected six feature cards")
+        if parser is None or parser.feature_cards != FEATURE_CARDS:
+            errors.append(f"{catalog.relative_to(DIST)}: expected {FEATURE_CARDS} feature cards")
 
     print(f"checked {len(pages)} HTML pages and {links_checked} local links")
     print(f"API inventory: {len(included)} included native rows, {len(excluded)} excluded, {len(node_entries)} Node declarations")

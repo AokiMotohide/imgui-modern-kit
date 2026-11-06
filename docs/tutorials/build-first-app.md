@@ -1,181 +1,133 @@
-# Build your first ImKit app
+# Build your first app
 
 [日本語](最初のアプリの作成.md) · [Documentation index](../README.md) · [How ImKit works](../getting-started/how-it-works.md)
 
-This is a codelab. By the end, you will have the full shape of a Dear ImGui host application that draws themed ImKit controls. It is modelled on the repo's minimal host, `examples/consumer/main.cpp`, and uses CPU-embedded resources so it needs no GPU, image loader, or file lookup to *understand* how things fit together.
+This tutorial builds the smallest program that draws ImKit controls: one window with a toggle, a status badge and a button. It runs one frame on the CPU, so it needs no window, GPU or image loader. At the end you will know where the Dear ImGui context, the theme and your own state live.
 
-![Native Gallery overview](../images/v4-start.gif)
+<img src="../images/v4-start.gif" alt="The Gallery Start page: the same controls before and after an ImKit theme" width="960">
 
-## What you'll build
+## Before you start
 
-A Dear ImGui host application that:
+- A C++20 toolchain and CMake 3.20 or newer.
+- Dear ImGui at the pinned commit `367b2c24f399988ddafc0bb4628da0106bcc09be`, built as a CMake target (see [Getting started](../getting-started/getting-started.md)).
+- ImKit linked as `imkit::imkit`.
 
-- Creates a Dear ImGui context and sets up its I/O.
-- Builds one themed `Theme` value and applies it.
-- Draws a few themed ImKit controls inside a child window.
-- Lets **your** code react to the controls (a `Toggle` reads/writes your bool; a button result is a value you handle).
+## Step 1: Create the context
 
-Everything is host-owned. ImKit only draws and reports — see [How ImKit works](../getting-started/how-it-works.md) for the ownership model.
-
-## What you need
-
-1. A C++20 toolchain that builds Dear ImGui 1.93.0 WIP (the pinned revision).
-2. CMake 3.20 or newer.
-3. Dear ImGui source at pinned commit `367b2c24f399988ddafc0bb4628da0106bcc09be`.
-4. ImKit source or the SDK package, linked as the `imkit::imkit` target.
-
-You do not need a GPU to read this. The example below is a CPU-only smoke host; the real Gallery uses GLFW/OpenGL or Metal to draw a window.
-
-## Step 1 — Create the Dear ImGui context
-
-ImKit never creates the context. You do, exactly once, and destroy it at shutdown.
+ImKit never creates a Dear ImGui context. Your application creates it once at startup and destroys it at shutdown.
 
 ```cpp
+#include <cstdio>
 #include <imgui.h>
 #include <imkit/imkit.h>
 
 int main() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    auto &io = ImGui::GetIO();
-    io.DisplaySize = {640, 480};   // real app: supplied by your windowing backend
-    io.DeltaTime   = 1.f / 60.f;   // real app: supplied by your windowing backend
-    io.IniFilename = nullptr;      // host owns all state; no settings file
-    io.Fonts->AddFontDefault();    // give Dear ImGui a font so text renders
-    // ...
-}
-```
-
-Key points:
-
-- `CreateContext()` is called once, at startup. `DestroyContext()` once, at shutdown.
-- `io.IniFilename = nullptr` means ImKit will not read or write any settings file. Your application is the source of truth for all state.
-- `AddFontDefault()` gives Dear ImGui a built-in font. In a real app you upload your own.
-
-## Step 2 — Build and apply a theme
-
-A theme is a plain value. `MakeTheme` returns a copy that you own, and `ApplyTheme` installs it on the current Dear ImGui context.
-
-```cpp
-    // Icons: CPU data is embedded. A real app uploads each atlas and binds it.
-    imkit::IconAtlas icons;
-    for (int size : imkit::IconPixelSizes) {
-        const auto atlas = imkit::GetIconAtlasPixels(size);
-        // Real app: upload atlas.rgba to a GPU texture, then:
-        //     icons.SetTexture(size, texture);
-    }
-
-    auto theme = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
-    imkit::ApplyTheme(theme, 1.0f);   // applied to the current context, before NewFrame
-```
-
-- `ThemePreset::PrecisionDark` is one of the named presets; any value from `imkit::ThemePresets()` works.
-- `ApplyTheme` takes a scale factor (the third position). `1.0f` is the default.
-- ImKit holds no global "current theme". The host decides which theme is active and when.
-
-## Step 3 — Draw your first ImKit controls
-
-`imkit::Begin`/`imkit::End` are Dear ImGui's child-window `Begin`/`End`, re-exported into the `imkit` namespace. They bracket a group of drawing calls. Inside, call themed controls; each reads host-owned values and returns results you handle.
-
-```cpp
-    ImGui::NewFrame();
-    {
-        imkit::ThemeScope scope(theme);   // theme is active only inside this block
-        if (imkit::Begin("Settings")) {   // true while the child window is visible
-            bool enabled = true;           // YOUR state — not owned by ImKit
-            imkit::Toggle("Enabled", &enabled, {&theme});
-            imkit::StatusBadge("Ready", imkit::StatusKind::Success, &theme);
-            imkit::Icon(icons, imkit::IconId::Settings);  // empty until you bind a texture
-        }
-        imkit::End();
-    }
-    ImGui::Render();
-```
-
-- `{&theme}` is a `ComponentOptions` whose first member is the theme. Pass `{}` when you have no overrides.
-- `Toggle` writes your `bool` on the user's input and returns `true` when the state changed.
-- `StatusBadge` is a draw-only status chip.
-- `Icon` reserves layout space for a glyph; with no bound texture it is intentionally blank in this CPU host.
-
-## The full program
-
-Putting the pieces together:
-
-```cpp
-#include <imgui.h>
-#include <imkit/imkit.h>
-
-int main() {
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    auto &io = ImGui::GetIO();
-    io.DisplaySize = {640, 480};
-    io.DeltaTime   = 1.f / 60.f;
-    io.IniFilename = nullptr;
+    ImGuiIO& io = ImGui::GetIO();
+    io.DisplaySize = {640, 480};    // a real app gets this from its window
+    io.DeltaTime = 1.0f / 60.0f;    // and this from its frame timer
+    io.IniFilename = nullptr;       // no settings file
     io.Fonts->AddFontDefault();
 
-    imkit::IconAtlas icons;
-    for (int size : imkit::IconPixelSizes) {
-        const auto atlas = imkit::GetIconAtlasPixels(size);
-        (void)atlas;   // real app: upload and icons.SetTexture(size, texture);
-    }
+    // No renderer backend runs here, so build the font atlas by hand.
+    // A real backend does this for you.
+    unsigned char* pixels = nullptr;
+    int width = 0, height = 0;
+    io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
+```
 
-    auto theme = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
-    imkit::ApplyTheme(theme, 1.0f);
+`io.IniFilename = nullptr` stops Dear ImGui from reading or writing `imgui.ini`.
 
+## Step 2: Make a theme
+
+A theme is a plain value. `MakeTheme` returns a copy that your application keeps. ImKit holds no global current theme.
+
+```cpp
+    imkit::Theme theme = imkit::MakeTheme(imkit::ThemePreset::Ocean);
+```
+
+<img src="../images/v4-themes.gif" alt="Picking a theme in the Gallery recolours every component" width="960">
+
+`ThemePreset::Ocean` is one of the built-in presets. See [Themes](../architecture/themes.md) for the list and for building your own.
+
+## Step 3: Keep your own state
+
+The values the controls edit belong to your application.
+
+```cpp
+    bool notifications = true;
+    int counter = 0;
+```
+
+## Step 4: Draw a frame
+
+Apply the theme on the live context before `NewFrame`, then draw between `NewFrame` and `Render`.
+
+```cpp
+    imkit::ApplyTheme(theme);       // before ImGui::NewFrame()
     ImGui::NewFrame();
-    {
-        imkit::ThemeScope scope(theme);
-        if (imkit::Begin("Settings")) {
-            bool enabled = true;
-            imkit::Toggle("Enabled", &enabled, {&theme});
-            imkit::StatusBadge("Ready", imkit::StatusKind::Success, &theme);
-            imkit::Icon(icons, imkit::IconId::Settings);
-            if (imkit::ActionButton("Save", imkit::ActionVariant::Primary, {}, {&theme})) {
-                // Your code decides what "Save" means. ImKit only reported the press.
-            }
+
+    ImGui::SetNextWindowPos({20, 20});
+    ImGui::SetNextWindowSize({320, 200});
+    if (imkit::Begin("Settings", nullptr, ImGuiWindowFlags_NoResize)) {
+        imkit::Toggle("Notifications", &notifications);
+        imkit::StatusBadge(notifications ? "Active" : "Off",
+                           notifications ? imkit::StatusKind::Success : imkit::StatusKind::Neutral);
+        if (imkit::ActionButton("Add one", imkit::ActionVariant::Primary)) {
+            ++counter;              // runs on the frame where the button is pressed
         }
-        imkit::End();
+        ImGui::SameLine();
+        ImGui::Text("Count: %d", counter);
     }
+    imkit::End();
+
     ImGui::Render();
+```
+
+| Call | What it does |
+| --- | --- |
+| `imkit::Toggle` | Reads and writes your `bool`, and returns true on the frame it changes |
+| `imkit::StatusBadge` | Draws a status chip. It returns nothing |
+| `imkit::ActionButton` | Returns true on the frame the button is pressed. Your code decides what happens |
+| `imkit::Begin` / `imkit::End` | Dear ImGui's `Begin` / `End`. Always call `End`, even when `Begin` returns false |
+
+## Step 5: Read the result and clean up
+
+```cpp
+    const ImDrawData* draw = ImGui::GetDrawData();
+    std::printf("draw lists: %d, vertices: %d, indices: %d\n",
+                draw->CmdListsCount, draw->TotalVtxCount, draw->TotalIdxCount);
 
     ImGui::DestroyContext();
     return 0;
 }
 ```
 
-## Run it
+Build and run it. Any output with non-zero vertex and index counts means the frame was drawn:
 
-1. To see ImKit in a real window today, build and run the **Gallery** — it renders every control in this guide:
+```text
+draw lists: 1, vertices: 418, indices: 1281
+```
 
-   ```powershell
-   cmake --preset windows-debug
-   cmake --build --preset windows-debug --target imkit_gallery --parallel
-   ./build/windows-debug/catalog/Debug/imkit_gallery.exe
-   ```
+The numbers depend on the default font. This program has no backend, so nothing reaches a screen and the button cannot be pressed. It confirms that the context, the theme and the controls work together.
 
-   On macOS, use the `macos-universal` preset (Release, arm64/x86_64). See [Gallery](../getting-started/gallery.md).
+## Show it in a window
 
-2. The exact code above is the minimal host `examples/consumer/main.cpp`. It is a **CPU smoke app**: it sets `DisplaySize` and `DeltaTime` by hand and renders one frame directly, with no windowing backend. It is the smallest possible host that proves the context + theme + controls pattern compiles and runs.
-
-## What just happened
-
-- Your host created the Dear ImGui context and owns everything (context, fonts, state).
-- ImKit applied a theme value and drew themed controls *inside* your frame.
-- Every control read your values and returned results; nothing was acted on automatically.
-- Nothing was persisted and nothing was owned by ImKit.
+Replace the single frame with your application's loop and let a backend submit `ImGui::GetDrawData()`. The Gallery does exactly this with GLFW and OpenGL3 or Metal. Read `examples/gallery/main.cpp`, and see the [Gallery guide](../getting-started/gallery.md) for how to build and run it.
 
 ## Common mistakes
 
-- **Applying the theme after `NewFrame`.** `ApplyTheme` must run on the current context *before* `NewFrame`.
-- **Forgetting `imkit::End()`.** A `Begin` without a matching `End` breaks the child window.
-- **Expecting ImKit to act on data.** A `Toggle`/`ActionButton`/drag returns a value or request. **You** apply it to your model.
-- **Retaining `Theme` pointers.** `Theme` and `ComponentOptions.theme` are non-retained; the host owns the lifetime of any value it passes.
-- **Mixing `Begin`/`End` with other window scopes.** Keep the child window balanced and do not nest it inside another `Begin`/`End` incorrectly.
+| Mistake | Effect | Fix |
+| --- | --- | --- |
+| Calling `ApplyTheme` after `NewFrame` | The current frame uses the previous style | Call it before `ImGui::NewFrame()` |
+| Skipping `imkit::End()` | The window scope is left open | Call `End` once for every `Begin` |
+| Expecting ImKit to change your data | Nothing changes except the values you passed by pointer | Apply returned results to your own model |
+| Destroying the context while a `ThemeScope` is alive | Assertion in the scope's destructor | End the scope before `DestroyContext()` |
 
 ## Next
 
-- [Build a settings screen](build-settings-screen.md) — compose a full form from components.
-- [Build a node editor](build-node-editor.md) — render a graph snapshot and collect edits.
-- [Build a timeline editor](build-timeline.md) — fades, transitions, and grouped moves.
-- [Author a custom component](custom-component.md) — write your own themed control.
+- [Build a settings screen](build-settings-screen.md): a form built from ImKit components.
+- [Build a node editor](build-node-editor.md): draw a graph and collect edit requests.
+- [Build a timeline](build-timeline.md): tracks, clips and edit gestures.
+- [Build a custom component](custom-component.md): your own themed control.

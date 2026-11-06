@@ -4,6 +4,8 @@
 
 Include `imkit/charts.h` or `imkit/imkit.h`. The chart components draw values the host already owns. They take borrowed views, retain nothing between frames, and never allocate. No global registry, worker or persistence is introduced, and existing APIs are unchanged.
 
+<img src="../images/v4-charts.gif" alt="Donut, bar, gauge and sparkline charts reacting to the pointer in the Gallery" width="960">
+
 | Component | Purpose | Returns |
 |---|---|---|
 | `DonutChart` | Share of a whole, with a centre value and an optional legend | Clicked segment index, or `-1` |

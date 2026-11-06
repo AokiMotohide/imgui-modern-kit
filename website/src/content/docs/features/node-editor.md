@@ -1,0 +1,366 @@
+---
+title: "ノードエディタ"
+description: "独立した imkit::nodeeditor ターゲットは、Dear ImGuiの標準部品によるノード編集、Contextを必要としないレイアウト関数、ホスト主導のプレビューを提供します。imkit::editorsuite に含まれ、単独でもリンクできます。"
+---
+
+独立した `imkit::node_editor` ターゲットは、Dear ImGuiの標準部品によるノード編集、Contextを必要としないレイアウト関数、ホスト主導のプレビューを提供します。`imkit::editor_suite` に含まれ、単独でもリンクできます。`<imkit/node_editor.h>` をincludeします。基準は、固定したDear ImGui 1.93.0 WIPのdockingコミットとC++20です。
+
+![Node Editor Gallery。動的なソケットとリンクを持つノード](/imgui-modern-kit/docs-images/v4-node-editor-poster.png)
+
+[操作GIFを開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-node-editor.gif)
+
+独自に実装したもので、`imgui-node-editor` はAPIと操作の参考にしただけです。ソース、ビルド、実行時のいずれにも依存せず、サードパーティのアセットも加えていません。単体のデモは、インストール済みのWindows用Segoe UIフォントを任意で読み込みます。ライブラリがこのフォントを再配布したり読み込んだりすることはありません。
+
+状態: 開発用API。確認済みの範囲は[確認と制約](#確認と制約)にあります。
+
+## 所有の分担
+
+| ライブラリ | ホスト |
+|---|---|
+| ノード、ソケット、リンク、プレビューを描画し、完結した編集要求を報告する | グラフデータ、IDとリビジョン、Undo、クリップボードのバイト列、ファイルへの永続化、ノードの評価、worker、テクスチャ、Context、バックエンドの初期化 |
+
+`CaptureView` と `RestoreView` は、値の状態を返し、受け取ります。シリアライズはホストが行います。
+
+## 最初のフレーム
+
+```cpp
+namespace ne = imkit::node_editor;
+// ホストが持ち、フレームをまたいで保持する。Reserveは任意で、ノード数の上限ではない。
+ne::EditorState editor;
+editor.Reserve(1024);
+std::vector<ne::EditRequest> storage(4096); // 大きなバッファはスタックに置かない
+
+// 毎フレーム、モデルからグラフのビューを作る。ビューとラベルは、描画が終わるまで生かしておく。
+ne::RequestBuffer requests{storage};
+auto style = ne::MakeNodeStyle(theme);
+auto frame = ne::BeginEditor("graph", graph, editor, requests, style);
+ne::DrawLinks(frame); // グラフのリンクを予約する
+for (const auto& node : graph.nodes) {
+    if (ne::BeginNode(frame, node.id)) {
+        // 標準のImGuiコントロール。使える内容幅いっぱいに置く。
+        // 本体とPreviewは、!node.collapsed かつ
+        // editor.zoom >= style.detailZoom のときだけ描く（DrawNodesが代行する）。
+        DrawMyNodeProperties(node.id);
+        ne::EndNode(frame);
+    }
+}
+ne::NodePalette(frame, availableNodeTypes);
+ne::EndEditor(frame); // クリップされたグラフや不正なグラフでも、必ず対にする
+ApplyMyCompleteTransactions(requests.Requests());
+```
+
+- `BeginNode`/`EndNode` と `BeginPin`/`EndPin` は、明示的なフレームを受け取ります。グローバルな現在のエディタはありません。
+- ノードとソケットのIDは、強い型の64ビット値です。0は予約済みで、IDは現在のグラフの中で一意にします。
+- 位置とサイズの単位は、グラフ単位です。ソケットのオフセットは、選んだノードの辺に沿って測ります。
+- グラフのデータは借用で、描画の間ずっと変更できません。切り離したプレビューとインスペクターのパネルも同じです。描画コールバックの中で、グラフのspanを再確保しないでください。
+- `EditorState` が持つのはUIの状態と作業領域だけで、グラフは持ちません。同時に表示するビューやContextごとに、別の状態を用意します。
+- 有効なフレームをコピーしたり、ノードのスコープを入れ子にしたりしないでください。
+
+## ImGui Contextなしのレイアウト
+
+```cpp
+std::vector<ne::PositionChange> changes(graph.nodes.size());
+ne::AlignOptions options;
+options.alignment = ne::Alignment::Left;
+options.reference = ne::AlignReference::Node;
+options.anchor = lastSelected;
+auto result = ne::AlignNodes(graph, selectedIds, changes, options);
+if (result) {
+    ne::QueueLayout(graph, std::span(changes).first(result.count), requests,
+                    editor.nextOperation++);
+}
+```
+
+| API | 動作 |
+|---|---|
+| `AlignNodes` | 左・中央・右・上・中段・下。基準は、選択範囲、アンカーのノード、明示した矩形 |
+| `DistributeNodes` | 水平または垂直の中心、または辺の間隔。ロックしたノードが、動かない区間を分ける |
+| `ArrangeNodes` | 接続の向きに沿った層、水平または垂直、循環の残りは決定的に配置 |
+| `SnapNodesToGrid` | 明示した位置の量子化。グラフを勝手に並べ直すことはない |
+| `FitGroupToContents` | 余白を含むコンテナの範囲を返す。位置とサイズは、ホストがまとめて適用する |
+| `FrameNodes` | 視点だけを変える。選択が空なら、グラフ全体に合わせる |
+| `TraceNodes` | 循環に安全な、上流・下流の選択候補 |
+
+- レイアウトが返すのは、変わった位置だけです。
+- 容量不足、不正なジオメトリ、重複ID、存在しない選択、不正な包含関係は、出力を部分的に書かずに失敗します。
+- コンテナを動かすと、ロックされていない子孫のオフセットは保たれます。祖先と一緒に選んだ子孫は、二重に動きません。ロックされたサブツリーは動きません。
+- Arrangeは、視覚上の親ごとに区切り、動かない兄弟の矩形を避けます。実用的な層状レイアウトであり、一般の制約ソルバーや最適な配線の探索ではありません。
+- 中心と間隔による等間隔配置は、両端のノードを動かしません。範囲が、ノードサイズの合計より小さいと、間隔が負になることがあります。
+
+## 編集要求
+
+`RequestBuffer` は、完結した操作のまとまりを出力します。まとまりごとに、次の手順で処理します。
+
+1. `operationSize` 個のレコードを、まとめて取り出す。
+2. `graph` と `revision` を確認する。
+3. 操作全体を適用するか、全体を拒否する。複数ノードの移動は、1つのUndoにする。
+
+**ドラッグの流れ。** ドラッグは、Begin、Update、Commit、Cancelを出します。
+
+- BeginとUpdateは下書きの観測で、永続モデルのリビジョンを変える変更ではありません。ドラッグ中の下書きは、エディタ自身が描きます。
+- モデルとリビジョンは、Commitで更新します。Cancelで下書きは元に戻ります。
+- 1回で終わる操作は、失敗を返して `overflow` を立て、一部だけを黙って適用することはありません。容量が足りないときは、終了側のジェスチャーを保留し、ホストがバッファを空にするか広げた後に、再送します。
+
+**接続。** `canConnect` が、型変換、同じノード内のリンク、グラフの循環を判定します。その前に、UIがソケットの向き、存在、ロック、重複リンク、接続数の上限を確認します。
+
+- 複数に分岐させる出力ソケットには、`multiple=true` を指定します。
+- コールバックがなければ、0以外で一致する型は接続できます。0は型の指定なしです。循環は、既定では禁止しません。
+
+**グループとサブグラフ。** グループやフレームへの所属（`parent`）は、サブグラフの識別（`childGraph`）とは別です。
+
+- ホストは一度に1つのグラフを渡し、EnterGraphの要求の後に切り替えます。カメラと選択は、グラフごとに記憶されます。
+- 公開したソケットは、`internal` で対応を示します。
+- グループ化、展開、公開、テンプレートの命令は要求であり、グラフのスキーマを押し付けるものではありません。サンプルは、グループとサブグラフの境界、展開、独立したテンプレートの複製、複製、削除、Undoを、通常のホストモデルで実装しています。
+
+| 要求 | 内容 |
+|---|---|
+| `InsertNode` | 互換性のあるノードの入力と出力のソケットを見つけ、1本の配線を2本に置き換える要求を、1つの操作として出す。`from` と `to` が挿入するノードの入力と出力、`link` が元の配線を示す |
+| コピー、切り取り、貼り付け、複製、グループ化 | 選択したノードのID |
+| `ReorderPin` | ノードごとの、0から始まるソケット順 |
+| `HidePin` | インデックス1で非表示、0で表示 |
+| `ExposeProperty` | `type` にプロパティID。インデックス1で公開、0で非公開 |
+| 名前の変更 | 要求が持つ文字列。UTF-8で127バイトと終端 |
+
+## 動的ソケット
+
+APIには、`CreatePin`、`DeletePin`、`RenamePin`、`ChangePinType`、`ReorderPin`、`SetPinMultiplicity`、`SetPinLimits`、`SetPinValue` の要求があります。
+
+- 安定したIDの割り当て、グラフデータの保持、渡されたリビジョンに対する完結した操作の適用は、ホストが行います。
+- `QueuePinEdits` は、1つのまとまりに、1つの操作IDとサイズを割り当てます。バッファの容量が足りないときは、何も書きません。
+- ホストは、結果のグループ数と影響を受けるすべてのリンクを検証し、操作全体を受け入れるか、変更なしで拒否します。
+- ソケットの削除や型の変更が、リンクを暗黙に削除することはありません。`affectedLinks` は参考情報で、ホストが現在のモデルを調べます。
+- 受け入れた1つの操作が、1つのUndo記録になります。
+- BeginとUpdateの値は、UIの一時的な下書きです。適用するのはCommitだけで、Cancelは捨てます。別に、ホストのプレビュー用トランザクションを持つこともできます。
+
+```cpp
+namespace ne = imkit::node_editor;
+ne::SocketTypeView types[] = {
+    {1, "Scalar", "Value", {.6f, .7f, .8f, 1}, ne::PinShape::Circle},
+    {2, "Color", "Value", {.9f, .7f, .2f, 1}, ne::PinShape::Square}
+};
+graph.socketTypes = types; // EndEditorとインスペクターの呼び出しが終わるまで借用される
+graph.typeCompatibility = [](void*, uint64_t out, uint64_t in) {
+    return out == in ? ne::ConnectionVerdict{} :
+        ne::ConnectionVerdict{ne::ConnectionMatch::Convertible, "Host conversion"};
+};
+node.inputs.add = true; // ホストが対応する機能だけを有効にする
+pin.capabilities = {true, true, true, true, true, true};
+pin.manualPosition = false;
+ne::EditRequest create;
+create.kind = ne::EditKind::CreatePin;
+create.node = node.id;
+create.pinKind = ne::PinKind::Input;
+create.index = 0;
+create.type = 1;
+create.text[0] = 'X';
+ne::QueuePinEdits(graph, {&create, 1}, requests, operationId);
+```
+
+**型のメタデータ**
+
+- `SocketTypeView` は、安定した数値の型ID、表示名、意味上のカテゴリ、色、形を持ちます。マテリアルやジオメトリの型を表すenumは、ライブラリにありません。
+- `typeCompatibility` は、正規化した出力と入力の型IDを受け取ります。`canConnect` があれば、そちらが優先され、循環やアプリ固有の規則も判定できます。
+- `Exact`、`Convertible`、`Rejected` は、借用した理由の文字列を持ちます。構造上の可否、重複した配線、接続数の上限は、コールバックより先に確認します。
+- `canEditPin` は、ホストが事前確認の理由を返す任意のコールバックです。最終的な検証は、常にホストの責任です。
+
+## 標準の行
+
+```cpp
+ne::DrawLinks(frame); // リンクを予約する。描画は、行のレイアウトの後
+if (ne::BeginNode(frame, node.id)) {
+    ne::PinRowOptions row;
+    row.value.kind = ne::ValueKind::Float;
+    row.value.number[0] = hostValue;
+    row.minimum = 0; row.maximum = 1;
+    ne::PinRow(frame, pin.id, row);
+    ne::PinAddRow(frame, node.id, ne::PinKind::Input);
+    ne::EndNode(frame);
+}
+ne::EndEditor(frame); // このフレームで測った行の位置を使って、リンクを描く
+```
+
+- 標準の行は、ラベル、値、ソケットを揃えます。入力は左、出力は右です。
+- `PinRowOptions` は、Color、Float、Integer、Boolean、Vector、Enum、Text、独自のnativeウィジェット用コールバックに対応します。要求に入る値は、コピーを所有し、ホストの記憶領域へのポインターではありません。
+- 編集できるのは、接続されていない入力だけです。接続済みの値は、既定で隠れ、`hideConnectedValue=false` にすると無効状態で表示されます。
+- ズームが小さいときは、細かい値のエディターは隠れ、行とソケットの構造は残ります。ズームが小さくても、行は渡してください。
+- `GetPinPosition` は、行を渡した後に、ソケットの描画とリンクが使うのと同じ画面位置を返します。
+- 特殊な内容には、辺とオフセットを手動で指定する `BeginPin`/`EndPin` を使います。通常の編集には、`manualPosition=false` の `PinRow` を使います。
+- `DrawLinks` は予約の呼び出しで、グラフのリンクは、`EndEditor` が、行を渡した後に1回だけ描きます。明示的な `Link` の呼び出しは即時で、対応する行の後に置きます。
+- ビュー、ラベル、型のメタデータ、コールバックの記憶領域は、エディタとインスペクターの呼び出しがすべて終わるまで、生かしておきます。
+
+**可変個の入力。** 0以外の `capabilities.group`、最小数、最大数と、対応するノードの入力機能を設定し、そのグループで `PinAddRow` を渡します。
+
+- 行は、同じグラフ・ノード・向き・グループの中でのドラッグによる並べ替えと、削除とメタデータ編集のコンテキストメニューに対応します。
+- インスペクターは、入力と出力を分け、作成、命名、型、表示、接続数、公開、グループの上限を扱えます。
+- `confirmPinImpact` は、リンク済みのソケットに出す短い確認を切り替えます。確認の済んだ編集も、ホストは拒否できます。
+
+**配線**
+
+- 接続済みの入力をドラッグすると、既存のリンクを付け替えます。拒否された接続は、元のリンクをそのままにします。
+- 配線をドラッグしている間、受けられるソケットには輪が付きます（成功の色、変換が要るときは警告の色）。ほかのソケットは `incompatibleAlpha` まで薄くなり、受け先が1つもないノードは `incompatibleNodeAlpha` まで薄くなります。
+- ドラッグ中の配線は、確定後と同じ形で描きます。`snapDistance` ピクセル以内の最も近い候補に吸着し、カーソルの横のピルに判定の理由を出します。理由はホストの文言、なければ Exact、Convertible、Rejected です。
+- `LinkView::validity` は、既存の配線に対するホストの判定です。`Converted` と `Cycle` は中央に印を付けます。`Invalid` はエラーの色の長い破線と ✕ の印で描き、受け側の入力に輪を付けます。印に hover すると `LinkView::reason` を出します。エディタがそうした配線を消したり直したりすることはありません。
+- ドロップ時の絞り込みにパレットの項目を出すには、`compatible` コールバックが必要です。CreateNodeの要求は、元のピンと置き換えるリンクを含み、ホストは、作成と自動接続を不可分に行います。`InsertNode` は、候補の入力と出力、既存のリンクを示し、ホストが不可分に適用します。
+- 型のメタデータの代わりに明示したピンの形を使うには、`inheritTypeStyle=false` にします。独自の値コールバックは、Begin、Update、Commit、Cancelを、明示的に返します。
+
+## プレビュー
+
+どのノードも、プロパティの下で `Preview` を呼べます。出力には、借用したテクスチャか、文字・表・波形・3D結果のための独自コールバックを持たせます。
+
+- コールバックは、サイズと、操作できるかを示すフラグを受け取ります。その領域に収め、フラグに従ってください。
+- 結果を渡すのはホストで、エディタは何も計算しません。結果がない、待機中、古い、エラーの状態は、明示されます。
+- 固定表示や展開したビューを保つため、画面外のノードを含め、関係するすべてのノードで、エディタの後に `DrawDetachedPreviews` を呼びます。
+- テクスチャは、ホストのレンダラーが描画データを消費するまで、有効にしておきます。
+- プレビューの要求は、UIのピクセルサイズと可視状態を報告します。あるフレームに要求がなければ、その出力は求められていません。描画の解像度、DPIの換算、更新頻度、スケジューリングは、ホストが決めます。
+- 2つの出力の比較は、画像処理を行いません。
+- 本体のサイズは明示します。ネイティブのウィジェットが収まるノードサイズを選んでください。低詳細の描画は、2つ目のプロパティエディターではありません。
+
+## スタイルとパネル
+
+- `MakeNodeStyle` は、Themeから、セマンティックな色、密度、角と線の寸法、モーションを導き、続けて `Theme::node` を適用します。エディタごとに、返された値を編集します。
+- 1つのノードには `NodeView::style` を、ポートにはソケットの色・形・側を、配線ごとにはリンクの色・スタイル・幅を、上書きします。
+
+**プリセット**
+
+`MakeNodeStylePreset(theme, preset)` は、`MakeNodeStyle(theme)` から始めて、プリセットの見た目の設定を入れます。
+
+| プリセット | 用途 | 設定するもの |
+|---|---|---|
+| `Classic` | 汎用ツール。以前の見た目 | なし |
+| `Studio` | マテリアル、ジオメトリ、合成 | 色を敷いたヘッダー、矢印なし、枠に差し込んだ中空のソケット |
+| `Logic` | イベントとフローのグラフ | 濃いめの色、矢印なし、枠に差し込んだ中空のソケット、配線の強調 |
+
+**描画フック**
+
+`NodeStyle::hooks` に、`background`、`header`、`pin`、`link` のコールバックを持つ `NodeDrawHooks` を指定できます。どれも省略可能です。各コールバックは、キャンバスの描画リストと、解決済みのビュー（`NodeChromeView`、`PinChromeView`、`LinkChromeView`）を受け取ります。true を返すと、その部位の既定の描画を置き換えます。当たり判定、ID、入力はエディタ側に残ります。pin のフックから `DrawPinGlyph` を呼ぶと、既定の記号に描き足せます。
+
+**パネルと未使用のソケット**
+
+```cpp
+if (ne::BeginNodePanel(frame, kSpecular, "Specular")) {
+    ne::PinRow(frame, specularPin, row);
+    ne::EndNodePanel(frame);
+}
+```
+
+- 閉じたパネルは、`PinView::panel` が一致するソケットを見出しの行に集め、その数を出します。配線はつながったままです。状態を自分で持つには `bool* open` を渡します。
+- `NodeView::hideUnusedPins` は、未接続のソケットとその行を隠します。隠れている間は接続先になりません。
+
+**見た目の設定**
+
+| 設定 | 値 | 既定 |
+|---|---|---|
+| `NodeStyle::headerFill` | `Strip`（一段明るいヘッダーに色の線）、`Tinted`（カテゴリ色を `headerTint` の濃さで敷く）、`Flat`、`Gradient`、`None` | `Strip` |
+| `NodeStyle::categories` と `NodeView::category` | ホストが持つ `{id, color, glyph}` の表。glyph はタイトル左のタイルに出る | 空 |
+| `NodeView::tint`、`glyph`、`subtitle` | ノードごとの色、タイルの記号、ヘッダー右の補足 | 継承 |
+| `hoverBorderWidth`、`selectedBorderWidth` | hover 中と選択中のノードの枠幅 | 1.5、2 |
+| `linkColor` | `OutputType`、`InputType`、`Gradient`、`Accent`。型の色は `SocketTypeView` から取る | `OutputType` |
+| `linkArrow` | `Middle`、`None`、`End` | `Middle` |
+| `highlightConnectedLinks` | hover 中の配線と、hover 中・選択中のノードにつながる配線を強調する | オフ |
+| `hollowUnconnectedPins` | 何もつながっていないソケットを輪だけで描く | オフ |
+| `status` | `WhenActive` は、時間も進捗もない Idle ノードのステータス行を隠す。ほかに `Always`、`Never` | `WhenActive` |
+
+- ノードの色は、`tint`、カテゴリ、accent の順に決まります。`Flat` と `Gradient` のヘッダーは、その色に合わせてタイトルの文字を暗色か明色にします。
+- `NodeKind::Reroute` のノードは、保存された大きさにかかわらず 16 単位のノットとして描きます。2つのソケットはその中心にあります。中心をドラッグすると移動し、外側の輪をドラッグすると配線を始めます。
+- `PinCapabilities::required` の入力が未接続のとき、ソケットにエラーの印が付きます。
+- 配線のラベルはピルの中に描きます。リサイズのつまみはズームに合わせて大きさが変わります。
+**ノードの形と状態**
+
+| ノード | 見た目 |
+|---|---|
+| `NodeShape::Standard` | ヘッダーと本体 |
+| `NodeShape::Event` | 左端に、実行の起点を示すタブが付く |
+| `NodeShape::Compact` | ヘッダーなし。glyph（なければタイトル）をレンズの中に描く。演算子向け |
+| `NodeShape::Variable` | 型のチップとタイトルを並べたピル型 |
+| `NodeShape::Boundary` | 点線の枠。サブグラフの入出力向け |
+| `NodeKind::Frame`、`Group` | 色を敷いた領域に、ラベルタブと中のノード数 |
+| `NodeKind::Note` | 角を折った色付きのカード。`DrawNodes` は description を出す |
+| `NodeKind::Subgraph` または `childGraph` | 後ろに重ねたカードと、`EnterGraph` を要求するヘッダーの「開く」ボタン |
+
+| 状態 | 見た目 |
+|---|---|
+| `NodeView::diagnostic` | ヘッダーのバッジ、下端の文言の帯、エラー・警告・accent の色の枠 |
+| `Status::Running` | 外側の光。`progress` があればヘッダーに進捗リング |
+| `Status::Waiting` | 点線の枠 |
+| `Status::Success` / `Error` | 成功 / エラーの色の枠 |
+| `Status::Bypassed` | 本体の斜線と、最初のデータ入力から型の合う最初の出力への点線の素通し線 |
+| `Status::Disabled` | ノードを薄くし、本体のウィジェットを無効にする |
+| `Status::Cached` | ヘッダーに「cached」のチップ |
+| `breakpoint` / `locked` | 左上の角の点 / ヘッダーの南京錠 |
+
+Compact と Variable のノードには本体がありません。`DrawNodes` はコールバックを呼ばず、形全体が移動のハンドルになります。
+
+**ソケットの記号**
+
+記号は `PinView::role`、`container`、`flags` で決まります。`DrawPinGlyph` は、`PinChromeView` から同じ記号を描きます。ホストのパネルや凡例に使えます。
+
+| ソケット | 記号 |
+|---|---|
+| `PinRole::Data` | 型の `PinShape`。`hollowUnconnectedPins` のときは輪で描き、接続すると芯が入る |
+| `PinRole::Flow` | 山形を入れた角丸四角。未接続のときは線だけ。Flow の配線は文字色、`flowLinkWidth` の太さ、山形の刻みで描き、Flow 同士だけをつなぐ |
+| `PinContainer::Array` / `Set` / `Map` | 後ろに薄い輪 / 中央に点のある角丸四角 / `keyType` の色と値の色で塗り分けた半円 |
+| `PinFlags_Reference` / `Wildcard` / `Field` / `Optional` | 六角形 / 十字の入った破線の輪 / 菱形の入った輪 / 一部が欠けた輪 |
+| `PinFlags_Unavailable` | 斜線の入った薄い輪。接続先にできず、理由は `PinView::reason` |
+| `multiple=true` の入力 | つながった本数だけ伸びる長円。配線はグラフの順に並んで入る |
+
+- ワイルドカードのソケットは、組み込みの型の判定を行いません。型はホストが配線を適用するときに決めます。
+- `pinSeat` は、各ソケットの周りにキャンバス色の輪を描き、枠に差し込んだように見せます。
+- ソケットに hover すると、ラベル、型の名前、`PinView::inspect` を出します。
+- `LinkView::active` の配線では、出力から入力へ印が動きます。速さは `flowSpeed` × 60 px/s、間隔は `flowSpacing` px です。`animate` がオフのときは止まります。
+
+- `EditorOptions::locale` で、ステータス行、接続の判定、バッファ不足の警告を翻訳できます。キーは `node_editor.` で始まります。例: `node_editor.connect.rejected`、`node_editor.status.running`。
+- 本体の内容は、標準のImGuiウィジェットのままです。ホストが用意するキャンバスの装飾には、`BackgroundImage` と `Annotation` を使います。リンクの流れは表示用のフラグで、実行ではありません。
+- `NodeInspector`、`ExposedProperties`、`NodeSearch`、`Diagnostics`、`LayoutToolbar`、`Breadcrumbs` は、キャンバスの外のホストのパネルに置けます。
+
+## 既定の操作
+
+| 操作 | 入力 |
+|---|---|
+| ノードの移動 | ヘッダーをドラッグ |
+| パン | 中ボタン |
+| ズーム | ホイール |
+| 全体表示 | F |
+| ノードの追加 | Tab |
+| 選択の切り替え | Ctrl |
+| 選択に追加 | Shift |
+| 投げ縄選択 | 任意 |
+| 配線の切断 | Altドラッグ |
+| 付け替え | 入力をAltドラッグ |
+| ソケットの配線をすべて外す | ソケットをAltクリック |
+| ソケットの配線をまとめて移す | 同じ向きの別のソケットへCtrlドラッグ |
+| Reroute の挿入 | 配線をダブルクリック（`EditKind::InsertReroute`） |
+| 配線へのノードの挿入 | ノードを1つだけ配線の上へドラッグして離す |
+| 選んだ2つのノードをつなぐ | 右クリックメニュー、または `ConnectSelected` |
+| Bypass / 折りたたみ | Ctrl+B / Ctrl+H |
+
+ネイティブのテキスト編集とポップアップが優先されます。Keymapは差し替えられます。読み取り専用モードは、グラフの編集を無効にし、ナビゲーションは残します。実行とデバッグのコントロールは、ホストがその機能を申告したときだけ出ます。
+
+## GalleryとMaterial Graph Mock
+
+独立したGalleryは、Material Graph Mockから開きます。ホスト側の実装は `examples/node_editor/material_mock.h` で、以前のスタジオ画面は、Node Studioのボタンから開きます。
+
+- 12個のノードテンプレート: 画像・色・スカラー・法線の入力、3つのBRDF例、Principled、Mix／Add Closure、Emission、Material Output。
+- すべてのノードがグラフにあります。拡張した作業領域は、パンするか、Frame allで表示します。
+- Principledの入力は編集でき、Mixは可変個のグループを持ちます。パレットは、作成と自動接続を不可分に行う前に、型で絞り込みます。
+- モックが、ID、スナップショット、Undo/Redo、上限付きのCPU上の色の伝播を持ちます。各ノードは、`PreviewOutput::draw` で、球のような簡単な色のプレビューを返します。
+- GUIの例であり、**シェーダーエンジンでも、物理的なマテリアルの評価でもありません**。接続済みのソケットは、切断するまで削除も型変更もできません。これは、リンクを変えない契約を示すためです。
+
+**ナビゲーションと外観**
+
+- Galleryの2つの画面は、追加、Undo/Redo、全体表示のアイコン操作を共有します。画面のボタンで、Material Graph MockとNode Studioを切り替えます。
+- メインGalleryの最上位にある**Node Editor**ボタンは、Node Studioを直接開きます。もう一度押すと、起動中の同じウィンドウにフォーカスします。`imkit_gallery` をビルドすると、同じディレクトリに、コンパニオンのNode Editor実行ファイルもビルドされます。
+- 設定には、密度、コントラスト、モーションの低減、キャンバスの設定があります。補助的な操作とヘルプはメニューにあり、Materialでは、選択した配線への挿入も使えます。
+- 検索結果は上限付きのパネル内でスクロールし、パンくずは折り返し、ミニマップのクリックは、下にあるウィジェットを動かさずにナビゲートします。
+- ホストは、既存のアイコンアトラスをアップロードし、インストール済みの日本語フォントを優先します。両方のリソースの寿命は、ホストが持ちます。
+- ノードのヘッダーを選ぶと、インスペクターの**Node properties**で、**Name**と**Node color...**を編集できます。名前は、Enterか、欄を離れたときに確定します。色は、RGBのピッカー（Apply、Use theme、Cancel）で選び、ノードのヘッダーに反映されます。
+- どちらの編集も、サンプルのUndo/Redoに入ります。色はサンプルが持ち、ノードごとの借用の `NodeStyle` として渡します。公開APIは変わりません。
+
+## 確認と制約
+
+`imkit_node_editor_gallery` をビルドし、`catalog/Debug` から実行ファイルを起動します。
+
+- `--smoke [絶対パスの出力.png]` は、ホストの編集、Undo、サブグラフの展開を確認し、nativeのフレームを5枚描画して、任意で実際のbackbufferをキャプチャします。
+- `--capture-gif <ディレクトリ>` は、決定的な960×540のOpenGL backbufferを80フレーム出力します。ズーム、パン、可視の動的ソケットの追加、新しい互換リンク、インライン値、プレビュー、ミニマップを含みます。ホスト所有のグラフモデルを直接変えるので、文書用のキャプチャは、物理的なポインターのタイミングに依存しません。
+- `imkit.node_editor` は、レイアウト、トランザクションの安全性、nativeの公開IOを確認します。`imkit.node_editor_api_compile` は、独立した公開ヘッダーとリンクのconsumerです。
+- APIの一覧は[node-editor-api.json](../../api/node-editor/)です。`python tools/generate_node_api.py` で再生成し、ほかのAPI一覧は書き換えません。
+- これらの開発用の確認は、native OS/IME、物理DPI、支援技術、Releaseの性能、インストール済みSDKの配布を示しません。検証と残る作業は、[P0/P1レビュー](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/archive/node-editor-review.md)にあります。

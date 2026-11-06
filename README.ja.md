@@ -1,6 +1,6 @@
 # ImKit
 
-**Dear ImGuiのまま、現代的なUIへ。使い方は、いつもどおり。**
+**Dear ImGui向けの、テーマ、部品、編集画面のライブラリ**
 
 ImKitは、既存のDear ImGuiアプリに、現代的な見た目と使いやすい部品を足すC++20の静的ライブラリです。テーマを1つ足すだけで始められ、フレームのループは変えません。必要なモジュールだけをリンクできます。
 
@@ -8,12 +8,12 @@ ImKitは、既存のDear ImGuiアプリに、現代的な見た目と使いや�
 
 [![ImKitの紹介動画: テーマの前後で同じアプリが変わる](website/public/media/imkit-poster.jpg)](https://aokimotohide.github.io/imgui-modern-kit/#film)
 
-## ImKitでできること
+## 概要
 
-- **見た目だけが新しくなる。** テーマを足すと、角丸、やわらかい影、なめらかな動きが入ります。呼び出しの形も、値の持ち方もそのままです。
-- **自分の世界観にできる。** 4色からテーマを作り、角、枠線、影を足せます。部品の枠を自作のスキンに差し替えることもできます。テーマは13種を内蔵しています。
-- **部品が揃っている。** 作業画面、タイムライン、ノードエディタ、グラフ、PTZパッド、321個のアイコン。メディアサーバー向けの任意モジュール `show` もあります。
-- **アプリの作りは変わらない。** Dear ImGuiのコンテキスト、バックエンド、レンダラー、フォント、データ、Undo履歴、保存処理は、これまでどおりアプリが持ちます。
+- **呼び出しは同じまま、見た目を変える。** テーマを足すと、角丸、やわらかい影、短い遷移の動きが入ります。呼び出しの形も、値の持ち方もそのままです。
+- **独自の見た目を作れる。** 4色からテーマを作り、角、枠線、影を足せます。部品の枠を、スキンで差し替えることもできます。テーマは13種を内蔵しています。
+- **基本の部品に加えて。** 作業画面の部品、タイムライン、ノードエディタ、グラフ、PTZパッド、321個のアイコンがあります。メディアサーバー向けの任意モジュール `show` もあります。
+- **制御はアプリに残る。** Dear ImGuiのContext、バックエンド、レンダラー、フォント、データ、Undo履歴、保存処理は、これまでどおりアプリが持ちます。
 
 <img src="docs/images/v4-start.gif" alt="同じ部品が、ImKitのテーマで見た目だけ変わり、続けてGallery全体の配色が切り替わる" width="960">
 
@@ -75,6 +75,7 @@ imkit::End();
 | --- | --- |
 | <img src="docs/images/v4-themes.gif" alt="テーマを選ぶと、Gallery全体の配色が変わる" width="470"><br>テーマを選ぶと、画面全体が着替えます。 | <img src="docs/images/v4-studio.gif" alt="Theme Studioでblueprint、pastel-pop、stickerの見た目を読み込む" width="470"><br>見た目を丸ごと読み込み、角と影も変えられます。 |
 | <img src="docs/images/v4-workspace.gif" alt="タブ、階層、設定、選択部品を1画面にまとめた作業画面" width="470"><br>タブ、階層、設定を1画面に。 | <img src="docs/images/v4-show.gif" alt="キューリストとクリップランチャーでライブ演出を動かす" width="470"><br>GOでライブ演出を動かします。 |
+| <img src="docs/images/v4-charts.gif" alt="ドーナツ、棒、ゲージ、スパークラインのグラフが、ポインターに反応する" width="470"><br>ドーナツ、棒、ゲージ、スパークラインのグラフです。 | <img src="docs/images/v4-surface.gif" alt="フェーダー、ノブ、キー、画像を並べたコントロールサーフェス" width="470"><br>フェーダー、ノブ、キーを、卓のように並べられます。 |
 
 ## 4.1の新機能
 
@@ -98,6 +99,14 @@ v4のABIは、Dear ImGui 1.93.0 WIP docking（コミット `367b2c24f399988ddafc
 ## 文書
 
 [文書一覧](docs/目次.md) · [導入ガイド](docs/getting-started/導入ガイド.md) · [部品の使い方](docs/getting-started/利用ガイド.md) · [Galleryガイド](docs/getting-started/ギャラリーガイド.md) · [ノードエディタ](docs/components/ノードエディタ.md) · [アーキテクチャ](docs/architecture/アーキテクチャ.md) · [変更履歴](CHANGELOG.md)
+
+## 謝辞
+
+**ImKitは[Dear ImGui](https://github.com/ocornut/imgui)の上に成り立っています。** C++でツールのUIを手早く、気持ちよく作れるライブラリを作り、育ててくださっているOmar Cornut氏と、すべての貢献者、スポンサーの皆さまに、心から感謝します。ImKitはその成果の上に重ねる層であり、Dear ImGuiの代わりになるものではありません。
+
+- ImKitが使うのは、Dear ImGuiの公開APIだけです。Dear ImGuiをフォークしたり、パッチを当てたり、ビルドし直したりはせず、`imgui_internal.h`も使いません。Dear ImGuiのソースはアプリが用意し、Galleryは、固定したコミットの`docking`ブランチを無改変のままビルドします。
+- Dear ImGuiはMITライセンス（著作権はOmar Cornut氏）です。Galleryのウィンドウには[GLFW](https://www.glfw.org/)を使い、任意のフォントとして[Inter](https://rsms.me/inter/)と[Noto Sans JP](https://github.com/notofonts/noto-cjk)を同梱しています。ライセンスとハッシュは[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)にあります。
+- 設計の参考にしたプロジェクトも、同じ文書に挙げています。そこからコードや素材は取り込んでいません。
 
 ## ライセンス
 

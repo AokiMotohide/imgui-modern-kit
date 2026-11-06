@@ -66,6 +66,8 @@ For any future source or asset reuse, review the exact file's license and preser
 - Commit: `367b2c24f399988ddafc0bb4628da0106bcc09be`
 - License: MIT
 - Used files: core sources, public headers, demo source, and the official GLFW/OpenGL3 backend
+- Modifications: none. ImKit uses Dear ImGui's public API only and does not use `imgui_internal.h`. The Gallery builds the upstream sources unmodified, and applications supply their own copy.
+- Thanks to Omar Cornut and the Dear ImGui contributors and sponsors, whose work ImKit builds on.
 
 The MIT License (MIT)
 

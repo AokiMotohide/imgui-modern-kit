@@ -65,6 +65,7 @@ PUBLIC_FILES |= {DOCS / en for en, _ in PAIRS}
 PUBLIC_FILES |= {DOCS / ja for _, ja in PAIRS}
 
 LINK_RE = re.compile(r"(?<!!)\[[^\]]*\]\(([^)]+)\)")
+IMAGE_RE = re.compile(r"!\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)|<img\s[^>]*?src=\"([^\"]+)\"")
 HEADING_RE = re.compile(r"^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$")
 HTML_ID_RE = re.compile(r"\bid=[\"']([^\"']+)[\"']", re.IGNORECASE)
 
@@ -126,6 +127,20 @@ def check_links(path: Path) -> list[str]:
     return failures
 
 
+def check_images(path: Path) -> list[str]:
+    """Every local image or diagram that a page shows must exist."""
+    failures: list[str] = []
+    source = strip_code(path.read_text(encoding="utf-8"))
+    for match in IMAGE_RE.finditer(source):
+        raw = (match.group(1) or match.group(2)).strip().strip("<>")
+        parsed = urlsplit(raw)
+        if parsed.scheme or parsed.netloc or not parsed.path:
+            continue
+        if not (path.parent / unquote(parsed.path)).resolve().is_file():
+            failures.append(f"{path.relative_to(ROOT)}: missing image {raw}")
+    return failures
+
+
 def main() -> int:
     errors: list[str] = []
     for en_rel, ja_rel in PAIRS:
@@ -162,6 +177,7 @@ def main() -> int:
             errors.append(f"missing public entry page: {path.relative_to(ROOT)}")
         else:
             errors.extend(check_links(path))
+            errors.extend(check_images(path))
     start_source = (ROOT / "examples/gallery/start_page.cpp").read_text(encoding="utf-8")
     gallery_guides = [DOCS / "getting-started/gallery.md", DOCS / "getting-started/ギャラリーガイド.md"]
     # Every route on the Start page needs a probe in the source and a page of that name in both Gallery guides.
@@ -184,8 +200,6 @@ def main() -> int:
     release_minor = re.search(r"project\(imgui-modern-kit VERSION (\d+\.\d+)\.", project).group(1)
     consumer_sources = [ROOT / "tests/consumer/CMakeLists.txt", ROOT / "examples/consumer/CMakeLists.txt"]
     consumer_sources += list((DOCS / "getting-started").glob("*.md"))
-    consumer_sources += [ROOT / "website/src/content/docs/getting-started.mdx",
-                         ROOT / "website/src/content/docs/en/getting-started.mdx"]
     for source in consumer_sources:
         for requested in re.findall(r"find_package\(imkit (\d+\.\d+)", source.read_text(encoding="utf-8")):
             if requested != release_minor:

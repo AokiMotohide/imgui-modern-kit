@@ -45,7 +45,7 @@ Documentation is organized into five structured categories based on development 
 | [Design System](../architecture/design-system.md) / [JA](../architecture/デザインシステム.md) | Color, spacing, typography tokens, and accessibility | `imkit/theme.h` |
 | [Themes](../architecture/themes.md) / [JA](../architecture/テーマ.md) | 13 preset themes, ThemeScope, and custom palette | `imkit/theme.h` |
 | [Make your own look](../architecture/make-your-own-look.md) / [JA](../architecture/世界観を作る.md) | Brand palette, theme file, outline, shadow, text roles, skins and backdrops | `imkit/theme.h`, `imkit/skin.h`, `imkit/decor.h` |
-| [Icons](../architecture/icons.md) / [JA](../architecture/アイコン.md) | Procedural icons, atlas management, and HiDPI drawing | `imkit/icons.h` |
+| [Icons](../architecture/icons.md) / [JA](../architecture/アイコン.md) | 321 icons, seven-size atlases, GPU upload and HiDPI drawing | `imkit/icons.h` |
 | [Dependencies](../architecture/dependencies.md) / [JA](../architecture/依存関係.md) | Pinned Dear ImGui docking revision and CMake options | `CMakeLists.txt` |
 
 ### 4. Components
@@ -78,6 +78,13 @@ Documentation is organized into five structured categories based on development 
 | [Migration to 4.0 and 4.1](migration-v4.md) / [JA](v4移行ガイド.md) | Rebuild, changed default tokens, deprecated spellings and the 4.1 node editor defaults | - |
 | [Migration v3](migration-v3.md) / [JA](v3移行ガイド.md) | Step-by-step upgrade guide from v2 | - |
 | [Troubleshooting](troubleshooting.md) / [JA](トラブルシューティング.md) | Solutions for common build issues and rendering anomalies | - |
+
+## Images and diagrams
+
+| Location | Content |
+|---|---|
+| `docs/images/` | Captures of the native Gallery and the Node Editor companion only |
+| `docs/diagrams/` | Drawn diagrams (ownership and module map), one SVG per language |
 
 ## Archive and historical notes
 

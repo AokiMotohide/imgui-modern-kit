@@ -1,47 +1,6 @@
 ---
-title: "WindowFrame"
----
-
-## 用途
-
-WindowFrameはテーマ付きのtitle areaを描画し、型付きwindow操作を返します。native windowとevent loopはアプリ側が管理します。
-
-## Galleryの画面
-
-![アプリケーションshellとcontent領域を含むGallery画面。](../../../assets/captures/v4-start-poster.png)
-
-Galleryの全体画面 — application shellとcontent · [Galleryの操作映像を開く](https://raw.githubusercontent.com/AokiMotohide/imgui-modern-kit/main/docs/images/v4-start.gif)
-
-## 最小描画例
-
-```cpp
-#include <imkit/window_frame.h>
-
-imkit::WindowFrameResult DrawTitleArea(const imkit::Theme& theme,
-                                       const imkit::WindowFrameContent& content,
-                                       float widthPixels) {
-    const auto style = imkit::MakeWindowFrameStyle(
-        imkit::WindowFramePreset::Workspace, theme);
-    const auto layout = imkit::LayoutWindowFrame(widthPixels, style);
-    return imkit::DrawWindowFrame(style, content, layout);
-}
-```
-
-**例の種別:** 完結した関数例です。現在のTheme、借用content、window幅をアプリ側で渡し、戻り値の操作を適用します。
-
-## アプリへ組み込む
-
-任意のWin32/macOS targetでnative title barの操作を連携します。基本描画APIはnative windowを所有しません。
-
-## 範囲
-
-Icon atlasとGPU textureもアプリ側のresourceです。window生成やtexture uploadは行いません。
-
-## 関連APIとガイド
-
-- [WindowFrame API map](../../api/window-frame/)
-- [Iconガイド](../icons/)
-
+title: "ウィンドウフレーム"
+description: "imkit/windowframe.h は、プラットフォーム非依存の値型レイアウトおよび描画APIです。ウィンドウのタイトルバーやクライアント領域外装飾を、ImKitのデザインシステムと調和させてカスタマイズできます。"
 ---
 
 `imkit/window_frame.h` は、プラットフォーム非依存の値型レイアウトおよび描画APIです。ウィンドウのタイトルバーやクライアント領域外装飾を、ImKitのデザインシステムと調和させてカスタマイズできます。
@@ -88,10 +47,12 @@ platformAdapter.SetLayout(layout);
 
 // 4. タイトルバーの描画とイベント処理
 auto result = imkit::DrawWindowFrame(style, content, layout, state);
-if (result.action == imkit::WindowFrameAction::Close) {
+const imkit::WindowFrameEvent& event = result.event;
+if (event.type == imkit::WindowFrameEventType::Operation &&
+    event.operation == imkit::WindowFrameOperation::Close) {
     RequestAppExit();
-} else if (result.hasWorkspaceSelection) {
-    selectedWorkspace = result.selectedWorkspace;
+} else if (event.type == imkit::WindowFrameEventType::WorkspaceSelected) {
+    selectedWorkspace = event.workspace;
 }
 ```
 
