@@ -1,7 +1,6 @@
 {
-  "version": "4.0.0",
+  "edition": "4.1",
   "license": "MIT; repository font and icon notices retained",
-  "revision": 1,
   "duration": 180,
   "fps": 60,
   "resolution": [
@@ -12,7 +11,7 @@
     "ja",
     "en"
   ],
-  "shots": 19,
+  "shots": 21,
   "music": {
     "title": "Laserpack",
     "artist": "Kevin MacLeod ft. DarkNES",
@@ -33,7 +32,7 @@
   ],
   "validate": "tools/media/verify.py",
   "sha256": {
-    "ja": "0432c22ecacd5281646e8f90bac6b5d8705290da72505031dfa7a314be5ef18a",
-    "en": "aa5c063b923d49d7b2986a02a266d82c125b0bccf84e37d58ef6f67764892bb5"
+    "ja": "273e55cfcd6cedd183f6fd8cf70dca02541da1edca6407fa3ce60f4d0ca31924",
+    "en": "67008a9f6d3c4c7145a2488c2f6745dc0f9ea3faa2240d5dbdf8cbcd9370047f"
   }
 }
