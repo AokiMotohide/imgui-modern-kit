@@ -31,6 +31,7 @@ DOCS_PAIRS = [
     ("reference/v3.2-api.md", "reference/3.2追加API.md"),
     ("reference/v3.3-api.md", "reference/3.3追加API.md"),
     ("reference/v4.0-api.md", "reference/4.0追加API.md"),
+    ("reference/v4.1-api.md", "reference/4.1追加API.md"),
     ("getting-started/getting-started.md", "getting-started/導入ガイド.md"),
     ("getting-started/how-it-works.md", "getting-started/仕組みと設計思想.md"),
     ("getting-started/guide.md", "getting-started/利用ガイド.md"),
@@ -86,7 +87,7 @@ def verify_package(key: str, archive: Path) -> dict:
         "README.ja.md",
         "LICENSE",
         "THIRD_PARTY_NOTICES.md",
-        "website/public/media/imkit-4.0-poster.jpg",
+        "website/public/media/imkit-poster.jpg",
     ]
     common.extend(PUBLIC_DOCS)
     missing = [name for name in common if not one_member(names, name)]
@@ -242,7 +243,7 @@ def main() -> int:
             "source": "native Gallery OpenGL backbuffer; public Dear ImGui IO",
             "film": {
                 "version": version,
-                "files": [f"website/public/media/imkit-4.0-film-{lang}.mp4" for lang in ("ja", "en")],
+                "files": [f"website/public/media/imkit-film-{lang}.mp4" for lang in ("ja", "en")],
                 "boundary": "Demonstration recorded from the Gallery; not validation evidence",
             },
         },

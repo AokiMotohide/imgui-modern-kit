@@ -1,7 +1,7 @@
 # ImKit documentation
 
 
-[4.0 additions: brand themes, charts, PTZ, range sliders and the show module](reference/v4.0-api.md) · [Migrating to 4.0](reference/migration-v4.md)
+[4.1 additions: tile map, control sizes, sprites, PTZ capabilities and the node editor look](reference/v4.1-api.md) · [4.0 additions: brand themes, charts, PTZ, range sliders and the show module](reference/v4.0-api.md) · [Migrating to 4.0 and 4.1](reference/migration-v4.md)
 [3.3 additions: progress tracks, stages and task cards](reference/v3.3-api.md)
 [日本語](目次.md) · [Project overview](../README.md)
 

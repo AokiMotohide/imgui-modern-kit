@@ -98,7 +98,7 @@ auto currentTheme = imkit::MakeTheme(preset);
 imkit::SetAccent(theme, ImVec4(1.0f, 0.5f, 0.0f, 1.0f));
 ```
 
-さらに細かい配色を調整したい場合は、`theme.semantic.*` の各フィールドを編集し、`imkit::ResolveTheme(theme)` を呼び出します。`semantic`（および `typography`、`radius`、`stroke`、`elevation`、`opacity`）が正で、`theme.colors` と `theme.metrics` は `ResolveTheme` が作る派生値です。`colors` を直接編集しても、次の `ResolveTheme` や `SetDensity` で上書きされます。
+さらに細かい配色を調整したい場合は、`theme.semantic.*` の各フィールドを編集し、`imkit::ResolveTheme(theme)` を呼び出します。`semantic`（および `typography`、`radius`、`stroke`、`elevation`、`opacity`）が正で、`theme.colors` と `theme.metrics` は `ResolveTheme` が作る派生値です。`colors` を直接編集しても、次の `ResolveTheme` や `SetDensity` で上書きされます。縦幅などの寸法は `theme.layout`（コントロール高、各種の間隔・余白、チェックボックス・トグル・バッジ・ダイアログの比率）で個別に上書きできます。`ResolveTheme` が密度の値のあとに適用し、未指定の項目は密度の値のままなので、何も設定しないテーマの見た目は変わりません。
 
 ---
 

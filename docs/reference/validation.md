@@ -34,6 +34,26 @@ Generated evidence and media:
 
 ## Records, newest first
 
+### 4.1.0 — 2026-11-06
+
+**Verified**
+
+- CI on the release branch at `51e9e0a` (push and pull request): Windows x64, Windows Arm64, macOS arm64, macOS x86_64, the macOS Universal 2 package and documentation all succeeded. The macOS jobs had failed on `imkit.node_editor` ("ctrl-drag on a linked socket starts moving links"): Dear ImGui swaps Ctrl and Cmd on macOS, so the test's injected Ctrl never reached `io.KeyCtrl`. The test now turns `ConfigMacOSXBehaviors` off; the editor still reads Cmd as Ctrl.
+- Windows x64 Debug, rebuilt from the branch: the Gallery, the Node Editor Gallery and the node editor, theme, decor, PTZ and show LED tests built, and those five tests passed. `imkit.theme` had failed in Debug on a Dear ImGui assertion (`font != 0`): the layout-token test built a `ThemeScope` outside a frame. Release compiles the assertion out, so CI had not seen it.
+- The Debug Gallery's `--verify` (public IO) passed all 45 checks and `--verify-comparison` passed, on the branch tree.
+- Both films (`tools/media/verify.py`): 1920×1080, 60 fps, 180.0 s (10,800 frames), −14.64 LUFS, −2.06 dBTP, 28.6 MiB (ja) and 28.3 MiB (en). 15 GIFs at 960×540 and 8.0 s, the largest 1.50 MiB. Both languages have the same 26 caption keys.
+- Incremental media pipeline: recording the same take twice gives identical pixels. After one caption word changes, `film.py --status` marks 2 of 30 chunks of that language stale and none of the other language.
+- Documentation: `tools/check_docs.py` passed for 40 English/Japanese pairs and local links in 82 public pages. The site build produced 69 pages and checked 5,116 local links, 365 API rows (48 excluded) and 52 Node declarations.
+
+**Not verified**
+
+- The Release build, the packaged SDK consumer and the macOS Universal 2 package for 4.1.0. CI runs them at the merge commit.
+- Alt-click and Cmd-drag on node editor sockets with a physical macOS keyboard. Only the automated test covers them.
+- How the music sounds. Only loudness and true peak were measured.
+- Physical OS input, native IME, screen readers, mixed-DPI and multi-monitor use.
+- Third-party hosts and hardware: cameras, PTZ heads, media servers, LED controllers.
+- macOS signing and notarization. The macOS packages are unsigned.
+
 ### 4.0.0 — 2026-10-31
 
 **Verified**

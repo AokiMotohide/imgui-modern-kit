@@ -67,7 +67,7 @@ Run from the repository root with FFmpeg on PATH. The film needs Python with Pil
 | Output | Contract |
 | --- | --- |
 | GIFs `docs/images/v4-*.gif` | 960×540, 20 fps (12 fps if needed), 6–8 s, at most 2 MiB. A longer take is sped up as one continuous sequence. |
-| Films `website/public/media/imkit-4.0-film-{ja,en}.mp4` | 1920×1080, 60 fps, about three minutes, about −14 LUFS. Same footage and score in both languages; only the captions differ. |
+| Films `website/public/media/imkit-film-{ja,en}.mp4` | 1920×1080, 60 fps, about three minutes, about −14 LUFS. Same footage and score in both languages; only the captions differ. |
 
 ## Provenance
 

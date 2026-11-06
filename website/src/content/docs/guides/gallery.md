@@ -67,7 +67,7 @@ python tools/media/verify.py
 | 出力 | 規格 |
 | --- | --- |
 | GIF `docs/images/v4-*.gif` | 960×540、20 fps（必要なら12 fps）、6〜8秒、2 MiB以下。長いテイクは、連続したまま加速する。 |
-| 動画 `website/public/media/imkit-4.0-film-{ja,en}.mp4` | 1920×1080、60 fps、約3分、約−14 LUFS。映像と音楽は日英で共通で、テロップだけが違う。 |
+| 動画 `website/public/media/imkit-film-{ja,en}.mp4` | 1920×1080、60 fps、約3分、約−14 LUFS。映像と音楽は日英で共通で、テロップだけが違う。 |
 
 ## 素材の出所
 
