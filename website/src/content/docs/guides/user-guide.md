@@ -108,7 +108,7 @@ Dear ImGuiは、docking のコミット `367b2c24f399988ddafc0bb4628da0106bcc09b
 ```cmake
 set(IMKIT_IMGUI_TARGET host_imgui)
 set(IMKIT_SDK_ABI_CONFIRMED ON) # マニフェストと設定を確かめたあとだけ
-find_package(imkit 4.0 CONFIG REQUIRED)
+find_package(imkit 4.1 CONFIG REQUIRED)
 target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
 
@@ -127,5 +127,6 @@ target_link_libraries(your_app PRIVATE imkit::imkit)
 | セマンティックトークン、ロケール、プロバイダーの契約 | [デザインシステム](../../features/design-system/) |
 | ウィザード、インスペクター、プレビュータイル、トースト | [ワークフロー部品](../../features/workflow/) |
 | タイムライン、曲線、3Dビュー | [エディタスイート](../../features/editor-suite/) |
+| 4.1で増えたもの | [4.1追加API](../../api/v4-1/) |
 | 4.0で増えたもの | [4.0追加API](../../api/v4-0/) |
 | 検証の根拠と範囲 | [検証記録](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/検証記録.md)、[第三者通知](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/THIRD_PARTY_NOTICES.md) |

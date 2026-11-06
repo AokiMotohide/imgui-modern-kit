@@ -35,6 +35,10 @@
   "title": "Corners, outline, shadow.",
   "sub": "Copy your theme as text and share it."
  },
+ "sprite": {
+  "title": "Pictures that move.",
+  "sub": "Play a sprite sheet, or let a picture ride the progress bar."
+ },
  "chapter-3": {
   "title": "Easy to adopt.",
   "sub": "Keep your app the way it is."
@@ -48,8 +52,8 @@
   "sub": "Playhead, clips and transport, ready to use."
  },
  "node-editor": {
-  "title": "Connect ideas with nodes.",
-  "sub": "Socket drags, minimap and previews included."
+  "title": "Nodes you can read.",
+  "sub": "Typed links, socket glyphs and live states."
  },
  "chapter-4": {
   "title": "Build real tools.",
@@ -62,6 +66,10 @@
  "show-surface": {
   "title": "Build your own console.",
   "sub": "Place faders and knobs. Rearrange in edit mode."
+ },
+ "tilemap": {
+  "title": "Map your LED wall.",
+  "sub": "Panels coloured by port, in cable order."
  },
  "charts": {
   "title": "Charts, too.",
@@ -80,7 +88,7 @@
   "sub": "Add the look and the components."
  },
  "outro-1": {
-  "title": "ImKit 4.0",
+  "title": "ImKit 4.1",
   "sub": "Modern tools, still Dear ImGui."
  },
  "outro-2": {

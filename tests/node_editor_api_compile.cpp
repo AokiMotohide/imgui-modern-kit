@@ -14,12 +14,43 @@ void (*volatile preview)(ne::EditorFrame &, std::span<const ne::PreviewOutput>,
 bool (*volatile pinEdits)(ne::GraphView, std::span<const ne::EditRequest>, ne::RequestBuffer &,
                           std::uint64_t) = &ne::QueuePinEdits;
 void (*volatile pinRow)(ne::EditorFrame &, ne::PinId, ne::PinRowOptions) = &ne::PinRow;
+void (*volatile glyph)(ImDrawList *, const ne::PinChromeView &) = &ne::DrawPinGlyph;
+ne::NodeStyle (*volatile preset)(const imkit::Theme &, ne::NodeStylePreset) = &ne::MakeNodeStylePreset;
+bool (*volatile panel)(ne::EditorFrame &, std::uint64_t, std::string_view, bool *) = &ne::BeginNodePanel;
+bool (*volatile connect)(ne::EditorFrame &) = &ne::ConnectSelected;
 ne::ConnectionVerdict (*volatile validate)(ne::GraphView, const ne::EditRequest &) = &ne::ValidatePinEdit;
+// Appearance types share their enums with the theme file.
+static_assert(std::is_same_v<ne::HeaderFill, imkit::NodeHeaderFill>);
+static_assert(std::is_same_v<ne::LinkColorSource, imkit::NodeLinkColor>);
+static_assert(std::is_same_v<ne::LinkArrow, imkit::NodeLinkArrow>);
 int main() {
+    static const ne::NodeCategoryStyle categories[] = {{7, {.4f, .6f, 1, 1}, "M"}};
+    ne::NodeStyle look;
+    look.headerFill = ne::HeaderFill::Tinted;
+    look.linkColor = ne::LinkColorSource::Gradient;
+    look.linkArrow = ne::LinkArrow::None;
+    look.status = ne::StatusDisplay::Never;
+    look.categories = categories;
+    look.snapDistance = 24;
+    static const ne::NodeDrawHooks hooks{nullptr, nullptr, nullptr,
+                                         [](ImDrawList *, const ne::PinChromeView &, void *) { return false; }};
+    look.hooks = &hooks;
+    ne::LinkView flagged{{1}, {1}, {2}};
+    flagged.validity = ne::LinkValidity::Invalid;
+    flagged.reason = "Type changed";
+    (void)flagged;
+    ne::EditorOptions options;
+    options.locale = nullptr;
     ne::EditorState state;
     state.Reserve(16);
     ne::NodeId ids[] = {{1}};
     ne::NodeView nodes[] = {{ids[0], {0, 0}, {240, 240}, "Example"}};
+    nodes[0].category = 7;
+    nodes[0].subtitle = "Math";
+    nodes[0].shape = ne::NodeShape::Compact;
+    nodes[0].diagnostic = {ne::Severity::Warning, "Unused input"};
+    (void)look;
+    (void)options;
     ne::GraphView graph;
     graph.nodes = nodes;
     ne::PositionChange changes[1];

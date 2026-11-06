@@ -142,6 +142,14 @@ Colours are `#RRGGBB[AA]`, numbers are plain decimals, switches are `true` or `f
 | `layout.check-height-scale`, `toggle-height-scale` | Optional, 1 to 4. Checkbox and Toggle height as a multiple of the font size (defaults 1.45 and 1.75) |
 | `layout.dialog-padding-scale`, `progress-bar-height-scale` | Optional multiples (defaults 1.3 and 0.2) |
 | `layout.badge-extra-height`, `segmented-inset` | Optional pixels (defaults 8 and 3) |
+| `node.header-fill` | `strip`, `tinted`, `flat`, `gradient` or `none` |
+| `node.link-color` | `output-type`, `input-type`, `gradient` or `accent` |
+| `node.link-arrow` | `middle`, `none` or `end` |
+| `node.canvas`, `node.grid`, `node.header` | Colours; alpha zero follows the semantic colours |
+| `node.header-tint` | Optional, 0 to 1 |
+| `node.rounding`, `header-height`, `pin-radius`, `link-width`, `grid-size` | Optional; 0 to 64, 8 to 200, 1 to 32, 0.5 to 16, 4 to 400 |
+| `node.pin-seat`, `node.flow-link-width` | Optional; 0 to 12, 0.5 to 16 |
+| `node.hollow-pins`, `node.highlight-links` | Switch |
 
 Unknown keys and values out of range are skipped with a warning. Key names are stable: they are never renamed or reused.
 

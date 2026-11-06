@@ -197,7 +197,9 @@ ne::EndEditor(frame); // このフレームで測った行の位置を使って�
 **配線**
 
 - 接続済みの入力をドラッグすると、既存のリンクを付け替えます。拒否された接続は、元のリンクをそのままにします。
-- 互換性のある接続先には、意味づけされたフィードバックのリングが出て、変換が要る接続先には、印が1つ加わります。
+- 配線をドラッグしている間、受けられるソケットには輪が付きます（成功の色、変換が要るときは警告の色）。ほかのソケットは `incompatibleAlpha` まで薄くなり、受け先が1つもないノードは `incompatibleNodeAlpha` まで薄くなります。
+- ドラッグ中の配線は、確定後と同じ形で描きます。`snapDistance` ピクセル以内の最も近い候補に吸着し、カーソルの横のピルに判定の理由を出します。理由はホストの文言、なければ Exact、Convertible、Rejected です。
+- `LinkView::validity` は、既存の配線に対するホストの判定です。`Converted` と `Cycle` は中央に印を付けます。`Invalid` はエラーの色の長い破線と ✕ の印で描き、受け側の入力に輪を付けます。印に hover すると `LinkView::reason` を出します。エディタがそうした配線を消したり直したりすることはありません。
 - ドロップ時の絞り込みにパレットの項目を出すには、`compatible` コールバックが必要です。CreateNodeの要求は、元のピンと置き換えるリンクを含み、ホストは、作成と自動接続を不可分に行います。`InsertNode` は、候補の入力と出力、既存のリンクを示し、ホストが不可分に適用します。
 - 型のメタデータの代わりに明示したピンの形を使うには、`inheritTypeStyle=false` にします。独自の値コールバックは、Begin、Update、Commit、Cancelを、明示的に返します。
 
@@ -215,8 +217,98 @@ ne::EndEditor(frame); // このフレームで測った行の位置を使って�
 
 ## スタイルとパネル
 
-- `MakeNodeStyle` は、Themeから、セマンティックな色、密度、角と線の寸法、モーションを導きます。エディタごとに、返された値を編集します。
+- `MakeNodeStyle` は、Themeから、セマンティックな色、密度、角と線の寸法、モーションを導き、続けて `Theme::node` を適用します。エディタごとに、返された値を編集します。
 - 1つのノードには `NodeView::style` を、ポートにはソケットの色・形・側を、配線ごとにはリンクの色・スタイル・幅を、上書きします。
+
+**プリセット**
+
+`MakeNodeStylePreset(theme, preset)` は、`MakeNodeStyle(theme)` から始めて、プリセットの見た目の設定を入れます。
+
+| プリセット | 用途 | 設定するもの |
+|---|---|---|
+| `Classic` | 汎用ツール。以前の見た目 | なし |
+| `Studio` | マテリアル、ジオメトリ、合成 | 色を敷いたヘッダー、矢印なし、枠に差し込んだ中空のソケット |
+| `Logic` | イベントとフローのグラフ | 濃いめの色、矢印なし、枠に差し込んだ中空のソケット、配線の強調 |
+
+**描画フック**
+
+`NodeStyle::hooks` に、`background`、`header`、`pin`、`link` のコールバックを持つ `NodeDrawHooks` を指定できます。どれも省略可能です。各コールバックは、キャンバスの描画リストと、解決済みのビュー（`NodeChromeView`、`PinChromeView`、`LinkChromeView`）を受け取ります。true を返すと、その部位の既定の描画を置き換えます。当たり判定、ID、入力はエディタ側に残ります。pin のフックから `DrawPinGlyph` を呼ぶと、既定の記号に描き足せます。
+
+**パネルと未使用のソケット**
+
+```cpp
+if (ne::BeginNodePanel(frame, kSpecular, "Specular")) {
+    ne::PinRow(frame, specularPin, row);
+    ne::EndNodePanel(frame);
+}
+```
+
+- 閉じたパネルは、`PinView::panel` が一致するソケットを見出しの行に集め、その数を出します。配線はつながったままです。状態を自分で持つには `bool* open` を渡します。
+- `NodeView::hideUnusedPins` は、未接続のソケットとその行を隠します。隠れている間は接続先になりません。
+
+**見た目の設定**
+
+| 設定 | 値 | 既定 |
+|---|---|---|
+| `NodeStyle::headerFill` | `Strip`（一段明るいヘッダーに色の線）、`Tinted`（カテゴリ色を `headerTint` の濃さで敷く）、`Flat`、`Gradient`、`None` | `Strip` |
+| `NodeStyle::categories` と `NodeView::category` | ホストが持つ `{id, color, glyph}` の表。glyph はタイトル左のタイルに出る | 空 |
+| `NodeView::tint`、`glyph`、`subtitle` | ノードごとの色、タイルの記号、ヘッダー右の補足 | 継承 |
+| `hoverBorderWidth`、`selectedBorderWidth` | hover 中と選択中のノードの枠幅 | 1.5、2 |
+| `linkColor` | `OutputType`、`InputType`、`Gradient`、`Accent`。型の色は `SocketTypeView` から取る | `OutputType` |
+| `linkArrow` | `Middle`、`None`、`End` | `Middle` |
+| `highlightConnectedLinks` | hover 中の配線と、hover 中・選択中のノードにつながる配線を強調する | オフ |
+| `hollowUnconnectedPins` | 何もつながっていないソケットを輪だけで描く | オフ |
+| `status` | `WhenActive` は、時間も進捗もない Idle ノードのステータス行を隠す。ほかに `Always`、`Never` | `WhenActive` |
+
+- ノードの色は、`tint`、カテゴリ、accent の順に決まります。`Flat` と `Gradient` のヘッダーは、その色に合わせてタイトルの文字を暗色か明色にします。
+- `NodeKind::Reroute` のノードは、保存された大きさにかかわらず 16 単位のノットとして描きます。2つのソケットはその中心にあります。中心をドラッグすると移動し、外側の輪をドラッグすると配線を始めます。
+- `PinCapabilities::required` の入力が未接続のとき、ソケットにエラーの印が付きます。
+- 配線のラベルはピルの中に描きます。リサイズのつまみはズームに合わせて大きさが変わります。
+**ノードの形と状態**
+
+| ノード | 見た目 |
+|---|---|
+| `NodeShape::Standard` | ヘッダーと本体 |
+| `NodeShape::Event` | 左端に、実行の起点を示すタブが付く |
+| `NodeShape::Compact` | ヘッダーなし。glyph（なければタイトル）をレンズの中に描く。演算子向け |
+| `NodeShape::Variable` | 型のチップとタイトルを並べたピル型 |
+| `NodeShape::Boundary` | 点線の枠。サブグラフの入出力向け |
+| `NodeKind::Frame`、`Group` | 色を敷いた領域に、ラベルタブと中のノード数 |
+| `NodeKind::Note` | 角を折った色付きのカード。`DrawNodes` は description を出す |
+| `NodeKind::Subgraph` または `childGraph` | 後ろに重ねたカードと、`EnterGraph` を要求するヘッダーの「開く」ボタン |
+
+| 状態 | 見た目 |
+|---|---|
+| `NodeView::diagnostic` | ヘッダーのバッジ、下端の文言の帯、エラー・警告・accent の色の枠 |
+| `Status::Running` | 外側の光。`progress` があればヘッダーに進捗リング |
+| `Status::Waiting` | 点線の枠 |
+| `Status::Success` / `Error` | 成功 / エラーの色の枠 |
+| `Status::Bypassed` | 本体の斜線と、最初のデータ入力から型の合う最初の出力への点線の素通し線 |
+| `Status::Disabled` | ノードを薄くし、本体のウィジェットを無効にする |
+| `Status::Cached` | ヘッダーに「cached」のチップ |
+| `breakpoint` / `locked` | 左上の角の点 / ヘッダーの南京錠 |
+
+Compact と Variable のノードには本体がありません。`DrawNodes` はコールバックを呼ばず、形全体が移動のハンドルになります。
+
+**ソケットの記号**
+
+記号は `PinView::role`、`container`、`flags` で決まります。`DrawPinGlyph` は、`PinChromeView` から同じ記号を描きます。ホストのパネルや凡例に使えます。
+
+| ソケット | 記号 |
+|---|---|
+| `PinRole::Data` | 型の `PinShape`。`hollowUnconnectedPins` のときは輪で描き、接続すると芯が入る |
+| `PinRole::Flow` | 山形を入れた角丸四角。未接続のときは線だけ。Flow の配線は文字色、`flowLinkWidth` の太さ、山形の刻みで描き、Flow 同士だけをつなぐ |
+| `PinContainer::Array` / `Set` / `Map` | 後ろに薄い輪 / 中央に点のある角丸四角 / `keyType` の色と値の色で塗り分けた半円 |
+| `PinFlags_Reference` / `Wildcard` / `Field` / `Optional` | 六角形 / 十字の入った破線の輪 / 菱形の入った輪 / 一部が欠けた輪 |
+| `PinFlags_Unavailable` | 斜線の入った薄い輪。接続先にできず、理由は `PinView::reason` |
+| `multiple=true` の入力 | つながった本数だけ伸びる長円。配線はグラフの順に並んで入る |
+
+- ワイルドカードのソケットは、組み込みの型の判定を行いません。型はホストが配線を適用するときに決めます。
+- `pinSeat` は、各ソケットの周りにキャンバス色の輪を描き、枠に差し込んだように見せます。
+- ソケットに hover すると、ラベル、型の名前、`PinView::inspect` を出します。
+- `LinkView::active` の配線では、出力から入力へ印が動きます。速さは `flowSpeed` × 60 px/s、間隔は `flowSpacing` px です。`animate` がオフのときは止まります。
+
+- `EditorOptions::locale` で、ステータス行、接続の判定、バッファ不足の警告を翻訳できます。キーは `node_editor.` で始まります。例: `node_editor.connect.rejected`、`node_editor.status.running`。
 - 本体の内容は、標準のImGuiウィジェットのままです。ホストが用意するキャンバスの装飾には、`BackgroundImage` と `Annotation` を使います。リンクの流れは表示用のフラグで、実行ではありません。
 - `NodeInspector`、`ExposedProperties`、`NodeSearch`、`Diagnostics`、`LayoutToolbar`、`Breadcrumbs` は、キャンバスの外のホストのパネルに置けます。
 
@@ -234,6 +326,12 @@ ne::EndEditor(frame); // このフレームで測った行の位置を使って�
 | 投げ縄選択 | 任意 |
 | 配線の切断 | Altドラッグ |
 | 付け替え | 入力をAltドラッグ |
+| ソケットの配線をすべて外す | ソケットをAltクリック |
+| ソケットの配線をまとめて移す | 同じ向きの別のソケットへCtrlドラッグ |
+| Reroute の挿入 | 配線をダブルクリック（`EditKind::InsertReroute`） |
+| 配線へのノードの挿入 | ノードを1つだけ配線の上へドラッグして離す |
+| 選んだ2つのノードをつなぐ | 右クリックメニュー、または `ConnectSelected` |
+| Bypass / 折りたたみ | Ctrl+B / Ctrl+H |
 
 ネイティブのテキスト編集とポップアップが優先されます。Keymapは差し替えられます。読み取り専用モードは、グラフの編集を無効にし、ナビゲーションは残します。実行とデバッグのコントロールは、ホストがその機能を申告したときだけ出ます。
 

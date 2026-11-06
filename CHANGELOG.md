@@ -2,59 +2,147 @@
 
 > Published release entries present English first, followed by equivalent Japanese notes. Unreleased remains a work-in-progress list.
 
-## Unreleased
+## 4.1.0 — 2026-11-06
 
-### Tile map for tiled displays
+**ImKit 4.1 redesigns the node editor, adds a tile map for tiled displays, and lets you tune control sizes, play sprite sheets and draw only the PTZ controls a camera has.** Rebuild your application and every linked ImKit library with the 4.1 headers: structures grew at their end. Only the node editor changes its default look. The Dear ImGui revision and the dependencies are unchanged. See the [migration guide](docs/reference/migration-v4.md#upgrading-from-40-to-41) and the [4.1 additions](docs/reference/v4.1-api.md).
+
+### Highlights
+
+- **Redesigned node editor.** Header fills, link colours that follow socket types, socket glyphs, node shapes and states, presets, draw hooks, wiring feedback, and Alt-click and Ctrl-drag on sockets.
+- **Tile map.** `show::TileMap` draws the panels of an LED wall or video wall coloured by port, with the wiring order.
+- **Adjustable control sizes.** `Theme::layout` sets how tall controls are; unset values keep the density.
+- **Sprites and progress thumbs.** Play a sprite sheet, or let a picture ride a progress fill.
+- **PTZ from capabilities.** The control draws only what the camera offers.
+
+### Added
+
+| Header | Additions |
+| --- | --- |
+| `imkit/show/led.h` | `TileMap`, `TileMapTile`, `TileMapView`, `TileMapOptions`, `TileMapRequest` |
+| `imkit/theme.h` | `Theme::layout` (`LayoutTokens`), `Theme::node` (`NodeTokens`); `layout.*` and `node.*` theme keys; resolved values in `Metrics` |
+| `imkit/decor.h` | `Sprite`, `SpriteSheet`, `SpriteState`, `SpriteFrameAt`, `SpriteFrameUV`, `DrawSprite` |
+| `imkit/patterns.h` | `ProgressTrackView::thumb`, `thumbUser`, `thumbHeight` |
+| `imkit/ptz.h` | `PtzView::capabilities` (`PtzCapabilities`), `PtzView::readoutText`; locale keys `ptz.panPad`, `ptz.tiltPad`, `ptz.presetRecallHint`, `ptz.unsupported` |
+| `imkit/node_editor.h` | `NodeStyle` fills, link colours and arrows; `NodeView::category`, `tint`, `subtitle`, `glyph`, `shape`, `diagnostic`; `PinView` roles, containers and flags; `DrawPinGlyph`, `PinChromeView`; `LinkView::validity`; `MakeNodeStylePreset`, `NodeDrawHooks`; `BeginNodePanel`, `EndNodePanel`; `ConnectSelected`; `EditorOptions::locale`, `EditorFrame::hoveredNode` |
+
+Gallery: LED gains a tile map, Skins gains a sprite and progress-thumb demo, and PTZ camera gains a Capabilities section.
+
+#### Tile map for tiled displays
 
 - `show::TileMap` draws one cell per panel of a tiled display, such as LED wall cabinets. Tiles are coloured by group (the data port or power circuit that feeds them), each group is joined in `order` like its cables, and a dot marks the first tile. `highlightGroup` dims the other groups. The host gets the hovered and clicked tile and writes its own tooltip.
-- `TileMapTile`, `TileMapView`, `TileMapOptions` and `TileMapRequest` are new declarations; existing structures are unchanged.
 
-### タイル状の表示装置のタイルマップ
-
-- `show::TileMap` で、LED ウォールのキャビネットのようなタイル状の表示装置を、パネル1枚を1マスとして描けます。マスはグループ（そのパネルへ給電・送信するデータポートや電源回路）ごとに色分けし、グループ内を `order` の順に線で結んでケーブルの順序を示します。先頭のマスには点を打ちます。`highlightGroup` を指定すると、ほかのグループを薄く表示します。ホストは、ポインタが乗ったマスとクリックしたマスを受け取り、ツールチップを自分で描きます。
-- `TileMapTile`、`TileMapView`、`TileMapOptions`、`TileMapRequest` は新しい宣言です。既存の構造体は変わりません。
-
-### Adjustable control sizes
+#### Adjustable control sizes
 
 - `Theme::layout` (`LayoutTokens`) overrides the sizes that decide how tall controls are: `controlHeight`, `spacingX` / `spacingY`, `horizontalPadding`, window and cell padding, `indent`, `scrollbar`, `grabMin`, `separatorTextPaddingY`, and the component ratios `checkHeightScale`, `toggleHeightScale`, `dialogPaddingScale`, `progressBarHeightScale`, `badgeExtraHeight`, `segmentedInset`. `ResolveTheme` applies them after the density; an unset value keeps the density, so existing themes draw as before.
 - `Metrics` gains the resolved values (`spacingY`, `windowPaddingX/Y`, `cellPaddingY`, `indent`, `scrollbar`, `grabMin`, `separatorTextPaddingY`, `parts`). Components that have no `Theme` (Checkbox, Toggle, StatusBadge, Segmented, dialogs, progress bars) read `parts` from the theme last applied to the context; `ThemeScope` restores the previous one.
 - The theme text format reads and writes `layout.*` keys; an unset token is not written.
-- `ThemeScope` and `Theme` gain members; rebuild code that links ImKit with the new header.
 
-### 調整できるコントロールの寸法
+#### Sprite playback and progress thumbs
+
+- `Sprite`, `SpriteSheet` and `SpriteState` play a sheet of equally sized frames from one host-owned texture: `Loop`, `Once` (then the rest frame) or `HoldLast`. Reduced motion shows `restFrame`; a rectangle outside the visible area is not drawn. `SpriteFrameAt` and `SpriteFrameUV` give the frame and its texture coordinates without a Dear ImGui context, and `DrawSprite` draws one frame into any rectangle.
+- `ProgressTrackView::thumb` (with `thumbUser` and `thumbHeight`) calls the host with the track rectangle, the head position and the shown fraction, so a picture can ride the fill. It is called for a determinate track and for a running indeterminate one. `thumbHeight` reserves layout height above the track.
+
+#### PTZ control draws only what the camera offers
+
+- `PtzView::capabilities` (`PtzCapabilities`: `pan`, `tilt`, `zoom`, `home`, `presets`, `presetStore`, `speed`) hides the controls a camera lacks. A pan-only head, a zoom-only lens or recall-only presets get a smaller control; with nothing to offer it draws one line of text. Every field defaults to true, so existing code is unchanged.
+- `PtzView::readoutText` lets the host format the P / T / Z chips for devices that report normalised values.
+- With the default diameter the pad shrinks (down to 3.2 frame heights) to fit a narrow host instead of being clipped at the right edge.
+
+#### Node editor
+
+- `NodeStyle` gains `headerFill` (`Strip`, `Tinted`, `Flat`, `Gradient`, `None`), `headerTint`, hover and selected border widths, `linkColor`, `linkArrow`, `highlightConnectedLinks`, `hollowUnconnectedPins`, `status` and a borrowed `categories` table. `NodeView` gains `category`, `tint`, `subtitle` and `glyph`; a glyph is drawn in a tile left of the title.
+- `Theme::node` (`NodeTokens`) carries the same choices, and theme files read and write `node.*` keys. `MakeNodeStyle` applies them.
+- Behaviour changes: links take the output socket type colour by default (accent without type colours); the status line of an Idle node with no time or progress is hidden; `NodeKind::Reroute` draws as a 16-unit knot with both sockets at its centre; an unconnected required input is marked; link labels sit in a pill; the resize grip scales with the zoom. Set `linkColor = Accent` and `status = Always` for the previous look.
+- `EditorOptions::locale` translates the status line, connection verdicts and the full-buffer warning (`node_editor.*` keys). `EditorFrame::hoveredNode` reports the topmost hovered node.
+- Wiring feedback: sockets that can take the dragged wire get a ring, the others fade (`incompatibleAlpha`) and nodes without a candidate fade (`incompatibleNodeAlpha`). The draft wire has the final link shape, snaps to the nearest candidate within `snapDistance`, and a pill by the cursor shows the verdict reason instead of a tooltip.
+- `LinkView::validity` (`Valid`, `Converted`, `Invalid`, `Cycle`) and `LinkView::reason` draw the host's verdict on existing links: a marker in the middle, and for `Invalid` the error colour, long dashes and a ring on the receiving input.
+- Socket glyphs: `PinView::role` (`Data`, `Flow`), `container` (`Single`, `Array`, `Set`, `Map`), `flags` (`Reference`, `Wildcard`, `Field`, `Optional`, `Unavailable`), `keyType`, `inspect` and `reason`. `DrawPinGlyph` and `PinChromeView` draw them outside the canvas too. Flow links use the text colour, `flowLinkWidth` and chevrons; inputs with `multiple=true` draw as a capsule with the links side by side; `pinSeat` docks sockets into the edge; active links move marks at `flowSpeed` and `flowSpacing`.
+- `CanConnect` rejects an unavailable socket with its reason and a flow-to-data link, and lets a wildcard through without the type check.
+- Node shapes and states: `NodeView::shape` (`Standard`, `Event`, `Compact`, `Variable`, `Boundary`) and `NodeView::diagnostic` (`Severity`, message). Frames and groups draw a label tab and member count, notes a folded card, subgraphs a stacked card with an open button that queues `EnterGraph`. Running, waiting, success, error, bypassed, disabled, cached, breakpoint and locked states each have their own look; `Status::Disabled` disables the body widgets.
+- `MakeNodeStylePreset(theme, NodeStylePreset)` with `Classic`, `Studio` and `Logic`. `NodeStyle::hooks` (`NodeDrawHooks`) lets the host replace the drawing of node backgrounds, title rows, sockets and links; input stays with the editor.
+- `BeginNodePanel` / `EndNodePanel` group rows; a closed panel gathers its sockets (`PinView::panel`) on its title row. `NodeView::hideUnusedPins` hides unconnected sockets.
+- New gestures: Alt-click breaks a socket's links, Ctrl-drag moves them to another socket, double-clicking a link requests `EditKind::InsertReroute`, dropping a single dragged node onto a link inserts it, and `ConnectSelected` links two selected nodes. `Keymap` gains `bypass` (Ctrl+B) and `collapse` (Ctrl+H).
+
+### Changed
+
+- The node editor's default look changes: links take the output socket's type colour, an idle node's empty status line is hidden, `NodeKind::Reroute` is a small knot, an unconnected required input is marked, link labels sit in a pill and the resize grip scales with the zoom. Set `linkColor = LinkColorSource::Accent` and `status = StatusDisplay::Always` for the previous look.
+- Fixed: a node whose body submits no item (for example a locked, empty node) no longer trips Dear ImGui's cursor-extension assertion.
+- `IMKIT_VERSION` reads `4.1.0`.
+
+### Compatibility
+
+Public additions are at the end of existing structs (`Theme`, `ThemeScope`, `Metrics`, `PtzView`, `ProgressTrackView`, `NodeStyle`, `NodeView`, `PinView`, `LinkView`, `EditorOptions`, `EditorFrame`), so objects built with 4.0 must not be mixed with 4.1 structures. A request for `find_package(imkit 4.0)` no longer matches; ask for 4.1.
+
+### 日本語
+
+**ImKit 4.1は、ノードエディタを作り直し、タイル状の表示装置向けのタイルマップを加え、コントロールの寸法の調整、スプライトシートの再生、カメラが持つ機能だけのPTZ操作を可能にします。** 構造体は末尾に拡張されています。アプリと、リンクするすべてのImKitライブラリを、4.1のヘッダーで再ビルドしてください。既定の見た目が変わるのは、ノードエディタだけです。Dear ImGuiのrevisionと依存は変わりません。[移行ガイド](docs/reference/v4移行ガイド.md#40から41へ)と[4.1追加API](docs/reference/4.1追加API.md)を参照してください。
+
+#### 主な変更
+
+- **ノードエディタを作り直しました。** ヘッダーの塗り、ソケットの型に沿う配線の色、ソケットの記号、ノードの形と状態、プリセット、描画フック、配線中のフィードバック、ソケットのAltクリックとCtrlドラッグが入ります。
+- **タイルマップ。** `show::TileMap` で、LEDウォールやビデオウォールのパネルを、ポートごとに色分けし、配線の順序とともに描けます。
+- **調整できるコントロールの寸法。** `Theme::layout` でコントロールの縦幅を決められます。未指定の値は密度のままです。
+- **スプライトと進捗のつまみ。** スプライトシートの再生と、進捗の塗りに乗る絵を描けます。
+- **機能から決めるPTZ操作。** カメラが持つ機能だけを描きます。
+
+#### 追加
+
+| ヘッダー | 追加するもの |
+| --- | --- |
+| `imkit/show/led.h` | `TileMap`、`TileMapTile`、`TileMapView`、`TileMapOptions`、`TileMapRequest` |
+| `imkit/theme.h` | `Theme::layout`（`LayoutTokens`）、`Theme::node`（`NodeTokens`）。`layout.*` と `node.*` のテーマキー。`Metrics` の解決済みの値 |
+| `imkit/decor.h` | `Sprite`、`SpriteSheet`、`SpriteState`、`SpriteFrameAt`、`SpriteFrameUV`、`DrawSprite` |
+| `imkit/patterns.h` | `ProgressTrackView::thumb`、`thumbUser`、`thumbHeight` |
+| `imkit/ptz.h` | `PtzView::capabilities`（`PtzCapabilities`）、`PtzView::readoutText`。ロケールキー `ptz.panPad`、`ptz.tiltPad`、`ptz.presetRecallHint`、`ptz.unsupported` |
+| `imkit/node_editor.h` | `NodeStyle` の塗り、配線の色と矢印。`NodeView::category`、`tint`、`subtitle`、`glyph`、`shape`、`diagnostic`。`PinView` の役割、入れ物、修飾。`DrawPinGlyph`、`PinChromeView`。`LinkView::validity`。`MakeNodeStylePreset`、`NodeDrawHooks`。`BeginNodePanel`、`EndNodePanel`。`ConnectSelected`。`EditorOptions::locale`、`EditorFrame::hoveredNode` |
+
+Galleryには、LEDにタイルマップ、Skinsにスプライトと進捗のつまみのデモ、PTZ cameraにCapabilitiesの節を加えました。
+
+##### タイル状の表示装置のタイルマップ
+
+- `show::TileMap` で、LED ウォールのキャビネットのようなタイル状の表示装置を、パネル1枚を1マスとして描けます。マスはグループ（そのパネルへ給電・送信するデータポートや電源回路）ごとに色分けし、グループ内を `order` の順に線で結んでケーブルの順序を示します。先頭のマスには点を打ちます。`highlightGroup` を指定すると、ほかのグループを薄く表示します。ホストは、ポインタが乗ったマスとクリックしたマスを受け取り、ツールチップを自分で描きます。
+
+##### 調整できるコントロールの寸法
 
 - `Theme::layout`（`LayoutTokens`）で、コントロールの縦幅を決める寸法を上書きできます。`controlHeight`、`spacingX` / `spacingY`、`horizontalPadding`、ウィンドウとセルの余白、`indent`、`scrollbar`、`grabMin`、`separatorTextPaddingY`、および部品ごとの比率 `checkHeightScale`、`toggleHeightScale`、`dialogPaddingScale`、`progressBarHeightScale`、`badgeExtraHeight`、`segmentedInset` です。`ResolveTheme` が密度のあとに適用し、未指定の項目は密度の値のままなので、既存のテーマの見た目は変わりません。
 - `Metrics` に解決済みの値（`spacingY`、`windowPaddingX/Y`、`cellPaddingY`、`indent`、`scrollbar`、`grabMin`、`separatorTextPaddingY`、`parts`）が加わります。`Theme` を持たない部品（Checkbox、Toggle、StatusBadge、Segmented、ダイアログ、進捗バー）は、そのコンテキストに最後に適用したテーマの `parts` を読みます。`ThemeScope` は前の値に戻します。
 - テーマのテキスト形式で `layout.*` を読み書きできます。未指定のトークンは書き出しません。
-- `ThemeScope` と `Theme` にメンバーが加わります。ImKit をリンクするコードは、新しいヘッダーで再ビルドしてください。
 
-### Sprite playback and progress thumbs
-
-- `Sprite`, `SpriteSheet` and `SpriteState` play a sheet of equally sized frames from one host-owned texture: `Loop`, `Once` (then the rest frame) or `HoldLast`. Reduced motion shows `restFrame`; a rectangle outside the visible area is not drawn. `SpriteFrameAt` and `SpriteFrameUV` give the frame and its texture coordinates without a Dear ImGui context, and `DrawSprite` draws one frame into any rectangle.
-- `ProgressTrackView::thumb` (with `thumbUser` and `thumbHeight`) calls the host with the track rectangle, the head position and the shown fraction, so a picture can ride the fill. It is called for a determinate track and for a running indeterminate one. `thumbHeight` reserves layout height above the track.
-- Both additions are appended to existing structures or are new declarations; rebuild code that links ImKit with the new headers.
-
-### スプライトの再生と進捗のつまみ
+##### スプライトの再生と進捗のつまみ
 
 - `Sprite`、`SpriteSheet`、`SpriteState` で、ホストが所有する1枚のテクスチャに並べた、同じ大きさのコマのシートを再生できます。`Loop`、`Once`（終わったら静止コマ）、`HoldLast` に対応します。`reducedMotion` では `restFrame` を表示し、見えない領域は描きません。`SpriteFrameAt` と `SpriteFrameUV` は、Dear ImGui のコンテキストなしで、コマ番号とテクスチャ座標を返し、`DrawSprite` は、任意の矩形に1コマを描きます。
 - `ProgressTrackView::thumb`（`thumbUser`、`thumbHeight` つき）で、トラックの矩形、先頭の位置、表示中の割合をホストへ渡し、塗りに乗る絵を描けます。確定した進捗と、動いている不確定の進捗で呼ばれます。`thumbHeight` は、トラックの上にレイアウトの高さを確保します。
-- どちらも既存の構造体の末尾への追加、または新しい宣言です。ImKit をリンクするコードは、新しいヘッダーで再ビルドしてください。
 
-### PTZ control draws only what the camera offers
-
-- `PtzView::capabilities` (`PtzCapabilities`: `pan`, `tilt`, `zoom`, `home`, `presets`, `presetStore`, `speed`) hides the controls a camera lacks. A pan-only head, a zoom-only lens or recall-only presets get a smaller control; with nothing to offer it draws one line of text. Every field defaults to true, so existing code is unchanged.
-- `PtzView::readoutText` lets the host format the P / T / Z chips for devices that report normalised values.
-- New locale keys: `ptz.panPad`, `ptz.tiltPad`, `ptz.presetRecallHint`, `ptz.unsupported`. The Gallery PTZ page gains a Capabilities section.
-- With the default diameter the pad shrinks (down to 3.2 frame heights) to fit a narrow host instead of being clipped at the right edge.
-- Both additions are appended to `PtzView`; rebuild code that links ImKit with the new header.
-
-### 日本語
+##### カメラが持つ機能だけを描くPTZ操作
 
 - `PtzView::capabilities`（`PtzCapabilities`: `pan`、`tilt`、`zoom`、`home`、`presets`、`presetStore`、`speed`）で、カメラが持たない操作を隠せます。パンだけの雲台、ズームだけのレンズ、呼び出し専用のプリセットでは小さな操作部になり、何もなければ1行の文だけを描きます。どのフィールドも既定値はtrueなので、既存のコードは変わりません。
-- `PtzView::readoutText`で、正規化した値を報告する機器向けにP / T / Zのチップの文字をホストが整えられます。
-- ロケールキー `ptz.panPad`、`ptz.tiltPad`、`ptz.presetRecallHint`、`ptz.unsupported` を追加しました。GalleryのPTZ画面にCapabilitiesの節を加えました。
+- `PtzView::readoutText` で、正規化した値を報告する機器向けにP / T / Zのチップの文字をホストが整えられます。
 - 直径が既定のときは、狭い配置先でも右端が切れないよう、パッドをフレーム高さの3.2倍まで縮めます。
-- どちらも`PtzView`の末尾に追加したので、ImKitをリンクするコードは新しいヘッダーで再ビルドしてください。
+
+##### ノードエディタ
+
+- `NodeStyle` に、`headerFill`（`Strip`、`Tinted`、`Flat`、`Gradient`、`None`）、`headerTint`、hover 時と選択時の枠幅、`linkColor`、`linkArrow`、`highlightConnectedLinks`、`hollowUnconnectedPins`、`status`、借用の `categories` 表が加わります。`NodeView` に `category`、`tint`、`subtitle`、`glyph` が加わり、glyph はタイトル左のタイルに描きます。
+- `Theme::node`（`NodeTokens`）で同じ設定を持てます。テーマファイルで `node.*` キーを読み書きでき、`MakeNodeStyle` が適用します。
+- 動作の変更: 配線は既定で出力ソケットの型の色になります（型の色がなければ accent）。時間も進捗もない Idle ノードのステータス行は出ません。`NodeKind::Reroute` は 16 単位のノットとして描き、2つのソケットを中心に置きます。必須入力が未接続のとき印を付けます。配線のラベルはピルの中に描きます。リサイズのつまみはズームに合わせて大きさが変わります。以前の見た目に戻すには `linkColor = Accent` と `status = Always` を指定します。
+- `EditorOptions::locale` で、ステータス行、接続の判定、バッファ不足の警告を翻訳できます（`node_editor.*` キー）。`EditorFrame::hoveredNode` は、一番手前の hover 中のノードを返します。
+- 配線中のフィードバック: ドラッグ中の配線を受けられるソケットに輪を付け、ほかのソケット（`incompatibleAlpha`）と受け先のないノード（`incompatibleNodeAlpha`）を薄くします。ドラッグ中の配線は確定後と同じ形で描き、`snapDistance` 以内の最も近い候補に吸着します。判定の理由は tooltip ではなく、カーソル横のピルに出します。
+- `LinkView::validity`（`Valid`、`Converted`、`Invalid`、`Cycle`）と `LinkView::reason` で、既存の配線に対するホストの判定を描きます。中央に印を付け、`Invalid` はエラーの色と長い破線で描き、受け側の入力に輪を付けます。
+- ソケットの記号: `PinView::role`（`Data`、`Flow`）、`container`（`Single`、`Array`、`Set`、`Map`）、`flags`（`Reference`、`Wildcard`、`Field`、`Optional`、`Unavailable`）、`keyType`、`inspect`、`reason` が加わります。`DrawPinGlyph` と `PinChromeView` で、キャンバスの外でも同じ記号を描けます。Flow の配線は文字色、`flowLinkWidth`、山形の刻みで描きます。`multiple=true` の入力は長円で描き、配線を並べて受けます。`pinSeat` でソケットを枠に差し込んだように見せます。実行中の配線では、`flowSpeed` と `flowSpacing` で印が動きます。
+- `CanConnect` は、使えないソケットを理由つきで拒否し、Flow とデータの接続も拒否します。ワイルドカードは型の判定をせずに通します。
+- ノードの形と状態: `NodeView::shape`（`Standard`、`Event`、`Compact`、`Variable`、`Boundary`）と `NodeView::diagnostic`（`Severity` と文言）が加わります。Frame と Group はラベルタブと中のノード数を、Note は角を折ったカードを、サブグラフは重ねたカードと `EnterGraph` を要求する「開く」ボタンを描きます。実行中、待機、成功、エラー、Bypass、無効、キャッシュ、ブレークポイント、ロックの各状態に専用の見た目があります。`Status::Disabled` は本体のウィジェットを無効にします。
+- `MakeNodeStylePreset(theme, NodeStylePreset)` で、`Classic`、`Studio`、`Logic` のプリセットを選べます。`NodeStyle::hooks`（`NodeDrawHooks`）で、ノードの背景、タイトル行、ソケット、配線の描画をホストが置き換えられます。入力はエディタ側に残ります。
+- `BeginNodePanel` / `EndNodePanel` で行をまとめられます。閉じたパネルは、`PinView::panel` が一致するソケットを見出しの行に集めます。`NodeView::hideUnusedPins` は未接続のソケットを隠します。
+- 新しい操作: Altクリックでソケットの配線をすべて外し、Ctrlドラッグで別のソケットへ移します。配線のダブルクリックで `EditKind::InsertReroute` を要求し、1つだけドラッグしたノードを配線の上で離すと挿入します。`ConnectSelected` は選んだ2つのノードをつなぎます。`Keymap` に `bypass`（Ctrl+B）と `collapse`（Ctrl+H）が加わります。
+
+#### 変更
+
+- ノードエディタの既定の見た目が変わります。配線は出力ソケットの型の色になり、Idle のノードの空のステータス行は隠れ、`NodeKind::Reroute` は小さなノットになり、未接続の必須入力に印が付き、配線のラベルはピルの中に描かれ、リサイズのつまみはズームに合わせて大きさが変わります。以前の見た目に戻すには `linkColor = LinkColorSource::Accent` と `status = StatusDisplay::Always` を指定します。
+- 修正: 本体に項目を1つも置かないノード（ロックされた空のノードなど）で、Dear ImGui のカーソル拡張のアサートが出なくなりました。
+- `IMKIT_VERSION` は `4.1.0` を返します。
+
+#### 互換性
+
+公開構造体への追加は、末尾だけです（`Theme`、`ThemeScope`、`Metrics`、`PtzView`、`ProgressTrackView`、`NodeStyle`、`NodeView`、`PinView`、`LinkView`、`EditorOptions`、`EditorFrame`）。それでも、4.0でビルドしたオブジェクトと4.1の構造体は混ぜないでください。`find_package(imkit 4.0)` の要求は4.1にマッチしなくなったので、4.1を指定してください。
 
 ## 4.0.0 — 2026-10-31
 

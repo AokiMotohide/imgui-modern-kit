@@ -14,7 +14,7 @@
 namespace imkit {
 namespace {
 // OptFloat: an optional number; an unset value is not written, and a written one is read back as set.
-enum class Kind { Color, Float, OptFloat, Bool, Vec2, Scheme, Contrast, Density, Easing };
+enum class Kind { Color, Float, OptFloat, Bool, Vec2, Scheme, Contrast, Density, Easing, HeaderFill, LinkColor, LinkArrow };
 
 struct Field {
     std::string_view key;
@@ -92,6 +92,22 @@ const Field kFields[] = {
     IMKIT_FIELD("motion.enabled", Bool, motion.enabled),
     IMKIT_FIELD("motion.reduced", Bool, motion.reducedMotion),
     IMKIT_FIELD("motion.easing", Easing, motion.easing),
+    IMKIT_FIELD("node.header-fill", HeaderFill, node.headerFill),
+    IMKIT_RANGED("node.header-tint", OptFloat, node.headerTint, 0, 1),
+    IMKIT_FIELD("node.link-color", LinkColor, node.linkColor),
+    IMKIT_FIELD("node.link-arrow", LinkArrow, node.linkArrow),
+    IMKIT_FIELD("node.canvas", Color, node.canvas),
+    IMKIT_FIELD("node.grid", Color, node.grid),
+    IMKIT_FIELD("node.header", Color, node.header),
+    IMKIT_RANGED("node.rounding", OptFloat, node.rounding, 0, 64),
+    IMKIT_RANGED("node.header-height", OptFloat, node.headerHeight, 8, 200),
+    IMKIT_RANGED("node.pin-radius", OptFloat, node.pinRadius, 1, 32),
+    IMKIT_RANGED("node.link-width", OptFloat, node.linkWidth, 0.5f, 16),
+    IMKIT_RANGED("node.grid-size", OptFloat, node.gridSize, 4, 400),
+    IMKIT_RANGED("node.pin-seat", OptFloat, node.pinSeat, 0, 12),
+    IMKIT_RANGED("node.flow-link-width", OptFloat, node.flowLinkWidth, 0.5f, 16),
+    IMKIT_FIELD("node.hollow-pins", Bool, node.hollowPins),
+    IMKIT_FIELD("node.highlight-links", Bool, node.highlightLinks),
 };
 #undef IMKIT_FIELD
 #undef IMKIT_RANGED
@@ -103,6 +119,14 @@ constexpr Name<Density> kDensities[] = {{"compact", Density::Compact}, {"comfort
 constexpr Name<Easing> kEasings[] = {{"linear", Easing::Linear}, {"ease-out", Easing::EaseOut}, {"ease-in-out", Easing::EaseInOut}};
 constexpr Name<CornerStyle> kCorners[] = {{"sharp", CornerStyle::Sharp}, {"soft", CornerStyle::Soft},
                                           {"round", CornerStyle::Round}, {"pill", CornerStyle::Pill}};
+constexpr Name<NodeHeaderFill> kHeaderFills[] = {{"strip", NodeHeaderFill::Strip}, {"tinted", NodeHeaderFill::Tinted},
+                                                 {"flat", NodeHeaderFill::Flat}, {"gradient", NodeHeaderFill::Gradient},
+                                                 {"none", NodeHeaderFill::None}};
+constexpr Name<NodeLinkColor> kLinkColors[] = {{"output-type", NodeLinkColor::OutputType},
+                                               {"input-type", NodeLinkColor::InputType},
+                                               {"gradient", NodeLinkColor::Gradient}, {"accent", NodeLinkColor::Accent}};
+constexpr Name<NodeLinkArrow> kLinkArrows[] = {{"middle", NodeLinkArrow::Middle}, {"none", NodeLinkArrow::None},
+                                               {"end", NodeLinkArrow::End}};
 
 template <class E, std::size_t N> bool ParseName(const Name<E> (&names)[N], std::string_view text, E &out) {
     for (const auto &n : names)
@@ -197,6 +221,9 @@ bool ParseValue(const Field &field, Theme &theme, std::string_view value) {
     case Kind::Contrast: return ParseName(kContrasts, value, *static_cast<ContrastMode *>(target));
     case Kind::Density: return ParseName(kDensities, value, *static_cast<Density *>(target));
     case Kind::Easing: return ParseName(kEasings, value, *static_cast<Easing *>(target));
+    case Kind::HeaderFill: return ParseName(kHeaderFills, value, *static_cast<NodeHeaderFill *>(target));
+    case Kind::LinkColor: return ParseName(kLinkColors, value, *static_cast<NodeLinkColor *>(target));
+    case Kind::LinkArrow: return ParseName(kLinkArrows, value, *static_cast<NodeLinkArrow *>(target));
     }
     return false;
 }
@@ -232,6 +259,9 @@ void AppendValue(std::string &out, const Field &field, Theme &theme) {
     case Kind::Contrast: out += NameOf(kContrasts, *static_cast<ContrastMode *>(source)); break;
     case Kind::Density: out += NameOf(kDensities, *static_cast<Density *>(source)); break;
     case Kind::Easing: out += NameOf(kEasings, *static_cast<Easing *>(source)); break;
+    case Kind::HeaderFill: out += NameOf(kHeaderFills, *static_cast<NodeHeaderFill *>(source)); break;
+    case Kind::LinkColor: out += NameOf(kLinkColors, *static_cast<NodeLinkColor *>(source)); break;
+    case Kind::LinkArrow: out += NameOf(kLinkArrows, *static_cast<NodeLinkArrow *>(source)); break;
     }
 }
 

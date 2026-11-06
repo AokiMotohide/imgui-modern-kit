@@ -234,8 +234,9 @@ void SocketTests() {
     auto view = m.View();
     auto style = MakeNodeStyle(imkit::MakeTheme(imkit::ColorScheme::Dark));
     node_gallery::StyleNodes(m.nodes, m, style);
-    Check(view.nodes.back().style && Near(view.nodes.back().style->header.x, .8),
-          "custom header color is supplied through borrowed per-node style");
+    Check(view.nodes.back().style && view.nodes.back().style->headerFill == HeaderFill::Flat &&
+              Near(view.nodes.back().tint.x, .8),
+          "custom header color is supplied as the node tint with a flat header");
 }
 void InputTests() {
     ImGui::CreateContext();
@@ -559,6 +560,532 @@ void InputTests() {
     }
     ImGui::DestroyContext();
 }
+
+// Counts draw-list vertices of one exact colour across the rendered frame.
+int CountVertices(ImU32 color) {
+    int count = 0;
+    auto *data = ImGui::GetDrawData();
+    for (int l = 0; data && l < data->CmdListsCount; ++l)
+        for (auto &v : data->CmdLists[l]->VtxBuffer)
+            count += v.col == color;
+    return count;
+}
+void AppearanceTests() {
+    ImGui::CreateContext();
+    auto &io = ImGui::GetIO();
+    io.IniFilename = nullptr;
+    io.ConfigMacOSXBehaviors = false; // The steps inject a literal Ctrl; on macOS Dear ImGui would swap it with Cmd.
+    io.DisplaySize = {1000, 700};
+    io.DeltaTime = 1.f / 60;
+    unsigned char *pixels;
+    int w, h;
+    io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);
+
+    // Theme file keys reach the node style and survive a round trip.
+    auto theme = imkit::MakeTheme(imkit::ColorScheme::Dark);
+    auto parsed = imkit::ParseTheme("node.header-fill = tinted\nnode.link-arrow = none\nnode.link-color = gradient\n"
+                                    "node.rounding = 3\nnode.hollow-pins = true\nnode.header-tint = 0.3\n",
+                                    theme);
+    Check(parsed.applied == 6 && parsed.ignored == 0, "node theme keys parse");
+    auto style = MakeNodeStyle(theme);
+    Check(style.headerFill == HeaderFill::Tinted && style.linkArrow == LinkArrow::None &&
+              style.linkColor == LinkColorSource::Gradient && Near(style.rounding, 3) && style.hollowUnconnectedPins &&
+              Near(style.headerTint, .3),
+          "node theme tokens shape MakeNodeStyle");
+    auto text = imkit::SerializeTheme(theme);
+    imkit::Theme restored = imkit::MakeTheme(imkit::ColorScheme::Dark);
+    imkit::ParseTheme(text, restored);
+    Check(imkit::SerializeTheme(restored) == text && text.find("node.header-fill = tinted") != std::string::npos,
+          "node theme tokens round-trip");
+    Check(imkit::SerializeTheme(imkit::MakeTheme()).find("node.rounding") == std::string::npos,
+          "unset node numbers are not written");
+
+    theme = imkit::MakeTheme(imkit::ColorScheme::Dark);
+    style = MakeNodeStyle(theme);
+    Check(style.status == StatusDisplay::WhenActive && style.headerFill == HeaderFill::Strip,
+          "default node look keeps the strip header");
+    const ImVec4 red{1, 0, 0, 1}, blue{0, 0, 1, 1};
+    SocketTypeView types[] = {{1, "Red", "Test", red}, {2, "Blue", "Test", blue}};
+    NodeView nodes[] = {{{1}, {20, 20}, {200, 160}, "Source"},
+                        {{2}, {420, 20}, {200, 160}, "Target"},
+                        {{3}, {300, 300}, {240, 240}, "Knot", {}, {}, {}, NodeKind::Reroute}};
+    PinView pins[] = {{{1}, {1}, "out", PinKind::Output, Side::Right, 60, 1},
+                      {{2}, {2}, "in", PinKind::Input, Side::Left, 60, 2},
+                      {{3}, {2}, "need", PinKind::Input, Side::Left, 100, 2},
+                      {{4}, {3}, "in", PinKind::Input},
+                      {{5}, {3}, "out", PinKind::Output, Side::Right}};
+    pins[2].capabilities.required = true;
+    LinkView links[] = {{{1}, {1}, {2}}};
+    GraphView graph;
+    graph.nodes = nodes;
+    graph.pins = pins;
+    graph.links = links;
+    graph.socketTypes = types;
+    EditorState state;
+    EditRequest events[16];
+    RequestBuffer out{events};
+    struct Lookups {
+        int idle = 0, running = 0;
+    } lookups;
+    imkit::LocaleContext locale;
+    locale.user = &lookups;
+    locale.lookup = [](void *user, std::string_view key, const char *fallback) {
+        auto &l = *static_cast<Lookups *>(user);
+        l.idle += key == "node_editor.status.idle";
+        l.running += key == "node_editor.status.running";
+        return fallback;
+    };
+    EditorOptions options{{960, 640}, true, false, false};
+    options.locale = &locale;
+    ImVec2 knot{};
+    NodeId hovered{};
+    auto frame = [&]() {
+        out.Clear();
+        ImGui::NewFrame();
+        ImGui::SetNextWindowPos({0, 0});
+        ImGui::SetNextWindowSize({1000, 700});
+        ImGui::Begin("test", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
+        auto f = BeginEditor("graph", graph, state, out, style, options);
+        hovered = f.hoveredNode;
+        DrawLinks(f);
+        DrawNodes(f);
+        GetPinPosition(f, {4}, knot);
+        EndEditor(f);
+        ImGui::End();
+        ImGui::Render();
+    };
+    frame();
+    Check(lookups.idle == 0, "idle node without timing hides its status line");
+    nodes[0].status = Status::Running;
+    frame();
+    Check(lookups.running > 0, "running node shows its localised status line");
+    nodes[0].status = Status::Idle;
+    style.status = StatusDisplay::Always;
+    frame();
+    Check(lookups.idle > 0, "StatusDisplay::Always keeps the status line");
+    style.status = StatusDisplay::WhenActive;
+
+    // A reroute is a 16-unit knot whatever size the host stored; both sockets sit at its centre.
+    ImVec2 knotOut{};
+    {
+        ImGui::NewFrame();
+        ImGui::Begin("test", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
+        auto f = BeginEditor("graph", graph, state, out, style, options);
+        GetPinPosition(f, {4}, knot);
+        GetPinPosition(f, {5}, knotOut);
+        const float expectX = f.min.x + float((300 + 8 - state.origin.x) * state.zoom);
+        const float expectY = f.min.y + float((300 + 8 - state.origin.y) * state.zoom);
+        Check(Near(knot.x, expectX) && Near(knot.y, expectY) && Near(knotOut.x, knot.x) && Near(knotOut.y, knot.y),
+              "reroute sockets share the knot centre");
+        EndEditor(f);
+        ImGui::End();
+        ImGui::Render();
+    }
+
+    // Link colour follows the output socket type by default and the accent when asked.
+    style.linkArrow = LinkArrow::None;
+    frame();
+    const int typed = CountVertices(ImGui::GetColorU32(red));
+    style.linkColor = LinkColorSource::Accent;
+    frame();
+    const int accent = CountVertices(ImGui::GetColorU32(red));
+    Check(typed > accent && accent > 0, "links take the output type colour by default");
+    style.linkColor = LinkColorSource::OutputType;
+
+    // An unconnected required input carries an error mark that disappears once connected.
+    const ImU32 error = ImGui::GetColorU32(style.error);
+    frame();
+    const int marked = CountVertices(error);
+    links[0].to = {3};
+    frame();
+    const int satisfied = CountVertices(error);
+    links[0].to = {2};
+    Check(marked > satisfied, "unconnected required input is marked");
+
+    // Hollow sockets draw an outline instead of a disc while unconnected.
+    style.hollowUnconnectedPins = true;
+    frame();
+    const int hollow = CountVertices(ImGui::GetColorU32(blue));
+    style.hollowUnconnectedPins = false;
+    frame();
+    Check(hollow != CountVertices(ImGui::GetColorU32(blue)), "hollow sockets change the unconnected glyph");
+
+    // The topmost node under the mouse is reported for hover styling.
+    io.MousePos = {120, 140};
+    frame();
+    frame();
+    Check(hovered == NodeId{1}, "hovered node is reported");
+
+    // Link markers: an invalid link turns to the error colour with a cross, a converted one gets a marker.
+    io.MousePos = {-100, -100};
+    const ImU32 warning = ImGui::GetColorU32(style.warning);
+    frame();
+    const int validError = CountVertices(error), validWarning = CountVertices(warning);
+    links[0].validity = LinkValidity::Invalid;
+    frame();
+    Check(CountVertices(error) > validError + 20, "invalid link is drawn in the error colour with a marker");
+    links[0].validity = LinkValidity::Converted;
+    frame();
+    Check(CountVertices(warning) > validWarning, "converted link carries a marker");
+    links[0].validity = LinkValidity::Valid;
+
+    // Wiring snaps to the nearest compatible socket and fades the others.
+    graph.typeCompatibility = [](void *, std::uint64_t, std::uint64_t) {
+        return ConnectionVerdict{ConnectionMatch::Convertible, "Host conversion"};
+    };
+    ImVec2 source{}, target{};
+    auto wire = [&](ImVec2 mouse, bool down) {
+        io.MousePos = mouse;
+        io.MouseDown[0] = down;
+        out.Clear();
+        ImGui::NewFrame();
+        ImGui::SetNextWindowPos({0, 0});
+        ImGui::SetNextWindowSize({1000, 700});
+        ImGui::Begin("test", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
+        auto f = BeginEditor("graph", graph, state, out, style, options);
+        DrawLinks(f);
+        DrawNodes(f);
+        GetPinPosition(f, {1}, source);
+        GetPinPosition(f, {3}, target);
+        EndEditor(f);
+        ImGui::End();
+        ImGui::Render();
+    };
+    state.selection.clear();
+    pins[0].multiple = true; // The source already feeds one link.
+    wire({-100, -100}, false);
+    wire(source, false);
+    wire(source, true);
+    Check(state.connecting == PinId{1}, "pressing an output starts a wire");
+    wire({target.x - 15, target.y + 2}, true); // Outside the socket's own hit box, inside the snap radius.
+    wire({target.x - 15, target.y + 2}, false);
+    bool created = false;
+    for (auto &r : out.Requests())
+        created = created || (r.kind == EditKind::CreateLink && r.from == PinId{1} && r.to == PinId{3});
+    Check(created, "releasing near a compatible socket snaps the wire to it");
+    Check(!state.connecting, "wire ends after the drop");
+    graph.typeCompatibility = nullptr;
+    pins[0].multiple = false;
+    io.MousePos = {-100, -100};
+
+    // Node states: an empty locked node closes cleanly, a diagnostic draws a band, Disabled disables the body,
+    // and the open-subgraph button queues EnterGraph.
+    {
+        nodes[1].locked = true;
+        frame(); // Would assert if the body cursor were left unsettled.
+        nodes[1].locked = false;
+        frame();
+        const int plain = CountVertices(error);
+        nodes[1].diagnostic = {Severity::Error, "Missing input"};
+        frame();
+        Check(CountVertices(error) > plain, "error diagnostic draws a badge, band and outline");
+        nodes[1].diagnostic = {};
+        bool disabledBody = false;
+        nodes[0].status = Status::Disabled;
+        out.Clear();
+        ImGui::NewFrame();
+        ImGui::Begin("test", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
+        {
+            auto f = BeginEditor("graph", graph, state, out, style, options);
+            if (BeginNode(f, {1})) {
+                ImGui::Dummy({1, 1});
+                disabledBody = (ImGui::GetItemFlags() & ImGuiItemFlags_Disabled) != 0;
+                EndNode(f);
+            }
+            EndEditor(f);
+        }
+        ImGui::End();
+        ImGui::Render();
+        nodes[0].status = Status::Idle;
+        Check(disabledBody, "a Disabled node disables its body widgets");
+
+        nodes[1].childGraph = {9};
+        auto click = [&](ImVec2 at, bool down) {
+            io.MousePos = at;
+            io.MouseDown[0] = down;
+            frame();
+        };
+        ImVec2 origin{};
+        {
+            ImGui::NewFrame();
+            ImGui::Begin("test", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
+            auto f = BeginEditor("graph", graph, state, out, style, options);
+            origin = f.min;
+            EndEditor(f);
+            ImGui::End();
+            ImGui::Render();
+        }
+        const float z = float(state.zoom), header = style.headerHeight * z;
+        const float badge = std::max(6.f, std::min(header * .5f, 16 * z));
+        const ImVec2 button{origin.x + float((420 + 200 - state.origin.x) * z) - style.padding * z - badge * .5f,
+                            origin.y + float((20 - state.origin.y) * z) + header * .5f};
+        click(button, false);
+        click(button, true);
+        bool entered = false;
+        for (auto &r : out.Requests())
+            entered = entered || (r.kind == EditKind::EnterGraph && r.node == NodeId{2});
+        click(button, false);
+        for (auto &r : out.Requests())
+            entered = entered || (r.kind == EditKind::EnterGraph && r.node == NodeId{2});
+        Check(entered, "the header button of a subgraph queues EnterGraph");
+        nodes[1].childGraph = {};
+        io.MousePos = {-100, -100};
+        frame();
+    }
+
+    // Presets, hooks and the editing gestures added with them.
+    {
+        auto studio = MakeNodeStylePreset(theme, NodeStylePreset::Studio);
+        auto logic = MakeNodeStylePreset(theme, NodeStylePreset::Logic);
+        auto classic = MakeNodeStylePreset(theme, NodeStylePreset::Classic);
+        Check(studio.headerFill == HeaderFill::Tinted && studio.hollowUnconnectedPins && studio.pinSeat > 0 &&
+                  studio.linkArrow == LinkArrow::None,
+              "Studio preset sets its appearance");
+        Check(logic.highlightConnectedLinks && logic.headerTint > studio.headerTint, "Logic preset sets its appearance");
+        const auto plain = MakeNodeStyle(theme);
+        Check(classic.headerFill == plain.headerFill && classic.linkArrow == plain.linkArrow &&
+                  classic.hollowUnconnectedPins == plain.hollowUnconnectedPins,
+              "Classic preset equals the plain theme style");
+
+        struct Calls {
+            int background = 0, pin = 0;
+        } calls;
+        NodeDrawHooks hooks;
+        hooks.user = &calls;
+        hooks.background = [](ImDrawList *, const NodeChromeView &v, void *user) {
+            ++static_cast<Calls *>(user)->background;
+            return v.node && v.max.x > v.min.x;
+        };
+        hooks.pin = [](ImDrawList *, const PinChromeView &v, void *user) {
+            ++static_cast<Calls *>(user)->pin;
+            return v.pin != nullptr;
+        };
+        style.hooks = &hooks;
+        frame();
+        Check(calls.background > 0 && calls.pin > 0, "draw hooks are called for nodes and sockets");
+        Check(CountVertices(ImGui::GetColorU32(blue)) < 4, "a hook that returns true replaces the socket glyph");
+        style.hooks = nullptr;
+
+        ImVec2 canvas{};
+        auto at = [&](double x, double y) {
+            return ImVec2{canvas.x + float((x - state.origin.x) * state.zoom), canvas.y + float((y - state.origin.y) * state.zoom)};
+        };
+        auto step = [&](ImVec2 mouse, bool down, bool ctrl = false, bool alt = false) {
+            io.MousePos = mouse;
+            io.MouseDown[0] = down;
+            io.AddKeyEvent(ImGuiMod_Ctrl, ctrl);
+            io.AddKeyEvent(ImGuiMod_Alt, alt);
+            out.Clear();
+            ImGui::NewFrame();
+            ImGui::SetNextWindowPos({0, 0});
+            ImGui::SetNextWindowSize({1000, 700});
+            ImGui::Begin("test", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
+            auto f = BeginEditor("graph", graph, state, out, style, options);
+            canvas = f.min;
+            DrawLinks(f);
+            DrawNodes(f);
+            EndEditor(f);
+            ImGui::End();
+            ImGui::Render();
+        };
+        auto has = [&](EditKind kind, auto predicate) {
+            for (auto &r : out.Requests())
+                if (r.kind == kind && predicate(r))
+                    return true;
+            return false;
+        };
+        state.selection.clear();
+        step({-50, -50}, false);
+        ImVec2 inPin{}, needPin{};
+        {
+            ImGui::NewFrame();
+            ImGui::Begin("test", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
+            auto f = BeginEditor("graph", graph, state, out, style, options);
+            GetPinPosition(f, {2}, inPin);
+            GetPinPosition(f, {3}, needPin);
+            EndEditor(f);
+            ImGui::End();
+            ImGui::Render();
+        }
+
+        // Alt-click breaks the socket's links as one operation.
+        step(inPin, false, false, true);
+        step(inPin, true, false, true);
+        Check(has(EditKind::DeleteLink, [](auto &r) { return r.link == LinkId{1}; }) && !state.connecting,
+              "alt-click on a socket deletes its links");
+        step(inPin, false);
+
+        // Ctrl-drag carries the links of a socket to another socket of the same direction.
+        graph.typeCompatibility = [](void *, std::uint64_t, std::uint64_t) { return ConnectionVerdict{}; };
+        step(inPin, false, true);
+        step(inPin, true, true);
+        Check(state.movingLinks && state.connecting == PinId{2}, "ctrl-drag on a linked socket starts moving links");
+        step(needPin, true, true);
+        step(needPin, false, true);
+        Check(has(EditKind::Reconnect,
+                  [](auto &r) { return r.link == LinkId{1} && r.from == PinId{1} && r.to == PinId{3}; }),
+              "dropping moves every link to the new socket");
+        Check(!state.movingLinks && !state.connecting, "moving links ends after the drop");
+        step({-50, -50}, false);
+
+        // Double-clicking a link asks the host for a reroute knot at that point.
+        const ImVec2 mid = at(320, 80);
+        step(mid, false);
+        step(mid, true);
+        step(mid, false);
+        step(mid, true);
+        Check(has(EditKind::InsertReroute, [](auto &r) { return r.link == LinkId{1}; }),
+              "double-clicking a link requests a reroute");
+        step(mid, false);
+        state.selectedLink = {};
+
+        // Two selected nodes connect through their first free compatible sockets.
+        state.selection = {{2}, {1}};
+        pins[0].multiple = true; // The output already feeds the first link.
+        {
+            ImGui::NewFrame();
+            ImGui::Begin("test", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
+            out.Clear();
+            auto f = BeginEditor("graph", graph, state, out, style, options);
+            Check(ConnectSelected(f) &&
+                      has(EditKind::CreateLink, [](auto &r) { return r.from == PinId{1} && r.to == PinId{3}; }),
+                  "ConnectSelected links left output to right free input");
+            EndEditor(f);
+            ImGui::End();
+            ImGui::Render();
+        }
+        state.selection.clear();
+        pins[0].multiple = false;
+
+        // Dropping a node onto a link it can split inserts it there.
+        step({-50, -50}, false);
+        const ImVec2 knot = at(308, 308);
+        step(knot, false);
+        step(knot, true);
+        step(at(316, 200), true);
+        step(mid, true);
+        Check(state.dropLink == LinkId{1}, "a dragged node over a link marks it for insertion");
+        step(mid, false);
+        Check(has(EditKind::Move, [](auto &r) { return r.phase == Phase::Commit && r.node == NodeId{3}; }) &&
+                  has(EditKind::InsertNode, [](auto &r) { return r.node == NodeId{3} && r.link == LinkId{1}; }),
+              "releasing over the link commits the move and inserts the node");
+        step({-50, -50}, false);
+        graph.typeCompatibility = nullptr;
+    }
+
+    // A closed panel gathers its sockets on its title row; hideUnusedPins removes unconnected sockets.
+    {
+        pins[2].panel = 7;
+        bool open = false;
+        ImVec2 gathered{}, titleCenter{};
+        for (int i = 0; i < 2; ++i) { // Second frame: the title row position is known.
+            ImGui::NewFrame();
+            ImGui::Begin("test", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
+            auto f = BeginEditor("graph", graph, state, out, style, options);
+            if (BeginNode(f, {2})) {
+                const auto start = ImGui::GetCursorScreenPos();
+                const float height = std::max(ImGui::GetFrameHeight(), style.headerHeight * float(state.zoom) * .7f);
+                titleCenter = {start.x, start.y + height * .5f};
+                if (BeginNodePanel(f, 7, "More", &open))
+                    EndNodePanel(f);
+                EndNode(f);
+            }
+            GetPinPosition(f, {3}, gathered);
+            EndEditor(f);
+            ImGui::End();
+            ImGui::Render();
+        }
+        Check(Near(gathered.y, titleCenter.y), "closed panel gathers its sockets on the title row");
+        pins[2].panel = 0;
+        const ImU32 blueU = ImGui::GetColorU32(blue);
+        frame();
+        const int shown = CountVertices(blueU);
+        nodes[1].hideUnusedPins = true;
+        frame();
+        Check(CountVertices(blueU) < shown, "hideUnusedPins hides unconnected sockets");
+        nodes[1].hideUnusedPins = false;
+    }
+
+    // Socket roles and flags take part in connection rules.
+    {
+        NodeView rn[] = {{{1}, {0, 0}, {100, 100}, "A"}, {{2}, {300, 0}, {100, 100}, "B"}};
+        PinView rp[] = {{{1}, {1}, "out", PinKind::Output, Side::Right, 50, 1},
+                        {{2}, {2}, "in", PinKind::Input, Side::Left, 50, 2},
+                        {{3}, {1}, "then", PinKind::Output, Side::Right, 70}};
+        rp[2].role = PinRole::Flow;
+        GraphView rg;
+        rg.nodes = rn;
+        rg.pins = rp;
+        Check(!CanConnect(rg, {1}, {2}).allowed, "different types are rejected without a callback");
+        rp[1].flags = PinFlags_Wildcard;
+        Check(CanConnect(rg, {1}, {2}).allowed, "a wildcard socket accepts any type");
+        Check(!CanConnect(rg, {3}, {2}).allowed, "flow does not connect to data");
+        rp[1].flags = PinFlags_Unavailable;
+        rp[1].reason = "Only in volume mode";
+        auto verdict = CanConnect(rg, {1}, {2});
+        Check(!verdict.allowed && verdict.reason == "Only in volume mode", "unavailable socket reports its reason");
+    }
+
+    // Every glyph draws, and the state it encodes changes the drawing.
+    {
+        ImGui::NewFrame();
+        ImGui::Begin("glyphs", nullptr, ImGuiWindowFlags_NoSavedSettings);
+        auto *dl = ImGui::GetWindowDrawList();
+        auto draw = [&](PinView pin, bool connected, bool hollow, int links = 0) {
+            const int before = dl->VtxBuffer.Size;
+            PinChromeView v;
+            v.pin = &pin;
+            v.center = {50, 50};
+            v.radius = 6;
+            v.seat = 2;
+            v.color = {1, 1, 1, 1};
+            v.canvas = {0, 0, 0, 1};
+            v.connected = connected;
+            v.hollow = hollow;
+            v.links = links;
+            DrawPinGlyph(dl, v);
+            return dl->VtxBuffer.Size - before;
+        };
+        PinView flow{};
+        flow.role = PinRole::Flow;
+        Check(draw(flow, true, false) > 0 && draw(flow, true, false) != draw(flow, false, false),
+              "flow glyph shows whether it is connected");
+        PinView data{};
+        Check(draw(data, false, true) != draw(data, true, true), "hollow data glyph gains a core when connected");
+        PinView multi{};
+        multi.multiple = true;
+        Check(draw(multi, true, false, 3) > draw(multi, true, false, 1), "multi-input glyph shows one dot per link");
+        PinView single{}, array{}, set{};
+        array.container = PinContainer::Array;
+        set.container = PinContainer::Set;
+        const int singleCount = draw(single, true, true);
+        Check(draw(array, true, true) > singleCount && draw(set, true, true) != singleCount,
+              "array and set glyphs differ from a single value");
+        PinView map{};
+        map.container = PinContainer::Map;
+        const ImU32 key = ImGui::GetColorU32(ImVec4{1, 0, 0, 1});
+        const int before = dl->VtxBuffer.Size;
+        PinChromeView mv;
+        mv.pin = &map;
+        mv.center = {50, 50};
+        mv.radius = 6;
+        mv.color = {1, 1, 1, 1};
+        mv.keyColor = {1, 0, 0, 1};
+        DrawPinGlyph(dl, mv);
+        int keyed = 0;
+        for (int i = before; i < dl->VtxBuffer.Size; ++i)
+            keyed += dl->VtxBuffer[i].col == key;
+        Check(keyed > 0, "map glyph shows the key type colour");
+        for (auto flag : {PinFlags_Reference, PinFlags_Wildcard, PinFlags_Field, PinFlags_Optional, PinFlags_Unavailable}) {
+            PinView flagged{};
+            flagged.flags = flag;
+            Check(draw(flagged, true, true) > 0, "flag glyph draws");
+        }
+        ImGui::End();
+        ImGui::Render();
+    }
+    ImGui::DestroyContext();
+}
 } // namespace
 int main() {
 #ifdef _MSC_VER
@@ -569,6 +1096,7 @@ int main() {
     LayoutTests();
     SocketTests();
     InputTests();
+    AppearanceTests();
     std::printf("node_editor: %d failure(s)\n", failures);
     return failures ? 1 : 0;
 }

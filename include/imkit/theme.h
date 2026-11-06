@@ -104,6 +104,19 @@ struct EditorPalette {
     ImVec4 scope{}, missing{}, proxy{}, error{}, locked{};
     ImVec4 effectClip{}, adjustmentClip{}, groupClip{};
 };
+enum class NodeHeaderFill : std::uint8_t { Strip, Tinted, Flat, Gradient, None };
+enum class NodeLinkColor : std::uint8_t { OutputType, InputType, Gradient, Accent };
+enum class NodeLinkArrow : std::uint8_t { Middle, None, End };
+// Node editor look, read by node_editor::MakeNodeStyle. Colours with alpha zero and unset numbers follow the
+// semantic tokens, so a theme that never mentions nodes still styles them.
+struct NodeTokens {
+    NodeHeaderFill headerFill = NodeHeaderFill::Strip;
+    NodeLinkColor linkColor = NodeLinkColor::OutputType;
+    NodeLinkArrow linkArrow = NodeLinkArrow::Middle;
+    ImVec4 canvas{}, grid{}, header{};
+    std::optional<float> headerTint, rounding, headerHeight, pinRadius, linkWidth, gridSize, pinSeat, flowLinkWidth;
+    bool hollowPins = false, highlightLinks = false;
+};
 struct Theme {
     ColorScheme scheme = ColorScheme::Light;
     ContrastMode contrast = ContrastMode::Standard;
@@ -121,6 +134,7 @@ struct Theme {
     Motion motion{};
     FontSet fonts{};
     EditorPalette editor{};
+    NodeTokens node{};
     const Skin *skin = nullptr; // Non-owning, like fonts; see skin.h. Not part of the theme text.
 };
 Theme MakePrecisionTheme(ColorScheme scheme = ColorScheme::Light);

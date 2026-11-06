@@ -387,9 +387,11 @@ void LookPages::Skins(GalleryState& s) {
             SameLine();
             SetNextItemWidth(160.f);
             SliderFloat("fps", &spriteFps, 2.f, 30.f, "%.0f");
+            Record(s, "look-sprite-fps");
             SameLine();
             if (Button("Restart"))
                 sprite.Restart();
+            Record(s, "look-sprite-restart");
             SameLine();
             Checkbox("Animate (off = rest frame)", &spriteAnimate);
             const bool animate = spriteAnimate && s.theme.motion.enabled && !s.theme.motion.reducedMotion;

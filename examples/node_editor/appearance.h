@@ -69,11 +69,10 @@ void StyleNodes(std::span<imkit::node_editor::NodeView> views, Model& model,
                 const imkit::node_editor::NodeStyle& base) {
     for (auto& view : views)
         if (auto* node = model.Find(view.id); node && node->color.w > 0) {
+            // A host-picked colour fills the whole header; the editor picks readable title ink.
             node->customStyle = base;
-            node->customStyle.header = node->color;
-            const auto c = node->color;
-            node->customStyle.text = .2126f * c.x + .7152f * c.y + .0722f * c.z > .55f
-                                        ? ImVec4{.04f, .04f, .04f, 1} : ImVec4{1, 1, 1, 1};
+            node->customStyle.headerFill = imkit::node_editor::HeaderFill::Flat;
+            view.tint = node->color;
             view.style = &node->customStyle;
         }
 }

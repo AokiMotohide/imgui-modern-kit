@@ -197,7 +197,9 @@ ne::EndEditor(frame); // draws the links using this frame's measured row positio
 **Wiring**
 
 - Dragging an occupied input rewires its existing link. A rejected connection leaves the original link untouched.
-- Compatible targets show semantic feedback rings, and convertible targets get an extra mark.
+- While a wire is dragged, sockets that can take it get a ring (success color, or warning when convertible). Other sockets fade to `incompatibleAlpha`, and nodes with no candidate fade to `incompatibleNodeAlpha`.
+- The draft wire has the final link shape. It snaps to the nearest candidate within `snapDistance` pixels, and a pill next to the cursor shows the verdict reason from the host, or Exact, Convertible or Rejected.
+- `LinkView::validity` carries the host's verdict on an existing link. `Converted` and `Cycle` add a marker in the middle; `Invalid` draws the link in the error color with long dashes and a cross marker, and rings the receiving input. Hovering a marker shows `LinkView::reason`. The editor never removes or repairs such links.
 - Palette entries need a `compatible` callback to appear during connection-drop filtering. A CreateNode request carries its source pin and replacement link, and the host creates and auto-connects atomically. `InsertNode` identifies the candidate input and output and the existing link for atomic host application.
 - Set `inheritTypeStyle=false` to use an explicit pin shape instead of the type metadata. Custom value callbacks return Begin, Update, Commit or Cancel explicitly.
 
@@ -215,8 +217,98 @@ Every node can call `Preview` below its properties. An output holds a borrowed t
 
 ## Styling and panels
 
-- `MakeNodeStyle` derives semantic colors, density, corner and stroke metrics, and motion from the Theme. Edit the returned value for an editor.
+- `MakeNodeStyle` derives semantic colors, density, corner and stroke metrics, and motion from the Theme, then applies `Theme::node`. Edit the returned value for an editor.
 - Override `NodeView::style` for one node, the socket color, shape and side for ports, or the link color, style and width per wire.
+
+**Presets**
+
+`MakeNodeStylePreset(theme, preset)` starts from `MakeNodeStyle(theme)` and sets the appearance choices of a preset:
+
+| Preset | For | Sets |
+|---|---|---|
+| `Classic` | General tools, the previous look | Nothing |
+| `Studio` | Materials, geometry, compositing | Tinted headers, no arrows, hollow docked sockets |
+| `Logic` | Event and flow graphs | Stronger tint, no arrows, hollow docked sockets, highlighted links |
+
+**Draw hooks**
+
+`NodeStyle::hooks` points to a `NodeDrawHooks` with optional `background`, `header`, `pin` and `link` callbacks. Each receives the canvas draw list and a resolved view (`NodeChromeView`, `PinChromeView`, `LinkChromeView`) and returns true to replace the default drawing of that part. Hit areas, IDs and input stay with the editor. `DrawPinGlyph` can be called from a pin hook to keep the default glyph and add to it.
+
+**Panels and unused sockets**
+
+```cpp
+if (ne::BeginNodePanel(frame, kSpecular, "Specular")) {
+    ne::PinRow(frame, specularPin, row);
+    ne::EndNodePanel(frame);
+}
+```
+
+- A closed panel gathers the sockets whose `PinView::panel` matches on its title row and shows how many there are. Links stay attached. Pass `bool* open` to keep the state yourself.
+- `NodeView::hideUnusedPins` removes unconnected sockets and their rows; they cannot be targets while hidden.
+
+**Appearance**
+
+| Setting | Values | Default |
+|---|---|---|
+| `NodeStyle::headerFill` | `Strip` (accent line over a raised header), `Tinted` (category color at `headerTint`), `Flat`, `Gradient`, `None` | `Strip` |
+| `NodeStyle::categories` + `NodeView::category` | Host table of `{id, color, glyph}`. The glyph appears in a tile left of the title | Empty |
+| `NodeView::tint`, `glyph`, `subtitle` | Per-node color, tile glyph and a right-aligned header note | Inherit |
+| `hoverBorderWidth`, `selectedBorderWidth` | Border width for the hovered and the selected node | 1.5, 2 |
+| `linkColor` | `OutputType`, `InputType`, `Gradient`, `Accent`. Type colors come from `SocketTypeView` | `OutputType` |
+| `linkArrow` | `Middle`, `None`, `End` | `Middle` |
+| `highlightConnectedLinks` | Halo on the hovered link and on links of hovered or selected nodes | Off |
+| `hollowUnconnectedPins` | Outline sockets until something connects | Off |
+| `status` | `WhenActive` hides the line of an Idle node with no time or progress; `Always`, `Never` | `WhenActive` |
+
+- A node color resolves as `tint`, then its category, then the accent. `Flat` and `Gradient` headers pick dark or light title ink from that color.
+- A `NodeKind::Reroute` node draws as a 16-unit knot and ignores its stored size. Both sockets sit at its center. Drag the center to move it; drag its ring to start a wire.
+- An unconnected input with `PinCapabilities::required` carries an error mark on its socket.
+- Link labels sit in a pill. The resize grip scales with the zoom.
+**Node shapes and states**
+
+| Node | Look |
+|---|---|
+| `NodeShape::Standard` | Header and body |
+| `NodeShape::Event` | Adds an entry tab on the left edge: execution starts here |
+| `NodeShape::Compact` | No header; the glyph, else the title, in a lens. For operators |
+| `NodeShape::Variable` | A pill with a type chip and the title |
+| `NodeShape::Boundary` | Dashed outline, for subgraph inputs and outputs |
+| `NodeKind::Frame`, `Group` | Tinted area with a label tab and a member count |
+| `NodeKind::Note` | Tinted card with a folded corner; `DrawNodes` shows the description |
+| `NodeKind::Subgraph` or `childGraph` | A second card behind, and an open button in the header that queues `EnterGraph` |
+
+| State | Look |
+|---|---|
+| `NodeView::diagnostic` | Header badge, a message band at the bottom and an outline in the error, warning or accent color |
+| `Status::Running` | Outer glow; a progress ring in the header when `progress` is set |
+| `Status::Waiting` | Dashed outline |
+| `Status::Success` / `Error` | Success / error outline |
+| `Status::Bypassed` | Hatched body and a dashed pass-through from the first data input to the first matching output |
+| `Status::Disabled` | Dimmed node; body widgets are disabled |
+| `Status::Cached` | A "cached" chip in the header |
+| `breakpoint` / `locked` | A dot on the top-left corner / a padlock in the header |
+
+Compact and Variable nodes have no body; `DrawNodes` skips the callback for them, and the whole shape is the move handle.
+
+**Socket glyphs**
+
+`PinView::role`, `container` and `flags` choose the glyph. `DrawPinGlyph` draws the same glyph from a `PinChromeView`, for host panels and legends.
+
+| Socket | Glyph |
+|---|---|
+| `PinRole::Data` | The type's `PinShape`. With `hollowUnconnectedPins`, a ring that gains a core once connected |
+| `PinRole::Flow` | Rounded square with a chevron, outlined while unconnected. Flow links use the text color, `flowLinkWidth` and chevron marks, and connect only to flow |
+| `PinContainer::Array` / `Set` / `Map` | A fainter ring behind / rounded square with a dot / halves in the `keyType` and value colors |
+| `PinFlags_Reference` / `Wildcard` / `Field` / `Optional` | Hexagon / dashed ring with a plus / ring with a diamond / open ring |
+| `PinFlags_Unavailable` | Faded ring with a slash; rejected as a target with `PinView::reason` |
+| Input with `multiple=true` | A capsule that grows with its links. The links land side by side, in graph order |
+
+- A wildcard socket skips the built-in type check; the host resolves its type when it applies the link.
+- `pinSeat` draws a canvas-colored ring around each socket so it reads as docked into the edge.
+- Hovering a socket shows its label, its type name and `PinView::inspect`.
+- `LinkView::active` moves marks along the link from output to input, at `flowSpeed` × 60 px/s and `flowSpacing` px apart. They hold still when `animate` is off.
+
+- `EditorOptions::locale` translates the status line, the connection verdict and the full-buffer warning. Keys start with `node_editor.`, for example `node_editor.connect.rejected` and `node_editor.status.running`.
 - Ordinary body contents remain native ImGui widgets. `BackgroundImage` and `Annotation` carry host-supplied canvas decoration. Link flow is a display flag, not execution.
 - `NodeInspector`, `ExposedProperties`, `NodeSearch`, `Diagnostics`, `LayoutToolbar` and `Breadcrumbs` can sit in host panels outside the canvas.
 
@@ -234,6 +326,12 @@ Every node can call `Preview` below its properties. An output holds a borrowed t
 | Lasso | Optional |
 | Cut a wire | Alt-drag |
 | Reconnect | Alt-drag an input |
+| Break all links of a socket | Alt-click the socket |
+| Move all links of a socket | Ctrl-drag the socket to another socket of the same direction |
+| Insert a reroute | Double-click a link (`EditKind::InsertReroute`) |
+| Insert a node into a link | Drag a single node onto the link and release |
+| Connect two selected nodes | Context menu, or `ConnectSelected` |
+| Bypass / collapse | Ctrl+B / Ctrl+H |
 
 Native text editing and popups take precedence. The Keymap is replaceable. Read-only mode disables graph edits and keeps navigation. Run and debug controls appear only when the host advertises those capabilities.
 

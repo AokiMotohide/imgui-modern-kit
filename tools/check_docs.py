@@ -17,6 +17,7 @@ PAIRS: list[tuple[str, str]] = [
     ("reference/v3.2-api.md", "reference/3.2追加API.md"),
     ("reference/v3.3-api.md", "reference/3.3追加API.md"),
     ("reference/v4.0-api.md", "reference/4.0追加API.md"),
+    ("reference/v4.1-api.md", "reference/4.1追加API.md"),
     # getting-started
     ("getting-started/getting-started.md", "getting-started/導入ガイド.md"),
     ("getting-started/how-it-works.md", "getting-started/仕組みと設計思想.md"),

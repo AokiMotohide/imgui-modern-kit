@@ -108,7 +108,7 @@ From an installed SDK, create the matching `host_imgui` first:
 ```cmake
 set(IMKIT_IMGUI_TARGET host_imgui)
 set(IMKIT_SDK_ABI_CONFIRMED ON) # only after checking the manifest and settings
-find_package(imkit 4.0 CONFIG REQUIRED)
+find_package(imkit 4.1 CONFIG REQUIRED)
 target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
 
@@ -127,5 +127,6 @@ Configure with `-DCMAKE_PREFIX_PATH=/path/to/sdk`. The package uses an imported 
 | Semantic tokens, locale and provider contracts | [Design system](../../features/design-system/) |
 | Wizards, inspectors, preview tiles, toasts | [Workflow components](../../features/workflow/) |
 | Timelines, curves, 3D views | [Editor Suite](../../features/editor-suite/) |
+| What 4.1 added | [4.1 additions](../../api/v4-1/) |
 | What 4.0 added | [4.0 additions](../../api/v4-0/) |
 | Exact evidence and limits | [Validation](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/validation.md), [third-party notices](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/THIRD_PARTY_NOTICES.md) |

@@ -6,7 +6,7 @@ ImKit is a C++20 static library that gives an existing Dear ImGui app a modern l
 
 [Watch the film](https://aokimotohide.github.io/imgui-modern-kit/en/#film) · [Download](https://github.com/AokiMotohide/imgui-modern-kit/releases/latest) · [Manual](https://aokimotohide.github.io/imgui-modern-kit/en/) · [API reference](https://aokimotohide.github.io/imgui-modern-kit/en/api/) · [日本語](README.ja.md)
 
-[![ImKit 4.0 film: the same app before and after a theme](website/public/media/imkit-4.0-poster.jpg)](https://aokimotohide.github.io/imgui-modern-kit/en/#film)
+[![ImKit film: the same app before and after a theme](website/public/media/imkit-poster.jpg)](https://aokimotohide.github.io/imgui-modern-kit/en/#film)
 
 ## Overview
 
@@ -19,7 +19,7 @@ ImKit is a C++20 static library that gives an existing Dear ImGui app a modern l
 
 ## Try the Gallery
 
-Download the [v4.0.0 package](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v4.0.0) for your platform, extract it and run `bin/imkit_gallery.exe` (Windows) or `imkit_gallery.app` (macOS). The package also holds a Node Editor Gallery. The Gallery uses the same public components your application links.
+Download the [v4.1.0 package](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v4.1.0) for your platform, extract it and run `bin/imkit_gallery.exe` (Windows) or `imkit_gallery.app` (macOS). The package also holds a Node Editor Gallery. The Gallery uses the same public components your application links.
 
 To build it from source on Windows:
 
@@ -77,23 +77,20 @@ The [module recipes](docs/getting-started/examples-recipes.md) list the header, 
 | <img src="docs/images/v4-workspace.gif" alt="Workspace with tabs, hierarchy, settings and choices" width="470"><br>Tabs, hierarchy and settings in one screen. | <img src="docs/images/v4-show.gif" alt="Cue list and clip launcher running a live show" width="470"><br>Run a live show with GO. |
 | <img src="docs/images/v4-charts.gif" alt="Donut, bar, gauge and sparkline charts reacting to the pointer" width="470"><br>Donut, bar, gauge and sparkline charts. | <img src="docs/images/v4-surface.gif" alt="A control surface with faders, knobs, keys and pictures" width="470"><br>Lay out faders, knobs and keys like a console. |
 
-## What is new in 4.0
+## What is new in 4.1
 
-- A refreshed default look: new radii, shadows and motion tokens, pill segments and sliders, redrawn progress, toasts and charts.
-- Brand themes: `MakeBrandTheme`, Theme Studio, skins, outlines and hard shadows.
-- New modules: charts, PTZ control, range sliders and the `show` module.
-- A redesigned Gallery and a new three-minute film.
+- A redesigned node editor: header fills, link colours, socket glyphs, node shapes and states, presets, draw hooks, wiring feedback, and Alt-click and Ctrl-drag on sockets.
+- `show::TileMap` for tiled displays such as LED walls, coloured by port with the wiring order.
+- Adjustable control sizes through `Theme::layout`.
+- Sprite sheets (`Sprite`) and a picture that rides the progress fill (`ProgressTrackView::thumb`).
+- A PTZ control that draws only what the camera offers (`PtzView::capabilities`).
 
-Rebuild your application and every linked ImKit library with the 4.0 headers, and do not mix 3.x objects with 4.0 structures. Default tokens changed: see the [migration guide](docs/reference/migration-v4.md) and the [changelog](CHANGELOG.md).
+| | |
+| --- | --- |
+| <img src="docs/images/v4-node-editor.gif" alt="Dragging a wire in the node editor: typed link colours, socket glyphs and node states" width="470"><br>A node editor you can read at a glance. | <img src="docs/images/v4-tilemap.gif" alt="An LED wall tile map coloured by port, with the cable order and a tooltip" width="470"><br>An LED wall as a tile map, coloured by port. |
+| <img src="docs/images/v4-sprites.gif" alt="A sprite sheet playing, and a picture riding the progress bar" width="470"><br>Sprites, and a picture that rides the progress bar. | |
 
-### In development on `main`
-
-These changes are in the [changelog](CHANGELOG.md) under *Unreleased* and ship with the next release.
-
-- `show::TileMap` draws the panels of a tiled display, such as LED wall cabinets, coloured by data port or power circuit.
-- `Sprite` plays a sheet of frames from one texture, and `ProgressTrackView::thumb` lets a picture ride a progress fill.
-- `Theme::layout` adjusts control heights, spacing and padding per theme.
-- `PtzView::capabilities` draws only the controls a camera has.
+Rebuild your application and every linked ImKit library with the 4.1 headers. Only the node editor changes its default look: see the [migration guide](docs/reference/migration-v4.md#upgrading-from-40-to-41), the [4.1 additions](docs/reference/v4.1-api.md) and the [changelog](CHANGELOG.md). 4.0 brought the refreshed default look, brand themes, charts, PTZ, range sliders and the `show` module.
 
 ## Compatibility
 

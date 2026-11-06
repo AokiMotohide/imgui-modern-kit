@@ -11,3 +11,4 @@ imgui.ini
 /website/node_modules/
 /website/.astro/
 /website/dist/
+__pycache__/

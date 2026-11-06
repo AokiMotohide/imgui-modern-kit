@@ -10,6 +10,6 @@ for match in re.finditer(r"^([A-Za-z][\w:<>, &]*?)\s+(\w+)\(([^;]*?)\);", header
     records.append({"name": "imkit::node_editor::" + match[2],
                     "declaration": " ".join(match[0].split()),
                     "header": "imkit/node_editor.h"})
-(root / "docs/node-editor-api.json").write_text(
+(root / "docs/reference/node-editor-api.json").write_text(
     json.dumps(records, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 print(f"{len(records)} node editor functions inventoried")

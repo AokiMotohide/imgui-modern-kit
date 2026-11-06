@@ -258,6 +258,17 @@ int TestLayoutTokens() {
         return 63;
 
     ImGui::CreateContext();
+    {
+        // ThemeScope pushes the default font, which a context only has inside a frame (Debug asserts on it).
+        auto &io = ImGui::GetIO();
+        io.IniFilename = nullptr;
+        io.DisplaySize = {1000, 700};
+        io.DeltaTime = 1.f / 60;
+        unsigned char *pixels;
+        int w, h;
+        io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);
+        ImGui::NewFrame();
+    }
     imkit::ApplyTheme(base, 1.f);
     const float baseFramePad = ImGui::GetStyle().FramePadding.y;
     {

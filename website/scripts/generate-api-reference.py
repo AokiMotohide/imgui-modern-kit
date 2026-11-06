@@ -25,7 +25,8 @@ NATIVE_CATEGORIES = {
 
 NODE_GROUPS = [
     ("Style and connection", "スタイルと接続", [
-        "MakeNodeStyle", "CanConnect", "ValidatePinEdit", "IsPinConnected",
+        "MakeNodeStyle", "MakeNodeStylePreset", "DrawPinGlyph", "CanConnect", "ValidatePinEdit",
+        "IsPinConnected",
     ]),
     ("Graph layout", "グラフの配置", [
         "AlignNodes", "DistributeNodes", "ArrangeNodes", "SnapNodesToGrid",
@@ -38,7 +39,8 @@ NODE_GROUPS = [
     ("Editor and node drawing", "編集領域とnode描画", [
         "BeginEditor", "EndEditor", "BeginNode", "EndNode", "BeginPin", "EndPin",
         "PinRow", "PinAddRow", "GetPinPosition", "Link", "DrawLinks", "DrawNodes",
-        "QueueCommand", "QueuePinEdits", "InsertNode",
+        "BeginNodePanel", "EndNodePanel", "QueueCommand", "QueuePinEdits", "InsertNode",
+        "ConnectSelected",
     ]),
     ("Panels and previews", "パネルとプレビュー", [
         "NodePalette", "MiniMap", "Diagnostics", "LayoutToolbar", "NodeSearch",

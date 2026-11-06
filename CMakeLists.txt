@@ -3,7 +3,7 @@ if(POLICY CMP0141)
     cmake_policy(SET CMP0141 NEW)
 endif()
 
-project(imgui-modern-kit VERSION 4.0.0 LANGUAGES CXX)
+project(imgui-modern-kit VERSION 4.1.0 LANGUAGES CXX)
 
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(IMKIT_IS_TOP_LEVEL ON)
@@ -195,7 +195,7 @@ configure_package_config_file(cmake/imkitConfig.cmake.in "${CMAKE_CURRENT_BINARY
 write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/imkitConfigVersion.cmake" VERSION ${PROJECT_VERSION} COMPATIBILITY SameMinorVersion)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/imkitConfig.cmake" "${CMAKE_CURRENT_BINARY_DIR}/imkitConfigVersion.cmake" DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/imkit)
 install(FILES README.md README.ja.md LICENSE THIRD_PARTY_NOTICES.md CHANGELOG.md DESTINATION .)
-install(FILES website/public/media/imkit-4.0-poster.jpg DESTINATION website/public/media)
+install(FILES website/public/media/imkit-poster.jpg DESTINATION website/public/media)
 install(DIRECTORY docs/ DESTINATION docs
     PATTERN "precision-layers-implementation-prompt.md" EXCLUDE
     PATTERN "completion-plan.md" EXCLUDE

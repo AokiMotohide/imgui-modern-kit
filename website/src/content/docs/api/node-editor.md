@@ -2,7 +2,7 @@
 title: "Node Editor API一覧"
 ---
 
-この生成一覧は[`docs/reference/node-editor-api.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/node-editor-api.json)にある`<imkit/node_editor.h>`の**47宣言**を掲載します。型と正確な契約はheaderを基準にしてください。v4.0.0の開発中APIであり、グラフデータ、検証、取り消し、保存はアプリ側が管理します。
+この生成一覧は[`docs/reference/node-editor-api.json`](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/node-editor-api.json)にある`<imkit/node_editor.h>`の**52宣言**を掲載します。型と正確な契約はheaderを基準にしてください。v4.1.0の開発中APIであり、グラフデータ、検証、取り消し、保存はアプリ側が管理します。
 
 以下は宣言一覧で、単独で使うコード例ではありません。`BeginEditor`の呼び出し、所有権、戻り値、対応する終了呼び出しは[BeginEditor詳細](begin-editor/)を参照してください。[Node Editorガイド](../../features/node-editor/)に描画順を示しています。
 
@@ -10,6 +10,8 @@ title: "Node Editor API一覧"
 
 ```cpp
 NodeStyle MakeNodeStyle(const Theme &theme);
+NodeStyle MakeNodeStylePreset(const Theme &theme, NodeStylePreset preset);
+void DrawPinGlyph(ImDrawList *drawList, const PinChromeView &pin);
 ConnectionVerdict CanConnect(GraphView graph, PinId a, PinId b, LinkId replacing = {});
 ConnectionVerdict ValidatePinEdit(GraphView graph, const EditRequest &request);
 bool IsPinConnected(GraphView graph, PinId pin);
@@ -56,9 +58,12 @@ bool GetPinPosition(const EditorFrame &frame, PinId pin, ImVec2 &screenPosition)
 void Link(EditorFrame &frame, const LinkView &link);
 void DrawLinks(EditorFrame &frame);
 void DrawNodes(EditorFrame &frame, void (*body)(void *, EditorFrame &, const NodeView &) = nullptr, void *user = nullptr);
+bool BeginNodePanel(EditorFrame &frame, std::uint64_t panel, std::string_view label, bool *open = nullptr);
+void EndNodePanel(EditorFrame &frame);
 bool QueueCommand(EditorFrame &frame, EditKind kind, NodeId node = {});
 bool QueuePinEdits(GraphView graph, std::span<const EditRequest> edits, RequestBuffer &output, std::uint64_t operation);
 bool InsertNode(EditorFrame &frame, NodeId node, LinkId link);
+bool ConnectSelected(EditorFrame &frame);
 ```
 
 ## パネルとプレビュー

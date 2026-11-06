@@ -142,6 +142,14 @@ imkit::Sprite("walk", walk, state, ImGui::GetTime(), {80, 64}, animate);
 | `layout.check-height-scale`、`toggle-height-scale` | 省略可能、1〜4。チェックボックスとトグルの高さ（フォントサイズの倍率。既定は1.45と1.75） |
 | `layout.dialog-padding-scale`、`progress-bar-height-scale` | 省略可能な倍率（既定は1.3と0.2） |
 | `layout.badge-extra-height`、`segmented-inset` | 省略可能なピクセル数（既定は8と3） |
+| `node.header-fill` | `strip`、`tinted`、`flat`、`gradient`、`none` |
+| `node.link-color` | `output-type`、`input-type`、`gradient`、`accent` |
+| `node.link-arrow` | `middle`、`none`、`end` |
+| `node.canvas`、`node.grid`、`node.header` | 色。アルファ0ならセマンティックな色に従う |
+| `node.header-tint` | 省略可能、0〜1 |
+| `node.rounding`、`header-height`、`pin-radius`、`link-width`、`grid-size` | 省略可能。0〜64、8〜200、1〜32、0.5〜16、4〜400 |
+| `node.pin-seat`、`node.flow-link-width` | 省略可能。0〜12、0.5〜16 |
+| `node.hollow-pins`、`node.highlight-links` | スイッチ |
 
 未知のキーと範囲外の値は、警告つきで飛ばされます。キー名は安定しており、変更も再利用もしません。
 

@@ -109,6 +109,7 @@ export default defineConfig({
 						{ label: 'BeginEditor', translations: { en: 'BeginEditor' }, slug: 'api/node-editor/begin-editor' },
 						{ slug: 'api/node-editor' },
 						{ slug: 'api/native' },
+						{ slug: 'api/v4-1' },
 						{ slug: 'api/v4-0' },
 						{ slug: 'api/v3-3' },
 						{ slug: 'api/v3-2' },

@@ -113,7 +113,7 @@ Use the installed SDK only when you have confirmed that the compiler, CRT, archi
 set(IMKIT_IMGUI_TARGET host_imgui)
 set(CMAKE_PREFIX_PATH "path/to/imkit-sdk" ${CMAKE_PREFIX_PATH})
 set(IMKIT_SDK_ABI_CONFIRMED ON)
-find_package(imkit 4.0 CONFIG REQUIRED)
+find_package(imkit 4.1 CONFIG REQUIRED)
 target_link_libraries(your_app PRIVATE imkit::imkit)
 ```
 

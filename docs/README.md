@@ -14,7 +14,7 @@ ImKit is a C++20 static library of themes, controls and editor components for De
 | Build something step by step | [Tutorials](#tutorials) |
 | Find the header and target for a feature | [Examples and recipes](getting-started/examples-recipes.md) |
 | Give your application its own look | [Themes](architecture/themes.md), then [Make your own look](architecture/make-your-own-look.md) |
-| Upgrade from an earlier version | [Migration to 4.0](reference/migration-v4.md) |
+| Upgrade from an earlier version | [Migration to 4.0 and 4.1](reference/migration-v4.md) |
 | Fix a build or runtime problem | [Troubleshooting](reference/troubleshooting.md) |
 
 ## Documents
@@ -73,9 +73,10 @@ ImKit is a C++20 static library of themes, controls and editor components for De
 | [Public API coverage](reference/api-coverage.md) | Every wrapped Dear ImGui overload and ImKit function |
 | [Editor API](reference/editor-api.md) | Editor suite types, signatures and provider contracts |
 | [Widget inventory](reference/widget-inventory.md) | The component list and the audit decisions |
+| [4.1 additions](reference/v4.1-api.md) | What 4.1 added, by header |
 | [4.0 additions](reference/v4.0-api.md) | What 4.0 added, by header |
 | [3.3 additions](reference/v3.3-api.md) and [3.2 additions](reference/v3.2-api.md) | Progress tracks, stages, task cards, workspace parts |
-| [Migration to 4.0](reference/migration-v4.md), [from v2](reference/migration-v3.md) | Rebuild notes, changed defaults, deprecated spellings |
+| [Migration to 4.0 and 4.1](reference/migration-v4.md), [from v2](reference/migration-v3.md) | Rebuild notes, changed defaults, deprecated spellings |
 | [Validation](reference/validation.md) | What was verified, and what was not |
 | [Troubleshooting](reference/troubleshooting.md) | Build, link and runtime problems |
 
@@ -84,6 +85,7 @@ ImKit is a C++20 static library of themes, controls and editor components for De
 | Version | Where |
 | --- | --- |
 | In development (`main`) | [Changelog, Unreleased](../CHANGELOG.md): tile map, sprites, adjustable control sizes, PTZ capabilities |
+| 4.1 | [4.1 additions](reference/v4.1-api.md), [migration guide](reference/migration-v4.md#upgrading-from-40-to-41) |
 | 4.0 | [4.0 additions](reference/v4.0-api.md), [migration guide](reference/migration-v4.md) |
 | 3.3 and 3.2 | [3.3 additions](reference/v3.3-api.md), [3.2 additions](reference/v3.2-api.md) |
 

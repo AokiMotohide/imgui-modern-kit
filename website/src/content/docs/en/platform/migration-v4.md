@@ -9,7 +9,7 @@ description: "To keep the 3.3 look, set the old values after you build the theme
 
 | Step | What to do | Why |
 | --- | --- | --- |
-| 1 | Rebuild your application and **every** ImKit static library with the 4.0 headers. Ask for `find_package(imkit 4.0 CONFIG REQUIRED)`. | Several public structs grew. A 3.x object next to a 4.0 structure reads the wrong layout. The Dear ImGui revision is unchanged. |
+| 1 | Rebuild your application and **every** ImKit static library with the current 4.x headers. Ask for `find_package(imkit 4.1 CONFIG REQUIRED)`. | Several public structs grew. A 3.x object next to a 4.0 structure reads the wrong layout. The Dear ImGui revision is unchanged. |
 | 2 | Look at the app once with the new defaults. Keep them, or restore the old tokens below. | Radii, shadows, motion and control height changed. |
 | 3 | Replace deprecated spellings when the compiler warns. | They still compile in 4.0 but are marked `[[deprecated]]`. |
 | 4 | If you call `imkit::Combo`, `BeginCombo`, `RadioButton` or the `Slider*` family, retest them. | They are now ImKit wrappers, not forwards to `ImGui::`. |
@@ -64,6 +64,27 @@ Define `IMKIT_DEPRECATED(message)` as nothing to silence the warnings while you 
 
 ## Check it worked
 
-- The build reports no mismatch between object and header versions, and `find_package(imkit 4.0)` resolves.
+- The build reports no mismatch between object and header versions, and `find_package(imkit 4.1)` resolves.
 - Open the app next to the Gallery (`imkit_gallery`) and compare **Before / After** with your own screens.
 - Run your own tests with the deprecation warnings on, then turn them into fixes one at a time.
+
+## Upgrading from 4.0 to 4.1
+
+4.1 adds to the public structures and changes the default look of the node editor. Nothing else changes by default: control sizes, colours, motion and the show module draw as in 4.0, and every new field defaults to the previous behaviour.
+
+| Step | What to do | Why |
+| --- | --- | --- |
+| 1 | Rebuild your application and **every** ImKit static library with the 4.1 headers. Ask for `find_package(imkit 4.1 CONFIG REQUIRED)`. | `Theme`, `ThemeScope`, `Metrics`, `PtzView`, `ProgressTrackView` and the node editor structures grew at their end. A 4.0 object next to a 4.1 structure reads the wrong layout. A request for `4.0` no longer matches 4.1. |
+| 2 | If you use the node editor, look at it once. Keep the new look, or restore the old values below. | The default look changed. |
+
+Node editor defaults that changed:
+
+| 4.1 default | Restore 4.0 |
+| --- | --- |
+| Links take the output socket's type colour, or the accent without type colours | `style.linkColor = LinkColorSource::Accent` |
+| The status line of an `Idle` node with no time or progress is hidden | `style.status = StatusDisplay::Always` |
+| `NodeKind::Reroute` is a 16-unit knot with both sockets at its centre | None |
+| An unconnected required input is marked | None |
+| Link labels sit in a pill, and the resize grip scales with the zoom | None |
+
+The full list is in the [changelog](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/CHANGELOG.md) and the [4.1 additions](../../api/v4-1/).

@@ -6,7 +6,7 @@ ImKitは、既存のDear ImGuiアプリに、現代的な見た目と使いや�
 
 [動画を見る](https://aokimotohide.github.io/imgui-modern-kit/#film) · [ダウンロード](https://github.com/AokiMotohide/imgui-modern-kit/releases/latest) · [マニュアル](https://aokimotohide.github.io/imgui-modern-kit/) · [API参照](https://aokimotohide.github.io/imgui-modern-kit/api/) · [English](README.md)
 
-[![ImKit 4.0の紹介動画: テーマの前後で同じアプリが変わる](website/public/media/imkit-4.0-poster.jpg)](https://aokimotohide.github.io/imgui-modern-kit/#film)
+[![ImKitの紹介動画: テーマの前後で同じアプリが変わる](website/public/media/imkit-poster.jpg)](https://aokimotohide.github.io/imgui-modern-kit/#film)
 
 ## 概要
 
@@ -19,7 +19,7 @@ ImKitは、既存のDear ImGuiアプリに、現代的な見た目と使いや�
 
 ## Galleryで試す
 
-お使いの環境向けの[v4.0.0パッケージ](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v4.0.0)をダウンロードして展開し、`bin/imkit_gallery.exe`（Windows）または `imkit_gallery.app`（macOS）を起動してください。Node Editor専用のGalleryも入っています。Galleryは、アプリがリンクするのと同じ公開部品だけで作ってあります。
+お使いの環境向けの[v4.1.0パッケージ](https://github.com/AokiMotohide/imgui-modern-kit/releases/tag/v4.1.0)をダウンロードして展開し、`bin/imkit_gallery.exe`（Windows）または `imkit_gallery.app`（macOS）を起動してください。Node Editor専用のGalleryも入っています。Galleryは、アプリがリンクするのと同じ公開部品だけで作ってあります。
 
 Windowsでソースからビルドする場合は、次のとおりです。
 
@@ -77,23 +77,20 @@ imkit::End();
 | <img src="docs/images/v4-workspace.gif" alt="タブ、階層、設定、選択部品を1画面にまとめた作業画面" width="470"><br>タブ、階層、設定を1画面に。 | <img src="docs/images/v4-show.gif" alt="キューリストとクリップランチャーでライブ演出を動かす" width="470"><br>GOでライブ演出を動かします。 |
 | <img src="docs/images/v4-charts.gif" alt="ドーナツ、棒、ゲージ、スパークラインのグラフが、ポインターに反応する" width="470"><br>ドーナツ、棒、ゲージ、スパークラインのグラフです。 | <img src="docs/images/v4-surface.gif" alt="フェーダー、ノブ、キー、画像を並べたコントロールサーフェス" width="470"><br>フェーダー、ノブ、キーを、卓のように並べられます。 |
 
-## 4.0の新機能
+## 4.1の新機能
 
-- 既定の見た目を刷新しました。角丸、影、動きのトークンを見直し、ピル形のセグメントとスライダー、描き直した進捗・トースト・グラフが入ります。
-- ブランドテーマ。`MakeBrandTheme`、Theme Studio、スキン、枠線、硬い影を追加しました。
-- 新しいモジュール。グラフ、PTZ操作、範囲スライダー、`show` モジュールです。
-- Galleryを作り直し、約3分の紹介動画を新しくしました。
+- ノードエディタを作り直しました。ヘッダーの塗り、配線の色、ソケットの記号、ノードの形と状態、プリセット、描画フック、配線中のフィードバック、ソケットのAltクリックとCtrlドラッグが入ります。
+- `show::TileMap`。LEDウォールのようなタイル状の表示装置を、ポートごとに色分けし、配線の順序とともに描きます。
+- `Theme::layout` で、コントロールの寸法を調整できます。
+- スプライトシート（`Sprite`）と、進捗の塗りに乗る絵（`ProgressTrackView::thumb`）。
+- カメラが持つ機能だけを描くPTZ操作（`PtzView::capabilities`）。
 
-アプリと、リンクするすべてのImKitライブラリを、4.0のヘッダーで再ビルドしてください。3.xのオブジェクトと4.0の構造体は混ぜられません。既定のトークンが変わっています。[移行ガイド](docs/reference/v4移行ガイド.md)と[変更履歴](CHANGELOG.md)を確認してください。
+| | |
+| --- | --- |
+| <img src="docs/images/v4-node-editor.gif" alt="ノードエディタで配線をドラッグする: 型で色分けした配線、記号つきのソケット、ノードの状態" width="470"><br>ひと目で読めるノードエディタ。 | <img src="docs/images/v4-tilemap.gif" alt="ポートごとに色分けしたLEDウォールのタイルマップ。ケーブルの順序とツールチップ" width="470"><br>LEDウォールを、ポートごとに色分けしたタイルマップで。 |
+| <img src="docs/images/v4-sprites.gif" alt="スプライトシートの再生と、進捗バーに乗る絵" width="470"><br>スプライトと、進捗バーに乗る絵。 | |
 
-### `main`で開発中の内容
-
-次の変更は[変更履歴](CHANGELOG.md)の「Unreleased」にあり、次のリリースに入ります。
-
-- `show::TileMap`で、LEDウォールのキャビネットのようなタイル状の表示装置を、データポートや電源回路ごとに色分けして描けます。
-- `Sprite`で、1枚のテクスチャに並べたコマを再生できます。`ProgressTrackView::thumb`では、進捗の塗りの先頭に絵を乗せられます。
-- `Theme::layout`で、コントロールの高さ、間隔、余白をテーマごとに調整できます。
-- `PtzView::capabilities`で、カメラが持つ操作だけを描けます。
+アプリと、リンクするすべてのImKitライブラリを、4.1のヘッダーで再ビルドしてください。既定の見た目が変わるのはノードエディタだけです。[移行ガイド](docs/reference/v4移行ガイド.md#40から41へ)、[4.1追加API](docs/reference/4.1追加API.md)、[変更履歴](CHANGELOG.md)を確認してください。4.0では、刷新した既定の見た目、ブランドテーマ、グラフ、PTZ、範囲スライダー、`show` モジュールが加わりました。
 
 ## 互換性
 
