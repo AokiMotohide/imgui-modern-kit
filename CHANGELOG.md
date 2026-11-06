@@ -2,6 +2,32 @@
 
 > Published release entries present English first, followed by equivalent Japanese notes. Unreleased remains a work-in-progress list.
 
+## Unreleased
+
+### Added
+
+| Header | Additions |
+| --- | --- |
+| `imkit/decor.h` | `DrawGlowFrame`, `GlowFrameLevel`, `GlowFrameStyle`, `GlowFrameState`, `GlowMotion`, `GlowPlacement` |
+| `imkit/shell.h` | `ExternalControlIndicator`, `MakeExternalControlStyle`, `ExternalControlView`, `ExternalControlStyle`, `ExternalControlState`, `ExternalControlRequest`, `ExternalControlPhase`, `ExternalControlPillPosition` |
+
+- `DrawGlowFrame` lights the edge of a rectangle: steady, breathing or orbiting, with ripples on `Pulse()` or at an interval, inside, outside or centred on the edge. Every value is a field of `GlowFrameStyle`.
+- `ExternalControlIndicator` frames the viewport while an automation API, a remote operator or an agent drives the application, and shows a pill with the client, its activity and Stop. Each phase has its own frame style: connected, active and input locked.
+- Gallery: a Glow frame page with six looks, an editor for every field, a copyable C++ snippet, and a scripted remote session that frames the Gallery window.
+
+### 日本語
+
+#### 追加
+
+| ヘッダー | 追加 |
+| --- | --- |
+| `imkit/decor.h` | `DrawGlowFrame`、`GlowFrameLevel`、`GlowFrameStyle`、`GlowFrameState`、`GlowMotion`、`GlowPlacement` |
+| `imkit/shell.h` | `ExternalControlIndicator`、`MakeExternalControlStyle`、`ExternalControlView`、`ExternalControlStyle`、`ExternalControlState`、`ExternalControlRequest`、`ExternalControlPhase`、`ExternalControlPillPosition` |
+
+- `DrawGlowFrame` は矩形の縁を光らせます。一定、呼吸、周回の動きと、`Pulse()` または一定間隔で出る波紋を持ち、縁の内側、外側、中央に描けます。値はすべて `GlowFrameStyle` のフィールドです。
+- `ExternalControlIndicator` は、自動化API、遠隔の操作者、エージェントがアプリを操作している間、ビューポートを枠で囲み、操作中の相手、その作業、停止ボタンを載せたピルを出します。枠の見た目は、接続中、操作中、入力ロック中の状態ごとに持ちます。
+- Gallery：Glow frame ページを追加しました。6つの見た目、全フィールドの編集、コピーできる C++ のコード、Gallery のウィンドウを囲む遠隔操作の再現を含みます。
+
 ## 4.1.0 — 2026-11-06
 
 **ImKit 4.1 redesigns the node editor, adds a tile map for tiled displays, and lets you tune control sizes, play sprite sheets and draw only the PTZ controls a camera has.** Rebuild your application and every linked ImKit library with the 4.1 headers: structures grew at their end. Only the node editor changes its default look. The Dear ImGui revision and the dependencies are unchanged. See the [migration guide](docs/reference/migration-v4.md#upgrading-from-40-to-41) and the [4.1 additions](docs/reference/v4.1-api.md).

@@ -74,4 +74,59 @@ void DrawSprite(ImDrawList* draw, const SpriteSheet& sheet, int frame, ImVec2 mi
 // `animate = !theme.motion.reducedMotion && theme.motion.enabled` so that reduced motion shows the rest frame.
 // A rectangle outside the visible area is not drawn. Returns the frame that was shown.
 int Sprite(const char* id, const SpriteSheet& sheet, SpriteState& state, double now, ImVec2 size, bool animate = true);
+
+// ---- Glow frame -----------------------------------------------------------------------------------------------
+// A soft light along the edge of a rectangle: a window, a panel or the whole viewport. It marks a state that applies
+// to everything inside, such as remote control, recording or a live output. The motions combine: a base motion,
+// ripples started by GlowFrameState::Pulse() or by `rippleInterval`, and an optional crisp line.
+enum class GlowMotion {
+    Steady,  // Constant light.
+    Breathe, // The light rises and falls once per `period`.
+    Orbit,   // Bright heads travel along the edge, one lap per `period`, over a dimmer track.
+};
+enum class GlowPlacement {
+    Inside,  // Fades inward from the edge; suits a viewport or a window that fills the screen.
+    Outside, // Fades outward; suits a panel with room around it.
+    Centered,// Fades both ways from the edge.
+};
+struct GlowFrameStyle {
+    ImVec4 color{.851f, .467f, .341f, 1.f};
+    GlowMotion motion = GlowMotion::Breathe;
+    GlowPlacement placement = GlowPlacement::Inside;
+    float intensity = .8f;         // Peak opacity, 0..1.
+    float minimumIntensity = .35f; // Breathe: the low point. Orbit: the track. A share of `intensity`, 0..1.
+    float period = 2.4f;           // Seconds per breath or per lap.
+    float spread = 28.f;           // Width of the soft light in pixels.
+    float falloff = 2.f;           // Curve of the fade: 1 is linear, higher keeps the light closer to the edge.
+    float lineThickness = 1.5f;    // Crisp line on the edge in pixels; 0 draws none.
+    float lineIntensity = 1.f;     // Line opacity as a share of the current light.
+    float rounding = 0.f;          // Corner radius in pixels.
+    int orbitHeads = 1;            // Orbit: heads spaced evenly along the edge (1..8).
+    float orbitLength = .18f;      // Orbit: length of each head's tail as a share of the perimeter (0..1).
+    float rippleSeconds = .9f;     // Life of one ripple.
+    float rippleDistance = 90.f;   // How far a ripple travels from the edge, in pixels.
+    float rippleInterval = 0.f;    // Seconds between automatic ripples while active; 0 starts them only on Pulse().
+    float fadeSeconds = .25f;      // Fade in when activated and out when deactivated.
+};
+// Host-owned. Keep one per frame that is drawn.
+struct GlowFrameState {
+    float visibility = 0;          // 0..1, eased toward 1 while active and 0 while not.
+    double start = -1;             // Clock of the motion; reset when the frame appears.
+    double last = -1;              // Time of the previous draw.
+    double lastAutoRipple = -1;
+    double ripples[4]{-1, -1, -1, -1};
+    int pendingPulses = 0;
+    // Starts a ripple at the next draw, for example when a command arrives. Ignored while the frame is hidden.
+    void Pulse() { ++pendingPulses; }
+    // Forgets visibility, motion and ripples; an active frame fades in again from the next draw.
+    void Reset() { *this = {}; }
+};
+// The brightness of the light, 0..1 before `intensity`, `elapsedSeconds` after the frame appeared. Orbit and Steady
+// return 1 here; Orbit's variation is along the edge. With `animate` false the result is 1. Needs no Dear ImGui context.
+float GlowFrameLevel(const GlowFrameStyle& style, double elapsedSeconds, bool animate);
+// Draws the frame. `now` is the host's monotonic time in seconds. Pass `animate = !theme.motion.reducedMotion &&
+// theme.motion.enabled`; without it the light is steady, ripples flash in place and nothing fades. Returns true while
+// the picture changes over time, so a host that sleeps between frames knows to draw another one.
+bool DrawGlowFrame(ImDrawList* draw, ImVec2 minimum, ImVec2 maximum, const GlowFrameStyle& style, GlowFrameState& state,
+                   double now, bool active, bool animate = true);
 } // namespace imkit

@@ -37,6 +37,7 @@ TAKES = {
     "ptz": ("imkit_gallery", None),
     "tilemap": ("imkit_gallery", "v4-tilemap"),
     "sprite": ("imkit_gallery", "v4-sprites"),
+    "glow": ("imkit_gallery", None),
     "toasts": ("imkit_gallery", "v4-toasts"),
     "icons": ("imkit_gallery", "v4-icons"),
     "workflow": ("imkit_gallery", "v4-progress"),

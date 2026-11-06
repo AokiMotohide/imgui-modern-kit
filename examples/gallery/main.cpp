@@ -1177,6 +1177,25 @@ void PlaySprite(Motion& m) {
     m.Slide("look-sprite-fps",.82f,.33f,"and slower",48);m.Hold(50);
     m.Click("look-sprite-restart");m.Hold(130);
 }
+// Glow frame looks, then a scripted remote session framing the whole window.
+void PlayGlow(Motion& m) {
+    auto& glow=m.h.s.glow;
+    m.Hold(110);
+    m.Click("glow-preset-1");m.Hold(170);
+    m.rec.Check("orbit look applied",glow.style.motion==imkit::GlowMotion::Orbit,glow.preset);
+    m.Click("glow-preset-2");m.Hold(150);
+    m.Click("glow-pulse");m.Hold(40);m.Click("glow-pulse");m.Hold(60);
+    m.Click("glow-preset-4");m.Hold(130);
+    m.Click("glow-preset-5");m.Hold(150);
+    m.Click("glow-preset-0");m.Hold(40);
+    const float spread=glow.style.spread;
+    m.Slide("glow-spread",.24f,.62f,"Spread the light",54);m.Hold(70);
+    m.rec.Check("spread widened",glow.style.spread>spread,glow.style.spread);
+    m.Slide("glow-intensity",.8f,1.f,"Brighter",40);m.Hold(110);
+    m.Click("glow-simulate");
+    m.rec.Check("remote session started",glow.simulate,glow.phase);
+    m.Hold(760);
+}
 const MotionScene kScenes[]={
     {"hook",PageStart,imkit::ThemePreset::Graphite,1.5f,[](imkit::gallery::GalleryState& s){s.start.style=0;s.start.level=.62f;},PlayHook,840},
     {"worlds",PageStart,imkit::ThemePreset::Graphite,1.5f,nullptr,PlayWorlds,720},
@@ -1187,6 +1206,7 @@ const MotionScene kScenes[]={
     {"ptz",PagePtz,imkit::ThemePreset::Graphite,1.5f,nullptr,PlayPtz,600},
     {"tilemap",PageShowLed,imkit::ThemePreset::Graphite,1.5f,nullptr,PlayTileMap,720},
     {"sprite",PageLookSkins,imkit::ThemePreset::Graphite,1.5f,nullptr,PlaySprite,600},
+    {"glow",PageGlowFrame,imkit::ThemePreset::Graphite,1.25f,nullptr,PlayGlow,1800},
 };
 const MotionScene* FindScene(const std::string& name) {
     for(const auto& scene:kScenes) if(name==scene.name) return &scene;

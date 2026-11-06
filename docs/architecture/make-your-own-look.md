@@ -108,6 +108,32 @@ imkit::Sprite("walk", walk, state, ImGui::GetTime(), {80, 64}, animate);
 
 `SpriteFrameAt` and `SpriteFrameUV` give the frame number and texture coordinates without a Dear ImGui context; `DrawSprite` draws one frame into any rectangle. `ProgressTrackView::thumb` lets you draw on the leading edge of a progress fill, for example a sprite that rides it. The callback receives the draw list, the track rectangle, the head position and the shown fraction; `thumbHeight` reserves layout height above the track so the picture does not cover the header.
 
+### Glow frames
+
+`DrawGlowFrame` lights the edge of any rectangle: a window, a panel or the whole viewport. Use it for a state that applies to everything inside, such as remote control, recording or a live output. Keep one `GlowFrameState` per frame and pass the host's monotonic time.
+
+```cpp
+imkit::GlowFrameStyle glow;
+glow.color = theme.semantic.accent;
+glow.motion = imkit::GlowMotion::Breathe;         // Steady, Breathe or Orbit
+glow.placement = imkit::GlowPlacement::Inside;    // Inside, Outside or Centered
+glow.period = 2.4f;                               // seconds per breath or lap
+glow.spread = 28.f;                               // width of the soft light in pixels
+static imkit::GlowFrameState state;
+const bool animate = theme.motion.enabled && !theme.motion.reducedMotion;
+if (commandArrived)
+    state.Pulse();                                // one ripple from the edge
+imkit::DrawGlowFrame(ImGui::GetWindowDrawList(), min, max, glow, state, ImGui::GetTime(), recording, animate);
+```
+
+| Group | Fields |
+| --- | --- |
+| Light | `color`, `intensity`, `spread`, `falloff`, `lineThickness`, `lineIntensity`, `rounding`, `placement` |
+| Motion | `motion`, `period`, `minimumIntensity` (low point or track level), `orbitHeads`, `orbitLength`, `fadeSeconds` |
+| Ripples | `rippleSeconds`, `rippleDistance`, `rippleInterval` (0 starts them only on `Pulse()`) |
+
+The return value is true while the picture changes over time, so a host that sleeps between frames knows to draw another one. Under reduced motion the light is steady, ripples flash in place and nothing fades. `GlowFrameLevel` gives the brightness of a breath without a Dear ImGui context. [`ExternalControlIndicator`](../components/shell-components.md#external-control-indicator) puts a glow frame around the viewport.
+
 ## What follows the theme on its own
 
 `ApplyTheme` writes `ImGuiStyle`, so colours, corners and outlines reach plain `ImGui::` widgets and ImKit components called without options. Skins, the hard shadow on buttons and text roles need the theme itself: pass it as `ComponentOptions::theme` (`imkit::ComponentOptions{&theme}`) or to the function. ImKit keeps no global current theme. A host that calls components in many places usually wraps them once.

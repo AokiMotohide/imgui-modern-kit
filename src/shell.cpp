@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <cstdio>
 #include <cstring>
 #include <string>
 
@@ -221,5 +222,131 @@ bool ThemePicker(const char* id,ThemePreset* selected,ThemePickerState& state,Co
     }
     ImGui::PopID();
     return changed;
+}
+
+ExternalControlStyle MakeExternalControlStyle(const Theme& theme) {
+    ExternalControlStyle style;
+    const float fade=std::max(theme.motion.overlaySeconds,0.0f);
+    GlowFrameStyle& connected=style.connected;
+    connected.color=theme.semantic.accent;connected.motion=GlowMotion::Steady;connected.intensity=0.45f;
+    connected.spread=16.0f;connected.lineThickness=1.0f;connected.lineIntensity=0.8f;connected.fadeSeconds=fade;
+    GlowFrameStyle& active=style.active;
+    active.color=theme.semantic.accent;active.motion=GlowMotion::Breathe;active.intensity=0.85f;active.minimumIntensity=0.4f;
+    active.period=2.4f;active.spread=30.0f;active.lineThickness=1.5f;active.fadeSeconds=fade;
+    GlowFrameStyle& locked=style.locked;
+    locked.color=theme.semantic.warning;locked.motion=GlowMotion::Steady;locked.intensity=1.0f;locked.spread=36.0f;
+    locked.falloff=1.6f;locked.lineThickness=2.5f;locked.fadeSeconds=fade;
+    return style;
+}
+
+namespace {
+const GlowFrameStyle& PhaseStyle(const ExternalControlStyle& style,ExternalControlPhase phase) {
+    switch(phase) {
+    case ExternalControlPhase::Connected:return style.connected;
+    case ExternalControlPhase::InputLocked:return style.locked;
+    default:return style.active;
+    }
+}
+ImVec4 ReadableOn(ImVec4 background) {
+    background.w=1.0f;
+    const ImVec4 light{1,1,1,1},dark{.07f,.07f,.08f,1};
+    return ContrastRatio(light,background)>=ContrastRatio(dark,background)?light:dark;
+}
+ImVec4 Faded(ImVec4 color,float alpha) {
+    color.w*=alpha;
+    return color;
+}
+} // namespace
+
+ExternalControlRequest ExternalControlIndicator(const char* id,const ExternalControlView& view,ExternalControlState& state,
+                                                double now,const ExternalControlStyle& style,ImGuiViewport* viewport,
+                                                ComponentOptions options) {
+    ExternalControlRequest request;
+    if(!viewport)viewport=ImGui::GetMainViewport();
+    const bool on=view.phase!=ExternalControlPhase::Off;
+    if(on)state.shown=view.phase;
+    const GlowFrameStyle& glow=PhaseStyle(style,state.shown);
+    const bool animate=!options.theme||(options.theme->motion.enabled&&!options.theme->motion.reducedMotion);
+    ImDrawList* foreground=ImGui::GetForegroundDrawList(viewport);
+    const ImVec2 minimum=viewport->Pos,maximum{viewport->Pos.x+viewport->Size.x,viewport->Pos.y+viewport->Size.y};
+    const float visibility=state.glow.visibility;
+    if(state.shown==ExternalControlPhase::InputLocked&&style.lockedTint>0.0f&&visibility>0.0f)
+        foreground->AddRectFilled(minimum,maximum,ImGui::ColorConvertFloat4ToU32(Faded(glow.color,std::min(style.lockedTint,1.0f)*visibility)));
+    request.needsFrame=DrawGlowFrame(foreground,minimum,maximum,glow,state.glow,now,on,animate);
+    const float shown=state.glow.visibility;
+    if(style.pill==ExternalControlPillPosition::Hidden||shown<=0.0f)
+        return request;
+
+    // The pill: a small window so Stop takes clicks and keyboard focus like any other button.
+    const int position=static_cast<int>(style.pill)-1;
+    const int column=position%3;const bool bottom=position>=3;
+    const ImVec2 work=viewport->WorkPos,size=viewport->WorkSize;
+    const float margin=std::isfinite(style.pillMargin)?std::max(style.pillMargin,0.0f):10.0f;
+    const ImVec2 anchor{column==0?work.x+margin:column==1?work.x+size.x*0.5f:work.x+size.x-margin,
+                        bottom?work.y+size.y-margin:work.y+margin};
+    const ImVec2 pivot{column*0.5f,bottom?1.0f:0.0f};
+    ImGui::PushID(id?id:"external-control");
+    const ImGuiID scope=ImGui::GetID("pill");
+    char name[64];std::snprintf(name,sizeof(name),"###imkit-external-control-%08x",scope);
+    const float font=ImGui::GetFontSize();
+    const ImVec4 fill=glow.color,ink=ReadableOn(fill);
+    ImGui::SetNextWindowViewport(viewport->ID);
+    ImGui::SetNextWindowPos(anchor,ImGuiCond_Always,pivot);
+    ImGui::PushStyleVar(ImGuiStyleVar_Alpha,ImGui::GetStyle().Alpha*shown);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,{font*0.8f,font*0.35f});
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding,font*2.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize,0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize,{1.0f,1.0f});
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,{font*0.5f,0.0f});
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding,font*2.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,{font*0.6f,font*0.15f});
+    ImGui::PushStyleColor(ImGuiCol_WindowBg,Faded(fill,0.96f));
+    ImGui::PushStyleColor(ImGuiCol_Text,ink);
+    constexpr ImGuiWindowFlags flags=ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoSavedSettings|
+                                     ImGuiWindowFlags_NoFocusOnAppearing|ImGuiWindowFlags_NoNav|ImGuiWindowFlags_NoMove|
+                                     ImGuiWindowFlags_NoDocking;
+    if(ImGui::Begin(name,nullptr,flags)) {
+        // The dot follows the frame's brightness, so the pill and the frame breathe together.
+        const float dotLevel=style.pulseDot?GlowFrameLevel(glow,now-state.glow.start,animate):1.0f;
+        const float lineHeight=ImGui::GetTextLineHeight(),dot=font*0.55f;
+        const ImVec2 at=ImGui::GetCursorScreenPos();
+        const float frameHeight=view.stopLabel&&*view.stopLabel?ImGui::GetFrameHeight():lineHeight;
+        ImGui::Dummy({dot,frameHeight});
+        ImGui::GetWindowDrawList()->AddCircleFilled({at.x+dot*0.5f,at.y+frameHeight*0.5f},dot*0.5f,
+                                                    ImGui::GetColorU32(Faded(ink,0.35f+0.65f*dotLevel)));
+        const float textY=(frameHeight-lineHeight)*0.5f;
+        auto text=[&](const char* value,float alpha,ImFont* font) {
+            if(!value||!*value)return;
+            ImGui::SameLine();ImGui::SetCursorPosY(ImGui::GetCursorPosY()+textY);
+            if(font)ImGui::PushFont(font,0.0f);
+            ImGui::PushStyleColor(ImGuiCol_Text,Faded(ink,alpha));ImGui::TextUnformatted(value);ImGui::PopStyleColor();
+            if(font)ImGui::PopFont();
+        };
+        text(view.title,1.0f,options.theme?options.theme->fonts.emphasis:nullptr);
+        text(view.client,0.85f,nullptr);
+        text(view.activity,0.75f,nullptr);
+        if(state.shown==ExternalControlPhase::InputLocked)text(view.lockedText,1.0f,options.theme?options.theme->fonts.emphasis:nullptr);
+        if(view.stopLabel&&*view.stopLabel) {
+            ImGui::SameLine(0,font*0.8f);
+            ImGui::PushStyleColor(ImGuiCol_Button,Faded(ink,0.16f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered,Faded(ink,0.28f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive,Faded(ink,0.40f));
+            const ImGuiID stopId=ImGui::GetID("stop");
+            request.stopRequested=ImGui::Button(view.stopLabel)&&on;
+            ImGui::PopStyleColor(3);
+            if(options.accessibility) {
+                accessibility::SemanticNode node;node.id=stopId;node.parent=options.parent;
+                node.role=accessibility::SemanticRole::Button;node.name=view.stopLabel;
+                node.description=view.title?view.title:"";node.actions=accessibility::SemanticAction::Press;
+                if(on)request.stopRequested|=options.accessibility->Take(node.id,accessibility::SemanticAction::Press);
+                accessibility::AnnotateLastItem(*options.accessibility,node);
+            }
+        }
+    }
+    ImGui::End();
+    ImGui::PopStyleColor(2);
+    ImGui::PopStyleVar(8);
+    ImGui::PopID();
+    return request;
 }
 } // namespace imkit

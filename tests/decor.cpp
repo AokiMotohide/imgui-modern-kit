@@ -281,19 +281,133 @@ void TestSpriteWidget() {
     });
     Check(with > without + 29.f, "thumbHeight reserves layout height above the track");
 }
+void TestGlowLevel() {
+    imkit::GlowFrameStyle style;
+    style.motion = imkit::GlowMotion::Breathe;
+    style.period = 2.f;
+    style.minimumIntensity = .25f;
+    Check(Near(imkit::GlowFrameLevel(style, 0, true), 1.f), "a breath starts at its peak");
+    Check(Near(imkit::GlowFrameLevel(style, 1, true), .25f), "half a period reaches the low point");
+    Check(Near(imkit::GlowFrameLevel(style, 2, true), 1.f), "a full period returns to the peak");
+    Check(Near(imkit::GlowFrameLevel(style, 1, false), 1.f), "reduced motion holds the peak");
+    style.motion = imkit::GlowMotion::Orbit;
+    Check(Near(imkit::GlowFrameLevel(style, 1, true), 1.f), "orbit varies along the edge, not over time");
+    style.motion = imkit::GlowMotion::Breathe;
+    style.period = std::nanf("");
+    Check(std::isfinite(imkit::GlowFrameLevel(style, 1, true)), "a non-finite period stays finite");
+}
+
+void TestGlowState() {
+    imkit::GlowFrameStyle style;
+    style.motion = imkit::GlowMotion::Steady;
+    style.fadeSeconds = .2f;
+    imkit::GlowFrameState state;
+    Check(imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, state, 10.0, true), "fading in asks for frames");
+    imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, state, 10.1, true);
+    Check(Near(state.visibility, .5f), "visibility follows the fade time");
+    imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, state, 10.3, true);
+    Check(Near(state.visibility, 1.f), "visibility settles at one");
+    Check(!imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, state, 10.4, true), "a settled steady frame is still");
+
+    state.Pulse();
+    Check(imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, state, 10.5, true), "a ripple asks for frames");
+    Check(!imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, state, 10.5 + style.rippleSeconds, true),
+          "the ripple ends after its life");
+
+    style.motion = imkit::GlowMotion::Breathe;
+    Check(imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, state, 12.0, true), "breathing keeps asking for frames");
+    Check(!imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, state, 12.1, true, false), "reduced motion is still");
+
+    state.Pulse();
+    imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, state, 13.0, false, false);
+    Check(state.visibility == 0.f, "without motion the frame hides at once");
+    Check(state.ripples[0] < 0 && state.ripples[1] < 0, "a pulse while hidden starts no ripple");
+
+    imkit::GlowFrameState automatic;
+    style.rippleInterval = 1.f;
+    style.fadeSeconds = 0.f;
+    imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, automatic, 20.0, true);
+    imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, automatic, 21.0, true);
+    int live = 0;
+    for (double ripple : automatic.ripples)
+        live += ripple >= 0;
+    Check(live == 1, "the interval restarts a ripple once its life is over");
+}
+
+void TestGlowDrawing() {
+    imkit::GlowFrameStyle style;
+    style.fadeSeconds = 0.f;
+    auto draw = [&](imkit::GlowFrameStyle s, bool active) {
+        imkit::GlowFrameState state;
+        return Vertices([&] {
+            const ImVec2 at = ImGui::GetCursorScreenPos();
+            imkit::DrawGlowFrame(ImGui::GetWindowDrawList(), at, {at.x + 300, at.y + 150}, s, state, 1.0, active);
+        });
+    };
+    const int steady = draw(style, true);
+    Check(steady > 0, "an active frame draws");
+    Check(draw(style, false) == 0, "an inactive frame draws nothing");
+    auto orbit = style;
+    orbit.motion = imkit::GlowMotion::Orbit;
+    Check(draw(orbit, true) > steady, "orbit splits the edges for its moving heads");
+    auto bare = style;
+    bare.spread = 0.f;
+    bare.lineThickness = 0.f;
+    Check(draw(bare, true) == 0, "no spread and no line draw nothing");
+    for (auto placement : {imkit::GlowPlacement::Outside, imkit::GlowPlacement::Centered}) {
+        auto placed = style;
+        placed.placement = placement;
+        placed.rounding = 12.f;
+        Check(draw(placed, true) > 0, "every placement draws");
+    }
+}
+
+void TestExternalControl() {
+    const imkit::Theme theme = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
+    imkit::ExternalControlStyle style = imkit::MakeExternalControlStyle(theme);
+    Check(style.active.motion == imkit::GlowMotion::Breathe && style.locked.motion == imkit::GlowMotion::Steady,
+          "the default style breathes while active and holds while locked");
+    imkit::ExternalControlState state;
+    imkit::ExternalControlView view;
+    view.client = "automation";
+    view.activity = "Moving a fixture";
+    auto frame = [&](double now) {
+        ImGui::NewFrame();
+        const int before = ImGui::GetForegroundDrawList()->VtxBuffer.Size;
+        const auto request = imkit::ExternalControlIndicator("remote", view, state, now, style, nullptr, {&theme});
+        const int drawn = ImGui::GetForegroundDrawList()->VtxBuffer.Size - before;
+        ImGui::EndFrame();
+        return std::pair{request, drawn};
+    };
+    auto [idle, idleDrawn] = frame(1.0);
+    Check(!idle.needsFrame && idleDrawn == 0 && !idle.stopRequested, "an indicator that was never on is invisible and still");
+    view.phase = imkit::ExternalControlPhase::Active;
+    frame(2.0);
+    auto [active, activeDrawn] = frame(2.5);
+    Check(active.needsFrame && activeDrawn > 0, "an active indicator draws its frame and keeps animating");
+    view.phase = imkit::ExternalControlPhase::Off;
+    auto [fading, fadingDrawn] = frame(2.51);
+    Check(fading.needsFrame && fadingDrawn > 0 && state.shown == imkit::ExternalControlPhase::Active,
+          "turning off fades out in the last phase's look");
+}
 } // namespace
 
 int main() {
     TestNineSlice();
     TestSpriteMath();
+    TestGlowLevel();
+    TestGlowState();
     auto *context = ImGui::CreateContext();
     ImGui::GetIO().DisplaySize = {1280, 720};
     ImGui::GetIO().DeltaTime = 1.f / 60.f;
     ImGui::GetIO().IniFilename = nullptr;
     TestSkin();
     TestSpriteWidget();
+    TestGlowDrawing();
+    TestExternalControl();
     ImGui::DestroyContext(context);
     if (failures == 0)
-        std::puts("nine-slice geometry, skin hooks, sprite playback and progress thumbs validated");
+        std::puts("nine-slice geometry, skin hooks, sprite playback, progress thumbs, glow frames and the external control "
+                  "indicator validated");
     return failures == 0 ? 0 : 1;
 }

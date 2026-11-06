@@ -4,7 +4,7 @@
 
 ImKit provides host-owned building blocks for persistent application chrome:
 `AppBar`, `WorkspaceHeader`, `InspectorSection`, `AdvancedSection`,
-`BottomActionBar`, `DiagnosticsDrawer`, and `ThemePicker`.
+`BottomActionBar`, `DiagnosticsDrawer`, `ThemePicker`, and `ExternalControlIndicator`.
 
 ## Overview
 
@@ -24,6 +24,7 @@ and lifecycle decisions remain on the host side.
 | `BottomActionBar` | Bottom-aligned status row and action buttons (Commit/Cancel/Progress) | Triggered action |
 | `DiagnosticsDrawer` | Bottom drawer displaying logs, warnings, and diagnostic messages | Open/close request, renders logs |
 | `ThemePicker` | UI widget for selecting available theme presets | Selected theme preset |
+| `ExternalControlIndicator` | Glow frame around the viewport and a pill naming who is in control | Stop request, whether another frame is needed |
 
 ## Code example
 
@@ -52,6 +53,40 @@ void RenderAppHeader(MyAppState& state, imkit::ToolbarState& toolbar) {
     }
 }
 ```
+
+## External control indicator
+
+`ExternalControlIndicator` shows that something other than the person at the screen is driving the application: an automation API, a remote operator or an agent. A glow frame around the viewport says so at any distance; a pill names who is in control, what it is doing, and offers Stop. The host owns the connection, the phase and what Stop does.
+
+| Phase | Default look |
+| --- | --- |
+| `Off` | Nothing; a visible frame fades out in the last phase's look |
+| `Connected` | A quiet, steady accent frame |
+| `Active` | A breathing accent frame that ripples on `Pulse()` |
+| `InputLocked` | A stronger, steady frame in the warning colour, a light wash and the locked text |
+
+```cpp
+static imkit::ExternalControlState remote;
+static imkit::ExternalControlStyle look = imkit::MakeExternalControlStyle(theme);
+imkit::ExternalControlView view;
+view.phase = server.Locked()   ? imkit::ExternalControlPhase::InputLocked
+           : server.Busy()     ? imkit::ExternalControlPhase::Active
+           : server.Attached() ? imkit::ExternalControlPhase::Connected
+                               : imkit::ExternalControlPhase::Off;
+view.client = server.ClientName();
+view.activity = server.CurrentCommand();
+if (server.TakeNewCommand())
+    remote.Pulse();
+// After the windows it should cover:
+const auto request = imkit::ExternalControlIndicator("remote", view, remote, ImGui::GetTime(), look, nullptr, {&theme});
+if (request.stopRequested)
+    server.Disconnect();
+```
+
+- `ExternalControlStyle` holds one `GlowFrameStyle` per phase (`connected`, `active`, `locked`), the pill position (`Hidden`, a corner, or the top or bottom centre), `pillMargin`, `lockedTint` and `pulseDot`. Every field can be changed after `MakeExternalControlStyle`.
+- The frame draws on the viewport's foreground draw list. The pill is a small window, so Stop takes clicks and keyboard focus like any other button. Stop is reported only while the phase is not `Off`.
+- `needsFrame` is true while the picture changes over time. The indicator does not hold back input; in `InputLocked`, the host blocks local input itself.
+- The frame options are described in [Glow frames](../architecture/make-your-own-look.md#glow-frames).
 
 ## Themes and fonts
 

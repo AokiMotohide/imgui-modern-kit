@@ -251,6 +251,7 @@ if(IMKIT_BUILD_GALLERY)
         examples/gallery/design_pages.cpp
         examples/gallery/workflow_pages.cpp
         examples/gallery/toast_page.cpp
+        examples/gallery/glow_page.cpp
         examples/gallery/charts_page.cpp
         examples/gallery/ptz_page.cpp
         examples/gallery/show_pages.cpp

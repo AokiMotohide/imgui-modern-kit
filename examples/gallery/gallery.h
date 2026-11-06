@@ -10,6 +10,7 @@
 #include "design_pages.h"
 #include "workflow_pages.h"
 #include "toast_page.h"
+#include "glow_page.h"
 #include "charts_page.h"
 #include "ptz_page.h"
 #include "show_pages.h"
@@ -45,7 +46,7 @@ enum PageId : int {
     PageGenericWorkspace, PageFeedback, PagePreviewTiles, PageFrameLab,
     PageStart, PageToasts, PageCompare, PageWorkbench, PageCharts, PagePtz,
     PageShowControls, PageShowLive, PageShowRules, PageShowSchedule, PageShowBeat, PageShowScript, PageShowSurface,
-    PageShowLed, PageShowImages, PageLookStudio, PageLookSkins
+    PageShowLed, PageShowImages, PageLookStudio, PageLookSkins, PageGlowFrame
 };
 struct PageInfo {
     PageId id;
@@ -60,6 +61,7 @@ struct GalleryState {
     DesignPages design;
     WorkflowPages workflow;
     ToastPage toasts;
+    GlowPage glow;
     ChartsPage charts;
     PtzPage ptz;
     ShowPages show;
