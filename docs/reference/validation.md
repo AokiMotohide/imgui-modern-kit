@@ -43,7 +43,7 @@ Generated evidence and media:
 - The Debug Gallery's `--verify` (public IO) passed all 45 checks and `--verify-comparison` passed, on the branch tree.
 - Both films (`tools/media/verify.py`): 1920×1080, 60 fps, 180.0 s (10,800 frames), −14.64 LUFS, −2.06 dBTP, 28.6 MiB (ja) and 28.3 MiB (en). 15 GIFs at 960×540 and 8.0 s, the largest 1.50 MiB. Both languages have the same 26 caption keys.
 - Incremental media pipeline: recording the same take twice gives identical pixels. After one caption word changes, `film.py --status` marks 2 of 30 chunks of that language stale and none of the other language.
-- Documentation: `tools/check_docs.py` passed for 40 English/Japanese pairs and local links in 82 public pages. The site build produced 69 pages and checked 5,116 local links, 365 API rows (48 excluded) and 52 Node declarations.
+- Documentation: `tools/check_docs.py` passed for 40 English/Japanese pairs and local links in 82 public pages. The site build produced 91 pages and checked 7,623 local links, 365 API rows (48 excluded) and 52 Node declarations, after the documentation review on `main` was merged into the release branch.
 
 **Not verified**
 
