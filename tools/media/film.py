@@ -5,7 +5,13 @@ The timeline lives in film.json (shots placed on bar lines) and the words in cap
 music swap never needs a new recording. Only the final MP4, poster and provenance are meant for git; everything else
 stays in out/media/film.
 
+The video is rendered in chunks of CHUNK_FRAMES. A chunk is cached under out/media/film/cache/<lang> by a key made of
+everything that can change its pixels (the shots it overlaps, the captions they use, the footage, ENGINE_REV), so after
+an edit only the affected chunks are drawn again. Raise ENGINE_REV when you change the drawing code in this file.
+
     python tools/media/film.py --lang both            # ja and en films, then the poster and provenance
+    python tools/media/film.py --status               # which chunks are stale, nothing rendered
+    python tools/media/film.py --force                # ignore the cache
     python tools/media/film.py --lang ja --review     # contact sheet of key frames, no encoding
     python tools/media/film.py --lang en --seconds 20 # a quick partial render
 """
@@ -21,7 +27,12 @@ import music
 ROOT = Path(__file__).resolve().parents[2]
 NATIVE = ROOT / "out/media/native"
 WORK = ROOT / "out/media/film"
+CACHE = WORK / "cache"
 SPEC = json.loads((Path(__file__).parent / "film.json").read_text(encoding="utf-8"))
+ENGINE_REV = 1  # Bump when the drawing code below changes what a frame looks like.
+CHUNK_FRAMES = 360
+FILM_NAME = "imkit-film-{lang}.mp4"  # Version-neutral: the release a film belongs to is SPEC["edition"].
+POSTER_NAME = "imkit-poster.jpg"
 W, H = SPEC["size"]
 FPS = SPEC["fps"]
 BEAT = 60.0 / SPEC["bpm"]
@@ -350,8 +361,9 @@ class Film:
 def render_chunk(job):
     lang, first, last, path = job
     film = Film(lang)
+    part = path.with_suffix(".part.mkv")  # A chunk appears under its real name only when it is complete.
     proc = subprocess.Popen(["ffmpeg", "-y", "-v", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "pipe:0",
-                             "-c:v", "libx264", "-preset", "veryfast", "-crf", "12", "-pix_fmt", "yuv420p", "-g", str(FPS), str(path)], stdin=subprocess.PIPE)
+                             "-c:v", "libx264", "-preset", "veryfast", "-crf", "12", "-pix_fmt", "yuv420p", "-g", str(FPS), str(part)], stdin=subprocess.PIPE)
     try:
         for i in range(first, last):
             proc.stdin.write(film.frame(i).tobytes())
@@ -360,7 +372,63 @@ def render_chunk(job):
         film.close()
     if proc.wait():
         raise RuntimeError(f"chunk {first}-{last} failed")
+    part.replace(path)
     return str(path)
+
+
+_DIGESTS = {}
+
+
+def take_digest(name):
+    """Content hash of a recorded take, remembered by (size, mtime) in out/media/native/digests.json."""
+    path = NATIVE / f"{name}.mkv"
+    stat = path.stat()
+    memo = NATIVE / "digests.json"
+    if not _DIGESTS and memo.is_file():
+        _DIGESTS.update(json.loads(memo.read_text()))
+    stamp = f"{stat.st_size}:{stat.st_mtime_ns}"
+    entry = _DIGESTS.get(name)
+    if not entry or entry["stamp"] != stamp:
+        h = hashlib.sha256()
+        with path.open("rb") as f:
+            for block in iter(lambda: f.read(1 << 24), b""):
+                h.update(block)
+        _DIGESTS[name] = {"stamp": stamp, "sha256": h.hexdigest()}
+        memo.write_text(json.dumps(_DIGESTS, indent=1))
+    return _DIGESTS[name]["sha256"]
+
+
+def chunk_key(lang, first, last, captions):
+    """Everything that can change the pixels of frames [first, last): the shots they touch, their words and footage."""
+    t0, t1 = first / FPS, last / FPS
+    shots = [s for s in SPEC["shots"] if start_of(s) < t1 and start_of(s) + duration_of(s) > t0 - 1e-9]
+    keys = {cap["key"] for s in shots for cap in s.get("caps", [])} | {s["key"] for s in shots if "key" in s}
+    if any(s["kind"] == "outro" for s in shots):
+        keys |= {"outro-1", "outro-2", "outro-3"}
+    takes = {name for s in shots for name in (s.get("take"), s.get("inset", {}).get("take")) if name}
+    payload = {"engine": ENGINE_REV, "lang": lang, "frames": [first, last], "format": [W, H, FPS, SPEC["bpm"], SPEC["bars"]],
+               "chapters": SPEC["chapters"], "shots": shots, "captions": {k: captions[k] for k in sorted(keys)},
+               "takes": {name: take_digest(name) for name in sorted(takes)}}
+    return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]
+
+
+def chunk_plan(lang, frames, force=False):
+    """[(first, last, path, cached)] for one language; cached chunks are reused as they are."""
+    captions = json.loads((Path(__file__).parent / f"captions.{lang}.json").read_text(encoding="utf-8"))
+    folder = CACHE / lang
+    folder.mkdir(parents=True, exist_ok=True)
+    plan = []
+    for first in range(0, frames, CHUNK_FRAMES):
+        last = min(frames, first + CHUNK_FRAMES)
+        path = folder / f"{first:06d}-{chunk_key(lang, first, last, captions)}.mkv"
+        plan.append((first, last, path, path.is_file() and not force))
+    return plan
+
+
+def print_status(lang, plan):
+    stale = [(f / FPS, l / FPS) for f, l, _, cached in plan if not cached]
+    print(f"[{lang}] {len(plan) - len(stale)} of {len(plan)} chunks cached", end="")
+    print(": " + ", ".join(f"{a:.0f}-{b:.0f}s" for a, b in stale) + " stale" if stale else ": nothing to render")
 
 
 def click_times():
@@ -397,24 +465,38 @@ def loudnorm(wav):
             ",alimiter=limit=0.66:level=0")
 
 
-def build(lang, seconds, out_path, wav, workers):
+def build(lang, seconds, out_path, wav, workers, force=False):
     frames = int(round(seconds * FPS))
-    step = 360
     WORK.mkdir(parents=True, exist_ok=True)
-    jobs = [(lang, a, min(frames, a + step), WORK / f"{lang}-{a:06d}.mkv") for a in range(0, frames, step)]
+    plan = chunk_plan(lang, frames, force)
+    print_status(lang, plan)
+    jobs = [(lang, first, last, path) for first, last, path, cached in plan if not cached]
     with ProcessPoolExecutor(workers) as pool:
-        for done, path in enumerate(pool.map(render_chunk, jobs), 1):
-            print(f"  [{lang}] chunk {done}/{len(jobs)}", flush=True)
+        for done, _ in enumerate(pool.map(render_chunk, jobs), 1):
+            print(f"  [{lang}] drew chunk {done}/{len(jobs)}", flush=True)
     listing = WORK / f"{lang}-chunks.txt"
-    listing.write_text("".join(f"file '{j[3].as_posix()}'\n" for j in jobs))
+    listing.write_text("".join(f"file '{path.as_posix()}'\n" for _, _, path, _ in plan))
+    if seconds >= TOTAL:  # A partial render must not throw away the rest of the cache.
+        for stale in (CACHE / lang).glob("*.mkv"):  # Chunks no longer in the plan belong to an older edit.
+            if stale not in {path for _, _, path, _ in plan}:
+                stale.unlink()
     out_path.parent.mkdir(parents=True, exist_ok=True)
     command = ["ffmpeg", "-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", str(listing)]
     if wav:
         command += ["-i", str(wav), "-af", loudnorm(wav), "-c:a", "aac", "-b:a", AUDIO_BITRATE, "-ar", "48000", "-shortest"]
     command += ["-c:v", "libx264", "-preset", "slow", "-crf", "21", "-pix_fmt", "yuv420p", "-r", str(FPS), "-movflags", "+faststart", str(out_path)]
     subprocess.run(command, check=True)
-    for j in jobs:
-        j[3].unlink()
+
+
+def write_provenance(output_dir, films):
+    """Refreshes the generated fields of provenance.json (edition, length, hashes); the credit text stays hand-written."""
+    path = output_dir / "provenance.json"
+    record = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+    record.pop("version", None)
+    record.pop("revision", None)
+    record = {"edition": SPEC["edition"], **record, "duration": round(TOTAL), "fps": FPS, "resolution": [W, H], "shots": len(SPEC["shots"]),
+              "sha256": {lang: hashlib.sha256(file.read_bytes()).hexdigest() for lang, file in films.items()}}
+    path.write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 def main():
@@ -426,14 +508,16 @@ def main():
     parser.add_argument("--synth", action="store_true", help="use the synthesized score even when film.json names a track")
     parser.add_argument("--audio-only", action="store_true", help="re-mux a new score into the existing films without rendering video")
     parser.add_argument("--workers", type=int, default=16)
+    parser.add_argument("--status", action="store_true", help="print which chunks are stale and stop")
+    parser.add_argument("--force", action="store_true", help="draw every chunk again, ignoring the cache")
     parser.add_argument("--output-dir", type=Path, default=ROOT / "website/public/media")
     args = parser.parse_args()
     langs = ["ja", "en"] if args.lang == "both" else [args.lang]
     WORK.mkdir(parents=True, exist_ok=True)
     if args.review:
         film = Film(langs[0])
-        times = [0.6, 3, 7, 12.5, 18, 26, 33, 38, 41, 47, 55, 63, 72, 80, 90, 100, 112, 124, 138, 150, 160, 168, 172, 178]
-        sheet = Image.new("RGB", (1920, 6 * 300), BG)
+        times = [0.6] + [start_of(s) + duration_of(s) * .5 for s in SPEC["shots"] if s["kind"] != "chapter"]  # One still per shot, mid-shot.
+        sheet = Image.new("RGB", (1920, ((len(times) + 3) // 4) * 300), BG)
         for k, t in enumerate(times):
             frame = film.frame(int(t * FPS))
             frame.save(WORK / f"review-{t:05.1f}.jpg", quality=92)
@@ -442,6 +526,10 @@ def main():
         film.close()
         sheet.save(WORK / f"contact-sheet-{langs[0]}.jpg", quality=92)
         print("wrote", WORK / f"contact-sheet-{langs[0]}.jpg")
+        return
+    if args.status:
+        for lang in langs:
+            print_status(lang, chunk_plan(lang, int(round(min(args.seconds, TOTAL) * FPS)), args.force))
         return
     wav = None
     if not args.no_audio:
@@ -457,7 +545,7 @@ def main():
             print("score synthesized")
     if args.audio_only:
         for lang in langs:
-            target = args.output_dir / f"imkit-4.0-film-{lang}.mp4"
+            target = args.output_dir / FILM_NAME.format(lang=lang)
             tmp = target.with_suffix(".tmp.mp4")
             subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", str(target), "-i", str(wav), "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-af", loudnorm(wav),
                             "-c:a", "aac", "-b:a", AUDIO_BITRATE, "-ar", "48000", "-shortest", "-movflags", "+faststart", str(tmp)], check=True)
@@ -465,13 +553,15 @@ def main():
             print("remuxed", target)
         return
     for lang in langs:
-        name = f"imkit-4.0-film-{lang}.mp4"
-        build(lang, min(args.seconds, TOTAL), args.output_dir / name, wav, args.workers)
-        print("wrote", args.output_dir / name, f"{(args.output_dir / name).stat().st_size / 1024 ** 2:.1f} MiB")
+        target = args.output_dir / FILM_NAME.format(lang=lang)
+        build(lang, min(args.seconds, TOTAL), target, wav, args.workers, args.force)
+        print("wrote", target, f"{target.stat().st_size / 1024 ** 2:.1f} MiB")
     if args.seconds >= TOTAL:
         poster = Film("en")
-        poster.frame(int(12.5 * FPS)).save(args.output_dir / "imkit-4.0-poster.jpg", quality=94)
+        poster.frame(int(SPEC.get("posterSeconds", 12.5) * FPS)).save(args.output_dir / POSTER_NAME, quality=94)
         poster.close()
+        if len(langs) == 2:
+            write_provenance(args.output_dir, {lang: args.output_dir / FILM_NAME.format(lang=lang) for lang in langs})
 
 
 if __name__ == "__main__":

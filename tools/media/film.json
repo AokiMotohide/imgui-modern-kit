@@ -1,4 +1,5 @@
 {
+ "edition": "4.1",
  "fps": 60,
  "size": [1920, 1080],
  "bpm": 128,
@@ -9,7 +10,7 @@
    "color": [120, 214, 198]
   },
   {
-   "first": 24,
+   "first": 22,
    "color": [193, 154, 245]
   },
   {
@@ -21,7 +22,7 @@
    "color": [128, 170, 255]
   },
   {
-   "first": 68,
+   "first": 67,
    "color": [243, 154, 176]
   }
  ],
@@ -80,9 +81,9 @@
    "kind": "take",
    "take": "icons",
    "at": 9,
-   "bars": 5,
+   "bars": 4,
    "in": 0,
-   "speed": 0.98,
+   "speed": 1.225,
    "caps": [
     {
      "key": "icons",
@@ -105,10 +106,10 @@
    "id": "toasts",
    "kind": "take",
    "take": "toasts",
-   "at": 14,
-   "bars": 5,
+   "at": 13,
+   "bars": 4,
    "in": 0,
-   "speed": 0.91,
+   "speed": 1.137,
    "caps": [
     {
      "key": "toasts",
@@ -121,7 +122,7 @@
    "id": "compare",
    "kind": "take",
    "take": "comparison",
-   "at": 19,
+   "at": 17,
    "bars": 5,
    "in": 2.0,
    "speed": 1.4,
@@ -136,7 +137,7 @@
   {
    "id": "chapter-2",
    "kind": "chapter",
-   "at": 24,
+   "at": 22,
    "bars": 1,
    "num": "02",
    "key": "chapter-2"
@@ -145,15 +146,15 @@
    "id": "worlds",
    "kind": "take",
    "take": "worlds",
-   "at": 25,
-   "bars": 7,
+   "at": 23,
+   "bars": 6,
    "in": 0,
-   "speed": 1.0,
+   "speed": 1.166,
    "caps": [
     {
      "key": "worlds",
      "t": 0.4,
-     "d": 13.0
+     "d": 10.6
     }
    ]
   },
@@ -161,20 +162,36 @@
    "id": "studio",
    "kind": "take",
    "take": "studio",
-   "at": 32,
-   "bars": 9,
+   "at": 29,
+   "bars": 7,
    "in": 0,
-   "speed": 0.85,
+   "speed": 1.093,
    "caps": [
     {
      "key": "studio-1",
      "t": 0.4,
-     "d": 6.0
+     "d": 5.6
     },
     {
      "key": "studio-2",
-     "t": 6.8,
-     "d": 7.0
+     "t": 6.2,
+     "d": 6.7
+    }
+   ]
+  },
+  {
+   "id": "sprite",
+   "kind": "take",
+   "take": "sprite",
+   "at": 36,
+   "bars": 5,
+   "in": 0.3,
+   "speed": 1.05,
+   "caps": [
+    {
+     "key": "sprite",
+     "t": 0.4,
+     "d": 8.6
     }
    ]
   },
@@ -217,14 +234,14 @@
    "kind": "take",
    "take": "workspace",
    "at": 50,
-   "bars": 8,
+   "bars": 7,
    "in": 0,
-   "speed": 1.17,
+   "speed": 1.337,
    "caps": [
     {
      "key": "workspace",
      "t": 0.4,
-     "d": 15.0
+     "d": 12.5
     }
    ]
   },
@@ -232,7 +249,7 @@
    "id": "timeline",
    "kind": "take",
    "take": "timeline",
-   "at": 58,
+   "at": 57,
    "bars": 5,
    "in": 0,
    "speed": 1.13,
@@ -248,7 +265,7 @@
    "id": "node-editor",
    "kind": "take",
    "take": "node-editor-final",
-   "at": 63,
+   "at": 62,
    "bars": 5,
    "in": 0,
    "speed": 0.96,
@@ -263,7 +280,7 @@
   {
    "id": "chapter-5",
    "kind": "chapter",
-   "at": 68,
+   "at": 67,
    "bars": 1,
    "num": "05",
    "key": "chapter-5"
@@ -272,15 +289,15 @@
    "id": "show-live",
    "kind": "take",
    "take": "show-live",
-   "at": 69,
-   "bars": 7,
+   "at": 68,
+   "bars": 6,
    "in": 0,
-   "speed": 0.93,
+   "speed": 1.085,
    "caps": [
     {
      "key": "show-live",
      "t": 0.4,
-     "d": 11.0
+     "d": 10.6
     }
    ]
   },
@@ -288,7 +305,7 @@
    "id": "show-surface",
    "kind": "take",
    "take": "show-surface",
-   "at": 76,
+   "at": 74,
    "bars": 7,
    "in": 0,
    "speed": 0.92,
@@ -301,18 +318,34 @@
    ]
   },
   {
+   "id": "tilemap",
+   "kind": "take",
+   "take": "tilemap",
+   "at": 81,
+   "bars": 4,
+   "in": 2.6,
+   "speed": 1.39,
+   "caps": [
+    {
+     "key": "tilemap",
+     "t": 0.4,
+     "d": 6.8
+    }
+   ]
+  },
+  {
    "id": "charts",
    "kind": "take",
    "take": "charts",
-   "at": 83,
-   "bars": 6,
+   "at": 85,
+   "bars": 4,
    "in": 0,
-   "speed": 0.89,
+   "speed": 1.33,
    "caps": [
     {
      "key": "charts",
      "t": 0.4,
-     "d": 9.2
+     "d": 6.8
     }
    ]
   },

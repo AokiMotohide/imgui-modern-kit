@@ -1137,6 +1137,46 @@ void PlayPtz(Motion& m) {
     m.Drag(c,{c.x-r*1.4f,c.y+r*.5f},"Pan left and tilt down",50);
     m.Hold(90);
 }
+void PlayTileMap(Motion& m) {
+    auto& led=m.h.s.show.led;
+    m.Hold(40);
+    // A section below the fold submits no items, so it has no probe until it scrolls into view.
+    m.Move({960.f,540.f},24);
+    for(int i=0;i<150 && (!m.h.s.probes.count("led-tiles")||m.At("led-tiles").max.y>1000.f);++i) {
+        m.h.Frame([](auto&io){io.AddMouseWheelEvent(0,-1.f);});m.Hold(3);
+    }
+    m.Hold(30);
+    // Light up one port at a time: the other rows dim and its cable order stays in view.
+    for(int port:{1,3,2}) {
+        // PortStrip wraps cells of 6 x 2.6 frame heights with a 0.35 gap, and the probe is the whole block, so the
+        // cells per row and the frame height follow from the block's proportions.
+        const auto ports=m.At("led-ports");const float bw=ports.max.x-ports.min.x,bh=ports.max.y-ports.min.y;
+        int perRow=1;float best=1e9f;
+        for(int n=1;n<=8;++n) {
+            const float err=std::fabs((6.35f*n-.35f)/(2.95f*float((8+n-1)/n)-.35f)-bw/bh);
+            if(err<best) {best=err;perRow=n;}
+        }
+        const float u=bw/(6.35f*perRow-.35f),cell=u*6.f,gap=u*.35f,row=u*2.6f;
+        m.ClickAt({ports.min.x+float(port%perRow)*(cell+gap)+cell*.5f,ports.min.y+float(port/perRow)*(row+gap)+row*.5f},"Pick a port");m.Hold(34);
+        m.rec.Check("port highlighted",led.selectedPort==port,led.selectedPort);
+    }
+    // Hover a few tiles for the tooltip, then click one.
+    const auto tiles=m.At("led-tiles");const float w=tiles.max.x-tiles.min.x,h=tiles.max.y-tiles.min.y;
+    for(const auto cell:{std::pair{1,0},std::pair{5,1},std::pair{2,2}}) {
+        m.Move({tiles.min.x+w*(float(cell.first)+.5f)/8.f,tiles.min.y+h*(float(cell.second)+.5f)/4.f},38);m.Hold(36);
+    }
+    m.ClickAt({tiles.min.x+w*(5.5f/8.f),tiles.min.y+h*(3.5f/4.f)},"Select a tile");m.Hold(50);
+    m.rec.Check("tile selected",led.selectedTile>=0,led.selectedTile);
+}
+void PlaySprite(Motion& m) {
+    auto& look=m.h.s.look;
+    m.Hold(70); // The sprites loop and the bar advances by itself.
+    const float fps=look.spriteFps;
+    m.Slide("look-sprite-fps",.33f,.82f,"Play faster",48);m.Hold(60);
+    m.rec.Check("playback sped up",look.spriteFps>fps,look.spriteFps);
+    m.Slide("look-sprite-fps",.82f,.33f,"and slower",48);m.Hold(50);
+    m.Click("look-sprite-restart");m.Hold(130);
+}
 const MotionScene kScenes[]={
     {"hook",PageStart,imkit::ThemePreset::Graphite,1.5f,[](imkit::gallery::GalleryState& s){s.start.style=0;s.start.level=.62f;},PlayHook,840},
     {"worlds",PageStart,imkit::ThemePreset::Graphite,1.5f,nullptr,PlayWorlds,720},
@@ -1145,6 +1185,8 @@ const MotionScene kScenes[]={
     {"show-surface",PageShowSurface,imkit::ThemePreset::Graphite,1.5f,nullptr,PlayShowSurface,720},
     {"charts",PageCharts,imkit::ThemePreset::Graphite,1.5f,nullptr,PlayCharts,600},
     {"ptz",PagePtz,imkit::ThemePreset::Graphite,1.5f,nullptr,PlayPtz,600},
+    {"tilemap",PageShowLed,imkit::ThemePreset::Graphite,1.5f,nullptr,PlayTileMap,720},
+    {"sprite",PageLookSkins,imkit::ThemePreset::Graphite,1.5f,nullptr,PlaySprite,600},
 };
 const MotionScene* FindScene(const std::string& name) {
     for(const auto& scene:kScenes) if(name==scene.name) return &scene;

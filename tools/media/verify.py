@@ -79,12 +79,12 @@ def main():
     args = parser.parse_args()
     report = {"captions": check_captions(), "films": [], "gifs": []}
     for lang in ("ja", "en"):
-        report["films"].append(check_film(args.films / f"imkit-4.0-film-{lang}.mp4"))
+        report["films"].append(check_film(args.films / film.FILM_NAME.format(lang=lang)))
     if not args.skip_gifs:
         for take, (_, stem) in capture.TAKES.items():
             if stem:
                 report["gifs"].append(check_gif(ROOT / "docs/images" / f"{stem}.gif"))
-    poster = args.films / "imkit-4.0-poster.jpg"
+    poster = args.films / film.POSTER_NAME
     if poster.exists():
         assert Image.open(poster).size == (1920, 1080)
     out = ROOT / "out/media/media-validation.json"
