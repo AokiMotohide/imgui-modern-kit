@@ -574,6 +574,7 @@ void AppearanceTests() {
     ImGui::CreateContext();
     auto &io = ImGui::GetIO();
     io.IniFilename = nullptr;
+    io.ConfigMacOSXBehaviors = false; // The steps inject a literal Ctrl; on macOS Dear ImGui would swap it with Cmd.
     io.DisplaySize = {1000, 700};
     io.DeltaTime = 1.f / 60;
     unsigned char *pixels;
