@@ -1,6 +1,7 @@
 #include <imkit/imkit.h>
 #include <cmath>
 #include <cstdio>
+#include <type_traits>
 #include <utility>
 
 namespace {
@@ -363,6 +364,7 @@ void TestGlowDrawing() {
 }
 
 void TestExternalControl() {
+    static_assert(std::is_same_v<imkit::ToastPosition, imkit::OverlayAnchor>, "toasts and the pill share one anchor type");
     const imkit::Theme theme = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
     imkit::ExternalControlStyle style = imkit::MakeExternalControlStyle(theme);
     Check(style.active.motion == imkit::GlowMotion::Breathe && style.locked.motion == imkit::GlowMotion::Steady,
@@ -389,6 +391,38 @@ void TestExternalControl() {
     auto [fading, fadingDrawn] = frame(2.51);
     Check(fading.needsFrame && fadingDrawn > 0 && state.shown == imkit::ExternalControlPhase::Active,
           "turning off fades out in the last phase's look");
+
+    // A lowered phase is held for holdSeconds, then released.
+    imkit::ExternalControlState held;
+    auto draw = [&](imkit::ExternalControlState& s, double now) {
+        ImGui::NewFrame();
+        const auto request = imkit::ExternalControlIndicator("held", view, s, now, style, nullptr, {&theme});
+        ImGui::EndFrame();
+        return request;
+    };
+    view.phase = imkit::ExternalControlPhase::Active;
+    draw(held, 10.0);
+    view.phase = imkit::ExternalControlPhase::Connected;
+    const auto holding = draw(held, 10.4);
+    Check(held.shown == imkit::ExternalControlPhase::Active && holding.needsFrame,
+          "a phase lowered within holdSeconds stays and asks for another frame");
+    draw(held, 11.2);
+    Check(held.shown == imkit::ExternalControlPhase::Connected, "after holdSeconds the lower phase shows");
+
+    // Pulses closer than pulseInterval make one ripple.
+    imkit::ExternalControlState pulsed;
+    view.phase = imkit::ExternalControlPhase::Active;
+    draw(pulsed, 20.0);
+    auto ripples = [&] {
+        int count = 0;
+        for (double r : pulsed.glow.ripples) count += r >= 20.0 ? 1 : 0;
+        return count;
+    };
+    pulsed.Pulse(); draw(pulsed, 20.1);
+    pulsed.Pulse(); draw(pulsed, 20.3);
+    Check(ripples() == 1, "two pulses within pulseInterval make one ripple");
+    pulsed.Pulse(); draw(pulsed, 20.7);
+    Check(ripples() == 2, "a pulse after pulseInterval makes a new ripple");
 }
 } // namespace
 

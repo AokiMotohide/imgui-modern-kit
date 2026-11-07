@@ -105,7 +105,6 @@ enum class ExternalControlPhase {
     Active,      // The client is operating the application.
     InputLocked, // The client operates and local input is held back by the host.
 };
-enum class ExternalControlPillPosition { Hidden, TopLeft, TopCenter, TopRight, BottomLeft, BottomCenter, BottomRight };
 struct ExternalControlView {
     ExternalControlPhase phase=ExternalControlPhase::Off;
     const char* title="External control";
@@ -116,10 +115,15 @@ struct ExternalControlView {
 };
 struct ExternalControlStyle {
     GlowFrameStyle connected, active, locked; // The frame for each phase.
-    ExternalControlPillPosition pill=ExternalControlPillPosition::TopCenter;
+    OverlayAnchor pill=OverlayAnchor::TopCenter;
+    bool showPill=true;         // False draws the frame alone.
     float pillMargin=10.0f;     // Distance of the pill from the viewport edge, in pixels.
     float lockedTint=0.06f;     // Opacity of a wash of the locked colour over the viewport; 0 for none.
     bool pulseDot=true;         // The dot in the pill follows the frame's brightness.
+    // Steadiness against a host that reports its state in bursts.
+    float holdSeconds=1.0f;      // A higher phase stays this long after the host lowers it (Off < Connected < Active < InputLocked).
+    float pulseInterval=0.5f;    // Pulses closer together than this make one ripple.
+    float transitionSeconds=0.3f; // Colour, strength, spread and line blend over this long when the phase changes.
 };
 // Connected: a quiet steady accent frame. Active: a breathing accent frame that ripples on Pulse(). InputLocked: a
 // stronger steady frame in the warning colour. Change any field afterwards.
@@ -127,15 +131,22 @@ ExternalControlStyle MakeExternalControlStyle(const Theme& theme);
 struct ExternalControlState {
     GlowFrameState glow;
     ExternalControlPhase shown=ExternalControlPhase::Off; // Last phase that was on, kept while the frame fades out.
-    // A ripple at the next draw, for example when a command arrives.
-    void Pulse() { glow.Pulse(); }
+    double heldUntil=-1;        // The shown phase is kept until then even if the host lowers it.
+    GlowFrameStyle drawn, from; // The look drawn last, and the look a transition starts from.
+    double transitionStart=-1;
+    double lastPulse=-1;
+    bool pulseRequested=false;
+    float pillWidth=0;          // The widest the pill has been while shown, so changing text does not make it shrink.
+    // A ripple at the next draw, for example when a command arrives. Pulses within pulseInterval make one ripple.
+    void Pulse() { pulseRequested=true; }
 };
 struct ExternalControlRequest {
     bool stopRequested=false;   // Stop was pressed; the host decides what stopping means.
     bool needsFrame=false;      // The picture changes over time; a host that sleeps between frames draws another.
 };
 // Call once per frame after the windows it should cover. `now` is the host's monotonic time in seconds. `viewport`
-// null uses the main viewport. The frame draws on the viewport's foreground draw list; the pill is a small window.
+// null uses the main viewport. The frame draws on the viewport's foreground draw list and never takes input; the pill
+// is a small window that takes input only for Stop, so a pill without a Stop label lets clicks through.
 ExternalControlRequest ExternalControlIndicator(const char* id, const ExternalControlView& view, ExternalControlState& state,
                                                 double now, const ExternalControlStyle& style,
                                                 ImGuiViewport* viewport=nullptr, ComponentOptions options={});

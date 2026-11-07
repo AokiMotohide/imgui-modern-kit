@@ -280,12 +280,17 @@ void GlowPage::Show(GalleryState& host) {
         ImGui::Spacing();
         ImGui::InputText("Client", client, sizeof(client));
         ImGui::InputText("Activity", activity, sizeof(activity));
-        static const char* const kPill[] = {"Hidden", "Top left", "Top center", "Top right", "Bottom left", "Bottom center", "Bottom right"};
-        if (ImGui::Combo("Pill", &pillPosition, kPill, 7))
-            remote.pill = static_cast<ExternalControlPillPosition>(pillPosition);
+        ImGui::Checkbox("Show the pill", &remote.showPill);
+        static const char* const kPill[] = {"Top left", "Top center", "Top right", "Bottom left", "Bottom center", "Bottom right"};
+        int pill = static_cast<int>(remote.pill);
+        if (ImGui::Combo("Pill position", &pill, kPill, 6))
+            remote.pill = static_cast<OverlayAnchor>(pill);
         ImGui::SliderFloat("Pill margin", &remote.pillMargin, 0.f, 80.f, "%.0f px");
         ImGui::SliderFloat("Locked wash", &remote.lockedTint, 0.f, .3f, "%.2f");
         ImGui::Checkbox("Dot follows the frame", &remote.pulseDot);
+        ImGui::SliderFloat("Hold a higher phase", &remote.holdSeconds, 0.f, 3.f, "%.1f s");
+        ImGui::SliderFloat("Merge pulses within", &remote.pulseInterval, 0.f, 2.f, "%.2f s");
+        ImGui::SliderFloat("Phase blend", &remote.transitionSeconds, 0.f, 1.5f, "%.2f s");
         ImGui::Text("Stop pressed %d time%s.", stops, stops == 1 ? "" : "s");
         ImGui::Spacing();
         if (ImGui::TreeNodeEx("Frame look per phase", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -297,8 +302,10 @@ void GlowPage::Show(GalleryState& host) {
             StyleEditor(host, "remote", edited, o);
             if (ActionButton("Reset to the theme's look", ActionVariant::Secondary, {}, o)) {
                 const auto pill = remote.pill;
+                const bool showPill = remote.showPill;
                 remote = MakeExternalControlStyle(host.theme);
                 remote.pill = pill;
+                remote.showPill = showPill;
             }
             ImGui::TreePop();
         }

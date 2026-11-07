@@ -27,6 +27,8 @@ enum class Easing { Linear, EaseOut, EaseInOut };
 enum class CornerStyle { Sharp, Soft, Round, Pill };
 enum class TextRole { Caption, Body, Heading, Title, Mono };
 enum class ElevationLevel { Raised, Overlay };
+// Where an overlay sits in a viewport's work area: toasts, the external control pill and similar floating parts.
+enum class OverlayAnchor { TopLeft, TopCenter, TopRight, BottomLeft, BottomCenter, BottomRight };
 // A frame border of this many design pixels or more is an outline: a deliberate stroke drawn at full strength on
 // windows, frames and every button variant. Thinner borders stay soft hairlines, as before.
 inline constexpr float OutlineMinimumWidth = 2.f;

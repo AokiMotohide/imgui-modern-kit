@@ -68,6 +68,19 @@ inline void DrawCheck(ImDrawList* draw, ImVec2 center, float size, ImU32 color, 
     draw->PathLineTo({center.x + s * .85f, center.y - s * .5f});
     draw->PathStroke(color, ImDrawFlags_RoundCornersAll, thickness);
 }
+// The point an overlay is pinned to and its pivot, for SetNextWindowPos or for placing a box of known size at
+// point - pivot * size. The margin is kept to at most half the work area on each axis.
+struct OverlayPlacement { ImVec2 point, pivot; bool bottom; };
+inline OverlayPlacement PlaceOverlay(OverlayAnchor anchor, ImVec2 workPos, ImVec2 workSize, float margin) {
+    const int index = std::clamp(static_cast<int>(anchor), 0, 5);
+    const int column = index % 3;
+    const bool bottom = index >= 3;
+    margin = std::isfinite(margin) ? std::max(margin, 0.f) : 0.f;
+    const float mx = std::min(margin, workSize.x * .5f), my = std::min(margin, workSize.y * .5f);
+    const float x = column == 0 ? workPos.x + mx : column == 1 ? workPos.x + workSize.x * .5f : workPos.x + workSize.x - mx;
+    const float y = bottom ? workPos.y + workSize.y - my : workPos.y + my;
+    return {{x, y}, {column * .5f, bottom ? 1.f : 0.f}, bottom};
+}
 inline void DrawCross(ImDrawList* draw, ImVec2 center, float size, ImU32 color, float thickness = 1.6f) {
     const float s = size * .5f;
     draw->AddLine({center.x - s, center.y - s}, {center.x + s, center.y + s}, color, thickness);

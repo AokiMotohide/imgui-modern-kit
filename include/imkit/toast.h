@@ -3,7 +3,7 @@
 #include <array>
 
 namespace imkit {
-enum class ToastPosition { TopLeft, TopCenter, TopRight, BottomLeft, BottomCenter, BottomRight };
+using ToastPosition = OverlayAnchor; // The 3.2 name, kept for source compatibility.
 enum class ToastPhase { Message, Loading };
 enum class ToastEventKind { Dismiss, Expired, Action };
 struct ToastView {

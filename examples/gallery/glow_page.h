@@ -14,7 +14,7 @@ struct GlowPage {
     // External control indicator.
     ExternalControlStyle remote;
     ExternalControlState remoteState;
-    int phase = 0, editPhase = 2, pillPosition = 2;
+    int phase = 0, editPhase = 2;
     bool simulate = false;
     double simulateStart = -1;
     int simulateStep = -1;

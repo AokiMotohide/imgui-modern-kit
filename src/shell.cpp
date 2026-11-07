@@ -1,8 +1,10 @@
 #include <imkit/shell.h>
 #include <imkit/widgets.h>
+#include "draw_internal.h"
 
 #include <algorithm>
 #include <cctype>
+#include <cfloat>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -256,6 +258,40 @@ ImVec4 Faded(ImVec4 color,float alpha) {
     color.w*=alpha;
     return color;
 }
+float Seconds(float value,float fallback) { return std::isfinite(value)?std::max(value,0.0f):fallback; }
+// The phase to show: the host's, unless a higher one is still within its hold.
+ExternalControlPhase HeldPhase(ExternalControlPhase requested,ExternalControlState& state,double now,float hold) {
+    const auto rank=[](ExternalControlPhase phase){return static_cast<int>(phase);};
+    const bool off=state.glow.visibility<=0.0f&&state.heldUntil<0.0;
+    const ExternalControlPhase current=off?ExternalControlPhase::Off:state.shown;
+    if(rank(requested)>=rank(current)||now>=state.heldUntil) {
+        state.heldUntil=requested==ExternalControlPhase::Off?-1.0:now+hold;
+        return requested;
+    }
+    return current;
+}
+float Mix(float a,float b,float t) { return a+(b-a)*t; }
+// A look between two phases. Steady blends as a Breathe that never dims; an orbit takes the target's motion at once.
+GlowFrameStyle Blend(GlowFrameStyle a,GlowFrameStyle b,float t) {
+    const GlowFrameStyle target=b;
+    if(t>=1.0f)return target;
+    const auto breathe=[](GlowFrameStyle& s,float period) {
+        if(s.motion!=GlowMotion::Steady)return;
+        s.motion=GlowMotion::Breathe;s.minimumIntensity=1.0f;s.period=period;
+    };
+    if(a.motion!=GlowMotion::Orbit&&b.motion!=GlowMotion::Orbit){breathe(a,b.period);breathe(b,a.period);}
+    GlowFrameStyle c=b;
+    c.color={Mix(a.color.x,b.color.x,t),Mix(a.color.y,b.color.y,t),Mix(a.color.z,b.color.z,t),Mix(a.color.w,b.color.w,t)};
+    c.intensity=Mix(a.intensity,b.intensity,t);
+    c.minimumIntensity=Mix(a.minimumIntensity,b.minimumIntensity,t);
+    c.period=Mix(a.period,b.period,t);
+    c.spread=Mix(a.spread,b.spread,t);
+    c.falloff=Mix(a.falloff,b.falloff,t);
+    c.lineThickness=Mix(a.lineThickness,b.lineThickness,t);
+    c.lineIntensity=Mix(a.lineIntensity,b.lineIntensity,t);
+    c.rounding=Mix(a.rounding,b.rounding,t);
+    return c;
+}
 } // namespace
 
 ExternalControlRequest ExternalControlIndicator(const char* id,const ExternalControlView& view,ExternalControlState& state,
@@ -263,35 +299,53 @@ ExternalControlRequest ExternalControlIndicator(const char* id,const ExternalCon
                                                 ComponentOptions options) {
     ExternalControlRequest request;
     if(!viewport)viewport=ImGui::GetMainViewport();
-    const bool on=view.phase!=ExternalControlPhase::Off;
-    if(on)state.shown=view.phase;
-    const GlowFrameStyle& glow=PhaseStyle(style,state.shown);
     const bool animate=!options.theme||(options.theme->motion.enabled&&!options.theme->motion.reducedMotion);
+    const ExternalControlPhase phase=HeldPhase(view.phase,state,now,Seconds(style.holdSeconds,1.0f));
+    const bool on=phase!=ExternalControlPhase::Off;
+    if(on&&phase!=state.shown) {
+        // A change between two visible phases blends from what was on screen; appearing from nothing fades instead.
+        const bool visible=state.glow.visibility>0.0f&&state.shown!=ExternalControlPhase::Off;
+        state.from=visible?state.drawn:PhaseStyle(style,phase);
+        state.transitionStart=visible?now:-1.0;
+        state.shown=phase;
+    }
+    const float transition=Seconds(style.transitionSeconds,0.3f);
+    float blend=1.0f;
+    if(animate&&state.transitionStart>=0.0&&transition>0.0f)
+        blend=static_cast<float>(std::clamp((now-state.transitionStart)/transition,0.0,1.0));
+    if(blend>=1.0f)state.transitionStart=-1.0;
+    const GlowFrameStyle glow=blend<1.0f?Blend(state.from,PhaseStyle(style,state.shown),blend):PhaseStyle(style,state.shown);
+    state.drawn=glow;
+    if(state.pulseRequested) {
+        state.pulseRequested=false;
+        const float interval=Seconds(style.pulseInterval,0.5f);
+        if(state.lastPulse<0.0||now-state.lastPulse>=interval||now<state.lastPulse){state.glow.Pulse();state.lastPulse=now;}
+    }
     ImDrawList* foreground=ImGui::GetForegroundDrawList(viewport);
     const ImVec2 minimum=viewport->Pos,maximum{viewport->Pos.x+viewport->Size.x,viewport->Pos.y+viewport->Size.y};
     const float visibility=state.glow.visibility;
     if(state.shown==ExternalControlPhase::InputLocked&&style.lockedTint>0.0f&&visibility>0.0f)
         foreground->AddRectFilled(minimum,maximum,ImGui::ColorConvertFloat4ToU32(Faded(glow.color,std::min(style.lockedTint,1.0f)*visibility)));
     request.needsFrame=DrawGlowFrame(foreground,minimum,maximum,glow,state.glow,now,on,animate);
+    // A held or blending phase changes later on its own, so a host that sleeps must draw again.
+    request.needsFrame|=phase!=view.phase||state.transitionStart>=0.0;
     const float shown=state.glow.visibility;
-    if(style.pill==ExternalControlPillPosition::Hidden||shown<=0.0f)
+    if(!style.showPill||shown<=0.0f) {
+        state.pillWidth=0;
         return request;
+    }
 
     // The pill: a small window so Stop takes clicks and keyboard focus like any other button.
-    const int position=static_cast<int>(style.pill)-1;
-    const int column=position%3;const bool bottom=position>=3;
-    const ImVec2 work=viewport->WorkPos,size=viewport->WorkSize;
-    const float margin=std::isfinite(style.pillMargin)?std::max(style.pillMargin,0.0f):10.0f;
-    const ImVec2 anchor{column==0?work.x+margin:column==1?work.x+size.x*0.5f:work.x+size.x-margin,
-                        bottom?work.y+size.y-margin:work.y+margin};
-    const ImVec2 pivot{column*0.5f,bottom?1.0f:0.0f};
+    const detail::OverlayPlacement place=detail::PlaceOverlay(style.pill,viewport->WorkPos,viewport->WorkSize,
+                                                              std::isfinite(style.pillMargin)?style.pillMargin:10.0f);
     ImGui::PushID(id?id:"external-control");
     const ImGuiID scope=ImGui::GetID("pill");
     char name[64];std::snprintf(name,sizeof(name),"###imkit-external-control-%08x",scope);
     const float font=ImGui::GetFontSize();
     const ImVec4 fill=glow.color,ink=ReadableOn(fill);
     ImGui::SetNextWindowViewport(viewport->ID);
-    ImGui::SetNextWindowPos(anchor,ImGuiCond_Always,pivot);
+    ImGui::SetNextWindowPos(place.point,ImGuiCond_Always,place.pivot);
+    ImGui::SetNextWindowSizeConstraints({state.pillWidth,0.0f},{FLT_MAX,FLT_MAX});
     ImGui::PushStyleVar(ImGuiStyleVar_Alpha,ImGui::GetStyle().Alpha*shown);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,{font*0.8f,font*0.35f});
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding,font*2.0f);
@@ -305,12 +359,14 @@ ExternalControlRequest ExternalControlIndicator(const char* id,const ExternalCon
     constexpr ImGuiWindowFlags flags=ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoSavedSettings|
                                      ImGuiWindowFlags_NoFocusOnAppearing|ImGuiWindowFlags_NoNav|ImGuiWindowFlags_NoMove|
                                      ImGuiWindowFlags_NoDocking;
-    if(ImGui::Begin(name,nullptr,flags)) {
+    const bool hasStop=view.stopLabel&&*view.stopLabel;
+    // Without Stop there is nothing to press, so clicks and hover go to the windows underneath.
+    if(ImGui::Begin(name,nullptr,hasStop?flags:flags|ImGuiWindowFlags_NoInputs)) {
         // The dot follows the frame's brightness, so the pill and the frame breathe together.
         const float dotLevel=style.pulseDot?GlowFrameLevel(glow,now-state.glow.start,animate):1.0f;
         const float lineHeight=ImGui::GetTextLineHeight(),dot=font*0.55f;
         const ImVec2 at=ImGui::GetCursorScreenPos();
-        const float frameHeight=view.stopLabel&&*view.stopLabel?ImGui::GetFrameHeight():lineHeight;
+        const float frameHeight=hasStop?ImGui::GetFrameHeight():lineHeight;
         ImGui::Dummy({dot,frameHeight});
         ImGui::GetWindowDrawList()->AddCircleFilled({at.x+dot*0.5f,at.y+frameHeight*0.5f},dot*0.5f,
                                                     ImGui::GetColorU32(Faded(ink,0.35f+0.65f*dotLevel)));
@@ -326,8 +382,16 @@ ExternalControlRequest ExternalControlIndicator(const char* id,const ExternalCon
         text(view.client,0.85f,nullptr);
         text(view.activity,0.75f,nullptr);
         if(state.shown==ExternalControlPhase::InputLocked)text(view.lockedText,1.0f,options.theme?options.theme->fonts.emphasis:nullptr);
-        if(view.stopLabel&&*view.stopLabel) {
+        const float left=ImGui::GetWindowPos().x,padding=ImGui::GetStyle().WindowPadding.x;
+        float natural=ImGui::GetItemRectMax().x-left+padding;
+        if(hasStop) {
+            // Stop keeps to the right edge of a pill that was once wider, instead of moving with the text.
             ImGui::SameLine(0,font*0.8f);
+            const float button=ImGui::CalcTextSize(view.stopLabel,nullptr,true).x+ImGui::GetStyle().FramePadding.x*2.0f;
+            const float start=ImGui::GetCursorScreenPos().x;
+            natural=start+button-left+padding;
+            const float edge=left+std::max(ImGui::GetWindowWidth(),state.pillWidth)-padding-button;
+            if(edge>start)ImGui::SetCursorScreenPos({edge,ImGui::GetCursorScreenPos().y});
             ImGui::PushStyleColor(ImGuiCol_Button,Faded(ink,0.16f));
             ImGui::PushStyleColor(ImGuiCol_ButtonHovered,Faded(ink,0.28f));
             ImGui::PushStyleColor(ImGuiCol_ButtonActive,Faded(ink,0.40f));
@@ -342,6 +406,7 @@ ExternalControlRequest ExternalControlIndicator(const char* id,const ExternalCon
                 accessibility::AnnotateLastItem(*options.accessibility,node);
             }
         }
+        state.pillWidth=std::max(state.pillWidth,natural);
     }
     ImGui::End();
     ImGui::PopStyleColor(2);

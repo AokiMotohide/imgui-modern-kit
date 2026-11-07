@@ -83,8 +83,18 @@ if (request.stopRequested)
     server.Disconnect();
 ```
 
-- `ExternalControlStyle` holds one `GlowFrameStyle` per phase (`connected`, `active`, `locked`), the pill position (`Hidden`, a corner, or the top or bottom centre), `pillMargin`, `lockedTint` and `pulseDot`. Every field can be changed after `MakeExternalControlStyle`.
+- `ExternalControlStyle` holds one `GlowFrameStyle` per phase (`connected`, `active`, `locked`), `showPill` and the pill position `pill` (an `OverlayAnchor`: a corner, or the top or bottom centre), `pillMargin`, `lockedTint`, `pulseDot`, and three steadiness values: `holdSeconds` (1.0 s), `pulseInterval` (0.5 s) and `transitionSeconds` (0.3 s). Every field can be changed after `MakeExternalControlStyle`.
 - The frame draws on the viewport's foreground draw list. The pill is a small window, so Stop takes clicks and keyboard focus like any other button. Stop is reported only while the phase is not `Off`.
+- The person at the screen can keep using the application. The frame never takes input, and a pill with an empty `stopLabel` lets clicks and hover through to the windows underneath.
+- Steadiness for hosts that report in bursts:
+
+| Field | Default | Effect |
+| --- | --- | --- |
+| `holdSeconds` | 1.0 | A lowered phase waits this long before the lower one shows (`Off < Connected < Active < InputLocked`). The same or a higher phase renews the hold. Applies with reduced motion too. |
+| `pulseInterval` | 0.5 | Pulses closer together than this make one ripple. |
+| `transitionSeconds` | 0.3 | Colour, strength, spread and line blend between phases. `Steady` blends as a `Breathe` that never dims. No blend with reduced motion. |
+
+- The pill does not narrow while shown, so a changing `activity` does not make it jitter; it returns to its natural width after it hides.
 - `needsFrame` is true while the picture changes over time. The indicator does not hold back input; in `InputLocked`, the host blocks local input itself.
 - The frame options are described in [Glow frames](../architecture/make-your-own-look.md#glow-frames).
 

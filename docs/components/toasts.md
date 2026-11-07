@@ -77,7 +77,7 @@ toast.action = "View details"; // Returns an Action event for this toast ID.
 
 | Setting | Behavior |
 | --- | --- |
-| `ToastPosition` | Top or bottom, times left, center or right. Default `TopRight`, with `maximum=4` |
+| `ToastPosition` | An alias of `OverlayAnchor`: top or bottom, times left, center or right. Default `TopRight`, with `maximum=4` |
 | Width zero | Font-relative width |
 | Negative margin or gap | Uses the theme-derived current style spacing |
 | Size limits | Cards and the visible count stay within the viewport work area; an oversized card scrolls vertically |

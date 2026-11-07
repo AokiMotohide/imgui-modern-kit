@@ -141,11 +141,9 @@ void ToastViewport(const char* id,std::span<const ToastView> items,ToastViewport
     std::size_t count=0;
     for(auto& e:state.entries) if(e.id&&!e.retired) ordered[count++]=&e;
     std::sort(ordered.begin(),ordered.begin()+count,[](auto* a,auto* b){return a->order>b->order;});
-    const int position=static_cast<int>(layout.position);
-    const bool bottom=position>=3;const int column=position%3;
-    const float x=column==0?viewport->WorkPos.x+std::min(margin,viewport->WorkSize.x*.5f):
-        column==1?viewport->WorkPos.x+(viewport->WorkSize.x-width)*.5f:
-        viewport->WorkPos.x+viewport->WorkSize.x-width-std::min(margin,viewport->WorkSize.x*.5f);
+    const detail::OverlayPlacement place=detail::PlaceOverlay(layout.position,viewport->WorkPos,viewport->WorkSize,margin);
+    const bool bottom=place.bottom;
+    const float x=place.point.x-place.pivot.x*width;
     const float available=std::max(1.f,viewport->WorkSize.y-std::min(margin*2,viewport->WorkSize.y-1));
     float used=0;std::size_t visible=0;
     std::array<float,ToastViewportState::Capacity> heights{};
@@ -160,8 +158,7 @@ void ToastViewport(const char* id,std::span<const ToastView> items,ToastViewport
     ImGui::PushID(Safe(id));const ImGuiID scope=ImGui::GetID("toast-viewport");ImGui::PopID();
     for(std::size_t i=0;i<visible;++i) {
         auto& e=*ordered[i];const auto& v=*Find(items,e.id);
-        const float y=bottom?viewport->WorkPos.y+viewport->WorkSize.y-std::min(margin,viewport->WorkSize.y*.5f)-offset-heights[i]:
-                              viewport->WorkPos.y+std::min(margin,viewport->WorkSize.y*.5f)+offset;
+        const float y=bottom?place.point.y-offset-heights[i]:place.point.y+offset;
         char name[80];std::snprintf(name,sizeof(name),"###imkit-toast-card-%08x-%llu",scope,static_cast<unsigned long long>(e.id));
         ImGui::SetNextWindowViewport(viewport->ID);ImGui::SetNextWindowSize({width,heights[i]});
         ImVec4 accent=o.theme?o.theme->semantic.accent:style.Colors[ImGuiCol_CheckMark];
