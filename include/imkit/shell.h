@@ -105,6 +105,9 @@ enum class ExternalControlPhase {
     Active,      // The client is operating the application.
     InputLocked, // The client operates and local input is held back by the host.
 };
+// How the pill is filled. Solid is the frame colour with readable text. Surface is a dark translucent theme surface with
+// the theme text colour; the title, the dot and the outline take the frame colour.
+enum class ExternalControlPillFill { Solid, Surface };
 struct ExternalControlView {
     ExternalControlPhase phase=ExternalControlPhase::Off;
     const char* title="External control";
@@ -120,6 +123,10 @@ struct ExternalControlStyle {
     float pillMargin=10.0f;     // Distance of the pill from the viewport edge, in pixels.
     float lockedTint=0.06f;     // Opacity of a wash of the locked colour over the viewport; 0 for none.
     bool pulseDot=true;         // The dot in the pill follows the frame's brightness.
+    ExternalControlPillFill pillFill=ExternalControlPillFill::Solid;
+    float pillOutline=0.0f;     // Width of a line in the frame colour around the pill, in pixels; 0 for none.
+    bool pillShadow=false;      // The theme's soft shadow under the pill.
+    float pillGlow=0.0f;        // 0..1: a faint halo of the frame colour around the pill.
     // Steadiness against a host that reports its state in bursts.
     float holdSeconds=1.0f;      // A higher phase stays this long after the host lowers it (Off < Connected < Active < InputLocked).
     float pulseInterval=0.5f;    // Pulses closer together than this make one ripple.

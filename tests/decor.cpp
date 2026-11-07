@@ -369,6 +369,9 @@ void TestExternalControl() {
     imkit::ExternalControlStyle style = imkit::MakeExternalControlStyle(theme);
     Check(style.active.motion == imkit::GlowMotion::Breathe && style.locked.motion == imkit::GlowMotion::Steady,
           "the default style breathes while active and holds while locked");
+    Check(style.pillFill == imkit::ExternalControlPillFill::Solid && style.pillOutline == 0.f && !style.pillShadow &&
+              style.pillGlow == 0.f,
+          "the pill keeps its solid look unless asked");
     imkit::ExternalControlState state;
     imkit::ExternalControlView view;
     view.client = "automation";
@@ -391,6 +394,19 @@ void TestExternalControl() {
     auto [fading, fadingDrawn] = frame(2.51);
     Check(fading.needsFrame && fadingDrawn > 0 && state.shown == imkit::ExternalControlPhase::Active,
           "turning off fades out in the last phase's look");
+
+    // The surface look with an outline, a shadow and a halo draws without disturbing the frame.
+    imkit::ExternalControlStyle quiet = style;
+    quiet.pillFill = imkit::ExternalControlPillFill::Surface;
+    quiet.pillOutline = 1.f; quiet.pillShadow = true; quiet.pillGlow = .5f;
+    imkit::ExternalControlState quietState;
+    view.phase = imkit::ExternalControlPhase::Active;
+    for (double t : {30.0, 30.1, 30.2}) {
+        ImGui::NewFrame();
+        imkit::ExternalControlIndicator("quiet", view, quietState, t, quiet, nullptr, {&theme});
+        ImGui::EndFrame();
+    }
+    Check(quietState.pillWidth > 0.f && quietState.glow.visibility > 0.f, "the surface pill is shown");
 
     // A lowered phase is held for holdSeconds, then released.
     imkit::ExternalControlState held;

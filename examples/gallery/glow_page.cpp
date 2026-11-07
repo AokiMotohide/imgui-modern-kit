@@ -288,6 +288,13 @@ void GlowPage::Show(GalleryState& host) {
         ImGui::SliderFloat("Pill margin", &remote.pillMargin, 0.f, 80.f, "%.0f px");
         ImGui::SliderFloat("Locked wash", &remote.lockedTint, 0.f, .3f, "%.2f");
         ImGui::Checkbox("Dot follows the frame", &remote.pulseDot);
+        static const char* const kFill[] = {"Solid", "Surface"};
+        int fill = static_cast<int>(remote.pillFill);
+        if (ImGui::Combo("Pill fill", &fill, kFill, 2))
+            remote.pillFill = static_cast<ExternalControlPillFill>(fill);
+        ImGui::SliderFloat("Pill outline", &remote.pillOutline, 0.f, 4.f, "%.1f px");
+        ImGui::SliderFloat("Pill halo", &remote.pillGlow, 0.f, 1.f, "%.2f");
+        ImGui::Checkbox("Pill shadow", &remote.pillShadow);
         ImGui::SliderFloat("Hold a higher phase", &remote.holdSeconds, 0.f, 3.f, "%.1f s");
         ImGui::SliderFloat("Merge pulses within", &remote.pulseInterval, 0.f, 2.f, "%.2f s");
         ImGui::SliderFloat("Phase blend", &remote.transitionSeconds, 0.f, 1.5f, "%.2f s");

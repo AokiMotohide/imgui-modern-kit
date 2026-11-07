@@ -1,6 +1,7 @@
 #include <imkit/shell.h>
 #include <imkit/widgets.h>
 #include "draw_internal.h"
+#include <imkit/components.h>
 
 #include <algorithm>
 #include <cctype>
@@ -342,7 +343,14 @@ ExternalControlRequest ExternalControlIndicator(const char* id,const ExternalCon
     const ImGuiID scope=ImGui::GetID("pill");
     char name[64];std::snprintf(name,sizeof(name),"###imkit-external-control-%08x",scope);
     const float font=ImGui::GetFontSize();
-    const ImVec4 fill=glow.color,ink=ReadableOn(fill);
+    const bool surfaceFill=style.pillFill==ExternalControlPillFill::Surface;
+    ImVec4 fill=glow.color,ink=ReadableOn(fill),accent=ink;
+    if(surfaceFill) {
+        fill=options.theme?options.theme->semantic.surface:ImVec4{.09f,.09f,.10f,1.0f};
+        fill.w=0.84f;
+        ink=options.theme?options.theme->semantic.text:ImVec4{.95f,.95f,.96f,1.0f};
+        accent=glow.color;
+    } else fill.w=0.96f;
     ImGui::SetNextWindowViewport(viewport->ID);
     ImGui::SetNextWindowPos(place.point,ImGuiCond_Always,place.pivot);
     ImGui::SetNextWindowSizeConstraints({state.pillWidth,0.0f},{FLT_MAX,FLT_MAX});
@@ -354,7 +362,7 @@ ExternalControlRequest ExternalControlIndicator(const char* id,const ExternalCon
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,{font*0.5f,0.0f});
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding,font*2.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,{font*0.6f,font*0.15f});
-    ImGui::PushStyleColor(ImGuiCol_WindowBg,Faded(fill,0.96f));
+    ImGui::PushStyleColor(ImGuiCol_WindowBg,ImVec4{0,0,0,0}); // The pill paints its own background below.
     ImGui::PushStyleColor(ImGuiCol_Text,ink);
     constexpr ImGuiWindowFlags flags=ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoSavedSettings|
                                      ImGuiWindowFlags_NoFocusOnAppearing|ImGuiWindowFlags_NoNav|ImGuiWindowFlags_NoMove|
@@ -362,6 +370,27 @@ ExternalControlRequest ExternalControlIndicator(const char* id,const ExternalCon
     const bool hasStop=view.stopLabel&&*view.stopLabel;
     // Without Stop there is nothing to press, so clicks and hover go to the windows underneath.
     if(ImGui::Begin(name,nullptr,hasStop?flags:flags|ImGuiWindowFlags_NoInputs)) {
+        {
+            // Shadow, halo, fill and outline, in that order, under the content.
+            ImDrawList* draw=ImGui::GetWindowDrawList();
+            const ImVec2 low=ImGui::GetWindowPos(),size=ImGui::GetWindowSize(),high{low.x+size.x,low.y+size.y};
+            const float round=std::min(font*2.0f,size.y*0.5f);
+            if(style.pillShadow&&options.theme)DrawShadow(*options.theme,draw,low,high,round,ElevationLevel::Overlay,ImGui::GetStyle().Alpha);
+            const float halo=std::isfinite(style.pillGlow)?std::clamp(style.pillGlow,0.0f,1.0f):0.0f;
+            if(halo>0.0f) {
+                draw->PushClipRectFullScreen();
+                constexpr int rings=6;
+                for(int i=rings;i>=1;--i) {
+                    const float grow=font*0.9f*i/rings,fall=1.0f-static_cast<float>(i-1)/rings;
+                    draw->AddRect({low.x-grow,low.y-grow},{high.x+grow,high.y+grow},
+                                  ImGui::GetColorU32(Faded(glow.color,halo*0.22f*fall*fall)),round+grow,0,font*0.9f/rings+1.0f);
+                }
+                draw->PopClipRect();
+            }
+            draw->AddRectFilled(low,high,ImGui::GetColorU32(fill),round);
+            const float line=std::isfinite(style.pillOutline)?std::max(style.pillOutline,0.0f):0.0f;
+            if(line>0.0f)draw->AddRect(low,high,ImGui::GetColorU32(glow.color),round,0,line);
+        }
         // The dot follows the frame's brightness, so the pill and the frame breathe together.
         const float dotLevel=style.pulseDot?GlowFrameLevel(glow,now-state.glow.start,animate):1.0f;
         const float lineHeight=ImGui::GetTextLineHeight(),dot=font*0.55f;
@@ -369,19 +398,19 @@ ExternalControlRequest ExternalControlIndicator(const char* id,const ExternalCon
         const float frameHeight=hasStop?ImGui::GetFrameHeight():lineHeight;
         ImGui::Dummy({dot,frameHeight});
         ImGui::GetWindowDrawList()->AddCircleFilled({at.x+dot*0.5f,at.y+frameHeight*0.5f},dot*0.5f,
-                                                    ImGui::GetColorU32(Faded(ink,0.35f+0.65f*dotLevel)));
+                                                    ImGui::GetColorU32(Faded(accent,0.35f+0.65f*dotLevel)));
         const float textY=(frameHeight-lineHeight)*0.5f;
-        auto text=[&](const char* value,float alpha,ImFont* font) {
+        auto text=[&](const char* value,float alpha,ImFont* font,bool highlight=false) {
             if(!value||!*value)return;
             ImGui::SameLine();ImGui::SetCursorPosY(ImGui::GetCursorPosY()+textY);
             if(font)ImGui::PushFont(font,0.0f);
-            ImGui::PushStyleColor(ImGuiCol_Text,Faded(ink,alpha));ImGui::TextUnformatted(value);ImGui::PopStyleColor();
+            ImGui::PushStyleColor(ImGuiCol_Text,Faded(highlight?accent:ink,alpha));ImGui::TextUnformatted(value);ImGui::PopStyleColor();
             if(font)ImGui::PopFont();
         };
-        text(view.title,1.0f,options.theme?options.theme->fonts.emphasis:nullptr);
+        text(view.title,1.0f,options.theme?options.theme->fonts.emphasis:nullptr,true);
         text(view.client,0.85f,nullptr);
         text(view.activity,0.75f,nullptr);
-        if(state.shown==ExternalControlPhase::InputLocked)text(view.lockedText,1.0f,options.theme?options.theme->fonts.emphasis:nullptr);
+        if(state.shown==ExternalControlPhase::InputLocked)text(view.lockedText,1.0f,options.theme?options.theme->fonts.emphasis:nullptr,true);
         const float left=ImGui::GetWindowPos().x,padding=ImGui::GetStyle().WindowPadding.x;
         float natural=ImGui::GetItemRectMax().x-left+padding;
         if(hasStop) {

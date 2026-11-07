@@ -83,7 +83,7 @@ if (request.stopRequested)
     server.Disconnect();
 ```
 
-- `ExternalControlStyle` holds one `GlowFrameStyle` per phase (`connected`, `active`, `locked`), `showPill` and the pill position `pill` (an `OverlayAnchor`: a corner, or the top or bottom centre), `pillMargin`, `lockedTint`, `pulseDot`, and three steadiness values: `holdSeconds` (1.0 s), `pulseInterval` (0.5 s) and `transitionSeconds` (0.3 s). Every field can be changed after `MakeExternalControlStyle`.
+- `ExternalControlStyle` holds one `GlowFrameStyle` per phase (`connected`, `active`, `locked`), `showPill` and the pill position `pill` (an `OverlayAnchor`: a corner, or the top or bottom centre), `pillMargin`, `lockedTint`, `pulseDot`, the pill look (`pillFill` `Solid` or `Surface`, `pillOutline`, `pillShadow`, `pillGlow`), and three steadiness values: `holdSeconds` (1.0 s), `pulseInterval` (0.5 s) and `transitionSeconds` (0.3 s). Every field can be changed after `MakeExternalControlStyle`.
 - The frame draws on the viewport's foreground draw list. The pill is a small window, so Stop takes clicks and keyboard focus like any other button. Stop is reported only while the phase is not `Off`.
 - The person at the screen can keep using the application. The frame never takes input, and a pill with an empty `stopLabel` lets clicks and hover through to the windows underneath.
 - Steadiness for hosts that report in bursts:
