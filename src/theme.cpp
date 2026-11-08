@@ -447,6 +447,24 @@ void AnimationState::Reset(std::uint64_t generation) {
     entries_ = {};
     generation_ = generation;
 }
+float ApplyEasing(Easing easing, float t, const EasingShape& shape) {
+    t = std::clamp(t, 0.f, 1.f);
+    const float c = shape.overshoot;
+    switch (easing) {
+    case Easing::Linear: return t;
+    case Easing::EaseOut: return 1 - (1 - t) * (1 - t);
+    case Easing::EaseInOut: return t * t * (3 - 2 * t);
+    case Easing::EaseIn: return t * t;
+    case Easing::OutBack: { const float u = t - 1; return 1 + (c + 1) * u * u * u + c * u * u; }
+    case Easing::InBack: return (c + 1) * t * t * t - c * t * t;
+    case Easing::Spring: {
+        if (t >= 1) return 1;
+        constexpr float kPi = 3.14159265358979f;
+        return 1 - std::exp(-std::max(0.f, shape.damping) * t) * std::cos(2 * kPi * std::max(0.f, shape.oscillations) * t);
+    }
+    }
+    return t;
+}
 void AnimationState::Prune(int frame, int age) {
     for (auto &e : entries_)
         if (e.used && frame - e.frame > age)
@@ -475,8 +493,7 @@ float AnimationState::Update(ImGuiID id, float target, float dt, float seconds, 
         if(slot->target!=target) { slot->from=slot->value; slot->target=target; slot->elapsed=0; }
         slot->elapsed+=std::max(0.f,dt);
         float step=seconds>0?std::clamp(slot->elapsed/seconds,0.f,1.f):1.f;
-        if(easing==Easing::EaseOut) step=1-(1-step)*(1-step);
-        if(easing==Easing::EaseInOut) step=step*step*(3-2*step);
+        step=ApplyEasing(easing,step);
         slot->value=!enabled || seconds<=0?target:slot->from+(target-slot->from)*step;
         slot->frame = frame;
     }

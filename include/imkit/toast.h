@@ -22,6 +22,10 @@ struct ToastView {
     const char* stage="";
     const char* progressText="";
     ProgressStatus status=ProgressStatus::Running;
+    // Folded detail under the description, such as job or attempt identifiers, drawn in the monospace text role. The
+    // card shows a "Details" toggle (locale key "details"); `detailOpen` is the state before the person toggles it.
+    const char* detail="";
+    bool detailOpen=false;
 };
 struct ToastEvent { StableId id=0; ToastEventKind kind=ToastEventKind::Dismiss; };
 struct ToastEventBuffer {

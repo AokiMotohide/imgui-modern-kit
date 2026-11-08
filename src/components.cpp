@@ -88,13 +88,50 @@ ButtonPalette MakeButtonPalette(ActionVariant variant, const Theme *t, const ImG
         p.border.w *= .58f;
     // Solid and ghost buttons are drawn without a frame, unless the theme is outlined and every button carries it.
     const bool borderless = (p.solid || variant == ActionVariant::Ghost) && !detail::IsOutlined(style);
-    p.borderSize = borderless ? 0.f : p.subtleDestructive ? std::max(1.f, style.FrameBorderSize) : style.FrameBorderSize;
+    float frameBorder = style.FrameBorderSize;
+    // A theme may give buttons a heavier outline than other frames; keep it in step with the UI scale.
+    if (t && t->stroke.button > 0)
+        frameBorder = t->stroke.border > 0 && style.FrameBorderSize > 0 ? style.FrameBorderSize * t->stroke.button / t->stroke.border
+                                                                       : t->stroke.button;
+    p.borderSize = borderless ? 0.f : p.subtleDestructive ? std::max(1.f, frameBorder) : frameBorder;
     p.focus = style.Colors[ImGuiCol_NavCursor];
     return p;
 }
-// ImKit paints the frame itself when the theme has a skin, or a hard shadow that must sit behind the button.
+// ImKit paints the frame itself when the theme has a skin, a hard shadow that must sit behind the button, a button
+// outline of its own, or dashed outlines for disabled buttons (decided before the item knows it is disabled).
 bool PaintsOwnFrame(const Theme *t, const ButtonPalette &p) {
-    return t && ((t->skin && t->skin->drawFrame) || (t->elevation.hard && p.filled));
+    return t && ((t->skin && t->skin->drawFrame) || (t->elevation.hard && p.filled) || t->stroke.button > 0 ||
+                 t->stroke.dashedDisabled);
+}
+// Dashes along the outline of a rounded rectangle.
+void DrawDashedRect(ImDrawList *draw, ImVec2 minimum, ImVec2 maximum, ImU32 color, float rounding, float thickness) {
+    draw->PathRect(minimum, maximum, rounding);
+    ImVector<ImVec2> path;
+    path.swap(draw->_Path);
+    draw->PathClear();
+    if (path.Size < 2)
+        return;
+    path.push_back(path[0]);
+    const float dash = std::max(3.f, thickness * 2.5f), gap = std::max(2.f, thickness * 1.8f);
+    float phase = 0; // Distance into the current dash+gap period.
+    for (int i = 1; i < path.Size; ++i) {
+        ImVec2 a = path[i - 1];
+        const ImVec2 b = path[i];
+        float length = std::sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
+        const ImVec2 dir = length > 0 ? ImVec2{(b.x - a.x) / length, (b.y - a.y) / length} : ImVec2{0, 0};
+        while (length > 0) {
+            const bool on = phase < dash;
+            const float step = std::min(length, on ? dash - phase : dash + gap - phase);
+            const ImVec2 c{a.x + dir.x * step, a.y + dir.y * step};
+            if (on)
+                draw->AddLine(a, c, color, thickness);
+            a = c;
+            length -= step;
+            phase += step;
+            if (phase >= dash + gap)
+                phase = 0;
+        }
+    }
 }
 struct PushedButtonStyle {
     int colors = 0, vars = 0;
@@ -155,7 +192,10 @@ ImVec2 PaintButtonFrame(const ButtonPalette &p, ActionVariant variant, const Com
     frame.hover = hover;
     if (!detail::TrySkin(t, frame)) {
         draw->AddRectFilled(minimum, maximum, ImGui::GetColorU32(active ? p.active : hovered ? p.hovered : p.fill), rounding);
-        if (p.borderSize > 0)
+        if (frame.disabled && t && t->stroke.dashedDisabled)
+            DrawDashedRect(draw, minimum, maximum, ImGui::GetColorU32(p.border), rounding,
+                           std::max(1.f, p.borderSize > 0 ? p.borderSize : style.FrameBorderSize));
+        else if (p.borderSize > 0)
             draw->AddRect(minimum, maximum, ImGui::GetColorU32(p.border), rounding, ImDrawFlags_None, p.borderSize);
     }
     if (focused && ImGui::GetIO().NavVisible)
@@ -193,16 +233,32 @@ bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, 
     if (painted)
         ImGui::PopStyleColor();
     if(ImGui::IsItemFocused()) ImGui::SetNavCursorVisible(true);
+    // An empty reason means the host explains it itself; null keeps the generic word.
     if((ImGui::GetItemFlags()&ImGuiItemFlags_Disabled)!=0 &&
-       ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+       ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) &&
+       !(options.disabledReason && !*options.disabledReason))
         ImGui::SetTooltip("%s",options.disabledReason?options.disabledReason:"Unavailable");
     pressed = SemanticItem(options,label,accessibility::SemanticRole::Button,accessibility::SemanticAction::Press) || pressed;
     const float hover = detail::Ease(options, id, ImGui::IsItemHovered() ? 1.f : 0.f);
     ImVec2 shift{0, 0};
-    if (painted) {
+    if (painted)
         shift = PaintButtonFrame(palette, variant, options, hover);
-        DrawButtonLabel(label, palette.text, shift);
+    if (std::isfinite(options.progress) && options.progress >= 0.f) {
+        // The work the button started, as a fill from the leading edge under the label.
+        const ImVec2 a = ImGui::GetItemRectMin(), b = ImGui::GetItemRectMax();
+        const float inset = std::max(1.f, palette.borderSize);
+        const ImVec2 lo{a.x + shift.x + inset, a.y + shift.y + inset}, hi{b.x + shift.x - inset, b.y + shift.y - inset};
+        const float fraction = std::clamp(options.progress, 0.f, 1.f);
+        const bool rtl = options.locale && options.locale->direction == TextDirection::RTL;
+        const float width = (hi.x - lo.x) * fraction;
+        ImVec4 fill = palette.solid ? palette.text : Accent(t);
+        fill.w = palette.solid ? .22f : .28f;
+        if (width > 0)
+            ImGui::GetWindowDrawList()->AddRectFilled(rtl ? ImVec2{hi.x - width, lo.y} : lo, rtl ? hi : ImVec2{lo.x + width, hi.y},
+                                                      ImGui::GetColorU32(fill), std::max(0.f, style.FrameRounding - inset));
     }
+    if (painted)
+        DrawButtonLabel(label, palette.text, shift);
     if (options.animation && hover > 0) {
         // Hover is a soft tonal wash that fades in; no outline.
         auto color = palette.solid ? ImVec4(1, 1, 1, 1) : Accent(t);

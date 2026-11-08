@@ -67,6 +67,8 @@ if (imkit::ActionButton("Apply", imkit::ActionVariant::Primary, {}, {&theme, &an
     SaveSettings();
 ```
 
+While the work a button started is running, set `ComponentOptions::progress` (0..1) and put the stage in the label; the button fills from its leading edge.
+
 Use primary once per decision area. Secondary, ghost and destructive variants express intent without changing button activation semantics.
 
 ## Boolean and mixed state

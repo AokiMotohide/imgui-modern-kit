@@ -22,7 +22,14 @@ struct ThemePresetInfo {
 };
 enum class ContrastMode { Standard, HighContrast };
 enum class Density { Compact, Comfortable, Touch };
-enum class Easing { Linear, EaseOut, EaseInOut };
+// New values are appended, so stored numbers keep their meaning.
+enum class Easing { Linear, EaseOut, EaseInOut, EaseIn, OutBack, InBack, Spring };
+// Shape of the curves that overshoot. `overshoot` is the Back constant (1.70158 is the common one); a spring makes
+// `oscillations` swings that fade with `damping` (larger settles sooner).
+struct EasingShape { float overshoot = 1.70158f; float oscillations = 1.5f; float damping = 6.f; };
+// Maps progress 0..1 (clamped) through the curve. The result is 0 at 0 and 1 at 1; Back and Spring pass beyond 1 or
+// below 0 on the way. Pure arithmetic: it needs no Dear ImGui context.
+float ApplyEasing(Easing easing, float t, const EasingShape& shape = {});
 // Radius presets for SetCornerStyle. Soft matches the default radii.
 enum class CornerStyle { Sharp, Soft, Round, Pill };
 enum class TextRole { Caption, Body, Heading, Title, Mono };
@@ -42,7 +49,9 @@ struct SpacingTokens { std::array<float,8> steps{2,4,6,8,12,16,24,32}; };
 // subtle: tags and small marks, control: frames and buttons, overlay: cards, popups and dialogs.
 struct Radius { float subtle=4, control=8, overlay=12; };
 // border is a hairline up to 1 and an outline from OutlineMinimumWidth; dividers and table lines never exceed 1.
-struct Stroke { float border=1, focus=2; };
+// `button` is the outline of buttons when it differs from other frames (0 uses `border`); `dashedDisabled` draws the
+// outline of a disabled ImKit button as a dashed line, so it reads as "not now" without relying on colour alone.
+struct Stroke { float border=1, focus=2; float button=0; bool dashedDisabled=false; };
 // Shadow extent in pixels. OverlayDecoration draws overlay; raised is available to hosts through DrawShadow.
 // hard replaces the blurred shadow with a solid copy of the shape moved by offset (design pixels, scaled with the UI).
 struct Elevation { float surface=0, raised=4, overlay=14; ImVec2 offset{0,0}; bool hard=false; };

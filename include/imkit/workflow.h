@@ -14,12 +14,17 @@ struct StepItem {
     IconId icon=IconId::Count;
 };
 struct StepNavigatorState { StableId focused=0; bool focusPending=false; };
+// The mark in front of each step: a circle, or a rounded square (rounding is a share of the mark's half size).
+enum class StepBadgeShape { Circle, RoundedSquare };
 struct StepNavigatorOptions {
     Orientation orientation=Orientation::Horizontal;
     ImVec2 size{};
     float itemExtent=0;
     const IconAtlas* icons=nullptr;
     bool numbers=true;
+    StepBadgeShape badge=StepBadgeShape::Circle;
+    float badgeRounding=.35f; // RoundedSquare: 0 is square, 1 is a pill.
+    float badgeBorder=-1;     // Outline width of an open mark; negative uses stroke.border.
 };
 // Selection is a request; current and completion are never mutated.
 StableId StepNavigator(const char* id, std::span<const StepItem> items, StableId current,

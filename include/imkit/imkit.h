@@ -6,6 +6,7 @@
 #include <imkit/components.h>
 #include <imkit/skin.h>
 #include <imkit/decor.h>
+#include <imkit/motion.h>
 #include <imkit/icons.h>
 #include <imkit/accessibility.h>
 #include <imkit/locale.h>

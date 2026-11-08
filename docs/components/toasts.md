@@ -37,6 +37,10 @@ The example needs `<array>`, `<vector>` and `<algorithm>`. Rules for using it:
 - Create covering host windows with `ImGuiWindowFlags_NoBringToFrontOnFocus`, for example `ImGui::Begin("App", nullptr, ImGuiWindowFlags_NoBringToFrontOnFocus)`, before drawing toasts. Otherwise a click on a host window can raise it above existing toasts.
 - Toasts are ordinary public ImGui windows. They do not force the display order through internal APIs or steal focus, and new overlapping windows and modal dialogs keep Dear ImGui's ordering and input rules.
 
+## Folded detail
+
+`ToastView::detail` holds text people rarely need, such as job or attempt identifiers. The card shows a Details toggle (locale key `details`) and draws the text in the monospace role when it is open; `detailOpen` is the state before the first toggle.
+
 ## Duration and queue
 
 | Case | Behavior |

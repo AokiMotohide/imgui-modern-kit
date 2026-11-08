@@ -80,6 +80,8 @@ const Field kFields[] = {
     IMKIT_RANGED("radius.overlay", Float, radius.overlay, 0, 1000),
     IMKIT_RANGED("stroke.border", Float, stroke.border, 0, 32),
     IMKIT_RANGED("stroke.focus", Float, stroke.focus, 0, 32),
+    IMKIT_RANGED("stroke.button", Float, stroke.button, 0, 32),
+    IMKIT_FIELD("stroke.dashed-disabled", Bool, stroke.dashedDisabled),
     IMKIT_RANGED("elevation.surface", Float, elevation.surface, 0, 128),
     IMKIT_RANGED("elevation.raised", Float, elevation.raised, 0, 128),
     IMKIT_RANGED("elevation.overlay", Float, elevation.overlay, 0, 128),
@@ -116,7 +118,9 @@ template <class E> struct Name { std::string_view text; E value; };
 constexpr Name<ColorScheme> kSchemes[] = {{"light", ColorScheme::Light}, {"dark", ColorScheme::Dark}};
 constexpr Name<ContrastMode> kContrasts[] = {{"standard", ContrastMode::Standard}, {"high-contrast", ContrastMode::HighContrast}};
 constexpr Name<Density> kDensities[] = {{"compact", Density::Compact}, {"comfortable", Density::Comfortable}, {"touch", Density::Touch}};
-constexpr Name<Easing> kEasings[] = {{"linear", Easing::Linear}, {"ease-out", Easing::EaseOut}, {"ease-in-out", Easing::EaseInOut}};
+constexpr Name<Easing> kEasings[] = {{"linear", Easing::Linear}, {"ease-out", Easing::EaseOut}, {"ease-in-out", Easing::EaseInOut},
+                                     {"ease-in", Easing::EaseIn}, {"out-back", Easing::OutBack}, {"in-back", Easing::InBack},
+                                     {"spring", Easing::Spring}};
 constexpr Name<CornerStyle> kCorners[] = {{"sharp", CornerStyle::Sharp}, {"soft", CornerStyle::Soft},
                                           {"round", CornerStyle::Round}, {"pill", CornerStyle::Pill}};
 constexpr Name<NodeHeaderFill> kHeaderFills[] = {{"strip", NodeHeaderFill::Strip}, {"tinted", NodeHeaderFill::Tinted},

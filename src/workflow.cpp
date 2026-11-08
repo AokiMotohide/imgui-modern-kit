@@ -627,8 +627,14 @@ StableId StepNavigator(const char* id,std::span<const StepItem> items,StableId c
             auto color=ImGui::GetColorU32(tone);
             const bool filled=item.completed||item.id==current;
             const ImVec4 ink=ContrastRatio({1,1,1,1},tone)>=ContrastRatio({0,0,0,1},tone)?ImVec4{1,1,1,1}:ImVec4{0,0,0,1};
-            if(filled) draw->AddCircleFilled(center,radius,color,24);
-            else draw->AddCircle(center,radius,color,24,o.theme?o.theme->stroke.border:1);
+            const float border=layout.badgeBorder>=0?layout.badgeBorder:(o.theme?o.theme->stroke.border:1);
+            if(layout.badge==StepBadgeShape::RoundedSquare) {
+                const ImVec2 lo{center.x-radius,center.y-radius},hi{center.x+radius,center.y+radius};
+                const float rounding=radius*std::clamp(layout.badgeRounding,0.f,1.f);
+                if(filled) draw->AddRectFilled(lo,hi,color,rounding);
+                else draw->AddRect(lo,hi,color,rounding,ImDrawFlags_None,border);
+            } else if(filled) draw->AddCircleFilled(center,radius,color,24);
+            else draw->AddCircle(center,radius,color,24,border);
             const auto markColor=filled?ImGui::GetColorU32(ink):ImGui::GetColorU32(ImGuiCol_Text);
             if(item.completed) detail::DrawCheck(draw,center,radius*1.05f,markColor,1.7f);
             else {

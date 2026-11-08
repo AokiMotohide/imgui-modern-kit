@@ -52,6 +52,7 @@ auto volatile externalControlStyle=&imkit::MakeExternalControlStyle;
 auto volatile externalControl=&imkit::ExternalControlIndicator;
 }
 int main() {
+    imkit::StepNavigatorOptions stepLayout;stepLayout.badge=imkit::StepBadgeShape::RoundedSquare;stepLayout.badgeRounding=.3f;stepLayout.badgeBorder=2;
     imkit::StableId ids[1];imkit::RequestBuffer requests{ids};
     imkit::editor::TileEvent events[1];imkit::editor::TileEventBuffer out{events};
     return !(grouped&&workspaceTabs&&choiceGroup&&hierarchyGroup&&hierarchyRow&&inspectorCard&&endInspectorCard&&collapsibleInspectorCard&&endCollapsibleInspectorCard&&settingToggleRow&&iconToolbar&&labeledIconToolbar&&iconAction&&step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&progressTrackView&&progressTrackValue&&stageProgress&&taskProgressCard&&card&&endCard&&section&&multi&&help&&validation&&toolbar&&valid&&placement&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&appBar&&workspaceHeader&&inspectorSection&&advancedSection&&bottomActionBar&&beginDiagnostics&&endDiagnostics&&themePicker&&resolveRightPanel&&rightPanelHandle&&externalControlStyle&&externalControl&&requests.Push(1)&&out.Push({}));

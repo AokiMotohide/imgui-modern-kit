@@ -22,7 +22,12 @@ struct ComponentOptions {
     accessibility::AccessibilityFrame* accessibility = nullptr;
     accessibility::StableId parent = 0;
     const LocaleContext* locale = nullptr;
+    // Shown when a disabled control is hovered. Null shows a generic word; an empty string shows nothing (the host
+    // explains it elsewhere).
     const char* disabledReason = nullptr;
+    // ActionButton only: 0..1 fills the button from the leading edge to show the work it started (put the stage and
+    // percentage in the label). Negative or nonfinite draws no fill.
+    float progress = -1.f;
 };
 bool ActionButton(const char *label, ActionVariant variant = ActionVariant::Primary,
                   const ImVec2 &size = ImVec2(0, 0), ComponentOptions options = {});

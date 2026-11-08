@@ -11,10 +11,20 @@
 | `imkit/decor.h` | `DrawGlowFrame`, `GlowFrameLevel`, `GlowFrameStyle`, `GlowFrameState`, `GlowMotion`, `GlowPlacement` |
 | `imkit/shell.h` | `ExternalControlIndicator`, `MakeExternalControlStyle`, `ExternalControlView`, `ExternalControlStyle`, `ExternalControlState`, `ExternalControlRequest`, `ExternalControlPhase` |
 | `imkit/theme.h` | `OverlayAnchor` |
+| `imkit/motion.h` | `MotionEase`, `ParseMotionEase`, `MotionEaseName`, `EvaluateMotionEase`, `MotionKey`, `EvaluateMotionTrack`, `WrapMotionTime`, `MotionLayer`, `LayerPose`, `PoseLayerQuad`, `DrawLayeredMotion` |
+| `imkit/theme.h` | `Easing::EaseIn`, `OutBack`, `InBack`, `Spring`, `EasingShape`, `ApplyEasing`, `Stroke::button`, `Stroke::dashedDisabled` |
+| `imkit/components.h` | `ComponentOptions::progress` |
+| `imkit/toast.h` | `ToastView::detail`, `ToastView::detailOpen` |
+| `imkit/workflow.h` | `StepBadgeShape`, `StepNavigatorOptions::badge`, `badgeRounding`, `badgeBorder` |
 
 - `DrawGlowFrame` lights the edge of a rectangle: steady, breathing or orbiting, with ripples on `Pulse()` or at an interval, inside, outside or centred on the edge. Every value is a field of `GlowFrameStyle`.
 - `ExternalControlIndicator` frames the viewport while an automation API, a remote operator or an agent drives the application, and shows a pill with the client, its activity and Stop. Each phase has its own frame style: connected, active and input locked. The phase is held for `holdSeconds` after the host lowers it, pulses within `pulseInterval` make one ripple, phases blend over `transitionSeconds`, the pill keeps its widest width while shown, and a pill without Stop lets input through. The pill can be a dark translucent theme surface (`pillFill = Surface`) with an outline, a soft shadow and a halo; the default look is unchanged.
 - `OverlayAnchor` names the six places of an overlay in a viewport's work area. Toasts and the external control pill share it, and `ToastPosition` is now an alias of it, so existing code compiles unchanged.
+- `imkit/motion.h` evaluates keyframe tracks in the common motion-file layout (each key names the curve that arrives at it) and draws layered pictures with CSS-like poses, so a designer's looping logo plays the same in the application. ImKit reads no files and owns no textures.
+- Themes gain `EaseIn`, `OutBack`, `InBack` and `Spring` curves (`ApplyEasing`, theme keys `ease-in`, `out-back`, `in-back`, `spring`), a button outline of its own (`stroke.button`) and dashed outlines for disabled buttons (`stroke.dashed-disabled`).
+- `ActionButton` fills from its leading edge with `ComponentOptions::progress` while the work it started runs.
+- Toasts can fold a detail, such as identifiers, behind a Details toggle and show it in the monospace role.
+- `StepNavigator` can draw its number marks as rounded squares.
 - Gallery: a Glow frame page with six looks, an editor for every field, a copyable C++ snippet, and a scripted remote session that frames the Gallery window.
 
 ### 日本語
@@ -26,10 +36,20 @@
 | `imkit/decor.h` | `DrawGlowFrame`、`GlowFrameLevel`、`GlowFrameStyle`、`GlowFrameState`、`GlowMotion`、`GlowPlacement` |
 | `imkit/shell.h` | `ExternalControlIndicator`、`MakeExternalControlStyle`、`ExternalControlView`、`ExternalControlStyle`、`ExternalControlState`、`ExternalControlRequest`、`ExternalControlPhase` |
 | `imkit/theme.h` | `OverlayAnchor` |
+| `imkit/motion.h` | `MotionEase`、`ParseMotionEase`、`MotionEaseName`、`EvaluateMotionEase`、`MotionKey`、`EvaluateMotionTrack`、`WrapMotionTime`、`MotionLayer`、`LayerPose`、`PoseLayerQuad`、`DrawLayeredMotion` |
+| `imkit/theme.h` | `Easing::EaseIn`、`OutBack`、`InBack`、`Spring`、`EasingShape`、`ApplyEasing`、`Stroke::button`、`Stroke::dashedDisabled` |
+| `imkit/components.h` | `ComponentOptions::progress` |
+| `imkit/toast.h` | `ToastView::detail`、`ToastView::detailOpen` |
+| `imkit/workflow.h` | `StepBadgeShape`、`StepNavigatorOptions::badge`、`badgeRounding`、`badgeBorder` |
 
 - `DrawGlowFrame` は矩形の縁を光らせます。一定、呼吸、周回の動きと、`Pulse()` または一定間隔で出る波紋を持ち、縁の内側、外側、中央に描けます。値はすべて `GlowFrameStyle` のフィールドです。
 - `ExternalControlIndicator` は、自動化API、遠隔の操作者、エージェントがアプリを操作している間、ビューポートを枠で囲み、操作中の相手、その作業、停止ボタンを載せたピルを出します。枠の見た目は、接続中、操作中、入力ロック中の状態ごとに持ちます。ホストが段階を下げても `holdSeconds` の間は保持し、`pulseInterval` 内の Pulse は1つの波紋にまとめ、段階は `transitionSeconds` で補間します。ピルは表示中に最大幅を保ち、停止ボタンのないピルは入力を通します。ピルは、暗い半透明のテーマの面（`pillFill = Surface`）に、縁取り、やわらかい影、うっすらした光を付けた見た目にもできます。既定の見た目は変わりません。
 - `OverlayAnchor` は、ビューポートの作業領域でオーバーレイを置く6つの位置を表します。トーストと外部制御のピルが共有し、`ToastPosition` はその別名になりました。既存のコードは変更なしでコンパイルできます。
+- `imkit/motion.h` は、よく使われる動きのファイルの形（各キーが、そこへ着く曲線の名前を持つ）のキーフレームを評価し、CSS と同じ順の姿勢で層の絵を描きます。デザイナーが作ったループのロゴを、アプリでも同じに再生できます。ImKit はファイルを読まず、テクスチャも持ちません。
+- テーマに `EaseIn`、`OutBack`、`InBack`、`Spring` の曲線（`ApplyEasing`、テーマのキー `ease-in`、`out-back`、`in-back`、`spring`）、ボタン専用の縁取りの太さ（`stroke.button`）、押せないボタンの破線の縁（`stroke.dashed-disabled`）を足しました。
+- `ActionButton` は、`ComponentOptions::progress` を渡すと、始めた処理の進み具合を先頭側からの塗りで示します。
+- トーストは、識別子などの詳細を「詳細」の切替の下に折りたたみ、等幅の文字の役割で出せます。
+- `StepNavigator` の番号の印を、角丸の四角で描けます。
 - Gallery：Glow frame ページを追加しました。6つの見た目、全フィールドの編集、コピーできる C++ のコード、Gallery のウィンドウを囲む遠隔操作の再現を含みます。
 
 ## 4.1.0 — 2026-11-06

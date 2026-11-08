@@ -450,7 +450,10 @@ void Spinner(const char* id,ComponentOptions o) {
     const ImU32 color=ImGui::GetColorU32(o.theme?o.theme->semantic.accent:ImGui::GetStyleColorVec4(ImGuiCol_Text));
     const float stroke=std::max(2.f,size*.09f),radius=size*.3f;
     const ImVec2 center{p.x+size*.5f,p.y+size*.5f};
-    draw->AddCircle(center,radius,ImGui::GetColorU32(detail::WithAlpha(TextColor(o),.12f)),32,stroke);
+    // An outlined theme draws the ring in its outline colour, so the accent arc reads against it.
+    const ImU32 track=detail::IsOutlined(ImGui::GetStyle())?ImGui::GetColorU32(ImGuiCol_Border)
+                                                           :ImGui::GetColorU32(detail::WithAlpha(TextColor(o),.12f));
+    draw->AddCircle(center,radius,track,32,stroke);
     draw->PathArcTo(center,radius,start,start+sweep,24);
     draw->PathStroke(color,ImDrawFlags_None,stroke);
     for(float angle:{start,start+sweep})

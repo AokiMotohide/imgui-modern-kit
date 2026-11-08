@@ -12,7 +12,7 @@ Every control returns a request. It never changes the value you pass in.
 
 | Group | Components | What they do |
 | --- | --- | --- |
-| Navigation | `StepNavigator`, `NavigationRail` | Step bar and vertical rail over a borrowed `StepItem` span; return a selection request |
+| Navigation | `StepNavigator`, `NavigationRail` | Step bar and vertical rail over a borrowed `StepItem` span; return a selection request. `StepNavigatorOptions::badge` draws the number mark as a circle or a rounded square (`badgeRounding`, `badgeBorder`) |
 | | `WorkspaceTabs` | Icon and label tabs; collapse to a combo when narrow |
 | | `ChoiceGroup` | Bordered heading with one to three columns of radio choices; returns the chosen stable ID |
 | Hierarchy and settings | `HierarchyGroupHeader`, `HierarchyRow` | Scene-graph style rows with full-width selection, ellipsized labels and an optional `accentColor` stripe. Selection, visibility, lock and group actions are requests. An unavailable visibility or lock action can be omitted |

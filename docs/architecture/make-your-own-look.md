@@ -61,8 +61,9 @@ ImKit reads and writes no files and watches nothing. For development, reload the
 ## Outlines, corners and shadows
 
 - **Outline.** A border of 2 design pixels or more (`theme.stroke.border`) is an outline: it is drawn in the full-strength border colour on windows, popups, frames and every button variant. Below 2 it stays a soft hairline, exactly as before. Dividers, tree lines and table lines never exceed 1.
-- **Components that follow the outline.** Besides windows and buttons: progress bars, circular progress and the donut chart (a bordered track), stage markers and connectors, timeline clips, bar chart bars, step sequencer cells, schedule events, the range slider rail and the thin frames of the Show module. Where a component drew a 1 px line, it now draws the outline width in full strength.
+- **Components that follow the outline.** Besides windows and buttons: the ring of the spinner and of a loading toast (in the border colour, under the accent arc), progress bars, circular progress and the donut chart (a bordered track), stage markers and connectors, timeline clips, bar chart bars, step sequencer cells, schedule events, the range slider rail and the thin frames of the Show module. Where a component drew a 1 px line, it now draws the outline width in full strength.
 - **Corners.** `SetCornerStyle` sets `radius.subtle`, `control` and `overlay` together: Sharp, Soft (the default), Round or Pill; Pill rounds a control to half its height at every density. Windows and images never use a radius larger than the overlay radius, so even a very large control radius does not turn them into capsules.
+- **Button outline.** `stroke.button` gives buttons a heavier outline than other frames, for example 3 against 2 on cards. `stroke.dashedDisabled` draws the outline of a disabled ImKit button as dashes, so "not now" does not depend on colour alone.
 - **Shadow.** `elevation.hard` replaces the blurred shadow with a solid copy of the shape moved by `elevation.offset`, in `semantic.shadow`. `DrawShadow` draws it for your own shapes and `OverlayDecoration` uses it for popups. Buttons that receive the theme draw it behind the frame and move down by the offset while pressed.
 
 ## Text roles and fonts
@@ -107,6 +108,20 @@ imkit::Sprite("walk", walk, state, ImGui::GetTime(), {80, 64}, animate);
 ```
 
 `SpriteFrameAt` and `SpriteFrameUV` give the frame number and texture coordinates without a Dear ImGui context; `DrawSprite` draws one frame into any rectangle. `ProgressTrackView::thumb` lets you draw on the leading edge of a progress fill, for example a sprite that rides it. The callback receives the draw list, the track rectangle, the head position and the shown fraction; `thumbHeight` reserves layout height above the track so the picture does not cover the header.
+
+### Keyframe motion and layered pictures
+
+`imkit/motion.h` evaluates the common motion-file layout: a track is a list of `[time, value, curve]` keys, and each key names the curve used to arrive at it (`linear`, `in`, `out`, `inOut`, `sine`, `outBack`, `inBack`, `hold`, `spring`). ImKit reads no files; parse your format into `MotionKey` spans.
+
+```cpp
+const double t = imkit::WrapMotionTime(ImGui::GetTime() - start, 4.0);
+imkit::LayerPose pose;
+pose.offset.y = float(imkit::EvaluateMotionTrack(logoY, t));
+pose.rotationDegrees = float(imkit::EvaluateMotionTrack(logoRotation, t));
+imkit::DrawLayeredMotion(draw, layers, {&pose, 1}, stageOrigin, stageScale);
+```
+
+`MotionLayer` places a host-owned texture on the designer's stage with a pivot; `LayerPose` moves, scales, rotates and fades it like a CSS transform. `PoseLayerQuad` gives the corners without drawing. With reduced motion, pass the rest pose. `ApplyEasing` exposes the theme curves, including `OutBack`, `InBack` and `Spring`, shaped by `EasingShape`.
 
 ### Glow frames
 
@@ -153,14 +168,15 @@ Colours are `#RRGGBB[AA]`, numbers are plain decimals, switches are `true` or `f
 | `semantic.control.rest`, `hover`, `pressed`, `focused`, `selected`, `disabled` | Colours |
 | `typography.caption`, `body`, `label`, `heading`, `title`, `monospace` | Sizes, 1 to 200 |
 | `radius.subtle`, `control`, `overlay` | 0 to 1000 |
-| `stroke.border`, `stroke.focus` | 0 to 32 |
+| `stroke.border`, `stroke.focus`, `stroke.button` | 0 to 32 (`stroke.button` 0 uses `stroke.border`) |
+| `stroke.dashed-disabled` | `true` or `false` |
 | `elevation.surface`, `raised`, `overlay` | 0 to 128 |
 | `elevation.offset` | Two numbers, −64 to 64, such as `0 3` |
 | `elevation.hard` | Switch |
 | `opacity.disabled`, `opacity.scrim` | 0 to 1 |
 | `motion.control-seconds`, `motion.overlay-seconds` | 0 to 10 |
 | `motion.enabled`, `motion.reduced` | Switch |
-| `motion.easing` | `linear`, `ease-out` or `ease-in-out` |
+| `motion.easing` | `linear`, `ease-out`, `ease-in-out`, `ease-in`, `out-back`, `in-back` or `spring` |
 | `layout.control-height`, `spacing-x`, `spacing-y`, `horizontal-padding`, `window-padding-x`, `window-padding-y`, `cell-padding-y`, `indent`, `scrollbar`, `grab-min`, `separator-text-padding-y` | Optional lengths. Unset keeps the density; an unset line is not written |
 | `layout.check-height-scale`, `toggle-height-scale` | Optional, 1 to 4. Checkbox and Toggle height as a multiple of the font size (defaults 1.45 and 1.75) |
 | `layout.dialog-padding-scale`, `progress-bar-height-scale` | Optional multiples (defaults 1.3 and 0.2) |
