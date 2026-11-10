@@ -58,6 +58,19 @@ if(NOT TARGET "${IMKIT_IMGUI_TARGET}")
         "Create the Dear ImGui target before adding imgui-modern-kit.")
 endif()
 
+# Easing and keyframe-track arithmetic with no Dear ImGui dependency (imkit/easing.h, imkit/motion_curve.h).
+add_library(imkit_motion STATIC src/easing.cpp src/motion_curve.cpp)
+add_library(imkit::motion ALIAS imkit_motion)
+target_compile_features(imkit_motion PUBLIC cxx_std_20)
+target_include_directories(imkit_motion
+    PUBLIC
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+        "$<INSTALL_INTERFACE:include>"
+)
+set_target_properties(imkit_motion PROPERTIES DEBUG_POSTFIX d)
+set_property(TARGET imkit_motion PROPERTY MSVC_DEBUG_INFORMATION_FORMAT Embedded)
+target_compile_options(imkit_motion PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
+
 add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/theme_text.cpp src/decor.cpp src/motion.cpp src/components.cpp src/icons.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp src/toast.cpp src/charts.cpp src/range_slider.cpp src/ptz.cpp src/shell.cpp src/window_frame.cpp)
 add_library(imkit::imkit ALIAS imkit)
 
@@ -67,7 +80,7 @@ target_include_directories(imkit
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
         "$<INSTALL_INTERFACE:include>"
 )
-target_link_libraries(imkit PUBLIC "$<BUILD_INTERFACE:${IMKIT_IMGUI_TARGET}>" "$<INSTALL_INTERFACE:imkit::host_imgui>")
+target_link_libraries(imkit PUBLIC imkit_motion "$<BUILD_INTERFACE:${IMKIT_IMGUI_TARGET}>" "$<INSTALL_INTERFACE:imkit::host_imgui>")
 set_target_properties(imkit PROPERTIES DEBUG_POSTFIX d)
 set_property(TARGET imkit PROPERTY MSVC_DEBUG_INFORMATION_FORMAT Embedded)
 target_compile_options(imkit PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
@@ -178,7 +191,7 @@ if(APPLE)
     target_link_libraries(imkit_preview_metal PUBLIC imkit::cg PRIVATE "-framework Metal" "-framework QuartzCore")
     install(TARGETS imkit_preview_metal EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
-install(TARGETS imkit EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS imkit imkit_motion EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(DIRECTORY include/imkit DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     PATTERN "window_frame_win32.h" EXCLUDE
     PATTERN "window_frame_macos.h" EXCLUDE
@@ -438,6 +451,10 @@ if(IMKIT_BUILD_TESTS)
     add_executable(imkit_motion_test tests/motion.cpp)
     target_link_libraries(imkit_motion_test PRIVATE imkit::imkit)
     add_test(NAME imkit.motion COMMAND imkit_motion_test)
+    # imkit::motion alone must build and link without Dear ImGui.
+    add_executable(imkit_motion_curve_api_compile tests/motion_curve_api_compile.cpp)
+    target_link_libraries(imkit_motion_curve_api_compile PRIVATE imkit::motion)
+    add_test(NAME imkit.motion_curve_api_compile COMMAND imkit_motion_curve_api_compile)
 
     add_executable(imkit_context_smoke tests/context_smoke.cpp)
     target_compile_features(imkit_context_smoke PRIVATE cxx_std_20)

@@ -1,5 +1,6 @@
 #pragma once
 #include <imkit/version.h>
+#include <imkit/easing.h>
 #include <array>
 #include <cstdint>
 #include <optional>
@@ -22,14 +23,6 @@ struct ThemePresetInfo {
 };
 enum class ContrastMode { Standard, HighContrast };
 enum class Density { Compact, Comfortable, Touch };
-// New values are appended, so stored numbers keep their meaning.
-enum class Easing { Linear, EaseOut, EaseInOut, EaseIn, OutBack, InBack, Spring };
-// Shape of the curves that overshoot. `overshoot` is the Back constant (1.70158 is the common one); a spring makes
-// `oscillations` swings that fade with `damping` (larger settles sooner).
-struct EasingShape { float overshoot = 1.70158f; float oscillations = 1.5f; float damping = 6.f; };
-// Maps progress 0..1 (clamped) through the curve. The result is 0 at 0 and 1 at 1; Back and Spring pass beyond 1 or
-// below 0 on the way. Pure arithmetic: it needs no Dear ImGui context.
-float ApplyEasing(Easing easing, float t, const EasingShape& shape = {});
 // Radius presets for SetCornerStyle. Soft matches the default radii.
 enum class CornerStyle { Sharp, Soft, Round, Pill };
 enum class TextRole { Caption, Body, Heading, Title, Mono };

@@ -123,6 +123,8 @@ imkit::DrawLayeredMotion(draw, layers, {&pose, 1}, stageOrigin, stageScale);
 
 `MotionLayer` places a host-owned texture on the designer's stage with a pivot; `LayerPose` moves, scales, rotates and fades it like a CSS transform. `PoseLayerQuad` gives the corners without drawing. With reduced motion, pass the rest pose. `ApplyEasing` exposes the theme curves, including `OutBack`, `InBack` and `Spring`, shaped by `EasingShape`.
 
+The curves and tracks need no Dear ImGui. `imkit/easing.h` (`Easing`, `EasingShape`, `ApplyEasing`) and `imkit/motion_curve.h` (`MotionEase`, `MotionKey`, `EvaluateMotionTrack`, `WrapMotionTime`) build into the `imkit::motion` target, so a renderer or a tool can evaluate the same tracks without linking the UI. `imkit::imkit` links it, and `imkit/motion.h` and `imkit/theme.h` include both headers, so existing code needs no change.
+
 ### Glow frames
 
 `DrawGlowFrame` lights the edge of any rectangle: a window, a panel or the whole viewport. Use it for a state that applies to everything inside, such as remote control, recording or a live output. Keep one `GlowFrameState` per frame and pass the host's monotonic time.

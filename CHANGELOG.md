@@ -11,6 +11,7 @@
 | `imkit/decor.h` | `DrawGlowFrame`, `GlowFrameLevel`, `GlowFrameStyle`, `GlowFrameState`, `GlowMotion`, `GlowPlacement` |
 | `imkit/shell.h` | `ExternalControlIndicator`, `MakeExternalControlStyle`, `ExternalControlView`, `ExternalControlStyle`, `ExternalControlState`, `ExternalControlRequest`, `ExternalControlPhase` |
 | `imkit/theme.h` | `OverlayAnchor` |
+| `imkit/easing.h`, `imkit/motion_curve.h` | The easing curves and keyframe-track evaluation moved here unchanged, in the new `imkit::motion` target that does not link Dear ImGui. `imkit/theme.h` and `imkit/motion.h` include them; `imkit::imkit` links `imkit::motion`. |
 | `imkit/motion.h` | `MotionEase`, `ParseMotionEase`, `MotionEaseName`, `EvaluateMotionEase`, `MotionKey`, `EvaluateMotionTrack`, `WrapMotionTime`, `MotionLayer`, `LayerPose`, `PoseLayerQuad`, `DrawLayeredMotion` |
 | `imkit/theme.h` | `Easing::EaseIn`, `OutBack`, `InBack`, `Spring`, `EasingShape`, `ApplyEasing`, `Stroke::button`, `Stroke::dashedDisabled` |
 | `imkit/components.h` | `ComponentOptions::progress` |
@@ -36,6 +37,7 @@
 | `imkit/decor.h` | `DrawGlowFrame`、`GlowFrameLevel`、`GlowFrameStyle`、`GlowFrameState`、`GlowMotion`、`GlowPlacement` |
 | `imkit/shell.h` | `ExternalControlIndicator`、`MakeExternalControlStyle`、`ExternalControlView`、`ExternalControlStyle`、`ExternalControlState`、`ExternalControlRequest`、`ExternalControlPhase` |
 | `imkit/theme.h` | `OverlayAnchor` |
+| `imkit/easing.h`、`imkit/motion_curve.h` | イージングの曲線と、キーフレームのチャンネルの評価を、そのままこちらへ移した。Dear ImGui をリンクしない新しいターゲット `imkit::motion` に入る。`imkit/theme.h` と `imkit/motion.h` はこの2つを読み、`imkit::imkit` は `imkit::motion` をリンクする。 |
 | `imkit/motion.h` | `MotionEase`、`ParseMotionEase`、`MotionEaseName`、`EvaluateMotionEase`、`MotionKey`、`EvaluateMotionTrack`、`WrapMotionTime`、`MotionLayer`、`LayerPose`、`PoseLayerQuad`、`DrawLayeredMotion` |
 | `imkit/theme.h` | `Easing::EaseIn`、`OutBack`、`InBack`、`Spring`、`EasingShape`、`ApplyEasing`、`Stroke::button`、`Stroke::dashedDisabled` |
 | `imkit/components.h` | `ComponentOptions::progress` |
