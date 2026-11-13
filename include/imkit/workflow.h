@@ -216,6 +216,20 @@ bool Progress(const char* id, const ProgressView& view, ProgressPresentation pre
               DialogState& state, ImVec2 size={}, ComponentOptions options={});
 // Draws status steps without changing the host's current stage.
 void StageProgress(const char* id, const StageProgressView& view, ComponentOptions options={});
+// A card for one piece of work the user is waiting for: what is running and its value on one line, the progress
+// track (segments and lanes included), one line of detail such as the time left, and the stage row. While the status
+// is Running the card's outline breathes and the live dot pulses, unless motion is reduced. Draw-only.
+struct WaitCardView {
+    StableId id=0;
+    const char* title="";   // What is running, for example "Scanning".
+    const char* value="";   // Shown large on the right, for example "40 / 102".
+    ProgressTrackView track{}; // Usually without label and valueText, which the card shows instead.
+    const char* meta="";    // One line under the track, for example "About 50 s left".
+    std::span<const StageProgressItem> stages{};
+    StableId currentStage=0;
+    ProgressStatus status=ProgressStatus::Running;
+};
+void WaitCard(const char* id, const WaitCardView& view, ComponentOptions options={});
 // Returns the requested operation ID, or zero. The host performs the operation.
 StableId TaskProgressCard(const char* id, const TaskProgressCardView& view,
                           TaskProgressCardOptions layout={}, ComponentOptions options={});

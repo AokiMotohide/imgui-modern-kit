@@ -303,7 +303,7 @@ void ProgressTrackImpl(const char* id,float fraction,ProgressStatus status,Compo
     const bool available=std::isfinite(fraction)&&fraction>=0.f;
     const float value=available?std::clamp(fraction,0.f,1.f):0.f;
     const float width=std::max(1.f,ImGui::GetContentRegionAvail().x);
-    const float height=detail::ProgressTrackBarHeight();
+    const float height=thumbView?detail::ProgressTrackBarHeight(*thumbView):detail::ProgressTrackBarHeight();
     const float radius=height*.5f;
     const ImVec2 position=ImGui::GetCursorScreenPos();
     ImGui::PushID(id);
@@ -351,6 +351,17 @@ void ProgressTrackImpl(const char* id,float fraction,ProgressStatus status,Compo
             info.head={left+segment*.5f,position.y+height*.5f};
             info.fraction=-1.f;info.status=status;info.animate=animate;
             thumbView->thumb(info,thumbView->thumbUser);
+        }
+    }
+    if(thumbView&&thumbView->segments>1) {
+        // Equal divisions as thin gaps in the window background, drawn over the fill.
+        ImVec4 gap=ImGui::GetStyleColorVec4(ImGuiCol_ChildBg);
+        if(gap.w<=0.f) gap=ImGui::GetStyleColorVec4(ImGuiCol_WindowBg);
+        gap.w=1.f;
+        const float gapWidth=std::max(2.f,height*.3f);
+        for(int i=1;i<thumbView->segments;++i) {
+            const float x=position.x+width*static_cast<float>(i)/static_cast<float>(thumbView->segments);
+            draw->AddRectFilled({x-gapWidth*.5f,position.y},{x+gapWidth*.5f,position.y+height},ImGui::GetColorU32(gap));
         }
     }
     detail::DrawOutline(draw,position,{position.x+width,position.y+height},radius);
@@ -402,6 +413,40 @@ void ProgressTrack(const char* id,const ProgressTrackView& view,ComponentOptions
         ImGui::SetCursorScreenPos({origin.x,origin.y+view.thumbHeight});
     }
     ProgressTrackImpl("track",view.fraction,view.status,trackOptions,&view);
+    if(!view.lanes.empty()) {
+        // Lanes: one thin bar per entry, side by side, with a short label under each. A finished lane shows a check.
+        const float laneGap=ImGui::GetStyle().ItemSpacing.x*.5f;
+        const float laneBar=detail::ProgressLaneBarHeight(view);
+        const float labelSize=detail::ProgressLaneLabelSize();
+        const float rowHeight=detail::ProgressLaneRowHeight(view);
+        const ImVec2 origin{top.x,ImGui::GetItemRectMax().y+detail::ProgressHeaderGap()};
+        ImGui::SetCursorScreenPos({top.x,ImGui::GetItemRectMax().y});
+        ImGui::Dummy({width,rowHeight});
+        auto* draw=ImGui::GetWindowDrawList();
+        const float count=static_cast<float>(view.lanes.size());
+        const float laneWidth=std::max(1.f,(width-laneGap*(count-1.f))/count);
+        const ImVec4 trackColor=detail::WithAlpha(TextColor(o),.13f);
+        for(std::size_t i=0;i<view.lanes.size();++i) {
+            const auto& lane=view.lanes[i];
+            const float x=origin.x+(laneWidth+laneGap)*static_cast<float>(i);
+            const float r=laneBar*.5f;
+            draw->AddRectFilled({x,origin.y},{x+laneWidth,origin.y+laneBar},ImGui::GetColorU32(trackColor),r);
+            const float f=std::isfinite(lane.fraction)?std::clamp(lane.fraction,0.f,1.f):0.f;
+            if(f>0.f)
+                draw->AddRectFilled({x,origin.y},{x+std::max(laneBar,laneWidth*f),origin.y+laneBar},
+                                    ImGui::GetColorU32(ProgressStatusColor(lane.status,o)),r);
+            const char* label=detail::SafeProgressText(lane.label);
+            const float labelY=origin.y+laneBar+detail::ProgressHeaderGap()*.5f;
+            float textX=x;
+            if(lane.status==ProgressStatus::Succeeded) {
+                detail::DrawCheck(draw,{x+labelSize*.45f,labelY+labelSize*.5f},labelSize*.75f,
+                                  ImGui::GetColorU32(ProgressStatusColor(lane.status,o)),1.5f);
+                textX+=labelSize;
+            }
+            const ImVec4 clip{x,labelY,x+laneWidth,labelY+labelSize*1.2f};
+            draw->AddText(ImGui::GetFont(),labelSize,{textX,labelY},ImGui::GetColorU32(SecondaryColor(o)),label,nullptr,0.f,&clip);
+        }
+    }
     if(*detail::SafeProgressText(view.supplemental)) {
         ImGui::SetCursorScreenPos({top.x,ImGui::GetItemRectMax().y+gap});
         ImGui::PushStyleColor(ImGuiCol_Text,SecondaryColor(o));

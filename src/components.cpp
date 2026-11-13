@@ -219,6 +219,47 @@ void DrawButtonLabel(const char *label, ImVec4 color, ImVec2 shift) {
     ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(), ImGui::GetFontSize(), at, ImGui::GetColorU32(color), visible.data(),
                                         visible.data() + visible.size(), 0.f, &clip);
 }
+// The mark of the one action to press next: a chevron at the trailing edge, and a ring that spreads once when the button
+// starts being drawn with the mark. The start is remembered per item in ImGui storage, so no host state is needed.
+void DrawCallToAction(ImGuiID id, const ButtonPalette &palette, const ComponentOptions &o, ImVec2 shift) {
+    const auto &style = ImGui::GetStyle();
+    auto *draw = ImGui::GetWindowDrawList();
+    const ImVec2 a{ImGui::GetItemRectMin().x + shift.x, ImGui::GetItemRectMin().y + shift.y};
+    const ImVec2 b{ImGui::GetItemRectMax().x + shift.x, ImGui::GetItemRectMax().y + shift.y};
+    const bool rtl = o.locale && o.locale->direction == TextDirection::RTL;
+    const float size = ImGui::GetFontSize() * .32f;
+    const float cx = rtl ? a.x + style.FramePadding.x + size : b.x - style.FramePadding.x - size;
+    const float cy = (a.y + b.y) * .5f;
+    const float dir = rtl ? -1.f : 1.f;
+    const ImVec2 chevron[3] = {{cx - size * .5f * dir, cy - size}, {cx + size * .5f * dir, cy}, {cx - size * .5f * dir, cy + size}};
+    draw->AddPolyline(chevron, 3, ImGui::GetColorU32(palette.text), ImDrawFlags_None, std::max(1.5f, size * .35f));
+    if ((ImGui::GetItemFlags() & ImGuiItemFlags_Disabled) != 0)
+        return;
+    auto *storage = ImGui::GetStateStorage();
+    ImGui::PushID(static_cast<int>(id));
+    const ImGuiID seenKey = ImGui::GetID("imkit-cta-seen");
+    const ImGuiID startKey = ImGui::GetID("imkit-cta-start");
+    ImGui::PopID();
+    const int frame = ImGui::GetFrameCount();
+    const int lastSeen = storage->GetInt(seenKey, -10);
+    if (lastSeen < frame - 1)
+        storage->SetFloat(startKey, static_cast<float>(ImGui::GetTime()));
+    storage->SetInt(seenKey, frame);
+    const bool animate = !(o.theme && (!o.theme->motion.enabled || o.theme->motion.reducedMotion));
+    if (!animate)
+        return;
+    constexpr float kRingSeconds = .9f;
+    const float elapsed = static_cast<float>(ImGui::GetTime()) - storage->GetFloat(startKey, -100.f);
+    if (elapsed < 0.f || elapsed > kRingSeconds)
+        return;
+    const float t = elapsed / kRingSeconds;
+    const float eased = 1.f - (1.f - t) * (1.f - t);
+    const float grow = ImGui::GetFontSize() * .7f * eased;
+    ImVec4 ring = Accent(o.theme);
+    ring.w = .55f * (1.f - t);
+    draw->AddRect({a.x - grow, a.y - grow}, {b.x + grow, b.y + grow}, ImGui::GetColorU32(ring), style.FrameRounding + grow,
+                  ImDrawFlags_None, 2.f);
+}
 } // namespace
 bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, ComponentOptions options) {
     const auto *t = options.theme;
@@ -229,7 +270,19 @@ bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, 
     const auto id = ImGui::GetID(label);
     if (painted)
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0, 0, 0, 0)); // The label is drawn after the frame.
-    bool pressed = ImGui::Button(label, size);
+    // A call to action reserves room for its trailing chevron when the width follows the label.
+    const float ctaSpace = options.callToAction ? ImGui::GetFontSize() * 1.2f : 0.f;
+    ImVec2 buttonSize = size;
+    // With the width following the label, the label starts at the padding and the chevron takes the room after it.
+    const bool ctaAutoWidth = ctaSpace > 0.f && size.x == 0.f;
+    if (ctaAutoWidth)
+        ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, style.ButtonTextAlign.y));
+    if (ctaAutoWidth) {
+        const std::string_view full = label ? label : "";
+        const auto visible = full.substr(0, full.find("##"));
+        buttonSize.x = ImGui::CalcTextSize(visible.data(), visible.data() + visible.size()).x + style.FramePadding.x * 2.f + ctaSpace;
+    }
+    bool pressed = ImGui::Button(label, buttonSize);
     if (painted)
         ImGui::PopStyleColor();
     if(ImGui::IsItemFocused()) ImGui::SetNavCursorVisible(true);
@@ -259,6 +312,10 @@ bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, 
     }
     if (painted)
         DrawButtonLabel(label, palette.text, shift);
+    if (ctaAutoWidth)
+        ImGui::PopStyleVar();
+    if (options.callToAction)
+        DrawCallToAction(id, palette, options, shift);
     if (options.animation && hover > 0) {
         // Hover is a soft tonal wash that fades in; no outline.
         auto color = palette.solid ? ImVec4(1, 1, 1, 1) : Accent(t);

@@ -5,6 +5,7 @@
 #include "progress_internal.h"
 #include "draw_internal.h"
 #include <algorithm>
+#include <cfloat>
 #include <cmath>
 #include <cstdio>
 
@@ -935,6 +936,79 @@ void StageProgress(const char* id,const StageProgressView& view,ComponentOptions
         }
     }
     ImGui::EndGroup();ImGui::PopID();
+}
+namespace {
+bool MotionAllowed(ComponentOptions o) {
+    return !o.theme||(o.theme->motion.enabled&&!o.theme->motion.reducedMotion);
+}
+ImVec4 TextColor(ComponentOptions o) { return o.theme?o.theme->semantic.text:ImGui::GetStyleColorVec4(ImGuiCol_Text); }
+ImVec4 SecondaryColor(ComponentOptions o) {
+    return o.theme?o.theme->semantic.textSecondary:ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);
+}
+// Height of StageProgress when it is not compact: the marker row, spacing, and one line of labels.
+float StageRowHeight() {
+    const auto& style=ImGui::GetStyle();
+    return std::max(12.f,ImGui::GetFrameHeight()*.75f)+style.ItemSpacing.y*2.f+style.CellPadding.y*2.f+
+           ImGui::GetTextLineHeight();
+}
+} // namespace
+void WaitCard(const char* id,const WaitCardView& view,ComponentOptions o) {
+    const auto& style=ImGui::GetStyle();
+    const float width=std::max(1.f,ImGui::GetContentRegionAvail().x);
+    const float innerWidth=std::max(1.f,width-style.WindowPadding.x*2.f-style.ChildBorderSize*2.f);
+    const float valueSize=ImGui::GetFontSize()*1.35f;
+    const float titleHeight=std::max(valueSize,ImGui::GetTextLineHeight());
+    // The card shows the value itself, so the track does not repeat it.
+    ProgressTrackView track=view.track;
+    if(*Safe(view.value)) track.hideValue=true;
+    float contentHeight=titleHeight+style.ItemSpacing.y*2.f+detail::ProgressTrackContentHeight(track,innerWidth,o);
+    if(*Safe(view.meta)) contentHeight+=style.ItemSpacing.y+ImGui::CalcTextSize(view.meta,nullptr,false,innerWidth).y;
+    if(!view.stages.empty()) contentHeight+=style.ItemSpacing.y+StageRowHeight();
+    const float cardHeight=contentHeight+style.WindowPadding.y*2.f+style.ChildBorderSize*2.f;
+    ImGui::PushID(id);if(view.id) Push(view.id);
+    const bool running=view.status==ProgressStatus::Running;
+    const bool animate=MotionAllowed(o);
+    const float time=static_cast<float>(std::fmod(std::max(0.0,ImGui::GetTime()),1000.0));
+    const bool visible=BeginCard("card",{0,cardHeight},o);
+    if(visible) {
+        auto* draw=ImGui::GetWindowDrawList();
+        const ImVec4 status=ProgressStatusColor(view.status,o);
+        // Title row: a live dot that pulses while running, the title, and the value large on the right.
+        const ImVec2 row=ImGui::GetCursorScreenPos();
+        const float dot=std::max(3.f,ImGui::GetFontSize()*.22f);
+        const float pulse=running&&animate?.5f+.5f*std::sin(time*4.5f):0.f;
+        const ImVec2 dotCenter{row.x+dot,row.y+titleHeight*.5f};
+        if(pulse>0.f) draw->AddCircleFilled(dotCenter,dot*(1.f+.9f*pulse),ImGui::GetColorU32(detail::WithAlpha(status,.35f*(1.f-pulse))),20);
+        draw->AddCircleFilled(dotCenter,dot,ImGui::GetColorU32(status),20);
+        const char* value=Safe(view.value);
+        ImFont* valueFont=o.theme&&o.theme->fonts.emphasis?o.theme->fonts.emphasis:ImGui::GetFont();
+        const ImVec2 valueExtent=*value?valueFont->CalcTextSizeA(valueSize,FLT_MAX,0.f,value):ImVec2{0,0};
+        const float titleX=row.x+dot*2.f+style.ItemSpacing.x;
+        const float titleRight=std::max(titleX,row.x+innerWidth-valueExtent.x-style.ItemSpacing.x);
+        const ImVec4 titleClip{titleX,row.y,titleRight,row.y+titleHeight};
+        draw->AddText(ImGui::GetFont(),ImGui::GetFontSize(),{titleX,row.y+(titleHeight-ImGui::GetFontSize())*.5f},
+                      ImGui::GetColorU32(TextColor(o)),Safe(view.title),nullptr,0.f,&titleClip);
+        if(*value) draw->AddText(valueFont,valueSize,{row.x+innerWidth-valueExtent.x,row.y+(titleHeight-valueExtent.y)*.5f},
+                                 ImGui::GetColorU32(TextColor(o)),value);
+        ImGui::Dummy({innerWidth,titleHeight});
+        ProgressTrack("track",track,o);
+        if(*Safe(view.meta)) {
+            ImGui::PushStyleColor(ImGuiCol_Text,SecondaryColor(o));
+            ImGui::TextWrapped("%s",view.meta);
+            ImGui::PopStyleColor();
+        }
+        if(!view.stages.empty()) StageProgress("stages",{view.stages,view.currentStage},o);
+    }
+    EndCard();
+    if(running) {
+        // The outline breathes slowly while the work runs; a still outline under reduced motion.
+        const float breathe=animate?.5f+.5f*std::sin(time*2.4f):.5f;
+        ImVec4 line=ProgressStatusColor(view.status,o);line.w=.25f+.45f*breathe;
+        ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(),ImGui::GetItemRectMax(),ImGui::GetColorU32(line),
+                                            style.ChildRounding,ImDrawFlags_None,1.5f);
+    }
+    if(view.id) Pop();
+    ImGui::PopID();
 }
 StableId TaskProgressCard(const char* id,const TaskProgressCardView& view,TaskProgressCardOptions layout,ComponentOptions o) {
     const auto& style=ImGui::GetStyle();

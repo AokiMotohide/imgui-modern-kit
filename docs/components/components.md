@@ -67,6 +67,8 @@ if (imkit::ActionButton("Apply", imkit::ActionVariant::Primary, {}, {&theme, &an
     SaveSettings();
 ```
 
+Set `ComponentOptions::callToAction` on the one action the user should press next: the button gets a trailing chevron, and a ring spreads once when it starts being drawn with the mark (not under reduced motion). Keep it to one button per region.
+
 While the work a button started is running, set `ComponentOptions::progress` (0..1) and put the stage in the label; the button fills from its leading edge.
 
 Use primary once per decision area. Secondary, ghost and destructive variants express intent without changing button activation semantics.

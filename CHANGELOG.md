@@ -15,6 +15,9 @@
 | `imkit/motion.h` | `MotionEase`, `ParseMotionEase`, `MotionEaseName`, `EvaluateMotionEase`, `MotionKey`, `EvaluateMotionTrack`, `WrapMotionTime`, `MotionLayer`, `LayerPose`, `PoseLayerQuad`, `DrawLayeredMotion` |
 | `imkit/theme.h` | `Easing::EaseIn`, `OutBack`, `InBack`, `Spring`, `EasingShape`, `ApplyEasing`, `Stroke::button`, `Stroke::dashedDisabled` |
 | `imkit/components.h` | `ComponentOptions::progress` |
+| `imkit/components.h` | `ComponentOptions::callToAction` (trailing chevron and a one-time spreading ring on the action to press next) |
+| `imkit/patterns.h` | `ProgressLane`, `ProgressTrackView::segments`, `ProgressTrackView::lanes`, `ProgressTrackView::barHeight`, `ProgressTrackView::hideValue` |
+| `imkit/workflow.h` | `WaitCard`, `WaitCardView` |
 | `imkit/toast.h` | `ToastView::detail`, `ToastView::detailOpen` |
 | `imkit/workflow.h` | `StepBadgeShape`, `StepNavigatorOptions::badge`, `badgeRounding`, `badgeBorder` |
 

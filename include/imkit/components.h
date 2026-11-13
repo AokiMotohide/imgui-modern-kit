@@ -28,6 +28,9 @@ struct ComponentOptions {
     // ActionButton only: 0..1 fills the button from the leading edge to show the work it started (put the stage and
     // percentage in the label). Negative or nonfinite draws no fill.
     float progress = -1.f;
+    // ActionButton only: marks the one action the user should press next. Adds a trailing arrow, and a ring that
+    // spreads once when the button starts being drawn with this mark (not under reduced motion).
+    bool callToAction = false;
 };
 bool ActionButton(const char *label, ActionVariant variant = ActionVariant::Primary,
                   const ImVec2 &size = ImVec2(0, 0), ComponentOptions options = {});

@@ -25,7 +25,7 @@ Every control returns a request. It never changes the value you pass in.
 | | `ToastRegion` | Host-owned queue and time; a stack clamped to the work area that never takes focus. For coloured cards see [Toasts](toasts.md) |
 | | `EmptyState`, `UnavailableState`, `RetryState` | Heading, description, optional icon and action; return a request |
 | | `MultiSelectionBar`, `HelpCallout`, `ValidationSummary` | Show a host count, commands or issues. There is no validation engine |
-| Progress | `Progress`, `ProgressTrack`, `StageProgress`, `TaskProgressCard`, `CircularProgress` | See [Progress](#progress) |
+| Progress | `Progress`, `ProgressTrack`, `StageProgress`, `TaskProgressCard`, `WaitCard`, `CircularProgress` | See [Progress](#progress) |
 | Layout | `BeginCard` / `EndCard` | Always pair them, even when Begin returns false |
 | | `ResponsiveToolbar` | Overflow menu, icon labels, disabled reasons and native keyboard focus |
 | | `ResolveRightSidePanelLayout`, `RightSidePanelHandle` | A collapsible side panel with an edge handle and mouse or keyboard resizing |
@@ -49,6 +49,8 @@ Every control returns a request. It never changes the value you pass in.
 
 ## Progress
 
+`ProgressTrackView::segments` divides the track into equal parts with thin gaps (for example one per projector), `lanes` adds thin side-by-side bars under it for work that runs beside the main value (a finished lane shows a check), `barHeight` overrides the theme height, and `hideValue` hides the value above the track when the host shows it elsewhere (`WaitCard` does this).
+
 `ProgressTrackView` is the shared source for the stage label, status text, percentage (or your `valueText`), the rounded bar and supplemental text. `Progress` and `TaskProgressCard` reuse it, so no card or toast builds a second percentage or status line.
 
 | Item | Behaviour |
@@ -57,6 +59,7 @@ Every control returns a request. It never changes the value you pass in.
 | Indeterminate | A negative or non-finite fraction. Only a `Running` track moves a short segment, and `Theme.motion.enabled`, `reducedMotion` and your `AnimationState` control the motion |
 | `Progress` | Inline, child overlay or modal, with a cancel request |
 | `StageProgress` | Displays the stages and the current ID you pass. When narrow, it shows the current stage and `n/total` |
+| `WaitCard` | One piece of work the user waits for: a live dot and title with the value large on the right, the track, one line of detail (for example the time left), and the stage row. While Running the outline breathes and the dot pulses; both stop under reduced motion. Draw-only |
 | `TaskProgressCard` | Regular or compact summary (`TaskProgressCardOptions::compact`). Returns the clicked `Command.id`, and 0 means no request. Strings and the operation span are borrowed for the frame |
 | `CircularProgress` | Borrowed fraction, value and label. A negative or non-finite fraction means unavailable. It has no threshold and owns no state |
 

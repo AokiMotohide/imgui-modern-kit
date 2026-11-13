@@ -1,6 +1,8 @@
 #include "workflow_pages.h"
 #include "gallery.h"
 #include <algorithm>
+#include <array>
+#include <cstdio>
 namespace imkit::gallery {
 void WorkflowPages::Show(int page,GalleryState& host) {
     auto& theme=host.theme;semantics.Begin(ImGui::GetFrameCount());
@@ -143,6 +145,27 @@ void WorkflowPages::Show(int page,GalleryState& host) {
                     taskFraction=taskFraction>=1.f?0.f:std::min(1.f,taskFraction+.18f);++taskUpdates;
                 }
                 Record(host,"progress-advance");
+                {
+                    // 待ちカード: 主のバーは件数で進み、PJごとの区切りと、並行して進む解析の細いバーを持つ。
+                    const int total=102,doneCount=static_cast<int>(taskFraction*total);
+                    const std::array<ProgressLane,3> lanes{{
+                        {"PJ 0",doneCount>=34?1.f:0.f,doneCount>=34?ProgressStatus::Succeeded:ProgressStatus::Queued},
+                        {"PJ 1",doneCount>=68?1.f:(doneCount>34?.4f:0.f),doneCount>=68?ProgressStatus::Succeeded:(doneCount>34?ProgressStatus::Running:ProgressStatus::Queued)},
+                        {"PJ 2",done?1.f:0.f,done?ProgressStatus::Succeeded:ProgressStatus::Queued}}};
+                    const std::array<StageProgressItem,3> waitStages{{
+                        {0x5401,japanese?"撮影":"Capture",done?ProgressStatus::Succeeded:ProgressStatus::Running},
+                        {0x5402,japanese?"解析":"Analyse",done?ProgressStatus::Running:ProgressStatus::Queued},
+                        {0x5403,japanese?"保存":"Save",ProgressStatus::Queued}}};
+                    char value[32];std::snprintf(value,sizeof(value),"%d / %d",doneCount,total);
+                    char meta[64];std::snprintf(meta,sizeof(meta),japanese?"残り 約%d秒":"About %d s left",(total-doneCount)/2);
+                    WaitCardView wait;wait.id=0x5400;
+                    wait.title=japanese?"スキャン中":"Scanning";wait.value=value;wait.meta=meta;
+                    wait.track.fraction=static_cast<float>(doneCount)/total;wait.track.segments=3;wait.track.lanes=lanes;
+                    wait.stages=waitStages;wait.status=done?ProgressStatus::Succeeded:ProgressStatus::Running;
+                    WaitCard("scan-wait",wait,o);
+                    ComponentOptions call=o;call.callToAction=true;
+                    ActionButton(japanese?"次の工程へ":"Next step",ActionVariant::Primary,{},call);
+                }
                 ImGui::TextDisabled(japanese?(done?"タスク 1/2: 完了":"タスク 1/2: 処理中"):(done?"Task 1/2: succeeded":"Task 1/2: running"));
                 const float narrowWidth=std::min(300.f,std::max(1.f,ImGui::GetContentRegionAvail().x));
                 ImGui::BeginChild("narrow-progress-demo",{narrowWidth,214},ImGuiChildFlags_Borders);

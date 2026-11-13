@@ -29,6 +29,7 @@ bool (*volatile progress)(const char*,const imkit::ProgressView&,imkit::Progress
 void (*volatile progressTrackView)(const char*,const imkit::ProgressTrackView&,imkit::ComponentOptions)=&imkit::ProgressTrack;
 void (*volatile progressTrackValue)(const char*,float,imkit::ProgressStatus,imkit::ComponentOptions)=&imkit::ProgressTrack;
 void (*volatile stageProgress)(const char*,const imkit::StageProgressView&,imkit::ComponentOptions)=&imkit::StageProgress;
+void (*volatile waitCard)(const char*,const imkit::WaitCardView&,imkit::ComponentOptions)=&imkit::WaitCard;
 imkit::StableId (*volatile taskProgressCard)(const char*,const imkit::TaskProgressCardView&,imkit::TaskProgressCardOptions,imkit::ComponentOptions)=&imkit::TaskProgressCard;
 void (*volatile circularProgress)(const char*,const imkit::CircularProgressView&,imkit::CircularProgressOptions,imkit::ComponentOptions)=&imkit::CircularProgress;
 auto volatile card=&imkit::BeginCard;auto volatile endCard=&imkit::EndCard;
@@ -53,6 +54,10 @@ auto volatile externalControl=&imkit::ExternalControlIndicator;
 }
 int main() {
     imkit::StepNavigatorOptions stepLayout;stepLayout.badge=imkit::StepBadgeShape::RoundedSquare;stepLayout.badgeRounding=.3f;stepLayout.badgeBorder=2;
+    imkit::ProgressLane lanes[2]{{"PJ 0",1.f,imkit::ProgressStatus::Succeeded},{"PJ 1",.4f,imkit::ProgressStatus::Running}};
+    imkit::WaitCardView wait;wait.track.segments=3;wait.track.lanes=lanes;wait.track.barHeight=10.f;
+    imkit::ComponentOptions call;call.callToAction=true;
+    if(!call.callToAction||wait.track.lanes.size()!=2||!waitCard) return 1;
     imkit::StableId ids[1];imkit::RequestBuffer requests{ids};
     imkit::editor::TileEvent events[1];imkit::editor::TileEventBuffer out{events};
     return !(grouped&&workspaceTabs&&choiceGroup&&hierarchyGroup&&hierarchyRow&&inspectorCard&&endInspectorCard&&collapsibleInspectorCard&&endCollapsibleInspectorCard&&settingToggleRow&&iconToolbar&&labeledIconToolbar&&iconAction&&step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&progressTrackView&&progressTrackValue&&stageProgress&&taskProgressCard&&card&&endCard&&section&&multi&&help&&validation&&toolbar&&valid&&placement&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&appBar&&workspaceHeader&&inspectorSection&&advancedSection&&bottomActionBar&&beginDiagnostics&&endDiagnostics&&themePicker&&resolveRightPanel&&rightPanelHandle&&externalControlStyle&&externalControl&&requests.Push(1)&&out.Push({}));
