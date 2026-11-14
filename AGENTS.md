@@ -1,63 +1,45 @@
 # AGENTS.md
 
-このファイルは必須規則だけを定める。製品契約は `docs/architecture.md`、検証範囲は `docs/validation.md` を正本とする。
+このリポジトリ固有の規則だけを書く。進め方、確認の上限、止める条件、Git、報告は、ユーザー共通の指示ファイルに従う。製品契約は `docs/architecture.md`、検証範囲は `docs/validation.md` を正本とする。
 
 ## 基本方針
 
-- `imgui-modern-kit` は C++20 / Dear ImGui の静的UIライブラリである。公開ヘッダーは `include/imkit/`、実装は `src/`、テストは `tests/`、開発用Galleryは `examples/gallery/` に置く。
-- 依頼範囲だけを変更する。調査・監査・計画・レビュー・説明では実装しない。公開API、ABI、依存、対応Dear ImGui版、CMake、install、packageの大きな変更は事前確認する。
-- 開始時とコミット前にブランチ、対象差分、作業ツリーを確認し、ユーザーや他セッションの変更を編集・削除・ステージしない。
-
-## 調査と効率
-
-- 既知の対象ファイル、シンボル、直接依存から始め、失敗または影響根拠がある場合だけ範囲を広げる。全体列挙、全文再読、広い履歴調査を定型化しない。
-- 横断的な所在、呼出し経路、所有権、影響範囲は `.codegraph/` の `codegraph explore` を先に使う。既知の局所修正、CMake、文書、設定、単純検索は対象を絞った `rg` または直接確認でよい。
-- CodeGraph、`rg`、全文読込で同じ確認を重複しない。`codegraph status` / `sync` は索引の古さが調査結果へ影響する場合だけ実行する。ローカルDBはコミットしない。
-- 検索とコマンド出力はディレクトリ、拡張子、シンボル、件数、行数を絞る。同じ失敗コマンドは条件や仮説を変えずに再実行しない。
-- ユーザーが明示しない限りサブエージェントを起動しない。並列処理は独立し、結果が重複しない場合だけ使う。
+- `imgui-modern-kit` は C++20 / Dear ImGui の静的 UI ライブラリ。公開ヘッダーは `include/imkit/`、実装は `src/`、テストは `tests/`、開発用 Gallery は `examples/gallery/` に置く。
+- 公開API、ABI、依存、対応する Dear ImGui の版、CMake、install、package の大きな変更は、実装の前に確認する。
+- PR、Issue、Release の作成は、依頼されたときだけ行う。
 
 ## 実装境界
 
-- 複数の制作ツールで再利用できるUIだけを本リポジトリへ置く。利用製品固有の型、用語、renderer adapter、保存処理はホスト側へ残す。
-- ライブラリはDear ImGuiのContext、backend、renderer、font、texture、永続化、workerを所有・初期化しない。Themeと状態の寿命もホストが管理する。
-- 公開overload、戻り値、default引数、ID、focus、callback、disabled、Begin/End、clipping、入力編集を維持する。入力widgetを独自挙動で置き換えない。
-- 公開APIは `include/imkit/`、実装は `src/` に分離する。非所有参照を所有扱いせず、scopeは対象Contextより先に破棄する。
-- 新しい部品は意味token、Dear ImGui公開widget、公開DrawListで構成し、グローバルregistryやホスト固有サービスを導入しない。
-- 公開API変更時だけ、API compile fixture、consumer test、API inventory、英日公開文書への影響を確認する。
+- 複数の制作ツールで再利用できる UI だけを本リポジトリへ置く。利用製品に固有の型、用語、renderer adapter、保存処理はホスト側へ残す。
+- ライブラリは Dear ImGui の Context、backend、renderer、font、texture、永続化、worker を所有・初期化しない。Theme と状態の寿命もホストが管理する。
+- 公開 overload、戻り値、default 引数、ID、focus、callback、disabled、Begin/End、clipping、入力編集を維持する。入力 widget を独自の挙動で置き換えない。
+- 非所有の参照を所有扱いしない。scope は対象 Context より先に破棄する。
+- 新しい部品は、意味 token、Dear ImGui の公開 widget、公開 DrawList で構成する。グローバル registry やホスト固有のサービスを導入しない。
+- 公開API を変えたときだけ、API compile fixture、consumer test、API inventory、英日の公開文書を合わせて更新する。
 
-## ビルドと検証
+## ビルド
 
-正規のビルド親は `C:\aokiDev\imgui-modern-kit\build` 一つに固定する。`tools/Invoke-SharedBuild.ps1` は絶対パスの `C:\aokiDev\tools\build-coordination\Invoke-SharedBuild.ps1` を呼び、同じ場所の `projects.json` に登録した親をキーとする排他ロックを使う。構成・ビルド・清掃・ソース統合は主担当が同じロックで直列化し、競合時は待機する。親の中でも日時・セッション・検証別の `build-*` や `target-*` を新設しない。worktreeでは静的確認だけを行い、変更を正規チェックアウトへ統合してから共有出力で検証する。
+- ビルド出力は `C:\aokiDev\imgui-modern-kit\build` の1か所（`build/windows-debug`、Arm64 は `build/windows-arm64`）。
+- 入口は `tools/Invoke-SharedBuild.ps1`（共有ラッパーを呼ぶ）。
 
-通常は主チェックアウト C:\aokiDev\imgui-modern-kit の構成済み build/windows-debug/ を使う。worktree内から直接CMakeを実行するとsourceDir配下に別build treeができるため、共有ランチャーで主チェックアウトのbuildを使う。
+```powershell
+& 'C:\aokiDev\imgui-modern-kit\tools\Invoke-SharedBuild.ps1' -Target '<imkit|対象テスト|imkit_gallery>'
+& 'C:\aokiDev\imgui-modern-kit\tools\Invoke-SharedBuild.ps1' -Tests -TestRegex '<対象テスト>'
+```
 
-    & 'C:\aokiDev\imgui-modern-kit\tools\Invoke-SharedBuild.ps1' -Target '<imkit|対象テスト|imkit_gallery>'
-    & 'C:\aokiDev\imgui-modern-kit\tools\Invoke-SharedBuild.ps1' -Tests -TestRegex '<対象テスト>'
+- 構成が要るときは `-Configure`、Arm64 は `-Preset windows-arm64` を付ける。
+- 変更した最小 target だけをビルドする。`ALL_BUILD`、`clean`、`Rebuild`、全テストは使わない。Release、install、package、SDK consumer は、変更範囲か依頼が必要とするときだけ実行する。
 
-構成が必要な場合はConfigureを指定する。Windows Arm64は同じ主チェックアウトの標準preset windows-arm64を-Preset windows-arm64で指定する。build出力は登録済みのbuild/windows-debugまたはbuild/windows-arm64に限り、セッション名・検証名のbuild treeを作らない。
+## 文書と資産
 
-- 変更した最小targetと直接回帰だけを1回確認する。成功後のno-op再ビルド、同一テスト、全テスト、`ALL_BUILD`、`clean`、`Rebuild` は追加しない。
-- 再構成は新規build、CMake・依存変更、構成不整合時だけ行う。Release、install、package、SDK consumerは変更範囲または依頼が必要とする場合だけ実行する。
-- 規約、文書、コメントだけの変更ではビルドしない。新規テストやcaptureは、変更した契約または再発リスクを直接検出する場合だけ追加する。
-- ビルド前の競合確認は1回とし、同じbuildまたは出力へ書く処理だけを競合とする。長時間処理は固定sleepではなくプロセスと出力更新で追跡する。
-- compile/link、公開IO操作、GPU capture、native OS/IME、他アプリ統合、配布検証を区別し、未実施項目を合格扱いしない。
-
-## 文書・資産・Git
-
-- 公開API、導入方法、対応環境、所有権、配布契約、ユーザー可視動作を変えた場合だけ関連文書を更新し、英日版の意味を一致させる。英語ファイルへの日本語混入や、日本語ファイルへの未翻訳・丸投げ（詳細は英語版を見よ等）を行わず、完全に対称な構成とする。
-- 文字だらけのAI特有の防衛的長文（責任逃れ的表現の反復・テキストの壁）を排し、表、箇条書き、見出し、コードブロックを活用して構造化された、読みやすいプロのライブラリドキュメントとして記述する。変更後は python tools/check_docs.py および website の検証を通過させる。
-- `docs/images/` はnative Galleryの実captureだけを使う。再生成可能なbuild、`out/`、ログ、capture一式は依頼なしにコミットしない。
-- 第三者のicon、font、画像、コードを変更した場合はprovenance、license、`THIRD_PARTY_NOTICES.md`、配布対象を確認する。
-- 完了後は対象ファイルだけをステージし、`git diff --cached --check` 後、日本語でコミットする。ユーザーがコミット不要と指定した場合は除く。push、PR、Issue、Releaseは明示依頼時だけ行う。
-- ユーザーが現在の依頼で明示しない限り、新規ブランチを作成しない。release、検証、作業分離を理由にした自動作成も行わない。
+- 公開API、導入方法、対応環境、所有権、配布契約、ユーザーに見える動作を変えたときだけ、関連文書を更新する。英語版と日本語版は同じ構成・同じ意味にし、片方を「詳細は他方を参照」で済ませない。
+- 文書は短く構造化する（表、箇条書き、見出し、コードブロック）。同じ但し書きを繰り返さない。
+- 文書を変えたときだけ、`python tools/check_docs.py` を1回実行する。
+- `docs/images/` は native Gallery の実 capture だけを使う。build、`out/`、ログ、capture 一式はコミットしない。
+- 第三者の icon、font、画像、コードを変えたら、provenance、license、`THIRD_PARTY_NOTICES.md`、配布対象を更新する。
 
 ## 機密保持
 
 - 回答、文書、コミット、Issue、PR、Release、ログ、生成物に、ユーザーが現在の依頼で対象情報と開示先を個別指定していない他リポジトリ情報を含めない。
 - 禁止対象は他リポジトリの名称、パス、存在、進捗、計画、ブランチ、コミット、差分、設計、未公開機能、障害、検証・配布状況と、それらを推測できる表現を含む。過去の許可、包括依頼、閲覧権限は開示許可ではない。
 - 他リポジトリを扱うのは、現在の依頼で対象と目的が明示された場合だけとし、情報を本リポジトリや外部公開物へ転記するには開示先の明示も必要とする。
-
-## 報告
-
-- 進捗は開始、重要な判断変更、長時間処理、阻害要因だけを簡潔に伝え、長いログ、全差分、同じ状態の反復を避ける。
-- 完了報告は結果、変更ファイル、実施した検証、重要な未実施項目、コミットの有無に限定する。
