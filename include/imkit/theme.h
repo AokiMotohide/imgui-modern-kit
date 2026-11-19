@@ -121,6 +121,18 @@ struct NodeTokens {
     std::optional<float> headerTint, rounding, headerHeight, pinRadius, linkWidth, gridSize, pinSeat, flowLinkWidth;
     bool hollowPins = false, highlightLinks = false;
 };
+// The large regions of an application window. Neighbouring regions differ in lightness, so the toolbar band, the side
+// panels, the work area and a strip of video previews read as separate places in every theme.
+enum class SurfaceZone : std::uint8_t { Chrome, Panel, Workspace, Monitor };
+// Derived from `Theme::semantic` by ResolveTheme. To override a value, assign it after ResolveTheme.
+struct SurfaceZoneColors {
+    ImVec4 chrome{};    // Menu bar and step band: the lightest region, leaning to the accent.
+    ImVec4 panel{};     // Lists and inspectors: the surface.
+    ImVec4 workspace{}; // Around the main view: a step darker than the canvas.
+    ImVec4 monitor{};   // Video previews: a desaturated, deep tone of the theme, so pictures are judged on a quiet ground.
+    ImVec4 onMonitor{}; // Text drawn on the monitor zone.
+    ImVec4 divider{};   // The line between two zones.
+};
 struct Theme {
     ColorScheme scheme = ColorScheme::Light;
     ContrastMode contrast = ContrastMode::Standard;
@@ -140,6 +152,7 @@ struct Theme {
     EditorPalette editor{};
     NodeTokens node{};
     const Skin *skin = nullptr; // Non-owning, like fonts; see skin.h. Not part of the theme text.
+    SurfaceZoneColors zones{};  // Derived; see SurfaceZoneColors.
 };
 Theme MakePrecisionTheme(ColorScheme scheme = ColorScheme::Light);
 std::span<const ThemePresetInfo> ThemePresets() noexcept;
@@ -185,6 +198,10 @@ struct ThemeParseResult {
 ThemeParseResult ParseTheme(std::string_view text, Theme& theme);
 // Call outside Begin/End windows, before NewFrame. Does not load or own fonts.
 void ApplyTheme(const Theme &theme, float scale = ThemeScaleDefault);
+ImVec4 SurfaceZoneColor(const Theme& theme, SurfaceZone zone);
+// Pushes the zone colour as the window background for the next Begin; call PopSurfaceZone right after that Begin.
+void PushSurfaceZone(const Theme& theme, SurfaceZone zone);
+void PopSurfaceZone();
 // Use within a frame, before Begin or around a group of widgets. Restore on the
 // same live context; scopes must be destroyed before the host destroys it.
 class ThemeScope {

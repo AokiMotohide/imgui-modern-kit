@@ -8,6 +8,10 @@
 #include <cfloat>
 #include <cmath>
 #include <cstdio>
+#include <cstring>
+#include <string>
+#include <string_view>
+#include <vector>
 
 namespace imkit {
 namespace {
@@ -169,6 +173,252 @@ StableId GroupedStepNavigator(const char* id, std::span<const StepGroup> groups,
     ImGui::SetCursorPos({x,y+2*(h+ImGui::GetStyle().ItemSpacing.y)});
     ImGui::Dummy({width,0});
     ImGui::PopID();return result;
+}
+namespace {
+ImVec4 Pick(ImVec4 value,ImVec4 fallback) { return value.w>0?value:fallback; }
+ImVec4 Solid(ImVec4 c) { c.w=1.f; return c; }
+ImVec4 InkOn(ImVec4 background) {
+    return ContrastRatio({1,1,1,1},background)>=ContrastRatio({0,0,0,1},background)?ImVec4{1,1,1,1}:ImVec4{.08f,.06f,.05f,1};
+}
+// The weakest mix of `color` toward `text` that reads on `background`.
+ImVec4 ReadableOn(ImVec4 color,ImVec4 background,ImVec4 text) {
+    for(float k=0.f;k<1.f;k+=.1f) {
+        const ImVec4 c=Mix(color,text,k);
+        if(ContrastRatio(c,background)>=4.5f) return c;
+    }
+    return text;
+}
+struct PlateColors { ImVec4 fill,outline,ink,grid,handle,sprout,sproutOutline,redo,blocked,pending; };
+PlateColors ResolvePlate(const PlateMarkStyle& s,ComponentOptions o) {
+    const Theme* t=o.theme;
+    const ImVec4 accent=t?t->semantic.accent:ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
+    const ImVec4 muted=t?t->semantic.textSecondary:ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);
+    const ImVec4 success=t?t->semantic.success:ImVec4{.2f,.62f,.32f,1};
+    const ImVec4 warning=t?t->semantic.warning:ImVec4{.95f,.64f,.23f,1};
+    const ImVec4 error=t?t->semantic.error:ImVec4{.9f,.34f,.3f,1};
+    PlateColors c{};
+    c.fill=Pick(s.fill,accent);
+    c.ink=Pick(s.ink,InkOn(c.fill));
+    c.outline=Pick(s.outline,Mix(Solid(c.fill),{0,0,0,1},.55f));
+    c.grid=Pick(s.grid,detail::WithAlpha(c.ink,.28f));
+    c.handle=Pick(s.handle,Solid(c.ink));
+    c.sprout=Pick(s.sprout,success);
+    c.sproutOutline=Pick(s.sproutOutline,Mix(Solid(c.sprout),{0,0,0,1},.4f));
+    c.redo=Pick(s.redo,warning);
+    c.blocked=Pick(s.blocked,error);
+    c.pending=Pick(s.pending,muted);
+    return c;
+}
+std::string FitText(ImFont* font,float size,std::string_view text,float room) {
+    if(room<=0.f) return {};
+    if(font->CalcTextSizeA(size,FLT_MAX,0.f,text.data(),text.data()+text.size()).x<=room) return std::string(text);
+    constexpr std::string_view dots="...";
+    room-=font->CalcTextSizeA(size,FLT_MAX,0.f,dots.data(),dots.data()+dots.size()).x;
+    while(!text.empty() && font->CalcTextSizeA(size,FLT_MAX,0.f,text.data(),text.data()+text.size()).x>room) {
+        auto count=text.size()-1;
+        while(count && (static_cast<unsigned char>(text[count])&0xc0)==0x80) --count;
+        text=text.substr(0,count);
+    }
+    return text.empty()?std::string():std::string(text)+std::string(dots);
+}
+StepMarkState StageMark(ProgressStatus status) {
+    switch(status) {
+    case ProgressStatus::Succeeded:return StepMarkState::Completed;
+    case ProgressStatus::Running:case ProgressStatus::Paused:return StepMarkState::Current;
+    case ProgressStatus::Failed:return StepMarkState::Redo;
+    case ProgressStatus::Cancelled:return StepMarkState::Skipped;
+    default:return StepMarkState::Pending;
+    }
+}
+} // namespace
+void DrawPlateMark(ImDrawList* draw,ImVec2 center,float size,const char* number,StepMarkState state,
+                   bool blocked,const PlateMarkStyle& style,ComponentOptions o) {
+    if(!draw || !(size>0.f)) return;
+    const PlateColors c=ResolvePlate(style,o);
+    const auto U=[](ImVec4 v) { return ImGui::GetColorU32(v); };
+    const float half=size*.5f;
+    const ImVec2 lo{center.x-half,center.y-half},hi{center.x+half,center.y+half};
+    const float rounding=size*std::clamp(style.rounding,0.f,.5f);
+    const float line=std::max(1.f,size*.07f);
+    // Ornaments sit behind the plate; the plate hides their base.
+    if(state==StepMarkState::Completed) {
+        const ImVec2 p0{center.x-size*.09f,lo.y+line},p1{center.x+size*.09f,lo.y+line},tip{center.x,lo.y-size*.25f};
+        draw->AddTriangleFilled(p0,tip,p1,U(c.sprout));
+        draw->AddTriangle(p0,tip,p1,U(c.sproutOutline),std::max(1.f,line*.5f));
+    } else if(state==StepMarkState::Redo) {
+        const ImVec2 p0{center.x-size*.06f,lo.y+line},p1{center.x+size*.08f,lo.y+line},tip{center.x+size*.26f,lo.y-size*.13f};
+        draw->AddTriangleFilled(p0,tip,p1,U(c.redo));
+        draw->AddTriangle(p0,tip,p1,U(c.outline),std::max(1.f,line*.45f));
+    }
+    ImVec4 ink=c.ink;
+    if(state==StepMarkState::Pending) {
+        detail::DrawDashedRect(draw,lo,hi,rounding,U(c.pending),std::max(1.f,line*.8f),std::max(2.f,size*.12f));
+        ink=c.pending;
+    } else {
+        const float alpha=state==StepMarkState::Skipped?.4f:1.f;
+        draw->AddRectFilled(lo,hi,U(detail::WithAlpha(c.fill,c.fill.w*alpha)),rounding);
+        const int lines=std::clamp(style.gridLines,0,6);
+        const ImU32 grid=U(detail::WithAlpha(c.grid,c.grid.w*alpha));
+        for(int i=1;i<=lines;++i) {
+            const float f=static_cast<float>(i)/static_cast<float>(lines+1);
+            draw->AddLine({lo.x+size*f,lo.y+line},{lo.x+size*f,hi.y-line},grid,1.f);
+            draw->AddLine({lo.x+line,lo.y+size*f},{hi.x-line,lo.y+size*f},grid,1.f);
+        }
+        draw->AddRect(lo,hi,U(detail::WithAlpha(c.outline,c.outline.w*alpha)),rounding,ImDrawFlags_None,line);
+        ink=detail::WithAlpha(ink,ink.w*alpha);
+    }
+    if(number && *number) {
+        ImFont* font=o.theme&&o.theme->fonts.emphasis?o.theme->fonts.emphasis:ImGui::GetFont();
+        const float fontSize=size*(std::strlen(number)>=2?.46f:.56f);
+        const ImVec2 extent=font->CalcTextSizeA(fontSize,FLT_MAX,0.f,number);
+        const ImVec2 at{center.x-extent.x*.5f,center.y-extent.y*.5f};
+        if(state!=StepMarkState::Pending) // A thin outline keeps the number readable over the grid.
+            for(const ImVec2 d:{ImVec2{-1,0},ImVec2{1,0},ImVec2{0,-1},ImVec2{0,1}})
+                draw->AddText(font,fontSize,{at.x+d.x,at.y+d.y},U(detail::WithAlpha(c.outline,.55f*ink.w)),number);
+        draw->AddText(font,fontSize,at,U(ink),number);
+    }
+    if(state==StepMarkState::Current) {
+        const float handle=size*.2f,inset=size*.02f;
+        for(const ImVec2 corner:{ImVec2{lo.x+inset,lo.y+inset},ImVec2{hi.x-inset,lo.y+inset},
+                                 ImVec2{hi.x-inset,hi.y-inset},ImVec2{lo.x+inset,hi.y-inset}}) {
+            const ImVec2 a{corner.x-handle*.5f,corner.y-handle*.5f},b{corner.x+handle*.5f,corner.y+handle*.5f};
+            draw->AddRectFilled(a,b,U(c.handle),handle*.25f);
+            draw->AddRect(a,b,U(c.outline),handle*.25f,ImDrawFlags_None,std::max(1.f,line*.6f));
+        }
+    }
+    if(blocked) {
+        const ImVec2 dot{hi.x,lo.y};
+        draw->AddCircleFilled(dot,size*.12f,U(c.blocked),16);
+        draw->AddCircle(dot,size*.12f,U(c.outline),16,std::max(1.f,line*.5f));
+    }
+}
+StableId StepBand(const char* id,std::span<const StepBandGroup> groups,std::span<const StepBandItem> items,
+                  StableId current,StepBandOptions layout,ComponentOptions o) {
+    if(items.empty()) return 0;
+    ImGui::PushID(id);
+    const Theme* t=o.theme;
+    const ImVec4 text=t?t->semantic.text:ImGui::GetStyleColorVec4(ImGuiCol_Text);
+    const ImVec4 muted=t?t->semantic.textSecondary:ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);
+    const ImVec4 accent=t?t->semantic.accent:ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
+    const ImVec4 background=Solid(layout.background.w>0?layout.background:
+        t?SurfaceZoneColor(*t,SurfaceZone::Chrome):ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
+    const bool dark=ContrastRatio({1,1,1,1},background)>ContrastRatio({0,0,0,1},background);
+    ImFont* font=ImGui::GetFont();
+    ImFont* strong=t&&t->fonts.emphasis?t->fonts.emphasis:font;
+    const float fontSize=ImGui::GetFontSize();
+    const float height=layout.height>0.f?layout.height:ImGui::GetFrameHeight()*1.5f;
+    const float width=std::max(1.f,ImGui::GetContentRegionAvail().x);
+    const ImVec2 origin=ImGui::GetCursorScreenPos();
+    auto* draw=ImGui::GetWindowDrawList();
+    const auto U=[](ImVec4 v) { return ImGui::GetColorU32(v); };
+    draw->AddRectFilled(origin,{origin.x+width,origin.y+height},U(background));
+    const float labelSize=fontSize*std::max(.5f,layout.labelScale);
+    const float groupSize=fontSize*.9f;
+    const float inset=std::max(2.f,height*.08f);
+    const float trayPad=height*.14f,trayGap=height*.2f,link=height*.3f;
+    const float plate=height*.5f;
+    const float markGap=height*.14f;
+    // Runs of consecutive items that share a group; an item outside every group forms its own tray.
+    struct Run { std::size_t first=0,end=0; int group=-1; };
+    std::vector<Run> runs;
+    const auto groupOf=[&](std::size_t i) {
+        for(std::size_t g=0;g<groups.size();++g)
+            if(i>=groups[g].first && i<groups[g].first+groups[g].count) return static_cast<int>(g);
+        return -1;
+    };
+    for(std::size_t i=0;i<items.size();++i) {
+        const int g=groupOf(i);
+        if(runs.empty() || g<0 || runs.back().group!=g) runs.push_back({i,i+1,g});
+        else runs.back().end=i+1;
+    }
+    const auto groupLabelWidth=[&](const Run& r) {
+        if(r.group<0 || !*Safe(groups[static_cast<std::size_t>(r.group)].label)) return 0.f;
+        return strong->CalcTextSizeA(groupSize,FLT_MAX,0.f,groups[static_cast<std::size_t>(r.group)].label).x+trayPad*1.4f;
+    };
+    float fixed=trayGap*static_cast<float>(runs.size()-1);
+    float labels=0.f;
+    for(const auto& r:runs) {
+        fixed+=trayPad*2.f+link*static_cast<float>(r.end-r.first-1);
+        labels+=groupLabelWidth(r);
+    }
+    const float count=static_cast<float>(items.size());
+    const bool showGroupLabels=(width-fixed-labels)/count>=plate+markGap+labelSize*2.5f;
+    const float cell=std::max(plate+markGap,(width-fixed-(showGroupLabels?labels:0.f))/count);
+    const bool showLabels=cell>=plate+markGap*2.f+labelSize*1.2f;
+    const PlateMarkStyle marks=layout.marks?*layout.marks:PlateMarkStyle{};
+    const ImVec4 linkDone=Pick(marks.fill,accent);
+    StableId result=0;
+    float x=origin.x;
+    for(const auto& r:runs) {
+        const ImVec4 tint=Solid(r.group>=0 && groups[static_cast<std::size_t>(r.group)].tint.w>0?
+                                groups[static_cast<std::size_t>(r.group)].tint:accent);
+        const float labelWidth=showGroupLabels?groupLabelWidth(r):0.f;
+        const float trayWidth=trayPad*2.f+labelWidth+cell*static_cast<float>(r.end-r.first)+link*static_cast<float>(r.end-r.first-1);
+        const ImVec2 a{x,origin.y+inset},b{x+trayWidth,origin.y+height-inset};
+        const ImVec4 trayFill=Mix(background,tint,dark?.2f:.3f);
+        const float trayRounding=height*.26f;
+        draw->AddRectFilled(a,b,U(trayFill),trayRounding);
+        draw->AddRect(a,b,U(Mix(background,tint,dark?.55f:.7f)),trayRounding,ImDrawFlags_None,std::max(1.f,height*.035f));
+        float cx=x+trayPad;
+        const float centerY=(a.y+b.y)*.5f;
+        if(labelWidth>0.f) {
+            const char* label=groups[static_cast<std::size_t>(r.group)].label;
+            const ImVec4 color=ReadableOn(dark?tint:Mix(tint,text,.35f),trayFill,text);
+            draw->AddText(strong,groupSize,{cx+trayPad*.1f,centerY-groupSize*.5f},U(color),label);
+            cx+=labelWidth;
+        }
+        for(std::size_t i=r.first;i<r.end;++i) {
+            const auto& item=items[i];
+            const bool isCurrent=item.id==current;
+            const ImVec2 ca{cx,a.y+inset*.5f},cb{cx+cell,b.y-inset*.5f};
+            ImGui::SetCursorScreenPos(ca);Push(item.id);
+            ImGui::BeginDisabled(item.disabled || !item.id);
+            bool pressed=ImGui::InvisibleButton("##step",{std::max(1.f,cb.x-ca.x),std::max(1.f,cb.y-ca.y)});
+            const bool hovered=ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled);
+            if(Annotate(item.label,item.description,accessibility::SemanticRole::Tab,
+                        accessibility::SemanticAction::Press,isCurrent,o)) pressed=true;
+            const float cellRounding=height*.2f;
+            if(isCurrent) {
+                draw->AddRectFilled(ca,cb,U(Mix(trayFill,dark?text:ImVec4{1,1,1,1},dark?.16f:.7f)),cellRounding);
+                draw->AddRect(ca,cb,U(text),cellRounding,ImDrawFlags_None,std::max(1.5f,height*.05f));
+            } else if(hovered) {
+                draw->AddRectFilled(ca,cb,U(Mix(trayFill,text,.08f)),cellRounding);
+            }
+            const ImVec2 markCenter{ca.x+markGap*.6f+plate*.5f,centerY+plate*.1f};
+            char number[24];std::snprintf(number,sizeof(number),"%zu",i+1);
+            DrawPlateMark(draw,markCenter,plate,number,item.state,item.blocked,marks,o);
+            if(showLabels) {
+                const float labelX=markCenter.x+plate*.5f+markGap;
+                ImFont* labelFont=isCurrent?strong:font;
+                const std::string fitted=FitText(labelFont,labelSize,Safe(item.label),cb.x-labelX-markGap*.5f);
+                const bool quiet=!isCurrent && (item.state==StepMarkState::Pending || item.state==StepMarkState::Skipped);
+                draw->AddText(labelFont,labelSize,{labelX,centerY-labelSize*.5f},
+                              U(quiet?ReadableOn(muted,trayFill,text):text),fitted.c_str());
+            }
+            if(hovered) {
+                ImGui::BeginTooltip();ImGui::PushTextWrapPos(fontSize*28.f);
+                ImGui::TextUnformatted(Safe(item.label));
+                if(*Safe(item.description)) { ImGui::PushStyleColor(ImGuiCol_Text,muted);ImGui::TextUnformatted(item.description);ImGui::PopStyleColor(); }
+                ImGui::PopTextWrapPos();ImGui::EndTooltip();
+            }
+            if(pressed && !item.disabled && item.id) result=item.id;
+            ImGui::EndDisabled();Pop();
+            cx+=cell;
+            if(i+1<r.end) {
+                const bool done=item.state==StepMarkState::Completed || item.state==StepMarkState::Skipped;
+                const float y=markCenter.y;
+                const float thickness=std::max(2.f,height*.07f);
+                if(done) draw->AddLine({cx-markGap*.2f,y},{cx+link+markGap*.2f,y},U(linkDone),thickness);
+                else draw->AddLine({cx,y},{cx+link,y},U(detail::WithAlpha(muted,.5f)),std::max(1.f,thickness*.45f));
+                cx+=link;
+            }
+        }
+        x+=trayWidth+trayGap;
+    }
+    ImGui::SetCursorScreenPos({origin.x,origin.y+height});
+    ImGui::Dummy({width,0.f});
+    ImGui::PopID();
+    return result;
 }
 StableId IconToolbar(const char* id,const IconAtlas& atlas,
     std::span<const IconToolbarItem> items,ComponentOptions o) {
@@ -907,6 +1157,11 @@ void StageProgress(const char* id,const StageProgressView& view,ComponentOptions
         for(std::size_t i=0;i<stages.size();++i) {
             const auto& stage=stages[i];const float x=origin.x+step*(static_cast<float>(i)+.5f);
             const ImVec4 color=ProgressStatusColor(stage.status,o);
+            if(view.marks) {
+                char number[24];std::snprintf(number,sizeof(number),"%zu",i+1);
+                DrawPlateMark(draw,{x,centerY+radius*.15f},radius*1.9f,number,StageMark(stage.status),false,*view.marks,o);
+                continue;
+            }
             if(stage.status==ProgressStatus::Queued) draw->AddCircle({x,centerY},radius,ImGui::GetColorU32(color),24,2.f);
             else draw->AddCircleFilled({x,centerY},radius,ImGui::GetColorU32(color),24);
             if(outlined) draw->AddCircle({x,centerY},radius,outlineColor,24,outline);
@@ -997,7 +1252,7 @@ void WaitCard(const char* id,const WaitCardView& view,ComponentOptions o) {
             ImGui::TextWrapped("%s",view.meta);
             ImGui::PopStyleColor();
         }
-        if(!view.stages.empty()) StageProgress("stages",{view.stages,view.currentStage},o);
+        if(!view.stages.empty()) StageProgress("stages",{view.stages,view.currentStage,view.stageMarks},o);
     }
     EndCard();
     if(running) {

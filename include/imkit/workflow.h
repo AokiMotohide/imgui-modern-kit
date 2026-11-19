@@ -41,6 +41,46 @@ struct StepGroup {
 };
 StableId GroupedStepNavigator(const char* id, std::span<const StepGroup> groups,
     std::span<const StepItem> items, StableId current, ComponentOptions options={});
+enum class StepMarkState : std::uint8_t { Pending, Current, Completed, Redo, Skipped };
+// A step mark drawn as a plate: a rounded square with faint grid lines and the step number. The state never relies on
+// colour alone: a pending plate is a dashed outline, the current one gets corner handles, a completed one a sprout on
+// top, one to redo a bent leaf, a skipped one fades, and a blocked step gets a dot at its top right corner.
+// Colours with alpha zero follow the theme.
+struct PlateMarkStyle {
+    ImVec4 fill{}, outline{}, ink{}, grid{}, handle{}, sprout{}, sproutOutline{}, redo{}, blocked{}, pending{};
+    float rounding=.12f; // Share of the plate size.
+    int gridLines=2;     // Lines in each direction; 0 draws none.
+};
+// Draws a mark whose plate is `size` pixels square, centred on `center`. Ornaments reach size*.25 above the plate.
+void DrawPlateMark(ImDrawList* draw, ImVec2 center, float size, const char* number, StepMarkState state,
+                   bool blocked=false, const PlateMarkStyle& style={}, ComponentOptions options={});
+// A group of contiguous steps in a StepBand. Tint alpha zero uses the theme accent.
+struct StepBandGroup {
+    StableId id=0;
+    const char* label="";
+    std::size_t first=0, count=0;
+    ImVec4 tint{};
+};
+struct StepBandItem {
+    StableId id=0;
+    const char* label="";
+    const char* description=""; // Shown on hover under the label; may hold several lines.
+    StepMarkState state=StepMarkState::Pending;
+    bool blocked=false;  // Draws the blocked dot; the step stays selectable.
+    bool disabled=false;
+};
+struct StepBandOptions {
+    float height=0;          // Zero uses 1.5 frame heights.
+    float labelScale=1;      // Step labels as a multiple of the font size.
+    const PlateMarkStyle* marks=nullptr; // Null draws plates in theme colours.
+    ImVec4 background{};     // Alpha zero uses the theme's chrome zone.
+};
+// One row of steps sorted into groups. Each group is a tray tinted by its colour, with its name at the left; steps in a
+// group are joined by a short bar that is solid once the earlier step is done. When the row is narrow the group names
+// hide first, then step labels shorten with an ellipsis. The height never grows. Returns a requested step ID, or zero;
+// the host owns the current step.
+StableId StepBand(const char* id, std::span<const StepBandGroup> groups, std::span<const StepBandItem> items,
+                  StableId current, StepBandOptions layout={}, ComponentOptions options={});
 struct IconToolbarItem {
     StableId id=0;
     IconId icon=IconId::Count;
@@ -182,6 +222,7 @@ struct StageProgressItem {
 struct StageProgressView {
     std::span<const StageProgressItem> stages{};
     StableId current=0;
+    const PlateMarkStyle* marks=nullptr; // Draws numbered plate marks instead of dots.
 };
 struct TaskProgressCardView {
     StableId id=0;
@@ -228,6 +269,7 @@ struct WaitCardView {
     std::span<const StageProgressItem> stages{};
     StableId currentStage=0;
     ProgressStatus status=ProgressStatus::Running;
+    const PlateMarkStyle* stageMarks=nullptr; // Draws the stage row with numbered plate marks.
 };
 void WaitCard(const char* id, const WaitCardView& view, ComponentOptions options={});
 // Returns the requested operation ID, or zero. The host performs the operation.

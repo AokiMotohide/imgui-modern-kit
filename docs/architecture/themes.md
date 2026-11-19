@@ -64,6 +64,19 @@ imkit::SetAccent(theme, ImVec4(1.0f, 0.5f, 0.0f, 1.0f));
 
 The shipped presets keep normal text at 4.5:1 or better against canvas, surface, input and raised surfaces, muted text at 3:1 or better, and accent and destructive foreground pairs at 4.5:1 or better. Check your own theme with `ValidateContrast`.
 
+## Surface zones
+
+`ResolveTheme` also derives `Theme::zones`, one colour for each large region of a window, so neighbouring regions read as separate places in every preset and brand theme.
+
+| Zone | Use | Derivation |
+| --- | --- | --- |
+| `Chrome` | Menu bar, step band | Dark: the raised surface leaning to the accent. Light: the canvas washed with the accent |
+| `Panel` | Lists, inspectors | The surface |
+| `Workspace` | Around the main view | The canvas, a step darker |
+| `Monitor` | Video previews | A desaturated, deep tone of the theme |
+
+Neighbouring zones stay at least 1.14:1 apart. `onMonitor` is text that reads on the monitor zone and `divider` is the line between zones. Call `PushSurfaceZone(theme, zone)` before a window's `Begin` and `PopSurfaceZone()` right after it; `SurfaceZoneColor` returns a zone colour for your own drawing. To override a zone, assign it after `ResolveTheme`.
+
 ## What `ApplyTheme` does
 
 `ApplyTheme` replaces the whole `ImGuiStyle` of the current context, except `Alpha` and `FontScaleDpi`. Make your adjustments in the `Theme`, not in `ImGuiStyle`, because the next `ApplyTheme` overwrites style edits you made directly.

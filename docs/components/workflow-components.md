@@ -13,6 +13,8 @@ Every control returns a request. It never changes the value you pass in.
 | Group | Components | What they do |
 | --- | --- | --- |
 | Navigation | `StepNavigator`, `NavigationRail` | Step bar and vertical rail over a borrowed `StepItem` span; return a selection request. `StepNavigatorOptions::badge` draws the number mark as a circle or a rounded square (`badgeRounding`, `badgeBorder`) |
+| | `StepBand` | One row of steps sorted into tinted group trays, the group name at the left of each tray. Steps are joined by a bar that turns solid once the earlier step is done. When narrow, group names hide first, then step labels shorten; the height never grows. Returns a selection request |
+| | `DrawPlateMark` | Draws one numbered plate mark. The state never relies on colour alone: dashed when pending, corner handles when current, a sprout when completed, a bent leaf to redo, faded when skipped, and a corner dot when blocked. `PlateMarkStyle` sets the colours, rounding and grid lines |
 | | `WorkspaceTabs` | Icon and label tabs; collapse to a combo when narrow |
 | | `ChoiceGroup` | Bordered heading with one to three columns of radio choices; returns the chosen stable ID |
 | Hierarchy and settings | `HierarchyGroupHeader`, `HierarchyRow` | Scene-graph style rows with full-width selection, ellipsized labels and an optional `accentColor` stripe. Selection, visibility, lock and group actions are requests. An unavailable visibility or lock action can be omitted |
@@ -59,6 +61,7 @@ Every control returns a request. It never changes the value you pass in.
 | Unknown fraction | A negative or non-finite fraction. No bar is drawn, because a moving segment does not say how far the work has come. A `Running` track still calls the thumb at the middle. Show the stage and the elapsed time beside it |
 | `Progress` | Inline, child overlay or modal, with a cancel request |
 | `StageProgress` | Displays the stages and the current ID you pass. When narrow, it shows the current stage and `n/total` |
+| `StageProgress` plate marks | Set `StageProgressView::marks` (or `WaitCardView::stageMarks`) to draw the stage row with numbered plate marks instead of dots |
 | `WaitCard` | One piece of work the user waits for: a live dot and title with the value large on the right, the track, one line of detail (for example the time left), and the stage row. While Running the outline breathes and the dot pulses; both stop under reduced motion. Draw-only |
 | `TaskProgressCard` | Regular or compact summary (`TaskProgressCardOptions::compact`). Returns the clicked `Command.id`, and 0 means no request. Strings and the operation span are borrowed for the frame |
 | `CircularProgress` | Borrowed fraction, value and label. A negative or non-finite fraction means unavailable. It has no threshold and owns no state |

@@ -51,6 +51,9 @@ auto volatile resolveRightPanel=&imkit::ResolveRightSidePanelLayout;
 auto volatile rightPanelHandle=&imkit::RightSidePanelHandle;
 auto volatile externalControlStyle=&imkit::MakeExternalControlStyle;
 auto volatile externalControl=&imkit::ExternalControlIndicator;
+void (*volatile plateMark)(ImDrawList*,ImVec2,float,const char*,imkit::StepMarkState,bool,const imkit::PlateMarkStyle&,imkit::ComponentOptions)=&imkit::DrawPlateMark;
+imkit::StableId (*volatile stepBand)(const char*,std::span<const imkit::StepBandGroup>,std::span<const imkit::StepBandItem>,imkit::StableId,imkit::StepBandOptions,imkit::ComponentOptions)=&imkit::StepBand;
+auto volatile zoneColor=&imkit::SurfaceZoneColor;auto volatile pushZone=&imkit::PushSurfaceZone;auto volatile popZone=&imkit::PopSurfaceZone;
 }
 int main() {
     imkit::StepNavigatorOptions stepLayout;stepLayout.badge=imkit::StepBadgeShape::RoundedSquare;stepLayout.badgeRounding=.3f;stepLayout.badgeBorder=2;
@@ -58,6 +61,13 @@ int main() {
     imkit::WaitCardView wait;wait.track.segments=3;wait.track.lanes=lanes;wait.track.barHeight=10.f;
     imkit::ComponentOptions call;call.callToAction=true;
     if(!call.callToAction||wait.track.lanes.size()!=2||!waitCard) return 1;
+    imkit::PlateMarkStyle plate;plate.gridLines=2;plate.rounding=.12f;wait.stageMarks=&plate;
+    imkit::StageProgressView stages;stages.marks=&plate;
+    imkit::StepBandGroup bandGroups[1]{{1,"Setup",0,2,{}}};
+    imkit::StepBandItem bandItems[2]{{1,"One","",imkit::StepMarkState::Completed},{2,"Two","",imkit::StepMarkState::Current,true}};
+    imkit::StepBandOptions band;band.marks=&plate;band.height=36.f;
+    imkit::Theme theme=imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
+    if(!stages.marks||sizeof(bandGroups)==0||!bandItems[1].blocked||band.height<=0||theme.zones.monitor.w<=0||!(plateMark&&stepBand&&zoneColor&&pushZone&&popZone)) return 1;
     imkit::StableId ids[1];imkit::RequestBuffer requests{ids};
     imkit::editor::TileEvent events[1];imkit::editor::TileEventBuffer out{events};
     return !(grouped&&workspaceTabs&&choiceGroup&&hierarchyGroup&&hierarchyRow&&inspectorCard&&endInspectorCard&&collapsibleInspectorCard&&endCollapsibleInspectorCard&&settingToggleRow&&iconToolbar&&labeledIconToolbar&&iconAction&&step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&progressTrackView&&progressTrackValue&&stageProgress&&taskProgressCard&&card&&endCard&&section&&multi&&help&&validation&&toolbar&&valid&&placement&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&appBar&&workspaceHeader&&inspectorSection&&advancedSection&&bottomActionBar&&beginDiagnostics&&endDiagnostics&&themePicker&&resolveRightPanel&&rightPanelHandle&&externalControlStyle&&externalControl&&requests.Push(1)&&out.Push({}));

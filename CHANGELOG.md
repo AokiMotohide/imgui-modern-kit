@@ -20,7 +20,11 @@
 | `imkit/workflow.h` | `WaitCard`, `WaitCardView` |
 | `imkit/toast.h` | `ToastView::detail`, `ToastView::detailOpen` |
 | `imkit/workflow.h` | `StepBadgeShape`, `StepNavigatorOptions::badge`, `badgeRounding`, `badgeBorder` |
+| `imkit/workflow.h` | `StepBand`, `StepBandGroup`, `StepBandItem`, `StepBandOptions`, `DrawPlateMark`, `PlateMarkStyle`, `StepMarkState`, `StageProgressView::marks`, `WaitCardView::stageMarks` |
+| `imkit/theme.h` | `SurfaceZone`, `SurfaceZoneColors`, `Theme::zones`, `SurfaceZoneColor`, `PushSurfaceZone`, `PopSurfaceZone` |
 
+- `StepBand` draws a one-row step bar sorted into tinted group trays, with numbered plate marks (`DrawPlateMark`) whose state shows in their shape. `StageProgress` and `WaitCard` can use the same marks.
+- Themes derive surface zones (chrome, panel, workspace, monitor) so the large regions of a window differ in every theme. `PushSurfaceZone` sets a window's background.
 - `DrawGlowFrame` lights the edge of a rectangle: steady, breathing or orbiting, with ripples on `Pulse()` or at an interval, inside, outside or centred on the edge. Every value is a field of `GlowFrameStyle`.
 - `ExternalControlIndicator` frames the viewport while an automation API, a remote operator or an agent drives the application, and shows a pill with the client, its activity and Stop. Each phase has its own frame style: connected, active and input locked. The phase is held for `holdSeconds` after the host lowers it, pulses within `pulseInterval` make one ripple, phases blend over `transitionSeconds`, the pill keeps its widest width while shown, and a pill without Stop lets input through. The pill can be a dark translucent theme surface (`pillFill = Surface`) with an outline, a soft shadow and a halo; the default look is unchanged.
 - `OverlayAnchor` names the six places of an overlay in a viewport's work area. Toasts and the external control pill share it, and `ToastPosition` is now an alias of it, so existing code compiles unchanged.
@@ -50,7 +54,11 @@
 | `imkit/components.h` | `ComponentOptions::progress` |
 | `imkit/toast.h` | `ToastView::detail`、`ToastView::detailOpen` |
 | `imkit/workflow.h` | `StepBadgeShape`、`StepNavigatorOptions::badge`、`badgeRounding`、`badgeBorder` |
+| `imkit/workflow.h` | `StepBand`、`StepBandGroup`、`StepBandItem`、`StepBandOptions`、`DrawPlateMark`、`PlateMarkStyle`、`StepMarkState`、`StageProgressView::marks`、`WaitCardView::stageMarks` |
+| `imkit/theme.h` | `SurfaceZone`、`SurfaceZoneColors`、`Theme::zones`、`SurfaceZoneColor`、`PushSurfaceZone`、`PopSurfaceZone` |
 
+- `StepBand`は、工程を色つきの群の箱に分けて1行に並べます。番号つきの板の印（`DrawPlateMark`）は、状態を形で示します。`StageProgress`と`WaitCard`も同じ印を使えます。
+- テーマが面の役割（帯、パネル、作業面、モニター）の色を作り、どのテーマでもウィンドウの大きな領域が見分けられます。`PushSurfaceZone`でウィンドウの背景に使います。
 - `DrawGlowFrame` は矩形の縁を光らせます。一定、呼吸、周回の動きと、`Pulse()` または一定間隔で出る波紋を持ち、縁の内側、外側、中央に描けます。値はすべて `GlowFrameStyle` のフィールドです。
 - `ExternalControlIndicator` は、自動化API、遠隔の操作者、エージェントがアプリを操作している間、ビューポートを枠で囲み、操作中の相手、その作業、停止ボタンを載せたピルを出します。枠の見た目は、接続中、操作中、入力ロック中の状態ごとに持ちます。ホストが段階を下げても `holdSeconds` の間は保持し、`pulseInterval` 内の Pulse は1つの波紋にまとめ、段階は `transitionSeconds` で補間します。ピルは表示中に最大幅を保ち、停止ボタンのないピルは入力を通します。ピルは、暗い半透明のテーマの面（`pillFill = Surface`）に、縁取り、やわらかい影、うっすらした光を付けた見た目にもできます。既定の見た目は変わりません。
 - `OverlayAnchor` は、ビューポートの作業領域でオーバーレイを置く6つの位置を表します。トーストと外部制御のピルが共有し、`ToastPosition` はその別名になりました。既存のコードは変更なしでコンパイルできます。

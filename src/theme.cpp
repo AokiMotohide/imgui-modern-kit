@@ -172,6 +172,9 @@ std::optional<ThemePreset> ThemePresetFromId(std::string_view id) noexcept {
     });
     return it == presets.end() ? std::nullopt : std::optional<ThemePreset>(it->preset);
 }
+namespace {
+void ResolveSurfaceZones(Theme& t);
+} // namespace
 Theme MakeTheme(ThemePreset preset) {
     const auto info = ThemePresets()[static_cast<std::size_t>(preset)];
     if (preset == ThemePreset::HighContrastLight || preset == ThemePreset::HighContrastDark)
@@ -256,6 +259,7 @@ Theme MakePrecisionTheme(ColorScheme scheme) {
        t.colors.muted,t.colors.border,t.colors.accent,t.colors.onAccent,t.colors.success,t.colors.warning,
        t.colors.destructive,{t.colors.input,detail::MixColor(t.colors.input,t.colors.accent,.10f),
        detail::MixColor(t.colors.input,t.colors.accent,.17f),t.colors.focus,t.colors.selection,t.colors.input}};
+    ResolveSurfaceZones(t);
     return t;
 }
 Theme MakeTheme(ColorScheme scheme, ContrastMode contrast, Density density) {
@@ -272,7 +276,48 @@ Theme MakeTheme(ColorScheme scheme, ContrastMode contrast, Density density) {
     SetDensity(t,density); return t;
 }
 void SetDensity(Theme& t,Density density) { t.density=density; ResolveTheme(t); }
+namespace {
+ImVec4 Desaturate(ImVec4 c,float amount) {
+    const float grey=c.x*.299f+c.y*.587f+c.z*.114f;
+    return {c.x+(grey-c.x)*amount,c.y+(grey-c.y)*amount,c.z+(grey-c.z)*amount,c.w};
+}
+ImVec4 ZoneSolid(ImVec4 c) { c.w=1.f; return c; }
+// Mixes `from` toward `to` from `start` until it reaches `ratio` against `against`, or `to` itself.
+ImVec4 MixUntilApart(ImVec4 from,ImVec4 to,float start,float ratio,ImVec4 against) {
+    for(float k=start;k<1.f;k+=.03f) {
+        const ImVec4 c=detail::MixColor(from,to,k);
+        if(ContrastRatio(c,against)>=ratio) return c;
+    }
+    return to;
+}
+// Neighbouring zones stay at least this contrast apart, so every theme separates them without hand tuning.
+constexpr float kZoneStep=1.14f;
+void ResolveSurfaceZones(Theme& t) {
+    const auto& c=t.semantic;
+    const ImVec4 black{0,0,0,1},white{1,1,1,1};
+    auto& z=t.zones;
+    z.panel=ZoneSolid(c.surface);
+    if(t.scheme==ColorScheme::Dark) {
+        // Chrome: the raised surface leaning to the accent, lighter than the panel.
+        const ImVec4 chrome=detail::MixColor(ZoneSolid(c.surfaceRaised),ZoneSolid(c.accent),.12f);
+        z.chrome=MixUntilApart(chrome,white,0.f,kZoneStep,z.panel);
+        z.workspace=MixUntilApart(ZoneSolid(c.canvas),black,.30f,kZoneStep,z.panel);
+        z.monitor=MixUntilApart(Desaturate(ZoneSolid(c.canvas),.7f),black,.45f,kZoneStep*.95f,z.workspace);
+        z.divider=detail::MixColor(ZoneSolid(c.canvas),black,.55f);
+    } else {
+        // Chrome: the canvas washed with the accent, darker than the white-ish panel.
+        z.chrome=MixUntilApart(detail::MixColor(ZoneSolid(c.canvas),ZoneSolid(c.accent),.16f),ZoneSolid(c.accent),0.f,kZoneStep*.95f,z.panel);
+        z.workspace=MixUntilApart(Desaturate(ZoneSolid(c.canvas),.5f),ZoneSolid(c.text),.06f,kZoneStep,z.panel);
+        // Monitor: a deep, quiet tone of the theme's ink, so a light theme keeps its colour without a bright frame.
+        z.monitor=detail::MixColor(Desaturate(ZoneSolid(c.text),.45f),ZoneSolid(c.canvas),.18f);
+        z.divider=detail::MixColor(ZoneSolid(c.border),ZoneSolid(c.text),.15f);
+    }
+    z.onMonitor=ContrastRatio(c.textSecondary,z.monitor)>=4.5f?ZoneSolid(c.textSecondary):
+                ContrastRatio(white,z.monitor)>=ContrastRatio(black,z.monitor)?ImVec4{.92f,.92f,.92f,1}:ImVec4{.08f,.08f,.08f,1};
+}
+} // namespace
 void ResolveTheme(Theme& t) {
+    ResolveSurfaceZones(t);
     const auto& c=t.semantic;
     t.colors={c.canvas,c.surface,c.control.rest,c.surfaceRaised,c.text,c.textSecondary,c.border,
         c.accent,c.onAccent,c.control.selected,c.control.focused,c.error,t.colors.onDestructive,
@@ -482,4 +527,19 @@ float AnimationState::Update(ImGuiID id, float target, float dt, float seconds, 
     if (!enabled) { slot->value=slot->from=slot->target=target; slot->elapsed=0; }
     return slot->value;
 }
+} // namespace imkit
+namespace imkit {
+ImVec4 SurfaceZoneColor(const Theme& theme,SurfaceZone zone) {
+    ImVec4 color=theme.zones.panel;
+    switch(zone) {
+    case SurfaceZone::Chrome:color=theme.zones.chrome;break;
+    case SurfaceZone::Workspace:color=theme.zones.workspace;break;
+    case SurfaceZone::Monitor:color=theme.zones.monitor;break;
+    default:break;
+    }
+    // A theme that was never resolved has no zones yet; keep the surface.
+    return color.w>0?color:theme.semantic.surface;
+}
+void PushSurfaceZone(const Theme& theme,SurfaceZone zone) { ImGui::PushStyleColor(ImGuiCol_WindowBg,SurfaceZoneColor(theme,zone)); }
+void PopSurfaceZone() { ImGui::PopStyleColor(); }
 } // namespace imkit
