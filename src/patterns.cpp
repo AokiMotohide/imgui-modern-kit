@@ -313,7 +313,10 @@ void ProgressTrackImpl(const char* id,float fraction,ProgressStatus status,Compo
     const bool animate=MotionAllowed(o);
     const ImVec4 track=detail::WithAlpha(TextColor(o),.13f);
     const ImVec4 foreground=ProgressStatusColor(status,o);
-    draw->AddRectFilled(position,{position.x+width,position.y+height},ImGui::GetColorU32(track),radius,ImDrawFlags_RoundCornersAll);
+    // An unknown fraction draws no bar at all: a moving segment says nothing about how far the work
+    // has come, and an empty track reads as stuck at zero. The host shows the stage and elapsed time.
+    if(available)
+        draw->AddRectFilled(position,{position.x+width,position.y+height},ImGui::GetColorU32(track),radius,ImDrawFlags_RoundCornersAll);
     if(available) {
         float shown=value;
         // Values tween so that coarse host updates do not look like jumps.
@@ -334,26 +337,15 @@ void ProgressTrackImpl(const char* id,float fraction,ProgressStatus status,Compo
             info.fraction=shown;info.status=status;info.animate=animate;
             thumbView->thumb(info,thumbView->thumbUser);
         }
-    } else if(status==ProgressStatus::Running) {
-        const float segment=std::min(width,std::max(height*3.f,width*.28f));
-        // Ping-pong with easing at both ends so the segment never snaps back.
-        float phase=.5f;
-        if(animate) {
-            const float t=static_cast<float>(std::fmod(std::max(0.0,ImGui::GetTime()),2.2)/2.2);
-            const float triangle=t<.5f?t*2.f:2.f-t*2.f;
-            phase=triangle*triangle*(3.f-2.f*triangle);
-        }
-        const float left=position.x+phase*(width-segment);
-        draw->AddRectFilled({left,position.y},{left+segment,position.y+height},ImGui::GetColorU32(foreground),radius,ImDrawFlags_RoundCornersAll);
-        if(thumbView&&thumbView->thumb) {
-            ProgressThumbInfo info;
-            info.draw=draw;info.trackMin=position;info.trackMax={position.x+width,position.y+height};
-            info.head={left+segment*.5f,position.y+height*.5f};
-            info.fraction=-1.f;info.status=status;info.animate=animate;
-            thumbView->thumb(info,thumbView->thumbUser);
-        }
+    } else if(status==ProgressStatus::Running&&thumbView&&thumbView->thumb) {
+        // The thumb still shows that work is running, standing still at the middle.
+        ProgressThumbInfo info;
+        info.draw=draw;info.trackMin=position;info.trackMax={position.x+width,position.y+height};
+        info.head={position.x+width*.5f,position.y+height*.5f};
+        info.fraction=-1.f;info.status=status;info.animate=animate;
+        thumbView->thumb(info,thumbView->thumbUser);
     }
-    if(thumbView&&thumbView->segments>1) {
+    if(available&&thumbView&&thumbView->segments>1) {
         // Equal divisions as thin gaps in the window background, drawn over the fill.
         ImVec4 gap=ImGui::GetStyleColorVec4(ImGuiCol_ChildBg);
         if(gap.w<=0.f) gap=ImGui::GetStyleColorVec4(ImGuiCol_WindowBg);
@@ -364,7 +356,7 @@ void ProgressTrackImpl(const char* id,float fraction,ProgressStatus status,Compo
             draw->AddRectFilled({x-gapWidth*.5f,position.y},{x+gapWidth*.5f,position.y+height},ImGui::GetColorU32(gap));
         }
     }
-    detail::DrawOutline(draw,position,{position.x+width,position.y+height},radius);
+    if(available) detail::DrawOutline(draw,position,{position.x+width,position.y+height},radius);
     if(o.accessibility) {
         accessibility::SemanticNode node;
         node.id=ImGui::GetID("progress-track");node.parent=o.parent;

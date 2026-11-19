@@ -31,6 +31,10 @@
 - `StepNavigator` can draw its number marks as rounded squares.
 - Gallery: a Glow frame page with six looks, an editor for every field, a copyable C++ snippet, and a scripted remote session that frames the Gallery window.
 
+### Changed
+
+- A progress track with an unknown fraction (negative or non-finite) no longer moves a segment back and forth. It draws no bar; a running track still calls the thumb, standing at the middle. Show the stage and the elapsed time instead. This applies to `ProgressTrack`, `Progress`, `WaitCard`, `TaskProgressCard` and loading toasts.
+
 ### 日本語
 
 #### 追加
@@ -56,6 +60,10 @@
 - トーストは、識別子などの詳細を「詳細」の切替の下に折りたたみ、等幅の文字の役割で出せます。
 - `StepNavigator` の番号の印を、角丸の四角で描けます。
 - Gallery：Glow frame ページを追加しました。6つの見た目、全フィールドの編集、コピーできる C++ のコード、Gallery のウィンドウを囲む遠隔操作の再現を含みます。
+
+#### 変更
+
+- 割合が分からない（負または非有限の）進捗バーで、区間を行ったり来たりさせるのをやめました。バーは描かず、実行中ならサムネイルを中央に止めて呼びます。代わりに段階の名前と経過時間を出してください。`ProgressTrack`、`Progress`、`WaitCard`、`TaskProgressCard`、読み込み中のトーストに効きます。
 
 ## 4.1.0 — 2026-11-06
 

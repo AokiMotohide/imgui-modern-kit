@@ -53,7 +53,7 @@ The example needs `<array>`, `<vector>` and `<algorithm>`. Rules for using it:
 
 Draw once per frame. `UpdateToastViewport` advances timing without drawing; do not call it for a state you also draw in the same frame.
 
-**Progress.** Set `phase=ToastPhase::Loading`. The toast uses the shared thin rounded track, with `stage`, the status, and a percentage or `progressText` outside the bar. A negative or nonfinite `progress` shows a short moving segment while the status is `Running`; paused and terminal unknown states stay still. Other values are clamped to 0–1.
+**Progress.** Set `phase=ToastPhase::Loading`. The toast uses the shared thin rounded track, with `stage`, the status, and a percentage or `progressText` outside the bar. A negative or nonfinite `progress` draws no bar; put the elapsed time in `progressText`. Other values are clamped to 0–1.
 
 **Completion.** Update the same ID to `phase=Message`, `Succeeded` or `Failed`, with a success or error kind. Changing the phase, kind or duration restarts the timer without changing the insertion order. Text and progress updates do not restart it.
 
@@ -62,7 +62,7 @@ The trailing `ToastView` fields `stage`, `progressText` and `status` have defaul
 ```cpp
 toast.phase = imkit::ToastPhase::Loading;
 toast.stage = "Inspecting files";
-toast.progress = fraction; // Negative or nonfinite means indeterminate.
+toast.progress = fraction; // Negative or nonfinite means unknown: no bar.
 toast.status = imkit::ProgressStatus::Running;
 toast.action = "View details"; // Returns an Action event for this toast ID.
 // On completion, update this same ID and set phase=Message, status=Succeeded/Failed.

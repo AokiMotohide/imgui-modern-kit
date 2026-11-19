@@ -56,7 +56,7 @@ Every control returns a request. It never changes the value you pass in.
 | Item | Behaviour |
 | --- | --- |
 | `ProgressStatus` | `Queued`, `Running`, `Paused`, `Succeeded`, `Failed`, `Cancelled` |
-| Indeterminate | A negative or non-finite fraction. Only a `Running` track moves a short segment, and `Theme.motion.enabled`, `reducedMotion` and your `AnimationState` control the motion |
+| Unknown fraction | A negative or non-finite fraction. No bar is drawn, because a moving segment does not say how far the work has come. A `Running` track still calls the thumb at the middle. Show the stage and the elapsed time beside it |
 | `Progress` | Inline, child overlay or modal, with a cancel request |
 | `StageProgress` | Displays the stages and the current ID you pass. When narrow, it shows the current stage and `n/total` |
 | `WaitCard` | One piece of work the user waits for: a live dot and title with the value large on the right, the track, one line of detail (for example the time left), and the stage row. While Running the outline breathes and the dot pulses; both stop under reduced motion. Draw-only |
@@ -65,7 +65,7 @@ Every control returns a request. It never changes the value you pass in.
 
 ```cpp
 imkit::ProgressTrackView progress;
-progress.fraction = fraction;     // negative or non-finite means indeterminate
+progress.fraction = fraction;     // negative or non-finite means unknown: no bar
 progress.status = imkit::ProgressStatus::Running;
 progress.label = "Inspecting files";
 progress.supplemental = "The host owns progress updates.";
