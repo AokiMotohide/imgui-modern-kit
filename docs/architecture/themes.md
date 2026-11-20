@@ -62,7 +62,17 @@ imkit::SetAccent(theme, ImVec4(1.0f, 0.5f, 0.0f, 1.0f));
 
 `SetAccent` updates the accent, focus colour, contrasting text on the accent and the selection. Arbitrary edits are not contrast-corrected automatically.
 
-The shipped presets keep normal text at 4.5:1 or better against canvas, surface, input and raised surfaces, muted text at 3:1 or better, and accent and destructive foreground pairs at 4.5:1 or better. Check your own theme with `ValidateContrast`.
+The shipped presets keep normal text at 4.5:1 or better against canvas, surface, input and raised surfaces, and accent and destructive foreground pairs at 4.5:1 or better. `ResolveTheme` raises secondary and disabled text to 4.5:1 on the surface and the panel zone, because they are read as captions. Check your own theme with `ValidateContrast`.
+
+### Corners and type steps
+
+| Token | Default | Rule |
+| --- | --- | --- |
+| `radius.controlShare` | `.25` | `ResolveTheme` derives the radii from the control height: control = height × share, subtle = half of it, overlay = height × share × 1.6. Set it to 0 to keep pixel radii. `CornerStyle` has `Sharp` (pixel radii), `Soft` (.25) and `Round` (.36); there is no capsule style |
+| `typography` | caption 12, body 14, heading 15, title 22 | Headings sit one step above the body so a panel title never shouts |
+| `layout.checkHeightScale` | 1.15 | Check boxes and radio buttons stay close to the text height |
+
+Splitters and resize grips use the `divider` zone colour, which stands apart from every zone, and turn to the accent under the pointer. A theme file sets `radius.control-share`; radii given in pixels without it switch the proportional corner off.
 
 ## Surface zones
 
@@ -75,7 +85,7 @@ The shipped presets keep normal text at 4.5:1 or better against canvas, surface,
 | `Workspace` | Around the main view | The canvas, a step darker |
 | `Monitor` | Video previews | A desaturated, deep tone of the theme |
 
-Neighbouring zones stay at least 1.14:1 apart. `onMonitor` is text that reads on the monitor zone and `divider` is the line between zones. Call `PushSurfaceZone(theme, zone)` before a window's `Begin` and `PopSurfaceZone()` right after it; `SurfaceZoneColor` returns a zone colour for your own drawing. To override a zone, assign it after `ResolveTheme`.
+Neighbouring zones stay at least 1.14:1 apart. `onMonitor` is text that reads on the monitor zone and `divider` is the line between zones; it keeps at least 1.3:1 (dark) or 1.6:1 (light) against the zones it separates. Call `PushSurfaceZone(theme, zone)` before a window's `Begin` and `PopSurfaceZone()` right after it; `SurfaceZoneColor` returns a zone colour for your own drawing. To override a zone, assign it after `ResolveTheme`.
 
 ## What `ApplyTheme` does
 

@@ -22,6 +22,10 @@
 | `imkit/workflow.h` | `StepBadgeShape`, `StepNavigatorOptions::badge`, `badgeRounding`, `badgeBorder` |
 | `imkit/workflow.h` | `StepBand`, `StepBandGroup`, `StepBandItem`, `StepBandOptions`, `DrawPlateMark`, `PlateMarkStyle`, `StepMarkState`, `StageProgressView::marks`, `WaitCardView::stageMarks` |
 | `imkit/theme.h` | `SurfaceZone`, `SurfaceZoneColors`, `Theme::zones`, `SurfaceZoneColor`, `PushSurfaceZone`, `PopSurfaceZone` |
+| `imkit/workflow.h` | `PlateGrowth`, `PlateMarkDecor`, `StepBandItem::growth`, `StepBandItem::optional`, `StepBandOptions::optionalScale` |
+| `imkit/components.h` | `ActionButtonMinimumWidth`, `ActionButtonWidth`, `ActionRowWidth` |
+| `imkit/theme.h` | `Radius::controlShare` (theme key `radius.control-share`) |
+| `imkit/toast.h` | `ToastViewportOptions::areaPos`, `ToastViewportOptions::areaSize` |
 
 - `StepBand` draws a one-row step bar sorted into tinted group trays, with numbered plate marks (`DrawPlateMark`) whose state shows in their shape. `StageProgress` and `WaitCard` can use the same marks.
 - Themes derive surface zones (chrome, panel, workspace, monitor) so the large regions of a window differ in every theme. `PushSurfaceZone` sets a window's background.
@@ -38,6 +42,15 @@
 ### Changed
 
 - A progress track with an unknown fraction (negative or non-finite) no longer moves a segment back and forth. It draws no bar; a running track still calls the thumb, standing at the middle. Show the stage and the elapsed time instead. This applies to `ProgressTrack`, `Progress`, `WaitCard`, `TaskProgressCard` and loading toasts.
+- **Breaking:** `DrawPlateMark` takes a `PlateMarkDecor` (blocked dot and grass) in place of `bool blocked`. Plates grow grass in three steps (`PlateGrowth`), and a band can mark optional steps (smaller plate, dotted links).
+- **Breaking:** `CornerStyle::Pill` and the theme value `corner = pill` are removed. A capsule button reads as a tag and leaves less room for its label; use `Round`.
+- Corners follow the control height (`Radius::controlShare = .25` by default) and every ImKit frame (buttons, Segmented, step bands, plates, chips, dashed outlines) is drawn with smooth corners. Slider grabs share the button corner.
+- `ActionButton` and `IconActionButton` always paint their own frame. A width that follows the label is at least four text heights; an icon button without a label is a square.
+- `Segmented` fills only the chosen segment, with the accent.
+- `StepBand` is 2.5 text heights tall by default, its plates are larger, and a group tray always stands apart from the band, even when its tint is the band's colour.
+- Typography defaults to caption 12, body 14, heading 15 and title 22; check boxes and radio buttons are 1.15 text heights. Secondary and disabled text are raised to 4.5:1 on the surface and the panel zone.
+- Splitters and resize grips use the divider zone colour and turn to the accent under the pointer.
+- One readable-colour rule (`MixToContrast`) serves surface zones, brand themes, step bands, node editors and the external control pill.
 
 ### 日本語
 
@@ -56,6 +69,10 @@
 | `imkit/workflow.h` | `StepBadgeShape`、`StepNavigatorOptions::badge`、`badgeRounding`、`badgeBorder` |
 | `imkit/workflow.h` | `StepBand`、`StepBandGroup`、`StepBandItem`、`StepBandOptions`、`DrawPlateMark`、`PlateMarkStyle`、`StepMarkState`、`StageProgressView::marks`、`WaitCardView::stageMarks` |
 | `imkit/theme.h` | `SurfaceZone`、`SurfaceZoneColors`、`Theme::zones`、`SurfaceZoneColor`、`PushSurfaceZone`、`PopSurfaceZone` |
+| `imkit/workflow.h` | `PlateGrowth`、`PlateMarkDecor`、`StepBandItem::growth`、`StepBandItem::optional`、`StepBandOptions::optionalScale` |
+| `imkit/components.h` | `ActionButtonMinimumWidth`、`ActionButtonWidth`、`ActionRowWidth` |
+| `imkit/theme.h` | `Radius::controlShare`（テーマのキー `radius.control-share`） |
+| `imkit/toast.h` | `ToastViewportOptions::areaPos`、`ToastViewportOptions::areaSize` |
 
 - `StepBand`は、工程を色つきの群の箱に分けて1行に並べます。番号つきの板の印（`DrawPlateMark`）は、状態を形で示します。`StageProgress`と`WaitCard`も同じ印を使えます。
 - テーマが面の役割（帯、パネル、作業面、モニター）の色を作り、どのテーマでもウィンドウの大きな領域が見分けられます。`PushSurfaceZone`でウィンドウの背景に使います。
@@ -72,6 +89,15 @@
 #### 変更
 
 - 割合が分からない（負または非有限の）進捗バーで、区間を行ったり来たりさせるのをやめました。バーは描かず、実行中ならサムネイルを中央に止めて呼びます。代わりに段階の名前と経過時間を出してください。`ProgressTrack`、`Progress`、`WaitCard`、`TaskProgressCard`、読み込み中のトーストに効きます。
+- **互換性のない変更:** `DrawPlateMark` は `bool blocked` の代わりに `PlateMarkDecor`（前提不足の点と芝生）を受け取ります。札の芝生は3段で育ち（`PlateGrowth`）、帯では寄り道の工程（小さい札、点線のつなぎ）を示せます。
+- **互換性のない変更:** `CornerStyle::Pill` とテーマの値 `corner = pill` をなくしました。カプセル形のボタンは札のように見え、ラベルの入る幅も狭くなるためです。`Round` を使ってください。
+- 角はコントロールの高さに比例し（既定は `Radius::controlShare = .25`）、ImKit が描く枠（ボタン、Segmented、工程の帯、札、絞り込みの札、破線の縁）はすべてなめらかな角で描きます。スライダーのつまみもボタンと同じ角です。
+- `ActionButton` と `IconActionButton` は、いつも自分で枠を描きます。幅をラベルに合わせるときは文字の高さ×4以上です。ラベルのないアイコンのボタンは正方形です。
+- `Segmented` は、選ばれた区切りだけを強調色で塗ります。
+- `StepBand` の既定の高さは文字の高さ×2.5で、札が大きくなりました。群の箱の色が帯と同じでも、箱は帯から離れて見えます。
+- 文字の段の既定は caption 12、body 14、heading 15、title 22 です。チェックとラジオは文字の高さ×1.15 です。補助の文字と無効の文字は、面とパネルの面に対して4.5:1以上に引き上げます。
+- 区画の境目とつまみは境の線（divider）の色で描き、触れると強調色になります。
+- 読める色を作る規則（`MixToContrast`）を1つにし、面の役割、ブランドのテーマ、工程の帯、ノード編集、外部制御のピルが同じ規則を使います。
 
 ## 4.1.0 — 2026-11-06
 

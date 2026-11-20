@@ -3,6 +3,7 @@
 #include <imkit/theme.h>
 #include <algorithm>
 #include <cmath>
+#include <initializer_list>
 
 // Small drawing helpers shared by the component implementations. Everything is
 // stateless and draws into the supplied list; nothing here owns ImGui state.
@@ -110,27 +111,106 @@ inline void DrawSoftShadow(ImDrawList* draw, ImVec2 minimum, ImVec2 maximum, flo
                       ImDrawFlags_None, step + .5f);
     }
 }
-// Rounded rectangle outline made of dashes; corners stay solid so the shape still reads as rounded.
-inline void DrawDashedRect(ImDrawList* draw, ImVec2 a, ImVec2 b, float rounding, ImU32 color, float thickness, float dash) {
-    constexpr float pi = 3.14159265358979323846f;
-    rounding = std::min(rounding, std::min(b.x - a.x, b.y - a.y) * .5f);
-    const ImVec2 corners[4] = {{a.x + rounding, a.y + rounding}, {b.x - rounding, a.y + rounding},
-                               {b.x - rounding, b.y - rounding}, {a.x + rounding, b.y - rounding}};
-    for (int i = 0; i < 4; ++i) {
-        draw->PathArcTo(corners[i], rounding, pi + static_cast<float>(i) * pi * .5f, pi * 1.5f + static_cast<float>(i) * pi * .5f, 6);
-        draw->PathStroke(color, 0, thickness);
+// The weakest mix of `from` toward `to`, starting at `start`, that reaches `ratio` against every background; `to` when
+// none does. Surfaces, tray tints and secondary text all use this one rule, so "readable" means the same everywhere.
+inline ImVec4 MixToContrast(ImVec4 from, ImVec4 to, float start, float ratio, std::initializer_list<ImVec4> backgrounds) {
+    for (float k = std::clamp(start, 0.f, 1.f); k < 1.f; k += .02f) {
+        const ImVec4 c = MixColor(from, to, k);
+        if (std::all_of(backgrounds.begin(), backgrounds.end(), [&](ImVec4 b) { return ContrastRatio(c, b) >= ratio; }))
+            return c;
     }
-    auto edge = [&](ImVec2 from, ImVec2 to) {
-        const float length = std::hypot(to.x - from.x, to.y - from.y);
-        for (float t = 0; t < length; t += dash * 2) {
-            const float e = std::min(length, t + dash);
-            draw->AddLine({from.x + (to.x - from.x) * t / length, from.y + (to.y - from.y) * t / length},
-                          {from.x + (to.x - from.x) * e / length, from.y + (to.y - from.y) * e / length}, color, thickness);
+    return to;
+}
+// White or a near black, whichever reads better on `background`.
+inline ImVec4 InkOn(ImVec4 background) {
+    background.w = 1.f;
+    const ImVec4 light{1, 1, 1, 1}, dark{.07f, .07f, .08f, 1};
+    return ContrastRatio(light, background) >= ContrastRatio(dark, background) ? light : dark;
+}
+// `color` itself when it reads on `background` (4.5:1), otherwise the weakest mix toward `text` that does.
+inline ImVec4 ReadableOn(ImVec4 color, ImVec4 background, ImVec4 text) {
+    return MixToContrast(color, text, 0.f, 4.5f, {background});
+}
+
+// Smooth corners. A circular arc meets the straight edge with a sudden change of curvature, which reads as a bump on
+// buttons; these corners start curving earlier (k = 1.28 r from the corner) and ease into the edge with one cubic
+// Bezier per corner, the continuous-curvature look of a superellipse. `radius` is the radius a circular corner would
+// have; it is limited to what fits the rectangle.
+inline float SmoothCornerReach(ImVec2 a, ImVec2 b, float radius) {
+    return std::max(0.f, std::min(radius * 1.28f, std::min(b.x - a.x, b.y - a.y) * .5f));
+}
+inline void PathSmoothRect(ImDrawList* draw, ImVec2 a, ImVec2 b, float radius) {
+    const float k = SmoothCornerReach(a, b, radius);
+    if (k <= .5f) {
+        draw->PathRect(a, b);
+        return;
+    }
+    const float c = k * (.62f / 1.28f); // Control handle length: 0.62 r for the full reach.
+    draw->PathLineTo({a.x + k, a.y});
+    draw->PathLineTo({b.x - k, a.y});
+    draw->PathBezierCubicCurveTo({b.x - k + c, a.y}, {b.x, a.y + k - c}, {b.x, a.y + k});
+    draw->PathLineTo({b.x, b.y - k});
+    draw->PathBezierCubicCurveTo({b.x, b.y - k + c}, {b.x - k + c, b.y}, {b.x - k, b.y});
+    draw->PathLineTo({a.x + k, b.y});
+    draw->PathBezierCubicCurveTo({a.x + k - c, b.y}, {a.x, b.y - k + c}, {a.x, b.y - k});
+    draw->PathLineTo({a.x, a.y + k});
+    draw->PathBezierCubicCurveTo({a.x, a.y + k - c}, {a.x + k - c, a.y}, {a.x + k, a.y});
+}
+inline void AddSmoothRectFilled(ImDrawList* draw, ImVec2 a, ImVec2 b, ImU32 color, float radius) {
+    if ((color & IM_COL32_A_MASK) == 0 || b.x <= a.x || b.y <= a.y)
+        return;
+    PathSmoothRect(draw, a, b, radius);
+    draw->PathFillConvex(color);
+}
+inline void AddSmoothRect(ImDrawList* draw, ImVec2 a, ImVec2 b, ImU32 color, float radius, float thickness) {
+    if ((color & IM_COL32_A_MASK) == 0 || b.x <= a.x || b.y <= a.y)
+        return;
+    // Stroke on the centre line of the border, like ImDrawList::AddRect.
+    const float h = thickness * .5f;
+    PathSmoothRect(draw, {a.x + h, a.y + h}, {b.x - h, b.y - h}, std::max(0.f, radius - h));
+    draw->PathStroke(color, ImDrawFlags_Closed, thickness);
+}
+// Dashes along a smooth-cornered rectangle, the dash phase running continuously around the shape.
+inline void DrawDashedRect(ImDrawList* draw, ImVec2 a, ImVec2 b, float radius, ImU32 color, float thickness, float dash) {
+    PathSmoothRect(draw, a, b, radius);
+    ImVector<ImVec2> path;
+    path.swap(draw->_Path);
+    draw->PathClear();
+    if (path.Size < 2)
+        return;
+    path.push_back(path[0]);
+    dash = std::max(1.f, dash);
+    const float gap = dash * .8f;
+    float phase = 0; // Distance into the current dash+gap period.
+    for (int i = 1; i < path.Size; ++i) {
+        ImVec2 p = path[i - 1];
+        const ImVec2 q = path[i];
+        float length = std::hypot(q.x - p.x, q.y - p.y);
+        const ImVec2 dir = length > 0 ? ImVec2{(q.x - p.x) / length, (q.y - p.y) / length} : ImVec2{0, 0};
+        while (length > 0) {
+            const bool on = phase < dash;
+            const float step = std::min(length, on ? dash - phase : dash + gap - phase);
+            const ImVec2 e{p.x + dir.x * step, p.y + dir.y * step};
+            if (on)
+                draw->AddLine(p, e, color, thickness);
+            p = e;
+            length -= step;
+            phase += step;
+            if (phase >= dash + gap)
+                phase = 0;
         }
-    };
-    edge({a.x + rounding, a.y}, {b.x - rounding, a.y});
-    edge({b.x, a.y + rounding}, {b.x, b.y - rounding});
-    edge({b.x - rounding, b.y}, {a.x + rounding, b.y});
-    edge({a.x, b.y - rounding}, {a.x, a.y + rounding});
+    }
+}
+// A dotted line: round dots `gap` apart, for links that may be skipped.
+inline void DrawDottedLine(ImDrawList* draw, ImVec2 from, ImVec2 to, ImU32 color, float thickness, float gap) {
+    const float length = std::hypot(to.x - from.x, to.y - from.y);
+    if (length <= 0)
+        return;
+    gap = std::max(gap, thickness * 1.5f);
+    const int count = std::max(1, static_cast<int>(length / gap));
+    for (int i = 0; i <= count; ++i) {
+        const float f = static_cast<float>(i) / static_cast<float>(count);
+        draw->AddCircleFilled({from.x + (to.x - from.x) * f, from.y + (to.y - from.y) * f}, thickness * .5f, color, 8);
+    }
 }
 } // namespace imkit::detail

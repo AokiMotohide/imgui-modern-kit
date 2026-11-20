@@ -87,12 +87,15 @@ int TestStyleProjection() {
         failure = 22;
     if (!Near(style.Colors[ImGuiCol_Border], outlined.colors.border, 1e-6f))
         failure = 23;
-    // Pill rounds the tallest control (44 px) to a capsule and nothing taller than that.
-    imkit::SetCornerStyle(outlined, imkit::CornerStyle::Pill);
+    // Round follows the control height (.36 of it). Slider grabs share the button corner.
+    imkit::SetCornerStyle(outlined, imkit::CornerStyle::Round);
     imkit::ApplyTheme(outlined, 1.f);
-    if (outlined.radius.control != 22.f || style.FrameRounding != 22.f || style.WindowRounding != 22.f)
+    const float round = std::round(outlined.metrics.controlHeight * .36f);
+    if (outlined.radius.control != round || style.FrameRounding != round || style.GrabRounding != round ||
+        style.WindowRounding != round)
         failure = 24;
     // A huge control radius set by hand must not turn windows and images into capsules.
+    outlined.radius.controlShare = 0.f;
     outlined.radius.control = 999.f;
     imkit::ApplyTheme(outlined, 1.f);
     if (style.FrameRounding < 900.f || style.WindowRounding != outlined.radius.overlay ||
@@ -101,6 +104,16 @@ int TestStyleProjection() {
     imkit::SetCornerStyle(outlined, imkit::CornerStyle::Sharp);
     if (outlined.radius.control != 2.f || outlined.metrics.radius != 2.f)
         failure = 25;
+    // The default corner is a quarter of the control height at every density, and captions stay readable.
+    for (auto density : {imkit::Density::Compact, imkit::Density::Comfortable, imkit::Density::Touch}) {
+        auto probe = imkit::MakeTheme(imkit::ThemePreset::WarmSand);
+        imkit::SetDensity(probe, density);
+        if (probe.radius.control != std::round(probe.metrics.controlHeight * .25f))
+            failure = 27;
+        if (imkit::ContrastRatio(probe.semantic.textSecondary, probe.semantic.surface) < 4.5f ||
+            imkit::ContrastRatio(probe.semantic.textDisabled, probe.zones.panel) < 4.5f)
+            failure = 28;
+    }
     ImGui::DestroyContext();
     return failure;
 }
@@ -184,10 +197,11 @@ int TestThemeText() {
     // A partial file changes only what it names, on top of the chosen base preset.
     auto partial = imkit::MakeTheme(imkit::ThemePreset::PrecisionLight);
     partial.fonts.display = fakeFont;
-    const auto diff = imkit::ParseTheme("preset = warm-sand\nstroke.border = 3\ncorner = pill\n", partial);
+    const auto diff = imkit::ParseTheme("preset = warm-sand\nstroke.border = 3\ncorner = round\n", partial);
     const auto warmSand = imkit::MakeTheme(imkit::ThemePreset::WarmSand);
     if (diff.applied != 3 || diff.ignored != 0 || !Near(partial.semantic.accent, warmSand.semantic.accent, 0) ||
-        partial.stroke.border != 3.f || partial.radius.control != 22.f || partial.fonts.display != fakeFont ||
+        partial.stroke.border != 3.f || partial.radius.control != std::round(partial.metrics.controlHeight * .36f) ||
+        partial.fonts.display != fakeFont ||
         partial.metrics.border != 3.f)
         return 43;
 
@@ -214,7 +228,7 @@ int TestThemeText() {
     imkit::ParseTheme("corner = round\nbrand.canvas = #ffe9a8\nbrand.surface = #fff6d6\nbrand.text = #4a2a18\nbrand.accent = #b2552f\n",
                       branded);
     if (!Near(branded.semantic.canvas, Hex(0xffe9a8)) || !Near(branded.colors.accent, Hex(0xb2552f)) ||
-        branded.radius.control != 16.f || !imkit::ValidateContrast(branded))
+        branded.radius.control != std::round(branded.metrics.controlHeight * .36f) || !imkit::ValidateContrast(branded))
         return 45;
     auto incomplete = imkit::MakeTheme(imkit::ThemePreset::PrecisionLight);
     const auto before = imkit::SerializeTheme(incomplete);
@@ -236,7 +250,7 @@ int TestLayoutTokens() {
     const auto &m = base.metrics;
     if (m.controlHeight != 30.f || m.spacingY != 6.f || m.windowPaddingX != 12.f || m.cellPaddingY != 4.f ||
         m.indent != 18.f || m.scrollbar != 10.f || m.grabMin != 14.f || m.separatorTextPaddingY != 6.f ||
-        m.parts.checkHeightScale != 1.45f || m.parts.toggleHeightScale != 1.75f || m.parts.badgeExtraHeight != 8.f)
+        m.parts.checkHeightScale != 1.15f || m.parts.toggleHeightScale != 1.75f || m.parts.badgeExtraHeight != 8.f)
         return 60;
     if (imkit::SerializeTheme(base).find("layout.") != std::string::npos) // Unset tokens are not written.
         return 61;

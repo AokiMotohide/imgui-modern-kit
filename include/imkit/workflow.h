@@ -1,6 +1,8 @@
 #pragma once
 #include <imkit/patterns.h>
 #include <imkit/icons.h>
+#include <cstdint>
+#include <optional>
 
 namespace imkit {
 enum class Orientation { Horizontal, Vertical };
@@ -43,7 +45,7 @@ StableId GroupedStepNavigator(const char* id, std::span<const StepGroup> groups,
     std::span<const StepItem> items, StableId current, ComponentOptions options={});
 enum class StepMarkState : std::uint8_t { Pending, Current, Completed, Redo, Skipped };
 // A step mark drawn as a plate: a rounded square with faint grid lines and the step number. The state never relies on
-// colour alone: a pending plate is a dashed outline, the current one gets corner handles, a completed one a sprout on
+// colour alone: a pending plate is a dashed outline, the current one gets corner handles, a completed one grass on
 // top, one to redo a bent leaf, a skipped one fades, and a blocked step gets a dot at its top right corner.
 // Colours with alpha zero follow the theme.
 struct PlateMarkStyle {
@@ -51,9 +53,17 @@ struct PlateMarkStyle {
     float rounding=.12f; // Share of the plate size.
     int gridLines=2;     // Lines in each direction; 0 draws none.
 };
-// Draws a mark whose plate is `size` pixels square, centred on `center`. Ornaments reach size*.25 above the plate.
+// How far a step has grown, decided by the host from its own data (not from whether the step was opened):
+// None draws no grass, Sprout one blade (started, or done for some of its targets), Grown three blades (done).
+enum class PlateGrowth : std::uint8_t { None, Sprout, Grown };
+// What a plate shows besides its state. Without a growth the state decides it: Completed is Grown, others None.
+struct PlateMarkDecor {
+    bool blocked=false;                 // Dot at the top right corner: something the step needs is missing.
+    std::optional<PlateGrowth> growth;  // Grass on top of the plate.
+};
+// Draws a mark whose plate is `size` pixels square, centred on `center`. Grass reaches size*.33 above the plate.
 void DrawPlateMark(ImDrawList* draw, ImVec2 center, float size, const char* number, StepMarkState state,
-                   bool blocked=false, const PlateMarkStyle& style={}, ComponentOptions options={});
+                   const PlateMarkDecor& decor={}, const PlateMarkStyle& style={}, ComponentOptions options={});
 // A group of contiguous steps in a StepBand. Tint alpha zero uses the theme accent.
 struct StepBandGroup {
     StableId id=0;
@@ -68,15 +78,19 @@ struct StepBandItem {
     StepMarkState state=StepMarkState::Pending;
     bool blocked=false;  // Draws the blocked dot; the step stays selectable.
     bool disabled=false;
+    std::optional<PlateGrowth> growth; // Grass on the plate; without it the state decides (see PlateMarkDecor).
+    bool optional=false; // A step that may be skipped: a smaller plate, a lighter label and dotted links to it.
 };
 struct StepBandOptions {
-    float height=0;          // Zero uses 1.5 frame heights.
+    float height=0;          // Zero uses 2.5 text heights.
     float labelScale=1;      // Step labels as a multiple of the font size.
     const PlateMarkStyle* marks=nullptr; // Null draws plates in theme colours.
     ImVec4 background{};     // Alpha zero uses the theme's chrome zone.
+    float optionalScale=.72f; // Plate size of an optional step relative to the others.
 };
-// One row of steps sorted into groups. Each group is a tray tinted by its colour, with its name at the left; steps in a
-// group are joined by a short bar that is solid once the earlier step is done. When the row is narrow the group names
+// One row of steps sorted into groups. Each group is a tray tinted by its colour, with its name at the left; the tray
+// always stands apart from the band (1.14:1), even when its tint is the band's own colour. Steps in a group are joined
+// by a short bar that is solid once the earlier step is done, and dotted next to an optional step. When the row is narrow the group names
 // hide first, then step labels shorten with an ellipsis. The height never grows. Returns a requested step ID, or zero;
 // the host owns the current step.
 StableId StepBand(const char* id, std::span<const StepBandGroup> groups, std::span<const StepBandItem> items,

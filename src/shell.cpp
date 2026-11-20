@@ -250,11 +250,6 @@ const GlowFrameStyle& PhaseStyle(const ExternalControlStyle& style,ExternalContr
     default:return style.active;
     }
 }
-ImVec4 ReadableOn(ImVec4 background) {
-    background.w=1.0f;
-    const ImVec4 light{1,1,1,1},dark{.07f,.07f,.08f,1};
-    return ContrastRatio(light,background)>=ContrastRatio(dark,background)?light:dark;
-}
 ImVec4 Faded(ImVec4 color,float alpha) {
     color.w*=alpha;
     return color;
@@ -344,7 +339,7 @@ ExternalControlRequest ExternalControlIndicator(const char* id,const ExternalCon
     char name[64];std::snprintf(name,sizeof(name),"###imkit-external-control-%08x",scope);
     const float font=ImGui::GetFontSize();
     const bool surfaceFill=style.pillFill==ExternalControlPillFill::Surface;
-    ImVec4 fill=glow.color,ink=ReadableOn(fill),accent=ink;
+    ImVec4 fill=glow.color,ink=detail::InkOn(fill),accent=ink;
     if(surfaceFill) {
         fill=options.theme?options.theme->semantic.surface:ImVec4{.09f,.09f,.10f,1.0f};
         fill.w=0.84f;

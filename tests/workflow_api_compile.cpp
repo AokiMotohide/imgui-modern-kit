@@ -51,7 +51,7 @@ auto volatile resolveRightPanel=&imkit::ResolveRightSidePanelLayout;
 auto volatile rightPanelHandle=&imkit::RightSidePanelHandle;
 auto volatile externalControlStyle=&imkit::MakeExternalControlStyle;
 auto volatile externalControl=&imkit::ExternalControlIndicator;
-void (*volatile plateMark)(ImDrawList*,ImVec2,float,const char*,imkit::StepMarkState,bool,const imkit::PlateMarkStyle&,imkit::ComponentOptions)=&imkit::DrawPlateMark;
+void (*volatile plateMark)(ImDrawList*,ImVec2,float,const char*,imkit::StepMarkState,const imkit::PlateMarkDecor&,const imkit::PlateMarkStyle&,imkit::ComponentOptions)=&imkit::DrawPlateMark;
 imkit::StableId (*volatile stepBand)(const char*,std::span<const imkit::StepBandGroup>,std::span<const imkit::StepBandItem>,imkit::StableId,imkit::StepBandOptions,imkit::ComponentOptions)=&imkit::StepBand;
 auto volatile zoneColor=&imkit::SurfaceZoneColor;auto volatile pushZone=&imkit::PushSurfaceZone;auto volatile popZone=&imkit::PopSurfaceZone;
 }
@@ -65,7 +65,10 @@ int main() {
     imkit::StageProgressView stages;stages.marks=&plate;
     imkit::StepBandGroup bandGroups[1]{{1,"Setup",0,2,{}}};
     imkit::StepBandItem bandItems[2]{{1,"One","",imkit::StepMarkState::Completed},{2,"Two","",imkit::StepMarkState::Current,true}};
-    imkit::StepBandOptions band;band.marks=&plate;band.height=36.f;
+    imkit::StepBandOptions band;band.marks=&plate;band.height=36.f;band.optionalScale=.72f;
+    bandItems[0].growth=imkit::PlateGrowth::Grown;bandItems[1].growth=imkit::PlateGrowth::Sprout;bandItems[1].optional=true;
+    imkit::PlateMarkDecor decor;decor.blocked=true;decor.growth=imkit::PlateGrowth::Sprout;
+    if(!decor.blocked||!bandItems[1].optional||*bandItems[0].growth!=imkit::PlateGrowth::Grown) return 1;
     imkit::Theme theme=imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
     if(!stages.marks||sizeof(bandGroups)==0||!bandItems[1].blocked||band.height<=0||theme.zones.monitor.w<=0||!(plateMark&&stepBand&&zoneColor&&pushZone&&popZone)) return 1;
     imkit::StableId ids[1];imkit::RequestBuffer requests{ids};

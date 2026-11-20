@@ -23,8 +23,9 @@ struct ThemePresetInfo {
 };
 enum class ContrastMode { Standard, HighContrast };
 enum class Density { Compact, Comfortable, Touch };
-// Radius presets for SetCornerStyle. Soft matches the default radii.
-enum class CornerStyle { Sharp, Soft, Round, Pill };
+// Radius presets for SetCornerStyle. Soft matches the default radii: a smooth corner at a quarter of the control height.
+// There is no capsule preset: a fully round button reads as a tag and leaves less room for its label.
+enum class CornerStyle { Sharp, Soft, Round };
 enum class TextRole { Caption, Body, Heading, Title, Mono };
 enum class ElevationLevel { Raised, Overlay };
 // Where an overlay sits in a viewport's work area: toasts, the external control pill and similar floating parts.
@@ -35,12 +36,16 @@ inline constexpr float OutlineMinimumWidth = 2.f;
 inline constexpr float ThemeScaleDefault = 1.25f;
 inline constexpr float ThemeScaleMinimum = 0.50f;
 inline constexpr float ThemeScaleMaximum = 2.50f;
+// Four steps a reader can tell apart at a glance: captions, body text, headings one step above the body, and titles.
 struct Typography {
-    float caption=12, body=14, label=14, heading=18, title=26, monospace=13;
+    float caption=12, body=14, label=14, heading=15, title=22, monospace=13;
 };
 struct SpacingTokens { std::array<float,8> steps{2,4,6,8,12,16,24,32}; };
 // subtle: tags and small marks, control: frames and buttons, overlay: cards, popups and dialogs.
-struct Radius { float subtle=4, control=8, overlay=12; };
+// controlShare > 0 derives all three from the control height when the theme resolves: control = height * share,
+// subtle = half of it and overlay = height * share * 1.6, rounded to whole pixels. The default .25 keeps the same
+// proportion at every density. Set it to 0 to use the pixel values as given.
+struct Radius { float subtle=4, control=8, overlay=12; float controlShare=.25f; };
 // border is a hairline up to 1 and an outline from OutlineMinimumWidth; dividers and table lines never exceed 1.
 // `button` is the outline of buttons when it differs from other frames (0 uses `border`); `dashedDisabled` draws the
 // outline of a disabled ImKit button as a dashed line, so it reads as "not now" without relying on colour alone.
@@ -65,7 +70,7 @@ struct Palette {
 // Sizes that components read while drawing. Ratios are multiples of the font size, so they follow the UI scale; the two
 // pixel values are screen pixels, as the literals they replace were. Defaults draw exactly as before.
 struct PartMetrics {
-    float checkHeightScale = 1.45f;       // Checkbox and RadioButton height.
+    float checkHeightScale = 1.15f;       // Checkbox and RadioButton height; close to the text so the mark never outweighs it.
     float toggleHeightScale = 1.75f;      // Toggle and Switch height.
     float dialogPaddingScale = 1.3f;      // Dialog window padding.
     float progressBarHeightScale = .2f;   // Progress bar height as a share of the frame height (kept within 4..8).
@@ -75,7 +80,7 @@ struct PartMetrics {
 // Derived from the density, tokens and `Theme::layout` by ResolveTheme; edit those instead.
 struct Metrics {
     float controlHeight = 30, spacing = 6, radius = 8, border = 1;
-    float bodySize = 14, headingSize = 18, focusWidth = 1.5f, elevation = 14;
+    float bodySize = 14, headingSize = 15, focusWidth = 1.5f, elevation = 14;
     float horizontalPadding = 12;
     float spacingY = 6;                   // Vertical item spacing; `spacing` is the horizontal one.
     float windowPaddingX = 12, windowPaddingY = 12;

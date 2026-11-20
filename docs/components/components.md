@@ -73,6 +73,21 @@ While the work a button started is running, set `ComponentOptions::progress` (0.
 
 Use primary once per decision area. Secondary, ghost and destructive variants express intent without changing button activation semantics.
 
+### Button roles, corners and widths
+
+| Role | Variant | Use for |
+|---|---|---|
+| Main | `Primary` | The one action of a region. At most one per region |
+| Ordinary | `Secondary` | Other actions |
+| Choice | `Segmented` (not a button) | Picking one of several values; only the chosen segment is filled with the accent |
+| Tool | `Ghost` | Small tools inside the content (undo, fit to view); frameless until hovered |
+| Danger | `SubtleDestructive` (`Destructive` in a confirmation) | Deleting or stopping |
+
+- Every button frame is painted by ImKit with smooth corners: the curve eases into the straight edge instead of meeting it with a circular arc. The radius is a quarter of the control height (`Radius::controlShare = .25`), so it keeps its proportion at every density. Only switch tracks and status badges stay round, because they are states, not things to press.
+- A width that follows the label is never narrower than `ActionButtonMinimumWidth()` (four text heights).
+- Give every button in a row or column of related actions the width `ActionRowWidth(labels)`, so they line up.
+- An `IconActionButton` without a label is a square.
+
 ## Boolean and mixed state
 
 ```cpp

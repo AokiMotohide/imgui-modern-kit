@@ -64,11 +64,21 @@ bool Annotate(const char* label,const char* description,accessibility::SemanticR
 bool LabeledButton(const char* label,const char* description,ImVec2 size,bool selected,ComponentOptions o,
                    accessibility::SemanticRole role=accessibility::SemanticRole::Button) {
     if(size.x==0)size.x=ImGui::CalcTextSize(Safe(label),nullptr,true).x+2*ImGui::GetStyle().FramePadding.x;
+    // The frame is painted here with smooth corners, like ActionButton; ImGui's own frame is made invisible.
+    const auto& style=ImGui::GetStyle();
+    const ImVec4 rest=style.Colors[ImGuiCol_Button],hover=style.Colors[ImGuiCol_ButtonHovered],held=style.Colors[ImGuiCol_ButtonActive];
+    const ImVec4 border=style.Colors[ImGuiCol_Border];
+    const float borderSize=style.FrameBorderSize;
+    for(ImGuiCol c:{ImGuiCol_Button,ImGuiCol_ButtonHovered,ImGuiCol_ButtonActive,ImGuiCol_Border}) ImGui::PushStyleColor(c,ImVec4{0,0,0,0});
     bool pressed=ImGui::Button("##action",size);
+    ImGui::PopStyleColor(4);
     if(ImGui::IsItemFocused())ImGui::SetNavCursorVisible(true);
     auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
-    const auto pad=ImGui::GetStyle().FramePadding;
+    const auto pad=style.FramePadding;
     auto* d=ImGui::GetWindowDrawList();
+    const float rounding=style.FrameRounding;
+    detail::AddSmoothRectFilled(d,a,b,ImGui::GetColorU32(ImGui::IsItemActive()?held:ImGui::IsItemHovered()?hover:rest),rounding);
+    if(borderSize>0.f) detail::AddSmoothRect(d,a,b,ImGui::GetColorU32(border),rounding,borderSize);
     d->PushClipRect({a.x+pad.x,a.y},{std::max(a.x+pad.x,b.x-pad.x),b.y},true);
     std::string_view text=Safe(label);if(auto suffix=text.find("##");suffix!=std::string_view::npos)text=text.substr(0,suffix);
     float room=std::max(0.f,b.x-a.x-pad.x*2);
@@ -85,8 +95,8 @@ bool LabeledButton(const char* label,const char* description,ImVec2 size,bool se
     d->PopClipRect();
     if(selected) {
         const ImVec4 accent=ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
-        d->AddRectFilled(a,b,ImGui::GetColorU32(detail::WithAlpha(accent,.14f)),ImGui::GetStyle().FrameRounding);
-        d->AddRect(a,b,ImGui::GetColorU32(detail::WithAlpha(accent,.55f)),ImGui::GetStyle().FrameRounding,ImDrawFlags_None,1.f);
+        detail::AddSmoothRectFilled(d,a,b,ImGui::GetColorU32(detail::WithAlpha(accent,.14f)),rounding);
+        detail::AddSmoothRect(d,a,b,ImGui::GetColorU32(detail::WithAlpha(accent,.55f)),rounding,1.f);
     }
     if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)||ImGui::IsItemFocused()) {
         if(!ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))ImGui::SetNextWindowPos({a.x,b.y});
@@ -177,17 +187,6 @@ StableId GroupedStepNavigator(const char* id, std::span<const StepGroup> groups,
 namespace {
 ImVec4 Pick(ImVec4 value,ImVec4 fallback) { return value.w>0?value:fallback; }
 ImVec4 Solid(ImVec4 c) { c.w=1.f; return c; }
-ImVec4 InkOn(ImVec4 background) {
-    return ContrastRatio({1,1,1,1},background)>=ContrastRatio({0,0,0,1},background)?ImVec4{1,1,1,1}:ImVec4{.08f,.06f,.05f,1};
-}
-// The weakest mix of `color` toward `text` that reads on `background`.
-ImVec4 ReadableOn(ImVec4 color,ImVec4 background,ImVec4 text) {
-    for(float k=0.f;k<1.f;k+=.1f) {
-        const ImVec4 c=Mix(color,text,k);
-        if(ContrastRatio(c,background)>=4.5f) return c;
-    }
-    return text;
-}
 struct PlateColors { ImVec4 fill,outline,ink,grid,handle,sprout,sproutOutline,redo,blocked,pending; };
 PlateColors ResolvePlate(const PlateMarkStyle& s,ComponentOptions o) {
     const Theme* t=o.theme;
@@ -198,7 +197,7 @@ PlateColors ResolvePlate(const PlateMarkStyle& s,ComponentOptions o) {
     const ImVec4 error=t?t->semantic.error:ImVec4{.9f,.34f,.3f,1};
     PlateColors c{};
     c.fill=Pick(s.fill,accent);
-    c.ink=Pick(s.ink,InkOn(c.fill));
+    c.ink=Pick(s.ink,detail::InkOn(c.fill));
     c.outline=Pick(s.outline,Mix(Solid(c.fill),{0,0,0,1},.55f));
     c.grid=Pick(s.grid,detail::WithAlpha(c.ink,.28f));
     c.handle=Pick(s.handle,Solid(c.ink));
@@ -232,7 +231,7 @@ StepMarkState StageMark(ProgressStatus status) {
 }
 } // namespace
 void DrawPlateMark(ImDrawList* draw,ImVec2 center,float size,const char* number,StepMarkState state,
-                   bool blocked,const PlateMarkStyle& style,ComponentOptions o) {
+                   const PlateMarkDecor& decor,const PlateMarkStyle& style,ComponentOptions o) {
     if(!draw || !(size>0.f)) return;
     const PlateColors c=ResolvePlate(style,o);
     const auto U=[](ImVec4 v) { return ImGui::GetColorU32(v); };
@@ -241,22 +240,33 @@ void DrawPlateMark(ImDrawList* draw,ImVec2 center,float size,const char* number,
     const float rounding=size*std::clamp(style.rounding,0.f,.5f);
     const float line=std::max(1.f,size*.07f);
     // Ornaments sit behind the plate; the plate hides their base.
-    if(state==StepMarkState::Completed) {
-        const ImVec2 p0{center.x-size*.09f,lo.y+line},p1{center.x+size*.09f,lo.y+line},tip{center.x,lo.y-size*.25f};
+    const PlateGrowth growth=decor.growth?*decor.growth:state==StepMarkState::Completed?PlateGrowth::Grown:PlateGrowth::None;
+    const auto blade=[&](float x,float halfWidth,float height) {
+        const ImVec2 p0{x-halfWidth,lo.y+line},p1{x+halfWidth,lo.y+line},tip{x,lo.y-height};
         draw->AddTriangleFilled(p0,tip,p1,U(c.sprout));
         draw->AddTriangle(p0,tip,p1,U(c.sproutOutline),std::max(1.f,line*.5f));
-    } else if(state==StepMarkState::Redo) {
+    };
+    if(growth==PlateGrowth::Sprout) {
+        blade(center.x,size*.09f,size*.25f);
+    } else if(growth==PlateGrowth::Grown) {
+        blade(center.x-size*.19f,size*.08f,size*.2f);
+        blade(center.x+size*.19f,size*.08f,size*.2f);
+        blade(center.x,size*.09f,size*.33f);
+    }
+    if(state==StepMarkState::Redo) {
         const ImVec2 p0{center.x-size*.06f,lo.y+line},p1{center.x+size*.08f,lo.y+line},tip{center.x+size*.26f,lo.y-size*.13f};
         draw->AddTriangleFilled(p0,tip,p1,U(c.redo));
         draw->AddTriangle(p0,tip,p1,U(c.outline),std::max(1.f,line*.45f));
     }
     ImVec4 ink=c.ink;
-    if(state==StepMarkState::Pending) {
+    // A pending step with grass has been started, so it is drawn as a plate rather than an empty outline.
+    const bool emptyOutline=state==StepMarkState::Pending && growth==PlateGrowth::None;
+    if(emptyOutline) {
         detail::DrawDashedRect(draw,lo,hi,rounding,U(c.pending),std::max(1.f,line*.8f),std::max(2.f,size*.12f));
         ink=c.pending;
     } else {
         const float alpha=state==StepMarkState::Skipped?.4f:1.f;
-        draw->AddRectFilled(lo,hi,U(detail::WithAlpha(c.fill,c.fill.w*alpha)),rounding);
+        detail::AddSmoothRectFilled(draw,lo,hi,U(detail::WithAlpha(c.fill,c.fill.w*alpha)),rounding);
         const int lines=std::clamp(style.gridLines,0,6);
         const ImU32 grid=U(detail::WithAlpha(c.grid,c.grid.w*alpha));
         for(int i=1;i<=lines;++i) {
@@ -264,7 +274,7 @@ void DrawPlateMark(ImDrawList* draw,ImVec2 center,float size,const char* number,
             draw->AddLine({lo.x+size*f,lo.y+line},{lo.x+size*f,hi.y-line},grid,1.f);
             draw->AddLine({lo.x+line,lo.y+size*f},{hi.x-line,lo.y+size*f},grid,1.f);
         }
-        draw->AddRect(lo,hi,U(detail::WithAlpha(c.outline,c.outline.w*alpha)),rounding,ImDrawFlags_None,line);
+        detail::AddSmoothRect(draw,lo,hi,U(detail::WithAlpha(c.outline,c.outline.w*alpha)),rounding,line);
         ink=detail::WithAlpha(ink,ink.w*alpha);
     }
     if(number && *number) {
@@ -272,7 +282,7 @@ void DrawPlateMark(ImDrawList* draw,ImVec2 center,float size,const char* number,
         const float fontSize=size*(std::strlen(number)>=2?.46f:.56f);
         const ImVec2 extent=font->CalcTextSizeA(fontSize,FLT_MAX,0.f,number);
         const ImVec2 at{center.x-extent.x*.5f,center.y-extent.y*.5f};
-        if(state!=StepMarkState::Pending) // A thin outline keeps the number readable over the grid.
+        if(!emptyOutline) // A thin outline keeps the number readable over the grid.
             for(const ImVec2 d:{ImVec2{-1,0},ImVec2{1,0},ImVec2{0,-1},ImVec2{0,1}})
                 draw->AddText(font,fontSize,{at.x+d.x,at.y+d.y},U(detail::WithAlpha(c.outline,.55f*ink.w)),number);
         draw->AddText(font,fontSize,at,U(ink),number);
@@ -286,7 +296,7 @@ void DrawPlateMark(ImDrawList* draw,ImVec2 center,float size,const char* number,
             draw->AddRect(a,b,U(c.outline),handle*.25f,ImDrawFlags_None,std::max(1.f,line*.6f));
         }
     }
-    if(blocked) {
+    if(decor.blocked) {
         const ImVec2 dot{hi.x,lo.y};
         draw->AddCircleFilled(dot,size*.12f,U(c.blocked),16);
         draw->AddCircle(dot,size*.12f,U(c.outline),16,std::max(1.f,line*.5f));
@@ -306,7 +316,7 @@ StableId StepBand(const char* id,std::span<const StepBandGroup> groups,std::span
     ImFont* font=ImGui::GetFont();
     ImFont* strong=t&&t->fonts.emphasis?t->fonts.emphasis:font;
     const float fontSize=ImGui::GetFontSize();
-    const float height=layout.height>0.f?layout.height:ImGui::GetFrameHeight()*1.5f;
+    const float height=layout.height>0.f?layout.height:fontSize*2.5f;
     const float width=std::max(1.f,ImGui::GetContentRegionAvail().x);
     const ImVec2 origin=ImGui::GetCursorScreenPos();
     auto* draw=ImGui::GetWindowDrawList();
@@ -316,7 +326,8 @@ StableId StepBand(const char* id,std::span<const StepBandGroup> groups,std::span
     const float groupSize=fontSize*.9f;
     const float inset=std::max(2.f,height*.08f);
     const float trayPad=height*.14f,trayGap=height*.2f,link=height*.3f;
-    const float plate=height*.5f;
+    // The plate is the largest thing on the band; grass on top still fits inside the tray.
+    const float plate=height*.62f;
     const float markGap=height*.14f;
     // Runs of consecutive items that share a group; an item outside every group forms its own tray.
     struct Run { std::size_t first=0,end=0; int group=-1; };
@@ -347,6 +358,9 @@ StableId StepBand(const char* id,std::span<const StepBandGroup> groups,std::span
     const bool showLabels=cell>=plate+markGap*2.f+labelSize*1.2f;
     const PlateMarkStyle marks=layout.marks?*layout.marks:PlateMarkStyle{};
     const ImVec4 linkDone=Pick(marks.fill,accent);
+    const auto grown=[&](const StepBandItem& item) {
+        return item.growth?*item.growth==PlateGrowth::Grown:item.state==StepMarkState::Completed||item.state==StepMarkState::Skipped;
+    };
     StableId result=0;
     float x=origin.x;
     for(const auto& r:runs) {
@@ -355,15 +369,19 @@ StableId StepBand(const char* id,std::span<const StepBandGroup> groups,std::span
         const float labelWidth=showGroupLabels?groupLabelWidth(r):0.f;
         const float trayWidth=trayPad*2.f+labelWidth+cell*static_cast<float>(r.end-r.first)+link*static_cast<float>(r.end-r.first-1);
         const ImVec2 a{x,origin.y+inset},b{x+trayWidth,origin.y+height-inset};
-        const ImVec4 trayFill=Mix(background,tint,dark?.2f:.3f);
+        // A tint close to the band's own colour would vanish, so the tray is pushed lighter (or darker on a dark band)
+        // until it stands apart; its edge is pushed toward the text until it reads as a line.
+        const ImVec4 tinted=Mix(background,tint,dark?.2f:.3f);
+        const ImVec4 trayFill=detail::MixToContrast(tinted,dark?ImVec4{0,0,0,1}:ImVec4{1,1,1,1},0.f,1.14f,{background});
+        const ImVec4 trayEdge=detail::MixToContrast(Mix(background,tint,dark?.55f:.7f),text,0.f,1.5f,{trayFill,background});
         const float trayRounding=height*.26f;
-        draw->AddRectFilled(a,b,U(trayFill),trayRounding);
-        draw->AddRect(a,b,U(Mix(background,tint,dark?.55f:.7f)),trayRounding,ImDrawFlags_None,std::max(1.f,height*.035f));
+        detail::AddSmoothRectFilled(draw,a,b,U(trayFill),trayRounding);
+        detail::AddSmoothRect(draw,a,b,U(trayEdge),trayRounding,std::max(1.f,height*.035f));
         float cx=x+trayPad;
         const float centerY=(a.y+b.y)*.5f;
         if(labelWidth>0.f) {
             const char* label=groups[static_cast<std::size_t>(r.group)].label;
-            const ImVec4 color=ReadableOn(dark?tint:Mix(tint,text,.35f),trayFill,text);
+            const ImVec4 color=detail::ReadableOn(dark?tint:Mix(tint,text,.35f),trayFill,text);
             draw->AddText(strong,groupSize,{cx+trayPad*.1f,centerY-groupSize*.5f},U(color),label);
             cx+=labelWidth;
         }
@@ -379,21 +397,23 @@ StableId StepBand(const char* id,std::span<const StepBandGroup> groups,std::span
                         accessibility::SemanticAction::Press,isCurrent,o)) pressed=true;
             const float cellRounding=height*.2f;
             if(isCurrent) {
-                draw->AddRectFilled(ca,cb,U(Mix(trayFill,dark?text:ImVec4{1,1,1,1},dark?.16f:.7f)),cellRounding);
-                draw->AddRect(ca,cb,U(text),cellRounding,ImDrawFlags_None,std::max(1.5f,height*.05f));
+                detail::AddSmoothRectFilled(draw,ca,cb,U(Mix(trayFill,dark?text:ImVec4{1,1,1,1},dark?.16f:.7f)),cellRounding);
+                detail::AddSmoothRect(draw,ca,cb,U(text),cellRounding,std::max(1.5f,height*.05f));
             } else if(hovered) {
-                draw->AddRectFilled(ca,cb,U(Mix(trayFill,text,.08f)),cellRounding);
+                detail::AddSmoothRectFilled(draw,ca,cb,U(Mix(trayFill,text,.08f)),cellRounding);
             }
-            const ImVec2 markCenter{ca.x+markGap*.6f+plate*.5f,centerY+plate*.1f};
+            const float itemPlate=item.optional?plate*std::clamp(layout.optionalScale,.4f,1.f):plate;
+            const ImVec2 markCenter{ca.x+markGap*.6f+plate*.5f,centerY+itemPlate*.12f};
             char number[24];std::snprintf(number,sizeof(number),"%zu",i+1);
-            DrawPlateMark(draw,markCenter,plate,number,item.state,item.blocked,marks,o);
+            DrawPlateMark(draw,markCenter,itemPlate,number,item.state,{item.blocked,item.growth},marks,o);
             if(showLabels) {
                 const float labelX=markCenter.x+plate*.5f+markGap;
                 ImFont* labelFont=isCurrent?strong:font;
-                const std::string fitted=FitText(labelFont,labelSize,Safe(item.label),cb.x-labelX-markGap*.5f);
-                const bool quiet=!isCurrent && (item.state==StepMarkState::Pending || item.state==StepMarkState::Skipped);
-                draw->AddText(labelFont,labelSize,{labelX,centerY-labelSize*.5f},
-                              U(quiet?ReadableOn(muted,trayFill,text):text),fitted.c_str());
+                const float size=item.optional&&!isCurrent?labelSize*.88f:labelSize;
+                const std::string fitted=FitText(labelFont,size,Safe(item.label),cb.x-labelX-markGap*.5f);
+                const bool quiet=!isCurrent && !grown(item) && !item.growth;
+                draw->AddText(labelFont,size,{labelX,centerY-size*.5f},
+                              U(quiet?detail::ReadableOn(muted,trayFill,text):text),fitted.c_str());
             }
             if(hovered) {
                 ImGui::BeginTooltip();ImGui::PushTextWrapPos(fontSize*28.f);
@@ -405,11 +425,14 @@ StableId StepBand(const char* id,std::span<const StepBandGroup> groups,std::span
             ImGui::EndDisabled();Pop();
             cx+=cell;
             if(i+1<r.end) {
-                const bool done=item.state==StepMarkState::Completed || item.state==StepMarkState::Skipped;
-                const float y=markCenter.y;
+                const bool done=grown(item);
+                const bool detour=item.optional || items[i+1].optional;
+                const float y=centerY+plate*.12f;
                 const float thickness=std::max(2.f,height*.07f);
-                if(done) draw->AddLine({cx-markGap*.2f,y},{cx+link+markGap*.2f,y},U(linkDone),thickness);
-                else draw->AddLine({cx,y},{cx+link,y},U(detail::WithAlpha(muted,.5f)),std::max(1.f,thickness*.45f));
+                const ImU32 color=done?U(linkDone):U(detail::ReadableOn(detail::WithAlpha(muted,.7f),trayFill,text));
+                if(detour) detail::DrawDottedLine(draw,{cx,y},{cx+link,y},color,thickness,thickness*1.8f);
+                else if(done) draw->AddLine({cx-markGap*.2f,y},{cx+link+markGap*.2f,y},color,thickness);
+                else draw->AddLine({cx,y},{cx+link,y},color,std::max(1.f,thickness*.45f));
                 cx+=link;
             }
         }
@@ -910,10 +933,10 @@ bool FilterChip(const char* id,const char* label,bool selected,ComponentOptions 
     ImGui::PushID(id);
     const auto pad=ImGui::GetStyle().FramePadding;
     const float check=selected?ImGui::GetFontSize()*1.1f:0.f;
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding,ImGui::GetFrameHeight()*.5f);
+    // Chips share the button corner: a capsule reads as a tag, not as something to press.
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,{pad.x+check*.5f,pad.y});
     bool hit=LabeledButton(label,"",{ImGui::CalcTextSize(Safe(label)).x+(pad.x+check*.5f)*2+check*.5f,0},selected,o);
-    ImGui::PopStyleVar(2);
+    ImGui::PopStyleVar();
     if(selected) {
         const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
         detail::DrawCheck(ImGui::GetWindowDrawList(),{a.x+pad.x*.6f+check*.55f,(a.y+b.y)*.5f},ImGui::GetFontSize()*.8f,ImGui::GetColorU32(ImGuiCol_CheckMark),1.7f);
@@ -1159,7 +1182,7 @@ void StageProgress(const char* id,const StageProgressView& view,ComponentOptions
             const ImVec4 color=ProgressStatusColor(stage.status,o);
             if(view.marks) {
                 char number[24];std::snprintf(number,sizeof(number),"%zu",i+1);
-                DrawPlateMark(draw,{x,centerY+radius*.15f},radius*1.9f,number,StageMark(stage.status),false,*view.marks,o);
+                DrawPlateMark(draw,{x,centerY+radius*.15f},radius*1.9f,number,StageMark(stage.status),{},*view.marks,o);
                 continue;
             }
             if(stage.status==ProgressStatus::Queued) draw->AddCircle({x,centerY},radius,ImGui::GetColorU32(color),24,2.f);

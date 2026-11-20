@@ -39,13 +39,13 @@ ImGuiStyle Style(const Theme &t, float scale) {
     s.ItemInnerSpacing = {m.spacing, m.spacingY};
     s.CellPadding = {m.spacing, m.cellPaddingY};
     const bool highContrast = t.contrast == ContrastMode::HighContrast;
-    // Windows, children and images are overlay-class surfaces: a pill control radius must not turn them into capsules.
+    // Windows, children and images are overlay-class surfaces: a large control radius must not turn them into capsules.
     const float surfaceRadius = std::min(t.radius.control, t.radius.overlay);
     s.WindowRounding = surfaceRadius;
     s.ChildRounding = surfaceRadius;
     s.PopupRounding = t.radius.overlay;
     s.FrameRounding = t.radius.control;
-    s.GrabRounding = 999.f; // Pill grabs follow the Toggle thumb.
+    s.GrabRounding = t.radius.control; // Slider grabs are pressed like buttons, so they share the button corner.
     s.ScrollbarRounding = 999.f;
     s.WindowBorderSize = border;
     s.ChildBorderSize = outline ? border : 0.f;
@@ -106,11 +106,14 @@ ImGuiStyle Style(const Theme &t, float scale) {
     c[ImGuiCol_Header] = p.selection;
     c[ImGuiCol_HeaderHovered] = detail::MixColor(p.surface, p.accent, .20f);
     c[ImGuiCol_HeaderActive] = detail::MixColor(p.surface, p.accent, .30f);
-    c[ImGuiCol_Separator] = hairline;
-    c[ImGuiCol_SeparatorHovered] = p.focus;
+    // Splitters and resize grips are things to grab: they use the divider, which ResolveTheme keeps visible against
+    // every surface zone, and turn to the accent under the pointer. A theme without zones keeps the hairline.
+    const ImVec4 divider = t.zones.divider.w > 0 ? t.zones.divider : hairline;
+    c[ImGuiCol_Separator] = divider;
+    c[ImGuiCol_SeparatorHovered] = p.accent;
     c[ImGuiCol_SeparatorActive] = p.accent;
-    c[ImGuiCol_ResizeGrip] = p.border;
-    c[ImGuiCol_ResizeGripHovered] = p.focus;
+    c[ImGuiCol_ResizeGrip] = Alpha(divider, .85f);
+    c[ImGuiCol_ResizeGripHovered] = p.accent;
     c[ImGuiCol_ResizeGripActive] = p.accent;
     c[ImGuiCol_InputTextCursor] = p.focus;
     c[ImGuiCol_Tab] = {0, 0, 0, 0};
@@ -194,7 +197,7 @@ Theme MakeTheme(ThemePreset preset) {
         c.control.hover = Hex(0x2b323d);
         c.control.pressed = Hex(0x384455);
         c.control.disabled = c.control.rest;
-        theme.radius = {6, 10, 14};
+        theme.radius = {6, 10, 14, .33f}; // Rounder than the default: a third of the control height.
         theme.stroke = {1, 2};
         ResolveTheme(theme);
         SetAccent(theme, Hex(0x78aaff));
@@ -282,14 +285,6 @@ ImVec4 Desaturate(ImVec4 c,float amount) {
     return {c.x+(grey-c.x)*amount,c.y+(grey-c.y)*amount,c.z+(grey-c.z)*amount,c.w};
 }
 ImVec4 ZoneSolid(ImVec4 c) { c.w=1.f; return c; }
-// Mixes `from` toward `to` from `start` until it reaches `ratio` against `against`, or `to` itself.
-ImVec4 MixUntilApart(ImVec4 from,ImVec4 to,float start,float ratio,ImVec4 against) {
-    for(float k=start;k<1.f;k+=.03f) {
-        const ImVec4 c=detail::MixColor(from,to,k);
-        if(ContrastRatio(c,against)>=ratio) return c;
-    }
-    return to;
-}
 // Neighbouring zones stay at least this contrast apart, so every theme separates them without hand tuning.
 constexpr float kZoneStep=1.14f;
 void ResolveSurfaceZones(Theme& t) {
@@ -300,17 +295,17 @@ void ResolveSurfaceZones(Theme& t) {
     if(t.scheme==ColorScheme::Dark) {
         // Chrome: the raised surface leaning to the accent, lighter than the panel.
         const ImVec4 chrome=detail::MixColor(ZoneSolid(c.surfaceRaised),ZoneSolid(c.accent),.12f);
-        z.chrome=MixUntilApart(chrome,white,0.f,kZoneStep,z.panel);
-        z.workspace=MixUntilApart(ZoneSolid(c.canvas),black,.30f,kZoneStep,z.panel);
-        z.monitor=MixUntilApart(Desaturate(ZoneSolid(c.canvas),.7f),black,.45f,kZoneStep*.95f,z.workspace);
-        z.divider=detail::MixColor(ZoneSolid(c.canvas),black,.55f);
+        z.chrome=detail::MixToContrast(chrome,white,0.f,kZoneStep,{z.panel});
+        z.workspace=detail::MixToContrast(ZoneSolid(c.canvas),black,.30f,kZoneStep,{z.panel});
+        z.monitor=detail::MixToContrast(Desaturate(ZoneSolid(c.canvas),.7f),black,.45f,kZoneStep*.95f,{z.workspace});
+        z.divider=detail::MixToContrast(ZoneSolid(c.canvas),black,.55f,1.3f,{z.panel,z.workspace});
     } else {
         // Chrome: the canvas washed with the accent, darker than the white-ish panel.
-        z.chrome=MixUntilApart(detail::MixColor(ZoneSolid(c.canvas),ZoneSolid(c.accent),.16f),ZoneSolid(c.accent),0.f,kZoneStep*.95f,z.panel);
-        z.workspace=MixUntilApart(Desaturate(ZoneSolid(c.canvas),.5f),ZoneSolid(c.text),.06f,kZoneStep,z.panel);
+        z.chrome=detail::MixToContrast(detail::MixColor(ZoneSolid(c.canvas),ZoneSolid(c.accent),.16f),ZoneSolid(c.accent),0.f,kZoneStep*.95f,{z.panel});
+        z.workspace=detail::MixToContrast(Desaturate(ZoneSolid(c.canvas),.5f),ZoneSolid(c.text),.06f,kZoneStep,{z.panel});
         // Monitor: a deep, quiet tone of the theme's ink, so a light theme keeps its colour without a bright frame.
         z.monitor=detail::MixColor(Desaturate(ZoneSolid(c.text),.45f),ZoneSolid(c.canvas),.18f);
-        z.divider=detail::MixColor(ZoneSolid(c.border),ZoneSolid(c.text),.15f);
+        z.divider=detail::MixToContrast(ZoneSolid(c.border),ZoneSolid(c.text),.15f,1.6f,{z.panel,z.workspace,z.chrome});
     }
     z.onMonitor=ContrastRatio(c.textSecondary,z.monitor)>=4.5f?ZoneSolid(c.textSecondary):
                 ContrastRatio(white,z.monitor)>=ContrastRatio(black,z.monitor)?ImVec4{.92f,.92f,.92f,1}:ImVec4{.08f,.08f,.08f,1};
@@ -318,6 +313,13 @@ void ResolveSurfaceZones(Theme& t) {
 } // namespace
 void ResolveTheme(Theme& t) {
     ResolveSurfaceZones(t);
+    {
+        // Secondary and disabled text are read as captions, so they keep 4.5:1 on the surfaces they sit on.
+        auto& s=t.semantic;
+        const ImVec4 panel=t.zones.panel.w>0?t.zones.panel:s.surface;
+        s.textSecondary=detail::MixToContrast(s.textSecondary,s.text,0.f,4.5f,{s.surface,panel});
+        s.textDisabled=detail::MixToContrast(s.textDisabled,s.text,0.f,4.5f,{s.surface,panel});
+    }
     const auto& c=t.semantic;
     t.colors={c.canvas,c.surface,c.control.rest,c.surfaceRaised,c.text,c.textSecondary,c.border,
         c.accent,c.onAccent,c.control.selected,c.control.focused,c.error,t.colors.onDestructive,
@@ -341,6 +343,13 @@ void ResolveTheme(Theme& t) {
         take(p.checkHeightScale,l.checkHeightScale); take(p.toggleHeightScale,l.toggleHeightScale);
         take(p.dialogPaddingScale,l.dialogPaddingScale); take(p.progressBarHeightScale,l.progressBarHeightScale);
         take(p.badgeExtraHeight,l.badgeExtraHeight); take(p.segmentedInset,l.segmentedInset);
+    }
+    if(t.radius.controlShare>0.f) {
+        // Corners in proportion to the control: the same smooth look at every density and control height.
+        const float share=std::clamp(t.radius.controlShare,0.f,.5f);
+        t.radius.control=std::round(t.metrics.controlHeight*share);
+        t.radius.subtle=std::round(t.radius.control*.5f);
+        t.radius.overlay=std::round(t.metrics.controlHeight*share*1.6f);
     }
     t.metrics.bodySize=t.typography.body; t.metrics.headingSize=t.typography.heading;
     t.metrics.radius=t.radius.control; t.metrics.border=t.stroke.border; t.metrics.focusWidth=t.stroke.focus;
@@ -372,16 +381,6 @@ void SetAccent(Theme &t, ImVec4 accent) {
     t.semantic.control.focused=accent; t.semantic.control.selected=t.colors.selection;
 }
 namespace {
-// The weakest mix of `from` toward `to`, starting at `start`, that reaches `ratio` against every background.
-ImVec4 MixForContrast(ImVec4 from, ImVec4 to, float start, float ratio, std::span<const ImVec4> backgrounds) {
-    for (float k = start; k < 1.f; k += .02f) {
-        const ImVec4 c = detail::MixColor(from, to, k);
-        if (std::all_of(backgrounds.begin(), backgrounds.end(),
-                        [&](ImVec4 background) { return ContrastRatio(c, background) >= ratio; }))
-            return c;
-    }
-    return to;
-}
 ImVec4 Opaque(ImVec4 c) {
     c.w = 1;
     return c;
@@ -405,12 +404,12 @@ Theme MakeBrandTheme(const BrandPalette &brand) {
     s.control = {input, detail::MixColor(input, accent, .10f), detail::MixColor(input, accent, .17f), accent,
                  detail::MixColor(surface, accent, dark ? .16f : .09f), input};
     // Secondary text and the border are derived against the surfaces they sit on, so they stay legible.
-    const std::array backgrounds = {s.canvas, s.surface, s.surfaceRaised, s.control.rest, s.control.hover,
-                                    s.control.pressed, s.control.selected};
+    const std::initializer_list<ImVec4> backgrounds = {s.canvas, s.surface, s.surfaceRaised, s.control.rest, s.control.hover,
+                                                       s.control.pressed, s.control.selected};
     s.textSecondary = given(brand.textSecondary) ? Opaque(brand.textSecondary)
-                                                 : MixForContrast(canvas, text, .78f, 4.5f, backgrounds);
+                                                 : detail::MixToContrast(canvas, text, .78f, 4.5f, backgrounds);
     s.textDisabled = s.textSecondary;
-    s.border = given(brand.border) ? Opaque(brand.border) : MixForContrast(surface, text, .62f, 3.f, backgrounds);
+    s.border = given(brand.border) ? Opaque(brand.border) : detail::MixToContrast(surface, text, .62f, 3.f, backgrounds);
     if (given(brand.success))
         s.success = Opaque(brand.success);
     if (given(brand.warning))
@@ -424,11 +423,10 @@ Theme MakeBrandTheme(const BrandPalette &brand) {
 }
 void SetCornerStyle(Theme &t, CornerStyle style) {
     switch (style) {
-    case CornerStyle::Sharp: t.radius = {0, 2, 4}; break;
-    case CornerStyle::Soft: t.radius = {4, 8, 12}; break;
-    case CornerStyle::Round: t.radius = {8, 16, 22}; break;
-    // 22 is half the tallest control (Touch, 44 px): every control becomes a pill, while a tall input stays a rounded box.
-    case CornerStyle::Pill: t.radius = {12, 22, 26}; break;
+    // Soft and Round follow the control height; Sharp keeps fixed small corners.
+    case CornerStyle::Sharp: t.radius = {0, 2, 4, 0.f}; break;
+    case CornerStyle::Soft: t.radius = Radius{}; break;
+    case CornerStyle::Round: t.radius = {8, 16, 22, .36f}; break;
     }
     ResolveTheme(t);
 }

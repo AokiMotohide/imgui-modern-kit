@@ -139,11 +139,6 @@ std::string_view CategoryGlyph(const NodeStyle &st, const NodeView &n) {
             return c.glyph;
     return {};
 }
-// Dark or light ink, whichever reads on the given fill.
-ImVec4 ReadableOn(ImVec4 fill) {
-    const float luminance = .2126f * fill.x + .7152f * fill.y + .0722f * fill.z;
-    return luminance > .55f ? ImVec4{.07f, .08f, .10f, 1} : ImVec4{1, 1, 1, 1};
-}
 ImVec4 Mix(ImVec4 a, ImVec4 b, float t) {
     return {a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t, a.w + (b.w - a.w) * t};
 }
@@ -377,7 +372,7 @@ void DrawBead(ImDrawList *dl, ImVec2 c, LinkValidity validity, const NodeStyle &
     }
     case LinkValidity::Invalid: {
         dl->AddCircleFilled(c, r, ImGui::GetColorU32(st.error));
-        const ImU32 ink = ImGui::GetColorU32(ReadableOn(st.error));
+        const ImU32 ink = ImGui::GetColorU32(detail::InkOn(st.error));
         dl->AddLine({c.x - 2.8f * k, c.y - 2.8f * k}, {c.x + 2.8f * k, c.y + 2.8f * k}, ink, 1.8f);
         dl->AddLine({c.x + 2.8f * k, c.y - 2.8f * k}, {c.x - 2.8f * k, c.y + 2.8f * k}, ink, 1.8f);
         return;
@@ -916,7 +911,7 @@ void DrawNodeChrome(const EditorFrame &f, const NodeView &n, ImDrawList *dl) {
         dl->AddRectFilled(t0, t1, Color(category), std::min(6 * z, (t1.y - t0.y) * .5f), ImDrawFlags_RoundCornersLeft);
         const float k = (t1.y - t0.y) * .2f;
         const ImVec2 c{a.x - tab * .5f, (t0.y + t1.y) * .5f};
-        dl->AddTriangleFilled({c.x - k * .7f, c.y - k}, {c.x + k, c.y}, {c.x - k * .7f, c.y + k}, Color(ReadableOn(category)));
+        dl->AddTriangleFilled({c.x - k * .7f, c.y - k}, {c.x + k, c.y}, {c.x - k * .7f, c.y + k}, Color(detail::InkOn(category)));
     }
     ImVec4 body = st.surface;
     if (group)
@@ -963,7 +958,7 @@ void DrawNodeChrome(const EditorFrame &f, const NodeView &n, ImDrawList *dl) {
         if (t1.x > t0.x) {
             dl->AddRectFilled(t0, t1, Color(WithAlpha(tone, .9f)), std::min(7 * z, tabHeight * .5f));
             dl->PushClipRect(t0, t1, true);
-            dl->AddText({t0.x + 9 * z, t0.y + (tabHeight - extent.y) * .5f}, Color(ReadableOn(tone)), title.c_str());
+            dl->AddText({t0.x + 9 * z, t0.y + (tabHeight - extent.y) * .5f}, Color(detail::InkOn(tone)), title.c_str());
             dl->PopClipRect();
         }
         int members = 0;
@@ -1336,20 +1331,20 @@ bool BeginNode(EditorFrame &f, NodeId id) {
         const ImVec4 category = CategoryColor(st, *n);
         const bool onCategory = n->kind != NodeKind::Note &&
                                 (st.headerFill == HeaderFill::Flat || st.headerFill == HeaderFill::Gradient);
-        const ImVec4 ink = onCategory ? ReadableOn(category) : st.text;
+        const ImVec4 ink = onCategory ? detail::InkOn(category) : st.text;
         float x = a.x + st.padding * z;
         float right = a.x + px.x - st.padding * z;
         const auto glyph = CategoryGlyph(st, *n);
         if (!glyph.empty() && !headerHooked) {
             const float tile = std::max(4.f, std::min(header - 10 * z, 20 * z));
             const ImVec2 t0{x, a.y + (header - tile) / 2}, t1{x + tile, a.y + (header + tile) / 2};
-            const ImVec4 fill = onCategory ? WithAlpha(ReadableOn(category), .22f) : category;
+            const ImVec4 fill = onCategory ? WithAlpha(detail::InkOn(category), .22f) : category;
             dl->AddRectFilled(t0, t1, Color(fill), std::min(st.rounding, tile * .3f));
             const std::string g(glyph);
             const float glyphSize = tile * .68f;
             const auto extent = ImGui::GetFont()->CalcTextSizeA(glyphSize, FLT_MAX, 0, g.c_str());
             dl->AddText(ImGui::GetFont(), glyphSize, {(t0.x + t1.x - extent.x) / 2, (t0.y + t1.y - extent.y) / 2},
-                        Color(onCategory ? ink : ReadableOn(category)), g.c_str());
+                        Color(onCategory ? ink : detail::InkOn(category)), g.c_str());
             x = t1.x + 6 * z;
         }
         // Header badges, right to left: open subgraph, lock, diagnostic, cached, progress.
@@ -1386,7 +1381,7 @@ bool BeginNode(EditorFrame &f, NodeId id) {
                                                                               : st.accent;
             dl->AddCircleFilled(c, badge * .5f, Color(tone));
             const float k = badge * .5f;
-            const ImU32 inkOn = Color(ReadableOn(tone));
+            const ImU32 inkOn = Color(detail::InkOn(tone));
             if (n->diagnostic.severity == Severity::Info) {
                 dl->AddLine({c.x, c.y - k * .1f}, {c.x, c.y + k * .5f}, inkOn, std::max(1.2f, k * .22f));
                 dl->AddCircleFilled({c.x, c.y - k * .45f}, std::max(.8f, k * .13f), inkOn);

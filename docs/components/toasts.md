@@ -33,6 +33,7 @@ The example needs `<array>`, `<vector>` and `<algorithm>`. Rules for using it:
 - Strings are borrowed UTF-8; keep their storage valid while drawing.
 - Use unique nonzero IDs.
 - Keep one state per viewport and context, and call `Reset()` before reusing a context.
+- Pass the area below your own fixed bars (a menu, a step band) as `ToastViewportOptions::areaPos` and `areaSize`, so cards never cover them. A zero size uses the viewport's work area.
 - Call on the UI thread. The host passes worker results across.
 - Create covering host windows with `ImGuiWindowFlags_NoBringToFrontOnFocus`, for example `ImGui::Begin("App", nullptr, ImGuiWindowFlags_NoBringToFrontOnFocus)`, before drawing toasts. Otherwise a click on a host window can raise it above existing toasts.
 - Toasts are ordinary public ImGui windows. They do not force the display order through internal APIs or steal focus, and new overlapping windows and modal dialogs keep Dear ImGui's ordering and input rules.

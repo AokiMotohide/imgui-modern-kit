@@ -1176,6 +1176,11 @@ int main() {
                                            const char*, ImGuiSliderFlags)>(&imkit::DragVector3WithUnit);
     auto* axisVector = &imkit::AxisVector3Field;
     auto* compactAction = &imkit::CompactIconActionButton;
+    float (*rowWidth)(std::span<const char *const>) = &imkit::ActionRowWidth;
+    float (*buttonWidth)(const char *) = &imkit::ActionButtonWidth;
+    float (*minimumWidth)() = &imkit::ActionButtonMinimumWidth;
+    if (!rowWidth || !buttonWidth || !minimumWidth)
+        return 1;
     imkit::ComponentOptions busy;
     busy.progress = .62f;
     imkit::Theme styled = theme; styled.stroke.button = 3;

@@ -80,6 +80,12 @@ int main() {
             const int col=p%3;Check(col==0?node->minimum.x==10:col==1?std::abs((node->minimum.x+node->maximum.x)*.5f-320)<1:node->maximum.x==630,"horizontal anchor");
         }
     }
+    // A host area keeps the cards inside it, below the host's own bars.
+    options.areaPos={0,100};options.areaSize={640,380};options.position=ToastPosition::TopRight;
+    s.Reset();frame(0);frame(.1);
+    if(auto* node=noticeNode()) Check(node->minimum.y==110&&node->maximum.x==630,"host area places the cards");
+    else Check(false,"notification in host area");
+    options.areaPos={};options.areaSize={};
     options.position=ToastPosition::TopRight;
     auto click=[&](accessibility::SemanticNode node,double now) {
         io.AddMousePosEvent((node.minimum.x+node.maximum.x)*.5f,(node.minimum.y+node.maximum.y)*.5f);

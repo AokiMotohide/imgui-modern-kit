@@ -78,6 +78,7 @@ const Field kFields[] = {
     IMKIT_RANGED("radius.subtle", Float, radius.subtle, 0, 1000),
     IMKIT_RANGED("radius.control", Float, radius.control, 0, 1000),
     IMKIT_RANGED("radius.overlay", Float, radius.overlay, 0, 1000),
+    IMKIT_RANGED("radius.control-share", Float, radius.controlShare, 0, .5f),
     IMKIT_RANGED("stroke.border", Float, stroke.border, 0, 32),
     IMKIT_RANGED("stroke.focus", Float, stroke.focus, 0, 32),
     IMKIT_RANGED("stroke.button", Float, stroke.button, 0, 32),
@@ -122,7 +123,7 @@ constexpr Name<Easing> kEasings[] = {{"linear", Easing::Linear}, {"ease-out", Ea
                                      {"ease-in", Easing::EaseIn}, {"out-back", Easing::OutBack}, {"in-back", Easing::InBack},
                                      {"spring", Easing::Spring}};
 constexpr Name<CornerStyle> kCorners[] = {{"sharp", CornerStyle::Sharp}, {"soft", CornerStyle::Soft},
-                                          {"round", CornerStyle::Round}, {"pill", CornerStyle::Pill}};
+                                          {"round", CornerStyle::Round}};
 constexpr Name<NodeHeaderFill> kHeaderFills[] = {{"strip", NodeHeaderFill::Strip}, {"tinted", NodeHeaderFill::Tinted},
                                                  {"flat", NodeHeaderFill::Flat}, {"gradient", NodeHeaderFill::Gradient},
                                                  {"none", NodeHeaderFill::None}};
@@ -374,6 +375,7 @@ ThemeParseResult ParseTheme(std::string_view text, Theme &theme) {
     }
     // Step 3: every other key, top to bottom.
     bool accentSet = false, onAccentSet = false, focusedSet = false, selectedSet = false;
+    bool radiusPixelsSet = false, radiusShareSet = false;
     for (const auto &e : entries) {
         if (e.key == "preset")
             continue;
@@ -389,7 +391,7 @@ ThemeParseResult ParseTheme(std::string_view text, Theme &theme) {
                 SetCornerStyle(theme, style);
                 ++result.applied;
             } else {
-                Warn(result, e.line, "unknown corner style `" + std::string(e.value) + "`, expected sharp, soft, round or pill");
+                Warn(result, e.line, "unknown corner style `" + std::string(e.value) + "`, expected sharp, soft or round");
             }
             continue;
         }
@@ -404,6 +406,8 @@ ThemeParseResult ParseTheme(std::string_view text, Theme &theme) {
             onAccentSet = onAccentSet || e.key == "semantic.on-accent";
             focusedSet = focusedSet || e.key == "semantic.control.focused";
             selectedSet = selectedSet || e.key == "semantic.control.selected";
+            radiusShareSet = radiusShareSet || e.key == "radius.control-share";
+            radiusPixelsSet = radiusPixelsSet || (e.key.starts_with("radius.") && e.key != "radius.control-share");
         } else
             Warn(result, e.line, "invalid value `" + std::string(e.value) + "` for `" + std::string(e.key) + "`");
     }
@@ -419,6 +423,9 @@ ThemeParseResult ParseTheme(std::string_view text, Theme &theme) {
         if (selectedSet)
             theme.semantic.control.selected = selected;
     }
+    // Radii given in pixels are meant as pixels: they switch off the proportional corner unless the file sets it too.
+    if (radiusPixelsSet && !radiusShareSet)
+        theme.radius.controlShare = 0.f;
     ResolveTheme(theme);
     return result;
 }

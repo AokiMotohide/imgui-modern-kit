@@ -120,11 +120,14 @@ void UpdateToastViewport(std::span<const ToastView> items,ToastViewportState& st
 void ToastViewport(const char* id,std::span<const ToastView> items,ToastViewportState& state,
                    double now,ToastEventBuffer& events,ToastViewportOptions layout,ComponentOptions o) {
     auto* viewport=ImGui::GetWindowViewport();
+    const bool hostArea=layout.areaSize.x>0.f&&layout.areaSize.y>0.f;
+    const ImVec2 areaPos=hostArea?layout.areaPos:viewport->WorkPos;
+    const ImVec2 areaSize=hostArea?layout.areaSize:viewport->WorkSize;
     const auto& style=ImGui::GetStyle();
     const float margin=Positive(layout.margin,style.WindowPadding.x);
     const float gap=Positive(layout.gap,style.ItemSpacing.y);
     const float width=std::min(Positive(layout.width,0)>0?layout.width:ImGui::GetFontSize()*25,
-                             std::max(1.f,viewport->WorkSize.x-std::min(margin*2,viewport->WorkSize.x-1)));
+                             std::max(1.f,areaSize.x-std::min(margin*2,areaSize.x-1)));
     const ImVec2 padding{style.WindowPadding.x,style.WindowPadding.y};
     const float textWidth=std::max(1.f,width-padding.x*2-Lead());
     // Open state of folded details, kept in the host window so it survives the cards being rebuilt each frame.
@@ -165,10 +168,10 @@ void ToastViewport(const char* id,std::span<const ToastView> items,ToastViewport
     std::size_t count=0;
     for(auto& e:state.entries) if(e.id&&!e.retired) ordered[count++]=&e;
     std::sort(ordered.begin(),ordered.begin()+count,[](auto* a,auto* b){return a->order>b->order;});
-    const detail::OverlayPlacement place=detail::PlaceOverlay(layout.position,viewport->WorkPos,viewport->WorkSize,margin);
+    const detail::OverlayPlacement place=detail::PlaceOverlay(layout.position,areaPos,areaSize,margin);
     const bool bottom=place.bottom;
     const float x=place.point.x-place.pivot.x*width;
-    const float available=std::max(1.f,viewport->WorkSize.y-std::min(margin*2,viewport->WorkSize.y-1));
+    const float available=std::max(1.f,areaSize.y-std::min(margin*2,areaSize.y-1));
     float used=0;std::size_t visible=0;
     std::array<float,ToastViewportState::Capacity> heights{};
     std::array<StableId,ToastViewportState::Capacity> paused{};std::size_t pauseCount=0;

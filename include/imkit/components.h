@@ -12,6 +12,10 @@
 #endif
 
 namespace imkit {
+// Button roles. Primary: the one action of a region (at most one per region). Secondary: an ordinary action.
+// Ghost: a tool inside the content (undo, fit to view), frameless until hovered. Destructive: a confirmed, final
+// action such as a dialog's delete. SubtleDestructive: deleting or stopping inside a list, red text and outline only.
+// Choosing one of several values is not a button: use Segmented.
 enum class ActionVariant { Primary, Secondary, Ghost, Destructive, SubtleDestructive };
 enum class CheckState { Unchecked, Checked, Mixed };
 enum class StatusKind { Neutral, Success, Warning, Error };
@@ -32,10 +36,18 @@ struct ComponentOptions {
     // spreads once when the button starts being drawn with this mark (not under reduced motion).
     bool callToAction = false;
 };
+// A width of 0 follows the label and is never narrower than ActionButtonMinimumWidth. Frames have smooth corners.
 bool ActionButton(const char *label, ActionVariant variant = ActionVariant::Primary,
                   const ImVec2 &size = ImVec2(0, 0), ComponentOptions options = {});
+// Four text heights: the narrowest an action button gets, so "OK" or "x" stays easy to hit.
+float ActionButtonMinimumWidth();
+// The width ActionButton gives `label` when its width follows the label.
+float ActionButtonWidth(const char *label);
+// The widest of ActionButtonWidth over `labels`. Pass it as the width of every button in a row or column of related
+// actions, so they line up as one group.
+float ActionRowWidth(std::span<const char *const> labels);
 // A single explicit action with a visible short label. Description and disabled
-// reason are shown on hover/focus; atlas and state remain host-owned.
+// reason are shown on hover/focus; atlas and state remain host-owned. With an empty label the button is a square.
 bool IconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
                       const char *label, const char *description = "",
                       ActionVariant variant = ActionVariant::Secondary,

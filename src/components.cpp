@@ -97,63 +97,25 @@ ButtonPalette MakeButtonPalette(ActionVariant variant, const Theme *t, const ImG
     p.focus = style.Colors[ImGuiCol_NavCursor];
     return p;
 }
-// ImKit paints the frame itself when the theme has a skin, a hard shadow that must sit behind the button, a button
-// outline of its own, or dashed outlines for disabled buttons (decided before the item knows it is disabled).
-bool PaintsOwnFrame(const Theme *t, const ButtonPalette &p) {
-    return t && ((t->skin && t->skin->drawFrame) || (t->elevation.hard && p.filled) || t->stroke.button > 0 ||
-                 t->stroke.dashedDisabled);
-}
-// Dashes along the outline of a rounded rectangle.
-void DrawDashedRect(ImDrawList *draw, ImVec2 minimum, ImVec2 maximum, ImU32 color, float rounding, float thickness) {
-    draw->PathRect(minimum, maximum, rounding);
-    ImVector<ImVec2> path;
-    path.swap(draw->_Path);
-    draw->PathClear();
-    if (path.Size < 2)
-        return;
-    path.push_back(path[0]);
-    const float dash = std::max(3.f, thickness * 2.5f), gap = std::max(2.f, thickness * 1.8f);
-    float phase = 0; // Distance into the current dash+gap period.
-    for (int i = 1; i < path.Size; ++i) {
-        ImVec2 a = path[i - 1];
-        const ImVec2 b = path[i];
-        float length = std::sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
-        const ImVec2 dir = length > 0 ? ImVec2{(b.x - a.x) / length, (b.y - a.y) / length} : ImVec2{0, 0};
-        while (length > 0) {
-            const bool on = phase < dash;
-            const float step = std::min(length, on ? dash - phase : dash + gap - phase);
-            const ImVec2 c{a.x + dir.x * step, a.y + dir.y * step};
-            if (on)
-                draw->AddLine(a, c, color, thickness);
-            a = c;
-            length -= step;
-            phase += step;
-            if (phase >= dash + gap)
-                phase = 0;
-        }
-    }
-}
 struct PushedButtonStyle {
     int colors = 0, vars = 0;
 };
-// `paintedByImKit` makes ImGui's own frame and focus ring invisible: PaintButtonFrame draws them instead.
-PushedButtonStyle PushButtonPalette(const ButtonPalette &p, bool paintedByImKit) {
+// ImKit always paints button frames itself (smooth corners, skins, hard shadows), so ImGui's own frame, border and
+// focus ring are made invisible; PaintButtonFrame draws them instead.
+PushedButtonStyle PushButtonPalette(const ButtonPalette &p) {
     const ImVec4 clear{0, 0, 0, 0};
-    ImGui::PushStyleColor(ImGuiCol_Button, paintedByImKit ? clear : p.fill);
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, paintedByImKit ? clear : p.hovered);
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, paintedByImKit ? clear : p.active);
+    ImGui::PushStyleColor(ImGuiCol_Button, clear);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, clear);
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, clear);
     ImGui::PushStyleColor(ImGuiCol_Text, p.text);
-    PushedButtonStyle pushed{4, 1};
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, paintedByImKit ? 0.f : p.borderSize);
-    if (p.subtleDestructive || paintedByImKit) {
-        ImGui::PushStyleColor(ImGuiCol_Border, paintedByImKit ? clear : p.border);
-        ++pushed.colors;
-    }
-    if (paintedByImKit) {
-        ImGui::PushStyleColor(ImGuiCol_NavCursor, clear);
-        ++pushed.colors;
-    }
-    return pushed;
+    ImGui::PushStyleColor(ImGuiCol_Border, clear);
+    ImGui::PushStyleColor(ImGuiCol_NavCursor, clear);
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
+    return {6, 1};
+}
+std::string_view VisibleLabel(const char *label) {
+    const std::string_view full = label ? label : "";
+    return full.substr(0, full.find("##"));
 }
 void PopButtonPalette(PushedButtonStyle pushed) {
     ImGui::PopStyleColor(pushed.colors);
@@ -191,16 +153,18 @@ ImVec2 PaintButtonFrame(const ButtonPalette &p, ActionVariant variant, const Com
     frame.disabled = (ImGui::GetItemFlags() & ImGuiItemFlags_Disabled) != 0;
     frame.hover = hover;
     if (!detail::TrySkin(t, frame)) {
-        draw->AddRectFilled(minimum, maximum, ImGui::GetColorU32(active ? p.active : hovered ? p.hovered : p.fill), rounding);
-        if (frame.disabled && t && t->stroke.dashedDisabled)
-            DrawDashedRect(draw, minimum, maximum, ImGui::GetColorU32(p.border), rounding,
-                           std::max(1.f, p.borderSize > 0 ? p.borderSize : style.FrameBorderSize));
-        else if (p.borderSize > 0)
-            draw->AddRect(minimum, maximum, ImGui::GetColorU32(p.border), rounding, ImDrawFlags_None, p.borderSize);
+        detail::AddSmoothRectFilled(draw, minimum, maximum, ImGui::GetColorU32(active ? p.active : hovered ? p.hovered : p.fill),
+                                    rounding);
+        if (frame.disabled && t && t->stroke.dashedDisabled) {
+            const float width = std::max(1.f, p.borderSize > 0 ? p.borderSize : style.FrameBorderSize);
+            detail::DrawDashedRect(draw, minimum, maximum, rounding, ImGui::GetColorU32(p.border), width, std::max(3.f, width * 2.5f));
+        } else if (p.borderSize > 0) {
+            detail::AddSmoothRect(draw, minimum, maximum, ImGui::GetColorU32(p.border), rounding, p.borderSize);
+        }
     }
     if (focused && ImGui::GetIO().NavVisible)
-        draw->AddRect({minimum.x - 2, minimum.y - 2}, {maximum.x + 2, maximum.y + 2}, ImGui::GetColorU32(p.focus), rounding + 2.f,
-                      ImDrawFlags_None, t ? t->stroke.focus : 2.f);
+        detail::AddSmoothRect(draw, {minimum.x - 2, minimum.y - 2}, {maximum.x + 2, maximum.y + 2}, ImGui::GetColorU32(p.focus),
+                              rounding + 2.f, t ? t->stroke.focus : 2.f);
     return shift;
 }
 // Draws the label of a button whose frame ImKit painted, placed and clipped the way ImGui::Button would.
@@ -257,34 +221,41 @@ void DrawCallToAction(ImGuiID id, const ButtonPalette &palette, const ComponentO
     const float grow = ImGui::GetFontSize() * .7f * eased;
     ImVec4 ring = Accent(o.theme);
     ring.w = .55f * (1.f - t);
-    draw->AddRect({a.x - grow, a.y - grow}, {b.x + grow, b.y + grow}, ImGui::GetColorU32(ring), style.FrameRounding + grow,
-                  ImDrawFlags_None, 2.f);
+    detail::AddSmoothRect(draw, {a.x - grow, a.y - grow}, {b.x + grow, b.y + grow}, ImGui::GetColorU32(ring),
+                          style.FrameRounding + grow, 2.f);
 }
 } // namespace
+float ActionButtonMinimumWidth() { return ImGui::GetFontSize() * 4.f; }
+float ActionButtonWidth(const char *label) {
+    const auto visible = VisibleLabel(label);
+    const float text = ImGui::CalcTextSize(visible.data(), visible.data() + visible.size()).x;
+    return std::max(text + ImGui::GetStyle().FramePadding.x * 2.f, ActionButtonMinimumWidth());
+}
+float ActionRowWidth(std::span<const char *const> labels) {
+    float width = 0.f;
+    for (const char *label : labels)
+        width = std::max(width, ActionButtonWidth(label));
+    return width;
+}
 bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, ComponentOptions options) {
     const auto *t = options.theme;
     auto &style = ImGui::GetStyle();
     const ButtonPalette palette = MakeButtonPalette(variant, t, style);
-    const bool painted = PaintsOwnFrame(t, palette);
-    const auto pushed = PushButtonPalette(palette, painted);
+    const auto pushed = PushButtonPalette(palette);
     const auto id = ImGui::GetID(label);
-    if (painted)
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0, 0, 0, 0)); // The label is drawn after the frame.
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0, 0, 0, 0)); // The label is drawn after the frame.
     // A call to action reserves room for its trailing chevron when the width follows the label.
     const float ctaSpace = options.callToAction ? ImGui::GetFontSize() * 1.2f : 0.f;
     ImVec2 buttonSize = size;
-    // With the width following the label, the label starts at the padding and the chevron takes the room after it.
+    // A width that follows the label never drops below four text heights, so short labels stay easy to hit.
+    if (size.x == 0.f)
+        buttonSize.x = ActionButtonWidth(label) + ctaSpace;
+    // With a chevron, the label starts at the padding and the chevron takes the room after it.
     const bool ctaAutoWidth = ctaSpace > 0.f && size.x == 0.f;
     if (ctaAutoWidth)
         ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, style.ButtonTextAlign.y));
-    if (ctaAutoWidth) {
-        const std::string_view full = label ? label : "";
-        const auto visible = full.substr(0, full.find("##"));
-        buttonSize.x = ImGui::CalcTextSize(visible.data(), visible.data() + visible.size()).x + style.FramePadding.x * 2.f + ctaSpace;
-    }
     bool pressed = ImGui::Button(label, buttonSize);
-    if (painted)
-        ImGui::PopStyleColor();
+    ImGui::PopStyleColor();
     if(ImGui::IsItemFocused()) ImGui::SetNavCursorVisible(true);
     // An empty reason means the host explains it itself; null keeps the generic word.
     if((ImGui::GetItemFlags()&ImGuiItemFlags_Disabled)!=0 &&
@@ -293,11 +264,10 @@ bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, 
         ImGui::SetTooltip("%s",options.disabledReason?options.disabledReason:"Unavailable");
     pressed = SemanticItem(options,label,accessibility::SemanticRole::Button,accessibility::SemanticAction::Press) || pressed;
     const float hover = detail::Ease(options, id, ImGui::IsItemHovered() ? 1.f : 0.f);
-    ImVec2 shift{0, 0};
-    if (painted)
-        shift = PaintButtonFrame(palette, variant, options, hover);
+    const ImVec2 shift = PaintButtonFrame(palette, variant, options, hover);
+    auto *draw = ImGui::GetWindowDrawList();
     if (std::isfinite(options.progress) && options.progress >= 0.f) {
-        // The work the button started, as a fill from the leading edge under the label.
+        // The work the button started, as a fill from the leading edge under the label, clipped to the button's shape.
         const ImVec2 a = ImGui::GetItemRectMin(), b = ImGui::GetItemRectMax();
         const float inset = std::max(1.f, palette.borderSize);
         const ImVec2 lo{a.x + shift.x + inset, a.y + shift.y + inset}, hi{b.x + shift.x - inset, b.y + shift.y - inset};
@@ -306,12 +276,13 @@ bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, 
         const float width = (hi.x - lo.x) * fraction;
         ImVec4 fill = palette.solid ? palette.text : Accent(t);
         fill.w = palette.solid ? .22f : .28f;
-        if (width > 0)
-            ImGui::GetWindowDrawList()->AddRectFilled(rtl ? ImVec2{hi.x - width, lo.y} : lo, rtl ? hi : ImVec2{lo.x + width, hi.y},
-                                                      ImGui::GetColorU32(fill), std::max(0.f, style.FrameRounding - inset));
+        if (width > 0) {
+            draw->PushClipRect(rtl ? ImVec2{hi.x - width, lo.y} : lo, rtl ? hi : ImVec2{lo.x + width, hi.y}, true);
+            detail::AddSmoothRectFilled(draw, lo, hi, ImGui::GetColorU32(fill), std::max(0.f, style.FrameRounding - inset));
+            draw->PopClipRect();
+        }
     }
-    if (painted)
-        DrawButtonLabel(label, palette.text, shift);
+    DrawButtonLabel(label, palette.text, shift);
     if (ctaAutoWidth)
         ImGui::PopStyleVar();
     if (options.callToAction)
@@ -321,8 +292,8 @@ bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, 
         auto color = palette.solid ? ImVec4(1, 1, 1, 1) : Accent(t);
         color.w = (palette.solid ? .10f : .08f) * hover;
         const ImVec2 a = ImGui::GetItemRectMin(), b = ImGui::GetItemRectMax();
-        ImGui::GetWindowDrawList()->AddRectFilled({a.x + shift.x, a.y + shift.y}, {b.x + shift.x, b.y + shift.y},
-                                                  ImGui::GetColorU32(color), style.FrameRounding);
+        detail::AddSmoothRectFilled(draw, {a.x + shift.x, a.y + shift.y}, {b.x + shift.x, b.y + shift.y}, ImGui::GetColorU32(color),
+                                    style.FrameRounding);
     }
     PopButtonPalette(pushed);
     return pressed;
@@ -344,15 +315,15 @@ bool IconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
     const auto *t = options.theme;
     auto &style = ImGui::GetStyle();
     const ButtonPalette palette = MakeButtonPalette(variant, t, style);
-    const bool painted = PaintsOwnFrame(t, palette);
-    const auto pushed = PushButtonPalette(palette, painted);
+    const auto pushed = PushButtonPalette(palette);
     const float iconSize = std::max(12.f, ImGui::GetFontSize());
-    const std::string_view fullLabel=label?label:"";
-    const auto visibleLabel=fullLabel.substr(0,fullLabel.find("##"));
+    const auto visibleLabel=VisibleLabel(label);
     const auto labelSize=ImGui::CalcTextSize(visibleLabel.data(),visibleLabel.data()+visibleLabel.size());
     const float gap=visibleLabel.empty()?0.f:style.ItemInnerSpacing.x;
-    const ImVec2 extent{iconSize+gap+labelSize.x+2*style.FramePadding.x,
-                        std::max(iconSize,labelSize.y)+2*style.FramePadding.y};
+    const float height=std::max(iconSize,labelSize.y)+2*style.FramePadding.y;
+    // An icon alone is a square; with a label the width follows the label like ActionButton.
+    const ImVec2 extent{visibleLabel.empty()?height:std::max(iconSize+gap+labelSize.x+2*style.FramePadding.x,ActionButtonMinimumWidth()),
+                        height};
     std::array<char,1024> widgetLabel{};
     std::snprintf(widgetLabel.data(),widgetLabel.size(),"%.*s##%s",
                   static_cast<int>(std::min<std::size_t>(visibleLabel.size(),900)),
@@ -361,11 +332,11 @@ bool IconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
     const bool pressedByWidget=ImGui::Button(widgetLabel.data(),extent);
     ImGui::PopStyleColor();
     if(ImGui::IsItemFocused()) ImGui::SetNavCursorVisible(true);
-    ImVec2 shift{0, 0};
-    if (painted)
-        shift = PaintButtonFrame(palette, variant, options, detail::Ease(options, ImGui::GetItemID(), ImGui::IsItemHovered() ? 1.f : 0.f));
+    const ImVec2 shift = PaintButtonFrame(palette, variant, options,
+                                          detail::Ease(options, ImGui::GetItemID(), ImGui::IsItemHovered() ? 1.f : 0.f));
     const auto minimum=ImVec2{ImGui::GetItemRectMin().x+shift.x,ImGui::GetItemRectMin().y+shift.y};
-    DrawAtlasIcon(atlas,icon,{minimum.x+style.FramePadding.x,
+    const float iconX=visibleLabel.empty()?(extent.x-iconSize)*.5f:style.FramePadding.x;
+    DrawAtlasIcon(atlas,icon,{minimum.x+iconX,
                              minimum.y+(extent.y-iconSize)*.5f},iconSize);
     ImGui::GetWindowDrawList()->AddText(
         {minimum.x+style.FramePadding.x+iconSize+gap,
@@ -482,9 +453,11 @@ bool Segmented(const char *id, int *selected, std::span<const char *const> label
     const ImVec2 after = ImGui::GetCursorScreenPos();
     auto *draw = ImGui::GetWindowDrawList();
     const float rounding = style.FrameRounding;
-    draw->AddRectFilled(origin, {origin.x + total + inset * 2, origin.y + height},
-                        ImGui::GetColorU32(detail::WithAlpha(style.Colors[ImGuiCol_Text], .08f)), rounding + 2.f);
-    detail::DrawOutline(draw, origin, {origin.x + total + inset * 2, origin.y + height}, rounding + 2.f);
+    const ImVec2 trackMax{origin.x + total + inset * 2, origin.y + height};
+    detail::AddSmoothRectFilled(draw, origin, trackMax, ImGui::GetColorU32(detail::WithAlpha(style.Colors[ImGuiCol_Text], .08f)),
+                                rounding + 2.f);
+    if (detail::IsOutlined(style))
+        detail::AddSmoothRect(draw, origin, trackMax, ImGui::GetColorU32(ImGuiCol_Border), rounding + 2.f, style.FrameBorderSize);
     // The raised thumb glides between segments (fractional index while animating).
     float index = static_cast<float>(std::clamp(*selected, 0, shown - 1));
     if (options.animation) {
@@ -500,8 +473,11 @@ bool Segmented(const char *id, int *selected, std::span<const char *const> label
     const float thumbWidth = widths[lower] + (widths[upper] - widths[lower]) * blend;
     const ImVec2 thumbMin{origin.x + inset + thumbLeft, origin.y + inset},
         thumbMax{origin.x + inset + thumbLeft + thumbWidth, origin.y + height - inset};
-    draw->AddRectFilled({thumbMin.x, thumbMin.y + 1}, {thumbMax.x, thumbMax.y + 1}, IM_COL32(0, 0, 0, 26), rounding);
-    draw->AddRectFilled(thumbMin, thumbMax, ImGui::GetColorU32(options.theme ? options.theme->colors.raised : style.Colors[ImGuiCol_PopupBg]), rounding);
+    // Only the chosen segment is filled, in the accent, so the choice reads at a glance without relying on a shadow.
+    const ImVec4 thumb = options.theme ? options.theme->colors.accent : style.Colors[ImGuiCol_CheckMark];
+    const ImVec4 onThumb = options.theme ? options.theme->colors.onAccent : detail::InkOn(thumb);
+    detail::AddSmoothRectFilled(draw, {thumbMin.x, thumbMin.y + 1}, {thumbMax.x, thumbMax.y + 1}, IM_COL32(0, 0, 0, 26), rounding);
+    detail::AddSmoothRectFilled(draw, thumbMin, thumbMax, ImGui::GetColorU32(thumb), rounding);
     ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0, 0, 0, 0));
     ImGui::PushStyleColor(ImGuiCol_HeaderHovered, detail::WithAlpha(style.Colors[ImGuiCol_Text], .06f));
     ImGui::PushStyleColor(ImGuiCol_HeaderActive, detail::WithAlpha(style.Colors[ImGuiCol_Text], .10f));
@@ -510,11 +486,9 @@ bool Segmented(const char *id, int *selected, std::span<const char *const> label
         ImGui::SetCursorScreenPos({origin.x + inset + lefts[i], origin.y + inset});
         ImGui::PushID(i);
         const bool active = *selected == i;
-        if (!active)
-            ImGui::PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]);
+        ImGui::PushStyleColor(ImGuiCol_Text, active ? onThumb : style.Colors[ImGuiCol_Text]);
         const bool hit = ImGui::Selectable(labels[i], false, 0, {widths[i], height - inset * 2});
-        if (!active)
-            ImGui::PopStyleColor();
+        ImGui::PopStyleColor();
         if (hit | SemanticItem(options, labels[i], accessibility::SemanticRole::Radio,
                                accessibility::SemanticAction::Select, active)) {
             changed = *selected != i;

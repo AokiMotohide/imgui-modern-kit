@@ -39,6 +39,9 @@ struct ToastViewportOptions {
     float width=0; // Zero uses font-relative width.
     float margin=-1, gap=-1; // Negative uses theme/style spacing.
     std::size_t maximum=4;
+    // The region the cards are placed in, in screen coordinates; a zero size uses the viewport's work area. Hosts pass
+    // the area below their own fixed bars (a menu, a step band), so cards never cover them and no host adds offsets.
+    ImVec2 areaPos{}, areaSize{};
 };
 // Host-owned, bounded storage; one instance per viewport/context. No strings,
 // ImGui context or application work are retained. Reset when reusing a context.

@@ -33,8 +33,9 @@ struct Section {
     Section& operator=(const Section&) = delete;
     explicit operator bool() const { return visible; }
 };
-constexpr CornerStyle kCorners[] = {CornerStyle::Sharp, CornerStyle::Soft, CornerStyle::Round, CornerStyle::Pill};
-constexpr const char* kCornerNames[] = {"sharp", "soft", "round", "pill"};
+constexpr CornerStyle kCorners[] = {CornerStyle::Sharp, CornerStyle::Soft, CornerStyle::Round};
+constexpr const char* kCornerNames[] = {"sharp", "soft", "round"};
+constexpr int kCustomCorner = 3; // Index of "Custom" in the corner combo.
 constexpr const char* kDensityNames[] = {"compact", "comfortable", "touch"};
 
 // Where the sample worlds live: examples/gallery/worlds, found by walking up from the executable and the working folder.
@@ -77,8 +78,8 @@ void LookPages::SyncFromTheme(const Theme& theme) {
     brand.accent = c.accent;
     brand.border = c.border;
     deriveBorder = false;
-    corner = 4;
-    for (int i = 0; i < 4; ++i) {
+    corner = kCustomCorner;
+    for (int i = 0; i < kCustomCorner; ++i) {
         Theme probe;
         SetCornerStyle(probe, kCorners[i]);
         if (probe.radius.subtle == theme.radius.subtle && probe.radius.control == theme.radius.control &&
@@ -105,7 +106,7 @@ std::string LookPages::Compose() const {
     if (!deriveBorder)
         add("brand.border", brand.border);
     char line[96];
-    if (corner < 4)
+    if (corner < kCustomCorner)
         t += std::string("corner = ") + kCornerNames[corner] + "\n";
     std::snprintf(line, sizeof line, "stroke.border = %g\n", border);
     t += line;
@@ -277,9 +278,9 @@ void LookPages::Studio(GalleryState& s) {
         }
     }
     if (const Section section{s, "Shape, outline and shadow"}) {
-        static const char* names[] = {"Sharp", "Soft", "Round", "Pill", "Custom"};
+        static const char* names[] = {"Sharp", "Soft", "Round", "Custom"};
         SetNextItemWidth(160.f);
-        changed |= Combo("Corners", &corner, names, corner == 4 ? 5 : 4);
+        changed |= Combo("Corners", &corner, names, corner == kCustomCorner ? kCustomCorner + 1 : kCustomCorner);
         Record(s, "look-corners");
         SetNextItemWidth(220.f);
         changed |= SliderFloat("Outline", &border, 0.f, 6.f, "%.1f px", ImGuiSliderFlags_AlwaysClamp);
@@ -299,7 +300,7 @@ void LookPages::Studio(GalleryState& s) {
         changed |= Combo("Density", &density, densities, 3);
     }
     if (changed) {
-        // The corner style combo has a fifth entry only while the radii are custom; picking one makes it a style.
+        // The corner style combo has a "Custom" entry only while the radii are custom; picking one makes it a style.
         Apply(s);
     }
 
