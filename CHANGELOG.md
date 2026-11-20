@@ -30,7 +30,7 @@
 - `StepBand` draws a one-row step bar sorted into tinted group trays, with numbered plate marks (`DrawPlateMark`) whose state shows in their shape. `StageProgress` and `WaitCard` can use the same marks.
 - Themes derive surface zones (chrome, panel, workspace, monitor) so the large regions of a window differ in every theme. `PushSurfaceZone` sets a window's background.
 - `DrawGlowFrame` lights the edge of a rectangle: steady, breathing or orbiting, with ripples on `Pulse()` or at an interval, inside, outside or centred on the edge. Every value is a field of `GlowFrameStyle`.
-- `ExternalControlIndicator` frames the viewport while an automation API, a remote operator or an agent drives the application, and shows a pill with the client, its activity and Stop. Each phase has its own frame style: connected, active and input locked. The phase is held for `holdSeconds` after the host lowers it, pulses within `pulseInterval` make one ripple, phases blend over `transitionSeconds`, the pill keeps its widest width while shown, and a pill without Stop lets input through. The pill can be a dark translucent theme surface (`pillFill = Surface`) with an outline, a soft shadow and a halo; the default look is unchanged.
+- `ExternalControlIndicator` frames the viewport while an automation API, a remote operator or an agent drives the application, and shows a pill with the client, its activity and Stop. Each phase has its own frame style: connected, active and input locked. The phase is held for `holdSeconds` after the host lowers it, pulses within `pulseInterval` make one ripple, phases blend over `transitionSeconds`, the pill keeps its widest width while shown, and a pill without Stop lets input through. The pill can be a raised theme surface (`pillFill = Surface`) with an outline, a soft shadow and a halo; the default look is unchanged.
 - `OverlayAnchor` names the six places of an overlay in a viewport's work area. Toasts and the external control pill share it, and `ToastPosition` is now an alias of it, so existing code compiles unchanged.
 - `imkit/motion.h` evaluates keyframe tracks in the common motion-file layout (each key names the curve that arrives at it) and draws layered pictures with CSS-like poses, so a designer's looping logo plays the same in the application. ImKit reads no files and owns no textures.
 - Themes gain `EaseIn`, `OutBack`, `InBack` and `Spring` curves (`ApplyEasing`, theme keys `ease-in`, `out-back`, `in-back`, `spring`), a button outline of its own (`stroke.button`) and dashed outlines for disabled buttons (`stroke.dashed-disabled`).
@@ -51,6 +51,7 @@
 - Typography defaults to caption 12, body 14, heading 15 and title 22; check boxes and radio buttons are 1.15 text heights. Secondary and disabled text are raised to 4.5:1 on the surface and the panel zone.
 - Splitters and resize grips use the divider zone colour and turn to the accent under the pointer.
 - One readable-colour rule (`MixToContrast`) serves surface zones, brand themes, step bands, node editors and the external control pill.
+- The external control pill with `pillFill = Surface` uses the raised surface at 96% and text that keeps 4.5:1 on it, so video behind it no longer washes the text out. An `IconActionButton` without a label shows its description as the tooltip, without an empty first line.
 
 ### 日本語
 
@@ -77,7 +78,7 @@
 - `StepBand`は、工程を色つきの群の箱に分けて1行に並べます。番号つきの板の印（`DrawPlateMark`）は、状態を形で示します。`StageProgress`と`WaitCard`も同じ印を使えます。
 - テーマが面の役割（帯、パネル、作業面、モニター）の色を作り、どのテーマでもウィンドウの大きな領域が見分けられます。`PushSurfaceZone`でウィンドウの背景に使います。
 - `DrawGlowFrame` は矩形の縁を光らせます。一定、呼吸、周回の動きと、`Pulse()` または一定間隔で出る波紋を持ち、縁の内側、外側、中央に描けます。値はすべて `GlowFrameStyle` のフィールドです。
-- `ExternalControlIndicator` は、自動化API、遠隔の操作者、エージェントがアプリを操作している間、ビューポートを枠で囲み、操作中の相手、その作業、停止ボタンを載せたピルを出します。枠の見た目は、接続中、操作中、入力ロック中の状態ごとに持ちます。ホストが段階を下げても `holdSeconds` の間は保持し、`pulseInterval` 内の Pulse は1つの波紋にまとめ、段階は `transitionSeconds` で補間します。ピルは表示中に最大幅を保ち、停止ボタンのないピルは入力を通します。ピルは、暗い半透明のテーマの面（`pillFill = Surface`）に、縁取り、やわらかい影、うっすらした光を付けた見た目にもできます。既定の見た目は変わりません。
+- `ExternalControlIndicator` は、自動化API、遠隔の操作者、エージェントがアプリを操作している間、ビューポートを枠で囲み、操作中の相手、その作業、停止ボタンを載せたピルを出します。枠の見た目は、接続中、操作中、入力ロック中の状態ごとに持ちます。ホストが段階を下げても `holdSeconds` の間は保持し、`pulseInterval` 内の Pulse は1つの波紋にまとめ、段階は `transitionSeconds` で補間します。ピルは表示中に最大幅を保ち、停止ボタンのないピルは入力を通します。ピルは、浮いたテーマの面（`pillFill = Surface`）に、縁取り、やわらかい影、うっすらした光を付けた見た目にもできます。既定の見た目は変わりません。
 - `OverlayAnchor` は、ビューポートの作業領域でオーバーレイを置く6つの位置を表します。トーストと外部制御のピルが共有し、`ToastPosition` はその別名になりました。既存のコードは変更なしでコンパイルできます。
 - `imkit/motion.h` は、よく使われる動きのファイルの形（各キーが、そこへ着く曲線の名前を持つ）のキーフレームを評価し、CSS と同じ順の姿勢で層の絵を描きます。デザイナーが作ったループのロゴを、アプリでも同じに再生できます。ImKit はファイルを読まず、テクスチャも持ちません。
 - テーマに `EaseIn`、`OutBack`、`InBack`、`Spring` の曲線（`ApplyEasing`、テーマのキー `ease-in`、`out-back`、`in-back`、`spring`）、ボタン専用の縁取りの太さ（`stroke.button`）、押せないボタンの破線の縁（`stroke.dashed-disabled`）を足しました。
@@ -98,6 +99,7 @@
 - 文字の段の既定は caption 12、body 14、heading 15、title 22 です。チェックとラジオは文字の高さ×1.15 です。補助の文字と無効の文字は、面とパネルの面に対して4.5:1以上に引き上げます。
 - 区画の境目とつまみは境の線（divider）の色で描き、触れると強調色になります。
 - 読める色を作る規則（`MixToContrast`）を1つにし、面の役割、ブランドのテーマ、工程の帯、ノード編集、外部制御のピルが同じ規則を使います。
+- 外部制御のピル（`pillFill = Surface`）は、浮いた面を96%の不透明度で塗り、文字はその上で4.5:1を保ちます。後ろの映像で文字が薄く見えなくなります。ラベルのない `IconActionButton` は、説明だけを重ねたときの説明に出し、空の1行目を出しません。
 
 ## 4.1.0 — 2026-11-06
 

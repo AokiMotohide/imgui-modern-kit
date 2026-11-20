@@ -347,7 +347,9 @@ bool IconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) || ImGui::IsItemFocused()) {
         ImGui::BeginTooltip();
         ImGui::PushTextWrapPos(ImGui::GetFontSize() * 32.f);
-        ImGui::TextUnformatted(label ? label : "");
+        // An icon-only button has no label: its description is the name.
+        if (!visibleLabel.empty())
+            ImGui::TextUnformatted(visibleLabel.data(), visibleLabel.data() + visibleLabel.size());
         const bool disabled = (ImGui::GetItemFlags() & ImGuiItemFlags_Disabled) != 0;
         if (disabled && options.disabledReason && *options.disabledReason)
             ImGui::TextDisabled("%s", options.disabledReason);

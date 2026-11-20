@@ -341,9 +341,12 @@ ExternalControlRequest ExternalControlIndicator(const char* id,const ExternalCon
     const bool surfaceFill=style.pillFill==ExternalControlPillFill::Surface;
     ImVec4 fill=glow.color,ink=detail::InkOn(fill),accent=ink;
     if(surfaceFill) {
-        fill=options.theme?options.theme->semantic.surface:ImVec4{.09f,.09f,.10f,1.0f};
-        fill.w=0.84f;
-        ink=options.theme?options.theme->semantic.text:ImVec4{.95f,.95f,.96f,1.0f};
+        // A raised, nearly opaque surface: the pill floats over video and canvases, so a see-through fill would let
+        // the picture behind wash the text out. The text keeps 4.5:1 on the fill.
+        fill=options.theme?options.theme->semantic.surfaceRaised:ImVec4{.09f,.09f,.10f,1.0f};
+        fill.w=0.96f;
+        ink=detail::ReadableOn(options.theme?options.theme->semantic.text:ImVec4{.95f,.95f,.96f,1.0f},
+                               {fill.x,fill.y,fill.z,1.0f},detail::InkOn(fill));
         accent=glow.color;
     } else fill.w=0.96f;
     ImGui::SetNextWindowViewport(viewport->ID);
