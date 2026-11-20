@@ -71,7 +71,7 @@ set_target_properties(imkit_motion PROPERTIES DEBUG_POSTFIX d)
 set_property(TARGET imkit_motion PROPERTY MSVC_DEBUG_INFORMATION_FORMAT Embedded)
 target_compile_options(imkit_motion PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
 
-add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/theme_text.cpp src/decor.cpp src/motion.cpp src/components.cpp src/icons.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp src/toast.cpp src/charts.cpp src/range_slider.cpp src/ptz.cpp src/shell.cpp src/window_frame.cpp)
+add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/theme_text.cpp src/decor.cpp src/motion.cpp src/components.cpp src/icons.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp src/toast.cpp src/charts.cpp src/range_slider.cpp src/transfer_curve.cpp src/ptz.cpp src/shell.cpp src/window_frame.cpp)
 add_library(imkit::imkit ALIAS imkit)
 
 target_compile_features(imkit PUBLIC cxx_std_20)

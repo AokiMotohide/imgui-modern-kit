@@ -26,6 +26,8 @@
 | `imkit/components.h` | `ActionButtonMinimumWidth`, `ActionButtonWidth`, `ActionRowWidth` |
 | `imkit/theme.h` | `Radius::controlShare` (theme key `radius.control-share`) |
 | `imkit/toast.h` | `ToastViewportOptions::areaPos`, `ToastViewportOptions::areaSize` |
+| `imkit/components.h` | `SliderFloatWithInput`, `SliderInputInteraction` |
+| `imkit/transfer_curve.h` | `TransferCurveEditor`, `TransferCurveSeries`, `TransferCurveNode`, `TransferCurveState`, `TransferCurveOptions`, `TransferCurveInteraction`, `TransferCurveClampMonotone` |
 
 - `StepBand` draws a one-row step bar sorted into tinted group trays, with numbered plate marks (`DrawPlateMark`) whose state shows in their shape. `StageProgress` and `WaitCard` can use the same marks.
 - Themes derive surface zones (chrome, panel, workspace, monitor) so the large regions of a window differ in every theme. `PushSurfaceZone` sets a window's background.
@@ -37,6 +39,7 @@
 - `ActionButton` fills from its leading edge with `ComponentOptions::progress` while the work it started runs.
 - Toasts can fold a detail, such as identifiers, behind a Details toggle and show it in the monospace role.
 - `StepNavigator` can draw its number marks as rounded squares.
+- `SliderFloatWithInput` edits one value with a slider and a number field on one row and reports drag progress and the committed value separately. `TransferCurveEditor` edits cubic Bezier transfer curves (several series, per-series display mapping, knot and handle drag, keyboard steps) and returns what changed.
 - Gallery: a Glow frame page with six looks, an editor for every field, a copyable C++ snippet, and a scripted remote session that frames the Gallery window.
 
 ### Changed

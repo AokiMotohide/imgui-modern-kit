@@ -1174,6 +1174,18 @@ int main() {
     const auto theme = imkit::MakeTheme(imkit::ThemePreset::Slate);
     auto* dragVector = static_cast<bool (*)(const char*, float*, const char*, float, float, float,
                                            const char*, ImGuiSliderFlags)>(&imkit::DragVector3WithUnit);
+    auto* sliderInput = &imkit::SliderFloatWithInput;
+    auto* curveEditor = &imkit::TransferCurveEditor;
+    auto* curveClamp = &imkit::TransferCurveClampMonotone;
+    imkit::SliderInputInteraction sliderInteraction;
+    imkit::TransferCurveState curveState;
+    imkit::TransferCurveOptions curveOptions;
+    imkit::TransferCurveInteraction curveInteraction;
+    imkit::TransferCurveSeries curveSeries;
+    imkit::TransferCurveNode curveNode;
+    if (!sliderInput || !curveEditor || !curveClamp || sliderInteraction.changed || curveState.node != -1 ||
+        curveOptions.monotone || curveInteraction.changed || curveSeries.dashed || curveNode.pos.x != 0.f)
+        return 1;
     auto* axisVector = &imkit::AxisVector3Field;
     auto* compactAction = &imkit::CompactIconActionButton;
     float (*rowWidth)(std::span<const char *const>) = &imkit::ActionRowWidth;

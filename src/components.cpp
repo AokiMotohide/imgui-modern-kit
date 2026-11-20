@@ -710,6 +710,59 @@ bool AxisVector3Field(const char *id, const char *label, float *value, const cha
     ImGui::PopID();
     return changed;
 }
+bool SliderFloatWithInput(const char *label, float *value, float minimum, float maximum, const char *format,
+                          float step, SliderInputInteraction *interaction, ComponentOptions options) {
+    (void)options;
+    if (interaction) *interaction = {};
+    if (!value || !std::isfinite(minimum) || !std::isfinite(maximum)) return false;
+    if (maximum < minimum) std::swap(minimum, maximum);
+    format = detail::SafeFormat(format, "fge", "%.2f");
+    const auto normalize = [&](float v) {
+        if (!std::isfinite(v)) v = minimum;
+        if (step > 0.f) v = minimum + std::round((v - minimum) / step) * step;
+        return std::min(std::max(v, minimum), maximum);
+    };
+    const float before = *value;
+    *value = normalize(*value);
+    bool changed = *value != before;
+    const auto &style = ImGui::GetStyle();
+    const float total = ImGui::CalcItemWidth();
+    char sample[48];
+    std::snprintf(sample, sizeof sample, format, static_cast<double>(maximum));
+    const float inputWidth = std::max(48.f, ImGui::CalcTextSize(sample).x + style.FramePadding.x * 2.f + 8.f);
+    const bool stacked = total < 160.f;
+    const float gap = style.ItemInnerSpacing.x;
+    const char *hidden = std::strstr(label, "##");
+    ImGui::PushID(label);
+    ImGui::BeginGroup();
+    SliderInputInteraction result;
+    const auto track = [&](bool edited) {
+        result.activated |= ImGui::IsItemActivated();
+        result.committed |= ImGui::IsItemDeactivatedAfterEdit();
+        result.canceled |= ImGui::IsItemActive() && ImGui::IsKeyPressed(ImGuiKey_Escape, false);
+        changed |= edited;
+    };
+    ImGui::SetNextItemWidth(stacked ? total : std::max(40.f, total - inputWidth - gap));
+    float v = *value;
+    bool edited = ImGui::SliderFloat("##slider", &v, minimum, maximum, format, ImGuiSliderFlags_AlwaysClamp);
+    if (edited) *value = normalize(v);
+    track(edited);
+    if (!stacked) ImGui::SameLine(0.f, gap);
+    ImGui::SetNextItemWidth(stacked ? total : inputWidth);
+    v = *value;
+    edited = ImGui::InputFloat("##input", &v, 0.f, 0.f, format, ImGuiInputTextFlags_AutoSelectAll);
+    if (edited) *value = normalize(v);
+    track(edited);
+    if (hidden != label) {
+        ImGui::SameLine(0.f, gap);
+        ImGui::TextUnformatted(label, hidden);
+    }
+    ImGui::EndGroup();
+    ImGui::PopID();
+    result.changed = changed;
+    if (interaction) *interaction = result;
+    return changed;
+}
 bool BeginSettingRow(const char *id, const char *label, float width) {
     if (!ImGui::BeginTable(id, 2, ImGuiTableFlags_SizingStretchProp))
         return false;

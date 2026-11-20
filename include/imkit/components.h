@@ -87,6 +87,18 @@ bool AxisVector3Field(const char *id, const char *label, float value[3], const c
                       float speed = 1.f, float minimum = 0.f, float maximum = 0.f,
                       const char *format = "%.3f", ImGuiSliderFlags flags = 0,
                       AxisVector3Interaction *interaction = nullptr);
+struct SliderInputInteraction {
+    bool activated = false; // Slider or number field became active.
+    bool changed = false;   // The value changed this frame.
+    bool committed = false; // Slider released, or number entry confirmed (Enter / focus lost), after a change.
+    bool canceled = false;  // Esc while editing.
+};
+// Slider and number field on one row, both editing `*value` (clamped to [minimum, maximum], snapped to `step` from
+// the minimum when step > 0). The width is ImGui::CalcItemWidth(); below ~160 px the number field wraps under the
+// slider. Text after "##" in `label` is the ID only. Use `interaction` to send drag progress (changed) and the final
+// value (committed) separately. Returns true on the frame the value changes.
+bool SliderFloatWithInput(const char* label, float* value, float minimum, float maximum, const char* format = "%.2f",
+                          float step = 0.f, SliderInputInteraction* interaction = nullptr, ComponentOptions options = {});
 // Begin/End pair; editor is placed in second column. End only when Begin is true.
 bool BeginSettingRow(const char *id, const char *label, float labelWidth = 140);
 void EndSettingRow();
