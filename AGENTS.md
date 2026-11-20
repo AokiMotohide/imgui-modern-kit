@@ -1,6 +1,6 @@
 # AGENTS.md
 
-このリポジトリ固有の規則だけを書く。進め方、確認の上限、止める条件、Git、報告は、ユーザー共通の指示ファイルに従う。製品契約は `docs/architecture.md`、検証範囲は `docs/validation.md` を正本とする。
+このリポジトリ固有の規則だけを書く。進め方、確認の上限、止める条件、Git、報告は、ユーザー共通の指示ファイルに従う。製品契約は `docs/architecture/architecture.md`、検証範囲は `docs/reference/validation.md` を正本とする。
 
 ## 基本方針
 
@@ -19,16 +19,38 @@
 
 ## ビルド
 
-- ビルド出力は `C:\aokiDev\imgui-modern-kit\build` の1か所（`build/windows-debug`、Arm64 は `build/windows-arm64`）。
-- 入口は `tools/Invoke-SharedBuild.ps1`（共有ラッパーを呼ぶ）。
+Claude Code・Codex・Antigravity 共通。`fast-build` スキルと食い違う所はこの節に従う。
+
+- 入口は `tools/Invoke-SharedBuild.ps1` だけ。出力先は `build/windows-debug`（Arm64 は `build/windows-arm64`）だけで、`build/` 直下の他のフォルダーは使わない・増やさない。
+- `-Target` は必ず指定する。省くと最も遅い `imkit_gallery`（約150秒）になる。
+- `fast-build` の単体コンパイル（`-t:ClCompile`）と `affected_targets.py` は使わない。テスト target 単独のビルドが数秒〜15秒で終わるので、それで足りる。
+
+### 手順（ビルド1回 + テスト1回）
+
+1. 編集をすべて終えてから、下の表の target を全部まとめて1回でビルドする。
+2. 成功したら、同じ範囲を1回でテストする。`-Tests` はビルドしないので、必ず手順1の後に `-TestRegex` 付きで実行する（`-TestRegex` なしは未ビルドの target が Not Run になり失敗する）。
+3. 失敗したら、出たエラーを全部直してから、同じ2コマンドを1回だけやり直す。ソースを変えずに同じ target を再ビルドしない。
 
 ```powershell
-& 'C:\aokiDev\imgui-modern-kit\tools\Invoke-SharedBuild.ps1' -Target '<imkit|対象テスト|imkit_gallery>'
-& 'C:\aokiDev\imgui-modern-kit\tools\Invoke-SharedBuild.ps1' -Tests -TestRegex '<対象テスト>'
+& 'C:\aokiDev\imgui-modern-kit\tools\Invoke-SharedBuild.ps1' -Target imkit_theme_test,imkit_api_compile
+& 'C:\aokiDev\imgui-modern-kit\tools\Invoke-SharedBuild.ps1' -Tests -TestRegex '^imkit\.(theme|api_compile)$'
 ```
 
-- 構成が要るときは `-Configure`、Arm64 は `-Preset windows-arm64` を付ける。
-- 変更した最小 target だけをビルドする。`ALL_BUILD`、`clean`、`Rebuild`、全テストは使わない。Release、install、package、SDK consumer は、変更範囲か依頼が必要とするときだけ実行する。
+### 変えたものとビルドする target
+
+| 変えたもの | target（ctest 名は `imkit_` を `imkit.` に替え、末尾の `_test` を除く） |
+|---|---|
+| `src/<名前>.cpp`・`tests/<名前>.cpp` | `imkit_<名前>_test` |
+| `src/show/<名前>.cpp` | `imkit_show_<名前>_test` |
+| `include/imkit/<名前>.h`（公開API） | 上の target、`imkit_api_compile`、あれば `imkit_<名前>_api_compile`（show は `imkit_show_api_compile`） |
+| 対応するテストがない `src/` | `imkit_api_compile` |
+| `examples/gallery/` | `imkit_gallery` だけ |
+| CMake | `-Configure` を1回してから、上の target |
+| 文書・規則・コメント・`website/` | ビルドしない |
+
+- `imkit_gallery` は、Gallery を変えたときと capture が要るときだけビルドする。ライブラリだけの変更では作らない。
+- `ALL_BUILD`、`clean`、`Rebuild`、全テスト、成功後の確認ビルドはしない。
+- Arm64（`-Preset windows-arm64`）、Release、install、package、SDK consumer は、依頼されたときだけ実行する。
 
 ## 文書と資産
 
