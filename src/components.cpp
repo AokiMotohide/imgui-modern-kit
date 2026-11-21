@@ -722,9 +722,8 @@ bool SliderFloatWithInput(const char *label, float *value, float minimum, float 
         if (step > 0.f) v = minimum + std::round((v - minimum) / step) * step;
         return std::min(std::max(v, minimum), maximum);
     };
-    const float before = *value;
-    *value = normalize(*value);
-    bool changed = *value != before;
+    // 外から来た値は、表示のために丸めても「変更」にしない（丸めは書き戻さない）。変更は利用者が動かしたときだけ。
+    bool changed = false;
     const auto &style = ImGui::GetStyle();
     const float total = ImGui::CalcItemWidth();
     char sample[48];

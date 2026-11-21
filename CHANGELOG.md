@@ -39,7 +39,7 @@
 - `ActionButton` fills from its leading edge with `ComponentOptions::progress` while the work it started runs.
 - Toasts can fold a detail, such as identifiers, behind a Details toggle and show it in the monospace role.
 - `StepNavigator` can draw its number marks as rounded squares.
-- `SliderFloatWithInput` edits one value with a slider and a number field on one row and reports drag progress and the committed value separately. `TransferCurveEditor` edits cubic Bezier transfer curves (several series, per-series display mapping, knot and handle drag, keyboard steps) and returns what changed.
+- `SliderFloatWithInput` edits one value with a slider and a number field on one row and reports drag progress and the committed value separately. It reports a change only when the user edits the value; a value passed in from outside is drawn as is, even when it is off the step. `TransferCurveEditor` edits cubic Bezier transfer curves (several series, per-series display mapping, knot and handle drag, keyboard steps) and returns what changed.
 - Gallery: a Glow frame page with six looks, an editor for every field, a copyable C++ snippet, and a scripted remote session that frames the Gallery window.
 
 ### Changed
