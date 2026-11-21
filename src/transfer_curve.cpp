@@ -328,4 +328,21 @@ bool TransferCurveEditor(const char* id, std::span<TransferCurveSeries> series, 
     if (interaction) *interaction = result;
     return changed || result.seriesChanged || result.nodeChanged;
 }
+bool TransferCurveSectionEditor(const char* id, TransferCurveSection& section,
+                                std::span<TransferCurveSeries> crossSeries,
+                                std::span<TransferCurveSeries> longitudinalSeries, TransferCurveState& state,
+                                TransferCurveOptions layout, TransferCurveInteraction* interaction,
+                                bool* sectionChanged, ComponentOptions options) {
+    ImGui::PushID(id);
+    static const char* const kLabels[] = {"æ©ªæ­é¢", "ç¸¦æ­é¢"}; // 横断面 / 縦断面
+    int selected = static_cast<int>(section);
+    const bool switched = Segmented("##section", &selected, kLabels, options);
+    if (switched) section = selected == 1 ? TransferCurveSection::Longitudinal : TransferCurveSection::Cross;
+    if (sectionChanged) *sectionChanged = switched;
+    const bool edited = TransferCurveEditor(
+        "##curve", section == TransferCurveSection::Longitudinal ? longitudinalSeries : crossSeries, state, layout,
+        interaction, options);
+    ImGui::PopID();
+    return switched || edited;
+}
 } // namespace imkit

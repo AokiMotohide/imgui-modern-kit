@@ -51,6 +51,17 @@ struct TransferCurveInteraction {
 bool TransferCurveEditor(const char* id, std::span<TransferCurveSeries> series, TransferCurveState& state,
                          TransferCurveOptions layout = {}, TransferCurveInteraction* interaction = nullptr,
                          ComponentOptions options = {});
+// Which cross-section of a tiled blend region the curves describe: across the region (horizontal cut) or along it
+// (vertical cut). The host owns the value; the editor never keeps it in a static.
+enum class TransferCurveSection { Cross = 0, Longitudinal = 1 };
+// Draws a Segmented switch (labels "横断面" / "縦断面") that edits `section`, then TransferCurveEditor for the series
+// of the chosen section. `state` is shared by both sections, so reset it from the host when `*sectionChanged` is true.
+// Returns true when the section, a value or the selection changed.
+bool TransferCurveSectionEditor(const char* id, TransferCurveSection& section,
+                                std::span<TransferCurveSeries> crossSeries,
+                                std::span<TransferCurveSeries> longitudinalSeries, TransferCurveState& state,
+                                TransferCurveOptions layout = {}, TransferCurveInteraction* interaction = nullptr,
+                                bool* sectionChanged = nullptr, ComponentOptions options = {});
 // Clamps handles to their segment box ([x0,x1] x [y0,y1]) and raises knot y values so the curve never decreases.
 // Returns true when anything changed. Use it as the host rule after an edit when `monotone` is off.
 bool TransferCurveClampMonotone(std::span<TransferCurveNode> nodes);

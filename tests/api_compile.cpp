@@ -1176,6 +1176,8 @@ int main() {
                                            const char*, ImGuiSliderFlags)>(&imkit::DragVector3WithUnit);
     auto* sliderInput = &imkit::SliderFloatWithInput;
     auto* curveEditor = &imkit::TransferCurveEditor;
+    auto* curveSectionEditor = &imkit::TransferCurveSectionEditor;
+    (void)curveSectionEditor;
     auto* curveClamp = &imkit::TransferCurveClampMonotone;
     imkit::SliderInputInteraction sliderInteraction;
     imkit::TransferCurveState curveState;
