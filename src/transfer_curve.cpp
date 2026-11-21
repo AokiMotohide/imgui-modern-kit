@@ -334,7 +334,7 @@ bool TransferCurveSectionEditor(const char* id, TransferCurveSection& section,
                                 TransferCurveOptions layout, TransferCurveInteraction* interaction,
                                 bool* sectionChanged, ComponentOptions options) {
     ImGui::PushID(id);
-    static const char* const kLabels[] = {"æ©ªæ­é¢", "ç¸¦æ­é¢"}; // 横断面 / 縦断面
+    static const char* const kLabels[] = {"横断面", "縦断面"};
     int selected = static_cast<int>(section);
     const bool switched = Segmented("##section", &selected, kLabels, options);
     if (switched) section = selected == 1 ? TransferCurveSection::Longitudinal : TransferCurveSection::Cross;
