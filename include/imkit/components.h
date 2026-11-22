@@ -18,7 +18,9 @@ namespace imkit {
 // Choosing one of several values is not a button: use Segmented.
 enum class ActionVariant { Primary, Secondary, Ghost, Destructive, SubtleDestructive };
 enum class CheckState { Unchecked, Checked, Mixed };
-enum class StatusKind { Neutral, Success, Warning, Error };
+// Live: sending to an output right now, like a broadcast tally ("on air"). Active: a mode the user turned on, drawn
+// in the accent colour. New kinds are only ever appended.
+enum class StatusKind { Neutral, Success, Warning, Error, Live, Active };
 enum class CompactActionRowRequest { None, Primary, Settings };
 struct ComponentOptions {
     const Theme *theme = nullptr; // Optional semantic overrides, never retained.
@@ -105,6 +107,12 @@ void EndSettingRow();
 void StatusBadge(const char *text, StatusKind kind = StatusKind::Neutral, ComponentOptions options = {});
 IMKIT_DEPRECATED("pass ComponentOptions instead of a bare Theme pointer")
 void StatusBadge(const char *text, StatusKind kind, const Theme *theme);
+// Size of a status badge for `text`. `fontSize` <= 0 uses the current font size.
+ImVec2 StatusBadgeSize(const char *text, float fontSize = 0.f);
+// Draws a status badge with its top-left corner at `position`, without taking layout space. For canvases and
+// overlays that place things on a draw list. Same look as StatusBadge. Returns the badge size.
+ImVec2 DrawStatusBadge(ImDrawList *draw, ImVec2 position, const char *text, StatusKind kind = StatusKind::Neutral,
+                       float fontSize = 0.f, ComponentOptions options = {});
 struct CompactActionRowOptions {
     const char *statusText = nullptr;
     StatusKind statusKind = StatusKind::Neutral;

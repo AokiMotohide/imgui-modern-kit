@@ -23,8 +23,15 @@ int (*volatile spriteAt)(const imkit::SpriteSheet&,double,bool)=&imkit::SpriteFr
 bool (*volatile spriteUV)(const imkit::SpriteSheet&,int,ImVec2&,ImVec2&)=&imkit::SpriteFrameUV;
 void (*volatile drawSprite)(ImDrawList*,const imkit::SpriteSheet&,int,ImVec2,ImVec2,ImU32)=&imkit::DrawSprite;
 int (*volatile sprite)(const char*,const imkit::SpriteSheet&,imkit::SpriteState&,double,ImVec2,bool)=&imkit::Sprite;
+ImVec2 (*volatile emptyMessage)(ImDrawList*,ImVec2,ImVec2,const imkit::IllustrationRef&,const char*,const char*,double,bool)=&imkit::DrawEmptyMessage;
+void (*volatile beginResult)(const char*,const imkit::ResultCardView&)=&imkit::BeginResultCard;
+void (*volatile endResult)()=&imkit::EndResultCard;
+ImVec2 (*volatile badgeSize)(const char*,float)=&imkit::StatusBadgeSize;
+ImVec2 (*volatile drawBadge)(ImDrawList*,ImVec2,const char*,imkit::StatusKind,float,imkit::ComponentOptions)=&imkit::DrawStatusBadge;
+constexpr imkit::StatusKind liveKind=imkit::StatusKind::Live, activeKind=imkit::StatusKind::Active;
+static_assert(static_cast<int>(liveKind)==4 && static_cast<int>(activeKind)==5);
 float (*volatile glowLevel)(const imkit::GlowFrameStyle&,double,bool)=&imkit::GlowFrameLevel;
 bool (*volatile glowFrame)(ImDrawList*,ImVec2,ImVec2,const imkit::GlowFrameStyle&,imkit::GlowFrameState&,double,bool,bool)=&imkit::DrawGlowFrame;
 imkit::ProgressThumbFn volatile thumb=nullptr;
 }
-int main(){return theme && resolve && contrast && palette && table && tree && annotate && compactActionRow && brand && corners && serialize && parse && pushRole && popRole && shadow && slices && nineSlice && backdrop && spriteAt && spriteUV && drawSprite && sprite && glowLevel && glowFrame && !thumb && !skinFrame?0:1;}
+int main(){return theme && resolve && contrast && palette && table && tree && annotate && compactActionRow && brand && corners && serialize && parse && pushRole && popRole && shadow && slices && nineSlice && backdrop && spriteAt && spriteUV && drawSprite && sprite && emptyMessage && beginResult && endResult && badgeSize && drawBadge && glowLevel && glowFrame && !thumb && !skinFrame?0:1;}

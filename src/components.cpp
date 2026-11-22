@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <cfloat>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -32,7 +33,10 @@ ImVec4 Status(StatusKind kind, const Theme *t) {
     case StatusKind::Warning:
         return t->colors.warning;
     case StatusKind::Error:
+    case StatusKind::Live:
         return t->colors.destructive;
+    case StatusKind::Active:
+        return t->colors.accent;
     default:
         return t->colors.muted;
     }
@@ -777,16 +781,21 @@ bool BeginSettingRow(const char *id, const char *label, float width) {
 void EndSettingRow() {
     ImGui::EndTable();
 }
-static ImVec2 StatusBadgeSize(const char *text) {
-    const float pad = ImGui::GetFontSize() * .75f;
-    return {ImGui::CalcTextSize(text).x + pad * 2 + ImGui::GetFontSize() * .55f, ImGui::GetFontSize() + detail::CurrentParts().badgeExtraHeight};
+ImVec2 StatusBadgeSize(const char *text, float fontSize) {
+    const float font = fontSize > 0.f ? fontSize : ImGui::GetFontSize();
+    const float pad = font * .75f;
+    const float textWidth = ImGui::GetFont()->CalcTextSizeA(font, FLT_MAX, 0.f, text).x;
+    const float extra = detail::CurrentParts().badgeExtraHeight * font / std::max(ImGui::GetFontSize(), 1.f);
+    return {textWidth + pad * 2 + font * .55f, font + extra};
 }
-void StatusBadge(const char *text, StatusKind kind, const Theme *theme) {
-    auto p = ImGui::GetCursorScreenPos();
-    const auto size = StatusBadgeSize(text);
-    ImGui::Dummy(size);
+ImVec2 DrawStatusBadge(ImDrawList *d, ImVec2 p, const char *text, StatusKind kind, float fontSize,
+                       ComponentOptions options) {
+    const Theme *theme = options.theme;
+    const float font = fontSize > 0.f ? fontSize : ImGui::GetFontSize();
+    const auto size = StatusBadgeSize(text, font);
+    if (!d)
+        return size;
     auto color = Status(kind, theme);
-    auto *d = ImGui::GetWindowDrawList();
     auto fill = color;
     fill.w = .14f;
     SkinFrame frame;
@@ -801,16 +810,27 @@ void StatusBadge(const char *text, StatusKind kind, const Theme *theme) {
         detail::DrawOutline(d, p, {p.x + size.x, p.y + size.y}, size.y * .5f);
     }
     // Marker shape and text carry meaning in addition to color.
-    const float u = ImGui::GetFontSize() * .3f;
+    const float u = font * .3f;
     const ImVec2 m{p.x + size.y * .5f + u * .4f, p.y + size.y * .5f};
     if (kind == StatusKind::Error)
         d->AddRectFilled({m.x - u * .8f, m.y - u * .8f}, {m.x + u * .8f, m.y + u * .8f}, ImGui::GetColorU32(color), 1.5f);
     else if (kind == StatusKind::Warning)
         d->AddTriangleFilled({m.x, m.y - u}, {m.x - u * 1.05f, m.y + u * .8f}, {m.x + u * 1.05f, m.y + u * .8f},
                              ImGui::GetColorU32(color));
-    else
+    else if (kind == StatusKind::Live) {
+        // A ring around the dot, so "on air" differs from an ordinary state by shape as well as colour.
+        d->AddCircle(m, u * 1.05f, ImGui::GetColorU32(color), 0, std::max(1.f, u * .3f));
+        d->AddCircleFilled(m, u * .55f, ImGui::GetColorU32(color));
+    } else
         d->AddCircleFilled(m, u * .8f, ImGui::GetColorU32(color));
-    d->AddText({m.x + u * 1.6f, p.y + (size.y - ImGui::GetTextLineHeight()) * .5f}, ImGui::GetColorU32(color), text);
+    d->AddText(ImGui::GetFont(), font, {m.x + u * 1.6f, p.y + (size.y - font) * .5f}, ImGui::GetColorU32(color), text);
+    return size;
+}
+void StatusBadge(const char *text, StatusKind kind, const Theme *theme) {
+    const auto p = ImGui::GetCursorScreenPos();
+    const auto size = StatusBadgeSize(text);
+    ImGui::Dummy(size);
+    DrawStatusBadge(ImGui::GetWindowDrawList(), p, text, kind, 0.f, ComponentOptions{theme});
 }
 CompactActionRowRequest CompactActionRow(const char *id,
                                          const CompactActionRowOptions &options) {

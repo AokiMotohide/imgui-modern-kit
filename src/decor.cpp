@@ -108,6 +108,121 @@ int Sprite(const char* id, const SpriteSheet& sheet, SpriteState& state, double 
 }
 
 namespace {
+ImVec2 SpriteSizeForHeight(const SpriteSheet& sheet, float height) {
+    return sheet.cellPixels.y > 0.f ? ImVec2{height * sheet.cellPixels.x / sheet.cellPixels.y, height} : ImVec2{0, 0};
+}
+void DrawPictureAt(ImDrawList* draw, const IllustrationRef& picture, ImVec2 foot, float height, double elapsed,
+                   bool animate) {
+    const ImVec2 size = SpriteSizeForHeight(*picture.sheet, height);
+    const ImVec2 minimum{foot.x - size.x * .5f, foot.y - height * picture.footY};
+    DrawSprite(draw, *picture.sheet, SpriteFrameAt(*picture.sheet, elapsed, animate), minimum,
+               {minimum.x + size.x, minimum.y + size.y});
+}
+} // namespace
+
+ImVec2 DrawEmptyMessage(ImDrawList* draw, ImVec2 minimum, ImVec2 maximum, const IllustrationRef& picture,
+                        const char* heading, const char* hint, double elapsedSeconds, bool animate) {
+    const float width = maximum.x - minimum.x, height = maximum.y - minimum.y;
+    if (!draw || !(width > 0.f) || !(height > 0.f))
+        return {-1.f, -1.f};
+    const float font = ImGui::GetFontSize();
+    const float pad = font * .25f;
+    const float pictureHeight = std::min({height - pad * 2.f, width * .4f, font * 4.f});
+    float textLeft = minimum.x + pad;
+    // Text matters more than the picture: drop the picture when the text would not fit beside it.
+    if (picture.sheet && width >= font * 9.f && pictureHeight >= font * 1.5f && picture.sheet->cellPixels.y > 0.f) {
+        const float pictureWidth = SpriteSizeForHeight(*picture.sheet, pictureHeight).x;
+        const float centerY = minimum.y + height * .5f;
+        DrawPictureAt(draw, picture,
+                      {minimum.x + pad + pictureWidth * .5f, centerY - pictureHeight * .5f + pictureHeight * picture.footY},
+                      pictureHeight, elapsedSeconds, animate);
+        textLeft += pictureWidth + pad;
+    }
+    const bool twoLines = hint && *hint && height >= font * 2.6f;
+    const float buttonHeight = ImGui::GetFrameHeight();
+    const bool withAction = twoLines && height >= font * 2.4f + buttonHeight + pad * 3.f;
+    const float textHeight = (twoLines ? font * 2.2f : font) + (withAction ? pad + buttonHeight : 0.f);
+    float y = minimum.y + (height - textHeight) * .5f;
+    draw->AddText({textLeft, y}, ImGui::GetColorU32(ImGuiCol_Text), heading ? heading : "");
+    if (twoLines) {
+        y += font * 1.2f;
+        draw->AddText({textLeft, y}, ImGui::GetColorU32(ImGuiCol_TextDisabled), hint);
+    }
+    if (!withAction)
+        return {-1.f, -1.f};
+    return {textLeft, y + font + pad};
+}
+
+void BeginResultCard(const char* id, const ResultCardView& view) {
+    ImGui::PushID(id);
+    ImGuiStorage* storage = ImGui::GetStateStorage();
+    const ImGuiID signatureKey = ImGui::GetID("signature"), startKey = ImGui::GetID("start");
+    const int signature = static_cast<int>(view.signature ^ (view.signature >> 32));
+    const double now = ImGui::GetTime();
+    if (storage->GetInt(signatureKey, 0) != signature || storage->GetFloat(startKey, -1.f) < 0.f) {
+        storage->SetInt(signatureKey, signature);
+        storage->SetFloat(startKey, static_cast<float>(now));
+    }
+    const double elapsed = now - storage->GetFloat(startKey, static_cast<float>(now));
+
+    const ImGuiStyle& style = ImGui::GetStyle();
+    const ImVec2 start = ImGui::GetCursorScreenPos();
+    const float width = std::max(1.f, ImGui::GetContentRegionAvail().x);
+    const float pad = style.FramePadding.x + 2.f;
+    const float pictureHeight = ImGui::GetFontSize() * 3.2f;
+    const float pictureWidth = view.picture.sheet ? SpriteSizeForHeight(*view.picture.sheet, pictureHeight).x : 0.f;
+
+    ImDrawList* draw = ImGui::GetWindowDrawList();
+    draw->ChannelsSplit(2);
+    draw->ChannelsSetCurrent(1);
+    if (view.picture.sheet && pictureWidth > 0.f)
+        DrawPictureAt(draw, view.picture,
+                      {start.x + pad + pictureWidth * .5f, start.y + pad + pictureHeight * view.picture.footY},
+                      pictureHeight, elapsed, view.animate && elapsed < view.motionSeconds);
+    const float textLeft = start.x + pad + (pictureWidth > 0.f ? pictureWidth + pad : 0.f);
+    // EndResultCard reads these back from the window storage under this card's ID.
+    storage->SetFloat(ImGui::GetID("x"), start.x);
+    storage->SetFloat(ImGui::GetID("y"), start.y);
+    storage->SetFloat(ImGui::GetID("w"), width);
+    storage->SetFloat(ImGui::GetID("minBottom"), start.y + pad + pictureHeight);
+    storage->SetFloat(ImGui::GetID("pad"), pad);
+    storage->SetFloat(ImGui::GetID("ar"), view.accent.x);
+    storage->SetFloat(ImGui::GetID("ag"), view.accent.y);
+    storage->SetFloat(ImGui::GetID("ab"), view.accent.z);
+    ImGui::SetCursorScreenPos({textLeft, start.y + pad});
+    ImGui::BeginGroup();
+    ImGui::PushTextWrapPos(start.x + width - pad - ImGui::GetWindowPos().x + ImGui::GetScrollX());
+    ImGui::TextColored(view.accent, "%s", view.heading ? view.heading : "");
+    if (view.detail && *view.detail)
+        ImGui::TextWrapped("%s", view.detail);
+    ImGui::PopTextWrapPos();
+}
+
+void EndResultCard() {
+    ImGui::EndGroup();
+    ImGuiStorage* storage = ImGui::GetStateStorage();
+    const ImVec2 start{storage->GetFloat(ImGui::GetID("x")), storage->GetFloat(ImGui::GetID("y"))};
+    const float width = storage->GetFloat(ImGui::GetID("w"), 1.f);
+    const float pad = storage->GetFloat(ImGui::GetID("pad"));
+    const ImVec4 accent{storage->GetFloat(ImGui::GetID("ar"), 1.f), storage->GetFloat(ImGui::GetID("ag"), 1.f),
+                        storage->GetFloat(ImGui::GetID("ab"), 1.f), 1.f};
+    const float bottom = std::max(ImGui::GetItemRectMax().y, storage->GetFloat(ImGui::GetID("minBottom"))) + pad;
+    ImDrawList* draw = ImGui::GetWindowDrawList();
+    draw->ChannelsSetCurrent(0);
+    const ImGuiStyle& style = ImGui::GetStyle();
+    const ImVec2 end{start.x + width, bottom};
+    ImVec4 fill = accent, border = accent;
+    fill.w = .12f;
+    border.w = .55f;
+    draw->AddRectFilled(start, end, ImGui::GetColorU32(fill), style.FrameRounding);
+    draw->AddRect(start, end, ImGui::GetColorU32(border), style.FrameRounding, 0, std::max(1.f, style.FrameBorderSize));
+    draw->ChannelsMerge();
+    ImGui::SetCursorScreenPos(start);
+    ImGui::Dummy({width, bottom - start.y});
+    ImGui::PopID();
+}
+
+namespace {
 constexpr int kMaxDots = 20000;
 constexpr int kMaxStripes = 4000;
 constexpr float kPi = 3.14159265358979323846f;

@@ -75,6 +75,36 @@ void DrawSprite(ImDrawList* draw, const SpriteSheet& sheet, int frame, ImVec2 mi
 // A rectangle outside the visible area is not drawn. Returns the frame that was shown.
 int Sprite(const char* id, const SpriteSheet& sheet, SpriteState& state, double now, ImVec2 size, bool animate = true);
 
+// ---- Illustrated messages -------------------------------------------------------------------------------------
+// A picture beside a short heading, for an area that is empty or for the result of a finished task. The picture is a
+// sprite sheet the host loads and owns; the library never chooses or ships one. `footY` is where the picture stands,
+// as a fraction of one frame's height from its top (1 = the bottom edge), so pictures with room under the feet line up.
+struct IllustrationRef {
+    const SpriteSheet* sheet = nullptr; // Null draws the text alone.
+    float footY = 1.f;
+};
+// Draws into the rectangle directly, without layout: the picture on the left, then `heading` and, when it fits, `hint`
+// in the secondary text colour. A narrow area drops the picture before the text. `elapsedSeconds` drives the picture;
+// pass `animate = false` for reduced motion. Returns where one button fits under the text (place it with
+// SetCursorScreenPos), or x < 0 when there is no room for one.
+ImVec2 DrawEmptyMessage(ImDrawList* draw, ImVec2 minimum, ImVec2 maximum, const IllustrationRef& picture,
+                        const char* heading, const char* hint, double elapsedSeconds, bool animate = true);
+
+struct ResultCardView {
+    IllustrationRef picture{};
+    ImVec4 accent{1, 1, 1, 1};   // Heading, tinted fill and border.
+    const char* heading = "";
+    const char* detail = "";     // Wrapped under the heading. Empty shows nothing.
+    unsigned long long signature = 0; // A new value marks a new result: the picture moves again from the start.
+    double motionSeconds = 4.0;  // The picture moves this long after a new result, then rests.
+    bool animate = true;
+};
+// A full-width card with the picture on the left and the text beside it. Items submitted between Begin and End
+// (for example one button) go under the text. Keep them simple: the card splits the draw list into two channels, so
+// a nested ChannelsSplit (tables, columns) inside it is not allowed. Always call EndResultCard.
+void BeginResultCard(const char* id, const ResultCardView& view);
+void EndResultCard();
+
 // ---- Glow frame -----------------------------------------------------------------------------------------------
 // A soft light along the edge of a rectangle: a window, a panel or the whole viewport. It marks a state that applies
 // to everything inside, such as remote control, recording or a live output. The motions combine: a base motion,

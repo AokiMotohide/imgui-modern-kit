@@ -125,6 +125,24 @@ imkit::DrawLayeredMotion(draw, layers, {&pose, 1}, stageOrigin, stageScale);
 
 The curves and tracks need no Dear ImGui. `imkit/easing.h` (`Easing`, `EasingShape`, `ApplyEasing`) and `imkit/motion_curve.h` (`MotionEase`, `MotionKey`, `EvaluateMotionTrack`, `WrapMotionTime`) build into the `imkit::motion` target, so a renderer or a tool can evaluate the same tracks without linking the UI. `imkit::imkit` links it, and `imkit/motion.h` and `imkit/theme.h` include both headers, so existing code needs no change.
 
+### Status badges on canvases, and illustrated messages
+
+`DrawStatusBadge` draws the same badge as `StatusBadge` at a position on a draw list, for cards and overlays that do not
+use layout. `StatusKind::Live` marks an output that is on air (a ring around the dot, in the destructive colour) and
+`StatusKind::Active` a mode the user turned on (accent colour).
+
+`DrawEmptyMessage` fills an empty area with a picture, a heading and a hint, and returns where one button fits.
+`BeginResultCard` / `EndResultCard` show the result of a finished task with the picture moving for `motionSeconds` after
+each new `signature`. The picture is an `IllustrationRef` to a host-owned `SpriteSheet`; without one, only the text is
+drawn. The library ships no picture.
+
+```cpp
+imkit::IllustrationRef idle{&hostIdleSheet, 0.95f};
+const ImVec2 button = imkit::DrawEmptyMessage(draw, minimum, maximum, idle, "No projectors yet",
+                                              "Add one in Setup", ImGui::GetTime(), animate);
+imkit::DrawStatusBadge(draw, {x, y}, "On air", imkit::StatusKind::Live);
+```
+
 ### Glow frames
 
 `DrawGlowFrame` lights the edge of any rectangle: a window, a panel or the whole viewport. Use it for a state that applies to everything inside, such as remote control, recording or a live output. Keep one `GlowFrameState` per frame and pass the host's monotonic time.

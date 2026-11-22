@@ -15,6 +15,8 @@
 | `imkit/motion.h` | `MotionEase`, `ParseMotionEase`, `MotionEaseName`, `EvaluateMotionEase`, `MotionKey`, `EvaluateMotionTrack`, `WrapMotionTime`, `MotionLayer`, `LayerPose`, `PoseLayerQuad`, `DrawLayeredMotion` |
 | `imkit/theme.h` | `Easing::EaseIn`, `OutBack`, `InBack`, `Spring`, `EasingShape`, `ApplyEasing`, `Stroke::button`, `Stroke::dashedDisabled` |
 | `imkit/components.h` | `ComponentOptions::progress` |
+| `imkit/components.h` | `StatusKind::Live` (on air, a ring around the dot), `StatusKind::Active` (accent colour), `StatusBadgeSize`, `DrawStatusBadge` (a status badge on a draw list without layout) |
+| `imkit/decor.h` | `IllustrationRef`, `DrawEmptyMessage`, `ResultCardView`, `BeginResultCard`, `EndResultCard` (a host-supplied sprite beside a heading, for empty areas and finished results) |
 | `imkit/components.h` | `ComponentOptions::callToAction` (trailing chevron and a one-time spreading ring on the action to press next) |
 | `imkit/patterns.h` | `ProgressLane`, `ProgressTrackView::segments`, `ProgressTrackView::lanes`, `ProgressTrackView::barHeight`, `ProgressTrackView::hideValue` |
 | `imkit/workflow.h` | `WaitCard`, `WaitCardView` |
