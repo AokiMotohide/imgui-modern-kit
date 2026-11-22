@@ -71,7 +71,8 @@ ButtonPalette MakeButtonPalette(ActionVariant variant, const Theme *t, const ImG
     p.text = style.Colors[ImGuiCol_Text];
     if (variant == ActionVariant::Primary) {
         p.fill = Accent(t);
-        p.text = t ? t->colors.onAccent : ImVec4(1, 1, 1, 1);
+        // Without a theme the accent comes from the style, which may be light (a yellow brand): pick readable ink.
+        p.text = t ? t->colors.onAccent : detail::InkOn(p.fill);
     }
     if (variant == ActionVariant::Destructive) {
         p.fill = destructive;
