@@ -1,5 +1,5 @@
 #include "show_pages.h"
-#include "gallery.h"
+#include "gallery_page_host.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -15,7 +15,7 @@ const char* Resources[] = {"Main LED", "Side wall", "Floor"};
 } // namespace
 
 void ShowPages::Schedule(GalleryState& host) {
-    ComponentOptions o{&host.theme, &host.animation};
+    ComponentOptions o{&HostTheme(host), &HostAnimation(host)};
     static const int offset = TokyoOffset;
     const TimeZone zone = FixedZone(&offset);
     // The Gallery is the host here: it reads the clock and hands the library its value.

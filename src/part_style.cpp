@@ -1,4 +1,5 @@
 #include <imkit/part_style.h>
+#include <imkit/theme.h>
 #include "draw_internal.h"
 #include "part_style_internal.h"
 #include "imgui_internal_compat.h"

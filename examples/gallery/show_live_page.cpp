@@ -1,5 +1,5 @@
 #include "show_pages.h"
-#include "gallery.h"
+#include "gallery_page_host.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -47,7 +47,7 @@ StableId NextStandby(const ShowPages::CueSim& sim) {
 } // namespace
 
 void ShowPages::Live(GalleryState& host) {
-    ComponentOptions o{&host.theme, &host.animation};
+    ComponentOptions o{&HostTheme(host), &HostAnimation(host)};
     const float dt = ImGui::GetIO().DeltaTime;
     const double now = ImGui::GetTime();
     const float u = ImGui::GetFrameHeight();
@@ -81,7 +81,7 @@ void ShowPages::Live(GalleryState& host) {
                 PadView& pad = launcher.cells[l * 6 + c];
                 pad.label = cellNames[(c + l) % 6];
                 pad.state = (l + c) % 5 == 4 ? PadState::Empty : (l + c) % 4 == 0 ? PadState::Loaded : PadState::Idle;
-                pad.image = host.sampleImages[(l * 2 + c) % host.sampleImages.size()];
+                pad.image = HostSampleImages(host)[(l * 2 + c) % HostSampleImages(host).size()];
             }
         }
         launcher.cells[1].state = PadState::Playing;

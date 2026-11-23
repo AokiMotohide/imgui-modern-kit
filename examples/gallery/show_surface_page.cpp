@@ -1,5 +1,5 @@
 #include "show_pages.h"
-#include "gallery.h"
+#include "gallery_page_host.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -20,7 +20,7 @@ SurfaceItem Make(StableId id, SurfaceKind kind, SurfaceRect rect, const char* la
 } // namespace
 
 void ShowPages::Surface(GalleryState& host) {
-    ComponentOptions o{&host.theme, &host.animation};
+    ComponentOptions o{&HostTheme(host), &HostAnimation(host)};
     auto& s = surface;
     const float time = static_cast<float>(ImGui::GetTime());
 
@@ -64,7 +64,7 @@ void ShowPages::Surface(GalleryState& host) {
         add(clock);
         SurfaceItem go = Make(33, SurfaceKind::Button, {10.4f, 9.4f, 6.8f, 2.6f}, "GO");
         go.text = "Space";
-        go.color = host.theme.semantic.accent;
+        go.color = HostTheme(host).semantic.accent;
         go.solid = true;
         go.labelScale = 1.6f;
         add(go);
@@ -81,7 +81,7 @@ void ShowPages::Surface(GalleryState& host) {
             SurfaceItem img = Make(40 + static_cast<StableId>(i), SurfaceKind::Image, {17.6f + 2.2f * static_cast<float>(i), 5.9f, 2.0f, 2.8f}, "");
             static const char* names[3] = {"Sunset", "Waves", "Neon"};
             img.label = names[i];
-            img.image.image = host.sampleImages[static_cast<std::size_t>(i)];
+            img.image.image = HostSampleImages(host)[static_cast<std::size_t>(i)];
             img.image.imagePixels = {96, 96};
             img.image.label = names[i];
             img.mode = i == 2 ? ConsoleMode::Toggle : ConsoleMode::Momentary;

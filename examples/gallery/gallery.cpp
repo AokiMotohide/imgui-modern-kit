@@ -8,9 +8,34 @@
 #include <iomanip>
 #include <vector>
 namespace imkit::gallery {
+Theme &HostTheme(GalleryState &s) { return s.theme; }
+const Theme &HostTheme(const GalleryState &s) { return s.theme; }
+AnimationState &HostAnimation(GalleryState &s) { return s.animation; }
+float HostScale(const GalleryState &s) { return s.scale; }
+const IconAtlas &HostIcons(const GalleryState &s) { return s.icons; }
+ImTextureRef HostTexture(const GalleryState &s) { return s.texture; }
+std::span<const ImTextureRef> HostSampleImages(const GalleryState &s) { return s.sampleImages; }
+ImTextureRef HostSpriteSheet(const GalleryState &s) { return s.spriteSheet; }
+bool &HostDark(GalleryState &s) { return s.dark; }
+int &HostPresetIndex(GalleryState &s) { return s.presetIndex; }
+int &HostDesignDensity(GalleryState &s) { return s.design.density; }
+
 void Record(GalleryState &s, const char *name) {
     s.probes[name] = {GetItemRectMin(), GetItemRectMax()};
 }
+void RecordProbe(GalleryState &s, const char *name, ImVec2 min, ImVec2 max) {
+    s.probes[name] = {min, max};
+}
+DefaultStyleScope::DefaultStyleScope() : previous_(ImGui::GetStyle()) {
+    ImGui::GetStyle() = ImGuiStyle{};
+    ImGui::StyleColorsDark(&ImGui::GetStyle());
+    ImGui::GetStyle().FontSizeBase = previous_.FontSizeBase;
+    ImGui::GetStyle().FontScaleMain = previous_.FontScaleMain;
+    ImGui::GetStyle().FontScaleDpi = previous_.FontScaleDpi;
+    ImGui::GetStyle().ScaleAllSizes(ImGui::GetIO().DisplayFramebufferScale.x);
+    ImGui::GetStyle().Colors[ImGuiCol_ChildBg].w = 1.f;
+}
+DefaultStyleScope::~DefaultStyleScope() { ImGui::GetStyle() = previous_; }
 void SelectFramePreset(GalleryState& s, WindowFramePreset preset) {
     s.framePresetStyles[static_cast<std::size_t>(s.framePreset)]=s.frameStyle;
     s.framePreset=preset;

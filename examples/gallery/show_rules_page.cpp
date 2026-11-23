@@ -1,5 +1,6 @@
 #include "show_pages.h"
-#include "gallery.h"
+#include "gallery_page_host.h"
+#include <imkit/widgets.h>
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -57,7 +58,7 @@ RuleValue Choice(int c) {
 } // namespace
 
 void ShowPages::Rules(GalleryState& host) {
-    ComponentOptions o{&host.theme, &host.animation};
+    ComponentOptions o{&HostTheme(host), &HostAnimation(host)};
     if (!rules.initialized) {
         rules.initialized = true;
         rules.doc.SetName("Evening mode");

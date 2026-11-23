@@ -22,35 +22,42 @@
 Claude Code・Codex・Antigravity 共通。`fast-build` スキルと食い違う所はこの節に従う。
 
 - 入口は `tools/Invoke-SharedBuild.ps1` だけ。出力先は `build/windows-debug`（Arm64 は `build/windows-arm64`）だけで、`build/` 直下の他のフォルダーは使わない・増やさない。
-- `-Target` は必ず指定する。省くと最も遅い `imkit_gallery`（約150秒）になる。
-- `fast-build` の単体コンパイル（`-t:ClCompile`）と `affected_targets.py` は使わない。テスト target 単独のビルドが数秒〜15秒で終わるので、それで足りる。
+- `Invoke-SharedBuild.ps1` は MSBuild の並列オプション（`UseMultiToolTask=true` / `EnforceProcessCountAcrossBuilds=true`）と最小ログ（`/nologo /v:minimal`）を自動付与する。`-Target` 省略や `-TestRegex` なしの `-Tests` は誤爆防止のためエラーになる（全テストは明示時のみ `-AllTests`）。
+- 変更パスから最小 target を決めるため、原則として `python tools/affected_targets.py <変更パス…>` を使う（または `-ChangedFiles <変更パス…> -BuildAndTest`）。
+- 複数ファイル変更や Gallery 編集中の素早い構文・型確認には `-CompileOnly <cppパス…>` を使う（リンク抜きで数秒で終わる）。
+- `imkit_gallery` と `imkit_node_editor_gallery` は依存分離済み。Node Editor 連携画面を確認するときだけ `-Target imkit_gallery,imkit_node_editor_gallery` の両方を指定する。
 
-### 手順（ビルド1回 + テスト1回）
+### 手順（最小算出 → ビルド1回 + テスト1回）
 
-1. 編集をすべて終えてから、下の表の target を全部まとめて1回でビルドする。
-2. 成功したら、同じ範囲を1回でテストする。`-Tests` はビルドしないので、必ず手順1の後に `-TestRegex` 付きで実行する（`-TestRegex` なしは未ビルドの target が Not Run になり失敗する）。
-3. 失敗したら、出たエラーを全部直してから、同じ2コマンドを1回だけやり直す。ソースを変えずに同じ target を再ビルドしない。
+1. 編集をすべて終えてから、`python tools/affected_targets.py <自分が変えたパス…>` で対象 target と `-TestRegex` を算出する（または `-ChangedFiles` を渡す）。
+2. 算出した target を全部まとめて 1 回でビルドし、成功後に同じ `-TestRegex` でテストを 1 回実行する。
+3. 失敗したら、出たエラーを全部直してから、必要なら `-CompileOnly` でコンパイルエラーを潰し、同じコマンドを 1 回だけやり直す。ソースを変えずに同じ target を再ビルドしない。
 
 ```powershell
+# 例1: 変更パスから自動で最小ビルド + テストを実行
+& 'C:\aokiDev\imgui-modern-kit\tools\Invoke-SharedBuild.ps1' -ChangedFiles src/theme.cpp -BuildAndTest
+
+# 例2: 手動で最小 target をまとめてビルド + テスト
 & 'C:\aokiDev\imgui-modern-kit\tools\Invoke-SharedBuild.ps1' -Target imkit_theme_test,imkit_api_compile
 & 'C:\aokiDev\imgui-modern-kit\tools\Invoke-SharedBuild.ps1' -Tests -TestRegex '^imkit\.(theme|api_compile)$'
+
+# 例3: 編集中のリンク抜き高速構文チェック
+& 'C:\aokiDev\imgui-modern-kit\tools\Invoke-SharedBuild.ps1' -CompileOnly examples/gallery/charts_page.cpp
 ```
 
-### 変えたものとビルドする target
-
-| 変えたもの | target（ctest 名は `imkit_` を `imkit.` に替え、末尾の `_test` を除く） |
-|---|---|
-| `src/<名前>.cpp`・`tests/<名前>.cpp` | `imkit_<名前>_test` |
-| `src/show/<名前>.cpp` | `imkit_show_<名前>_test` |
-| `include/imkit/<名前>.h`（公開API） | 上の target、`imkit_api_compile`、あれば `imkit_<名前>_api_compile`（show は `imkit_show_api_compile`） |
-| 対応するテストがない `src/` | `imkit_api_compile` |
-| `examples/gallery/` | `imkit_gallery` だけ |
-| CMake | `-Configure` を1回してから、上の target |
-| 文書・規則・コメント・`website/` | ビルドしない |
-
 - `imkit_gallery` は、Gallery を変えたときと capture が要るときだけビルドする。ライブラリだけの変更では作らない。
+- 文書・規則・コメント・`website/` だけの変更ではビルドしない（`python tools/check_docs.py` のみ）。
 - `ALL_BUILD`、`clean`、`Rebuild`、全テスト、成功後の確認ビルドはしない。
 - Arm64（`-Preset windows-arm64`）、Release、install、package、SDK consumer は、依頼されたときだけ実行する。
+
+## ビルド時間短縮の設計ルール（恒久ガード）
+
+- **公開ヘッダー (`include/imkit/`)**: 既存利用者の互換性を最優先しつつ、新規・編集時は前方宣言を優先し、不要な STL / 他モジュール `#include` や重い `inline` 実装を足さない。
+- **内部実装 (`src/`)**: 共通ヘルパーは `*_internal.h` に宣言だけを置き、実装本体や `static` 配列バッファは `*_internal.cpp` / `src/show/common.cpp` へ分離する。巨大な静的データ配列は `imgui.h` 非依存の独立 `*_data.cpp`（例：`src/icons_data.cpp`）へ分離する。1 ファイルが 1,500〜2,000 行を超える肥大化を避け、責務単位で分割する。
+- **Gallery (`examples/gallery/`)**: 各ページ実装は `gallery_page_host.h` とそのページに必要な最小ヘッダーだけを `#include` し、`gallery.h` や他ページヘッダーを増やさない。
+- **テスト (`tests/`)**: 単体テストは対象モジュールの個別ヘッダーを直接 `#include` し、アンブレラヘッダー (`imkit/imkit.h`, `imkit/show.h`) を足さない（`*_api_compile.cpp`・`context_smoke.cpp`・`design_system.cpp` は除く）。`*_api_compile` ターゲットにはヘッダー自己完結性検証のため PCH を付けない。
+- **CMake と SDK 境界**: 新規ターゲットには `/Z7` (`imkit_configure_target_build`) を適用する。PCH (`IMKIT_ENABLE_PCH`) 等の開発専用高速化はトップレベル開発ビルド・`windows-debug` プリセットに閉じ、外部利用者の `add_subdirectory`・Release SDK（`imkit` 本体の再パック含む）へ影響させない。
+- **構造変更時のチェック**: `tests/`・`examples/gallery/`・`src/*internal.h`・CMake を変更したときは `python tools/check_build_hygiene.py` を 1 回実行する。
 
 ## 文書と資産
 

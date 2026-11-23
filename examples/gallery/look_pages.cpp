@@ -1,5 +1,9 @@
 #include "look_pages.h"
-#include "gallery.h"
+#include "gallery_page_host.h"
+#include <imkit/patterns.h>
+#include <imkit/skin.h>
+#include <imkit/widgets.h>
+#include <imkit/native.h>
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
@@ -122,9 +126,9 @@ std::string LookPages::Compose() const {
 
 void LookPages::Apply(GalleryState& s) {
     text = Compose();
-    warnings = ParseTheme(text, s.theme).warnings;
-    s.dark = s.theme.scheme == ColorScheme::Dark;
-    s.design.density = density;
+    warnings = ParseTheme(text, HostTheme(s)).warnings;
+    HostDark(s) = HostTheme(s).scheme == ColorScheme::Dark;
+    HostDesignDensity(s) = density;
 }
 
 bool LookPages::LoadFile(GalleryState& s, const std::filesystem::path& path) {
@@ -137,18 +141,18 @@ bool LookPages::LoadFile(GalleryState& s, const std::filesystem::path& path) {
     content << in.rdbuf();
     // A clean base, so what the file does not name is not left over from earlier experiments.
     Theme base = MakeTheme(ThemePreset::PrecisionLight);
-    base.fonts = s.theme.fonts;
-    base.skin = s.theme.skin;
+    base.fonts = HostTheme(s).fonts;
+    base.skin = HostTheme(s).skin;
     const auto result = ParseTheme(content.str(), base);
-    s.theme = base;
-    s.dark = s.theme.scheme == ColorScheme::Dark;
-    s.design.density = static_cast<int>(s.theme.density);
+    HostTheme(s) = base;
+    HostDark(s) = HostTheme(s).scheme == ColorScheme::Dark;
+    HostDesignDensity(s) = static_cast<int>(HostTheme(s).density);
     warnings = result.warnings;
     fileMessage = path.filename().string() + ": " + std::to_string(result.applied) + " applied, " + std::to_string(result.ignored) + " skipped";
     std::snprintf(file, sizeof file, "%s", path.string().c_str());
     std::error_code error;
     fileTime = std::filesystem::last_write_time(path, error);
-    SyncFromTheme(s.theme);
+    SyncFromTheme(HostTheme(s));
     text = Compose();
     synced = true;
     return true;
@@ -170,7 +174,7 @@ void LookPages::Poll(GalleryState& s) {
 namespace {
 // A strip of components so a change is visible without leaving the page. Every component receives the theme.
 void Preview(GalleryState& s) {
-    const ComponentOptions options{&s.theme};
+    const ComponentOptions options{&HostTheme(s)};
     ActionButton("Primary", ActionVariant::Primary, {}, options);
     ImGui::SameLine();
     ActionButton("Secondary", ActionVariant::Secondary, {}, options);
@@ -213,7 +217,7 @@ void LookPages::Studio(GalleryState& s) {
     if (!worldsSearched)
         FindWorlds();
     if (!synced) {
-        SyncFromTheme(s.theme);
+        SyncFromTheme(HostTheme(s));
         text = Compose();
         synced = true;
     }
@@ -230,12 +234,12 @@ void LookPages::Studio(GalleryState& s) {
             for (int i = 0; i < static_cast<int>(presets.size()); ++i)
                 if (Selectable(presets[static_cast<std::size_t>(i)].displayName.data(), preset == i)) {
                     preset = i;
-                    const FontSet fonts = s.theme.fonts;
-                    s.theme = MakeTheme(presets[static_cast<std::size_t>(i)].preset);
-                    s.theme.fonts = fonts;
-                    s.dark = s.theme.scheme == ColorScheme::Dark;
-                    s.design.density = static_cast<int>(s.theme.density);
-                    SyncFromTheme(s.theme);
+                    const FontSet fonts = HostTheme(s).fonts;
+                    HostTheme(s) = MakeTheme(presets[static_cast<std::size_t>(i)].preset);
+                    HostTheme(s).fonts = fonts;
+                    HostDark(s) = HostTheme(s).scheme == ColorScheme::Dark;
+                    HostDesignDensity(s) = static_cast<int>(HostTheme(s).density);
+                    SyncFromTheme(HostTheme(s));
                     text = Compose();
                 }
             EndCombo();
@@ -310,18 +314,18 @@ void LookPages::Studio(GalleryState& s) {
     if (const Section section{s, "Theme text", "Save it as a .theme file, or paste it into ParseTheme."}) {
         if (text.empty())
             text = Compose();
-        if (ValidateContrast(s.theme))
+        if (ValidateContrast(HostTheme(s)))
             TextDisabled("Contrast: text, border and focus meet the minimum on every surface.");
         else
-            TextColored(s.theme.semantic.warning, "Contrast warning: some text or border colours fall below the minimum. The theme still applies.");
+            TextColored(HostTheme(s).semantic.warning, "Contrast warning: some text or border colours fall below the minimum. The theme still applies.");
         if (!warnings.empty())
-            TextColored(s.theme.semantic.warning, "%s", warnings.c_str());
+            TextColored(HostTheme(s).semantic.warning, "%s", warnings.c_str());
         InputTextMultiline("##theme-text", text.data(), text.size() + 1, {-FLT_MIN, GetTextLineHeight() * 11.f}, ImGuiInputTextFlags_ReadOnly);
         if (Button("Copy"))
             SetClipboardText(text.c_str());
         SameLine();
         if (Button("Copy every token")) {
-            const std::string full = SerializeTheme(s.theme);
+            const std::string full = SerializeTheme(HostTheme(s));
             SetClipboardText(full.c_str());
         }
     }
@@ -370,11 +374,11 @@ void LookPages::Skins(GalleryState& s) {
     if (!BeginGrid(s, "look-skins", 1))
         return;
     if (const Section section{s, "Sprite sheet and progress thumb", "Sprite plays a sheet of frames; ProgressTrackView::thumb draws on the leading edge of a fill."}) {
-        if (s.spriteSheet.GetTexID() == ImTextureID{}) {
+        if (HostSpriteSheet(s).GetTexID() == ImTextureID{}) {
             TextDisabled("This build has no sample sheet.");
         } else {
             SpriteSheet sheet;
-            sheet.texture = s.spriteSheet;
+            sheet.texture = HostSpriteSheet(s);
             sheet.sheetPixels = {256.f, 192.f};
             sheet.cellPixels = {64.f, 64.f};
             sheet.columns = 4;
@@ -395,7 +399,7 @@ void LookPages::Skins(GalleryState& s) {
             Record(s, "look-sprite-restart");
             SameLine();
             Checkbox("Animate (off = rest frame)", &spriteAnimate);
-            const bool animate = spriteAnimate && s.theme.motion.enabled && !s.theme.motion.reducedMotion;
+            const bool animate = spriteAnimate && HostTheme(s).motion.enabled && !HostTheme(s).motion.reducedMotion;
             const double now = GetTime();
             const ImVec2 sizes[] = {{32.f, 32.f}, {64.f, 64.f}, {128.f, 128.f}};
             for (const ImVec2 size : sizes) {
@@ -425,15 +429,15 @@ void LookPages::Skins(GalleryState& s) {
             };
             view.thumbUser = &rider;
             view.thumbHeight = height;
-            ProgressTrack("sprite-progress", view, {&s.theme});
+            ProgressTrack("sprite-progress", view, {&HostTheme(s)});
             ProgressTrackView idle = view;
             idle.fraction = -1.f;
             idle.label = "Indeterminate: the picture follows the moving segment";
-            ProgressTrack("sprite-idle", idle, {&s.theme});
+            ProgressTrack("sprite-idle", idle, {&HostTheme(s)});
         }
     }
     if (const Section section{s, "The same components, three looks"}) {
-        Theme plain = s.theme;
+        Theme plain = HostTheme(s);
         plain.skin = nullptr;
         plain.elevation.hard = false;
         Theme shadowed = plain;
@@ -484,14 +488,14 @@ void LookPages::Skins(GalleryState& s) {
         const ImVec2 origin = GetCursorScreenPos();
         const float width = std::min(GetContentRegionAvail().x, 560.f), height = 180.f;
         auto* draw = GetWindowDrawList();
-        draw->AddRectFilled(origin, {origin.x + width, origin.y + height}, GetColorU32(s.theme.semantic.surfaceRaised), s.theme.radius.overlay);
+        draw->AddRectFilled(origin, {origin.x + width, origin.y + height}, GetColorU32(HostTheme(s).semantic.surfaceRaised), HostTheme(s).radius.overlay);
         DrawBackdropPattern(draw, origin, {origin.x + width, origin.y + height}, backdrop);
-        draw->AddRect(origin, {origin.x + width, origin.y + height}, GetColorU32(s.theme.semantic.border), s.theme.radius.overlay, ImDrawFlags_None,
-                      std::max(1.f, s.theme.stroke.border));
+        draw->AddRect(origin, {origin.x + width, origin.y + height}, GetColorU32(HostTheme(s).semantic.border), HostTheme(s).radius.overlay, ImDrawFlags_None,
+                      std::max(1.f, HostTheme(s).stroke.border));
         Dummy({width, height});
     }
     if (const Section section{s, "Nine-slice picture", "DrawNineSlice keeps the corners of a picture at their size and stretches the rest."}) {
-        const ImTextureRef picture = s.sampleImages[5];
+        const ImTextureRef picture = HostSampleImages(s)[5];
         if (picture.GetTexID() == ImTextureID{}) {
             TextDisabled("This build has no sample picture.");
         } else {

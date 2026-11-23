@@ -1,5 +1,5 @@
 #pragma once
-#include <imkit/imkit.h>
+#include <imkit/patterns.h>
 #include <vector>
 #include <array>
 #include <string>

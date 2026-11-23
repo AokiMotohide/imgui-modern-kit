@@ -1,4 +1,8 @@
-#include <imkit/imkit.h>
+#include <imkit/part_style.h>
+#include <imkit/theme.h>
+#include <imkit/widgets.h>
+#include <imkit/components.h>
+#include <imkit/native.h>
 #include <cmath>
 #include <cstdio>
 #ifdef _MSC_VER

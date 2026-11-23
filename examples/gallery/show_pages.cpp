@@ -1,5 +1,5 @@
 #include "show_pages.h"
-#include "gallery.h"
+#include "gallery_page_host.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -46,7 +46,7 @@ void ShowPages::Show(int page, GalleryState& host) {
 }
 
 void ShowPages::Controls(GalleryState& host) {
-    ComponentOptions o{&host.theme, &host.animation};
+    ComponentOptions o{&HostTheme(host), &HostAnimation(host)};
     const float dt = ImGui::GetIO().DeltaTime;
     const float time = static_cast<float>(ImGui::GetTime());
     auto remember = [&](const ValueEdit& e) {
@@ -237,7 +237,7 @@ void ShowPages::Controls(GalleryState& host) {
             static int momentary = 0, flashes = 0, holds = 0;
             ConsoleButtonOptions mo;
             mo.size = {ImGui::GetFrameHeight() * 3.2f, ImGui::GetFrameHeight() * 2.2f};
-            mo.tone = host.theme.semantic.accent;
+            mo.tone = HostTheme(host).semantic.accent;
             mo.hint = "F1";
             if (ConsoleButton("Cue A", nullptr, mo, o).pressed)
                 ++momentary;
@@ -245,14 +245,14 @@ void ShowPages::Controls(GalleryState& host) {
             ImGui::SameLine();
             ConsoleButtonOptions to = mo;
             to.mode = ConsoleMode::Toggle;
-            to.tone = host.theme.semantic.success;
+            to.tone = HostTheme(host).semantic.success;
             to.hint = "";
             ConsoleButton("Loop", &toggles[0], to, o);
             Record(host, "show-key-toggle");
             ImGui::SameLine();
             ConsoleButtonOptions fo = mo;
             fo.mode = ConsoleMode::Flash;
-            fo.tone = host.theme.semantic.warning;
+            fo.tone = HostTheme(host).semantic.warning;
             fo.hint = "hold";
             if (ConsoleButton("Flash", nullptr, fo, o).pressed)
                 ++flashes;
@@ -260,7 +260,7 @@ void ShowPages::Controls(GalleryState& host) {
             ConsoleButtonOptions lo = mo;
             lo.mode = ConsoleMode::Toggle;
             lo.glyph = ConsoleGlyph::Lock;
-            lo.tone = host.theme.semantic.warning;
+            lo.tone = HostTheme(host).semantic.warning;
             lo.hint = "";
             ConsoleButton("Lock", &toggles[1], lo, o);
             ImGui::SameLine();
@@ -272,11 +272,11 @@ void ShowPages::Controls(GalleryState& host) {
                 ++holds;
             Record(host, "show-key-hold");
             ImGui::Spacing();
-            ScribbleStrip("scribble1", "Layer 1", "-6.0 dB", host.theme.semantic.accent, ImGui::GetFrameHeight() * 4.5f, o);
+            ScribbleStrip("scribble1", "Layer 1", "-6.0 dB", HostTheme(host).semantic.accent, ImGui::GetFrameHeight() * 4.5f, o);
             ImGui::SameLine();
-            ScribbleStrip("scribble2", "Bus A", "Armed", host.theme.semantic.warning, ImGui::GetFrameHeight() * 4.5f, o);
+            ScribbleStrip("scribble2", "Bus A", "Armed", HostTheme(host).semantic.warning, ImGui::GetFrameHeight() * 4.5f, o);
             ImGui::SameLine();
-            ScribbleStrip("scribble3", "Master", "", host.theme.semantic.success, ImGui::GetFrameHeight() * 4.5f, o);
+            ScribbleStrip("scribble3", "Master", "", HostTheme(host).semantic.success, ImGui::GetFrameHeight() * 4.5f, o);
             ImGui::TextDisabled("Cue A: %d   Flash: %d   Reset: %d", momentary, flashes, holds);
         }
         EndSection(section5);

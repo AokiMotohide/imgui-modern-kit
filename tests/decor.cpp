@@ -1,4 +1,8 @@
-#include <imkit/imkit.h>
+#include <imkit/decor.h>
+#include <imkit/patterns.h>
+#include <imkit/shell.h>
+#include <imkit/skin.h>
+#include <imkit/toast.h>
 #include <cmath>
 #include <cstdio>
 #include <type_traits>

@@ -1,5 +1,6 @@
 #pragma once
-#include <imkit/imkit.h>
+#include <imkit/theme.h>
+#include <imkit/decor.h>
 #include <filesystem>
 #include <string>
 #include <vector>

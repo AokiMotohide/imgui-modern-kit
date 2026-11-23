@@ -1,5 +1,5 @@
 #include "show_pages.h"
-#include "gallery.h"
+#include "gallery_page_host.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -8,7 +8,7 @@ namespace imkit::gallery {
 using namespace show;
 
 void ShowPages::Beat(GalleryState& host) {
-    ComponentOptions o{&host.theme, &host.animation};
+    ComponentOptions o{&HostTheme(host), &HostAnimation(host)};
     BeatSim& s = beat;
     const float dt = ImGui::GetIO().DeltaTime;
     const double now = ImGui::GetTime();

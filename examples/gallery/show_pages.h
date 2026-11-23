@@ -1,6 +1,8 @@
 #pragma once
-#include <imkit/imkit.h>
-#include <imkit/show.h>
+#include <imkit/show/live.h>
+#include <imkit/show/rules.h>
+#include <imkit/show/schedule.h>
+#include <imkit/show/beat.h>
 #include <imkit/show/script.h>
 #include <imkit/show/surface.h>
 #include <imkit/show/led.h>

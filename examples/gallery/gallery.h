@@ -1,4 +1,5 @@
 #pragma once
+#include "gallery_page_host.h"
 #include <imkit/imkit.h>
 #include <map>
 #include <string>
@@ -17,12 +18,6 @@
 #include "look_pages.h"
 #include "start_page.h"
 namespace imkit::gallery {
-struct Probe {
-    ImVec2 min, max;
-    ImVec2 Center() const {
-        return {(min.x + max.x) / 2, (min.y + max.y) / 2};
-    }
-};
 // Gallery-only state for the floating comparison. Both columns borrow this
 // value, so the difference remains visual rather than a comparison of two
 // independent application models.
@@ -37,17 +32,7 @@ struct ComparisonState {
     int applyCount = 0;
     char name[96] = "Display Console";
 };
-// Page ids are stable: --page and the capture scripts address pages by number. Navigation order and grouping live in
-// Pages(), so reordering the sidebar never renumbers a page. PageStart is the Gallery-only start page.
-enum PageId : int {
-    PageBasic = 0, PageNumeric, PageInput, PageHierarchy, PageOverlay, PageComposites, PageIcons,
-    PageEditorCore, PageVideo, PageCG,
-    PageFoundations, PageReferenceComponents, PagePatterns, PageAccessibility, PageResponsive,
-    PageGenericWorkspace, PageFeedback, PagePreviewTiles, PageFrameLab,
-    PageStart, PageToasts, PageCompare, PageWorkbench, PageCharts, PagePtz,
-    PageShowControls, PageShowLive, PageShowRules, PageShowSchedule, PageShowBeat, PageShowScript, PageShowSurface,
-    PageShowLed, PageShowImages, PageLookStudio, PageLookSkins, PageGlowFrame
-};
+// Page ids live in gallery_page_host.h. Navigation order and grouping live in Pages(), so reordering the sidebar never renumbers a page.
 struct PageInfo {
     PageId id;
     const char *title;
@@ -119,33 +104,8 @@ struct GalleryState {
     ComparisonState comparison;
     std::map<std::string, Probe> probes;
 };
-// Restores plain Dear ImGui colours and metrics (fonts and scale stay) for the lifetime of the scope, so a specimen can
-// be drawn "before" next to the same calls drawn with an ImKit theme.
-class DefaultStyleScope {
-  public:
-    DefaultStyleScope() : previous_(ImGui::GetStyle()) {
-        ImGui::GetStyle() = ImGuiStyle{};
-        ImGui::StyleColorsDark(&ImGui::GetStyle());
-        ImGui::GetStyle().FontSizeBase = previous_.FontSizeBase;
-        ImGui::GetStyle().FontScaleMain = previous_.FontScaleMain;
-        ImGui::GetStyle().FontScaleDpi = previous_.FontScaleDpi;
-        ImGui::GetStyle().ScaleAllSizes(ImGui::GetIO().DisplayFramebufferScale.x);
-        ImGui::GetStyle().Colors[ImGuiCol_ChildBg].w = 1.f;
-    }
-    ~DefaultStyleScope() { ImGui::GetStyle() = previous_; }
-    DefaultStyleScope(const DefaultStyleScope &) = delete;
-    DefaultStyleScope &operator=(const DefaultStyleScope &) = delete;
-
-  private:
-    ImGuiStyle previous_;
-};
 // Makes ThemePresets()[index] the Gallery theme and keeps the Appearance controls in step with it.
 void ApplyThemePreset(GalleryState &s, int index);
-// Layout helpers shared by the Gallery pages: a responsive card grid and titled cards.
-bool BeginGrid(GalleryState &s, const char *id, int maxColumns = 2);
-void EndGrid();
-bool BeginSection(GalleryState &s, const char *title, const char *hint = nullptr);
-void EndSection(bool visible);
 void Show(GalleryState &s);
 void ShowComparison(GalleryState &s);
 void Record(GalleryState &s, const char *name);

@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cfloat>
+#include <cmath>
 #include <cstring>
 
 namespace imkit::show {

@@ -1,5 +1,3 @@
-#include <imkit/imkit.h>
-#include <imkit/show.h>
 #include <imkit/show/schedule.h>
 #include <algorithm>
 #include <array>

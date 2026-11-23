@@ -1,5 +1,6 @@
 #include "toast_page.h"
-#include "gallery.h"
+#include "gallery_page_host.h"
+#include <imkit/widgets.h>
 #include <algorithm>
 #include <array>
 #include <cstdio>
@@ -21,7 +22,7 @@ bool ToneButton(const char* label, ImVec4 tone) {
 }
 // Miniature screen with six anchor cells; the selected cell shows where the stack appears.
 bool PositionPicker(GalleryState& host, int& position) {
-    const float scale = host.scale;
+    const float scale = HostScale(host);
     const ImVec2 size{std::min(ImGui::GetContentRegionAvail().x, 260.f * scale), 140.f * scale};
     const ImVec2 origin = ImGui::GetCursorScreenPos();
     auto* draw = ImGui::GetWindowDrawList();
@@ -30,7 +31,7 @@ bool PositionPicker(GalleryState& host, int& position) {
     draw->AddRect(origin, {origin.x + size.x, origin.y + size.y}, ImGui::GetColorU32(ImGuiCol_Border), rounding + 2);
     const char* names[] = {"Top left", "Top center", "Top right", "Bottom left", "Bottom center", "Bottom right"};
     const float pad = 6.f * scale, cellW = (size.x - pad * 4) / 3, cellH = (size.y - pad * 3) / 2;
-    ImVec4 accent = host.theme.semantic.accent;
+    ImVec4 accent = HostTheme(host).semantic.accent;
     bool changed = false;
     ImGui::PushID("position-picker");
     for (int i = 0; i < 6; ++i) {
@@ -49,7 +50,7 @@ bool PositionPicker(GalleryState& host, int& position) {
         auto fill = accent;
         fill.w = selected ? .22f : hovered ? .10f : .0f;
         draw->AddRectFilled(a, b, ImGui::GetColorU32(fill), rounding);
-        auto edge = selected ? accent : host.theme.semantic.border;
+        auto edge = selected ? accent : HostTheme(host).semantic.border;
         edge.w *= selected ? 1.f : .7f;
         draw->AddRect(a, b, ImGui::GetColorU32(edge), rounding, 0, selected ? 1.6f : 1.f);
         // The stack glyph: two short bars anchored toward the chosen corner or edge.
@@ -58,7 +59,7 @@ bool PositionPicker(GalleryState& host, int& position) {
         const bool top = row == 0;
         for (int bar = 0; bar < 2; ++bar) {
             const float y = top ? a.y + 6.f * scale + bar * (barH + gap) : b.y - 6.f * scale - barH - bar * (barH + gap);
-            auto glyph = selected ? accent : host.theme.semantic.textSecondary;
+            auto glyph = selected ? accent : HostTheme(host).semantic.textSecondary;
             glyph.w *= selected ? 1.f : .55f;
             draw->AddRectFilled({x, y}, {x + barW * (bar ? .75f : 1.f), y + barH}, ImGui::GetColorU32(glyph), barH * .5f);
         }
@@ -71,8 +72,8 @@ bool PositionPicker(GalleryState& host, int& position) {
 }
 }
 void ToastPage::Show(GalleryState& host) {
-    ComponentOptions o{&host.theme, &host.animation};
-    const float scale = host.scale;
+    ComponentOptions o{&HostTheme(host), &HostAnimation(host)};
+    const float scale = HostScale(host);
     // Controls sit opposite the toast stack so the stack never covers them.
     const bool stackLeft = position == 0 || position == 3;
     const float available = ImGui::GetContentRegionAvail().x;
@@ -111,14 +112,14 @@ void ToastPage::Show(GalleryState& host) {
                                           japanese ? "成功と情報は5秒で消えます。警告・エラー・処理中は閉じるまで残ります。"
                                                    : "Success and info close after 5 s. Warning, error and loading stay until dismissed.");
         if (trigger) {
-            if (ToneButton(japanese ? "成功" : "Success", host.theme.semantic.success)) add(FeedbackKind::Success);
+            if (ToneButton(japanese ? "成功" : "Success", HostTheme(host).semantic.success)) add(FeedbackKind::Success);
             Record(host, "toast-success");
             ImGui::SameLine();
-            if (ToneButton(japanese ? "情報" : "Info", host.theme.semantic.accent)) add(FeedbackKind::Info);
+            if (ToneButton(japanese ? "情報" : "Info", HostTheme(host).semantic.accent)) add(FeedbackKind::Info);
             ImGui::SameLine();
-            if (ToneButton(japanese ? "警告" : "Warning", host.theme.semantic.warning)) add(FeedbackKind::Warning);
+            if (ToneButton(japanese ? "警告" : "Warning", HostTheme(host).semantic.warning)) add(FeedbackKind::Warning);
             ImGui::SameLine();
-            if (ToneButton(japanese ? "エラー" : "Error", host.theme.semantic.error)) add(FeedbackKind::Error);
+            if (ToneButton(japanese ? "エラー" : "Error", HostTheme(host).semantic.error)) add(FeedbackKind::Error);
             ImGui::Spacing();
             ImGui::TextDisabled("%s", japanese ? "進捗つきの通知" : "Progress toast");
             if (ActionButton(japanese ? "処理中" : "Loading", ActionVariant::Secondary, {}, o)) add(FeedbackKind::Info, true);
@@ -186,12 +187,12 @@ void ToastPage::Show(GalleryState& host) {
     accessibility::AccessibilityFrame semantics{nodes};semantics.Begin(ImGui::GetFrameCount());
     LocaleContext locale;locale.lookup=[](void* user,std::string_view key,const char* fallback){return *static_cast<bool*>(user)&&key=="dismiss"?"閉じる":fallback;};locale.user=&japanese;
     std::array<ToastEvent,64> storage{};ToastEventBuffer events{storage};
-    ToastViewport("gallery-toasts",items,state,ImGui::GetTime(),events,layout,{&host.theme,nullptr,&semantics,0,&locale});
+    ToastViewport("gallery-toasts",items,state,ImGui::GetTime(),events,layout,{&HostTheme(host),nullptr,&semantics,0,&locale});
     for(const auto& n:semantics.Tree().nodes) {
         if(n.role==accessibility::SemanticRole::Button) {
-            if(n.name=="Dismiss"||n.name=="閉じる") host.probes["toast-close-"+std::to_string(n.parent)]={n.minimum,n.maximum};
-            else host.probes["toast-action-"+std::to_string(n.parent)]={n.minimum,n.maximum};
-        } else if(n.parent==0) host.probes["toast-card-"+std::to_string(n.id)]={n.minimum,n.maximum};
+            if(n.name=="Dismiss"||n.name=="閉じる") RecordProbe(host, ("toast-close-"+std::to_string(n.parent)).c_str(), n.minimum,n.maximum);
+            else RecordProbe(host, ("toast-action-"+std::to_string(n.parent)).c_str(), n.minimum,n.maximum);
+        } else if(n.parent==0) RecordProbe(host, ("toast-card-"+std::to_string(n.id)).c_str(), n.minimum,n.maximum);
     }
     for(std::size_t i=0;i<events.count;++i) {
         const auto event=storage[i];

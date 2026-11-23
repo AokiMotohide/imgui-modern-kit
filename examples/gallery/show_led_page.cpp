@@ -1,5 +1,5 @@
 #include "show_pages.h"
-#include "gallery.h"
+#include "gallery_page_host.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -8,7 +8,7 @@ namespace imkit::gallery {
 using namespace show;
 
 void ShowPages::Led(GalleryState& host) {
-    ComponentOptions o{&host.theme, &host.animation};
+    ComponentOptions o{&HostTheme(host), &HostAnimation(host)};
     auto& s = led;
     const float u = ImGui::GetFrameHeight();
     const float time = static_cast<float>(ImGui::GetTime());

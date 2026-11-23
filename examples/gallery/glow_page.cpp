@@ -1,5 +1,5 @@
 #include "glow_page.h"
-#include "gallery.h"
+#include "gallery_page_host.h"
 #include <algorithm>
 #include <cmath>
 #include <iterator>
@@ -169,13 +169,13 @@ void GlowPage::ApplyPreset(int index, const Theme& theme) {
 }
 
 void GlowPage::Show(GalleryState& host) {
-    const ComponentOptions o{&host.theme, &host.animation};
-    const float scale = host.scale;
+    const ComponentOptions o{&HostTheme(host), &HostAnimation(host)};
+    const float scale = HostScale(host);
     const double now = ImGui::GetTime();
-    const bool themeMotion = host.theme.motion.enabled && !host.theme.motion.reducedMotion;
+    const bool themeMotion = HostTheme(host).motion.enabled && !HostTheme(host).motion.reducedMotion;
     if (!initialized) {
-        ApplyPreset(0, host.theme);
-        remote = MakeExternalControlStyle(host.theme);
+        ApplyPreset(0, HostTheme(host));
+        remote = MakeExternalControlStyle(HostTheme(host));
         initialized = true;
     }
     ImGui::TextWrapped("DrawGlowFrame lights the edge of any rectangle. ExternalControlIndicator uses it around the whole window to "
@@ -194,7 +194,7 @@ void GlowPage::Show(GalleryState& host) {
             char label[48];
             std::snprintf(label, sizeof(label), "%s##glow-preset", kPresets[i]);
             if (ActionButton(label, preset == i ? ActionVariant::Primary : ActionVariant::Secondary, {}, o))
-                ApplyPreset(i, host.theme);
+                ApplyPreset(i, HostTheme(host));
             char probe[32];
             std::snprintf(probe, sizeof(probe), "glow-preset-%d", i);
             Record(host, probe);
@@ -209,7 +209,7 @@ void GlowPage::Show(GalleryState& host) {
         // Outside placement needs room around the frame; Inside fills the area.
         const float margin = style.placement == GlowPlacement::Inside ? 0.f : 44.f * scale;
         const ImVec2 frameA{a.x + margin, a.y + margin}, frameB{b.x - margin, b.y - margin};
-        MockApplication(draw, frameA, frameB, host.theme, scale);
+        MockApplication(draw, frameA, frameB, HostTheme(host), scale);
         DrawGlowFrame(draw, frameA, frameB, style, preview, now, active, animate && themeMotion);
         draw->PopClipRect();
         ImGui::Spacing();
@@ -247,7 +247,7 @@ void GlowPage::Show(GalleryState& host) {
                       style.spread, style.falloff, style.lineThickness, style.rounding, style.orbitHeads, style.orbitLength,
                       style.rippleSeconds, style.rippleDistance, style.rippleInterval);
         if (ImGui::TreeNode("C++ for this look")) {
-            ImGui::PushFont(nullptr, host.theme.metrics.bodySize * .92f);
+            ImGui::PushFont(nullptr, HostTheme(host).metrics.bodySize * .92f);
             ImGui::TextUnformatted(code);
             ImGui::PopFont();
             if (ActionButton("Copy", ActionVariant::Secondary, {}, o))
@@ -310,7 +310,7 @@ void GlowPage::Show(GalleryState& host) {
             if (ActionButton("Reset to the theme's look", ActionVariant::Secondary, {}, o)) {
                 const auto pill = remote.pill;
                 const bool showPill = remote.showPill;
-                remote = MakeExternalControlStyle(host.theme);
+                remote = MakeExternalControlStyle(HostTheme(host));
                 remote.pill = pill;
                 remote.showPill = showPill;
             }

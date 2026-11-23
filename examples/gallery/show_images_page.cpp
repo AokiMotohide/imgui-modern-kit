@@ -1,5 +1,5 @@
 #include "show_pages.h"
-#include "gallery.h"
+#include "gallery_page_host.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -8,14 +8,14 @@ namespace imkit::gallery {
 using namespace show;
 
 void ShowPages::Images(GalleryState& host) {
-    ComponentOptions o{&host.theme, &host.animation};
+    ComponentOptions o{&HostTheme(host), &HostAnimation(host)};
     auto& s = images;
     const float u = ImGui::GetFrameHeight();
     const float time = static_cast<float>(ImGui::GetTime());
     if (!s.initialized) {
         s.initialized = true;
         for (std::size_t i = 0; i < s.views.size(); ++i) {
-            s.views[i].image = host.sampleImages[i];
+            s.views[i].image = HostSampleImages(host)[i];
             s.views[i].imagePixels = {96, 96};
             s.views[i].label = s.names[i];
         }
@@ -24,7 +24,7 @@ void ShowPages::Images(GalleryState& host) {
         s.views[5].fit = ImageFit::Contain;
     }
     auto assign = [&](std::size_t index, std::size_t picture) {
-        s.views[index].image = host.sampleImages[picture % host.sampleImages.size()];
+        s.views[index].image = HostSampleImages(host)[picture % HostSampleImages(host).size()];
         s.views[index].imagePixels = {96, 96};
         s.views[index].crop = {};
         s.assigned[index] = true;
@@ -80,14 +80,14 @@ void ShowPages::Images(GalleryState& host) {
 
         const bool section2 = BeginSection(host, "Assign a picture", "Drag a picture onto a button. Choosing a file is the host's job; here the menu cycles the sample pictures.");
         if (section2) {
-            for (int k = 0; k < static_cast<int>(host.sampleImages.size()); ++k) {
+            for (int k = 0; k < static_cast<int>(HostSampleImages(host).size()); ++k) {
                 if (k > 0)
                     ImGui::SameLine();
                 ImGui::PushID(k);
-                ImGui::Image(host.sampleImages[static_cast<std::size_t>(k)], {u * 2.2f, u * 2.2f});
+                ImGui::Image(HostSampleImages(host)[static_cast<std::size_t>(k)], {u * 2.2f, u * 2.2f});
                 if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
                     ImGui::SetDragDropPayload("IMKIT_IMAGE", &k, sizeof(k));
-                    ImGui::Image(host.sampleImages[static_cast<std::size_t>(k)], {u * 2.2f, u * 2.2f});
+                    ImGui::Image(HostSampleImages(host)[static_cast<std::size_t>(k)], {u * 2.2f, u * 2.2f});
                     ImGui::EndDragDropSource();
                 }
                 ImGui::PopID();
@@ -127,7 +127,7 @@ void ShowPages::Images(GalleryState& host) {
                 if (i > 0)
                     ImGui::SameLine();
                 ImageButtonView view;
-                view.image = host.sampleImages[static_cast<std::size_t>(i)];
+                view.image = HostSampleImages(host)[static_cast<std::size_t>(i)];
                 view.imagePixels = {96, 48}; // Pretend the picture is wide, so the fit modes differ.
                 view.fit = fits[i];
                 view.label = names[i];
