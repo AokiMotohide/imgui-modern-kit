@@ -87,7 +87,7 @@ theme.skin = &skin;                                    // non-owning, like theme
 imkit::ActionButton("Go", imkit::ActionVariant::Primary, {}, {&theme});
 ```
 
-`SkinFrame` carries the rectangle, rounding, part (`Button`, `Badge`, `Card`), variant or status, the interaction state and an eased `hover` value. `DrawNineSlice` stretches a picture you loaded over a rectangle while keeping its corners; `NineSliceQuads` gives the same split without drawing. `DrawBackdropPattern` fills a rectangle with `Dots`, `Stripes` or `Rays`. Neither helper loads or owns a texture.
+`SkinFrame` carries the rectangle, rounding, part (`Button`, `Badge`, `Card`), variant or status, the interaction state and an eased `hover` value. `DrawNineSlice` stretches a picture you loaded over a rectangle while keeping its corners; `NineSliceQuads` gives the same split without drawing. `DrawBackdropPattern` fills a rectangle with `Dots`, `Stripes` or `Rays`. `BackdropStyle::phase` shifts the pattern origin in screen pixels and `BackdropStyle::scale` multiplies its spacing and size; pass a canvas pan offset and zoom to keep the pattern fixed to the world while the view moves. The defaults draw the unshifted pattern. Neither helper loads or owns a texture.
 
 ### Animated pictures and progress thumbs
 
@@ -107,7 +107,7 @@ const bool animate = theme.motion.enabled && !theme.motion.reducedMotion;
 imkit::Sprite("walk", walk, state, ImGui::GetTime(), {80, 64}, animate);
 ```
 
-`SpriteFrameAt` and `SpriteFrameUV` give the frame number and texture coordinates without a Dear ImGui context; `DrawSprite` draws one frame into any rectangle. `ProgressTrackView::thumb` lets you draw on the leading edge of a progress fill, for example a sprite that rides it. The callback receives the draw list, the track rectangle, the head position and the shown fraction; `thumbHeight` reserves layout height above the track so the picture does not cover the header.
+`SpriteFrameAt` and `SpriteFrameUV` give the frame number and texture coordinates without a Dear ImGui context; `DrawSprite` draws one frame into any rectangle. `DrawSpriteScatter` repeats one frame over a rectangle on a staggered grid, as a faint wallpaper: `SpriteScatterStyle` sets `spacing`, `size` (the longer side, keeping the cell's aspect), `tint` (its alpha sets how faint), `stagger` (shift per row as a fraction of the spacing, default .5), `phase` and `scale`. It clips to the rectangle and widens the spacing to stay under about 2000 sprites. `ProgressTrackView::thumb` lets you draw on the leading edge of a progress fill, for example a sprite that rides it. The callback receives the draw list, the track rectangle, the head position and the shown fraction; `thumbHeight` reserves layout height above the track so the picture does not cover the header.
 
 ### Keyframe motion and layered pictures
 

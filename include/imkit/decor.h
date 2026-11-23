@@ -35,6 +35,11 @@ struct BackdropStyle {
     float angle = 0.f;       // Stripes: direction in radians. Rays: rotation of the first wedge.
     int rays = 24;           // Rays: number of coloured wedges.
     ImVec2 origin{.5f, .5f}; // Rays: centre, as a fraction of the rectangle.
+    // Shift of the pattern origin in screen pixels (Dots: from the rectangle's top-left; Stripes and Rays: from
+    // their usual anchor). Pass a canvas pan offset here and its zoom in `scale` to keep the pattern fixed to the
+    // world while the view moves. `scale` multiplies `spacing` and `size`. The defaults draw the unshifted pattern.
+    ImVec2 phase{0, 0};
+    float scale = 1.f;
 };
 // Fills the rectangle with the pattern, clipped to it. The pattern is redrawn every frame; dots are capped at about
 // 20000 per call by widening the spacing, so bake a texture for large, fine halftones.
@@ -74,6 +79,20 @@ void DrawSprite(ImDrawList* draw, const SpriteSheet& sheet, int frame, ImVec2 mi
 // `animate = !theme.motion.reducedMotion && theme.motion.enabled` so that reduced motion shows the rest frame.
 // A rectangle outside the visible area is not drawn. Returns the frame that was shown.
 int Sprite(const char* id, const SpriteSheet& sheet, SpriteState& state, double now, ImVec2 size, bool animate = true);
+
+// One sprite frame repeated over a rectangle on a staggered grid, as a faint wallpaper behind a canvas.
+struct SpriteScatterStyle {
+    float spacing = 96.f;                    // Distance between neighbouring sprites, in pixels.
+    float size = 40.f;                       // Longer side of one sprite, in pixels; the cell's aspect is kept.
+    ImU32 tint = IM_COL32(255, 255, 255, 28); // Multiplies the picture; its alpha sets how faint the scatter is.
+    float stagger = .5f;                     // Horizontal shift added per row, as a fraction of `spacing` (0..1).
+    ImVec2 phase{0, 0};                      // Shift of the grid origin from the rectangle's top-left, in pixels.
+    float scale = 1.f;                       // Multiplies `spacing` and `size`; pass a canvas zoom with `phase`.
+};
+// Draws `frame` of the sheet at every grid point, clipped to the rectangle. Sprites are capped at about 2000 per
+// call by widening the spacing. Draws nothing when the sheet or frame is unusable or the tint is transparent.
+void DrawSpriteScatter(ImDrawList* draw, const SpriteSheet& sheet, int frame, ImVec2 minimum, ImVec2 maximum,
+                       const SpriteScatterStyle& style);
 
 // ---- Illustrated messages -------------------------------------------------------------------------------------
 // A picture beside a short heading, for an area that is empty or for the result of a finished task. The picture is a

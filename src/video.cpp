@@ -66,6 +66,37 @@ const editor::Keyframe *FindClipKey(std::span<const editor::Keyframe> keys,Tick 
 editor::Value Value(const ClipView &c) {
     return {c.start, c.start + c.duration, c.sourceIn, c.track, c.speed};
 }
+// Filmstrip clip body: 16:9 frames from the left edge with a 1 px gap, the last one cut at the clip end. Only the
+// frames inside [visibleLeft, visibleRight] are drawn, and at most kFilmstripQueries ask the host for a picture.
+constexpr int kFilmstripQueries=64;
+void DrawFilmstripFrames(ImDrawList *draw,const TimelineProvider &p,StableId track,const ClipView &clip,
+                         const editor::Value &value,ImVec2 a,ImVec2 b,float visibleLeft,float visibleRight,
+                         float originX,double originSeconds,double pixelsPerSecond,float radius) {
+    const float height=b.y-a.y;
+    if (height<=2 || b.x-a.x<=1 || !(pixelsPerSecond>0)) return;
+    const float pitch=height*16.f/9.f+1.f;
+    const int first=std::max(0,static_cast<int>(std::floor((std::max(a.x,visibleLeft)-a.x)/pitch)));
+    const int last=static_cast<int>(std::floor((std::min(b.x,visibleRight)-a.x)/pitch));
+    if (last<first) return;
+    const int stride=std::max(1,(last-first+kFilmstripQueries)/kFilmstripQueries);
+    ImTextureRef picture=clip.thumbnail;
+    for (int i=first;i<=last;++i) {
+        const float left=a.x+static_cast<float>(i)*pitch,right=std::min(b.x,left+pitch-1.f);
+        if (right<=left) break;
+        if (p.thumbnailAt && (i-first)%stride==0) {
+            const double timelineSeconds=originSeconds+((left+right)*.5f-originX)/pixelsPerSecond;
+            const double sourceSeconds=editor::Seconds(value.offset)+(timelineSeconds-editor::Seconds(value.first))*value.x;
+            const ImTextureRef asked=p.thumbnailAt(p.user,track,clip.id,sourceSeconds);
+            picture=asked.GetTexID() ? asked : clip.thumbnail;
+        }
+        if (!picture.GetTexID()) continue;
+        const ImDrawFlags corners=(i==0 ? ImDrawFlags_RoundCornersLeft : ImDrawFlags_None)|
+                                  (right>=b.x ? ImDrawFlags_RoundCornersRight : ImDrawFlags_None);
+        const ImVec2 uv1{(right-left)/(pitch-1.f),1.f};
+        if (corners) draw->AddImageRounded(picture,{left,a.y},{right,b.y},{0,0},uv1,IM_COL32_WHITE,radius,corners);
+        else draw->AddImage(picture,{left,a.y},{right,b.y},{0,0},uv1);
+    }
+}
 editor::Value Value(const ClipEdit &e, StableId track, double speed) {
     return {e.start, e.start + e.duration, e.sourceIn, track, speed};
 }
@@ -801,26 +832,45 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                          : track.kind == TrackKind::Adjustment ? theme.editor.adjustmentClip
                          : track.kind == TrackKind::Group ? theme.editor.groupClip
                                                             : theme.editor.videoClip;
+            const bool filmstrip = s.options.clipBody == ClipBody::Filmstrip;
             const float fillAlpha = selected ? .92f : bodyHovered ? .72f : .56f;
-            const ImVec4 composite = ::imkit::detail::MixColor(theme.editor.trackHeader, color, fillAlpha * color.w);
-            color.w *= fillAlpha;
-            // Text colour follows the clip's actual tone so selected (saturated) clips stay readable.
             const ImVec4 white{1,1,1,1}, black{0,0,0,1};
-            const ImVec4 ink = ContrastRatio(theme.colors.text, composite) >= 4.5f ? theme.colors.text
+            // Filmstrip: a neutral dark ground taken from the track header, so frames read as pictures, not as tint.
+            const ImVec4 ground = ::imkit::detail::MixColor(theme.editor.trackHeader, black, .62f);
+            const ImVec4 composite = filmstrip ? ground
+                                               : ::imkit::detail::MixColor(theme.editor.trackHeader, color, fillAlpha * color.w);
+            // Text colour follows the clip's actual tone so selected (saturated) clips stay readable.
+            const ImVec4 ink = filmstrip ? ImVec4(1.f,.984f,.937f,1.f)
+                             : ContrastRatio(theme.colors.text, composite) >= 4.5f ? theme.colors.text
                              : ContrastRatio(white, composite) >= ContrastRatio(black, composite) ? white : black;
             const ImU32 inkColor = ImGui::GetColorU32(ink);
+            const ImU32 chipColor = ImGui::GetColorU32(::imkit::detail::WithAlpha(::imkit::detail::MixColor(ground, black, .35f), .78f));
             const float clipRadius = std::min(std::max(6.f, theme.radius.subtle), theme.radius.control);
-            if (selected)
-                draw->AddRect({a.x-2,a.y-2}, {b.x+2,b.y+2}, ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.focus,.30f)),
-                              clipRadius + 2, ImDrawFlags_None, 3.f);
-            draw->AddRectFilled(a, b, ImGui::GetColorU32(color), clipRadius);
-            if (p.drawClipOverlay) p.drawClipOverlay(p.user,clip.id,value,a,b);
-            const bool outlined=::imkit::detail::IsOutlined(ImGui::GetStyle());
-            draw->AddRect(a, b,
-                          selected ? ImGui::GetColorU32(theme.colors.focus)
-                                   : outlined ? ImGui::GetColorU32(ImGuiCol_Border) : ImGui::GetColorU32(ImVec4(0,0,0,.20f)),
-                          clipRadius, ImDrawFlags_None,
-                          selected ? std::max(2.f, ::imkit::detail::FrameLineWidth(1.f)) : ::imkit::detail::FrameLineWidth(1.f));
+            if (filmstrip) {
+                const ImVec4 band{color.x,color.y,color.z,1.f};
+                if (selected)
+                    draw->AddRect({a.x-2,a.y-2}, {b.x+2,b.y+2}, ImGui::GetColorU32(theme.colors.accent), clipRadius + 2,
+                                  ImDrawFlags_None, 2.f);
+                draw->AddRectFilled(a, b, ImGui::GetColorU32(ground), clipRadius);
+                DrawFilmstripFrames(draw,p,track.id,clip,value,a,b,view.min.x+s.headerWidth,view.max.x,
+                                    view.min.x+s.headerWidth,s.canvas.origin.x,s.canvas.scale.x,clipRadius);
+                if (p.drawClipOverlay) p.drawClipOverlay(p.user,clip.id,value,a,b);
+                draw->AddRectFilled(a, {b.x,std::min(b.y,a.y+3.f)}, ImGui::GetColorU32(band), clipRadius, ImDrawFlags_RoundCornersTop);
+                draw->AddRect(a, b, ImGui::GetColorU32(band), clipRadius, ImDrawFlags_None, 1.5f);
+            } else {
+                color.w *= fillAlpha;
+                if (selected)
+                    draw->AddRect({a.x-2,a.y-2}, {b.x+2,b.y+2}, ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.focus,.30f)),
+                                  clipRadius + 2, ImDrawFlags_None, 3.f);
+                draw->AddRectFilled(a, b, ImGui::GetColorU32(color), clipRadius);
+                if (p.drawClipOverlay) p.drawClipOverlay(p.user,clip.id,value,a,b);
+                const bool outlined=::imkit::detail::IsOutlined(ImGui::GetStyle());
+                draw->AddRect(a, b,
+                              selected ? ImGui::GetColorU32(theme.colors.focus)
+                                       : outlined ? ImGui::GetColorU32(ImGuiCol_Border) : ImGui::GetColorU32(ImVec4(0,0,0,.20f)),
+                              clipRadius, ImDrawFlags_None,
+                              selected ? std::max(2.f, ::imkit::detail::FrameLineWidth(1.f)) : ::imkit::detail::FrameLineWidth(1.f));
+            }
             const float edgeHit=std::min(10.f,std::max(6.f,(b.x-a.x)*.22f));
             const bool leftEdge=bodyHovered && io.MousePos.x-a.x<=edgeHit;
             const bool rightEdge=bodyHovered && b.x-io.MousePos.x<=edgeHit;
@@ -845,11 +895,22 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             std::snprintf(metadata,sizeof(metadata),"%s  %.3gx",duration,value.x);
             const float metadataWidth=ImGui::CalcTextSize(metadata).x;
             const float metadataRight=end-(clip.proxy ? ImGui::GetFontSize()+16 : 12);
-            const bool showMetadata=metadataRight-x>metadataWidth+100 && nameY+ImGui::GetFontSize()<b.y;
-            const float nameRight=showMetadata ? metadataRight-metadataWidth-10 : metadataRight;
-            if (track.expanded && clip.thumbnail.GetTexID() && end-x>8 && b.y>nameY+ImGui::GetFontSize()+7)
+            // Filmstrip puts the metadata in its own label at the bottom right, so it needs a second text row.
+            const float metadataY=filmstrip ? b.y-ImGui::GetFontSize()-4.f : nameY;
+            const bool showMetadata=metadataRight-x>metadataWidth+100 &&
+                (filmstrip ? metadataY>=nameY+ImGui::GetFontSize()+2.f : nameY+ImGui::GetFontSize()<b.y);
+            const float nameRight=showMetadata && !filmstrip ? metadataRight-metadataWidth-10 : metadataRight;
+            auto chip=[&](float left,float top,float right) {
+                const float l=std::max(left,x+2.f),r=std::min(right,end-2.f);
+                if (filmstrip && r>l+4) draw->AddRectFilled({l,top},{r,top+ImGui::GetFontSize()+2.f},chipColor,4.f);
+            };
+            if (!filmstrip && track.expanded && clip.thumbnail.GetTexID() && end-x>8 && b.y>nameY+ImGui::GetFontSize()+7)
                 draw->AddImage(clip.thumbnail, {x+3,nameY+ImGui::GetFontSize()+4}, {std::min(end-3,x+65),b.y-3});
             float nameLeft=x+6;
+            if (filmstrip && !(s.editingCaption == clip.id && s.captionDrag.active)) {
+                const float badges=s.icons ? static_cast<float>((clip.linked ? 1 : 0)+(clip.group ? 1 : 0))*(ImGui::GetFontSize()+3) : 0.f;
+                chip(x+5,nameY-1,std::min(nameRight,nameLeft+badges+ImGui::CalcTextSize(clip.label).x)+6);
+            }
             if (s.icons && (clip.linked || clip.group)) {
                 const float iconSize=ImGui::GetFontSize();
                 const float pixels=iconSize*std::max(io.DisplayFramebufferScale.x,io.DisplayFramebufferScale.y);
@@ -883,7 +944,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 }
             } else {
                 text({nameLeft,nameY},inkColor,clip.label,nameRight);
-                if (showMetadata) text({metadataRight-metadataWidth,nameY},ImGui::GetColorU32(::imkit::detail::WithAlpha(ink,.70f)),metadata,metadataRight);
+                if (showMetadata) chip(metadataRight-metadataWidth-5,metadataY-1,metadataRight+5);
+                if (showMetadata) text({metadataRight-metadataWidth,metadataY},ImGui::GetColorU32(::imkit::detail::WithAlpha(ink,.70f)),metadata,metadataRight);
             }
             if (clip.missing || clip.offline)
                 draw->AddLine(a, b, ImGui::GetColorU32(clip.offline ? theme.editor.error : theme.editor.missing), 2);

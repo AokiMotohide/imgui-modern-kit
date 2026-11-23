@@ -57,6 +57,8 @@ int main() {
     gate.toolbar.trailing=[](void *){};
     gate.externalDrops=std::span(&dropRoute,1);
     gate.drawClipOverlay=[](void *,editor::StableId,const editor::Value &,ImVec2,ImVec2){};
+    gate.thumbnailAt=[](void *,editor::StableId,editor::StableId,double){return ImTextureRef{};};
+    timeline.options.clipBody=video::ClipBody::Filmstrip;
     timeline.labels.fit="Frame all clips";timeline.labels.followModes[0]="Disabled";
     timeline.trackLabels.controls="Track actions";timeline.trackLabels.names[0]="Visibility";
     curve.icons=&icons;uv.icons=&icons;viewport.icons=&icons;timeline.icons=&icons;

@@ -22,6 +22,10 @@ bool (*volatile skinFrame)(const imkit::SkinFrame&,void*)=imkit::Skin{}.drawFram
 int (*volatile spriteAt)(const imkit::SpriteSheet&,double,bool)=&imkit::SpriteFrameAt;
 bool (*volatile spriteUV)(const imkit::SpriteSheet&,int,ImVec2&,ImVec2&)=&imkit::SpriteFrameUV;
 void (*volatile drawSprite)(ImDrawList*,const imkit::SpriteSheet&,int,ImVec2,ImVec2,ImU32)=&imkit::DrawSprite;
+void (*volatile spriteScatter)(ImDrawList*,const imkit::SpriteSheet&,int,ImVec2,ImVec2,const imkit::SpriteScatterStyle&)=&imkit::DrawSpriteScatter;
+constexpr imkit::SpriteScatterStyle scatterStyle{96.f,40.f,IM_COL32(255,255,255,28),.5f,{0,0},1.f};
+constexpr imkit::BackdropStyle worldBackdrop{.phase{3,4},.scale=2.f};
+static_assert(scatterStyle.stagger==.5f && worldBackdrop.scale==2.f);
 int (*volatile sprite)(const char*,const imkit::SpriteSheet&,imkit::SpriteState&,double,ImVec2,bool)=&imkit::Sprite;
 ImVec2 (*volatile emptyMessage)(ImDrawList*,ImVec2,ImVec2,const imkit::IllustrationRef&,const char*,const char*,double,bool)=&imkit::DrawEmptyMessage;
 void (*volatile beginResult)(const char*,const imkit::ResultCardView&)=&imkit::BeginResultCard;
@@ -34,4 +38,4 @@ float (*volatile glowLevel)(const imkit::GlowFrameStyle&,double,bool)=&imkit::Gl
 bool (*volatile glowFrame)(ImDrawList*,ImVec2,ImVec2,const imkit::GlowFrameStyle&,imkit::GlowFrameState&,double,bool,bool)=&imkit::DrawGlowFrame;
 imkit::ProgressThumbFn volatile thumb=nullptr;
 }
-int main(){return theme && resolve && contrast && palette && table && tree && annotate && compactActionRow && brand && corners && serialize && parse && pushRole && popRole && shadow && slices && nineSlice && backdrop && spriteAt && spriteUV && drawSprite && sprite && emptyMessage && beginResult && endResult && badgeSize && drawBadge && glowLevel && glowFrame && !thumb && !skinFrame?0:1;}
+int main(){return theme && resolve && contrast && palette && table && tree && annotate && compactActionRow && brand && corners && serialize && parse && pushRole && popRole && shadow && slices && nineSlice && backdrop && spriteAt && spriteUV && drawSprite && spriteScatter && sprite && emptyMessage && beginResult && endResult && badgeSize && drawBadge && glowLevel && glowFrame && !thumb && !skinFrame?0:1;}

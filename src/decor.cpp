@@ -227,34 +227,47 @@ constexpr int kMaxDots = 20000;
 constexpr int kMaxStripes = 4000;
 constexpr float kPi = 3.14159265358979323846f;
 
+float PatternScale(float scale) { return std::isfinite(scale) && scale > 0.f ? scale : 1.f; }
+float FloorDiv(float value, float step) { return std::floor(value / step); }
+
 void DrawDots(ImDrawList* draw, ImVec2 minimum, ImVec2 maximum, const BackdropStyle& style) {
     const float width = maximum.x - minimum.x, height = maximum.y - minimum.y;
-    float spacing = std::max(style.spacing, 2.f);
+    const float scale = PatternScale(style.scale);
+    float spacing = std::max(style.spacing * scale, 2.f);
     // Widen the grid rather than flood the draw list with dots.
     while ((std::ceil(width / spacing) + 1.f) * (std::ceil(height / spacing) + 1.f) > static_cast<float>(kMaxDots))
         spacing *= 1.25f;
-    const float radius = std::max(style.size, 0.5f) * .5f;
+    const float radius = std::max(style.size * scale, 0.5f) * .5f;
+    // The grid is anchored at minimum + phase; start at the first row and column that reaches the rectangle.
+    const ImVec2 anchor{minimum.x + style.phase.x, minimum.y + style.phase.y};
+    const int firstRow = static_cast<int>(FloorDiv(minimum.y - anchor.y, spacing));
+    const int firstColumn = static_cast<int>(FloorDiv(minimum.x - anchor.x, spacing));
     const int rows = static_cast<int>(std::ceil(height / spacing)) + 1, columns = static_cast<int>(std::ceil(width / spacing)) + 1;
-    for (int row = 0; row < rows; ++row) {
-        const float y = minimum.y + static_cast<float>(row) * spacing;
+    for (int row = firstRow; row < firstRow + rows; ++row) {
+        const float y = anchor.y + static_cast<float>(row) * spacing;
         const float shift = (row & 1) ? spacing * .5f : 0.f; // Staggered rows read as halftone, not as a grid.
-        for (int column = 0; column < columns; ++column)
-            draw->AddCircleFilled({minimum.x + shift + static_cast<float>(column) * spacing, y}, radius, style.color, 8);
+        for (int column = firstColumn; column < firstColumn + columns; ++column)
+            draw->AddCircleFilled({anchor.x + shift + static_cast<float>(column) * spacing, y}, radius, style.color, 8);
     }
 }
 
 void DrawStripes(ImDrawList* draw, ImVec2 minimum, ImVec2 maximum, const BackdropStyle& style) {
     const ImVec2 center{(minimum.x + maximum.x) * .5f, (minimum.y + maximum.y) * .5f};
+    const ImVec2 anchor{center.x + style.phase.x, center.y + style.phase.y};
     const float halfDiagonal = std::hypot(maximum.x - minimum.x, maximum.y - minimum.y) * .5f;
     const ImVec2 direction{std::cos(style.angle), std::sin(style.angle)}, normal{-direction.y, direction.x};
-    float spacing = std::max(style.spacing, 2.f);
+    const float scale = PatternScale(style.scale);
+    float spacing = std::max(style.spacing * scale, 2.f);
     while (halfDiagonal * 2.f / spacing > static_cast<float>(kMaxStripes))
         spacing *= 1.25f;
-    const float thickness = std::max(style.size, 0.5f);
-    // Bands are laid out along the normal, starting from the centre line so the pattern does not jump when resized.
-    const int steps = static_cast<int>(std::ceil(halfDiagonal / spacing));
-    for (int i = -steps; i <= steps; ++i) {
-        const float offset = static_cast<float>(i) * spacing;
+    const float thickness = std::max(style.size * scale, 0.5f);
+    // Bands are laid out along the normal from the anchor line, so the pattern does not jump when resized. Each
+    // band is drawn through the point nearest the centre, long enough to cross the whole rectangle.
+    const float centerOffset = (center.x - anchor.x) * normal.x + (center.y - anchor.y) * normal.y;
+    const int firstBand = static_cast<int>(FloorDiv(centerOffset - halfDiagonal, spacing));
+    const int lastBand = static_cast<int>(std::ceil((centerOffset + halfDiagonal) / spacing));
+    for (int i = firstBand; i <= lastBand; ++i) {
+        const float offset = static_cast<float>(i) * spacing - centerOffset;
         const ImVec2 middle{center.x + normal.x * offset, center.y + normal.y * offset};
         draw->AddLine({middle.x - direction.x * halfDiagonal, middle.y - direction.y * halfDiagonal},
                       {middle.x + direction.x * halfDiagonal, middle.y + direction.y * halfDiagonal}, style.color, thickness);
@@ -262,7 +275,8 @@ void DrawStripes(ImDrawList* draw, ImVec2 minimum, ImVec2 maximum, const Backdro
 }
 
 void DrawRays(ImDrawList* draw, ImVec2 minimum, ImVec2 maximum, const BackdropStyle& style) {
-    const ImVec2 origin{minimum.x + (maximum.x - minimum.x) * style.origin.x, minimum.y + (maximum.y - minimum.y) * style.origin.y};
+    const ImVec2 origin{minimum.x + (maximum.x - minimum.x) * style.origin.x + style.phase.x,
+                        minimum.y + (maximum.y - minimum.y) * style.origin.y + style.phase.y};
     float farthest = 0.f;
     for (const ImVec2 corner : {minimum, maximum, ImVec2{minimum.x, maximum.y}, ImVec2{maximum.x, minimum.y}})
         farthest = std::max(farthest, std::hypot(corner.x - origin.x, corner.y - origin.y));
@@ -286,6 +300,44 @@ void DrawBackdropPattern(ImDrawList* draw, ImVec2 minimum, ImVec2 maximum, const
     case BackdropPattern::Dots: DrawDots(draw, minimum, maximum, style); break;
     case BackdropPattern::Stripes: DrawStripes(draw, minimum, maximum, style); break;
     case BackdropPattern::Rays: DrawRays(draw, minimum, maximum, style); break;
+    }
+    draw->PopClipRect();
+}
+
+void DrawSpriteScatter(ImDrawList* draw, const SpriteSheet& sheet, int frame, ImVec2 minimum, ImVec2 maximum,
+                       const SpriteScatterStyle& style) {
+    ImVec2 uv0, uv1;
+    if (!draw || !(maximum.x > minimum.x) || !(maximum.y > minimum.y) || (style.tint >> IM_COL32_A_SHIFT) == 0 ||
+        !SpriteFrameUV(sheet, frame, uv0, uv1))
+        return;
+    constexpr int kMaxSprites = 2000;
+    const float scale = PatternScale(style.scale);
+    const float longest = std::max(style.size * scale, 1.f);
+    const float aspect = sheet.cellPixels.x / sheet.cellPixels.y; // SpriteFrameUV accepted the cell, so both > 0.
+    const ImVec2 half = aspect >= 1.f ? ImVec2{longest * .5f, longest * .5f / aspect} : ImVec2{longest * .5f * aspect, longest * .5f};
+    float spacing = std::max(style.spacing * scale, 2.f);
+    // Count the points whose sprite can touch the rectangle, and widen the grid rather than flood the draw list.
+    const auto count = [&](float step) {
+        return (std::ceil((maximum.x - minimum.x + 2.f * half.x) / step) + 2.f) *
+               (std::ceil((maximum.y - minimum.y + 2.f * half.y) / step) + 2.f);
+    };
+    while (count(spacing) > static_cast<float>(kMaxSprites))
+        spacing *= 1.25f;
+    const float stagger = std::isfinite(style.stagger) ? std::clamp(style.stagger, 0.f, 1.f) : .5f;
+    const ImVec2 anchor{minimum.x + style.phase.x, minimum.y + style.phase.y};
+    const int firstRow = static_cast<int>(FloorDiv(minimum.y - half.y - anchor.y, spacing));
+    const int lastRow = static_cast<int>(std::ceil((maximum.y + half.y - anchor.y) / spacing));
+    draw->PushClipRect(minimum, maximum, true);
+    for (int row = firstRow; row <= lastRow; ++row) {
+        const float y = anchor.y + static_cast<float>(row) * spacing;
+        const float rowShift = static_cast<float>(row) * stagger;
+        const float shift = (rowShift - std::floor(rowShift)) * spacing;
+        const int firstColumn = static_cast<int>(FloorDiv(minimum.x - half.x - anchor.x - shift, spacing));
+        const int lastColumn = static_cast<int>(std::ceil((maximum.x + half.x - anchor.x - shift) / spacing));
+        for (int column = firstColumn; column <= lastColumn; ++column) {
+            const float x = anchor.x + shift + static_cast<float>(column) * spacing;
+            draw->AddImage(sheet.texture, {x - half.x, y - half.y}, {x + half.x, y + half.y}, uv0, uv1, style.tint);
+        }
     }
     draw->PopClipRect();
 }

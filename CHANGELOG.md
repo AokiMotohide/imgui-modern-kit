@@ -8,6 +8,8 @@
 
 | Header | Additions |
 | --- | --- |
+| `imkit/video.h` | `ClipBody` (`Fill`, `Filmstrip`), `TimelineOptions::clipBody`, `TimelineProvider::thumbnailAt` (16:9 frames along a clip; `Fill` stays the default) |
+| `imkit/decor.h` | `BackdropStyle::phase`, `BackdropStyle::scale` (a pattern fixed to a panned and zoomed canvas), `DrawSpriteScatter`, `SpriteScatterStyle` |
 | `imkit/decor.h` | `DrawGlowFrame`, `GlowFrameLevel`, `GlowFrameStyle`, `GlowFrameState`, `GlowMotion`, `GlowPlacement` |
 | `imkit/shell.h` | `ExternalControlIndicator`, `MakeExternalControlStyle`, `ExternalControlView`, `ExternalControlStyle`, `ExternalControlState`, `ExternalControlRequest`, `ExternalControlPhase` |
 | `imkit/theme.h` | `OverlayAnchor` |
