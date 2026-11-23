@@ -364,15 +364,22 @@ StableId StepBand(const char* id,std::span<const StepBandGroup> groups,std::span
     StableId result=0;
     float x=origin.x;
     for(const auto& r:runs) {
-        const ImVec4 tint=Solid(r.group>=0 && groups[static_cast<std::size_t>(r.group)].tint.w>0?
-                                groups[static_cast<std::size_t>(r.group)].tint:accent);
+        const ImVec4 groupTint=Solid(r.group>=0 && groups[static_cast<std::size_t>(r.group)].tint.w>0?
+                                     groups[static_cast<std::size_t>(r.group)].tint:accent);
+        const ImVec4 tint=layout.tintTrays?groupTint:background;
+        bool holdsCurrent=false;
+        for(std::size_t i=r.first;i<r.end;++i) holdsCurrent|=items[i].id==current;
+        // The tray of the current step goes the other way from the rest (lighter on a dark band), so it reads as raised.
+        const bool raised=holdsCurrent&&layout.currentTrayContrast>1.14f;
+        const float trayContrast=raised?layout.currentTrayContrast:1.14f;
+        const ImVec4 trayToward=(dark!=raised)?ImVec4{0,0,0,1}:ImVec4{1,1,1,1};
         const float labelWidth=showGroupLabels?groupLabelWidth(r):0.f;
         const float trayWidth=trayPad*2.f+labelWidth+cell*static_cast<float>(r.end-r.first)+link*static_cast<float>(r.end-r.first-1);
         const ImVec2 a{x,origin.y+inset},b{x+trayWidth,origin.y+height-inset};
         // A tint close to the band's own colour would vanish, so the tray is pushed lighter (or darker on a dark band)
         // until it stands apart; its edge is pushed toward the text until it reads as a line.
         const ImVec4 tinted=Mix(background,tint,dark?.2f:.3f);
-        const ImVec4 trayFill=detail::MixToContrast(tinted,dark?ImVec4{0,0,0,1}:ImVec4{1,1,1,1},0.f,1.14f,{background});
+        const ImVec4 trayFill=detail::MixToContrast(tinted,trayToward,0.f,trayContrast,{background});
         const ImVec4 trayEdge=detail::MixToContrast(Mix(background,tint,dark?.55f:.7f),text,0.f,1.5f,{trayFill,background});
         const float trayRounding=height*.26f;
         detail::AddSmoothRectFilled(draw,a,b,U(trayFill),trayRounding);

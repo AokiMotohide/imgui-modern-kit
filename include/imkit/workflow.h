@@ -87,6 +87,8 @@ struct StepBandOptions {
     const PlateMarkStyle* marks=nullptr; // Null draws plates in theme colours.
     ImVec4 background{};     // Alpha zero uses the theme's chrome zone.
     float optionalScale=.72f; // Plate size of an optional step relative to the others.
+    bool tintTrays=true;     // False draws every tray in the band's own colour; groups then differ by place and name only.
+    float currentTrayContrast=0; // Above 1.14, the tray holding the current step stands this far apart from the band.
 };
 // One row of steps sorted into groups. Each group is a tray tinted by its colour, with its name at the left; the tray
 // always stands apart from the band (1.14:1), even when its tint is the band's own colour. Steps in a group are joined

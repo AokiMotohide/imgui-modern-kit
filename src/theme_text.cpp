@@ -63,6 +63,7 @@ const Field kFields[] = {
     IMKIT_FIELD("semantic.warning", Color, semantic.warning),
     IMKIT_FIELD("semantic.error", Color, semantic.error),
     IMKIT_FIELD("semantic.shadow", Color, semantic.shadow),
+    IMKIT_FIELD("semantic.crown", Color, semantic.crown),
     IMKIT_FIELD("semantic.control.rest", Color, semantic.control.rest),
     IMKIT_FIELD("semantic.control.hover", Color, semantic.control.hover),
     IMKIT_FIELD("semantic.control.pressed", Color, semantic.control.pressed),
@@ -83,6 +84,8 @@ const Field kFields[] = {
     IMKIT_RANGED("stroke.focus", Float, stroke.focus, 0, 32),
     IMKIT_RANGED("stroke.button", Float, stroke.button, 0, 32),
     IMKIT_FIELD("stroke.dashed-disabled", Bool, stroke.dashedDisabled),
+    IMKIT_RANGED("stroke.primary", Float, stroke.primary, 0, 32),
+    IMKIT_FIELD("stroke.primary-color", Color, stroke.primaryColor),
     IMKIT_RANGED("elevation.surface", Float, elevation.surface, 0, 128),
     IMKIT_RANGED("elevation.raised", Float, elevation.raised, 0, 128),
     IMKIT_RANGED("elevation.overlay", Float, elevation.overlay, 0, 128),
@@ -346,7 +349,8 @@ ThemeParseResult ParseTheme(std::string_view text, Theme &theme) {
         {"brand.text", &BrandPalette::text, 2},     {"brand.accent", &BrandPalette::accent, 3},
         {"brand.raised", &BrandPalette::raised, -1}, {"brand.border", &BrandPalette::border, -1},
         {"brand.text-secondary", &BrandPalette::textSecondary, -1}, {"brand.success", &BrandPalette::success, -1},
-        {"brand.warning", &BrandPalette::warning, -1}, {"brand.error", &BrandPalette::error, -1}};
+        {"brand.warning", &BrandPalette::warning, -1}, {"brand.error", &BrandPalette::error, -1},
+        {"brand.crown", &BrandPalette::crown, -1}};
     for (const auto &e : entries)
         for (const auto &b : brandKeys) {
             if (e.key != b.key)

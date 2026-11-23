@@ -49,7 +49,9 @@ struct Radius { float subtle=4, control=8, overlay=12; float controlShare=.25f; 
 // border is a hairline up to 1 and an outline from OutlineMinimumWidth; dividers and table lines never exceed 1.
 // `button` is the outline of buttons when it differs from other frames (0 uses `border`); `dashedDisabled` draws the
 // outline of a disabled ImKit button as a dashed line, so it reads as "not now" without relying on colour alone.
-struct Stroke { float border=1, focus=2; float button=0; bool dashedDisabled=false; };
+// `primary` gives the primary button an outline of its own width (0 keeps `button`), drawn in `primaryColor`
+// (alpha zero uses onAccent), so the one action to press stands out while other buttons keep a hairline.
+struct Stroke { float border=1, focus=2; float button=0; bool dashedDisabled=false; float primary=0; ImVec4 primaryColor{}; };
 // Shadow extent in pixels. OverlayDecoration draws overlay; raised is available to hosts through DrawShadow.
 // hard replaces the blurred shadow with a solid copy of the shape moved by offset (design pixels, scaled with the UI).
 struct Elevation { float surface=0, raised=4, overlay=14; ImVec2 offset{0,0}; bool hard=false; };
@@ -60,6 +62,7 @@ struct SemanticColors {
     ImVec4 border{}, accent{}, onAccent{}, success{}, warning{}, error{};
     StateColors control{};
     ImVec4 shadow{}; // Alpha <= 0 uses black. A soft shadow takes only its colour; a hard shadow uses it as is.
+    ImVec4 crown{};  // Optional colour of the top of the window (menu bar, step band). Alpha zero derives it.
 };
 // Derived from `Theme::semantic` by ResolveTheme; edit semantic tokens instead.
 struct Palette {
@@ -127,16 +130,22 @@ struct NodeTokens {
     bool hollowPins = false, highlightLinks = false;
 };
 // The large regions of an application window. Neighbouring regions differ in lightness, so the toolbar band, the side
-// panels, the work area and a strip of video previews read as separate places in every theme.
-enum class SurfaceZone : std::uint8_t { Chrome, Panel, Workspace, Monitor };
-// Derived from `Theme::semantic` by ResolveTheme. To override a value, assign it after ResolveTheme.
+// panels, the work area and a strip of video previews read as separate places in every theme. Panel (lists) and
+// Inspector (settings) share a lightness and differ in hue, so two side panels read as two roles without either
+// standing out.
+enum class SurfaceZone : std::uint8_t { Chrome, Panel, Workspace, Monitor, Inspector, Header, ChromeCanvas };
+// Derived from `Theme::semantic` by ResolveTheme in OKLCH, so the steps are even to the eye in every theme. To override
+// a value, assign it after ResolveTheme.
 struct SurfaceZoneColors {
-    ImVec4 chrome{};    // Menu bar and step band: the lightest region, leaning to the accent.
-    ImVec4 panel{};     // Lists and inspectors: the surface.
-    ImVec4 workspace{}; // Around the main view: a step darker than the canvas.
-    ImVec4 monitor{};   // Video previews: a desaturated, deep tone of the theme, so pictures are judged on a quiet ground.
-    ImVec4 onMonitor{}; // Text drawn on the monitor zone.
-    ImVec4 divider{};   // The line between two zones.
+    ImVec4 chrome{};       // Menu bar and step band: semantic.crown when given, else the raised surface leaning to the accent.
+    ImVec4 panel{};        // Lists and step lists: the surface.
+    ImVec4 workspace{};    // Gaps between panels and around the main view: a step darker than the panel.
+    ImVec4 monitor{};      // Inside a picture: an almost neutral, deep tone, so pictures are judged on a quiet ground.
+    ImVec4 onMonitor{};    // Text drawn on the monitor zone.
+    ImVec4 divider{};      // The line between two zones.
+    ImVec4 inspector{};    // Settings panels: the panel's lightness, turned toward the accent's hue and calmer.
+    ImVec4 header{};       // The heading row of a panel and floating tool windows: a step from the panel.
+    ImVec4 chromeCanvas{}; // A canvas inside the chrome (a strip of previews): a deep tone of the chrome.
 };
 struct Theme {
     ColorScheme scheme = ColorScheme::Light;
@@ -177,6 +186,7 @@ void SetAccent(Theme &theme, ImVec4 accent);
 struct BrandPalette {
     ImVec4 canvas{}, surface{}, text{}, accent{};
     ImVec4 raised{}, border{}, textSecondary{}, success{}, warning{}, error{};
+    ImVec4 crown{}; // The top of the window (semantic.crown).
 };
 // Builds a complete, resolved theme from a few colours: control states, selection, secondary text and a border are
 // derived so that text and border keep their contrast against every surface. The light or dark scheme follows the

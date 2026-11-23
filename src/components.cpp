@@ -99,6 +99,12 @@ ButtonPalette MakeButtonPalette(ActionVariant variant, const Theme *t, const ImG
         frameBorder = t->stroke.border > 0 && style.FrameBorderSize > 0 ? style.FrameBorderSize * t->stroke.button / t->stroke.border
                                                                        : t->stroke.button;
     p.borderSize = borderless ? 0.f : p.subtleDestructive ? std::max(1.f, frameBorder) : frameBorder;
+    // The primary action may carry an outline of its own, even in a theme whose other frames are hairlines.
+    if (variant == ActionVariant::Primary && t && t->stroke.primary > 0) {
+        p.border = t->stroke.primaryColor.w > 0 ? t->stroke.primaryColor : t->semantic.onAccent;
+        p.borderSize = t->stroke.border > 0 && style.FrameBorderSize > 0 ? style.FrameBorderSize * t->stroke.primary / t->stroke.border
+                                                                         : t->stroke.primary;
+    }
     p.focus = style.Colors[ImGuiCol_NavCursor];
     return p;
 }

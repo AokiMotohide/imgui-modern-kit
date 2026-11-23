@@ -80,12 +80,15 @@ Splitters and resize grips use the `divider` zone colour, which stands apart fro
 
 | Zone | Use | Derivation |
 | --- | --- | --- |
-| `Chrome` | Menu bar, step band | Dark: the raised surface leaning to the accent. Light: the canvas washed with the accent |
-| `Panel` | Lists, inspectors | The surface |
-| `Workspace` | Around the main view | The canvas, a step darker |
-| `Monitor` | Video previews | A desaturated, deep tone of the theme |
+| `Chrome` | Menu bar, step band | `semantic.crown` when given. Otherwise dark: the raised surface leaning to the accent; light: the canvas washed with the accent |
+| `Panel` | Lists, step lists | The surface |
+| `Inspector` | Settings panels | The panel's lightness, turned up to 26° toward the accent's hue and calmer |
+| `Header` | Heading rows, floating tool windows | A step from the panel |
+| `Workspace` | Gaps between panels, around the main view | The panel, a step darker |
+| `Monitor` | Inside a picture | An almost neutral, deep tone of the theme |
+| `ChromeCanvas` | A strip of previews inside the chrome | A deep tone of the chrome |
 
-Neighbouring zones stay at least 1.14:1 apart. `onMonitor` is text that reads on the monitor zone and `divider` is the line between zones; it keeps at least 1.3:1 (dark) or 1.6:1 (light) against the zones it separates. Call `PushSurfaceZone(theme, zone)` before a window's `Begin` and `PopSurfaceZone()` right after it; `SurfaceZoneColor` returns a zone colour for your own drawing. To override a zone, assign it after `ResolveTheme`.
+Zones are stepped in OKLCH lightness, so the steps look even in every theme, and neighbouring zones stay at least 1.14:1 apart. `Panel` and `Inspector` share a lightness and differ only in hue. `onMonitor` is text that reads on the monitor zone and `divider` is the line between zones; it keeps at least 1.3:1 (dark) or 1.6:1 (light) against the zones it separates. Call `PushSurfaceZone(theme, zone)` before a window's `Begin` and `PopSurfaceZone()` right after it; `SurfaceZoneColor` returns a zone colour for your own drawing. To override a zone, assign it after `ResolveTheme`.
 
 ## What `ApplyTheme` does
 

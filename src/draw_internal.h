@@ -121,6 +121,53 @@ inline ImVec4 MixToContrast(ImVec4 from, ImVec4 to, float start, float ratio, st
     }
     return to;
 }
+// OKLCH (Björn Ottosson's OKLab in polar form): L is lightness as the eye sees it (0..1), C chroma, h hue in degrees.
+// Surfaces are stepped in L so that neighbouring regions look evenly apart in every theme.
+struct Oklch { float L = 0, C = 0, h = 0; };
+inline float SrgbToLinear(float v) { return v <= .04045f ? v / 12.92f : std::pow((v + .055f) / 1.055f, 2.4f); }
+inline float LinearToSrgb(float v) { return v <= .0031308f ? v * 12.92f : 1.055f * std::pow(v, 1.f / 2.4f) - .055f; }
+inline Oklch ToOklch(ImVec4 c) {
+    const float r = SrgbToLinear(c.x), g = SrgbToLinear(c.y), b = SrgbToLinear(c.z);
+    const float l = std::cbrt(.4122214708f * r + .5363325363f * g + .0514459929f * b);
+    const float m = std::cbrt(.2119034982f * r + .6806995451f * g + .1073969566f * b);
+    const float s = std::cbrt(.0883024619f * r + .2817188376f * g + .6299787005f * b);
+    const float L = .2104542553f * l + .7936177850f * m - .0040720468f * s;
+    const float A = 1.9779984951f * l - 2.4285922050f * m + .4505937099f * s;
+    const float B = .0259040371f * l + .7827717662f * m - .8086757660f * s;
+    float h = std::atan2(B, A) * 57.29577951f;
+    if (h < 0) h += 360.f;
+    return {L, std::hypot(A, B), h};
+}
+// Back to sRGB. A chroma outside the sRGB gamut is reduced until the colour fits, keeping lightness and hue.
+inline ImVec4 FromOklch(Oklch o, float alpha = 1.f) {
+    const auto convert = [&](float chroma, bool& inside) {
+        const float rad = o.h * .01745329252f, A = chroma * std::cos(rad), B = chroma * std::sin(rad);
+        const float l = std::pow(o.L + .3963377774f * A + .2158037573f * B, 3.f);
+        const float m = std::pow(o.L - .1055613458f * A - .0638541728f * B, 3.f);
+        const float s = std::pow(o.L - .0894841775f * A - 1.2914855480f * B, 3.f);
+        const float lin[3] = {4.0767416621f * l - 3.3077115913f * m + .2309699292f * s,
+                              -1.2684380046f * l + 2.6097574011f * m - .3413193965f * s,
+                              -.0041960863f * l - .7034186147f * m + 1.7076147010f * s};
+        inside = true;
+        for (float v : lin) inside = inside && v >= -1e-4f && v <= 1.0001f;
+        return ImVec4{LinearToSrgb(std::clamp(lin[0], 0.f, 1.f)), LinearToSrgb(std::clamp(lin[1], 0.f, 1.f)),
+                      LinearToSrgb(std::clamp(lin[2], 0.f, 1.f)), alpha};
+    };
+    o.L = std::clamp(o.L, 0.f, 1.f);
+    float chroma = std::max(0.f, o.C);
+    for (int i = 0; i < 24; ++i, chroma *= .85f) {
+        bool inside = false;
+        const ImVec4 c = convert(chroma, inside);
+        if (inside) return c;
+    }
+    bool ignored = false;
+    return convert(0.f, ignored);
+}
+// The signed hue step from `from` toward `to`, at most `limit` degrees.
+inline float HueToward(float from, float to, float limit) {
+    float d = std::fmod(to - from + 540.f, 360.f) - 180.f;
+    return std::clamp(d, -limit, limit);
+}
 // White or a near black, whichever reads better on `background`.
 inline ImVec4 InkOn(ImVec4 background) {
     background.w = 1.f;

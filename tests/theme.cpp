@@ -114,6 +114,27 @@ int TestStyleProjection() {
             imkit::ContrastRatio(probe.semantic.textDisabled, probe.zones.panel) < 4.5f)
             failure = 28;
     }
+    // Every preset: neighbouring zones stay apart, the two side panels differ by hue at the same lightness, a dark
+    // theme's fields sit above the panel, and a given crown becomes the chrome.
+    for (const auto &info : imkit::ThemePresets()) {
+        const auto probe = imkit::MakeTheme(info.preset);
+        const auto &z = probe.zones;
+        if (imkit::ContrastRatio(z.workspace, z.panel) < 1.14f || imkit::ContrastRatio(z.header, z.panel) < 1.09f ||
+            imkit::ContrastRatio(z.inspector, z.panel) > 1.12f || z.chromeCanvas.w <= 0)
+            failure = 29;
+    }
+    {
+        imkit::BrandPalette brand;
+        brand.canvas = {.24f, .11f, .05f, 1};
+        brand.surface = {.22f, .15f, .10f, 1};
+        brand.text = {.96f, .94f, .88f, 1};
+        brand.accent = {.97f, .84f, .43f, 1};
+        brand.crown = {.14f, .32f, .19f, 1};
+        const auto brandTheme = imkit::MakeBrandTheme(brand);
+        if (brandTheme.zones.chrome.y != brand.crown.y ||
+            imkit::ContrastRatio(brandTheme.semantic.control.rest, brandTheme.zones.panel) < 1.2f)
+            failure = 30;
+    }
     ImGui::DestroyContext();
     return failure;
 }

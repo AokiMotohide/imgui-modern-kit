@@ -63,7 +63,7 @@ ImKit reads and writes no files and watches nothing. For development, reload the
 - **Outline.** A border of 2 design pixels or more (`theme.stroke.border`) is an outline: it is drawn in the full-strength border colour on windows, popups, frames and every button variant. Below 2 it stays a soft hairline, exactly as before. Dividers, tree lines and table lines never exceed 1.
 - **Components that follow the outline.** Besides windows and buttons: the ring of the spinner and of a loading toast (in the border colour, under the accent arc), progress bars, circular progress and the donut chart (a bordered track), stage markers and connectors, timeline clips, bar chart bars, step sequencer cells, schedule events, the range slider rail and the thin frames of the Show module. Where a component drew a 1 px line, it now draws the outline width in full strength.
 - **Corners.** `SetCornerStyle` sets `radius.subtle`, `control` and `overlay` together: Sharp, Soft (the default), Round or Pill; Pill rounds a control to half its height at every density. Windows and images never use a radius larger than the overlay radius, so even a very large control radius does not turn them into capsules.
-- **Button outline.** `stroke.button` gives buttons a heavier outline than other frames, for example 3 against 2 on cards. `stroke.dashedDisabled` draws the outline of a disabled ImKit button as dashes, so "not now" does not depend on colour alone.
+- **Button outline.** `stroke.button` gives buttons a heavier outline than other frames, for example 3 against 2 on cards. `stroke.dashedDisabled` draws the outline of a disabled ImKit button as dashes, so "not now" does not depend on colour alone. `stroke.primary` gives only the primary button its own outline width, drawn in `stroke.primaryColor` (alpha zero uses onAccent), so other buttons can keep a hairline.
 - **Shadow.** `elevation.hard` replaces the blurred shadow with a solid copy of the shape moved by `elevation.offset`, in `semantic.shadow`. `DrawShadow` draws it for your own shapes and `OverlayDecoration` uses it for popups. Buttons that receive the theme draw it behind the frame and move down by the offset while pressed.
 
 ## Text roles and fonts
@@ -183,12 +183,13 @@ Colours are `#RRGGBB[AA]`, numbers are plain decimals, switches are `true` or `f
 | `corner` | `sharp`, `soft`, `round` or `pill` |
 | `scheme`, `contrast`, `density` | `light` or `dark`; `standard` or `high-contrast`; `compact`, `comfortable` or `touch` |
 | `brand.canvas`, `brand.surface`, `brand.text`, `brand.accent` | Required together; colours |
-| `brand.raised`, `brand.border`, `brand.text-secondary`, `brand.success`, `brand.warning`, `brand.error` | Optional colours |
+| `brand.raised`, `brand.border`, `brand.text-secondary`, `brand.success`, `brand.warning`, `brand.error`, `brand.crown` | Optional colours (`brand.crown` is the top of the window: menu bar and step band) |
 | `semantic.canvas`, `surface`, `surface-raised`, `overlay`, `text`, `text-secondary`, `text-disabled`, `border`, `accent`, `on-accent`, `success`, `warning`, `error`, `shadow` | Colours |
 | `semantic.control.rest`, `hover`, `pressed`, `focused`, `selected`, `disabled` | Colours |
 | `typography.caption`, `body`, `label`, `heading`, `title`, `monospace` | Sizes, 1 to 200 |
 | `radius.subtle`, `control`, `overlay` | 0 to 1000 |
-| `stroke.border`, `stroke.focus`, `stroke.button` | 0 to 32 (`stroke.button` 0 uses `stroke.border`) |
+| `stroke.border`, `stroke.focus`, `stroke.button`, `stroke.primary` | 0 to 32 (`stroke.button` 0 uses `stroke.border`; `stroke.primary` 0 keeps `stroke.button`) |
+| `stroke.primary-color` | Colour of the primary button's outline |
 | `stroke.dashed-disabled` | `true` or `false` |
 | `elevation.surface`, `raised`, `overlay` | 0 to 128 |
 | `elevation.offset` | Two numbers, −64 to 64, such as `0 3` |

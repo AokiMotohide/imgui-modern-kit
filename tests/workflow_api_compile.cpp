@@ -65,12 +65,12 @@ int main() {
     imkit::StageProgressView stages;stages.marks=&plate;
     imkit::StepBandGroup bandGroups[1]{{1,"Setup",0,2,{}}};
     imkit::StepBandItem bandItems[2]{{1,"One","",imkit::StepMarkState::Completed},{2,"Two","",imkit::StepMarkState::Current,true}};
-    imkit::StepBandOptions band;band.marks=&plate;band.height=36.f;band.optionalScale=.72f;
+    imkit::StepBandOptions band;band.marks=&plate;band.height=36.f;band.optionalScale=.72f;band.tintTrays=false;band.currentTrayContrast=1.4f;
     bandItems[0].growth=imkit::PlateGrowth::Grown;bandItems[1].growth=imkit::PlateGrowth::Sprout;bandItems[1].optional=true;
     imkit::PlateMarkDecor decor;decor.blocked=true;decor.growth=imkit::PlateGrowth::Sprout;
     if(!decor.blocked||!bandItems[1].optional||*bandItems[0].growth!=imkit::PlateGrowth::Grown) return 1;
     imkit::Theme theme=imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
-    if(!stages.marks||sizeof(bandGroups)==0||!bandItems[1].blocked||band.height<=0||theme.zones.monitor.w<=0||!(plateMark&&stepBand&&zoneColor&&pushZone&&popZone)) return 1;
+    if(!stages.marks||sizeof(bandGroups)==0||!bandItems[1].blocked||band.height<=0||theme.zones.monitor.w<=0||theme.zones.inspector.w<=0||theme.zones.header.w<=0||theme.zones.chromeCanvas.w<=0||band.tintTrays||!(plateMark&&stepBand&&zoneColor&&pushZone&&popZone)) return 1;
     imkit::StableId ids[1];imkit::RequestBuffer requests{ids};
     imkit::editor::TileEvent events[1];imkit::editor::TileEventBuffer out{events};
     return !(grouped&&workspaceTabs&&choiceGroup&&hierarchyGroup&&hierarchyRow&&inspectorCard&&endInspectorCard&&collapsibleInspectorCard&&endCollapsibleInspectorCard&&settingToggleRow&&iconToolbar&&labeledIconToolbar&&iconAction&&step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&progressTrackView&&progressTrackValue&&stageProgress&&taskProgressCard&&card&&endCard&&section&&multi&&help&&validation&&toolbar&&valid&&placement&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&appBar&&workspaceHeader&&inspectorSection&&advancedSection&&bottomActionBar&&beginDiagnostics&&endDiagnostics&&themePicker&&resolveRightPanel&&rightPanelHandle&&externalControlStyle&&externalControl&&requests.Push(1)&&out.Push({}));

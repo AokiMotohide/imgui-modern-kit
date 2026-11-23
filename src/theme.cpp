@@ -287,26 +287,48 @@ ImVec4 Desaturate(ImVec4 c,float amount) {
 ImVec4 ZoneSolid(ImVec4 c) { c.w=1.f; return c; }
 // Neighbouring zones stay at least this contrast apart, so every theme separates them without hand tuning.
 constexpr float kZoneStep=1.14f;
+// The side panels share the panel's lightness. The inspector turns at most this many degrees toward the accent's hue,
+// which separates the two roles by hue alone.
+constexpr float kInspectorTurn=26.f;
 void ResolveSurfaceZones(Theme& t) {
+    using detail::FromOklch; using detail::ToOklch;
     const auto& c=t.semantic;
     const ImVec4 black{0,0,0,1},white{1,1,1,1};
+    const bool dark=t.scheme==ColorScheme::Dark;
     auto& z=t.zones;
     z.panel=ZoneSolid(c.surface);
-    if(t.scheme==ColorScheme::Dark) {
+    const detail::Oklch p=ToOklch(z.panel),accent=ToOklch(ZoneSolid(c.accent));
+    // A grey accent has no hue to turn toward; the inspector is then only calmer.
+    const float turn=accent.C>.03f?detail::HueToward(p.h,accent.h,kInspectorTurn):0.f;
+    z.inspector=FromOklch({p.L,p.C*.76f,p.h+turn});
+    if(dark) {
+        z.header=detail::MixToContrast(FromOklch({p.L+.045f,p.C*.9f,p.h+turn*.4f}),white,0.f,1.12f,{z.panel});
+        z.workspace=detail::MixToContrast(FromOklch({p.L-.07f,p.C*.55f,p.h}),black,0.f,kZoneStep,{z.panel,z.inspector});
+        // A panel already at black (high contrast) cannot have a darker gap; the gap then steps lighter instead.
+        if(ContrastRatio(z.workspace,z.panel)<kZoneStep)
+            z.workspace=detail::MixToContrast(z.panel,white,0.f,kZoneStep,{z.panel});
+        z.monitor=FromOklch({std::max(.12f,p.L-.11f),std::min(p.C,.006f),p.h});
+        z.monitor=detail::MixToContrast(z.monitor,black,0.f,kZoneStep*.95f,{z.workspace});
+        z.divider=detail::MixToContrast(z.workspace,black,.4f,1.3f,{z.panel,z.workspace});
+    } else {
+        z.header=detail::MixToContrast(FromOklch({p.L-.035f,p.C,p.h+turn*.4f}),ZoneSolid(c.text),0.f,1.1f,{z.panel});
+        z.workspace=detail::MixToContrast(Desaturate(ZoneSolid(c.canvas),.5f),ZoneSolid(c.text),.06f,kZoneStep,{z.panel,z.inspector});
+        // Monitor: a deep, quiet tone of the theme's ink, so a light theme keeps its colour without a bright frame.
+        z.monitor=detail::MixColor(Desaturate(ZoneSolid(c.text),.45f),ZoneSolid(c.canvas),.18f);
+        z.divider=detail::MixToContrast(ZoneSolid(c.border),ZoneSolid(c.text),.15f,1.6f,{z.panel,z.workspace});
+    }
+    if(c.crown.w>0) {
+        z.chrome=ZoneSolid(c.crown);
+    } else if(dark) {
         // Chrome: the raised surface leaning to the accent, lighter than the panel.
         const ImVec4 chrome=detail::MixColor(ZoneSolid(c.surfaceRaised),ZoneSolid(c.accent),.12f);
         z.chrome=detail::MixToContrast(chrome,white,0.f,kZoneStep,{z.panel});
-        z.workspace=detail::MixToContrast(ZoneSolid(c.canvas),black,.30f,kZoneStep,{z.panel});
-        z.monitor=detail::MixToContrast(Desaturate(ZoneSolid(c.canvas),.7f),black,.45f,kZoneStep*.95f,{z.workspace});
-        z.divider=detail::MixToContrast(ZoneSolid(c.canvas),black,.55f,1.3f,{z.panel,z.workspace});
     } else {
         // Chrome: the canvas washed with the accent, darker than the white-ish panel.
         z.chrome=detail::MixToContrast(detail::MixColor(ZoneSolid(c.canvas),ZoneSolid(c.accent),.16f),ZoneSolid(c.accent),0.f,kZoneStep*.95f,{z.panel});
-        z.workspace=detail::MixToContrast(Desaturate(ZoneSolid(c.canvas),.5f),ZoneSolid(c.text),.06f,kZoneStep,{z.panel});
-        // Monitor: a deep, quiet tone of the theme's ink, so a light theme keeps its colour without a bright frame.
-        z.monitor=detail::MixColor(Desaturate(ZoneSolid(c.text),.45f),ZoneSolid(c.canvas),.18f);
-        z.divider=detail::MixToContrast(ZoneSolid(c.border),ZoneSolid(c.text),.15f,1.6f,{z.panel,z.workspace,z.chrome});
     }
+    const detail::Oklch crown=ToOklch(z.chrome);
+    z.chromeCanvas=FromOklch({std::max(.12f,crown.L-(dark?.12f:.10f)),crown.C*.85f,crown.h});
     z.onMonitor=ContrastRatio(c.textSecondary,z.monitor)>=4.5f?ZoneSolid(c.textSecondary):
                 ContrastRatio(white,z.monitor)>=ContrastRatio(black,z.monitor)?ImVec4{.92f,.92f,.92f,1}:ImVec4{.08f,.08f,.08f,1};
 }
@@ -400,9 +422,16 @@ Theme MakeBrandTheme(const BrandPalette &brand) {
     s.text = text;
     s.accent = accent;
     s.onAccent = OnColor(accent);
-    const ImVec4 input = detail::MixColor(canvas, surface, .35f);
+    // On a dark theme a field is a step lighter than the panel it sits on (a raised key, not a hole); on a light theme
+    // it is a step toward the canvas.
+    const detail::Oklch panel = detail::ToOklch(surface), tone = detail::ToOklch(accent);
+    const float turn = tone.C > .03f ? detail::HueToward(panel.h, tone.h, 26.f) * .55f : 0.f;
+    const ImVec4 input = dark ? detail::FromOklch({panel.L + .10f, panel.C * .9f, panel.h + turn})
+                              : detail::MixColor(canvas, surface, .35f);
     s.control = {input, detail::MixColor(input, accent, .10f), detail::MixColor(input, accent, .17f), accent,
-                 detail::MixColor(surface, accent, dark ? .16f : .09f), input};
+                 detail::MixColor(surface, accent, dark ? .24f : .09f), input};
+    if (given(brand.crown))
+        s.crown = Opaque(brand.crown);
     // Secondary text and the border are derived against the surfaces they sit on, so they stay legible.
     const std::initializer_list<ImVec4> backgrounds = {s.canvas, s.surface, s.surfaceRaised, s.control.rest, s.control.hover,
                                                        s.control.pressed, s.control.selected};
@@ -533,6 +562,9 @@ ImVec4 SurfaceZoneColor(const Theme& theme,SurfaceZone zone) {
     case SurfaceZone::Chrome:color=theme.zones.chrome;break;
     case SurfaceZone::Workspace:color=theme.zones.workspace;break;
     case SurfaceZone::Monitor:color=theme.zones.monitor;break;
+    case SurfaceZone::Inspector:color=theme.zones.inspector;break;
+    case SurfaceZone::Header:color=theme.zones.header;break;
+    case SurfaceZone::ChromeCanvas:color=theme.zones.chromeCanvas;break;
     default:break;
     }
     // A theme that was never resolved has no zones yet; keep the surface.
