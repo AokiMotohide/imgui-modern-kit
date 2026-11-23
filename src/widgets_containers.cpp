@@ -1,6 +1,6 @@
 #include "widgets_internal.h"
 #include "draw_internal.h"
-#include <imgui_internal.h>
+#include "imgui_internal_compat.h"
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
