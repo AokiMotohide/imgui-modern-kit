@@ -1,6 +1,7 @@
 #pragma once
 #include <imkit/version.h>
 #include <imkit/easing.h>
+#include <imkit/part_style.h>
 #include <array>
 #include <cstdint>
 #include <optional>
@@ -13,8 +14,12 @@ struct Skin;
 enum class ColorScheme { Light, Dark };
 enum class ThemePreset : std::uint8_t {
     PrecisionLight, PrecisionDark, Graphite, Midnight, Ocean, Forest,
-    WarmSand, Rose, Violet, Solar, HighContrastLight, HighContrastDark, Slate
+    WarmSand, Rose, Violet, Solar, HighContrastLight, HighContrastDark, Slate,
+    Classic // The Precision Dark colours with ThemeLook::Classic: the Dear ImGui shapes of ImKit 4.1.
 };
+// Modern is the default for every preset: thin scrollbars, faint dividers, rounded floating windows and popups,
+// calm tables and the redrawn ImKit parts. Classic keeps the Dear ImGui shapes for hosts that want the previous look.
+enum class ThemeLook : std::uint8_t { Modern, Classic };
 struct ThemePresetInfo {
     ThemePreset preset;
     std::string_view id;
@@ -26,7 +31,8 @@ enum class Density { Compact, Comfortable, Touch };
 // Radius presets for SetCornerStyle. Soft matches the default radii: a smooth corner at a quarter of the control height.
 // There is no capsule preset: a fully round button reads as a tag and leaves less room for its label.
 enum class CornerStyle { Sharp, Soft, Round };
-enum class TextRole { Caption, Body, Heading, Title, Mono };
+// Numeric is the body size in fonts.numeric (regular when null), for figures that line up in fields and readouts.
+enum class TextRole { Caption, Body, Heading, Title, Mono, Numeric };
 enum class ElevationLevel { Raised, Overlay };
 // Where an overlay sits in a viewport's work area: toasts, the external control pill and similar floating parts.
 enum class OverlayAnchor { TopLeft, TopCenter, TopRight, BottomLeft, BottomCenter, BottomRight };
@@ -109,6 +115,7 @@ struct FontSet {
     ImFont *regular = nullptr;
     ImFont *emphasis = nullptr;
     ImFont *display = nullptr; // Headings and titles; PushTextRole falls back to emphasis, then regular.
+    ImFont *numeric = nullptr; // Figures in number fields (TextRole::Numeric); null uses regular.
 }; // Non-owning.
 struct EditorPalette {
     ImVec4 canvas{}, grid{}, ruler{}, trackHeader{}, videoClip{}, audioClip{}, captionClip{};
@@ -142,6 +149,8 @@ struct WindowRoleColors {
     ImVec4 body{};     // Window and child background: panel, inspector, workspace or chromeCanvas.
     ImVec4 emphasis{}; // Section headers and the selected row: one step in front of the body, in its hue.
     ImVec4 label{};    // Tab line while the window is not focused, in the body's hue (the chrome's for Monitor).
+    ImVec4 head{};     // The tab band of a dock node (DockTabBand): at least 1.25:1 from the body, so the selected
+                       // tab (the body colour) reads as part of the window below it.
 };
 // Derived from `Theme::semantic` by ResolveTheme in OKLCH, so the steps are even to the eye in every theme. To override
 // a value, assign it after ResolveTheme.
@@ -175,6 +184,10 @@ struct Theme {
     FontSet fonts{};
     EditorPalette editor{};
     NodeTokens node{};
+    ThemeLook look = ThemeLook::Modern;
+    // Per part and state values (L1, part_style.h): `button.height`, `checkbox.on.fill`, `slider.thumb.size`.
+    // Unset entries follow the tokens above. Lengths are design pixels.
+    PartOverrides partOverrides{};
     const Skin *skin = nullptr; // Non-owning, like fonts; see skin.h. Not part of the theme text.
     SurfaceZoneColors zones{};  // Derived; see SurfaceZoneColors.
 };
@@ -233,6 +246,11 @@ void PopSurfaceZone();
 // style colours. The tab line shows only when ImGuiStyle::TabBarOverlineSize is above zero.
 void PushWindowRole(const Theme& theme, WindowRole role);
 void PopWindowRole();
+// Paints the tab band of the current window's dock node with the role's head colour. Dear ImGui draws one band per dock
+// node, so the leftmost tab's window decides it: call this right after Begin in every docked window that has a role,
+// whatever Begin returned. It recolours the band Dear ImGui drew this frame (and the dimmed tabs that share its colour);
+// it does nothing for a window that is not docked, a node without a tab bar, or an unresolved theme.
+void DockTabBand(const Theme& theme, WindowRole role);
 // Use within a frame, before Begin or around a group of widgets. Restore on the
 // same live context; scopes must be destroyed before the host destroys it.
 class ThemeScope {

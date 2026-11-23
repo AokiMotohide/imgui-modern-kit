@@ -1,5 +1,6 @@
 #pragma once
 
+#include <imkit/part_style.h>
 #include <imkit/widgets.h>
 #include <imkit/native.h>
 #include <imkit/theme.h>

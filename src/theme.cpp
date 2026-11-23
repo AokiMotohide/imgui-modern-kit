@@ -1,5 +1,7 @@
 #include <imkit/theme.h>
 #include "draw_internal.h"
+#include "part_style_internal.h"
+#include <imgui_internal.h>
 #include <algorithm>
 #include <cmath>
 #include <initializer_list>
@@ -41,6 +43,7 @@ ImGuiStyle Style(const Theme &t, float scale) {
     s.ItemInnerSpacing = {m.spacing, m.spacingY};
     s.CellPadding = {m.spacing, m.cellPaddingY};
     const bool highContrast = t.contrast == ContrastMode::HighContrast;
+    const bool modern = t.look == ThemeLook::Modern;
     // Windows, children and images are overlay-class surfaces: a large control radius must not turn them into capsules.
     const float surfaceRadius = std::min(t.radius.control, t.radius.overlay);
     s.WindowRounding = surfaceRadius;
@@ -48,15 +51,15 @@ ImGuiStyle Style(const Theme &t, float scale) {
     s.PopupRounding = t.radius.overlay;
     s.FrameRounding = t.radius.control;
     s.GrabRounding = t.radius.control; // Slider grabs are pressed like buttons, so they share the button corner.
-    s.ScrollbarRounding = 999.f;
+    s.ScrollbarRounding = modern ? 999.f : 4.f;
     s.WindowBorderSize = border;
     s.ChildBorderSize = outline ? border : 0.f;
     s.PopupBorderSize = border;
     s.FrameBorderSize = border;
     s.IndentSpacing = m.indent;
-    s.ScrollbarSize = m.scrollbar;
+    s.ScrollbarSize = modern && !t.layout.scrollbar ? std::min(m.scrollbar, 8.f) : m.scrollbar;
     s.GrabMinSize = m.grabMin;
-    s.TabRounding = t.radius.control + 2;
+    s.TabRounding = modern ? t.radius.control + 2 : 4.f;
     s.TabBorderSize = outline ? border : 0.f;
     s.TabBarBorderSize = 1;
     s.TabBarOverlineSize = 0;
@@ -65,7 +68,9 @@ ImGuiStyle Style(const Theme &t, float scale) {
     s.SeparatorTextAlign = {0, .5f};
     s.ImageRounding = surfaceRadius;
     s.ImageBorderSize = border;
-    s.MenuItemRounding = t.radius.control - 2;
+    s.MenuItemRounding = modern ? std::max(4.f, t.radius.control - 2.f) : 0.f;
+    s.CellPadding = modern && !t.layout.cellPaddingY ? ImVec2{m.spacing * 1.25f, m.cellPaddingY * 1.25f}
+                                                     : ImVec2{m.spacing, m.cellPaddingY};
     s.TreeLinesSize = hairlineWidth;
     s.TreeLinesRounding = 2;
     s.TreeLinesFlags = ImGuiTreeNodeFlags_DrawLinesToNodes;
@@ -92,8 +97,8 @@ ImGuiStyle Style(const Theme &t, float scale) {
     c[ImGuiCol_TitleBgActive] = p.raised;
     c[ImGuiCol_TitleBgCollapsed] = p.surface;
     c[ImGuiCol_MenuBarBg] = Alpha(p.text, .04f);
-    c[ImGuiCol_ScrollbarBg] = {0, 0, 0, 0};
-    c[ImGuiCol_ScrollbarGrab] = highContrast ? p.border : Alpha(p.muted, .38f);
+    c[ImGuiCol_ScrollbarBg] = modern ? ImVec4{0, 0, 0, 0} : Alpha(p.surface, .5f);
+    c[ImGuiCol_ScrollbarGrab] = highContrast ? p.border : Alpha(p.muted, modern ? .35f : .38f);
     c[ImGuiCol_ScrollbarGrabHovered] = highContrast ? p.muted : Alpha(p.muted, .62f);
     c[ImGuiCol_ScrollbarGrabActive] = p.accent;
     c[ImGuiCol_CheckMark] = p.accent;
@@ -106,12 +111,12 @@ ImGuiStyle Style(const Theme &t, float scale) {
     c[ImGuiCol_ButtonHovered] = highContrast ? detail::MixColor(p.raised, p.accent, .15f) : detail::MixColor(button, p.text, .06f);
     c[ImGuiCol_ButtonActive] = detail::MixColor(button, p.accent, .25f);
     c[ImGuiCol_Header] = p.selection;
-    c[ImGuiCol_HeaderHovered] = detail::MixColor(p.surface, p.accent, .20f);
-    c[ImGuiCol_HeaderActive] = detail::MixColor(p.surface, p.accent, .30f);
+    c[ImGuiCol_HeaderHovered] = detail::MixColor(p.surface, p.accent, modern ? .16f : .20f);
+    c[ImGuiCol_HeaderActive] = detail::MixColor(p.surface, p.accent, modern ? .24f : .30f);
     // Splitters and resize grips are things to grab: they use the divider, which ResolveTheme keeps visible against
     // every surface zone, and turn to the accent under the pointer. A theme without zones keeps the hairline.
     const ImVec4 divider = t.zones.divider.w > 0 ? t.zones.divider : hairline;
-    c[ImGuiCol_Separator] = divider;
+    c[ImGuiCol_Separator] = modern ? Alpha(divider, .48f) : divider;
     c[ImGuiCol_SeparatorHovered] = p.accent;
     c[ImGuiCol_SeparatorActive] = p.accent;
     c[ImGuiCol_ResizeGrip] = Alpha(divider, .85f);
@@ -131,11 +136,11 @@ ImGuiStyle Style(const Theme &t, float scale) {
     c[ImGuiCol_PlotLinesHovered] = p.focus;
     c[ImGuiCol_PlotHistogram] = p.accent;
     c[ImGuiCol_PlotHistogramHovered] = p.focus;
-    c[ImGuiCol_TableHeaderBg] = p.input;
-    c[ImGuiCol_TableBorderStrong] = hairline;
-    c[ImGuiCol_TableBorderLight] = Alpha(hairline, .6f);
+    c[ImGuiCol_TableHeaderBg] = modern ? detail::MixColor(p.surface, p.text, .04f) : p.input;
+    c[ImGuiCol_TableBorderStrong] = modern ? Alpha(hairline, .55f) : hairline;
+    c[ImGuiCol_TableBorderLight] = modern ? Alpha(hairline, .25f) : Alpha(hairline, .6f);
     c[ImGuiCol_TableRowBg] = {0, 0, 0, 0};
-    c[ImGuiCol_TableRowBgAlt] = Alpha(p.muted, .045f);
+    c[ImGuiCol_TableRowBgAlt] = Alpha(p.muted, modern ? .035f : .045f);
     c[ImGuiCol_TextLink] = p.accent;
     c[ImGuiCol_TextSelectedBg] = p.selection;
     c[ImGuiCol_TreeLines] = hairline;
@@ -167,6 +172,7 @@ std::span<const ThemePresetInfo> ThemePresets() noexcept {
         ThemePresetInfo{ThemePreset::HighContrastLight, "high-contrast-light", "High Contrast Light", ColorScheme::Light},
         ThemePresetInfo{ThemePreset::HighContrastDark, "high-contrast-dark", "High Contrast Dark", ColorScheme::Dark},
         ThemePresetInfo{ThemePreset::Slate, "slate", "Slate", ColorScheme::Dark},
+        ThemePresetInfo{ThemePreset::Classic, "classic", "Classic", ColorScheme::Dark},
     };
     return presets;
 }
@@ -179,9 +185,15 @@ std::optional<ThemePreset> ThemePresetFromId(std::string_view id) noexcept {
 }
 namespace {
 void ResolveSurfaceZones(Theme& t);
+void ResolveWindowRoles(Theme& t);
 } // namespace
 Theme MakeTheme(ThemePreset preset) {
     const auto info = ThemePresets()[static_cast<std::size_t>(preset)];
+    if (preset == ThemePreset::Classic) {
+        auto theme = MakePrecisionTheme(ColorScheme::Dark);
+        theme.look = ThemeLook::Classic;
+        return theme;
+    }
     if (preset == ThemePreset::HighContrastLight || preset == ThemePreset::HighContrastDark)
         return MakeTheme(info.scheme, ContrastMode::HighContrast);
     if (preset == ThemePreset::Slate) {
@@ -265,6 +277,7 @@ Theme MakePrecisionTheme(ColorScheme scheme) {
        t.colors.destructive,{t.colors.input,detail::MixColor(t.colors.input,t.colors.accent,.10f),
        detail::MixColor(t.colors.input,t.colors.accent,.17f),t.colors.focus,t.colors.selection,t.colors.input}};
     ResolveSurfaceZones(t);
+    ResolveWindowRoles(t);
     return t;
 }
 Theme MakeTheme(ColorScheme scheme, ContrastMode contrast, Density density) {
@@ -355,6 +368,20 @@ void ResolveWindowRoles(Theme& t) {
         // The label is a line, not a surface: it needs colour more than lightness, so it borrows chroma.
         const detail::Oklch hue=i==static_cast<std::size_t>(WindowRole::Monitor)?top:b;
         r.label=FromOklch({dark?.72f:.52f,high?0.f:std::clamp(hue.C*2.2f,.012f,.11f),hue.h});
+        // The tab band sits behind the tabs, so it recedes: deeper than the body, unless the body is already too deep
+        // to step down (then lighter). High contrast keeps it neutral.
+        const float chroma=high?0.f:b.C;
+        const auto band=[&](float direction) {
+            float L2=b.L;ImVec4 c=r.body;
+            for(int n=0;n<40&&ContrastRatio(c,r.body)<kRoleStep;++n) {
+                L2+=direction*.02f;
+                if(L2<=0.f||L2>=1.f) return std::optional<ImVec4>{};
+                c=FromOklch({L2,chroma,b.h});
+            }
+            return ContrastRatio(c,r.body)>=kRoleStep?std::optional<ImVec4>{c}:std::optional<ImVec4>{};
+        };
+        const float down=b.L>.3f?-1.f:1.f;
+        if(auto c=band(down)) r.head=*c; else if(auto c2=band(-down)) r.head=*c2; else r.head=r.emphasis;
     }
 }
 } // namespace
@@ -494,6 +521,8 @@ void PushTextRole(const Theme &t, TextRole role) {
                      : role == TextRole::Mono    ? y.monospace
                                                  : y.body;
     ImFont *font = t.fonts.regular;
+    if (role == TextRole::Numeric && t.fonts.numeric)
+        font = t.fonts.numeric;
     if (heading)
         font = t.fonts.display ? t.fonts.display : t.fonts.emphasis ? t.fonts.emphasis : t.fonts.regular;
     ImGui::PushFont(font, size);
@@ -523,6 +552,7 @@ void SetCurrentParts(const PartMetrics& parts) {
 } // namespace detail
 void ApplyTheme(const Theme &t, float scale) {
     detail::SetCurrentParts(t.metrics.parts);
+    detail::SetPartTheme(t, scale);
     auto next = Style(t, scale);
     // These are host/window multipliers, not design tokens. In particular a
     // temporary theme must not undo a surrounding BeginDisabled() alpha.
@@ -532,6 +562,7 @@ void ApplyTheme(const Theme &t, float scale) {
 }
 ThemeScope::ThemeScope(const Theme &t, float scale)
     : context_(ImGui::GetCurrentContext()), previous_(ImGui::GetStyle()), previousParts_(detail::CurrentParts()) {
+    detail::PushPartThemeSnapshot();
     ApplyTheme(t, scale);
     ImGui::PushFont(t.fonts.regular, t.metrics.bodySize);
 }
@@ -540,6 +571,7 @@ ThemeScope::~ThemeScope() {
     ImGui::PopFont();
     ImGui::GetStyle() = previous_;
     detail::SetCurrentParts(previousParts_);
+    detail::PopPartThemeSnapshot();
 }
 void AnimationState::Reset(std::uint64_t generation) {
     entries_ = {};
@@ -617,4 +649,32 @@ void PushWindowRole(const Theme& theme,WindowRole role) {
     for(std::size_t i=0;i<std::size(kWindowRoleColors);++i) ImGui::PushStyleColor(kWindowRoleColors[i],values[i]);
 }
 void PopWindowRole() { ImGui::PopStyleColor(static_cast<int>(std::size(kWindowRoleColors))); }
+void DockTabBand(const Theme& theme,WindowRole role) {
+    const auto& r=theme.zones.roles[static_cast<std::size_t>(role)];
+    ImGuiWindow* window=ImGui::GetCurrentWindowRead();
+    if(r.head.w<=0||!window||!window->DockIsActive) return;
+    ImGuiDockNode* node=window->DockNode;
+    if(!node||!node->HostWindow||node->IsHiddenTabBar()||node->IsNoTabBar()) return;
+    // One band per node: the leftmost tab's window owns it, so the band does not flicker as tabs are selected.
+    ImGuiWindow* owner=node->TabBar&&node->TabBar->Tabs.Size>0?node->TabBar->Tabs[0].Window:
+                       node->Windows.Size>0?node->Windows[0]:nullptr;
+    if(owner!=window) return;
+    // Dear ImGui filled the band in DockNodeUpdate (before this Begin) with a title colour, then drew the tabs over
+    // it. Recolouring those vertices puts the head colour under the tabs without changing ImGuiStyle or Dear ImGui.
+    // Anti-aliased rounded corners add fringe vertices in the same colour with zero alpha; they are recoloured too.
+    const ImGuiStyle& style=ImGui::GetStyle();
+    const ImRect band(node->Pos,{node->Pos.x+node->Size.x,node->Pos.y+ImGui::GetFontSize()+style.FramePadding.y*2.f});
+    ImRect bounds=band;bounds.Expand(1.f);
+    const ImU32 from[]={ImGui::GetColorU32(ImGuiCol_TitleBg),ImGui::GetColorU32(ImGuiCol_TitleBgActive),
+                        ImGui::GetColorU32(ImGuiCol_TitleBgCollapsed)};
+    const ImU32 to=ImGui::GetColorU32(r.head);
+    ImDrawList* draw=node->HostWindow->DrawList;
+    for(ImDrawVert& v:draw->VtxBuffer) {
+        if(!bounds.Contains(v.pos)) continue;
+        for(ImU32 c:from) {
+            if(v.col==c) { v.col=to; break; }
+            if(v.col==(c&~IM_COL32_A_MASK)) { v.col=to&~IM_COL32_A_MASK; break; }
+        }
+    }
+}
 } // namespace imkit

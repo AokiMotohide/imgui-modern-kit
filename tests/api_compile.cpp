@@ -1204,7 +1204,7 @@ int main() {
     auto* drawLayers = &imkit::DrawLayeredMotion;
     if (!(eased > .5f) || imkit::EvaluateMotionTrack(keys, 2) != 1 || drawLayers == nullptr || busy.progress < 0)
         return 1;
-    return presets.size() == 13 && theme.scheme == imkit::ColorScheme::Dark &&
+    return presets.size() == 14 && theme.scheme == imkit::ColorScheme::Dark &&
                    dragVector != nullptr && axisVector != nullptr && compactAction != nullptr &&
                    imkit::ThemeScaleMinimum == .5f &&
                    imkit::ThemeScaleDefault == 1.25f &&

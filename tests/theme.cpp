@@ -348,7 +348,7 @@ int main() {
         imkit::ThemeScaleMaximum != 2.5f)
         return 11;
     const auto presets = imkit::ThemePresets();
-    if (presets.size() != 13)
+    if (presets.size() != 14)
         return 1;
     std::set<std::string> ids;
     for (const auto &info : presets) {
@@ -412,6 +412,50 @@ int main() {
         return failure;
     if (const int failure = TestWorlds())
         return failure;
-    std::puts("13 theme presets, stable IDs, scale bounds, legacy factories, brand themes, outlines and theme text validated");
+    // Part overrides (L1), named styles (L2), push/pop priority and Classic preset.
+    {
+        const auto classic = imkit::MakeTheme(imkit::ThemePreset::Classic);
+        if (classic.look != imkit::ThemeLook::Classic || imkit::ThemePresetFromId("classic") != imkit::ThemePreset::Classic)
+            return 44;
+        auto base = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
+        const auto partParsed = imkit::ParseTheme(
+            "button.height = 40\nbutton.hover.fill = #3d7eff\ncheckbox.on.fill = accent\nslider.thumb.size = 14\nbad.part.key = 1\n",
+            base);
+        if (partParsed.applied != 4 || partParsed.ignored != 1 ||
+            base.partOverrides.Var(imkit::Part::Button, imkit::PartVar::Height) != 40.f ||
+            base.partOverrides.Var(imkit::Part::Slider, imkit::PartVar::ThumbSize) != 14.f)
+            return 45;
+        const std::string roundTrip = imkit::SerializeTheme(base);
+        if (!Contains(roundTrip, "button.height = 40") || !Contains(roundTrip, "slider.thumb.size = 14"))
+            return 46;
+
+        ImGui::CreateContext();
+        imkit::ApplyTheme(base, 1.f);
+        imkit::ButtonStyle named;
+        named.height = 32.f;
+        named.colors.rest.fill = imkit::Hex("#112233");
+        imkit::RegisterStyle("toolbar", named);
+        {
+            imkit::StyleScope scope("toolbar");
+            if (imkit::ResolvePartVar(imkit::Part::Button, imkit::PartVar::Height) != 32.f)
+                return 47;
+            imkit::PushPartVar(imkit::Part::Button, imkit::PartVar::Height, 36.f);
+            if (imkit::ResolvePartVar(imkit::Part::Button, imkit::PartVar::Height) != 36.f)
+                return 48;
+            imkit::ButtonStyle call;
+            call.height = 44.f;
+            const imkit::PartValues callVals = imkit::ToPartValues(call);
+            imkit::PartLayer layer = imkit::PartLayer::Default;
+            if (imkit::ResolvePartVar(imkit::Part::Button, imkit::PartVar::Height, &callVals, &layer) != 44.f ||
+                layer != imkit::PartLayer::Call)
+                return 49;
+            imkit::PopPartVar();
+        }
+        if (imkit::ResolvePartVar(imkit::Part::Button, imkit::PartVar::Height) != 40.f)
+            return 50;
+        imkit::UnregisterStyle("toolbar");
+        ImGui::DestroyContext();
+    }
+    std::puts("14 theme presets, stable IDs, scale bounds, legacy factories, brand themes, outlines, part styles and theme text validated");
     return 0;
 }
