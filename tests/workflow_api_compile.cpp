@@ -54,6 +54,7 @@ auto volatile externalControl=&imkit::ExternalControlIndicator;
 void (*volatile plateMark)(ImDrawList*,ImVec2,float,const char*,imkit::StepMarkState,const imkit::PlateMarkDecor&,const imkit::PlateMarkStyle&,imkit::ComponentOptions)=&imkit::DrawPlateMark;
 imkit::StableId (*volatile stepBand)(const char*,std::span<const imkit::StepBandGroup>,std::span<const imkit::StepBandItem>,imkit::StableId,imkit::StepBandOptions,imkit::ComponentOptions)=&imkit::StepBand;
 auto volatile zoneColor=&imkit::SurfaceZoneColor;auto volatile pushZone=&imkit::PushSurfaceZone;auto volatile popZone=&imkit::PopSurfaceZone;
+auto volatile pushRole=&imkit::PushWindowRole;auto volatile popRole=&imkit::PopWindowRole;
 }
 int main() {
     imkit::StepNavigatorOptions stepLayout;stepLayout.badge=imkit::StepBadgeShape::RoundedSquare;stepLayout.badgeRounding=.3f;stepLayout.badgeBorder=2;

@@ -134,6 +134,15 @@ struct NodeTokens {
 // Inspector (settings) share a lightness and differ in hue, so two side panels read as two roles without either
 // standing out.
 enum class SurfaceZone : std::uint8_t { Chrome, Panel, Workspace, Monitor, Inspector, Header, ChromeCanvas };
+// The part a docked window plays. Each role takes the zone of that part as its background, so neighbouring windows read
+// as different places by colour as well as by position; the focused window's tab line takes the accent.
+enum class WindowRole : std::uint8_t { Browse, Edit, View, Monitor };
+// Colours of one window role, derived by ResolveTheme from the zones. The emphasis stays at least 1.25:1 from the body.
+struct WindowRoleColors {
+    ImVec4 body{};     // Window and child background: panel, inspector, workspace or chromeCanvas.
+    ImVec4 emphasis{}; // Section headers and the selected row: one step in front of the body, in its hue.
+    ImVec4 label{};    // Tab line while the window is not focused, in the body's hue (the chrome's for Monitor).
+};
 // Derived from `Theme::semantic` by ResolveTheme in OKLCH, so the steps are even to the eye in every theme. To override
 // a value, assign it after ResolveTheme.
 struct SurfaceZoneColors {
@@ -146,6 +155,7 @@ struct SurfaceZoneColors {
     ImVec4 inspector{};    // Settings panels: the panel's lightness, turned toward the accent's hue and calmer.
     ImVec4 header{};       // The heading row of a panel and floating tool windows: a step from the panel.
     ImVec4 chromeCanvas{}; // A canvas inside the chrome (a strip of previews): a deep tone of the chrome.
+    std::array<WindowRoleColors, 4> roles{}; // Indexed by WindowRole.
 };
 struct Theme {
     ColorScheme scheme = ColorScheme::Light;
@@ -217,6 +227,12 @@ ImVec4 SurfaceZoneColor(const Theme& theme, SurfaceZone zone);
 // Pushes the zone colour as the window background for the next Begin; call PopSurfaceZone right after that Begin.
 void PushSurfaceZone(const Theme& theme, SurfaceZone zone);
 void PopSurfaceZone();
+// Pushes the colours of a window role for the next Begin: background, child background, headers and the docked tab
+// (the focused tab line takes the accent, an unfocused one the role label). Call PopWindowRole after End, so the widgets
+// inside use the role colours too. Input fields keep the theme's own colour. An unresolved theme pushes the current
+// style colours. The tab line shows only when ImGuiStyle::TabBarOverlineSize is above zero.
+void PushWindowRole(const Theme& theme, WindowRole role);
+void PopWindowRole();
 // Use within a frame, before Begin or around a group of widgets. Restore on the
 // same live context; scopes must be destroyed before the host destroys it.
 class ThemeScope {

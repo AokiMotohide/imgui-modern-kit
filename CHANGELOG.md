@@ -9,6 +9,7 @@
 | Header | Additions |
 | --- | --- |
 | `imkit/theme.h` | `SurfaceZone::Inspector`, `Header`, `ChromeCanvas`; `SurfaceZoneColors::inspector`, `header`, `chromeCanvas`; `SemanticColors::crown`, `BrandPalette::crown`; `Stroke::primary`, `Stroke::primaryColor`. Zones are now stepped in OKLCH lightness, and a dark brand theme's fields sit a step above the panel |
+| `imkit/theme.h` | `WindowRole`, `WindowRoleColors`, `SurfaceZoneColors::roles`, `PushWindowRole`, `PopWindowRole`: per-role window colours (body from the zones, a header step, a tab line that takes the accent when focused) |
 | `imkit/workflow.h` | `StepBandOptions::tintTrays`, `StepBandOptions::currentTrayContrast` |
 | `imkit/video.h` | `ClipBody` (`Fill`, `Filmstrip`), `TimelineOptions::clipBody`, `TimelineProvider::thumbnailAt` (16:9 frames along a clip; `Fill` stays the default) |
 | `imkit/decor.h` | `BackdropStyle::phase`, `BackdropStyle::scale` (a pattern fixed to a panned and zoomed canvas), `DrawSpriteScatter`, `SpriteScatterStyle` |

@@ -2,6 +2,8 @@
 #include "draw_internal.h"
 #include <algorithm>
 #include <cmath>
+#include <initializer_list>
+#include <iterator>
 #include <vector>
 
 namespace imkit {
@@ -332,9 +334,33 @@ void ResolveSurfaceZones(Theme& t) {
     z.onMonitor=ContrastRatio(c.textSecondary,z.monitor)>=4.5f?ZoneSolid(c.textSecondary):
                 ContrastRatio(white,z.monitor)>=ContrastRatio(black,z.monitor)?ImVec4{.92f,.92f,.92f,1}:ImVec4{.08f,.08f,.08f,1};
 }
+// Inside one window, a header stands this far from the body; the 1.14 between zones is too close for a heading row.
+constexpr float kRoleStep=1.25f;
+// Each role reuses its zone, so the rule is the zones' own and serves every preset and brand theme alike.
+void ResolveWindowRoles(Theme& t) {
+    using detail::FromOklch; using detail::ToOklch;
+    auto& z=t.zones;
+    const bool dark=t.scheme==ColorScheme::Dark, high=t.contrast==ContrastMode::HighContrast;
+    const ImVec4 bodies[]={z.panel,z.inspector,z.workspace,z.chromeCanvas};
+    const detail::Oklch top=ToOklch(z.chrome);
+    for(std::size_t i=0;i<z.roles.size();++i) {
+        auto& r=z.roles[i];
+        r.body=ZoneSolid(bodies[i]);
+        const detail::Oklch b=ToOklch(r.body);
+        // Dark themes bring the emphasis forward by lightening, light themes by deepening; the deepest bodies
+        // (a picture strip, or a black high contrast panel) can only step lighter.
+        float step=dark||b.L<.4f?.045f:-.045f, L=b.L+step;
+        r.emphasis=FromOklch({L,b.C*1.1f,b.h});
+        for(int n=0;n<60&&ContrastRatio(r.emphasis,r.body)<kRoleStep&&L>0.f&&L<1.f;++n) { L+=step*.15f; r.emphasis=FromOklch({L,b.C*1.1f,b.h}); }
+        // The label is a line, not a surface: it needs colour more than lightness, so it borrows chroma.
+        const detail::Oklch hue=i==static_cast<std::size_t>(WindowRole::Monitor)?top:b;
+        r.label=FromOklch({dark?.72f:.52f,high?0.f:std::clamp(hue.C*2.2f,.012f,.11f),hue.h});
+    }
+}
 } // namespace
 void ResolveTheme(Theme& t) {
     ResolveSurfaceZones(t);
+    ResolveWindowRoles(t);
     {
         // Secondary and disabled text are read as captions, so they keep 4.5:1 on the surfaces they sit on.
         auto& s=t.semantic;
@@ -572,4 +598,23 @@ ImVec4 SurfaceZoneColor(const Theme& theme,SurfaceZone zone) {
 }
 void PushSurfaceZone(const Theme& theme,SurfaceZone zone) { ImGui::PushStyleColor(ImGuiCol_WindowBg,SurfaceZoneColor(theme,zone)); }
 void PopSurfaceZone() { ImGui::PopStyleColor(); }
+namespace {
+constexpr ImGuiCol kWindowRoleColors[]={ImGuiCol_WindowBg,ImGuiCol_ChildBg,ImGuiCol_Header,ImGuiCol_HeaderHovered,
+    ImGuiCol_HeaderActive,ImGuiCol_TabSelected,ImGuiCol_TabDimmedSelected,ImGuiCol_TabSelectedOverline,
+    ImGuiCol_TabDimmedSelectedOverline};
+} // namespace
+void PushWindowRole(const Theme& theme,WindowRole role) {
+    const auto& r=theme.zones.roles[static_cast<std::size_t>(role)];
+    if(r.body.w<=0) {
+        // Not resolved: push the current colours so the Pop count still matches.
+        for(ImGuiCol col:kWindowRoleColors) ImGui::PushStyleColor(col,ImGui::GetStyleColorVec4(col));
+        return;
+    }
+    const ImVec4 accent=theme.semantic.accent;
+    // Docked tabs keep the colours of the window's Begin (Dear ImGui stores them per window), so push before Begin.
+    const ImVec4 values[]={r.body,r.body,r.emphasis,detail::MixColor(r.emphasis,accent,.15f),
+        detail::MixColor(r.emphasis,accent,.25f),r.body,r.body,accent,r.label};
+    for(std::size_t i=0;i<std::size(kWindowRoleColors);++i) ImGui::PushStyleColor(kWindowRoleColors[i],values[i]);
+}
+void PopWindowRole() { ImGui::PopStyleColor(static_cast<int>(std::size(kWindowRoleColors))); }
 } // namespace imkit

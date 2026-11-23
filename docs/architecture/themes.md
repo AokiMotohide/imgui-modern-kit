@@ -90,6 +90,19 @@ Splitters and resize grips use the `divider` zone colour, which stands apart fro
 
 Zones are stepped in OKLCH lightness, so the steps look even in every theme, and neighbouring zones stay at least 1.14:1 apart. `Panel` and `Inspector` share a lightness and differ only in hue. `onMonitor` is text that reads on the monitor zone and `divider` is the line between zones; it keeps at least 1.3:1 (dark) or 1.6:1 (light) against the zones it separates. Call `PushSurfaceZone(theme, zone)` before a window's `Begin` and `PopSurfaceZone()` right after it; `SurfaceZoneColor` returns a zone colour for your own drawing. To override a zone, assign it after `ResolveTheme`.
 
+### Window roles
+
+`ResolveTheme` also derives `zones.roles`, one set of colours per `WindowRole`, from the zones above, so the same rule serves every preset and brand theme.
+
+| Role | Use | Body |
+| --- | --- | --- |
+| `Browse` | Lists, outliners | `panel` |
+| `Edit` | Inspectors, property panels | `inspector` |
+| `View` | Around the main view | `workspace` |
+| `Monitor` | A strip of previews | `chromeCanvas` |
+
+Each role has `body`, `emphasis` (section headers and the selected row, at least 1.25:1 from the body, in its hue) and `label` (the tab line of an unfocused window, in the body's hue; the chrome's hue for `Monitor`). Call `PushWindowRole(theme, role)` before a window's `Begin` and `PopWindowRole()` after its `End`. Docked tabs keep the colours pushed at `Begin`; the focused tab line takes the accent. The line shows only when `ImGuiStyle::TabBarOverlineSize` is above zero. Input fields keep the theme's own colour.
+
 ## What `ApplyTheme` does
 
 `ApplyTheme` replaces the whole `ImGuiStyle` of the current context, except `Alpha` and `FontScaleDpi`. Make your adjustments in the `Theme`, not in `ImGuiStyle`, because the next `ApplyTheme` overwrites style edits you made directly.
