@@ -23,20 +23,21 @@ LEAD = [  # eight eighth-notes per bar, None = rest
 ]
 
 # (first bar, last bar, layer gains). Bars are 1-based; later rows override earlier ones.
+# 96-bar arc at 128 BPM (180.0s) matching the 6-act trailer structure in film.json.
 SECTIONS = [
-    (1, 4, dict(pad=.9, arp=.5, kick=0.0)),
-    (3, 4, dict(kick=.5)),
-    (5, 8, dict(kick=.9, hat=.5, bass=.6, pad=.8, arp=.55)),
-    (9, 24, dict(kick=1, hat=.8, clap=.8, bass=.9, stab=.55, pad=.6, arp=.4)),
-    (25, 26, dict(kick=0, hat=.6, clap=0, bass=0, stab=0, pad=.8, arp=.6, roll=1, riser=1)),
-    (27, 42, dict(kick=1, hat=1, clap=1, bass=1, stab=.85, pad=.6, arp=.0, lead=.8, open=.8)),
-    (43, 44, dict(kick=0, hat=0, clap=0, bass=0, stab=0, pad=1, arp=.5, lead=0, riser=1)),
-    (45, 58, dict(kick=1, hat=1, clap=1, bass=1, stab=.8, pad=.6, arp=.35, lead=.85, open=.8, perc=.6)),
-    (59, 72, dict(kick=1, hat=1, clap=1, bass=1, stab=.7, pad=.6, arp=.45, lead=.8, open=1, perc=.9)),
-    (73, 80, dict(kick=.55, hat=.45, clap=0, bass=.55, stab=.0, pad=.9, arp=.8, lead=0, open=0, perc=0)),
-    (81, 82, dict(kick=0, hat=.7, bass=0, pad=.9, arp=.8, roll=1, riser=1)),
-    (83, 88, dict(kick=1, hat=1, clap=1, bass=1, stab=.9, pad=.7, arp=.4, lead=.95, open=1, perc=1, crash=1)),
-    (89, 90, dict(kick=0, hat=0, clap=0, bass=0, stab=0, pad=1, arp=.3, lead=0, open=0, perc=0)),
+    (1, 3, dict(pad=.85, arp=.55, kick=0.0)),
+    (4, 5, dict(kick=.65, hat=.4, bass=.45, pad=.85, arp=.65)),
+    (6, 10, dict(kick=.95, hat=.85, clap=.75, bass=.85, stab=.5, pad=.65, arp=.45)),
+    (11, 11, dict(kick=0, hat=.4, clap=0, bass=0, pad=.9, arp=.6, riser=.8)),
+    (12, 28, dict(kick=1, hat=.9, clap=.85, bass=.95, stab=.7, pad=.65, arp=.4, open=.65)),
+    (29, 29, dict(kick=0, hat=.5, clap=0, bass=0, pad=.95, arp=.7, roll=.85, riser=.95)),
+    (30, 48, dict(kick=1, hat=1, clap=1, bass=1, stab=.85, pad=.6, arp=.3, lead=.8, open=.85, perc=.65)),
+    (49, 52, dict(kick=0, hat=.35, clap=0, bass=0, pad=1.0, arp=.65, lead=0, roll=.7, riser=1.0)),
+    (53, 69, dict(kick=1, hat=1, clap=1, bass=1, stab=.9, pad=.68, arp=.45, lead=.92, open=1, perc=.9, crash=1)),
+    (70, 70, dict(kick=0, hat=.45, clap=0, bass=0, pad=.9, arp=.65, riser=.8)),
+    (71, 84, dict(kick=.72, hat=.6, clap=.55, bass=.7, pad=.82, arp=.75, lead=.5, open=.4)),
+    (85, 90, dict(kick=1, hat=1, clap=1, bass=1, stab=.92, pad=.75, arp=.5, lead=1.0, open=1, perc=1, crash=1)),
+    (91, 96, dict(kick=0, hat=0, clap=0, bass=.3, pad=.95, arp=.42, lead=0, open=0, perc=0)),
 ]
 LAYERS = ["kick", "hat", "open", "clap", "bass", "stab", "pad", "arp", "lead", "perc", "roll", "riser", "crash"]
 
@@ -198,7 +199,8 @@ def render_score(path: Path, bpm=120.0, bars=90, cuts=(), clicks=()):
                 mix.add("music", at + beat / 2, stab(CHORDS[chord] + [CHORDS[chord][0] + 12]), .22 * g["stab"], -.2)
             if g["roll"]:
                 for s in range(4):
-                    mix.add("drums", at + s * beat / 4, clap_hit[:int(SR * .1)], .12 * (1 + (bar - 25 if bar < 40 else bar - 81) * .35 + b * .1 + s * .05) * g["roll"], 0)
+                    roll_scale = 0.25 + 0.15 * b + 0.08 * s
+                    mix.add("drums", at + s * beat / 4, clap_hit[:int(SR * .1)], .14 * roll_scale * g["roll"], 0)
         if g["pad"]:
             mix.add("music", start, pad(CHORDS[chord] + [CHORDS[chord][0] - 12], bar_len + .3), .55 * g["pad"])
         if g["arp"]:
@@ -206,13 +208,13 @@ def render_score(path: Path, bpm=120.0, bars=90, cuts=(), clicks=()):
             for s in range(16):
                 mix.add("music", start + s * beat / 4, pluck(notes[(s * 3) % 4] + (12 if s % 8 >= 4 else 0)), .32 * g["arp"], math.sin(s) * .5)
         if g["lead"]:
-            octave = 12 if bar >= 59 and (bar // 4) % 2 else 0
+            octave = 12 if bar >= 53 and (bar // 4) % 2 else 0
             for i, note in enumerate(LEAD[chord]):
                 if note is not None:
                     mix.add("music", start + i * beat / 2, lead(note + octave, beat * .5), .3 * g["lead"], .15)
         if g["riser"]:
-            mix.add("fx", start, noise_riser(bar_len, rng), .45)
-        if g["crash"] and bar in (83,):
+            mix.add("fx", start, noise_riser(bar_len, rng), .45 * g["riser"])
+        if g["crash"] and bar in (53, 85):
             mix.add("fx", start, highpass(rng.standard_normal(int(SR * 2.2)), 3000) * np.exp(-np.arange(int(SR * 2.2)) / SR * 2.2), .35)
     # Picture cuts and recorded mouse presses.
     for at in cuts:
@@ -316,3 +318,105 @@ def render_track_score(path: Path, track: Path, bpm: float, bars: int, offset: f
         f.setsampwidth(2)
         f.setframerate(SR)
         f.writeframes((out * 32767).astype("<i2").tobytes())
+
+
+def render_gemini_score(
+    path: Path,
+    music_wav: Path,
+    bpm: float,
+    bars: int,
+    narration_manifest: dict | None = None,
+    cuts=(),
+    clicks=(),
+    laser_times=(),
+):
+    """Mix the Lyria 3.5 score with smooth voice-ducking, Gemini TTS narration, and UI/transition SFX."""
+    _, bar_len, _ = beat_grid(bpm)
+    seconds = bars * bar_len
+    n = int((seconds + 0.5) * SR)
+
+    bgm = load_track(music_wav)
+    bgm_peak = max(0.01, float(np.abs(bgm).max()))
+    bgm = (bgm / bgm_peak) * 0.62
+
+    # If the generated track is slightly shorter than 180s, extend seamlessly on a bar boundary with a 2-bar crossfade.
+    if len(bgm) < n:
+        xfade = min(int(2 * bar_len * SR), len(bgm) // 4)
+        loop_start = int(8 * bar_len * SR)
+        if loop_start + xfade >= len(bgm):
+            loop_start = max(0, len(bgm) // 3)
+        chunk = bgm[loop_start:].copy()
+        out_bgm = bgm.copy()
+        while len(out_bgm) < n:
+            if len(out_bgm) > xfade and len(chunk) > xfade:
+                fade_out = np.linspace(1.0, 0.0, xfade, dtype=np.float32)[:, None]
+                fade_in = np.linspace(0.0, 1.0, xfade, dtype=np.float32)[:, None]
+                tail = out_bgm[-xfade:] * fade_out + chunk[:xfade] * fade_in
+                out_bgm = np.vstack([out_bgm[:-xfade], tail, chunk[xfade:]])
+            else:
+                out_bgm = np.vstack([out_bgm, chunk])
+        bgm = out_bgm[:n]
+    else:
+        bgm = bgm[:n]
+
+    # Fade in & out cleanly.
+    t = np.arange(n, dtype=np.float32) / SR
+    fade_in = np.clip(t / 0.12, 0.0, 1.0)
+    fade_out = np.clip((seconds - t) / 3.2, 0.0, 1.0)
+    bgm *= (fade_in * fade_out)[:, None]
+
+    # Build voice bed and smooth ducking envelope.
+    voice_bus = np.zeros((n, 2), np.float32)
+    duck = np.ones(n, np.float32)
+    if narration_manifest:
+        attack_n = int(0.14 * SR)
+        release_n = int(0.38 * SR)
+        for info in narration_manifest.values():
+            wav_path = Path(info["file"])
+            if not wav_path.is_absolute():
+                wav_path = path.parents[3] / wav_path
+            if not wav_path.is_file():
+                continue
+            speech = load_track(wav_path)
+            speech = highpass(speech.astype(np.float64), 85, 1).astype(np.float32)
+            rms = float(np.sqrt(np.mean(speech ** 2))) if len(speech) else 0.0
+            if rms > 1e-4:
+                speech *= 0.22 / rms
+            speech = np.clip(speech, -0.95, 0.95)
+            start_i = int(round(float(info["at"]) * SR))
+            end_i = min(n, start_i + len(speech))
+            if start_i < n and end_i > start_i:
+                voice_bus[start_i:end_i] += speech[: end_i - start_i]
+                # Duck BGM smoothly from 1.0 down to 0.32 while voice plays.
+                a0 = max(0, start_i - attack_n)
+                b1 = min(n, end_i + release_n)
+                env = np.full(b1 - a0, 0.32, np.float32)
+                if start_i > a0:
+                    env[: start_i - a0] = np.linspace(1.0, 0.32, start_i - a0, dtype=np.float32)
+                if b1 > end_i:
+                    env[end_i - a0 :] = np.linspace(0.32, 1.0, b1 - end_i, dtype=np.float32)
+                duck[a0:b1] = np.minimum(duck[a0:b1], env)
+
+    rng = np.random.default_rng(404)
+    fx = Mix(seconds + 1.5)
+    for at in cuts:
+        w = np.arange(int(SR * 0.22)) / SR
+        fx.add("fx", at - 0.1, highpass(rng.standard_normal(len(w)), 2400) * np.sin(np.pi * w / 0.22) ** 2, 0.045, -0.18)
+    for at in clicks:
+        w = np.arange(int(SR * 0.035)) / SR
+        fx.add("fx", at, np.sin(2 * np.pi * 1850 * w) * np.exp(-w * 130), 0.055)
+    for at in laser_times:
+        w = np.arange(int(SR * 0.55)) / SR
+        sweep = np.sin(2 * np.pi * np.cumsum(260 * (9.0 ** (w / 0.55))) / SR)
+        air = highpass(rng.standard_normal(len(w)), 3200) * 0.45
+        env = np.sin(np.pi * w / 0.55) ** 1.4
+        fx.add("fx", at, (sweep * 0.45 + air) * env, 0.22)
+
+    out = bgm * duck[:, None] + voice_bus + fx.bus["fx"][:n]
+    out = np.tanh(out * 1.05)
+    out *= 0.92 / max(0.01, float(np.abs(out).max()))
+    with wave.open(str(path), "wb") as f:
+        f.setnchannels(2)
+        f.setsampwidth(2)
+        f.setframerate(SR)
+        f.writeframes((out[: int(round(seconds * SR))] * 32767).astype("<i2").tobytes())

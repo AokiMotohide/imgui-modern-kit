@@ -13,7 +13,7 @@ The Gallery and the test suite re-check these on every release. Passing native-A
 | Public API | 365 included overloads; independent function-pointer signature references compile and link against the pinned header; excluded functions are enumerated |
 | Debug / Release | Library and production catalog compile and link on Windows x64, MSVC 19.51.36256 / v145 |
 | Ownership | Two independent contexts; non-cumulative scale; nested ThemeScope style and font restoration; surrounding disabled alpha retained |
-| Theme presets | 13 stable unique IDs; complete finite palettes; Light/Dark metadata; legacy Precision values; normal, muted and semantic contrast thresholds |
+| Theme presets | 14 stable unique IDs (including `Classic`); complete finite palettes; Light/Dark metadata; legacy Precision values; normal, muted and semantic contrast thresholds |
 | Motion | Intermediate value, endpoint, disabled immediate result, pruning and generation reset |
 | External target | A separate consumer creates its own ImGui target; no core or backend sources in imkit; no GLFW/OpenGL target leakage |
 | Actions | Pointer and model edits, disabled action, switch, mixed-to-checked, radio, same-label IDs, programmatic focus, Space, Tab/Shift-Tab |
@@ -33,6 +33,23 @@ Generated evidence and media:
 - The README and Pages animations are cut from lossless 1920×1080, 60 Hz takes of the Gallery. `tools/media/capture.py` records them and checks each take's assertions. `tools/media/verify.py` enforces the GIF contract (960×540, at most 2 MiB, 6–8 s) and the film contract. Neither validates native OS input.
 
 ## Records, newest first
+
+### 4.2.0 — 2026-11-23
+
+**Verified**
+
+- Windows x64 Debug on `Version4.2`: built all 13 library, test and Gallery targets (`imkit_gallery`, `imkit_node_editor_gallery`) cleanly, and passed 11 of 11 CTest targets (`theme`, `part_style`, `transfer_curve`, `decor`, `motion`, `motion_curve_api_compile`, `workflow`, `workflow_api_compile`, `toast`, `api_compile`, `design_api_compile`).
+- Debug Gallery `--verify` (public IO): all 45 checks passed and `--verify-comparison` passed.
+- Both films (`tools/media/verify.py`): 1920×1080, 60 fps, 180.0 s (10,800 frames), −14.03 LUFS / −3.53 dBTP (ja, 30.4 MiB) and −14.02 LUFS / −2.96 dBTP (en, 30.4 MiB), with bilingual Gemini TTS narration and a 96-bar original 128 BPM score.
+- Native GIF captures (`tools/media/capture.py --check` + `verify.py`): 16 GIFs at 960×540 and 8.0 s including new `v4-glow.gif`, largest 1.47 MiB (within 2 MiB); both caption sets share all 25 keys.
+- Documentation: `tools/check_docs.py` passed for 41 English/Japanese pairs and local links in 84 public pages. The site build produced 93 HTML pages and checked 7,979 local links, 365 API rows (48 excluded) and 52 Node declarations.
+
+**Not verified**
+
+- Push CI Release builds (Windows x64/Arm64, macOS arm64/x86_64/Universal 2) and relocated SDK consumer packages for 4.2.0 (executed by GitHub Actions after merging to `main`).
+- Listening/visual acceptance across external browsers beyond local contact-sheet and frame inspection.
+- Physical OS input, native IME, screen readers, mixed-DPI, multi-monitor use and physical hardware.
+- macOS signing and notarization (packages remain unsigned).
 
 ### 4.1.0 — 2026-11-06
 

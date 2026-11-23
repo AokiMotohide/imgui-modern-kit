@@ -70,7 +70,26 @@ if (imkit::ActionButton("Apply", imkit::ActionVariant::Primary, {}, {&theme, &an
     SaveSettings();
 ```
 
+Set `ComponentOptions::callToAction` on the one action the user should press next: the button gets a trailing chevron, and a ring spreads once when it starts being drawn with the mark (not under reduced motion). Keep it to one button per region.
+
+While the work a button started is running, set `ComponentOptions::progress` (0..1) and put the stage in the label; the button fills from its leading edge.
+
 Use primary once per decision area. Secondary, ghost and destructive variants express intent without changing button activation semantics.
+
+### Button roles, corners and widths
+
+| Role | Variant | Use for |
+|---|---|---|
+| Main | `Primary` | The one action of a region. At most one per region |
+| Ordinary | `Secondary` | Other actions |
+| Choice | `Segmented` (not a button) | Picking one of several values; only the chosen segment is filled with the accent |
+| Tool | `Ghost` | Small tools inside the content (undo, fit to view); frameless until hovered |
+| Danger | `SubtleDestructive` (`Destructive` in a confirmation) | Deleting or stopping |
+
+- Every button frame is painted by ImKit with smooth corners: the curve eases into the straight edge instead of meeting it with a circular arc. The radius is a quarter of the control height (`Radius::controlShare = .25`), so it keeps its proportion at every density. Only switch tracks and status badges stay round, because they are states, not things to press.
+- A width that follows the label is never narrower than `ActionButtonMinimumWidth()` (four text heights).
+- Give every button in a row or column of related actions the width `ActionRowWidth(labels)`, so they line up.
+- An `IconActionButton` without a label is a square.
 
 ## Boolean and mixed state
 
@@ -105,6 +124,10 @@ Call `EndSettingRow` only when `BeginSettingRow` returns true. Native scalar par
 For a three-axis drag value, use `DragVector3WithUnit("Offset", values, "cm", .1f, -10.f, 10.f)`. Each axis remains a native `DragFloat`; the label scopes its stable IDs and narrow widths stack the fields.
 
 For a labeled inspector field, use `AxisVector3Field("position", "Position", values, "m", .01f)`. It keeps X/Y/Z colors and native drag or direct numeric input, stacking the axes when space is limited. Hosts that need edit lifecycle events can receive activation, commit, and cancellation through the final `AxisVector3Interaction*` argument. `CompactIconActionButton` pairs an atlas icon with a visible label and a subtle role accent for compact tool groups; the host owns the atlas and action state.
+
+`SliderFloatWithInput("Gain", &gain, 0.f, 1.f, "%.2f", 0.01f, &interaction)` puts a slider and a number field on one row; both edit the same value, clamped to the range and snapped to `step` when it is above zero. Below about 160 px the number field wraps under the slider. `SliderInputInteraction` reports `activated`, `changed` (also while dragging), `committed` (slider released or number entry confirmed after a change) and `canceled` (Esc), so a host can send progress and the final value separately.
+
+`TransferCurveEditor("falloff", series, state, options, &interaction)` (`imkit/transfer_curve.h`) edits cubic Bezier transfer curves on a 0..1 frame. Each `TransferCurveSeries` holds a host-owned `std::span<TransferCurveNode>` (absolute `pos`, `in`, `out`), a color, a dashed flag and an optional display mapping (`toDisplay` / `fromDisplay` / `user`, for example y^(1/gamma)); dragging converts back with `fromDisplay`. `TransferCurveState` holds the selected series and knot (-1 for none); only the selected knot shows its handles. Drag a knot (its handles follow) or a handle; x stays between the neighbouring knots and the first and last knot keep their x. Click near another curve to select that series. With keyboard focus the arrow keys move the knot by 0.01 (Shift: 0.04) and Esc clears the knot. `TransferCurveInteraction` reports `activated`, `changed`, `committed`, `canceled` (Esc during a drag ends it; values stay as dragged, so restore the host snapshot), `seriesChanged` and `nodeChanged`. `TransferCurveOptions::monotone` keeps every curve non-decreasing after each edit; `TransferCurveClampMonotone(nodes)` does the same on demand.
 
 ## Status and notification
 

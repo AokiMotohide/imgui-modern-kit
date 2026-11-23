@@ -2,7 +2,7 @@
 
 [日本語](テーマ.md) · [Documentation index](../README.md) · [Design system](design-system.md) · [Make your own look](make-your-own-look.md)
 
-ImKit has thirteen named presets and a set of functions to adjust or build your own. A `Theme` is a plain value that your application owns, and `ApplyTheme` writes it into the current Dear ImGui context.
+ImKit has fourteen named presets and a set of functions to adjust or build your own. A `Theme` is a plain value that your application owns, and `ApplyTheme` writes it into the current Dear ImGui context.
 
 <img src="../images/v4-themes.gif" alt="Picking a theme in the Gallery changes the colours of every component" width="960">
 
@@ -20,13 +20,14 @@ ImKit has thirteen named presets and a set of functions to adjust or build your 
 | | `Violet` | Dark purple with a purple accent |
 | | `Slate` | Blue-grey canvas and surfaces |
 | | `HighContrastDark` | Raised contrast for legibility |
+| | `Classic` | `PrecisionDark` colours with `ThemeLook::Classic` (4.1 Dear ImGui shapes) |
 | Light | `PrecisionLight` | The standard light theme: white and pale grey |
 | | `WarmSand` | Sand beige with a brown accent |
 | | `Rose` | Pale pink with a rose accent |
 | | `Solar` | Warm cream with an olive-gold accent |
 | | `HighContrastLight` | Raised contrast for legibility |
 
-`PrecisionLight`, `PrecisionDark`, `Slate` and the two high-contrast presets have hand-tuned palettes. The other eight are built by `MakeBrandTheme` from four colours: canvas, surface, text and accent. They also show what an application can do with the same function (see [Make your own look](make-your-own-look.md)).
+`PrecisionLight`, `PrecisionDark`, `Classic`, `Slate` and the two high-contrast presets use tuned Precision palettes. The other eight are built by `MakeBrandTheme` from four colours: canvas, surface, text and accent. They also show what an application can do with the same function (see [Make your own look](make-your-own-look.md)).
 
 ## Choose and restore a theme
 

@@ -1,398 +1,220 @@
 {
- "edition": "4.1",
+ "edition": "4.2",
  "fps": 60,
  "size": [1920, 1080],
  "bpm": 128,
  "bars": 96,
+ "posterSeconds": 11.5,
  "chapters": [
-  {
-   "first": 1,
-   "color": [120, 214, 198]
-  },
-  {
-   "first": 22,
-   "color": [193, 154, 245]
-  },
-  {
-   "first": 41,
-   "color": [246, 200, 121]
-  },
-  {
-   "first": 49,
-   "color": [128, 170, 255]
-  },
-  {
-   "first": 67,
-   "color": [243, 154, 176]
-  }
+  {"first": 1, "color": [72, 209, 214]},
+  {"first": 11, "color": [120, 214, 198]},
+  {"first": 29, "color": [167, 139, 250]},
+  {"first": 49, "color": [246, 192, 108]},
+  {"first": 70, "color": [96, 165, 250]},
+  {"first": 85, "color": [244, 114, 182]}
  ],
  "shots": [
   {
-   "id": "hook",
-   "kind": "take",
-   "take": "hook",
+   "id": "intro-veo",
+   "kind": "veo_intro",
+   "clip": "clip_intro_bg",
    "at": 1,
-   "bars": 8,
-   "in": 0,
+   "bars": 3,
+   "caps": [{"key": "intro-tag", "t": 0.4, "d": 4.8, "style": "hero_tag"}]
+  },
+  {
+   "id": "hook-transform",
+   "kind": "laser_transform",
+   "take": "hook",
+   "morph": "clip_transform_morph",
+   "at": 4,
+   "bars": 7,
+   "in": 0.0,
    "speed": 1.0,
    "camera": [
-    {
-     "t": 0,
-     "rect": [0, 0, 1920, 1080]
-    },
-    {
-     "t": 4.2,
-     "rect": [0, 0, 1920, 1080]
-    },
-    {
-     "t": 5.2,
-     "rect": [1020, 30, 1880, 514]
-    },
-    {
-     "t": 9.8,
-     "rect": [1020, 30, 1880, 514]
-    },
-    {
-     "t": 10.8,
-     "rect": [0, 0, 1920, 1080]
-    }
+    {"t": 0.0, "rect": [0, 0, 1920, 1080], "tilt": -0.06},
+    {"t": 3.8, "rect": [0, 0, 1920, 1080], "tilt": 0.0},
+    {"t": 5.2, "rect": [1000, 20, 1890, 520], "tilt": 0.04},
+    {"t": 9.8, "rect": [1000, 20, 1890, 520], "tilt": 0.02},
+    {"t": 11.2, "rect": [0, 0, 1920, 1080], "tilt": 0.0}
    ],
-   "caps": [
-    {
-     "key": "hook-1",
-     "t": 0.4,
-     "d": 3.8
-    },
-    {
-     "key": "hook-2",
-     "t": 4.6,
-     "d": 6.0
-    },
-    {
-     "key": "hook-title",
-     "t": 11.6,
-     "d": 3.2,
-     "style": "title"
-    }
-   ]
+   "caps": [{"key": "hook-title", "t": 9.6, "d": 3.4, "style": "title"}]
   },
-  {
-   "id": "icons",
-   "kind": "take",
-   "take": "icons",
-   "at": 9,
-   "bars": 4,
-   "in": 0,
-   "speed": 1.225,
-   "caps": [
-    {
-     "key": "icons",
-     "t": 0.3,
-     "d": 7.2
-    }
-   ],
-   "camera": [
-    {
-     "t": 0,
-     "rect": [0, 0, 1280, 720]
-    },
-    {
-     "t": 8,
-     "rect": [0, 0, 1280, 720]
-    }
-   ]
-  },
-  {
-   "id": "toasts",
-   "kind": "take",
-   "take": "toasts",
-   "at": 13,
-   "bars": 4,
-   "in": 0,
-   "speed": 1.137,
-   "caps": [
-    {
-     "key": "toasts",
-     "t": 0.3,
-     "d": 7.2
-    }
-   ]
-  },
+  {"id": "ch-1", "kind": "chapter", "at": 11, "bars": 1, "num": "01", "key": "ch-1"},
   {
    "id": "compare",
-   "kind": "take",
+   "kind": "take_3d",
    "take": "comparison",
-   "at": 17,
-   "bars": 5,
-   "in": 2.0,
-   "speed": 1.4,
-   "caps": [
-    {
-     "key": "compare",
-     "t": 0.3,
-     "d": 7.2
-    }
-   ]
+   "at": 12,
+   "bars": 4,
+   "in": 1.8,
+   "speed": 1.55,
+   "tilt": -0.05,
+   "caps": [{"key": "compare", "t": 0.2, "d": 7.0}]
   },
   {
-   "id": "chapter-2",
-   "kind": "chapter",
-   "at": 22,
-   "bars": 1,
-   "num": "02",
-   "key": "chapter-2"
+   "id": "four-layers",
+   "kind": "layers_3d",
+   "take": "studio",
+   "at": 16,
+   "bars": 5,
+   "in": 2.0,
+   "speed": 1.1,
+   "caps": [{"key": "layers", "t": 0.2, "d": 8.9}]
   },
   {
    "id": "worlds",
-   "kind": "take",
+   "kind": "take_3d",
    "take": "worlds",
-   "at": 23,
-   "bars": 6,
-   "in": 0,
-   "speed": 1.166,
-   "caps": [
-    {
-     "key": "worlds",
-     "t": 0.4,
-     "d": 10.6
-    }
-   ]
+   "at": 21,
+   "bars": 4,
+   "in": 0.0,
+   "speed": 1.5,
+   "tilt": 0.05,
+   "beat_flash": true,
+   "caps": [{"key": "worlds", "t": 0.2, "d": 7.0}]
   },
   {
    "id": "studio",
-   "kind": "take",
+   "kind": "take_3d",
    "take": "studio",
-   "at": 29,
-   "bars": 7,
-   "in": 0,
-   "speed": 1.093,
-   "caps": [
-    {
-     "key": "studio-1",
-     "t": 0.4,
-     "d": 5.6
-    },
-    {
-     "key": "studio-2",
-     "t": 6.2,
-     "d": 6.7
-    }
-   ]
+   "at": 25,
+   "bars": 4,
+   "in": 3.5,
+   "speed": 1.4,
+   "tilt": -0.04,
+   "caps": [{"key": "studio", "t": 0.2, "d": 7.0}]
   },
-  {
-   "id": "sprite",
-   "kind": "take",
-   "take": "sprite",
-   "at": 36,
-   "bars": 5,
-   "in": 0.3,
-   "speed": 1.05,
-   "caps": [
-    {
-     "key": "sprite",
-     "t": 0.4,
-     "d": 8.6
-    }
-   ]
-  },
-  {
-   "id": "chapter-3",
-   "kind": "chapter",
-   "at": 41,
-   "bars": 1,
-   "num": "03",
-   "key": "chapter-3"
-  },
-  {
-   "id": "code",
-   "kind": "code",
-   "at": 42,
-   "bars": 7,
-   "inset": {
-    "take": "hook",
-    "in": 4.0,
-    "speed": 0.9
-   },
-   "caps": [
-    {
-     "key": "code",
-     "t": 0.4,
-     "d": 11.0
-    }
-   ]
-  },
-  {
-   "id": "chapter-4",
-   "kind": "chapter",
-   "at": 49,
-   "bars": 1,
-   "num": "04",
-   "key": "chapter-4"
-  },
+  {"id": "ch-2", "kind": "chapter", "at": 29, "bars": 1, "num": "02", "key": "ch-2"},
   {
    "id": "workspace",
-   "kind": "take",
+   "kind": "take_3d",
    "take": "workspace",
-   "at": 50,
-   "bars": 7,
-   "in": 0,
-   "speed": 1.337,
-   "caps": [
-    {
-     "key": "workspace",
-     "t": 0.4,
-     "d": 12.5
-    }
-   ]
+   "at": 30,
+   "bars": 6,
+   "in": 0.0,
+   "speed": 1.45,
+   "tilt": 0.05,
+   "caps": [{"key": "workspace", "t": 0.2, "d": 10.6}]
   },
   {
    "id": "timeline",
-   "kind": "take",
+   "kind": "take_3d",
    "take": "timeline",
-   "at": 57,
+   "at": 36,
    "bars": 5,
-   "in": 0,
-   "speed": 1.13,
-   "caps": [
-    {
-     "key": "timeline",
-     "t": 0.4,
-     "d": 9.2
-    }
-   ]
+   "in": 0.0,
+   "speed": 1.25,
+   "tilt": -0.05,
+   "caps": [{"key": "timeline", "t": 0.2, "d": 8.8}]
   },
   {
    "id": "node-editor",
-   "kind": "take",
+   "kind": "take_3d",
    "take": "node-editor-final",
-   "at": 62,
+   "at": 41,
    "bars": 5,
-   "in": 0,
-   "speed": 0.96,
-   "caps": [
-    {
-     "key": "node-editor",
-     "t": 0.4,
-     "d": 9.2
-    }
-   ]
+   "in": 0.0,
+   "speed": 1.02,
+   "tilt": 0.04,
+   "caps": [{"key": "node-editor", "t": 0.2, "d": 8.8}]
   },
   {
-   "id": "chapter-5",
-   "kind": "chapter",
-   "at": 67,
-   "bars": 1,
-   "num": "05",
-   "key": "chapter-5"
-  },
-  {
-   "id": "show-live",
-   "kind": "take",
-   "take": "show-live",
-   "at": 68,
-   "bars": 6,
-   "in": 0,
-   "speed": 1.085,
-   "caps": [
-    {
-     "key": "show-live",
-     "t": 0.4,
-     "d": 10.6
-    }
-   ]
-  },
-  {
-   "id": "show-surface",
-   "kind": "take",
-   "take": "show-surface",
-   "at": 74,
-   "bars": 7,
-   "in": 0,
-   "speed": 0.92,
-   "caps": [
-    {
-     "key": "show-surface",
-     "t": 0.4,
-     "d": 11.0
-    }
-   ]
-  },
-  {
-   "id": "tilemap",
-   "kind": "take",
-   "take": "tilemap",
-   "at": 81,
-   "bars": 4,
-   "in": 2.6,
-   "speed": 1.39,
-   "caps": [
-    {
-     "key": "tilemap",
-     "t": 0.4,
-     "d": 6.8
-    }
-   ]
-  },
-  {
-   "id": "charts",
-   "kind": "take",
-   "take": "charts",
-   "at": 85,
-   "bars": 4,
-   "in": 0,
-   "speed": 1.33,
-   "caps": [
-    {
-     "key": "charts",
-     "t": 0.4,
-     "d": 6.8
-    }
-   ]
-  },
-  {
-   "id": "keep",
-   "kind": "take",
-   "take": "hook",
-   "at": 89,
+   "id": "charts-ptz",
+   "kind": "split_dual",
+   "left": {"take": "charts", "in": 0.2, "speed": 1.5, "label": "Charts"},
+   "right": {"take": "ptz", "in": 0.5, "speed": 1.5, "label": "PTZ Capabilities"},
+   "at": 46,
    "bars": 3,
-   "in": 4.0,
-   "speed": 1.9,
-   "camera": [
-    {
-     "t": 0,
-     "rect": [0, 0, 1920, 1080]
-    },
-    {
-     "t": 1.0,
-     "rect": [1020, 30, 1880, 514]
-    },
-    {
-     "t": 7.0,
-     "rect": [1020, 30, 1880, 514]
-    }
+   "caps": [{"key": "charts-ptz", "t": 0.2, "d": 5.2}]
+  },
+  {"id": "ch-3", "kind": "chapter", "at": 49, "bars": 1, "num": "03", "key": "ch-3"},
+  {
+   "id": "stage-bridge",
+   "kind": "veo_bridge",
+   "clip": "clip_stage_bridge",
+   "inset_take": "show-live",
+   "at": 50,
+   "bars": 3,
+   "caps": [{"key": "stage-bridge", "t": 0.2, "d": 5.0, "style": "hero_tag"}]
+  },
+  {
+   "id": "show-mosaic",
+   "kind": "mosaic_3",
+   "takes": [
+    {"take": "show-live", "in": 0.0, "speed": 1.05, "label": "Live Cue GO"},
+    {"take": "show-surface", "in": 0.0, "speed": 1.05, "label": "Control Surface"},
+    {"take": "tilemap", "in": 2.4, "speed": 0.95, "label": "LED TileMap"}
    ],
-   "caps": [
-    {
-     "key": "keep",
-     "t": 0.4,
-     "d": 7.2
-    }
-   ]
+   "at": 53,
+   "bars": 6,
+   "caps": [{"key": "show-mosaic", "t": 0.2, "d": 10.6}]
+  },
+  {
+   "id": "glow-agent",
+   "kind": "take_3d",
+   "take": "glow",
+   "at": 59,
+   "bars": 5,
+   "in": 12.0,
+   "speed": 1.75,
+   "tilt": -0.04,
+   "glow_bloom": true,
+   "caps": [{"key": "glow-agent", "t": 0.2, "d": 8.8}]
+  },
+  {
+   "id": "workflow-ui",
+   "kind": "split_dual",
+   "left": {"take": "workflow", "in": 0.2, "speed": 1.6, "label": "StepBand & WaitCard"},
+   "right": {"take": "toasts", "in": 0.2, "speed": 1.4, "label": "Toasts"},
+   "at": 64,
+   "bars": 3,
+   "caps": [{"key": "workflow-ui", "t": 0.2, "d": 5.2}]
+  },
+  {
+   "id": "icons-sprite",
+   "kind": "split_dual",
+   "left": {"take": "icons", "in": 0.2, "speed": 1.5, "label": "321 Icons"},
+   "right": {"take": "sprite", "in": 0.3, "speed": 1.5, "label": "imkit::motion & Sprites"},
+   "at": 67,
+   "bars": 3,
+   "caps": [{"key": "icons-sprite", "t": 0.2, "d": 5.2}]
+  },
+  {"id": "ch-4", "kind": "chapter", "at": 70, "bars": 1, "num": "04", "key": "ch-4"},
+  {
+   "id": "code",
+   "kind": "code",
+   "at": 71,
+   "bars": 7,
+   "inset": {"take": "hook", "in": 4.0, "speed": 0.85},
+   "caps": [{"key": "code", "t": 0.2, "d": 12.4}]
+  },
+  {
+   "id": "ownership",
+   "kind": "arch_kinetic",
+   "at": 78,
+   "bars": 7,
+   "inset": {"take": "hook", "in": 4.5, "speed": 1.2},
+   "caps": [{"key": "ownership", "t": 0.2, "d": 12.4}]
+  },
+  {
+   "id": "wall",
+   "kind": "card_wall_3d",
+   "clip": "clip_finale_bg",
+   "takes": [
+    "hook", "studio", "workspace", "timeline", "node-editor-final",
+    "show-live", "show-surface", "glow", "charts"
+   ],
+   "at": 85,
+   "bars": 6,
+   "caps": [{"key": "wall", "t": 0.3, "d": 10.4}]
   },
   {
    "id": "outro",
    "kind": "outro",
-   "at": 92,
-   "bars": 5
+   "clip": "clip_finale_bg",
+   "at": 91,
+   "bars": 6
   }
- ],
- "track": {
-  "file": "out/media/music/Laserpack.mp3",
-  "offset": 0.0107,
-  "title": "Laserpack",
-  "artist": "Kevin MacLeod ft. DarkNES",
-  "source": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1800018",
-  "license": "CC BY 4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
- }
+ ]
 }

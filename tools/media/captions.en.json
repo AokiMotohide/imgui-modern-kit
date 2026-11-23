@@ -1,106 +1,27 @@
 {
- "hook-1": {
-  "title": "Your Dear ImGui app.",
-  "sub": "Same call shapes. Same values."
- },
- "hook-2": {
-  "title": "Add a theme. This happens.",
-  "sub": "Drop-in calls, same values. A new look and feel."
- },
- "hook-title": {
-  "title": "Modern UI.",
-  "sub": "Familiar workflow."
- },
- "icons": {
-  "title": "300+ icons.",
-  "sub": "Search, then copy the C++ call."
- },
- "toasts": {
-  "title": "Show progress in place.",
-  "sub": "Loading to Success. Your app owns the state."
- },
- "chapter-2": {
-  "title": "Make it yours.",
-  "sub": "Pick a colour and the whole screen follows."
- },
- "worlds": {
-  "title": "Pick a theme. Everything changes.",
-  "sub": "13 built-in themes, or build your own from four colours."
- },
- "studio-1": {
-  "title": "Bring a whole world.",
-  "sub": "Load a theme file and the Gallery follows."
- },
- "studio-2": {
-  "title": "Corners, outline, shadow.",
-  "sub": "Copy your theme as text and share it."
- },
- "sprite": {
-  "title": "Pictures that move.",
-  "sub": "Play a sprite sheet, or let a picture ride the progress bar."
- },
- "chapter-3": {
-  "title": "Easy to adopt.",
-  "sub": "Keep your app the way it is."
- },
- "workspace": {
-  "title": "Tabs, hierarchy, settings. One screen.",
-  "sub": "Actions return as requests. Your app applies them."
- },
- "timeline": {
-  "title": "Scrub. Edit. Play.",
-  "sub": "Playhead, clips and transport, ready to use."
- },
- "node-editor": {
-  "title": "Nodes you can read.",
-  "sub": "Typed links, socket glyphs and live states."
- },
- "chapter-4": {
-  "title": "Build real tools.",
-  "sub": "Your data and undo history stay in your app."
- },
- "show-live": {
-  "title": "Run a live show with GO.",
-  "sub": "Cue list, clip launcher and mixer."
- },
- "show-surface": {
-  "title": "Build your own console.",
-  "sub": "Place faders and knobs. Rearrange in edit mode."
- },
- "tilemap": {
-  "title": "Map your LED wall.",
-  "sub": "Panels coloured by port, in cable order."
- },
- "charts": {
-  "title": "Charts, too.",
-  "sub": "Donut, bar, gauge and sparkline."
- },
- "chapter-5": {
-  "title": "Beyond editors.",
-  "sub": "Media servers, live shows and monitoring."
- },
- "code": {
-  "title": "Three lines of CMake. Three of C++.",
-  "sub": "Your context, renderer and fonts stay yours."
- },
- "keep": {
-  "title": "Keep your calls.",
-  "sub": "Add the look and the components."
- },
- "outro-1": {
-  "title": "ImKit 4.1",
-  "sub": "Modern tools, still Dear ImGui."
- },
- "outro-2": {
-  "title": "Try the Gallery today.",
-  "sub": "aokimotohide.github.io/imgui-modern-kit"
- },
- "outro-3": {
-  "title": "Open source · MIT · C++20",
-  "sub": "Music: \"Laserpack\" by Kevin MacLeod ft. DarkNES (incompetech.com) · CC BY 4.0"
- },
- "compare": {
-  "title": "Edit once. Both sides respond.",
-  "sub": "Compare plain Dear ImGui and ImKit side by side."
- }
+  "intro-tag": {"title": "DEAR IMGUI + MODERN UI", "sub": "Keep your calls. Elevate every frame."},
+  "hook-title": {"title": "ImKit 4.2", "sub": "4-Layer Customization · OKLCH Surfaces · Agent-Ready UI"},
+  "ch-1": {"title": "Same Calls, Modern Soul", "sub": "22 rebuilt widgets with four clean layers of customization"},
+  "compare": {"title": "Before / After", "sub": "Plain Dear ImGui and ImKit 4.2 editing the exact same values"},
+  "layers": {"title": "Four-Layer Customization", "sub": "L1 Theme Text · L2 Typed Styles & StyleScope · L3 Skins · L4 Interact"},
+  "worlds": {"title": "14 Themes × OKLCH Surfaces", "sub": "Switch the entire application's mood in one call"},
+  "studio": {"title": "Theme Studio & Classic", "sub": "Tune corners, outlines, and shadows live—or pick Classic"},
+  "ch-2": {"title": "Built for Creative Tools", "sub": "Workspaces, timelines, node graphs, and curve editors"},
+  "workspace": {"title": "Role-Colored Dock Bands & FloatingPanel", "sub": "WindowRole surface contrast, hierarchies, and inspectors"},
+  "timeline": {"title": "Filmstrip & Zoom-Locked Backdrops", "sub": "16:9 clip frames along the track for faster editing"},
+  "node-editor": {"title": "A Readable Node Editor", "sub": "Typed wire colors · socket glyphs · instant wiring feedback"},
+  "charts-ptz": {"title": "Charts & Capability-Aware PTZ", "sub": "Live telemetry charts and cameras that draw what they support"},
+  "ch-3": {"title": "Live Shows & AI Agents", "sub": "Show control, glowing viewports, and external control pills"},
+  "stage-bridge": {"title": "Show & Automation", "sub": "From live media servers to agent-driven sessions"},
+  "show-mosaic": {"title": "Unified Show Suite", "sub": "Cue Launcher · Tactile Surface · LED Wall TileMap"},
+  "glow-agent": {"title": "ExternalControlIndicator & DrawGlowFrame", "sub": "Clear viewport glow and floating control pill for remote & AI sessions"},
+  "workflow-ui": {"title": "StepBand · WaitCard · Toasts", "sub": "Readable multi-stage pipelines and expandable toast details"},
+  "icons-sprite": {"title": "321 Icons & imkit::motion", "sub": "Seven-size icon atlases plus standalone keyframe evaluation"},
+  "ch-4": {"title": "Zero Lock-in. Three Lines.", "sub": "Your context, your renderer, and your data stay yours"},
+  "code": {"title": "3 Lines in CMake · 3 Lines in C++", "sub": "Link only the modules your tool actually uses"},
+  "ownership": {"title": "Your Context. Your Renderer. Your Data.", "sub": "ImKit draws inside your loop and never takes over ownership"},
+  "wall": {"title": "Every Screen Built on Public APIs", "sub": "14 Themes · 22 Parts · Editor Suite · Node Editor · Show"},
+  "outro-1": {"title": "ImKit 4.2", "sub": "Modern tools, still Dear ImGui."},
+  "outro-2": {"title": "Try the Gallery today.", "sub": "aokimotohide.github.io/imgui-modern-kit"},
+  "outro-3": {"title": "Open Source · MIT · C++20 · Windows & macOS", "sub": "Voice: Gemini Flash TTS (Charon) · Score: 96-Bar Original · Visuals: Native Gallery 1080p60"}
 }

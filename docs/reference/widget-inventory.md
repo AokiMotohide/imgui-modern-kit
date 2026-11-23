@@ -10,7 +10,7 @@ Dear ImGui standard widgets styled with the ImKit Precision Layers design system
 
 | Family | Method | Catalog |
 |---|---|---|
-| Named themes | 13 discoverable host-owned presets; stable IDs; no global selection or persistence | Theme presets |
+| Named themes | 14 discoverable host-owned presets; stable IDs; no global selection or persistence | Theme presets |
 | Text, links, buttons, checkbox/radio, combo/list, progress | Shared semantic style; native behavior | Basic / Selection |
 | Drag, slider, scalar input; all types, vector lengths, ranges | Shared input/selection/focus tokens; native precision/parsing | Numeric / Units |
 | Text input, hint, multiline, callbacks | Native input and IME contract; optional validation decoration | Input / Media |

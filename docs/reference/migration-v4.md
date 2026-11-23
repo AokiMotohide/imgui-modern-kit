@@ -1,6 +1,6 @@
 # Migrating from 3.x to 4.0
 
-[日本語](v4移行ガイド.md) · [4.0 additions](v4.0-api.md) · [v3 migration guide](migration-v3.md) · [Changelog](../../CHANGELOG.md)
+[日本語](v4移行ガイド.md) · [4.2 additions](v4.2-api.md) · [4.1 additions](v4.1-api.md) · [4.0 additions](v4.0-api.md) · [v3 migration guide](migration-v3.md) · [Changelog](../../CHANGELOG.md)
 
 **Who needs this:** every application that links ImKit 3.x. Source changes are small. Rebuilding is mandatory, and the default look changes unless you set the old values yourself.
 
@@ -8,7 +8,7 @@
 
 | Step | What to do | Why |
 | --- | --- | --- |
-| 1 | Rebuild your application and **every** ImKit static library with the current 4.x headers. Ask for `find_package(imkit 4.1 CONFIG REQUIRED)`. | Several public structs grew. A 3.x object next to a 4.0 structure reads the wrong layout. The Dear ImGui revision is unchanged. |
+| 1 | Rebuild your application and **every** ImKit static library with the current 4.x headers. Ask for `find_package(imkit 4.2 CONFIG REQUIRED)`. | Several public structs grew. A 3.x object next to a 4.x structure reads the wrong layout. The Dear ImGui revision is unchanged. |
 | 2 | Look at the app once with the new defaults. Keep them, or restore the old tokens below. | Radii, shadows, motion and control height changed. |
 | 3 | Replace deprecated spellings when the compiler warns. | They still compile in 4.0 but are marked `[[deprecated]]`. |
 | 4 | If you call `imkit::Combo`, `BeginCombo`, `RadioButton` or the `Slider*` family, retest them. | They are now ImKit wrappers, not forwards to `ImGui::`. |
@@ -87,3 +87,16 @@ Node editor defaults that changed:
 | Link labels sit in a pill, and the resize grip scales with the zoom | None |
 
 The full list is in the [changelog](../../CHANGELOG.md) and the [4.1 additions](v4.1-api.md).
+
+## Upgrading from 4.1 to 4.2
+
+4.2 rebuilds 22 standard controls with continuous-curvature smooth corners (`PartStyle` / 4 customisation layers), derives OKLCH surface zones and docked window roles, adds `DrawGlowFrame`, `ExternalControlIndicator`, `StepBand`, `TransferCurveEditor` and timeline filmstrips, and moves keyframe easing into Dear ImGui-free `imkit::motion`. Two breaking changes apply, and public structs grew at their end, so rebuild your application and every linked ImKit library with the 4.2 headers.
+
+| Step | What to do | Why |
+| --- | --- | --- |
+| 1 | Rebuild your application and **every** ImKit library with the 4.2 headers. Request `find_package(imkit 4.2 CONFIG REQUIRED)`. | `Theme`, `SurfaceZoneColors`, `Metrics`, `ToastView`, `TimelineOptions` and widget headers grew or added targets (`imkit::motion`). Older `4.1` requests will not resolve. |
+| 2 | Update any direct call to `imkit::workflow::DrawPlateMark`. | `bool blocked` was replaced with `PlateMarkDecor` (`blocked` dot and three-step `PlateGrowth`). |
+| 3 | Replace `CornerStyle::Pill` and theme text `corner = pill` with `Round`. | Capsule buttons read as tags and squeeze labels; `Round` is the largest corner preset. |
+| 4 | Keep the modern smooth-corner default or select `ThemePreset::Classic`. | All 22 controls now draw with smooth continuous corners by default; `Classic` keeps 4.1 Dear ImGui shapes. |
+
+See [4.2 additions](v4.2-api.md) for the new headers, four-layer customisation (`imkit/part_style.h`) and ownership contracts.

@@ -10,7 +10,7 @@ A look in ImKit is one value, `imkit::Theme`: colours, corners, outline, shadow,
 
 | Step | You write | You get |
 |---|---|---|
-| 1 | `MakeTheme(ThemePreset::…)` | One of the 13 presets |
+| 1 | `MakeTheme(ThemePreset::…)` | One of the 14 presets (including `Classic` for 4.1 shapes) |
 | 2 | `BrandPalette` with four colours, `SetCornerStyle` | A complete theme from your brand colours |
 | 3 | A few `key = value` lines | Outline, shadow, density and any token, changed without rebuilding |
 | 4 | Fields of `Theme` | Every token, directly |
@@ -54,7 +54,7 @@ if (!result.warnings.empty()) Log(result.warnings);     // bad lines are skipped
 imkit::ApplyTheme(theme, scale);
 ```
 
-Keys apply in this order: `preset` replaces the base (fonts and skin are kept), then the `brand.*` colours rebuild the colour tokens, then every other key from top to bottom. `corner = sharp | soft | round | pill` is a shortcut for `SetCornerStyle`. A `#` starts a comment line; colours are `#RRGGBB` or `#RRGGBBAA`. `brand.*` needs `brand.canvas`, `brand.surface`, `brand.text` and `brand.accent`; with fewer, none of them is applied and a warning is returned.
+Keys apply in this order: `preset` replaces the base (fonts and skin are kept), then the `brand.*` colours rebuild the colour tokens, then every other key from top to bottom. `corner = sharp | soft | round` is a shortcut for `SetCornerStyle`. A `#` starts a comment line; colours are `#RRGGBB` or `#RRGGBBAA`. `brand.*` needs `brand.canvas`, `brand.surface`, `brand.text` and `brand.accent`; with fewer, none of them is applied and a warning is returned.
 
 ImKit reads and writes no files and watches nothing. For development, reload the file when its timestamp changes and call `ParseTheme` on a fresh base theme. For release, embed the text as a string literal. `SerializeTheme(theme)` writes every token the parser understands, which is the quickest way to start a file.
 
@@ -62,7 +62,7 @@ ImKit reads and writes no files and watches nothing. For development, reload the
 
 - **Outline.** A border of 2 design pixels or more (`theme.stroke.border`) is an outline: it is drawn in the full-strength border colour on windows, popups, frames and every button variant. Below 2 it stays a soft hairline, exactly as before. Dividers, tree lines and table lines never exceed 1.
 - **Components that follow the outline.** Besides windows and buttons: the ring of the spinner and of a loading toast (in the border colour, under the accent arc), progress bars, circular progress and the donut chart (a bordered track), stage markers and connectors, timeline clips, bar chart bars, step sequencer cells, schedule events, the range slider rail and the thin frames of the Show module. Where a component drew a 1 px line, it now draws the outline width in full strength.
-- **Corners.** `SetCornerStyle` sets `radius.subtle`, `control` and `overlay` together: Sharp, Soft (the default), Round or Pill; Pill rounds a control to half its height at every density. Windows and images never use a radius larger than the overlay radius, so even a very large control radius does not turn them into capsules.
+- **Corners.** `SetCornerStyle` sets `radius.subtle`, `control` and `overlay` together: Sharp, Soft (the default) or Round; `CornerStyle::Pill` was removed in 4.2. Windows and images never use a radius larger than the overlay radius, so even a very large control radius does not turn them into capsules.
 - **Button outline.** `stroke.button` gives buttons a heavier outline than other frames, for example 3 against 2 on cards. `stroke.dashedDisabled` draws the outline of a disabled ImKit button as dashes, so "not now" does not depend on colour alone. `stroke.primary` gives only the primary button its own outline width, drawn in `stroke.primaryColor` (alpha zero uses onAccent), so other buttons can keep a hairline.
 - **Shadow.** `elevation.hard` replaces the blurred shadow with a solid copy of the shape moved by `elevation.offset`, in `semantic.shadow`. `DrawShadow` draws it for your own shapes and `OverlayDecoration` uses it for popups. Buttons that receive the theme draw it behind the frame and move down by the offset while pressed.
 
@@ -180,7 +180,7 @@ Colours are `#RRGGBB[AA]`, numbers are plain decimals, switches are `true` or `f
 | Keys | Value |
 |---|---|
 | `preset` | A preset ID such as `warm-sand` |
-| `corner` | `sharp`, `soft`, `round` or `pill` |
+| `corner` | `sharp`, `soft` or `round` |
 | `scheme`, `contrast`, `density` | `light` or `dark`; `standard` or `high-contrast`; `compact`, `comfortable` or `touch` |
 | `brand.canvas`, `brand.surface`, `brand.text`, `brand.accent` | Required together; colours |
 | `brand.raised`, `brand.border`, `brand.text-secondary`, `brand.success`, `brand.warning`, `brand.error`, `brand.crown` | Optional colours (`brand.crown` is the top of the window: menu bar and step band) |

@@ -1,0 +1,25 @@
+{
+  "voice": "Charon",
+  "style": "Clear, calm, modern, confident English tech product film narrator. Warm studio presence, articulate pacing, natural intonation.",
+  "lines": [
+    {"id": "n01", "at": 0.8, "max_dur": 4.4, "text": "Keep your Dear ImGui code. Upgrade every pixel to studio grade."},
+    {"id": "n02", "at": 6.4, "max_dur": 11.6, "text": "Meet ImKit 4.2. Apply one theme, and your existing widget calls gain refined geometry, OKLCH depth, and fluid motion, with zero rewrite."},
+    {"id": "n03", "at": 21.1, "max_dur": 6.6, "text": "Same values, side by side. A completely modern finish, while keeping every native contract intact."},
+    {"id": "n04", "at": 28.6, "max_dur": 8.4, "text": "New in 4.2: a four-layer customization engine across twenty-two rebuilt widgets, from theme files and typed scopes to custom skins."},
+    {"id": "n05", "at": 38.0, "max_dur": 6.6, "text": "Fourteen built-in worlds powered by OKLCH surface zones. Recolor your entire workspace in a single call."},
+    {"id": "n06", "at": 45.5, "max_dur": 6.6, "text": "Dial in corners, outlines, and shadows live in Theme Studio, or switch back to the Classic preset anytime."},
+    {"id": "n07", "at": 54.9, "max_dur": 10.2, "text": "Build complete creative workspaces out of the box, with role-colored dock bands, floating panels, hierarchies, and structured inspectors."},
+    {"id": "n08", "at": 66.1, "max_dur": 8.4, "text": "On the multi-track timeline, new filmstrip clip thumbnails and zoom-locked canvas backdrops keep heavy video editing crystal clear."},
+    {"id": "n09", "at": 75.5, "max_dur": 8.4, "text": "A readable node editor with typed wire colors, pin glyphs, and instant connection feedback, while your app keeps the graph state."},
+    {"id": "n10", "at": 84.8, "max_dur": 4.8, "text": "Interactive telemetry charts and capability-aware PTZ controls fit right in."},
+    {"id": "n11", "at": 92.4, "max_dur": 4.6, "text": "Built for live production, and ready for AI-driven workflows."},
+    {"id": "n12", "at": 98.0, "max_dur": 10.2, "text": "The Show module brings cue launchers, tactile control surfaces, and LED wall tile maps together under one unified design language."},
+    {"id": "n13", "at": 109.2, "max_dur": 8.4, "text": "Highlight automated or AI-agent control clearly with DrawGlowFrame and ExternalControlIndicator, signaling every phase at a glance."},
+    {"id": "n14", "at": 118.6, "max_dur": 4.8, "text": "Keep long tasks legible with StepBand, WaitCard, and expandable toast details."},
+    {"id": "n15", "at": 124.2, "max_dur": 4.8, "text": "Plus 321 crisp icons and the standalone imkit::motion keyframe engine."},
+    {"id": "n16", "at": 131.8, "max_dur": 11.8, "text": "Integration takes minutes. Three lines in CMake, three lines in C++, and you link only the targets your application actually needs."},
+    {"id": "n17", "at": 144.9, "max_dur": 11.8, "text": "Zero lock-in. Your Dear ImGui context, your renderer, your fonts, and your undo history stay one hundred percent owned by your app."},
+    {"id": "n18", "at": 158.1, "max_dur": 9.8, "text": "Ship creative tools that look as sharp as they perform. Download the native Gallery and SDK for Windows and macOS today."},
+    {"id": "n19", "at": 169.4, "max_dur": 7.5, "text": "ImKit 4.2. MIT licensed, C++20 ready. Build your next tool."}
+  ]
+}
