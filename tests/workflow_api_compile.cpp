@@ -2,7 +2,8 @@
 #include <imkit/editor_canvas.h>
 namespace {
 auto volatile grouped=&imkit::GroupedStepNavigator;
-auto volatile workspaceTabs=&imkit::WorkspaceTabs;
+imkit::StableId (*volatile workspaceTabs)(const char*,std::span<const imkit::WorkspaceTab>,imkit::StableId,const imkit::IconAtlas*,imkit::ComponentOptions)=&imkit::WorkspaceTabs;
+imkit::StableId (*volatile workspaceTabsStyled)(const char*,std::span<const imkit::WorkspaceTab>,imkit::StableId,imkit::WorkspaceTabsOptions,const imkit::IconAtlas*,imkit::ComponentOptions)=&imkit::WorkspaceTabs;
 imkit::StableId (*volatile choiceGroup)(const char*,const char*,std::span<const imkit::ChoiceItem>,imkit::StableId,imkit::ChoiceGroupOptions,imkit::ComponentOptions)=&imkit::ChoiceGroup;
 auto volatile hierarchyGroup=&imkit::HierarchyGroupHeader;
 auto volatile hierarchyRow=&imkit::HierarchyRow;
@@ -55,6 +56,8 @@ void (*volatile plateMark)(ImDrawList*,ImVec2,float,const char*,imkit::StepMarkS
 imkit::StableId (*volatile stepBand)(const char*,std::span<const imkit::StepBandGroup>,std::span<const imkit::StepBandItem>,imkit::StableId,imkit::StepBandOptions,imkit::ComponentOptions)=&imkit::StepBand;
 auto volatile zoneColor=&imkit::SurfaceZoneColor;auto volatile pushZone=&imkit::PushSurfaceZone;auto volatile popZone=&imkit::PopSurfaceZone;
 auto volatile pushRole=&imkit::PushWindowRole;auto volatile popRole=&imkit::PopWindowRole;
+auto volatile dockTabBand=&imkit::DockTabBand;
+auto volatile pushFloating=&imkit::PushFloatingPanel;auto volatile popFloating=&imkit::PopFloatingPanel;
 }
 int main() {
     imkit::StepNavigatorOptions stepLayout;stepLayout.badge=imkit::StepBadgeShape::RoundedSquare;stepLayout.badgeRounding=.3f;stepLayout.badgeBorder=2;
@@ -71,6 +74,11 @@ int main() {
     imkit::PlateMarkDecor decor;decor.blocked=true;decor.growth=imkit::PlateGrowth::Sprout;
     if(!decor.blocked||!bandItems[1].optional||*bandItems[0].growth!=imkit::PlateGrowth::Grown) return 1;
     imkit::Theme theme=imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
+    imkit::WorkspaceTab accentTab;accentTab.accent={.2f,.6f,.9f,1};imkit::WorkspaceTabsOptions tabLook;tabLook.filledSelection=true;
+    theme.fonts.numeric=nullptr;const imkit::TextRole numericRole=imkit::TextRole::Numeric;
+    if(accentTab.accent.w<=0||!tabLook.filledSelection||numericRole!=imkit::TextRole::Numeric||theme.zones.roles[0].head.w<=0||
+       imkit::ContrastRatio(theme.zones.roles[0].head,theme.zones.roles[0].body)<1.25f||
+       !(workspaceTabs&&workspaceTabsStyled&&dockTabBand&&pushFloating&&popFloating)) return 1;
     if(!stages.marks||sizeof(bandGroups)==0||!bandItems[1].blocked||band.height<=0||theme.zones.monitor.w<=0||theme.zones.inspector.w<=0||theme.zones.header.w<=0||theme.zones.chromeCanvas.w<=0||band.tintTrays||!(plateMark&&stepBand&&zoneColor&&pushZone&&popZone)) return 1;
     imkit::StableId ids[1];imkit::RequestBuffer requests{ids};
     imkit::editor::TileEvent events[1];imkit::editor::TileEventBuffer out{events};

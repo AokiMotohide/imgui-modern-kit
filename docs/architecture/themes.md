@@ -103,6 +103,25 @@ Zones are stepped in OKLCH lightness, so the steps look even in every theme, and
 
 Each role has `body`, `emphasis` (section headers and the selected row, at least 1.25:1 from the body, in its hue) and `label` (the tab line of an unfocused window, in the body's hue; the chrome's hue for `Monitor`). Call `PushWindowRole(theme, role)` before a window's `Begin` and `PopWindowRole()` after its `End`. Docked tabs keep the colours pushed at `Begin`; the focused tab line takes the accent. The line shows only when `ImGuiStyle::TabBarOverlineSize` is above zero. Input fields keep the theme's own colour.
 
+Dear ImGui draws one tab band per dock node, not per window. `head` is that band's colour, at least 1.25:1 from the body, so the selected tab (the body colour) joins the window below it. Call `DockTabBand(theme, role)` right after `Begin` in each docked window, whatever `Begin` returned; the window of the leftmost tab decides the band. It recolours the band Dear ImGui drew this frame and changes neither `ImGuiStyle` nor Dear ImGui. High contrast themes keep `head` neutral.
+
+```cpp
+imkit::PushWindowRole(theme, imkit::WindowRole::Edit);
+const bool open = ImGui::Begin("Inspector");
+imkit::DockTabBand(theme, imkit::WindowRole::Edit);
+if (open) { /* ... */ }
+ImGui::End();
+imkit::PopWindowRole();
+```
+
+### Floating panels
+
+For a tool window that floats over the main view, call `PushFloatingPanel(theme)` before `Begin` and `PopFloatingPanel()` right after it. The background is `zones.header`, the border a 1 px hairline in the theme's border colour, and the shadow follows `Theme::elevation` at the raised level; a hard shadow is drawn only outside the window. A docked window gets no shadow.
+
+### Numeric text
+
+`TextRole::Numeric` is the body size in `fonts.numeric` (non-owning; null uses `regular`). `SliderFloatWithInput` draws its figures in `fonts.numeric` when `ComponentOptions::theme` has one; with null nothing changes. For other number fields, wrap them in `PushTextRole(theme, TextRole::Numeric)`.
+
 ## What `ApplyTheme` does
 
 `ApplyTheme` replaces the whole `ImGuiStyle` of the current context, except `Alpha` and `FontScaleDpi`. Make your adjustments in the `Theme`, not in `ImGuiStyle`, because the next `ApplyTheme` overwrites style edits you made directly.

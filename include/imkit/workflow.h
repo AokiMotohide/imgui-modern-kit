@@ -120,11 +120,22 @@ struct WorkspaceTab {
     const char* description="";
     IconId icon=IconId::Count;
     bool disabled=false;
+    // Label and selection mark colour of this tab, moved toward the text colour when it would not read (4.5:1) on the
+    // window background. Alpha zero keeps the theme's colours.
+    ImVec4 accent{};
+};
+struct WorkspaceTabsOptions {
+    // Draws the selected tab filled with its accent (the tab's, else the theme's) and its label in onAccent (black or
+    // white when onAccent does not read on a tab accent). False keeps the header fill and the underline mark.
+    bool filledSelection=false;
 };
 // Returns a selection request. The host owns the selected tab and its content.
 StableId WorkspaceTabs(const char* id, std::span<const WorkspaceTab> tabs,
                        StableId selected, const IconAtlas* icons=nullptr,
                        ComponentOptions options={});
+StableId WorkspaceTabs(const char* id, std::span<const WorkspaceTab> tabs,
+                       StableId selected, WorkspaceTabsOptions layout,
+                       const IconAtlas* icons=nullptr, ComponentOptions options={});
 
 struct ChoiceItem {
     StableId id=0;

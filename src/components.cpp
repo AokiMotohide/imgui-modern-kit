@@ -13,6 +13,8 @@
 #include <cstring>
 #include <string>
 #include <string_view>
+#include <iterator>
+#include <vector>
 
 namespace imkit {
 namespace {
@@ -737,6 +739,9 @@ bool SliderFloatWithInput(const char *label, float *value, float minimum, float 
     bool changed = false;
     const auto &style = ImGui::GetStyle();
     const float total = ImGui::CalcItemWidth();
+    // The figures use the theme's numeric font when it has one; the label keeps the current font.
+    ImFont *numeric = options.theme ? options.theme->fonts.numeric : nullptr;
+    if (numeric) ImGui::PushFont(numeric, 0.f);
     char sample[48];
     std::snprintf(sample, sizeof sample, format, static_cast<double>(maximum));
     const float inputWidth = std::max(48.f, ImGui::CalcTextSize(sample).x + style.FramePadding.x * 2.f + 8.f);
@@ -763,6 +768,7 @@ bool SliderFloatWithInput(const char *label, float *value, float minimum, float 
     edited = ImGui::InputFloat("##input", &v, 0.f, 0.f, format, ImGuiInputTextFlags_AutoSelectAll);
     if (edited) *value = normalize(v);
     track(edited);
+    if (numeric) ImGui::PopFont();
     if (hidden != label) {
         ImGui::SameLine(0.f, gap);
         ImGui::TextUnformatted(label, hidden);
@@ -1002,6 +1008,55 @@ void DrawShadow(const Theme &t, ImDrawList *draw, ImVec2 minimum, ImVec2 maximum
         detail::DrawSoftShadow(draw, minimum, maximum, rounding, extent, peak, hasColor ? t.semantic.shadow : ImVec4(0, 0, 0, 1));
     }
     draw->PopClipRect();
+}
+namespace {
+// Floating panels pushed and not yet popped, per context. Push and Pop sit around one Begin, so this stays tiny.
+struct FloatingPanelEntry { ImGuiContext *context; const Theme *theme; };
+std::vector<FloatingPanelEntry> &FloatingPanels() { static std::vector<FloatingPanelEntry> stack; return stack; }
+} // namespace
+void PushFloatingPanel(const Theme &t) {
+    FloatingPanels().push_back({ImGui::GetCurrentContext(), &t});
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, t.zones.header.w > 0 ? t.zones.header : ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
+    ImGui::PushStyleColor(ImGuiCol_Border, t.colors.border.w > 0 ? t.colors.border : ImGui::GetStyleColorVec4(ImGuiCol_Border));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.f);
+}
+void PopFloatingPanel() {
+    ImGui::PopStyleVar();
+    ImGui::PopStyleColor(2);
+    auto &stack = FloatingPanels();
+    const Theme *t = nullptr;
+    for (auto it = stack.rbegin(); it != stack.rend(); ++it)
+        if (it->context == ImGui::GetCurrentContext()) {
+            t = it->theme;
+            stack.erase(std::next(it).base());
+            break;
+        }
+    if (!t || ImGui::IsWindowDocked())
+        return;
+    ImDrawList *draw = ImGui::GetWindowDrawList();
+    const ImVec2 p = ImGui::GetWindowPos(), size = ImGui::GetWindowSize(), q{p.x + size.x, p.y + size.y};
+    const float rounding = ImGui::GetStyle().WindowRounding;
+    if (!t->elevation.hard) {
+        // The soft shadow lies outside the window, so drawing it after the background is safe.
+        DrawShadow(*t, draw, p, q, rounding, ElevationLevel::Raised);
+        return;
+    }
+    // The window's draw list is drawn over its background, so the solid copy is clipped to the parts outside it.
+    const float scale = ImGui::GetStyle().FontScaleMain;
+    const ImVec2 o{t->elevation.offset.x * scale, t->elevation.offset.y * scale};
+    const ImVec2 a{p.x + o.x, p.y + o.y}, b{q.x + o.x, q.y + o.y};
+    ImVec4 color = t->semantic.shadow.w > 0 ? t->semantic.shadow : ImVec4(0, 0, 0, .25f);
+    color.w *= ImGui::GetStyle().Alpha;
+    const ImU32 col = ImGui::GetColorU32(color);
+    const ImVec2 strips[4][2] = {{{a.x, a.y}, {b.x, p.y}}, {{a.x, q.y}, {b.x, b.y}},
+                                 {{a.x, p.y}, {p.x, q.y}}, {{q.x, p.y}, {b.x, q.y}}};
+    for (const auto &s : strips) {
+        if (s[1].x <= s[0].x || s[1].y <= s[0].y)
+            continue;
+        draw->PushClipRect(s[0], s[1], false);
+        draw->AddRectFilled(a, b, col, rounding);
+        draw->PopClipRect();
+    }
 }
 void StatusBadge(const char *text, StatusKind kind, ComponentOptions options) { StatusBadge(text, kind, options.theme); }
 bool NotificationCard(const Notification &n, double now, ComponentOptions options) { return NotificationCard(n, now, options.theme); }

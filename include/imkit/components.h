@@ -152,4 +152,10 @@ void OverlayDecoration(const Theme &theme, AnimationState *animation = nullptr);
 // the shape itself.
 void DrawShadow(const Theme &theme, ImDrawList *draw, ImVec2 minimum, ImVec2 maximum, float rounding,
                 ElevationLevel level = ElevationLevel::Overlay, float alpha = 1.f);
+// A tool window that floats over the main view: background zones.header, a 1 px border in the theme's border colour,
+// and the raised shadow of Theme::elevation (a hard shadow is drawn only outside the window). Call PushFloatingPanel
+// before Begin and PopFloatingPanel right after it, whatever Begin returned. A docked window gets no shadow. `theme`
+// must stay alive until PopFloatingPanel.
+void PushFloatingPanel(const Theme &theme);
+void PopFloatingPanel();
 } // namespace imkit

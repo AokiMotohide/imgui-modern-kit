@@ -497,7 +497,21 @@ StableId IconToolbar(const char* id,const IconAtlas& atlas,
 }
 StableId WorkspaceTabs(const char* id,std::span<const WorkspaceTab> tabs,
                        StableId selected,const IconAtlas* icons,ComponentOptions o) {
+    return WorkspaceTabs(id,tabs,selected,WorkspaceTabsOptions{},icons,o);
+}
+StableId WorkspaceTabs(const char* id,std::span<const WorkspaceTab> tabs,
+                       StableId selected,WorkspaceTabsOptions layout,const IconAtlas* icons,ComponentOptions o) {
     ImGui::PushID(id);
+    const ImVec4 themeAccent=o.theme?o.theme->semantic.accent:ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
+    // A tab's own accent may be any colour, so the label on it is the theme's onAccent only while that still reads.
+    const auto onFill=[&](ImVec4 fill) {
+        const ImVec4 on=o.theme?o.theme->semantic.onAccent:ImVec4{1,1,1,1};
+        return ContrastRatio(on,fill)>=4.5f?on:detail::InkOn(fill);
+    };
+    // A tab accent picked for its hue (a pastel on a light theme, say) is moved toward the text until it reads.
+    const auto labelColor=[&](ImVec4 accent) {
+        return detail::ReadableOn(accent,ImGui::GetStyleColorVec4(ImGuiCol_WindowBg),ImGui::GetStyleColorVec4(ImGuiCol_Text));
+    };
     StableId request=0;
     float required=0;
     for(const auto& tab:tabs)
@@ -510,7 +524,9 @@ StableId WorkspaceTabs(const char* id,std::span<const WorkspaceTab> tabs,
         if(imkit::BeginCombo("##workspaces",preview)) {
             for(const auto& tab:tabs) {
                 Push(tab.id);ImGui::BeginDisabled(tab.disabled||!tab.id);
+                if(tab.accent.w>0) ImGui::PushStyleColor(ImGuiCol_Text,labelColor(tab.accent));
                 if(ImGui::Selectable(Safe(tab.label),tab.id==selected))request=tab.id;
+                if(tab.accent.w>0) ImGui::PopStyleColor();
                 Annotate(tab.label,tab.description,accessibility::SemanticRole::Tab,
                          accessibility::SemanticAction::Select,tab.id==selected,o);
                 ImGui::EndDisabled();Pop();
@@ -523,20 +539,31 @@ StableId WorkspaceTabs(const char* id,std::span<const WorkspaceTab> tabs,
             if(i)ImGui::SameLine(0,ImGui::GetStyle().ItemSpacing.x);
             Push(tab.id);ImGui::BeginDisabled(tab.disabled||!tab.id);
             const bool active=tab.id==selected;
-            if(active) {
+            const bool filled=active&&layout.filledSelection;
+            const ImVec4 accent=tab.accent.w>0?tab.accent:themeAccent;
+            int pushed=0;
+            if(filled) {
+                ImGui::PushStyleColor(ImGuiCol_Button,accent);
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered,Mix(accent,onFill(accent),.12f));
+                ImGui::PushStyleColor(ImGuiCol_ButtonActive,Mix(accent,onFill(accent),.2f));
+                ImGui::PushStyleColor(ImGuiCol_Text,onFill(accent));
+                pushed=4;
+            } else if(active) {
                 ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_Header));
                 ImGui::PushStyleColor(ImGuiCol_ButtonHovered,ImGui::GetStyleColorVec4(ImGuiCol_HeaderHovered));
+                pushed=2;
             }
+            if(!filled&&tab.accent.w>0) { ImGui::PushStyleColor(ImGuiCol_Text,labelColor(tab.accent)); ++pushed; }
             const bool hit=icons&&tab.icon!=IconId::Count
                 ?IconLabelButton("tab",*icons,tab.icon,Safe(tab.label),{ImGui::GetFontSize()})
                 :ImGui::Button(Safe(tab.label));
-            if(active)ImGui::PopStyleColor(2);
+            if(pushed)ImGui::PopStyleColor(pushed);
             if(Annotate(tab.label,tab.description,accessibility::SemanticRole::Tab,
                         accessibility::SemanticAction::Select,active,o)||hit)request=tab.id;
-            if(active) {
+            if(active&&!filled) {
                 auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
                 ImGui::GetWindowDrawList()->AddLine({a.x,b.y-1},{b.x,b.y-1},
-                    ImGui::GetColorU32(ImGuiCol_CheckMark),2.f);
+                    tab.accent.w>0?ImGui::GetColorU32(tab.accent):ImGui::GetColorU32(ImGuiCol_CheckMark),2.f);
             }
             if((ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)||ImGui::IsItemFocused())&&*Safe(tab.description))
                 ImGui::SetTooltip("%s",tab.description);
