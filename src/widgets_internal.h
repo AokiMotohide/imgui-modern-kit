@@ -4,11 +4,12 @@
 #include "part_style_internal.h"
 #include <algorithm>
 #include <cstdarg>
+#include <string_view>
 
 // Shared helpers for widgets.cpp, widgets_controls.cpp and widgets_containers.cpp.
 namespace imkit::detail {
 // Pushes the ImGui colours and style variables a widget style overrides, and pops them on destruction.
-// Used while individual widgets are migrated to custom drawing (Wave 2), so L1/L2 values already take effect.
+// Used for ClassicLook fallback and parts whose popup/tooltip rendering still reads Dear ImGui style entries.
 class WidgetStyleScope {
   public:
     template <class Style>
@@ -80,4 +81,13 @@ class WidgetStyleScope {
 
 // Selected rows get an accent bar on the leading edge; tabs get an inset pill underneath.
 void DrawSelectionMark(bool selected, bool underline = false);
+bool IsCurrentItemDisabled();
+inline ImDrawListSplitter &SharedSplitter() {
+    thread_local ImDrawListSplitter splitter;
+    return splitter;
+}
+inline std::string_view VisibleLabel(const char *label) {
+    const std::string_view full = label ? label : "";
+    return full.substr(0, full.find("##"));
+}
 } // namespace imkit::detail

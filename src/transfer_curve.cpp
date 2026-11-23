@@ -1,5 +1,4 @@
 #include <imkit/transfer_curve.h>
-#include "imgui_internal_compat.h"
 #include <algorithm>
 #include <cmath>
 #include <vector>

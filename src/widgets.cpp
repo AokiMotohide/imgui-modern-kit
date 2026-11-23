@@ -1,11 +1,15 @@
 #include "widgets_internal.h"
 #include "draw_internal.h"
+#include "imgui_internal_compat.h"
 #include <imkit/theme.h>
 #include <algorithm>
 #include <string>
 
 namespace imkit {
 namespace detail {
+bool IsCurrentItemDisabled() {
+    return (GImGui->CurrentItemFlags & ImGuiItemFlags_Disabled) != 0;
+}
 void DrawSelectionMark(bool selected, bool underline) {
     if (!selected)
         return;

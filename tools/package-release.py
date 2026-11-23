@@ -32,6 +32,7 @@ DOCS_PAIRS = [
     ("reference/v3.3-api.md", "reference/3.3追加API.md"),
     ("reference/v4.0-api.md", "reference/4.0追加API.md"),
     ("reference/v4.1-api.md", "reference/4.1追加API.md"),
+    ("reference/v4.2-api.md", "reference/4.2追加API.md"),
     ("getting-started/getting-started.md", "getting-started/導入ガイド.md"),
     ("getting-started/how-it-works.md", "getting-started/仕組みと設計思想.md"),
     ("getting-started/guide.md", "getting-started/利用ガイド.md"),
@@ -94,6 +95,7 @@ def verify_package(key: str, archive: Path) -> dict:
     if key.startswith("windows"):
         required = [
             "lib/imkit.lib",
+            "lib/imkit_motion.lib",
             "lib/imkit_node_editor.lib",
             "bin/imkit_gallery.exe",
             "bin/imkit_node_editor_gallery.exe",
@@ -101,6 +103,7 @@ def verify_package(key: str, archive: Path) -> dict:
     else:
         required = [
             "lib/libimkit.a",
+            "lib/libimkit_motion.a",
             "lib/libimkit_node_editor.a",
             "imkit_gallery.app/Contents/MacOS/imkit_gallery",
             "imkit_node_editor_gallery.app/Contents/MacOS/imkit_node_editor_gallery",

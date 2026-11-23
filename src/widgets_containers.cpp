@@ -14,15 +14,6 @@ namespace imkit {
 namespace {
 constexpr float kPiHalf = 1.57079632679f;
 
-ImDrawListSplitter &SharedSplitter() {
-    thread_local ImDrawListSplitter splitter;
-    return splitter;
-}
-
-bool IsCurrentItemDisabled() {
-    return (GImGui->CurrentItemFlags & ImGuiItemFlags_Disabled) != 0;
-}
-
 ImU32 ColorU32(const ResolvedPartStyle &r, PartState state, PartColor color, float alphaMul = 1.f) {
     ImVec4 c = r.Color(state, color);
     c.w *= alphaMul;
@@ -101,7 +92,7 @@ bool TreeNodeModern(const void *ptrId, const char *strId, ImGuiTreeNodeFlags fla
         return false;
 
     ImDrawList *draw = window->DrawList;
-    auto &splitter = SharedSplitter();
+    auto &splitter = detail::SharedSplitter();
     splitter.Split(draw, 2);
     splitter.SetCurrentChannel(draw, 1);
 
@@ -122,7 +113,7 @@ bool TreeNodeModern(const void *ptrId, const char *strId, ImGuiTreeNodeFlags fla
     if (ImGui::IsItemVisible()) {
         const ImVec2 a = ImGui::GetItemRectMin(), b = ImGui::GetItemRectMax();
         const ImGuiID id = ImGui::GetItemID();
-        const bool disabled = IsCurrentItemDisabled();
+        const bool disabled = detail::IsCurrentItemDisabled();
         const bool selected = (flags & ImGuiTreeNodeFlags_Selected) != 0;
         const bool hovered = ImGui::IsItemHovered() && !disabled;
         const bool active = ImGui::IsItemActive() && !disabled;
@@ -181,7 +172,7 @@ bool SelectableImpl(const char *label, bool selected, ImGuiSelectableFlags flags
 
     const ResolvedPartStyle r = ResolvePartStyle(Part::Selectable, style);
     ImDrawList *draw = ImGui::GetWindowDrawList();
-    auto &splitter = SharedSplitter();
+    auto &splitter = detail::SharedSplitter();
     splitter.Split(draw, 2);
     splitter.SetCurrentChannel(draw, 1);
 
@@ -202,7 +193,7 @@ bool SelectableImpl(const char *label, bool selected, ImGuiSelectableFlags flags
     if (ImGui::IsItemVisible()) {
         const ImVec2 a = ImGui::GetItemRectMin(), b = ImGui::GetItemRectMax();
         const ImGuiID id = ImGui::GetItemID();
-        const bool disabled = IsCurrentItemDisabled() || (flags & ImGuiSelectableFlags_Disabled) != 0;
+        const bool disabled = detail::IsCurrentItemDisabled() || (flags & ImGuiSelectableFlags_Disabled) != 0;
         const bool hovered = ImGui::IsItemHovered() && !disabled;
         const bool active = ImGui::IsItemActive() && !disabled;
         const float radius = r.Var(PartVar::Radius);
@@ -428,7 +419,7 @@ bool ColorEditImpl(const char *label, float *col, bool hasAlpha, ImGuiColorEditF
         const ImVec2 fMax{fMin.x + minW, fMin.y + height};
 
         ImDrawList *draw = window->DrawList;
-        auto &splitter = SharedSplitter();
+        auto &splitter = detail::SharedSplitter();
         splitter.Split(draw, 2);
         splitter.SetCurrentChannel(draw, 1);
 
@@ -457,7 +448,7 @@ bool ColorEditImpl(const char *label, float *col, bool hasAlpha, ImGuiColorEditF
                 }
             }
         }
-        const bool hexDisabled = IsCurrentItemDisabled();
+        const bool hexDisabled = detail::IsCurrentItemDisabled();
         const bool hexHovered = ImGui::IsItemHovered() && !hexDisabled;
         const bool hexActive = ImGui::IsItemActive() && !hexDisabled;
         const bool hexFocused = ImGui::IsItemFocused() && GImGui->NavCursorVisible && !hexDisabled;
@@ -529,7 +520,7 @@ bool BeginCombo(const char *label, const char *preview, ImGuiComboFlags flags, c
     char buffer[256];
     const char *shown = FitPreview(preview, std::max(0.f, width - height - padX), buffer);
 
-    auto &splitter = SharedSplitter();
+    auto &splitter = detail::SharedSplitter();
     splitter.Split(draw, 2);
     splitter.SetCurrentChannel(draw, 1);
 
@@ -541,7 +532,7 @@ bool BeginCombo(const char *label, const char *preview, ImGuiComboFlags flags, c
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,
                         {padX, std::max(0.f, (height - ImGui::GetFontSize()) * .5f)});
 
-    const bool disabled = IsCurrentItemDisabled();
+    const bool disabled = detail::IsCurrentItemDisabled();
     const bool open = ImGui::BeginCombo(label, shown, flags | ImGuiComboFlags_NoArrowButton);
 
     ImGui::PopStyleVar();

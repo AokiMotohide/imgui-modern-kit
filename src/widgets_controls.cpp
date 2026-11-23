@@ -39,20 +39,6 @@ struct FontSizeScope {
     FontSizeScope &operator=(const FontSizeScope &) = delete;
 };
 
-std::string_view VisibleLabel(const char *label) {
-    const std::string_view full = label ? label : "";
-    return full.substr(0, full.find("##"));
-}
-
-bool IsCurrentItemDisabled() {
-    return (GImGui->CurrentItemFlags & ImGuiItemFlags_Disabled) != 0;
-}
-
-ImDrawListSplitter &SharedSplitter() {
-    thread_local ImDrawListSplitter splitter;
-    return splitter;
-}
-
 void DrawDashedCircle(ImDrawList *draw, ImVec2 center, float radius, ImU32 color, float thickness, float dash) {
     if (radius <= 0.f || (color & IM_COL32_A_MASK) == 0)
         return;
@@ -80,7 +66,7 @@ bool DrawModernButton(Part part, const char *label, const ImVec2 &size, const Bu
     if (window->SkipItems)
         return false;
 
-    const std::string_view visible = VisibleLabel(label);
+    const std::string_view visible = detail::VisibleLabel(label);
     const ImVec2 textSize =
         visible.empty() ? ImVec2(0, 0) : ImGui::CalcTextSize(visible.data(), visible.data() + visible.size(), false);
     const float padX = r.Var(PartVar::PaddingX);
@@ -207,7 +193,7 @@ bool DrawModernSlider(const char *label, T *value, T minimum, T maximum, const c
     const ImVec2 frameMax{frameMin.x + frameW, frameMin.y + frameH};
 
     ImDrawList *draw = ImGui::GetWindowDrawList();
-    auto &splitter = SharedSplitter();
+    auto &splitter = detail::SharedSplitter();
     splitter.Split(draw, 2);
     splitter.SetCurrentChannel(draw, 1);
 
@@ -221,7 +207,7 @@ bool DrawModernSlider(const char *label, T *value, T minimum, T maximum, const c
     ImGui::PopStyleVar();
     ImGui::PopStyleColor(7);
 
-    const bool disabled = IsCurrentItemDisabled();
+    const bool disabled = detail::IsCurrentItemDisabled();
     const bool active = ImGui::IsItemActive();
     const bool hovered = ImGui::IsItemHovered();
     const bool focused = ImGui::IsItemFocused();
@@ -320,7 +306,7 @@ bool DrawModernSlider(const char *label, T *value, T minimum, T maximum, const c
         draw->AddText(ImGui::GetFont(), ImGui::GetFontSize(), valPos, ImGui::GetColorU32(textCol), valueBuf);
     }
 
-    const std::string_view visible = VisibleLabel(label);
+    const std::string_view visible = detail::VisibleLabel(label);
     if (!visible.empty()) {
         const ImVec2 labelSize = ImGui::CalcTextSize(visible.data(), visible.data() + visible.size(), false);
         const ImVec2 labelPos{frameMax.x + imguiStyle.ItemInnerSpacing.x, frameMin.y + (frameH - labelSize.y) * .5f};
@@ -366,7 +352,7 @@ bool DrawModernDrag(const char *label, const DragStyle &style, NativeCall native
     const ImVec2 frameMax{frameMin.x + frameW, frameMin.y + frameH};
 
     ImDrawList *draw = ImGui::GetWindowDrawList();
-    auto &splitter = SharedSplitter();
+    auto &splitter = detail::SharedSplitter();
     splitter.Split(draw, 2);
     splitter.SetCurrentChannel(draw, 1);
 
@@ -375,14 +361,14 @@ bool DrawModernDrag(const char *label, const DragStyle &style, NativeCall native
     ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, clear);
     ImGui::PushStyleColor(ImGuiCol_FrameBgActive, clear);
     ImGui::PushStyleColor(ImGuiCol_Border, clear);
-    ImGui::PushStyleColor(ImGuiCol_Text, r.Color(IsCurrentItemDisabled() ? PartState::Disabled : PartState::Rest,
+    ImGui::PushStyleColor(ImGuiCol_Text, r.Color(detail::IsCurrentItemDisabled() ? PartState::Disabled : PartState::Rest,
                                                  PartColor::Text));
     ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
     const bool changed = nativeCall();
     ImGui::PopStyleVar();
     ImGui::PopStyleColor(5);
 
-    const bool disabled = IsCurrentItemDisabled();
+    const bool disabled = detail::IsCurrentItemDisabled();
     const bool active = ImGui::IsItemActive();
     const bool hovered = ImGui::IsItemHovered();
     const bool focused = ImGui::IsItemFocused();
@@ -464,7 +450,7 @@ bool DrawModernInput(const char *label, const InputStyle &style, bool hasStepBut
     const ImVec2 frameMax{frameMin.x + boxW, frameMin.y + frameH};
 
     ImDrawList *draw = ImGui::GetWindowDrawList();
-    auto &splitter = SharedSplitter();
+    auto &splitter = detail::SharedSplitter();
     splitter.Split(draw, 2);
     splitter.SetCurrentChannel(draw, 1);
 
@@ -473,7 +459,7 @@ bool DrawModernInput(const char *label, const InputStyle &style, bool hasStepBut
     ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, clear);
     ImGui::PushStyleColor(ImGuiCol_FrameBgActive, clear);
     ImGui::PushStyleColor(ImGuiCol_Border, clear);
-    ImGui::PushStyleColor(ImGuiCol_Text, r.Color(IsCurrentItemDisabled() ? PartState::Disabled : PartState::Rest,
+    ImGui::PushStyleColor(ImGuiCol_Text, r.Color(detail::IsCurrentItemDisabled() ? PartState::Disabled : PartState::Rest,
                                                  PartColor::Text));
     ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
     const bool changed = nativeCall();
@@ -487,7 +473,7 @@ bool DrawModernInput(const char *label, const InputStyle &style, bool hasStepBut
         textId = window->GetID("");
         ImGui::PopID();
     }
-    const bool disabled = IsCurrentItemDisabled();
+    const bool disabled = detail::IsCurrentItemDisabled();
     const bool active = hasStepButtons ? (GImGui->ActiveId == textId) : ImGui::IsItemActive();
     const bool hovered = hasStepButtons ? ImGui::IsMouseHoveringRect(frameMin, frameMax) : ImGui::IsItemHovered();
     const bool focused = (hasStepButtons ? (GImGui->NavId == textId) : ImGui::IsItemFocused()) || active;
@@ -578,7 +564,7 @@ bool Checkbox(const char *label, bool *value, const CheckboxStyle &style) {
     if (window->SkipItems)
         return false;
 
-    const std::string_view visible = VisibleLabel(label);
+    const std::string_view visible = detail::VisibleLabel(label);
     const ImVec2 textSize =
         visible.empty() ? ImVec2(0, 0) : ImGui::CalcTextSize(visible.data(), visible.data() + visible.size(), false);
     const float boxSize = std::max(8.f, r.Var(PartVar::BoxSize));
@@ -666,7 +652,7 @@ bool RadioButton(const char *label, bool active, const RadioStyle &style) {
     if (window->SkipItems)
         return false;
 
-    const std::string_view visible = VisibleLabel(label);
+    const std::string_view visible = detail::VisibleLabel(label);
     const ImVec2 textSize =
         visible.empty() ? ImVec2(0, 0) : ImGui::CalcTextSize(visible.data(), visible.data() + visible.size(), false);
     const float boxSize = std::max(8.f, r.Var(PartVar::BoxSize));
