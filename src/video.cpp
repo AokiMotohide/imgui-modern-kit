@@ -1,3 +1,4 @@
+#include "video_internal.h"
 #include "draw_internal.h"
 #include <imkit/video.h>
 #include <imkit/components.h>
@@ -8,24 +9,7 @@
 #include <cstdio>
 #include <cstring>
 namespace imkit::video {
-double EvaluateEnvelope(std::span<const EnvelopePoint> points,Tick tick) {
-    if (points.empty()) return 1;
-    auto next=std::upper_bound(points.begin(),points.end(),tick,[](auto t,const auto &point){return t<point.tick;});
-    if (next==points.begin()) return next->gain;
-    if (next==points.end()) return points.back().gain;
-    const auto &previous=*(next-1);
-    const double f=(double(tick)-double(previous.tick))/(double(next->tick)-double(previous.tick));
-    return previous.gain+(next->gain-previous.gain)*f;
-}
-TransitionEdit EditTransition(const ClipView &clip, bool end, Tick delta) {
-    if (clip.locked || clip.duration<=0 || clip.transitionIn<0 || clip.transitionOut<0 ||
-        clip.transitionIn>clip.duration || clip.transitionOut>clip.duration-clip.transitionIn) return {};
-    TransitionEdit result{clip.transitionIn,clip.transitionOut,true};
-    auto &duration=end ? result.outDuration : result.inDuration;
-    const Tick other=end ? result.inDuration : result.outDuration;
-    duration+=std::clamp(delta,-duration,clip.duration-other-duration);
-    return result;
-}
+using impl::AvailableTicks;
 namespace {
 bool TransitionBadge(ImDrawList *draw,const IconAtlas *atlas,TransitionKind kind,bool outgoing,ImVec2 position,float size) {
     if (!atlas || kind==TransitionKind::None) return false;
@@ -65,6 +49,37 @@ const editor::Keyframe *FindClipKey(std::span<const editor::Keyframe> keys,Tick 
 }
 editor::Value Value(const ClipView &c) {
     return {c.start, c.start + c.duration, c.sourceIn, c.track, c.speed};
+}
+// Filmstrip clip body: 16:9 frames from the left edge with a 1 px gap, the last one cut at the clip end. Only the
+// frames inside [visibleLeft, visibleRight] are drawn, and at most kFilmstripQueries ask the host for a picture.
+constexpr int kFilmstripQueries=64;
+void DrawFilmstripFrames(ImDrawList *draw,const TimelineProvider &p,StableId track,const ClipView &clip,
+                         const editor::Value &value,ImVec2 a,ImVec2 b,float visibleLeft,float visibleRight,
+                         float originX,double originSeconds,double pixelsPerSecond,float radius) {
+    const float height=b.y-a.y;
+    if (height<=2 || b.x-a.x<=1 || !(pixelsPerSecond>0)) return;
+    const float pitch=height*16.f/9.f+1.f;
+    const int first=std::max(0,static_cast<int>(std::floor((std::max(a.x,visibleLeft)-a.x)/pitch)));
+    const int last=static_cast<int>(std::floor((std::min(b.x,visibleRight)-a.x)/pitch));
+    if (last<first) return;
+    const int stride=std::max(1,(last-first+kFilmstripQueries)/kFilmstripQueries);
+    ImTextureRef picture=clip.thumbnail;
+    for (int i=first;i<=last;++i) {
+        const float left=a.x+static_cast<float>(i)*pitch,right=std::min(b.x,left+pitch-1.f);
+        if (right<=left) break;
+        if (p.thumbnailAt && (i-first)%stride==0) {
+            const double timelineSeconds=originSeconds+((left+right)*.5f-originX)/pixelsPerSecond;
+            const double sourceSeconds=editor::Seconds(value.offset)+(timelineSeconds-editor::Seconds(value.first))*value.x;
+            const ImTextureRef asked=p.thumbnailAt(p.user,track,clip.id,sourceSeconds);
+            picture=asked.GetTexID() ? asked : clip.thumbnail;
+        }
+        if (!picture.GetTexID()) continue;
+        const ImDrawFlags corners=(i==0 ? ImDrawFlags_RoundCornersLeft : ImDrawFlags_None)|
+                                  (right>=b.x ? ImDrawFlags_RoundCornersRight : ImDrawFlags_None);
+        const ImVec2 uv1{(right-left)/(pitch-1.f),1.f};
+        if (corners) draw->AddImageRounded(picture,{left,a.y},{right,b.y},{0,0},uv1,IM_COL32_WHITE,radius,corners);
+        else draw->AddImage(picture,{left,a.y},{right,b.y},{0,0},uv1);
+    }
 }
 editor::Value Value(const ClipEdit &e, StableId track, double speed) {
     return {e.start, e.start + e.duration, e.sourceIn, track, speed};
@@ -138,186 +153,7 @@ void SplitBatch(const TimelineProvider &p,std::span<const ClipView> clips,std::s
             edit.draft.proposed.first=tick;edit.Commit(p.revision,out);
         }
 }
-Tick AvailableTicks(std::uint64_t sourceTicks,double speed) {
-    if (speed==1) return static_cast<Tick>(std::min(sourceTicks,static_cast<std::uint64_t>(std::numeric_limits<Tick>::max())));
-    const auto value=std::floor(static_cast<long double>(sourceTicks)/speed);
-    return value>=std::ldexp(1.L,63) ? std::numeric_limits<Tick>::max() : static_cast<Tick>(value);
-}
-bool AddTick(Tick a,Tick b,Tick &out) {
-    if ((b>0 && a>std::numeric_limits<Tick>::max()-b) ||
-        (b<0 && a<std::numeric_limits<Tick>::min()-b)) return false;
-    out=a+b;return true;
-}
 } // namespace
-float TrackExtent(const TrackView &track) {
-    return track.expanded ? (std::max)(64.f,std::isfinite(track.height) ? track.height : 64.f) : 32.f;
-}
-Tick CenteredTransitionLimit(const ClipView &left,const ClipView &right,
-                             ClipConstraints leftBounds,ClipConstraints rightBounds) {
-    if (left.track!=right.track || !EditClip(left,editor::EditKind::Move,0,leftBounds).valid ||
-        !EditClip(right,editor::EditKind::Move,0,rightBounds).valid ||
-        left.start+left.duration!=right.start) return 0;
-    const Tick post=AvailableTicks(static_cast<std::uint64_t>(leftBounds.mediaLast)-
-                                  static_cast<std::uint64_t>(left.sourceIn),left.speed)-left.duration;
-    const Tick pre=AvailableTicks(static_cast<std::uint64_t>(right.sourceIn)-
-                                 static_cast<std::uint64_t>(rightBounds.mediaFirst),right.speed);
-    return 2*std::min({post,pre,left.duration,right.duration,std::numeric_limits<Tick>::max()/2});
-}
-std::optional<Tick> RippleDeletePosition(const ClipView &survivor,std::span<const ClipView> removed) {
-    const auto add=[](Tick a,Tick b)->std::optional<Tick> {Tick value;return AddTick(a,b,value)?std::optional<Tick>(value):std::nullopt;};
-    if(survivor.duration<=0) return std::nullopt;
-    const auto survivorEnd=add(survivor.start,survivor.duration);if(!survivorEnd) return std::nullopt;
-    Tick shift=0,previousEnd=0;StableId previousTrack=0;bool first=true;
-    for(const auto &clip:removed) {
-        const auto end=add(clip.start,clip.duration);
-        if(clip.duration<=0 || !end || (!first && (clip.track<previousTrack || (clip.track==previousTrack && clip.start<previousEnd)))) return std::nullopt;
-        first=false;previousTrack=clip.track;previousEnd=*end;
-        if(clip.track!=survivor.track) continue;
-        if(clip.start<*survivorEnd && *end>survivor.start) return std::nullopt;
-        if(*end<=survivor.start) {auto sum=add(shift,clip.duration);if(!sum) return std::nullopt;shift=*sum;}
-    }
-    return add(survivor.start,-shift);
-}
-ClipEdit EditClip(const ClipView &c, editor::EditKind kind, Tick delta, ClipConstraints bounds) {
-    ClipEdit result{c.start, c.duration, c.sourceIn, false};
-    if (c.locked || bounds.minimumDuration<1 || c.duration < bounds.minimumDuration || c.speed <= 0 || !std::isfinite(c.speed) ||
-        bounds.mediaLast < bounds.mediaFirst)
-        return result;
-    if (c.sourceIn < bounds.mediaFirst || c.sourceIn > bounds.mediaLast ||
-        (c.speed==1 ? static_cast<std::uint64_t>(c.duration)>static_cast<std::uint64_t>(bounds.mediaLast)-static_cast<std::uint64_t>(c.sourceIn) :
-        static_cast<long double>(c.duration)*c.speed > static_cast<long double>(static_cast<std::uint64_t>(bounds.mediaLast)-static_cast<std::uint64_t>(c.sourceIn))) ||
-        c.start>std::numeric_limits<Tick>::max()-c.duration)
-        return result;
-    Tick before=AvailableTicks(static_cast<std::uint64_t>(c.sourceIn)-static_cast<std::uint64_t>(bounds.mediaFirst),c.speed);
-    Tick after=AvailableTicks(static_cast<std::uint64_t>(bounds.mediaLast)-static_cast<std::uint64_t>(c.sourceIn),c.speed)-c.duration;
-    const auto advanceSource=[&](Tick amount) {
-        if (c.speed==1) return AddTick(c.sourceIn,amount,result.sourceIn);
-        const auto mapped=std::round(static_cast<long double>(amount)*c.speed);
-        if (!std::isfinite(mapped) || mapped < -std::ldexp(1.L,63) || mapped >= std::ldexp(1.L,63)) return false;
-        return AddTick(c.sourceIn,static_cast<Tick>(mapped),result.sourceIn);
-    };
-    switch (kind) {
-    case editor::EditKind::Move:
-    case editor::EditKind::Duplicate:
-        if (!AddTick(c.start,delta,result.start)) return result;
-        break;
-    case editor::EditKind::TrimStart:
-        delta = std::clamp(delta, -std::min(before,std::numeric_limits<Tick>::max()-c.duration), c.duration - bounds.minimumDuration);
-        if (!AddTick(c.start,delta,result.start)) return result;
-        result.duration -= delta;
-        if (!advanceSource(delta)) return result;
-        break;
-    case editor::EditKind::TrimEnd:
-    case editor::EditKind::Ripple:
-        delta = std::clamp(delta, bounds.minimumDuration - c.duration, after);
-        result.duration += delta;
-        result.rippleDelta = kind == editor::EditKind::Ripple ? delta : 0;
-        break;
-    case editor::EditKind::Slip:
-        delta = std::clamp(delta, -before, after);
-        if (!advanceSource(delta)) return result;
-        break;
-    default:
-        return result;
-    }
-    if (result.start>std::numeric_limits<Tick>::max()-result.duration || result.sourceIn<bounds.mediaFirst ||
-        result.sourceIn>bounds.mediaLast) return result;
-    result.valid = true;
-    return result;
-}
-PairEdit RollClips(const ClipView &a, const ClipView &b, Tick delta, ClipConstraints ac, ClipConstraints bc) {
-    Tick cut=0;
-    if (a.track!=b.track || a.duration<=0 || b.duration<=0 ||
-        !AddTick(a.start,a.duration,cut) || cut!=b.start || a.locked || b.locked)
-        return {};
-    auto left = EditClip(a, editor::EditKind::TrimEnd, delta, ac);
-    auto right = EditClip(b, editor::EditKind::TrimStart, delta, bc);
-    if (!left.valid || !right.valid)
-        return {};
-    Tick constrained = delta >= 0 ? (std::min)(left.duration - a.duration, right.start - b.start)
-                                  : (std::max)(left.duration - a.duration, right.start - b.start);
-    left = EditClip(a, editor::EditKind::TrimEnd, constrained, ac);
-    right = EditClip(b, editor::EditKind::TrimStart, constrained, bc);
-    return {left, right, left.valid && right.valid};
-}
-SplitResult SplitClip(const ClipView &c, Tick tick, ClipConstraints bounds) {
-    if (c.locked || bounds.minimumDuration<1 || c.duration<bounds.minimumDuration ||
-        !std::isfinite(c.speed) || c.speed<=0 || bounds.mediaLast<bounds.mediaFirst ||
-        c.sourceIn<bounds.mediaFirst || c.sourceIn>bounds.mediaLast ||
-        c.start>std::numeric_limits<Tick>::max()-c.duration) return {};
-    const auto end=c.start+c.duration;
-    if (tick<=c.start || tick>=end) return {};
-    const Tick offset=tick-c.start;
-    if (offset<bounds.minimumDuration || c.duration-offset<bounds.minimumDuration) return {};
-    const auto available=static_cast<std::uint64_t>(bounds.mediaLast)-static_cast<std::uint64_t>(c.sourceIn);
-    Tick sourceOffset=offset;
-    if (c.speed==1) {
-        if (static_cast<std::uint64_t>(c.duration)>available) return {};
-    } else {
-        const long double sourceDuration=static_cast<long double>(c.duration)*c.speed;
-        if (sourceDuration>static_cast<long double>(available)) return {};
-        const long double mapped=std::round(static_cast<long double>(offset)*c.speed);
-        if (!std::isfinite(mapped) || mapped<0 || mapped>=std::ldexp(1.L,63)) return {};
-        sourceOffset=static_cast<Tick>(mapped);
-    }
-    if (c.sourceIn>std::numeric_limits<Tick>::max()-sourceOffset) return {};
-    const auto rightSource=c.sourceIn+sourceOffset;
-    if (rightSource>bounds.mediaLast) return {};
-    return {{c.start, offset, c.sourceIn, true},
-            {tick, c.duration - offset, rightSource, true},true};
-}
-TripleEdit SlideClip(const ClipView &a, const ClipView &b, const ClipView &c, Tick delta, ClipConstraints ac,
-                     ClipConstraints bc, ClipConstraints cc) {
-    Tick firstCut=0,secondCut=0;
-    if (a.track!=b.track || b.track!=c.track || a.duration<=0 || b.duration<=0 || c.duration<=0 ||
-        !AddTick(a.start,a.duration,firstCut) || firstCut!=b.start ||
-        !AddTick(b.start,b.duration,secondCut) || secondCut!=c.start || a.locked || b.locked ||
-        c.locked)
-        return {};
-    auto left = EditClip(a, editor::EditKind::TrimEnd, delta, ac),
-         right = EditClip(c, editor::EditKind::TrimStart, delta, cc);
-    if (!left.valid || !right.valid)
-        return {};
-    Tick constrained = delta >= 0 ? (std::min)(left.duration - a.duration, right.start - c.start)
-                                  : (std::max)(left.duration - a.duration, right.start - c.start);
-    left = EditClip(a, editor::EditKind::TrimEnd, constrained, ac);
-    right = EditClip(c, editor::EditKind::TrimStart, constrained, cc);
-    auto middle = EditClip(b, editor::EditKind::Move, constrained, bc);
-    return {left, middle, right, left.valid && middle.valid && right.valid};
-}
-editor::SnapResult ResolveTimelineSnap(const TimelineState &s, Tick delta,
-    std::span<const editor::SnapCandidate> candidates, std::span<const StableId> movingIds) {
-    const auto kind = s.drag.draft.kind;
-    const bool end = kind == editor::EditKind::TrimEnd || kind == editor::EditKind::Ripple || kind == editor::EditKind::Roll;
-    const Tick anchor = s.original.start + (end ? s.original.duration : 0);
-    editor::SnapResult best{anchor + delta};
-    if (!s.snapping || kind == editor::EditKind::Slip) return best;
-    auto consider = [&](editor::SnapCandidate candidate, Tick edge) {
-        if (!(s.snapKinds & (1u << static_cast<unsigned>(candidate.kind)))) return;
-        if (candidate.id && (candidate.id == s.original.id ||
-            std::find(movingIds.begin(),movingIds.end(),candidate.id)!=movingIds.end())) return;
-        auto hit = editor::ResolveSnap(edge + delta, {&candidate,1},
-            s.canvas.scale.x/editor::TicksPerSecond,8);
-        if (hit.snapped && (!best.snapped || hit.distancePixels < best.distancePixels ||
-            (hit.distancePixels == best.distancePixels && hit.candidate.priority > best.candidate.priority))) {
-            best = hit;
-            // tick is the snapped primary anchor; candidate.tick is the visible guide.
-            best.tick = anchor + hit.tick - edge;
-        }
-    };
-    auto edge = [&](Tick tick) {
-        if (s.snapToFrame && editor::Valid(s.time.rate)) {
-            auto frame=editor::TickToFrame(tick+delta,s.time.rate);
-            for (auto f : {frame-1,frame,frame+1})
-                consider({editor::FrameToTick(f,s.time.rate),editor::SnapKind::Frame,0,0},tick);
-        }
-        if (s.magnet) for (auto candidate:candidates) consider(candidate,tick);
-    };
-    edge(anchor);
-    if (kind == editor::EditKind::Move || kind == editor::EditKind::Duplicate || kind == editor::EditKind::Slide)
-        edge(s.original.start+s.original.duration);
-    return best;
-}
 #include "video_editing.inl"
 void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, editor::Selection &selection,
               editor::EventBuffer &out, const Theme &theme, ImVec2 size) {
@@ -801,26 +637,45 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                          : track.kind == TrackKind::Adjustment ? theme.editor.adjustmentClip
                          : track.kind == TrackKind::Group ? theme.editor.groupClip
                                                             : theme.editor.videoClip;
+            const bool filmstrip = s.options.clipBody == ClipBody::Filmstrip;
             const float fillAlpha = selected ? .92f : bodyHovered ? .72f : .56f;
-            const ImVec4 composite = ::imkit::detail::MixColor(theme.editor.trackHeader, color, fillAlpha * color.w);
-            color.w *= fillAlpha;
-            // Text colour follows the clip's actual tone so selected (saturated) clips stay readable.
             const ImVec4 white{1,1,1,1}, black{0,0,0,1};
-            const ImVec4 ink = ContrastRatio(theme.colors.text, composite) >= 4.5f ? theme.colors.text
+            // Filmstrip: a neutral dark ground taken from the track header, so frames read as pictures, not as tint.
+            const ImVec4 ground = ::imkit::detail::MixColor(theme.editor.trackHeader, black, .62f);
+            const ImVec4 composite = filmstrip ? ground
+                                               : ::imkit::detail::MixColor(theme.editor.trackHeader, color, fillAlpha * color.w);
+            // Text colour follows the clip's actual tone so selected (saturated) clips stay readable.
+            const ImVec4 ink = filmstrip ? ImVec4(1.f,.984f,.937f,1.f)
+                             : ContrastRatio(theme.colors.text, composite) >= 4.5f ? theme.colors.text
                              : ContrastRatio(white, composite) >= ContrastRatio(black, composite) ? white : black;
             const ImU32 inkColor = ImGui::GetColorU32(ink);
+            const ImU32 chipColor = ImGui::GetColorU32(::imkit::detail::WithAlpha(::imkit::detail::MixColor(ground, black, .35f), .78f));
             const float clipRadius = std::min(std::max(6.f, theme.radius.subtle), theme.radius.control);
-            if (selected)
-                draw->AddRect({a.x-2,a.y-2}, {b.x+2,b.y+2}, ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.focus,.30f)),
-                              clipRadius + 2, ImDrawFlags_None, 3.f);
-            draw->AddRectFilled(a, b, ImGui::GetColorU32(color), clipRadius);
-            if (p.drawClipOverlay) p.drawClipOverlay(p.user,clip.id,value,a,b);
-            const bool outlined=::imkit::detail::IsOutlined(ImGui::GetStyle());
-            draw->AddRect(a, b,
-                          selected ? ImGui::GetColorU32(theme.colors.focus)
-                                   : outlined ? ImGui::GetColorU32(ImGuiCol_Border) : ImGui::GetColorU32(ImVec4(0,0,0,.20f)),
-                          clipRadius, ImDrawFlags_None,
-                          selected ? std::max(2.f, ::imkit::detail::FrameLineWidth(1.f)) : ::imkit::detail::FrameLineWidth(1.f));
+            if (filmstrip) {
+                const ImVec4 band{color.x,color.y,color.z,1.f};
+                if (selected)
+                    draw->AddRect({a.x-2,a.y-2}, {b.x+2,b.y+2}, ImGui::GetColorU32(theme.colors.accent), clipRadius + 2,
+                                  ImDrawFlags_None, 2.f);
+                draw->AddRectFilled(a, b, ImGui::GetColorU32(ground), clipRadius);
+                DrawFilmstripFrames(draw,p,track.id,clip,value,a,b,view.min.x+s.headerWidth,view.max.x,
+                                    view.min.x+s.headerWidth,s.canvas.origin.x,s.canvas.scale.x,clipRadius);
+                if (p.drawClipOverlay) p.drawClipOverlay(p.user,clip.id,value,a,b);
+                draw->AddRectFilled(a, {b.x,std::min(b.y,a.y+3.f)}, ImGui::GetColorU32(band), clipRadius, ImDrawFlags_RoundCornersTop);
+                draw->AddRect(a, b, ImGui::GetColorU32(band), clipRadius, ImDrawFlags_None, 1.5f);
+            } else {
+                color.w *= fillAlpha;
+                if (selected)
+                    draw->AddRect({a.x-2,a.y-2}, {b.x+2,b.y+2}, ImGui::GetColorU32(::imkit::detail::WithAlpha(theme.colors.focus,.30f)),
+                                  clipRadius + 2, ImDrawFlags_None, 3.f);
+                draw->AddRectFilled(a, b, ImGui::GetColorU32(color), clipRadius);
+                if (p.drawClipOverlay) p.drawClipOverlay(p.user,clip.id,value,a,b);
+                const bool outlined=::imkit::detail::IsOutlined(ImGui::GetStyle());
+                draw->AddRect(a, b,
+                              selected ? ImGui::GetColorU32(theme.colors.focus)
+                                       : outlined ? ImGui::GetColorU32(ImGuiCol_Border) : ImGui::GetColorU32(ImVec4(0,0,0,.20f)),
+                              clipRadius, ImDrawFlags_None,
+                              selected ? std::max(2.f, ::imkit::detail::FrameLineWidth(1.f)) : ::imkit::detail::FrameLineWidth(1.f));
+            }
             const float edgeHit=std::min(10.f,std::max(6.f,(b.x-a.x)*.22f));
             const bool leftEdge=bodyHovered && io.MousePos.x-a.x<=edgeHit;
             const bool rightEdge=bodyHovered && b.x-io.MousePos.x<=edgeHit;
@@ -845,11 +700,22 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
             std::snprintf(metadata,sizeof(metadata),"%s  %.3gx",duration,value.x);
             const float metadataWidth=ImGui::CalcTextSize(metadata).x;
             const float metadataRight=end-(clip.proxy ? ImGui::GetFontSize()+16 : 12);
-            const bool showMetadata=metadataRight-x>metadataWidth+100 && nameY+ImGui::GetFontSize()<b.y;
-            const float nameRight=showMetadata ? metadataRight-metadataWidth-10 : metadataRight;
-            if (track.expanded && clip.thumbnail.GetTexID() && end-x>8 && b.y>nameY+ImGui::GetFontSize()+7)
+            // Filmstrip puts the metadata in its own label at the bottom right, so it needs a second text row.
+            const float metadataY=filmstrip ? b.y-ImGui::GetFontSize()-4.f : nameY;
+            const bool showMetadata=metadataRight-x>metadataWidth+100 &&
+                (filmstrip ? metadataY>=nameY+ImGui::GetFontSize()+2.f : nameY+ImGui::GetFontSize()<b.y);
+            const float nameRight=showMetadata && !filmstrip ? metadataRight-metadataWidth-10 : metadataRight;
+            auto chip=[&](float left,float top,float right) {
+                const float l=std::max(left,x+2.f),r=std::min(right,end-2.f);
+                if (filmstrip && r>l+4) draw->AddRectFilled({l,top},{r,top+ImGui::GetFontSize()+2.f},chipColor,4.f);
+            };
+            if (!filmstrip && track.expanded && clip.thumbnail.GetTexID() && end-x>8 && b.y>nameY+ImGui::GetFontSize()+7)
                 draw->AddImage(clip.thumbnail, {x+3,nameY+ImGui::GetFontSize()+4}, {std::min(end-3,x+65),b.y-3});
             float nameLeft=x+6;
+            if (filmstrip && !(s.editingCaption == clip.id && s.captionDrag.active)) {
+                const float badges=s.icons ? static_cast<float>((clip.linked ? 1 : 0)+(clip.group ? 1 : 0))*(ImGui::GetFontSize()+3) : 0.f;
+                chip(x+5,nameY-1,std::min(nameRight,nameLeft+badges+ImGui::CalcTextSize(clip.label).x)+6);
+            }
             if (s.icons && (clip.linked || clip.group)) {
                 const float iconSize=ImGui::GetFontSize();
                 const float pixels=iconSize*std::max(io.DisplayFramebufferScale.x,io.DisplayFramebufferScale.y);
@@ -883,7 +749,8 @@ void Timeline(const char *id, const TimelineProvider &p, TimelineState &s, edito
                 }
             } else {
                 text({nameLeft,nameY},inkColor,clip.label,nameRight);
-                if (showMetadata) text({metadataRight-metadataWidth,nameY},ImGui::GetColorU32(::imkit::detail::WithAlpha(ink,.70f)),metadata,metadataRight);
+                if (showMetadata) chip(metadataRight-metadataWidth-5,metadataY-1,metadataRight+5);
+                if (showMetadata) text({metadataRight-metadataWidth,metadataY},ImGui::GetColorU32(::imkit::detail::WithAlpha(ink,.70f)),metadata,metadataRight);
             }
             if (clip.missing || clip.offline)
                 draw->AddLine(a, b, ImGui::GetColorU32(clip.offline ? theme.editor.error : theme.editor.missing), 2);
@@ -1830,652 +1697,5 @@ void TransitionPicker(const char *id,const ClipView &clip,std::uint64_t revision
         }
     }
     ImGui::EndDisabled();ImGui::PopID();
-}
-void MonitorControls(const char *id,MonitorOptions &options,const IconAtlas *icons,const MonitorLabels &labels) {
-    ImGui::PushID(id);
-    auto toggle=[&](IconId icon,const char *label,bool &value) {
-        if (icons) {Icon(*icons,icon,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
-        imkit::Checkbox(label,&value);
-    };
-    toggle(IconId::SafeArea,labels.safeArea,options.safeArea);
-    toggle(IconId::Guides,labels.guides,options.guides);
-    imkit::Checkbox(labels.timecode,&options.showTimecode);
-    toggle(IconId::TransformBounds,labels.bounds,options.transform);
-    bool anchor=options.showAnchor.value_or(options.transform);
-    const bool before=anchor;toggle(IconId::AnchorPoint,labels.anchor,anchor);
-    if (anchor!=before) options.showAnchor=anchor;
-    if (icons) {Icon(*icons,IconId::MetadataOverlay,{16*ImGui::GetFontSize()/14});ImGui::SameLine();}
-    int preset=static_cast<int>(options.metadataPreset);
-    if (imkit::Combo(labels.metadata,&preset,labels.presets.data(),3)) options.metadataPreset=static_cast<MonitorMetadataPreset>(preset);
-    ImGui::PopID();
-}
-void Monitor(const char *id, ImTextureRef texture, ImVec2 size, const editor::TimeState &time,
-             const MonitorOptions &o, const Theme &theme) {
-    ImGui::PushID(id);
-    auto p = ImGui::GetCursorScreenPos();
-    if (texture.GetTexID())
-        ImGui::Image(texture, size, o.flipY ? ImVec2{0,1} : ImVec2{0,0}, o.flipY ? ImVec2{1,0} : ImVec2{1,1});
-    else
-        ImGui::Dummy(size);
-    auto *d = ImGui::GetWindowDrawList();
-    d->PushClipRect(p, {p.x + size.x, p.y + size.y}, true);
-    if (!texture.GetTexID())
-        d->AddRectFilled(p, {p.x + size.x, p.y + size.y}, ImGui::GetColorU32(theme.colors.canvas));
-    auto color = ImGui::GetColorU32(theme.colors.muted);
-    if (o.safeArea)
-        for (float inset : {.05f, .1f})
-            d->AddRect({p.x + size.x * inset, p.y + size.y * inset},
-                       {p.x + size.x * (1 - inset), p.y + size.y * (1 - inset)}, color);
-    if (o.guides)
-        for (int i = 1; i < 3; ++i) {
-            d->AddLine({p.x + size.x * i / 3, p.y}, {p.x + size.x * i / 3, p.y + size.y}, color);
-            d->AddLine({p.x, p.y + size.y * i / 3}, {p.x + size.x, p.y + size.y * i / 3}, color);
-        }
-    if (o.transform) {
-        const auto &bounds=o.transformBounds;
-        const ImVec2 minimum{p.x+float(size.x*bounds.min.x),p.y+float(size.y*bounds.min.y)};
-        const ImVec2 maximum{p.x+float(size.x*bounds.max.x),p.y+float(size.y*bounds.max.y)};
-        if (std::isfinite(minimum.x) && std::isfinite(minimum.y) && std::isfinite(maximum.x) && std::isfinite(maximum.y) &&
-            minimum.x<maximum.x && minimum.y<maximum.y)
-            d->AddRect(minimum,maximum,ImGui::GetColorU32(theme.colors.accent),0.f,2.f,ImDrawFlags_None);
-    }
-    if (o.showAnchor.value_or(o.transform)) {
-        const ImVec2 anchor{p.x+size.x*o.anchor.x,p.y+size.y*o.anchor.y};
-        if (std::isfinite(anchor.x) && std::isfinite(anchor.y)) d->AddCircle(anchor,5,color);
-    }
-    const float padding=std::max(3.f,ImGui::GetFontSize()*.25f);
-    const float lineHeight=ImGui::GetFontSize()+2*padding;
-    auto overlayText=[&](float top,const char *label) {
-        if (!label || !*label || size.x<=4*padding || size.y<lineHeight+2*padding) return;
-        const ImVec2 minimum{p.x+padding,top};
-        const ImVec2 maximum{std::min(p.x+size.x-padding,minimum.x+ImGui::CalcTextSize(label).x+2*padding),top+lineHeight};
-        auto background=theme.colors.surface;background.w=1;
-        d->AddRectFilled(minimum,maximum,ImGui::GetColorU32(background),theme.metrics.radius);
-        const ImVec4 bounds{minimum.x+padding,minimum.y+padding,maximum.x-padding,maximum.y-padding};
-        d->AddText(ImGui::GetFont(),ImGui::GetFontSize(),{bounds.x,bounds.y},ImGui::GetColorU32(theme.colors.text),label,nullptr,0,&bounds);
-    };
-    overlayText(p.y+padding,o.label);
-    if (o.metadataPreset!=MonitorMetadataPreset::Off) {
-        float top=p.y+padding+((o.label && *o.label) ? lineHeight+padding : 0);
-        const float bottom=p.y+size.y-padding-(o.showTimecode ? lineHeight+padding : 0);
-        auto line=[&](const char *label) {
-            if (label && *label && top+lineHeight<=bottom) {
-                overlayText(top,label);top+=lineHeight+padding;
-            }
-        };
-        line(o.clipName);line(o.markerComment);
-        if (o.metadataPreset==MonitorMetadataPreset::Details)
-            for (const char *label:o.metadata) {
-                if (top+lineHeight>bottom) break;
-                line(label);
-            }
-    }
-    if (o.showTimecode && (!o.label || !*o.label || size.y>=2*lineHeight+3*padding)) {
-        char label[32]{};
-        editor::FormatTimecode(time.playhead, time.rate, time.dropFrame, label);
-        overlayText(p.y+size.y-lineHeight-padding,label);
-    }
-    d->PopClipRect();
-    ImGui::PopID();
-}
-bool Monitor(const char *id,const MonitorView &monitor,ImVec2 size,const editor::TimeState &time,
-             const MonitorOptions &o,const Theme &theme,ComponentOptions components) {
-    const auto extent=[](float value) {return std::isfinite(value)&&value>0 ? value : 0.f;};
-    size={extent(size.x),extent(size.y)};
-    ImGui::PushID(id);
-    if(size.x<=0 || size.y<=0) {
-        ImGui::Dummy(size);ImGui::PopID();return false;
-    }
-    if(!components.theme) components.theme=&theme;
-    const ImVec2 widgetMin=ImGui::GetCursorScreenPos(),widgetMax{widgetMin.x+size.x,widgetMin.y+size.y};
-    ImGui::InvisibleButton("##monitor",size);
-    const ImVec2 after=ImGui::GetCursorScreenPos();
-    auto *draw=ImGui::GetWindowDrawList();
-    draw->PushClipRect(widgetMin,widgetMax,true);
-    draw->AddRectFilled(widgetMin,widgetMax,ImGui::GetColorU32(theme.colors.canvas));
-    const auto layout=editor::ResolveImagePlacement(monitor.image.pixels,{size.x,size.y},monitor.placement);
-    const bool ready=monitor.status==editor::PreviewState::Ready && layout.valid && monitor.image.texture.GetTexID()!=ImTextureID{};
-    bool action=false;
-    if(ready) {
-        const ImVec2 imageMin{widgetMin.x+static_cast<float>(layout.display.min.x),
-                              widgetMin.y+static_cast<float>(layout.display.min.y)};
-        const ImVec2 imageMax{widgetMin.x+static_cast<float>(layout.display.max.x),
-                              widgetMin.y+static_cast<float>(layout.display.max.y)};
-        const auto textureUv=[&](ImVec2 uv) {
-            return ImVec2{monitor.image.uv0.x+(monitor.image.uv1.x-monitor.image.uv0.x)*uv.x,
-                          monitor.image.uv0.y+(monitor.image.uv1.y-monitor.image.uv0.y)*uv.y};
-        };
-        ImVec2 uv0=textureUv(layout.uv0),uv1=textureUv(layout.uv1);
-        if(o.flipY) std::swap(uv0.y,uv1.y);
-        draw->AddImage(monitor.image.texture,imageMin,imageMax,uv0,uv1);
-        draw->PushClipRect(imageMin,imageMax,true);
-        const ImVec2 visibleUv{layout.uv1.x-layout.uv0.x,layout.uv1.y-layout.uv0.y};
-        const auto point=[&](ImVec2 normalized) {
-            return ImVec2{imageMin.x+(normalized.x-layout.uv0.x)/visibleUv.x*(imageMax.x-imageMin.x),
-                          imageMin.y+(normalized.y-layout.uv0.y)/visibleUv.y*(imageMax.y-imageMin.y)};
-        };
-        const auto color=ImGui::GetColorU32(theme.colors.muted);
-        if(o.safeArea)
-            for(float inset:{.05f,.1f}) draw->AddRect(point({inset,inset}),point({1-inset,1-inset}),color);
-        if(o.guides)
-            for(int i=1;i<3;++i) {
-                const float at=static_cast<float>(i)/3;
-                draw->AddLine(point({at,0}),point({at,1}),color);
-                draw->AddLine(point({0,at}),point({1,at}),color);
-            }
-        if(o.transform) {
-            const ImVec2 minimum=point({static_cast<float>(o.transformBounds.min.x),static_cast<float>(o.transformBounds.min.y)});
-            const ImVec2 maximum=point({static_cast<float>(o.transformBounds.max.x),static_cast<float>(o.transformBounds.max.y)});
-            if(std::isfinite(minimum.x)&&std::isfinite(minimum.y)&&std::isfinite(maximum.x)&&std::isfinite(maximum.y) &&
-               minimum.x<maximum.x&&minimum.y<maximum.y)
-                draw->AddRect(minimum,maximum,ImGui::GetColorU32(theme.colors.accent),0.f,2.f,ImDrawFlags_None);
-        }
-        if(o.showAnchor.value_or(o.transform)) {
-            const ImVec2 anchor=point(o.anchor);
-            if(std::isfinite(anchor.x)&&std::isfinite(anchor.y)) draw->AddCircle(anchor,5,color);
-        }
-        const float padding=std::max(3.f,ImGui::GetFontSize()*.25f);
-        const float lineHeight=ImGui::GetFontSize()+2*padding;
-        const auto overlayText=[&](float top,const char *label) {
-            if(!label||!*label||imageMax.x-imageMin.x<=4*padding||imageMax.y-imageMin.y<lineHeight+2*padding) return;
-            const ImVec2 minimum{imageMin.x+padding,top};
-            const ImVec2 maximum{std::min(imageMax.x-padding,minimum.x+ImGui::CalcTextSize(label).x+2*padding),top+lineHeight};
-            auto background=theme.colors.surface;background.w=1;
-            draw->AddRectFilled(minimum,maximum,ImGui::GetColorU32(background),theme.metrics.radius);
-            const ImVec4 bounds{minimum.x+padding,minimum.y+padding,maximum.x-padding,maximum.y-padding};
-            draw->AddText(ImGui::GetFont(),ImGui::GetFontSize(),{bounds.x,bounds.y},ImGui::GetColorU32(theme.colors.text),label,nullptr,0,&bounds);
-        };
-        overlayText(imageMin.y+padding,o.label);
-        if(o.metadataPreset!=MonitorMetadataPreset::Off) {
-            float top=imageMin.y+padding+((o.label&&*o.label)?lineHeight+padding:0);
-            const float bottom=imageMax.y-padding-(o.showTimecode?lineHeight+padding:0);
-            const auto line=[&](const char *label) {
-                if(label&&*label&&top+lineHeight<=bottom) {overlayText(top,label);top+=lineHeight+padding;}
-            };
-            line(o.clipName);line(o.markerComment);
-            if(o.metadataPreset==MonitorMetadataPreset::Details)
-                for(const char *label:o.metadata) {if(top+lineHeight>bottom) break;line(label);}
-        }
-        if(o.showTimecode&&(!o.label||!*o.label||imageMax.y-imageMin.y>=2*lineHeight+3*padding)) {
-            char label[32]{};editor::FormatTimecode(time.playhead,time.rate,time.dropFrame,label);
-            overlayText(imageMax.y-lineHeight-padding,label);
-        }
-        draw->PopClipRect();
-    } else if(monitor.status!=editor::PreviewState::Ready) {
-        StateView state=monitor.stateView;
-        const char *key="preview_empty",*fallback="Empty";
-        switch(monitor.status) {
-        case editor::PreviewState::Loading:key="preview_loading";fallback="Loading";break;
-        case editor::PreviewState::Offline:key="preview_offline";fallback="Offline";break;
-        case editor::PreviewState::Error:key="preview_error";fallback="Error";state.kind=FeedbackKind::Error;break;
-        default:break;
-        }
-        if(!state.heading||!*state.heading) state.heading=components.locale?components.locale->Text(key,fallback):fallback;
-        const float padding=std::max(4.f,ImGui::GetStyle().FramePadding.x);
-        const ImVec2 contentMin{widgetMin.x+padding,widgetMin.y+padding};
-        const ImVec2 contentSize{std::max(1.f,size.x-2*padding),std::max(1.f,size.y-2*padding)};
-        if(monitor.status==editor::PreviewState::Loading) {
-            ImGui::SetCursorScreenPos(contentMin);Skeleton("loading-skeleton",contentSize,components);
-            ImGui::SetCursorScreenPos(contentMin);Spinner("loading-spinner",components);ImGui::SameLine();
-            auto loading=state;loading.action="";EmptyState("loading-state",loading,components);
-        } else {
-            ImGui::SetCursorScreenPos(contentMin);
-            if(monitor.status==editor::PreviewState::Empty) action=EmptyState("empty-state",state,components);
-            else if(monitor.status==editor::PreviewState::Offline) action=UnavailableState("offline-state",state,components);
-            else action=RetryState("error-state",state,components);
-        }
-        ImGui::SetCursorScreenPos(after);ImGui::Dummy({0,0});
-    }
-    draw->PopClipRect();
-    ImGui::PopID();return action;
-}
-void BuildAudioBuckets(std::span<const float> pcm, int channels, int channel, std::span<AudioBucket> out) {
-    std::fill(out.begin(), out.end(), AudioBucket{});
-    if (channels <= 0 || channel < 0 || channel >= channels || out.empty())
-        return;
-    auto frames = pcm.size() / channels;
-    for (std::size_t i = 0; i < out.size(); ++i) {
-        auto first = i * frames / out.size(), last = (i + 1) * frames / out.size();
-        if (first == last)
-            continue;
-        auto &b = out[i];
-        float firstSample = pcm[first * channels + channel];
-        b.minimum = b.maximum = std::isfinite(firstSample) ? firstSample : 0.f;
-        double sum = 0;
-        for (auto j = first; j < last; ++j) {
-            float v = pcm[j * channels + channel];
-            if (!std::isfinite(v))
-                v = 0;
-            b.minimum = (std::min)(b.minimum, v);
-            b.maximum = (std::max)(b.maximum, v);
-            b.peak = (std::max)(b.peak, std::abs(v));
-            sum += v * v;
-        }
-        b.rms = static_cast<float>(std::sqrt(sum / (last - first)));
-    }
-}
-void UpdateMeter(MeterState &s, std::span<const float> samples, float dt, float hold) {
-    AudioBucket bucket;
-    BuildAudioBuckets(samples, 1, 0, {&bucket, 1});
-    s.rms = bucket.rms;
-    s.peak = bucket.peak;
-    s.holdRemaining = (std::max)(0.f, s.holdRemaining - dt);
-    if (s.peak >= s.heldPeak) {
-        s.heldPeak = s.peak;
-        s.holdRemaining = hold;
-    } else if (s.holdRemaining == 0)
-        s.heldPeak = (std::max)(s.peak, s.heldPeak - dt * .5f);
-}
-AudioBucket WaveformPixel(const WaveformView &view, editor::Range range) {
-    AudioBucket result{};
-    if (view.status!=WaveformStatus::Ready || view.buckets.empty() || view.range.last<=view.range.first || range.last<=range.first) return result;
-    const long double extent=static_cast<long double>(view.range.last)-view.range.first;
-    const auto index=[&](Tick t) {return (static_cast<long double>(t)-view.range.first)*view.buckets.size()/extent;};
-    const auto first=static_cast<std::size_t>(std::clamp(std::floor(index(range.first)),0.L,static_cast<long double>(view.buckets.size())));
-    const auto last=static_cast<std::size_t>(std::clamp(std::ceil(index(range.last)),0.L,static_cast<long double>(view.buckets.size())));
-    for (auto i=first;i<last;++i) {
-        const auto &v=view.buckets[i];
-        if (std::isfinite(v.minimum)) result.minimum=std::min(result.minimum,v.minimum);
-        if (std::isfinite(v.maximum)) result.maximum=std::max(result.maximum,v.maximum);
-        if (std::isfinite(v.peak)) result.peak=std::max(result.peak,v.peak);
-        if (std::isfinite(v.rms)) result.rms=std::max(result.rms,v.rms);
-    }
-    return result;
-}
-void DrawWaveform(const WaveformView &view, editor::Range range, ImVec2 min, ImVec2 max,
-                  const WaveformOptions &options, const Theme &theme) {
-    if (max.x<=min.x || max.y<=min.y) return;
-    auto *d=ImGui::GetWindowDrawList();
-    const float left=std::max(min.x,d->GetClipRectMin().x),right=std::min(max.x,d->GetClipRectMax().x);
-    if(right<=left) return;
-    const auto at=[&](float x) {return static_cast<Tick>(static_cast<long double>(range.first)+
-        (static_cast<long double>(range.last)-range.first)*(x-min.x)/(max.x-min.x));};
-    range={at(left),at(right)};min.x=left;max.x=right;
-    d->PushClipRect(min,max,true);
-    const float center=(min.y+max.y)*.5f, amplitude=(max.y-min.y)*.46f;
-    if (options.zeroLine) d->AddLine({min.x,center},{max.x,center},ImGui::GetColorU32(theme.colors.muted));
-    if (view.status!=WaveformStatus::Ready) {
-        d->AddText(min,ImGui::GetColorU32(view.status==WaveformStatus::Error ? theme.colors.destructive : theme.colors.muted),
-            view.status==WaveformStatus::Error ? "!" : "...");
-    } else {
-        const int pixels=std::max(1,static_cast<int>(std::ceil(max.x-min.x)));
-        const auto time=[&](int i) {return range.first+static_cast<Tick>((static_cast<long double>(range.last)-range.first)*i/pixels);};
-        const float gain=std::isfinite(options.gain) ? std::clamp(options.gain,0.f,64.f) : 1.f;
-        for (int i=0;i<pixels;++i) {
-            const auto v=WaveformPixel(view,{time(i),time(i+1)});
-            const float low=std::clamp(v.minimum*gain,-1.f,1.f), high=std::clamp(v.maximum*gain,-1.f,1.f);
-            if (low!=0 || high!=0) {
-                const float top=center-high*amplitude, bottom=std::max(center-low*amplitude,top+1);
-                auto envelope=theme.colors.text; envelope.w*=.38f;
-                d->AddRectFilled({min.x+i,top},{min.x+i+1,bottom},ImGui::GetColorU32(envelope));
-                // RMS core: the perceived loudness sits inside the peak envelope.
-                const float core=std::clamp(v.rms*gain,0.f,1.f)*amplitude;
-                if (core>.5f) d->AddRectFilled({min.x+i,std::max(top,center-core)},{min.x+i+1,std::min(bottom,center+core)},
-                                               ImGui::GetColorU32(theme.colors.text));
-            }
-        }
-    }
-    d->PopClipRect();
-}
-void Waveform(const char *id, std::span<const AudioBucket> buckets, ImVec2 size, const Theme &theme) {
-    if (size.x<=0 || size.y<=0) return;
-    const auto p=ImGui::GetCursorScreenPos();ImGui::InvisibleButton(id,size);
-    const editor::Range range{0,static_cast<Tick>(buckets.size())*editor::TicksPerSecond};
-    DrawWaveform({buckets,range,WaveformStatus::Ready},range,p,{p.x+size.x,p.y+size.y},{},theme);
-}
-void LevelMeter(const char *id, const MeterState &left, const MeterState &right, ImVec2 size,
-                const Theme &t) {
-    auto p = ImGui::GetCursorScreenPos();
-    ImGui::InvisibleButton(id, size);
-    auto *d = ImGui::GetWindowDrawList();
-    const auto level = [](float value) {
-        return std::clamp((20 * std::log10((std::max)(value, 1e-6f)) + 60) / 60, 0.f, 1.f);
-    };
-    const float gap = std::max(3.f, size.x * .1f), w = std::max(4.f, (size.x - gap) * .5f), round = std::min(w * .4f, 4.f);
-    // Zone boundaries in dB: green up to -18, amber up to -6, red above.
-    const float zoneLow = level(std::pow(10.f, -18.f / 20.f)), zoneHigh = level(std::pow(10.f, -6.f / 20.f));
-    const ImVec4 zones[3] = {t.colors.success, t.colors.warning, t.colors.destructive};
-    const float bounds[4] = {0.f, zoneLow, zoneHigh, 1.f};
-    int i = 0;
-    for (auto s : {left, right}) {
-        const float x = p.x + i++ * (w + gap);
-        const float bottom = p.y + size.y, top = p.y;
-        auto at = [&](float fraction) { return bottom - (bottom - top) * fraction; };
-        auto track = t.colors.text; track.w = .09f;
-        d->AddRectFilled({x, top}, {x + w, bottom}, ImGui::GetColorU32(track), round);
-        const float fill = level(s.rms);
-        for (int zone = 0; zone < 3; ++zone) {
-            const float from = bounds[zone], to = std::min(bounds[zone + 1], fill);
-            if (to <= from) continue;
-            const ImDrawFlags corners = (zone == 0 ? ImDrawFlags_RoundCornersBottom : 0) |
-                                        (to >= fill ? ImDrawFlags_RoundCornersTop : 0);
-            d->AddRectFilled({x, at(to)}, {x + w, at(from)}, ImGui::GetColorU32(zones[zone]), corners ? round : 0.f,
-                             corners ? corners : ImDrawFlags_RoundCornersNone);
-        }
-        for (float tick : {zoneLow, zoneHigh}) {
-            auto line = t.colors.canvas; line.w = .8f;
-            d->AddLine({x, at(tick)}, {x + w, at(tick)}, ImGui::GetColorU32(line));
-        }
-        const float hold = at(level(s.heldPeak));
-        d->AddRectFilled({x - 1, hold - 1}, {x + w + 1, hold + 1}, ImGui::GetColorU32(s.peak >= 1 ? t.colors.destructive : t.colors.text), 1.f);
-        if (s.peak >= 1)
-            d->AddRectFilled({x, top}, {x + w, top + 3}, ImGui::GetColorU32(t.colors.destructive), round, ImDrawFlags_RoundCornersTop);
-    }
-}
-void AudioStrip(const AudioStripView &v, std::uint64_t revision, editor::PropertyState &s,
-                editor::EventBuffer &out) {
-    detail::ResumeTerminal(s.drag, revision, out);
-    if (s.drag.active && (v.locked || ImGui::IsKeyPressed(ImGuiKey_Escape) ||
-                         (s.drag.draft.target != v.gainId && s.drag.draft.target != v.panId)))
-        s.drag.Cancel(out);
-    ImGui::PushID(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(v.id)));
-    ImGui::BeginGroup();
-    ImGui::TextUnformatted(v.label);
-    ImGui::BeginDisabled(v.locked);
-    auto process = [&](StableId target,double original,double draft,bool changed) {
-        if (!target) return;
-        if (ImGui::IsItemActivated() && !s.drag.active)
-            s.drag.Begin(target,revision,editor::EditKind::Property,{0,0,0,0,original},
-                         editor::CurrentModifiers(),out);
-        if (s.drag.active && s.drag.draft.target==target) {
-            if (changed) s.drag.Update(revision,{0,0,0,0,draft},out);
-            if (ImGui::IsItemDeactivated()) s.drag.Commit(revision,out);
-        }
-    };
-    double gain=s.drag.active && s.drag.draft.target==v.gainId ? s.drag.draft.proposed.x : v.gain;
-    double minimum=0,maximum=4;
-    ImGui::BeginDisabled(!v.gainId);
-    bool changed=ImGui::VSliderScalar(v.gainLabel,{32,100},ImGuiDataType_Double,&gain,&minimum,&maximum,"%.2f");
-    process(v.gainId,v.gain,gain,changed);
-    ImGui::EndDisabled();
-    ImGui::SameLine();
-    ImGui::BeginGroup();
-    double pan=s.drag.active && s.drag.draft.target==v.panId ? s.drag.draft.proposed.x : v.pan;
-    minimum=-1;maximum=1;
-    ImGui::SetNextItemWidth(ImGui::GetFontSize()*10);
-    ImGui::BeginDisabled(!v.panId || v.panId==v.gainId);
-    changed=ImGui::SliderScalar(v.panLabel,ImGuiDataType_Double,&pan,&minimum,&maximum,"%.2f");
-    process(v.panId,v.pan,pan,changed);
-    ImGui::EndDisabled();
-    const bool flags[]={v.mute,v.solo,v.record};
-    const TrackControl controls[]={TrackControl::Mute,TrackControl::Solo,TrackControl::Record};
-    const char *labels[]={v.muteLabel,v.soloLabel,v.recordLabel};
-    for (int i=0;i<3;++i) {
-        bool value=flags[i];
-        ImGui::PushID(i);
-        if(s.icons) {const IconId icons[]{IconId::Mute,IconId::Solo,IconId::Microphone};Icon(*s.icons,icons[i],{ImGui::GetFontSize()});ImGui::SameLine();}
-        if (imkit::Checkbox(labels[i],&value))
-            out.Push({v.id,revision,editor::Phase::Commit,editor::EditKind::Toggle,
-                      {0,0,0,0,static_cast<double>(controls[i]),flags[i] ? 1. : 0.},
-                      {0,0,0,0,static_cast<double>(controls[i]),value ? 1. : 0.},editor::CurrentModifiers()});
-        ImGui::PopID();
-    }
-    ImGui::EndGroup();
-    ImGui::EndDisabled();
-    ImGui::EndGroup();
-    ImGui::PopID();
-}
-bool BuildScopes(std::span<const Rgba> pixels, int w, int h, ScopeBuffers out) {
-    if (w <= 0 || h <= 0 || pixels.size() != static_cast<std::size_t>(w) * h || out.red.size() != 256 ||
-        out.green.size() != 256 || out.blue.size() != 256 || out.luma.size() != 256 ||
-        out.waveform.size() != static_cast<std::size_t>(w) * 256 || out.vectorscope.size() != 65536)
-        return false;
-    const auto waveSize = static_cast<std::size_t>(w) * 256;
-    const bool rgb = !out.redWaveform.empty() || !out.greenWaveform.empty() || !out.blueWaveform.empty();
-    if (rgb && (out.redWaveform.size() != waveSize || out.greenWaveform.size() != waveSize ||
-                out.blueWaveform.size() != waveSize))
-        return false;
-    for (auto span : {out.red, out.green, out.blue, out.luma, out.waveform, out.vectorscope,
-                     out.redWaveform, out.greenWaveform, out.blueWaveform})
-        std::fill(span.begin(), span.end(), 0);
-    auto bin = [](float value) {
-        return static_cast<int>(std::clamp(std::isfinite(value) ? value : 0.f, 0.f, 1.f) * 255);
-    };
-    for (std::size_t i = 0; i < pixels.size(); ++i) {
-        auto p = pixels[i];
-        p.r = std::isfinite(p.r) ? p.r : 0.f;
-        p.g = std::isfinite(p.g) ? p.g : 0.f;
-        p.b = std::isfinite(p.b) ? p.b : 0.f;
-        float y = .2126f * p.r + .7152f * p.g + .0722f * p.b;
-        ++out.red[bin(p.r)];
-        ++out.green[bin(p.g)];
-        ++out.blue[bin(p.b)];
-        ++out.luma[bin(y)];
-        ++out.waveform[bin(y) * w + i % w];
-        if (rgb) {
-            ++out.redWaveform[bin(p.r) * w + i % w];
-            ++out.greenWaveform[bin(p.g) * w + i % w];
-            ++out.blueWaveform[bin(p.b) * w + i % w];
-        }
-        ++out.vectorscope[bin(.5f + (p.r - y) * .635f) * 256 + bin(.5f + (p.b - y) * .539f)];
-    }
-    return true;
-}
-void Histogram(const char *id, std::span<const std::uint32_t> bins, ImVec2 size, const Theme &t) {
-    auto p = ImGui::GetCursorScreenPos();
-    ImGui::InvisibleButton(id, size);
-    auto *d = ImGui::GetWindowDrawList();
-    auto panel = t.colors.text; panel.w = .06f;
-    d->AddRectFilled(p, {p.x + size.x, p.y + size.y}, ImGui::GetColorU32(panel), t.radius.control);
-    if (bins.empty() || size.x < 4 || size.y < 4)
-        return;
-    auto grid = t.colors.text; grid.w = .08f;
-    for (int i = 1; i < 4; ++i) {
-        const float x = p.x + size.x * i / 4;
-        d->AddLine({x, p.y + 2}, {x, p.y + size.y - 2}, ImGui::GetColorU32(grid));
-    }
-    if (size.x > 90 && size.y > 36) {
-        // Level marks at the black point, mid grey and white point.
-        auto mark = t.colors.muted; mark.w *= .8f;
-        ImFont *font = ImGui::GetFont();
-        const float small = ImGui::GetFontSize() * .78f;
-        const ImU32 ink = ImGui::GetColorU32(mark);
-        d->AddText(font, small, {p.x + 4, p.y + size.y - small - 2}, ink, "0");
-        d->AddText(font, small, {p.x + size.x * .5f - small * .7f, p.y + size.y - small - 2}, ink, "128");
-        d->AddText(font, small, {p.x + size.x - small * 1.6f - 3, p.y + size.y - small - 2}, ink, "255");
-    }
-    const float maximum = static_cast<float>((std::max)(1u, *std::max_element(bins.begin(), bins.end())));
-    // One sample per two pixels, taking the tallest bin that falls in the column.
-    constexpr int MaxColumns = 512;
-    const int columns = std::clamp(static_cast<int>(size.x * .5f), 2, MaxColumns);
-    std::array<ImVec2, MaxColumns> points{};
-    const float baseline = p.y + size.y - 1;
-    for (int c = 0; c < columns; ++c) {
-        const std::size_t first = bins.size() * c / columns;
-        const std::size_t last = (std::max)(first + 1, bins.size() * (c + 1) / columns);
-        std::uint32_t peak = 0;
-        for (std::size_t i = first; i < last && i < bins.size(); ++i) peak = (std::max)(peak, bins[i]);
-        // Square-root scaling keeps small populations visible next to a dominant bin.
-        const float height = std::sqrt(peak / maximum) * (size.y - 4);
-        points[c] = {p.x + size.x * c / (columns - 1), baseline - height};
-    }
-    auto fill = t.colors.accent; fill.w = .28f;
-    for (int c = 0; c + 1 < columns; ++c)
-        d->AddQuadFilled(points[c], points[c + 1], {points[c + 1].x, baseline}, {points[c].x, baseline}, ImGui::GetColorU32(fill));
-    d->AddPolyline(points.data(), columns, ImGui::GetColorU32(t.colors.accent), ImDrawFlags_None, 1.75f);
-}
-void ScopeImage(const char *id, std::span<const std::uint32_t> bins, int w, int h, ImVec2 size,
-                const Theme &t) {
-    ScopeImage(id, bins, w, h, size, t, t.colors.success);
-}
-void ScopeImage(const char *id, std::span<const std::uint32_t> bins, int w, int h, ImVec2 size,
-                const Theme &t, ImVec4 tint) {
-    auto p = ImGui::GetCursorScreenPos();
-    ImGui::InvisibleButton(id, size);
-    auto *d = ImGui::GetWindowDrawList();
-    auto panel = t.colors.canvas; panel.w = .7f;
-    d->AddRectFilled(p, {p.x + size.x, p.y + size.y}, ImGui::GetColorU32(panel), t.radius.control);
-    auto graticule = t.colors.text; graticule.w = .10f;
-    for (int i = 1; i < 4; ++i)
-        d->AddLine({p.x, p.y + size.y * i / 4}, {p.x + size.x, p.y + size.y * i / 4}, ImGui::GetColorU32(graticule));
-    if (w <= 0 || h <= 0 || bins.size() != static_cast<std::size_t>(w) * h)
-        return;
-    auto max = *std::max_element(bins.begin(), bins.end());
-    if (!max)
-        return;
-    for (int y = 0; y < h; ++y)
-        for (int x = 0; x < w; ++x)
-            if (bins[y * w + x]) {
-                auto c = tint;
-                c.w *= static_cast<float>(std::log1p(bins[y * w + x]) / std::log1p(max));
-                d->AddRectFilled({p.x + x * size.x / w, p.y + (h - 1 - y) * size.y / h},
-                                 {p.x + (x + 1) * size.x / w, p.y + (h - y) * size.y / h},
-                                 ImGui::GetColorU32(c));
-            }
-}
-namespace {
-editor::Value ColorValue(const float *rgb) { return {0,0,0,0,rgb[0],rgb[1],rgb[2]}; }
-void ColorEvent(StableId target, editor::Value original, editor::Value proposed, bool changed,
-                std::uint64_t revision, ColorState *state, editor::EventBuffer *events) {
-    if (!state || !events || !target)
-        return;
-    auto &drag = state->drag;
-    if (ImGui::IsItemActivated() && !drag.active)
-        drag.Begin(target, revision, editor::EditKind::Property, original, editor::CurrentModifiers(), *events);
-    if (drag.active && drag.draft.target == target) {
-        if (changed)
-            drag.Update(revision, proposed, *events);
-        if (ImGui::IsItemDeactivated())
-            drag.Commit(revision, *events);
-    }
-}
-bool Wheel(float *rgb, float diameter, ImVec2 &center) {
-    constexpr float pi = 3.14159265358979323846f;
-    const auto p = ImGui::GetCursorScreenPos();
-    float radius = diameter * .5f - 4;
-    center = {p.x + diameter * .5f, p.y + diameter * .5f};
-    ImGui::InvisibleButton("wheel", {diameter,diameter});
-    const float mean = (rgb[0] + rgb[1] + rgb[2]) / 3;
-    float x = rgb[0] - mean, y = (rgb[1] - rgb[2]) / std::sqrt(3.f);
-    bool changed = false;
-    if (ImGui::IsItemActive() && ImGui::IsMouseDown(0)) {
-        auto mouse = ImGui::GetIO().MousePos;
-        x = (mouse.x - center.x) / radius;
-        y = (center.y - mouse.y) / radius;
-        float length = std::hypot(x,y);
-        if (length > 1) { x /= length; y /= length; }
-        if (ImGui::IsMouseDoubleClicked(0)) x = y = 0;
-        float candidate[] = {mean + x, mean - .5f*x + std::sqrt(3.f)*.5f*y,
-                             mean - .5f*x - std::sqrt(3.f)*.5f*y};
-        for (int i=0; i<3; ++i) {
-            changed |= rgb[i] != candidate[i];
-            rgb[i] = candidate[i];
-        }
-    }
-    auto *draw = ImGui::GetWindowDrawList();
-    {
-        // Smooth hue/saturation disc from one indexed mesh: no seams between sectors.
-        constexpr int rings = 14, sectors = 90;
-        draw->PrimReserve(rings * sectors * 6, (rings + 1) * (sectors + 1));
-        const ImDrawIdx base = static_cast<ImDrawIdx>(draw->_VtxCurrentIdx);
-        const ImVec2 white = ImGui::GetFontTexUvWhitePixel();
-        for (int ring = 0; ring <= rings; ++ring)
-            for (int sector = 0; sector <= sectors; ++sector) {
-                const float angle = sector * 2 * pi / sectors, r = radius * ring / rings;
-                float cr, cg, cb;
-                ImGui::ColorConvertHSVtoRGB(static_cast<float>(sector % sectors) / sectors, static_cast<float>(ring) / rings, .85f, cr, cg, cb);
-                draw->PrimWriteVtx({center.x + std::cos(angle) * r, center.y - std::sin(angle) * r}, white,
-                                   ImGui::GetColorU32(ImVec4(cr, cg, cb, 1)));
-            }
-        for (int ring = 0; ring < rings; ++ring)
-            for (int sector = 0; sector < sectors; ++sector) {
-                const ImDrawIdx a = base + static_cast<ImDrawIdx>(ring * (sectors + 1) + sector), b = a + 1,
-                                c = a + static_cast<ImDrawIdx>(sectors + 1), e = c + 1;
-                for (ImDrawIdx index : {a, b, e, a, e, c}) draw->PrimWriteIdx(index);
-            }
-    }
-    const auto border = ImGui::GetColorU32(ImGuiCol_Border);
-    draw->AddCircle(center,radius,border,64,1.f);
-    draw->AddLine({center.x-4,center.y},{center.x+4,center.y},border);
-    draw->AddLine({center.x,center.y-4},{center.x,center.y+4},border);
-    float length = std::hypot(x,y);
-    if (length>1) { x/=length; y/=length; }
-    ImVec2 thumb{center.x+x*radius,center.y-y*radius};
-    draw->AddCircleFilled(thumb,5,ImGui::GetColorU32(ImGuiCol_WindowBg));
-    draw->AddCircle(thumb,5,ImGui::GetColorU32(ImGuiCol_Text),16,2);
-    if (ImGui::IsItemFocused())
-        draw->AddRect(p,{p.x+diameter,p.y+diameter},ImGui::GetColorU32(ImGuiCol_NavCursor),4.f,2.f,ImDrawFlags_None);
-    return changed;
-}
-bool ColorPanel(const char *id, ColorValues &draft, const ColorValues &original,
-                const ColorPropertyIds &ids, std::uint64_t revision, ColorState *state,
-                editor::EventBuffer *events, const ColorLabels &labels) {
-    ImGui::PushID(id);
-    bool changed = false;
-    float *rgb[] = {draft.lift,draft.gamma,draft.gain};
-    const float *source[] = {original.lift,original.gamma,original.gain};
-    const StableId targets[] = {ids.lift,ids.gamma,ids.gain};
-    const char *names[] = {labels.lift,labels.gamma,labels.gain};
-    const int columns = ImGui::GetContentRegionAvail().x < ImGui::GetFontSize()*30 ? 1 : 3;
-    if (ImGui::BeginTable("wheels",columns)) {
-        for (int i=0; i<3; ++i) {
-            ImGui::TableNextColumn();
-            ImGui::PushID(i);
-            ImGui::TextUnformatted(names[i]);
-            ImGui::BeginDisabled(state && !targets[i]);
-            float diameter = std::clamp(ImGui::GetContentRegionAvail().x, 64.f, ImGui::GetFontSize()*8);
-            ImVec2 center;
-            bool edited = Wheel(rgb[i],diameter,center);
-            ColorEvent(targets[i],ColorValue(source[i]),ColorValue(rgb[i]),edited,revision,state,events);
-            changed |= edited;
-            if (state) { state->wheelCenters[i]=center; state->wheelRadius=diameter*.5f-4; }
-            ImGui::SetNextItemWidth(diameter);
-            float mean = (rgb[i][0]+rgb[i][1]+rgb[i][2])/3, before = mean;
-            edited = imkit::SliderFloat(labels.level,&mean,i==0 ? -1.f : .01f,i==0 ? 1.f : 4.f);
-            if (edited) for (int c=0;c<3;++c) rgb[i][c] += mean-before;
-            ColorEvent(targets[i],ColorValue(source[i]),ColorValue(rgb[i]),edited,revision,state,events);
-            changed |= edited;
-            ImGui::EndDisabled();
-            ImGui::PopID();
-        }
-        ImGui::EndTable();
-    }
-    float *scalars[] = {&draft.temperature,&draft.tint,&draft.exposure};
-    float values[] = {original.temperature,original.tint,original.exposure};
-    StableId scalarIds[] = {ids.temperature,ids.tint,ids.exposure};
-    const char *scalarNames[] = {labels.temperature,labels.tint,labels.exposure};
-    for (int i=0; i<3; ++i) {
-        ImGui::PushID(i+3);
-        ImGui::BeginDisabled(state && !scalarIds[i]);
-        bool edited = imkit::SliderFloat(scalarNames[i],scalars[i],i==2 ? -10.f : -1.f,i==2 ? 10.f : 1.f);
-        ColorEvent(scalarIds[i],{0,0,0,0,values[i]},{0,0,0,0,*scalars[i]},edited,revision,state,events);
-        changed |= edited;
-        ImGui::EndDisabled();
-        ImGui::PopID();
-    }
-    ImGui::PopID();
-    return changed;
-}
-}
-Rgba ApplyColorCurves(Rgba input,const ColorCurveSet &curves) {
-    auto evaluate=[](float value,std::span<const editor::Keyframe> keys) {
-        const double normalized=std::isfinite(value) ? std::clamp(double(value),0.,1.) : 0.;
-        const double result=keys.empty() ? normalized : editor::Evaluate(keys,editor::FromSeconds(normalized));
-        return std::isfinite(result) ? float(std::clamp(result,0.,1.)) : 0.f;
-    };
-    return {evaluate(input.r,curves.red),evaluate(input.g,curves.green),evaluate(input.b,curves.blue),input.a};
-}
-bool ColorControls(const char *id, ColorValues &draft) {
-    const ColorValues original = draft;
-    return ColorPanel(id,draft,original,{},0,nullptr,nullptr,{});
-}
-void ColorControls(const char *id, const ColorValues &values, const ColorPropertyIds &ids,
-                   std::uint64_t revision, ColorState &state, editor::EventBuffer &events,
-                   const ColorLabels &labels) {
-    detail::ResumeTerminal(state.drag,revision,events);
-    if (state.drag.active && ImGui::IsKeyPressed(ImGuiKey_Escape)) state.drag.Cancel(events);
-    auto draft = values;
-    if (state.drag.active) {
-        const auto &event = state.drag.draft;
-        float *rgb = event.target == ids.lift ? draft.lift : event.target == ids.gamma ? draft.gamma :
-                     event.target == ids.gain ? draft.gain : nullptr;
-        if (rgb) { rgb[0]=static_cast<float>(event.proposed.x); rgb[1]=static_cast<float>(event.proposed.y);
-                   rgb[2]=static_cast<float>(event.proposed.z); }
-        else if (event.target == ids.temperature) draft.temperature=static_cast<float>(event.proposed.x);
-        else if (event.target == ids.tint) draft.tint=static_cast<float>(event.proposed.x);
-        else if (event.target == ids.exposure) draft.exposure=static_cast<float>(event.proposed.x);
-        else state.drag.Cancel(events);
-    }
-    ColorPanel(id,draft,values,ids,revision,&state,&events,labels);
 }
 } // namespace imkit::video

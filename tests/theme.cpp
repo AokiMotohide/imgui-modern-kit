@@ -87,12 +87,15 @@ int TestStyleProjection() {
         failure = 22;
     if (!Near(style.Colors[ImGuiCol_Border], outlined.colors.border, 1e-6f))
         failure = 23;
-    // Pill rounds the tallest control (44 px) to a capsule and nothing taller than that.
-    imkit::SetCornerStyle(outlined, imkit::CornerStyle::Pill);
+    // Round follows the control height (.36 of it). Slider grabs share the button corner.
+    imkit::SetCornerStyle(outlined, imkit::CornerStyle::Round);
     imkit::ApplyTheme(outlined, 1.f);
-    if (outlined.radius.control != 22.f || style.FrameRounding != 22.f || style.WindowRounding != 22.f)
+    const float round = std::round(outlined.metrics.controlHeight * .36f);
+    if (outlined.radius.control != round || style.FrameRounding != round || style.GrabRounding != round ||
+        style.WindowRounding != round)
         failure = 24;
     // A huge control radius set by hand must not turn windows and images into capsules.
+    outlined.radius.controlShare = 0.f;
     outlined.radius.control = 999.f;
     imkit::ApplyTheme(outlined, 1.f);
     if (style.FrameRounding < 900.f || style.WindowRounding != outlined.radius.overlay ||
@@ -101,6 +104,37 @@ int TestStyleProjection() {
     imkit::SetCornerStyle(outlined, imkit::CornerStyle::Sharp);
     if (outlined.radius.control != 2.f || outlined.metrics.radius != 2.f)
         failure = 25;
+    // The default corner is a quarter of the control height at every density, and captions stay readable.
+    for (auto density : {imkit::Density::Compact, imkit::Density::Comfortable, imkit::Density::Touch}) {
+        auto probe = imkit::MakeTheme(imkit::ThemePreset::WarmSand);
+        imkit::SetDensity(probe, density);
+        if (probe.radius.control != std::round(probe.metrics.controlHeight * .25f))
+            failure = 27;
+        if (imkit::ContrastRatio(probe.semantic.textSecondary, probe.semantic.surface) < 4.5f ||
+            imkit::ContrastRatio(probe.semantic.textDisabled, probe.zones.panel) < 4.5f)
+            failure = 28;
+    }
+    // Every preset: neighbouring zones stay apart, the two side panels differ by hue at the same lightness, a dark
+    // theme's fields sit above the panel, and a given crown becomes the chrome.
+    for (const auto &info : imkit::ThemePresets()) {
+        const auto probe = imkit::MakeTheme(info.preset);
+        const auto &z = probe.zones;
+        if (imkit::ContrastRatio(z.workspace, z.panel) < 1.14f || imkit::ContrastRatio(z.header, z.panel) < 1.09f ||
+            imkit::ContrastRatio(z.inspector, z.panel) > 1.12f || z.chromeCanvas.w <= 0)
+            failure = 29;
+    }
+    {
+        imkit::BrandPalette brand;
+        brand.canvas = {.24f, .11f, .05f, 1};
+        brand.surface = {.22f, .15f, .10f, 1};
+        brand.text = {.96f, .94f, .88f, 1};
+        brand.accent = {.97f, .84f, .43f, 1};
+        brand.crown = {.14f, .32f, .19f, 1};
+        const auto brandTheme = imkit::MakeBrandTheme(brand);
+        if (brandTheme.zones.chrome.y != brand.crown.y ||
+            imkit::ContrastRatio(brandTheme.semantic.control.rest, brandTheme.zones.panel) < 1.2f)
+            failure = 30;
+    }
     ImGui::DestroyContext();
     return failure;
 }
@@ -184,10 +218,11 @@ int TestThemeText() {
     // A partial file changes only what it names, on top of the chosen base preset.
     auto partial = imkit::MakeTheme(imkit::ThemePreset::PrecisionLight);
     partial.fonts.display = fakeFont;
-    const auto diff = imkit::ParseTheme("preset = warm-sand\nstroke.border = 3\ncorner = pill\n", partial);
+    const auto diff = imkit::ParseTheme("preset = warm-sand\nstroke.border = 3\ncorner = round\n", partial);
     const auto warmSand = imkit::MakeTheme(imkit::ThemePreset::WarmSand);
     if (diff.applied != 3 || diff.ignored != 0 || !Near(partial.semantic.accent, warmSand.semantic.accent, 0) ||
-        partial.stroke.border != 3.f || partial.radius.control != 22.f || partial.fonts.display != fakeFont ||
+        partial.stroke.border != 3.f || partial.radius.control != std::round(partial.metrics.controlHeight * .36f) ||
+        partial.fonts.display != fakeFont ||
         partial.metrics.border != 3.f)
         return 43;
 
@@ -214,7 +249,7 @@ int TestThemeText() {
     imkit::ParseTheme("corner = round\nbrand.canvas = #ffe9a8\nbrand.surface = #fff6d6\nbrand.text = #4a2a18\nbrand.accent = #b2552f\n",
                       branded);
     if (!Near(branded.semantic.canvas, Hex(0xffe9a8)) || !Near(branded.colors.accent, Hex(0xb2552f)) ||
-        branded.radius.control != 16.f || !imkit::ValidateContrast(branded))
+        branded.radius.control != std::round(branded.metrics.controlHeight * .36f) || !imkit::ValidateContrast(branded))
         return 45;
     auto incomplete = imkit::MakeTheme(imkit::ThemePreset::PrecisionLight);
     const auto before = imkit::SerializeTheme(incomplete);
@@ -236,7 +271,7 @@ int TestLayoutTokens() {
     const auto &m = base.metrics;
     if (m.controlHeight != 30.f || m.spacingY != 6.f || m.windowPaddingX != 12.f || m.cellPaddingY != 4.f ||
         m.indent != 18.f || m.scrollbar != 10.f || m.grabMin != 14.f || m.separatorTextPaddingY != 6.f ||
-        m.parts.checkHeightScale != 1.45f || m.parts.toggleHeightScale != 1.75f || m.parts.badgeExtraHeight != 8.f)
+        m.parts.checkHeightScale != 1.15f || m.parts.toggleHeightScale != 1.75f || m.parts.badgeExtraHeight != 8.f)
         return 60;
     if (imkit::SerializeTheme(base).find("layout.") != std::string::npos) // Unset tokens are not written.
         return 61;
@@ -313,7 +348,7 @@ int main() {
         imkit::ThemeScaleMaximum != 2.5f)
         return 11;
     const auto presets = imkit::ThemePresets();
-    if (presets.size() != 13)
+    if (presets.size() != 14)
         return 1;
     std::set<std::string> ids;
     for (const auto &info : presets) {
@@ -377,6 +412,50 @@ int main() {
         return failure;
     if (const int failure = TestWorlds())
         return failure;
-    std::puts("13 theme presets, stable IDs, scale bounds, legacy factories, brand themes, outlines and theme text validated");
+    // Part overrides (L1), named styles (L2), push/pop priority and Classic preset.
+    {
+        const auto classic = imkit::MakeTheme(imkit::ThemePreset::Classic);
+        if (classic.look != imkit::ThemeLook::Classic || imkit::ThemePresetFromId("classic") != imkit::ThemePreset::Classic)
+            return 44;
+        auto base = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
+        const auto partParsed = imkit::ParseTheme(
+            "button.height = 40\nbutton.hover.fill = #3d7eff\ncheckbox.on.fill = accent\nslider.thumb.size = 14\nbad.part.key = 1\n",
+            base);
+        if (partParsed.applied != 4 || partParsed.ignored != 1 ||
+            base.partOverrides.Var(imkit::Part::Button, imkit::PartVar::Height) != 40.f ||
+            base.partOverrides.Var(imkit::Part::Slider, imkit::PartVar::ThumbSize) != 14.f)
+            return 45;
+        const std::string roundTrip = imkit::SerializeTheme(base);
+        if (!Contains(roundTrip, "button.height = 40") || !Contains(roundTrip, "slider.thumb.size = 14"))
+            return 46;
+
+        ImGui::CreateContext();
+        imkit::ApplyTheme(base, 1.f);
+        imkit::ButtonStyle named;
+        named.height = 32.f;
+        named.colors.rest.fill = imkit::Hex("#112233");
+        imkit::RegisterStyle("toolbar", named);
+        {
+            imkit::StyleScope scope("toolbar");
+            if (imkit::ResolvePartVar(imkit::Part::Button, imkit::PartVar::Height) != 32.f)
+                return 47;
+            imkit::PushPartVar(imkit::Part::Button, imkit::PartVar::Height, 36.f);
+            if (imkit::ResolvePartVar(imkit::Part::Button, imkit::PartVar::Height) != 36.f)
+                return 48;
+            imkit::ButtonStyle call;
+            call.height = 44.f;
+            const imkit::PartValues callVals = imkit::ToPartValues(call);
+            imkit::PartLayer layer = imkit::PartLayer::Default;
+            if (imkit::ResolvePartVar(imkit::Part::Button, imkit::PartVar::Height, &callVals, &layer) != 44.f ||
+                layer != imkit::PartLayer::Call)
+                return 49;
+            imkit::PopPartVar();
+        }
+        if (imkit::ResolvePartVar(imkit::Part::Button, imkit::PartVar::Height) != 40.f)
+            return 50;
+        imkit::UnregisterStyle("toolbar");
+        ImGui::DestroyContext();
+    }
+    std::puts("14 theme presets, stable IDs, scale bounds, legacy factories, brand themes, outlines, part styles and theme text validated");
     return 0;
 }

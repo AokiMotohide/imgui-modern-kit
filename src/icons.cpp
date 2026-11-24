@@ -5,11 +5,19 @@
 #include <vector>
 
 namespace imkit {
+namespace detail {
+extern const int kIconAtlasColumns;
+extern const int kIconAtlasRows;
+extern const std::size_t kIconOffsets[];
+extern const unsigned char kIconAlphaRle[];
+} // namespace detail
 namespace {
 // Generated from the individually generated source images by tools/build_icons.py.
-#include "icons_data.inc"
+#include "icons_catalog.inc"
 static_assert(std::size(kCatalog) == static_cast<std::size_t>(IconId::Count));
 static_assert(kAtlasColumns * kAtlasRows >= std::size(kCatalog));
+using detail::kIconAlphaRle;
+using detail::kIconOffsets;
 int Index(int size) {
     for (int i = 0; i < static_cast<int>(IconPixelSizes.size()); ++i)
         if (IconPixelSizes[i] == size)
@@ -102,9 +110,9 @@ IconAtlasPixels GetIconAtlasPixels(int iconPixels) {
             auto &rgba = result[i];
             const int cell = IconPixelSizes[i] + 4;
             rgba.reserve(cell * cell * kAtlasColumns * kAtlasRows * 4);
-            for (std::size_t j = kOffsets[i]; j < kOffsets[i + 1]; j += 2)
-                for (int n = 0; n < kAlphaRle[j]; ++n)
-                    rgba.insert(rgba.end(), {255, 255, 255, kAlphaRle[j + 1]});
+            for (std::size_t j = kIconOffsets[i]; j < kIconOffsets[i + 1]; j += 2)
+                for (int n = 0; n < kIconAlphaRle[j]; ++n)
+                    rgba.insert(rgba.end(), {255, 255, 255, kIconAlphaRle[j + 1]});
         }
         return result;
     }();

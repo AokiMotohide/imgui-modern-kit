@@ -43,7 +43,7 @@ Documentation is organized into five structured categories based on development 
 |---|---|---|
 | [Architecture](../architecture/architecture.md) / [JA](../architecture/アーキテクチャ.md) | Layer structure, module dependencies, and state boundaries | Overall design |
 | [Design System](../architecture/design-system.md) / [JA](../architecture/デザインシステム.md) | Color, spacing, typography tokens, and accessibility | `imkit/theme.h` |
-| [Themes](../architecture/themes.md) / [JA](../architecture/テーマ.md) | 13 preset themes, ThemeScope, and custom palette | `imkit/theme.h` |
+| [Themes](../architecture/themes.md) / [JA](../architecture/テーマ.md) | 14 preset themes, ThemeScope, and custom palette | `imkit/theme.h` |
 | [Make your own look](../architecture/make-your-own-look.md) / [JA](../architecture/世界観を作る.md) | Brand palette, theme file, outline, shadow, text roles, skins and backdrops | `imkit/theme.h`, `imkit/skin.h`, `imkit/decor.h` |
 | [Icons](../architecture/icons.md) / [JA](../architecture/アイコン.md) | 321 icons, seven-size atlases, GPU upload and HiDPI drawing | `imkit/icons.h` |
 | [Dependencies](../architecture/dependencies.md) / [JA](../architecture/依存関係.md) | Pinned Dear ImGui docking revision and CMake options | `CMakeLists.txt` |
@@ -73,9 +73,10 @@ Documentation is organized into five structured categories based on development 
 | [Widget Inventory](widget-inventory.md) / [JA](ウィジェット一覧.md) | Component inventory and design audit decision logs | All modules |
 | [Documentation Catalog](documentation-catalog.md) / [JA](文書カタログ.md) | This document (comprehensive documentation index) | - |
 | [Validation](validation.md) / [JA](検証記録.md) | Platform, CI, and GPU smoke test verification records | Test suite |
+| [4.2 additions](v4.2-api.md) / [JA](4.2追加API.md) | Four-layer customisation, 22 parts, OKLCH zones, glow frames, external control, curves and `imkit::motion` | `imkit/part_style.h`, `imkit/theme.h`, `imkit/decor.h`, `imkit/shell.h`, `imkit/transfer_curve.h`, `imkit/motion.h` |
 | [4.1 additions](v4.1-api.md) / [JA](4.1追加API.md) | Tile map, layout tokens, sprites, progress thumbs, PTZ capabilities and the node editor look | `imkit/show/led.h`, `imkit/theme.h`, `imkit/decor.h`, `imkit/ptz.h`, `imkit/node_editor.h` |
 | [4.0 additions](v4.0-api.md) / [JA](4.0追加API.md) | Brand themes, skins, charts, PTZ, range sliders and the show module | `imkit/theme.h`, `imkit/charts.h` |
-| [Migration to 4.0 and 4.1](migration-v4.md) / [JA](v4移行ガイド.md) | Rebuild, changed default tokens, deprecated spellings and the 4.1 node editor defaults | - |
+| [Migration to 4.x](migration-v4.md) / [JA](v4移行ガイド.md) | Rebuild, changed default tokens, breaking 4.2/4.1 notes and deprecated spellings | - |
 | [Migration v3](migration-v3.md) / [JA](v3移行ガイド.md) | Step-by-step upgrade guide from v2 | - |
 | [Troubleshooting](troubleshooting.md) / [JA](トラブルシューティング.md) | Solutions for common build issues and rendering anomalies | - |
 

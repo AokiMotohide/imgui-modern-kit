@@ -1,5 +1,5 @@
 #include "show_pages.h"
-#include "gallery.h"
+#include "gallery_page_host.h"
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
@@ -83,7 +83,7 @@ std::string JsonValue(std::string_view object, const char* key) {
 } // namespace
 
 void ShowPages::Script(GalleryState& host) {
-    ComponentOptions o{&host.theme, &host.animation};
+    ComponentOptions o{&HostTheme(host), &HostAnimation(host)};
     ScriptSim& s = script;
     const double now = ImGui::GetTime();
     const float u = ImGui::GetFrameHeight();

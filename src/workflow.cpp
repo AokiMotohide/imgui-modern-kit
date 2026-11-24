@@ -5,8 +5,13 @@
 #include "progress_internal.h"
 #include "draw_internal.h"
 #include <algorithm>
+#include <cfloat>
 #include <cmath>
 #include <cstdio>
+#include <cstring>
+#include <string>
+#include <string_view>
+#include <vector>
 
 namespace imkit {
 namespace {
@@ -59,11 +64,21 @@ bool Annotate(const char* label,const char* description,accessibility::SemanticR
 bool LabeledButton(const char* label,const char* description,ImVec2 size,bool selected,ComponentOptions o,
                    accessibility::SemanticRole role=accessibility::SemanticRole::Button) {
     if(size.x==0)size.x=ImGui::CalcTextSize(Safe(label),nullptr,true).x+2*ImGui::GetStyle().FramePadding.x;
+    // The frame is painted here with smooth corners, like ActionButton; ImGui's own frame is made invisible.
+    const auto& style=ImGui::GetStyle();
+    const ImVec4 rest=style.Colors[ImGuiCol_Button],hover=style.Colors[ImGuiCol_ButtonHovered],held=style.Colors[ImGuiCol_ButtonActive];
+    const ImVec4 border=style.Colors[ImGuiCol_Border];
+    const float borderSize=style.FrameBorderSize;
+    for(ImGuiCol c:{ImGuiCol_Button,ImGuiCol_ButtonHovered,ImGuiCol_ButtonActive,ImGuiCol_Border}) ImGui::PushStyleColor(c,ImVec4{0,0,0,0});
     bool pressed=ImGui::Button("##action",size);
+    ImGui::PopStyleColor(4);
     if(ImGui::IsItemFocused())ImGui::SetNavCursorVisible(true);
     auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
-    const auto pad=ImGui::GetStyle().FramePadding;
+    const auto pad=style.FramePadding;
     auto* d=ImGui::GetWindowDrawList();
+    const float rounding=style.FrameRounding;
+    detail::AddSmoothRectFilled(d,a,b,ImGui::GetColorU32(ImGui::IsItemActive()?held:ImGui::IsItemHovered()?hover:rest),rounding);
+    if(borderSize>0.f) detail::AddSmoothRect(d,a,b,ImGui::GetColorU32(border),rounding,borderSize);
     d->PushClipRect({a.x+pad.x,a.y},{std::max(a.x+pad.x,b.x-pad.x),b.y},true);
     std::string_view text=Safe(label);if(auto suffix=text.find("##");suffix!=std::string_view::npos)text=text.substr(0,suffix);
     float room=std::max(0.f,b.x-a.x-pad.x*2);
@@ -80,8 +95,8 @@ bool LabeledButton(const char* label,const char* description,ImVec2 size,bool se
     d->PopClipRect();
     if(selected) {
         const ImVec4 accent=ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
-        d->AddRectFilled(a,b,ImGui::GetColorU32(detail::WithAlpha(accent,.14f)),ImGui::GetStyle().FrameRounding);
-        d->AddRect(a,b,ImGui::GetColorU32(detail::WithAlpha(accent,.55f)),ImGui::GetStyle().FrameRounding,ImDrawFlags_None,1.f);
+        detail::AddSmoothRectFilled(d,a,b,ImGui::GetColorU32(detail::WithAlpha(accent,.14f)),rounding);
+        detail::AddSmoothRect(d,a,b,ImGui::GetColorU32(detail::WithAlpha(accent,.55f)),rounding,1.f);
     }
     if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)||ImGui::IsItemFocused()) {
         if(!ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))ImGui::SetNextWindowPos({a.x,b.y});
@@ -169,6 +184,272 @@ StableId GroupedStepNavigator(const char* id, std::span<const StepGroup> groups,
     ImGui::Dummy({width,0});
     ImGui::PopID();return result;
 }
+namespace {
+ImVec4 Pick(ImVec4 value,ImVec4 fallback) { return value.w>0?value:fallback; }
+ImVec4 Solid(ImVec4 c) { c.w=1.f; return c; }
+struct PlateColors { ImVec4 fill,outline,ink,grid,handle,sprout,sproutOutline,redo,blocked,pending; };
+PlateColors ResolvePlate(const PlateMarkStyle& s,ComponentOptions o) {
+    const Theme* t=o.theme;
+    const ImVec4 accent=t?t->semantic.accent:ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
+    const ImVec4 muted=t?t->semantic.textSecondary:ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);
+    const ImVec4 success=t?t->semantic.success:ImVec4{.2f,.62f,.32f,1};
+    const ImVec4 warning=t?t->semantic.warning:ImVec4{.95f,.64f,.23f,1};
+    const ImVec4 error=t?t->semantic.error:ImVec4{.9f,.34f,.3f,1};
+    PlateColors c{};
+    c.fill=Pick(s.fill,accent);
+    c.ink=Pick(s.ink,detail::InkOn(c.fill));
+    c.outline=Pick(s.outline,Mix(Solid(c.fill),{0,0,0,1},.55f));
+    c.grid=Pick(s.grid,detail::WithAlpha(c.ink,.28f));
+    c.handle=Pick(s.handle,Solid(c.ink));
+    c.sprout=Pick(s.sprout,success);
+    c.sproutOutline=Pick(s.sproutOutline,Mix(Solid(c.sprout),{0,0,0,1},.4f));
+    c.redo=Pick(s.redo,warning);
+    c.blocked=Pick(s.blocked,error);
+    c.pending=Pick(s.pending,muted);
+    return c;
+}
+std::string FitText(ImFont* font,float size,std::string_view text,float room) {
+    if(room<=0.f) return {};
+    if(font->CalcTextSizeA(size,FLT_MAX,0.f,text.data(),text.data()+text.size()).x<=room) return std::string(text);
+    constexpr std::string_view dots="...";
+    room-=font->CalcTextSizeA(size,FLT_MAX,0.f,dots.data(),dots.data()+dots.size()).x;
+    while(!text.empty() && font->CalcTextSizeA(size,FLT_MAX,0.f,text.data(),text.data()+text.size()).x>room) {
+        auto count=text.size()-1;
+        while(count && (static_cast<unsigned char>(text[count])&0xc0)==0x80) --count;
+        text=text.substr(0,count);
+    }
+    return text.empty()?std::string():std::string(text)+std::string(dots);
+}
+StepMarkState StageMark(ProgressStatus status) {
+    switch(status) {
+    case ProgressStatus::Succeeded:return StepMarkState::Completed;
+    case ProgressStatus::Running:case ProgressStatus::Paused:return StepMarkState::Current;
+    case ProgressStatus::Failed:return StepMarkState::Redo;
+    case ProgressStatus::Cancelled:return StepMarkState::Skipped;
+    default:return StepMarkState::Pending;
+    }
+}
+} // namespace
+void DrawPlateMark(ImDrawList* draw,ImVec2 center,float size,const char* number,StepMarkState state,
+                   const PlateMarkDecor& decor,const PlateMarkStyle& style,ComponentOptions o) {
+    if(!draw || !(size>0.f)) return;
+    const PlateColors c=ResolvePlate(style,o);
+    const auto U=[](ImVec4 v) { return ImGui::GetColorU32(v); };
+    const float half=size*.5f;
+    const ImVec2 lo{center.x-half,center.y-half},hi{center.x+half,center.y+half};
+    const float rounding=size*std::clamp(style.rounding,0.f,.5f);
+    const float line=std::max(1.f,size*.07f);
+    // Ornaments sit behind the plate; the plate hides their base.
+    const PlateGrowth growth=decor.growth?*decor.growth:state==StepMarkState::Completed?PlateGrowth::Grown:PlateGrowth::None;
+    const auto blade=[&](float x,float halfWidth,float height) {
+        const ImVec2 p0{x-halfWidth,lo.y+line},p1{x+halfWidth,lo.y+line},tip{x,lo.y-height};
+        draw->AddTriangleFilled(p0,tip,p1,U(c.sprout));
+        draw->AddTriangle(p0,tip,p1,U(c.sproutOutline),std::max(1.f,line*.5f));
+    };
+    if(growth==PlateGrowth::Sprout) {
+        blade(center.x,size*.09f,size*.25f);
+    } else if(growth==PlateGrowth::Grown) {
+        blade(center.x-size*.19f,size*.08f,size*.2f);
+        blade(center.x+size*.19f,size*.08f,size*.2f);
+        blade(center.x,size*.09f,size*.33f);
+    }
+    if(state==StepMarkState::Redo) {
+        const ImVec2 p0{center.x-size*.06f,lo.y+line},p1{center.x+size*.08f,lo.y+line},tip{center.x+size*.26f,lo.y-size*.13f};
+        draw->AddTriangleFilled(p0,tip,p1,U(c.redo));
+        draw->AddTriangle(p0,tip,p1,U(c.outline),std::max(1.f,line*.45f));
+    }
+    ImVec4 ink=c.ink;
+    // A pending step with grass has been started, so it is drawn as a plate rather than an empty outline.
+    const bool emptyOutline=state==StepMarkState::Pending && growth==PlateGrowth::None;
+    if(emptyOutline) {
+        detail::DrawDashedRect(draw,lo,hi,rounding,U(c.pending),std::max(1.f,line*.8f),std::max(2.f,size*.12f));
+        ink=c.pending;
+    } else {
+        const float alpha=state==StepMarkState::Skipped?.4f:1.f;
+        detail::AddSmoothRectFilled(draw,lo,hi,U(detail::WithAlpha(c.fill,c.fill.w*alpha)),rounding);
+        const int lines=std::clamp(style.gridLines,0,6);
+        const ImU32 grid=U(detail::WithAlpha(c.grid,c.grid.w*alpha));
+        for(int i=1;i<=lines;++i) {
+            const float f=static_cast<float>(i)/static_cast<float>(lines+1);
+            draw->AddLine({lo.x+size*f,lo.y+line},{lo.x+size*f,hi.y-line},grid,1.f);
+            draw->AddLine({lo.x+line,lo.y+size*f},{hi.x-line,lo.y+size*f},grid,1.f);
+        }
+        detail::AddSmoothRect(draw,lo,hi,U(detail::WithAlpha(c.outline,c.outline.w*alpha)),rounding,line);
+        ink=detail::WithAlpha(ink,ink.w*alpha);
+    }
+    if(number && *number) {
+        ImFont* font=o.theme&&o.theme->fonts.emphasis?o.theme->fonts.emphasis:ImGui::GetFont();
+        const float fontSize=size*(std::strlen(number)>=2?.46f:.56f);
+        const ImVec2 extent=font->CalcTextSizeA(fontSize,FLT_MAX,0.f,number);
+        const ImVec2 at{center.x-extent.x*.5f,center.y-extent.y*.5f};
+        if(!emptyOutline) // A thin outline keeps the number readable over the grid.
+            for(const ImVec2 d:{ImVec2{-1,0},ImVec2{1,0},ImVec2{0,-1},ImVec2{0,1}})
+                draw->AddText(font,fontSize,{at.x+d.x,at.y+d.y},U(detail::WithAlpha(c.outline,.55f*ink.w)),number);
+        draw->AddText(font,fontSize,at,U(ink),number);
+    }
+    if(state==StepMarkState::Current) {
+        const float handle=size*.2f,inset=size*.02f;
+        for(const ImVec2 corner:{ImVec2{lo.x+inset,lo.y+inset},ImVec2{hi.x-inset,lo.y+inset},
+                                 ImVec2{hi.x-inset,hi.y-inset},ImVec2{lo.x+inset,hi.y-inset}}) {
+            const ImVec2 a{corner.x-handle*.5f,corner.y-handle*.5f},b{corner.x+handle*.5f,corner.y+handle*.5f};
+            draw->AddRectFilled(a,b,U(c.handle),handle*.25f);
+            draw->AddRect(a,b,U(c.outline),handle*.25f,ImDrawFlags_None,std::max(1.f,line*.6f));
+        }
+    }
+    if(decor.blocked) {
+        const ImVec2 dot{hi.x,lo.y};
+        draw->AddCircleFilled(dot,size*.12f,U(c.blocked),16);
+        draw->AddCircle(dot,size*.12f,U(c.outline),16,std::max(1.f,line*.5f));
+    }
+}
+StableId StepBand(const char* id,std::span<const StepBandGroup> groups,std::span<const StepBandItem> items,
+                  StableId current,StepBandOptions layout,ComponentOptions o) {
+    if(items.empty()) return 0;
+    ImGui::PushID(id);
+    const Theme* t=o.theme;
+    const ImVec4 text=t?t->semantic.text:ImGui::GetStyleColorVec4(ImGuiCol_Text);
+    const ImVec4 muted=t?t->semantic.textSecondary:ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);
+    const ImVec4 accent=t?t->semantic.accent:ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
+    const ImVec4 background=Solid(layout.background.w>0?layout.background:
+        t?SurfaceZoneColor(*t,SurfaceZone::Chrome):ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
+    const bool dark=ContrastRatio({1,1,1,1},background)>ContrastRatio({0,0,0,1},background);
+    ImFont* font=ImGui::GetFont();
+    ImFont* strong=t&&t->fonts.emphasis?t->fonts.emphasis:font;
+    const float fontSize=ImGui::GetFontSize();
+    const float height=layout.height>0.f?layout.height:fontSize*2.5f;
+    const float width=std::max(1.f,ImGui::GetContentRegionAvail().x);
+    const ImVec2 origin=ImGui::GetCursorScreenPos();
+    auto* draw=ImGui::GetWindowDrawList();
+    const auto U=[](ImVec4 v) { return ImGui::GetColorU32(v); };
+    draw->AddRectFilled(origin,{origin.x+width,origin.y+height},U(background));
+    const float labelSize=fontSize*std::max(.5f,layout.labelScale);
+    const float groupSize=fontSize*.9f;
+    const float inset=std::max(2.f,height*.08f);
+    const float trayPad=height*.14f,trayGap=height*.2f,link=height*.3f;
+    // The plate is the largest thing on the band; grass on top still fits inside the tray.
+    const float plate=height*.62f;
+    const float markGap=height*.14f;
+    // Runs of consecutive items that share a group; an item outside every group forms its own tray.
+    struct Run { std::size_t first=0,end=0; int group=-1; };
+    std::vector<Run> runs;
+    const auto groupOf=[&](std::size_t i) {
+        for(std::size_t g=0;g<groups.size();++g)
+            if(i>=groups[g].first && i<groups[g].first+groups[g].count) return static_cast<int>(g);
+        return -1;
+    };
+    for(std::size_t i=0;i<items.size();++i) {
+        const int g=groupOf(i);
+        if(runs.empty() || g<0 || runs.back().group!=g) runs.push_back({i,i+1,g});
+        else runs.back().end=i+1;
+    }
+    const auto groupLabelWidth=[&](const Run& r) {
+        if(r.group<0 || !*Safe(groups[static_cast<std::size_t>(r.group)].label)) return 0.f;
+        return strong->CalcTextSizeA(groupSize,FLT_MAX,0.f,groups[static_cast<std::size_t>(r.group)].label).x+trayPad*1.4f;
+    };
+    float fixed=trayGap*static_cast<float>(runs.size()-1);
+    float labels=0.f;
+    for(const auto& r:runs) {
+        fixed+=trayPad*2.f+link*static_cast<float>(r.end-r.first-1);
+        labels+=groupLabelWidth(r);
+    }
+    const float count=static_cast<float>(items.size());
+    const bool showGroupLabels=(width-fixed-labels)/count>=plate+markGap+labelSize*2.5f;
+    const float cell=std::max(plate+markGap,(width-fixed-(showGroupLabels?labels:0.f))/count);
+    const bool showLabels=cell>=plate+markGap*2.f+labelSize*1.2f;
+    const PlateMarkStyle marks=layout.marks?*layout.marks:PlateMarkStyle{};
+    const ImVec4 linkDone=Pick(marks.fill,accent);
+    const auto grown=[&](const StepBandItem& item) {
+        return item.growth?*item.growth==PlateGrowth::Grown:item.state==StepMarkState::Completed||item.state==StepMarkState::Skipped;
+    };
+    StableId result=0;
+    float x=origin.x;
+    for(const auto& r:runs) {
+        const ImVec4 groupTint=Solid(r.group>=0 && groups[static_cast<std::size_t>(r.group)].tint.w>0?
+                                     groups[static_cast<std::size_t>(r.group)].tint:accent);
+        const ImVec4 tint=layout.tintTrays?groupTint:background;
+        bool holdsCurrent=false;
+        for(std::size_t i=r.first;i<r.end;++i) holdsCurrent|=items[i].id==current;
+        // The tray of the current step goes the other way from the rest (lighter on a dark band), so it reads as raised.
+        const bool raised=holdsCurrent&&layout.currentTrayContrast>1.14f;
+        const float trayContrast=raised?layout.currentTrayContrast:1.14f;
+        const ImVec4 trayToward=(dark!=raised)?ImVec4{0,0,0,1}:ImVec4{1,1,1,1};
+        const float labelWidth=showGroupLabels?groupLabelWidth(r):0.f;
+        const float trayWidth=trayPad*2.f+labelWidth+cell*static_cast<float>(r.end-r.first)+link*static_cast<float>(r.end-r.first-1);
+        const ImVec2 a{x,origin.y+inset},b{x+trayWidth,origin.y+height-inset};
+        // A tint close to the band's own colour would vanish, so the tray is pushed lighter (or darker on a dark band)
+        // until it stands apart; its edge is pushed toward the text until it reads as a line.
+        const ImVec4 tinted=Mix(background,tint,dark?.2f:.3f);
+        const ImVec4 trayFill=detail::MixToContrast(tinted,trayToward,0.f,trayContrast,{background});
+        const ImVec4 trayEdge=detail::MixToContrast(Mix(background,tint,dark?.55f:.7f),text,0.f,1.5f,{trayFill,background});
+        const float trayRounding=height*.26f;
+        detail::AddSmoothRectFilled(draw,a,b,U(trayFill),trayRounding);
+        detail::AddSmoothRect(draw,a,b,U(trayEdge),trayRounding,std::max(1.f,height*.035f));
+        float cx=x+trayPad;
+        const float centerY=(a.y+b.y)*.5f;
+        if(labelWidth>0.f) {
+            const char* label=groups[static_cast<std::size_t>(r.group)].label;
+            const ImVec4 color=detail::ReadableOn(dark?tint:Mix(tint,text,.35f),trayFill,text);
+            draw->AddText(strong,groupSize,{cx+trayPad*.1f,centerY-groupSize*.5f},U(color),label);
+            cx+=labelWidth;
+        }
+        for(std::size_t i=r.first;i<r.end;++i) {
+            const auto& item=items[i];
+            const bool isCurrent=item.id==current;
+            const ImVec2 ca{cx,a.y+inset*.5f},cb{cx+cell,b.y-inset*.5f};
+            ImGui::SetCursorScreenPos(ca);Push(item.id);
+            ImGui::BeginDisabled(item.disabled || !item.id);
+            bool pressed=ImGui::InvisibleButton("##step",{std::max(1.f,cb.x-ca.x),std::max(1.f,cb.y-ca.y)});
+            const bool hovered=ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled);
+            if(Annotate(item.label,item.description,accessibility::SemanticRole::Tab,
+                        accessibility::SemanticAction::Press,isCurrent,o)) pressed=true;
+            const float cellRounding=height*.2f;
+            if(isCurrent) {
+                detail::AddSmoothRectFilled(draw,ca,cb,U(Mix(trayFill,dark?text:ImVec4{1,1,1,1},dark?.16f:.7f)),cellRounding);
+                detail::AddSmoothRect(draw,ca,cb,U(text),cellRounding,std::max(1.5f,height*.05f));
+            } else if(hovered) {
+                detail::AddSmoothRectFilled(draw,ca,cb,U(Mix(trayFill,text,.08f)),cellRounding);
+            }
+            const float itemPlate=item.optional?plate*std::clamp(layout.optionalScale,.4f,1.f):plate;
+            const ImVec2 markCenter{ca.x+markGap*.6f+plate*.5f,centerY+itemPlate*.12f};
+            char number[24];std::snprintf(number,sizeof(number),"%zu",i+1);
+            DrawPlateMark(draw,markCenter,itemPlate,number,item.state,{item.blocked,item.growth},marks,o);
+            if(showLabels) {
+                const float labelX=markCenter.x+plate*.5f+markGap;
+                ImFont* labelFont=isCurrent?strong:font;
+                const float size=item.optional&&!isCurrent?labelSize*.88f:labelSize;
+                const std::string fitted=FitText(labelFont,size,Safe(item.label),cb.x-labelX-markGap*.5f);
+                const bool quiet=!isCurrent && !grown(item) && !item.growth;
+                draw->AddText(labelFont,size,{labelX,centerY-size*.5f},
+                              U(quiet?detail::ReadableOn(muted,trayFill,text):text),fitted.c_str());
+            }
+            if(hovered) {
+                ImGui::BeginTooltip();ImGui::PushTextWrapPos(fontSize*28.f);
+                ImGui::TextUnformatted(Safe(item.label));
+                if(*Safe(item.description)) { ImGui::PushStyleColor(ImGuiCol_Text,muted);ImGui::TextUnformatted(item.description);ImGui::PopStyleColor(); }
+                ImGui::PopTextWrapPos();ImGui::EndTooltip();
+            }
+            if(pressed && !item.disabled && item.id) result=item.id;
+            ImGui::EndDisabled();Pop();
+            cx+=cell;
+            if(i+1<r.end) {
+                const bool done=grown(item);
+                const bool detour=item.optional || items[i+1].optional;
+                const float y=centerY+plate*.12f;
+                const float thickness=std::max(2.f,height*.07f);
+                const ImU32 color=done?U(linkDone):U(detail::ReadableOn(detail::WithAlpha(muted,.7f),trayFill,text));
+                if(detour) detail::DrawDottedLine(draw,{cx,y},{cx+link,y},color,thickness,thickness*1.8f);
+                else if(done) draw->AddLine({cx-markGap*.2f,y},{cx+link+markGap*.2f,y},color,thickness);
+                else draw->AddLine({cx,y},{cx+link,y},color,std::max(1.f,thickness*.45f));
+                cx+=link;
+            }
+        }
+        x+=trayWidth+trayGap;
+    }
+    ImGui::SetCursorScreenPos({origin.x,origin.y+height});
+    ImGui::Dummy({width,0.f});
+    ImGui::PopID();
+    return result;
+}
 StableId IconToolbar(const char* id,const IconAtlas& atlas,
     std::span<const IconToolbarItem> items,ComponentOptions o) {
     return IconToolbar(id,atlas,items,IconToolbarOptions{},o);
@@ -216,7 +497,21 @@ StableId IconToolbar(const char* id,const IconAtlas& atlas,
 }
 StableId WorkspaceTabs(const char* id,std::span<const WorkspaceTab> tabs,
                        StableId selected,const IconAtlas* icons,ComponentOptions o) {
+    return WorkspaceTabs(id,tabs,selected,WorkspaceTabsOptions{},icons,o);
+}
+StableId WorkspaceTabs(const char* id,std::span<const WorkspaceTab> tabs,
+                       StableId selected,WorkspaceTabsOptions layout,const IconAtlas* icons,ComponentOptions o) {
     ImGui::PushID(id);
+    const ImVec4 themeAccent=o.theme?o.theme->semantic.accent:ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
+    // A tab's own accent may be any colour, so the label on it is the theme's onAccent only while that still reads.
+    const auto onFill=[&](ImVec4 fill) {
+        const ImVec4 on=o.theme?o.theme->semantic.onAccent:ImVec4{1,1,1,1};
+        return ContrastRatio(on,fill)>=4.5f?on:detail::InkOn(fill);
+    };
+    // A tab accent picked for its hue (a pastel on a light theme, say) is moved toward the text until it reads.
+    const auto labelColor=[&](ImVec4 accent) {
+        return detail::ReadableOn(accent,ImGui::GetStyleColorVec4(ImGuiCol_WindowBg),ImGui::GetStyleColorVec4(ImGuiCol_Text));
+    };
     StableId request=0;
     float required=0;
     for(const auto& tab:tabs)
@@ -229,7 +524,9 @@ StableId WorkspaceTabs(const char* id,std::span<const WorkspaceTab> tabs,
         if(imkit::BeginCombo("##workspaces",preview)) {
             for(const auto& tab:tabs) {
                 Push(tab.id);ImGui::BeginDisabled(tab.disabled||!tab.id);
+                if(tab.accent.w>0) ImGui::PushStyleColor(ImGuiCol_Text,labelColor(tab.accent));
                 if(ImGui::Selectable(Safe(tab.label),tab.id==selected))request=tab.id;
+                if(tab.accent.w>0) ImGui::PopStyleColor();
                 Annotate(tab.label,tab.description,accessibility::SemanticRole::Tab,
                          accessibility::SemanticAction::Select,tab.id==selected,o);
                 ImGui::EndDisabled();Pop();
@@ -242,20 +539,31 @@ StableId WorkspaceTabs(const char* id,std::span<const WorkspaceTab> tabs,
             if(i)ImGui::SameLine(0,ImGui::GetStyle().ItemSpacing.x);
             Push(tab.id);ImGui::BeginDisabled(tab.disabled||!tab.id);
             const bool active=tab.id==selected;
-            if(active) {
+            const bool filled=active&&layout.filledSelection;
+            const ImVec4 accent=tab.accent.w>0?tab.accent:themeAccent;
+            int pushed=0;
+            if(filled) {
+                ImGui::PushStyleColor(ImGuiCol_Button,accent);
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered,Mix(accent,onFill(accent),.12f));
+                ImGui::PushStyleColor(ImGuiCol_ButtonActive,Mix(accent,onFill(accent),.2f));
+                ImGui::PushStyleColor(ImGuiCol_Text,onFill(accent));
+                pushed=4;
+            } else if(active) {
                 ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_Header));
                 ImGui::PushStyleColor(ImGuiCol_ButtonHovered,ImGui::GetStyleColorVec4(ImGuiCol_HeaderHovered));
+                pushed=2;
             }
+            if(!filled&&tab.accent.w>0) { ImGui::PushStyleColor(ImGuiCol_Text,labelColor(tab.accent)); ++pushed; }
             const bool hit=icons&&tab.icon!=IconId::Count
                 ?IconLabelButton("tab",*icons,tab.icon,Safe(tab.label),{ImGui::GetFontSize()})
                 :ImGui::Button(Safe(tab.label));
-            if(active)ImGui::PopStyleColor(2);
+            if(pushed)ImGui::PopStyleColor(pushed);
             if(Annotate(tab.label,tab.description,accessibility::SemanticRole::Tab,
                         accessibility::SemanticAction::Select,active,o)||hit)request=tab.id;
-            if(active) {
+            if(active&&!filled) {
                 auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
                 ImGui::GetWindowDrawList()->AddLine({a.x,b.y-1},{b.x,b.y-1},
-                    ImGui::GetColorU32(ImGuiCol_CheckMark),2.f);
+                    tab.accent.w>0?ImGui::GetColorU32(tab.accent):ImGui::GetColorU32(ImGuiCol_CheckMark),2.f);
             }
             if((ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)||ImGui::IsItemFocused())&&*Safe(tab.description))
                 ImGui::SetTooltip("%s",tab.description);
@@ -627,8 +935,14 @@ StableId StepNavigator(const char* id,std::span<const StepItem> items,StableId c
             auto color=ImGui::GetColorU32(tone);
             const bool filled=item.completed||item.id==current;
             const ImVec4 ink=ContrastRatio({1,1,1,1},tone)>=ContrastRatio({0,0,0,1},tone)?ImVec4{1,1,1,1}:ImVec4{0,0,0,1};
-            if(filled) draw->AddCircleFilled(center,radius,color,24);
-            else draw->AddCircle(center,radius,color,24,o.theme?o.theme->stroke.border:1);
+            const float border=layout.badgeBorder>=0?layout.badgeBorder:(o.theme?o.theme->stroke.border:1);
+            if(layout.badge==StepBadgeShape::RoundedSquare) {
+                const ImVec2 lo{center.x-radius,center.y-radius},hi{center.x+radius,center.y+radius};
+                const float rounding=radius*std::clamp(layout.badgeRounding,0.f,1.f);
+                if(filled) draw->AddRectFilled(lo,hi,color,rounding);
+                else draw->AddRect(lo,hi,color,rounding,ImDrawFlags_None,border);
+            } else if(filled) draw->AddCircleFilled(center,radius,color,24);
+            else draw->AddCircle(center,radius,color,24,border);
             const auto markColor=filled?ImGui::GetColorU32(ink):ImGui::GetColorU32(ImGuiCol_Text);
             if(item.completed) detail::DrawCheck(draw,center,radius*1.05f,markColor,1.7f);
             else {
@@ -653,10 +967,10 @@ bool FilterChip(const char* id,const char* label,bool selected,ComponentOptions 
     ImGui::PushID(id);
     const auto pad=ImGui::GetStyle().FramePadding;
     const float check=selected?ImGui::GetFontSize()*1.1f:0.f;
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding,ImGui::GetFrameHeight()*.5f);
+    // Chips share the button corner: a capsule reads as a tag, not as something to press.
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,{pad.x+check*.5f,pad.y});
     bool hit=LabeledButton(label,"",{ImGui::CalcTextSize(Safe(label)).x+(pad.x+check*.5f)*2+check*.5f,0},selected,o);
-    ImGui::PopStyleVar(2);
+    ImGui::PopStyleVar();
     if(selected) {
         const auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
         detail::DrawCheck(ImGui::GetWindowDrawList(),{a.x+pad.x*.6f+check*.55f,(a.y+b.y)*.5f},ImGui::GetFontSize()*.8f,ImGui::GetColorU32(ImGuiCol_CheckMark),1.7f);
@@ -900,6 +1214,11 @@ void StageProgress(const char* id,const StageProgressView& view,ComponentOptions
         for(std::size_t i=0;i<stages.size();++i) {
             const auto& stage=stages[i];const float x=origin.x+step*(static_cast<float>(i)+.5f);
             const ImVec4 color=ProgressStatusColor(stage.status,o);
+            if(view.marks) {
+                char number[24];std::snprintf(number,sizeof(number),"%zu",i+1);
+                DrawPlateMark(draw,{x,centerY+radius*.15f},radius*1.9f,number,StageMark(stage.status),{},*view.marks,o);
+                continue;
+            }
             if(stage.status==ProgressStatus::Queued) draw->AddCircle({x,centerY},radius,ImGui::GetColorU32(color),24,2.f);
             else draw->AddCircleFilled({x,centerY},radius,ImGui::GetColorU32(color),24);
             if(outlined) draw->AddCircle({x,centerY},radius,outlineColor,24,outline);
@@ -929,6 +1248,79 @@ void StageProgress(const char* id,const StageProgressView& view,ComponentOptions
         }
     }
     ImGui::EndGroup();ImGui::PopID();
+}
+namespace {
+bool MotionAllowed(ComponentOptions o) {
+    return !o.theme||(o.theme->motion.enabled&&!o.theme->motion.reducedMotion);
+}
+ImVec4 TextColor(ComponentOptions o) { return o.theme?o.theme->semantic.text:ImGui::GetStyleColorVec4(ImGuiCol_Text); }
+ImVec4 SecondaryColor(ComponentOptions o) {
+    return o.theme?o.theme->semantic.textSecondary:ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);
+}
+// Height of StageProgress when it is not compact: the marker row, spacing, and one line of labels.
+float StageRowHeight() {
+    const auto& style=ImGui::GetStyle();
+    return std::max(12.f,ImGui::GetFrameHeight()*.75f)+style.ItemSpacing.y*2.f+style.CellPadding.y*2.f+
+           ImGui::GetTextLineHeight();
+}
+} // namespace
+void WaitCard(const char* id,const WaitCardView& view,ComponentOptions o) {
+    const auto& style=ImGui::GetStyle();
+    const float width=std::max(1.f,ImGui::GetContentRegionAvail().x);
+    const float innerWidth=std::max(1.f,width-style.WindowPadding.x*2.f-style.ChildBorderSize*2.f);
+    const float valueSize=ImGui::GetFontSize()*1.35f;
+    const float titleHeight=std::max(valueSize,ImGui::GetTextLineHeight());
+    // The card shows the value itself, so the track does not repeat it.
+    ProgressTrackView track=view.track;
+    if(*Safe(view.value)) track.hideValue=true;
+    float contentHeight=titleHeight+style.ItemSpacing.y*2.f+detail::ProgressTrackContentHeight(track,innerWidth,o);
+    if(*Safe(view.meta)) contentHeight+=style.ItemSpacing.y+ImGui::CalcTextSize(view.meta,nullptr,false,innerWidth).y;
+    if(!view.stages.empty()) contentHeight+=style.ItemSpacing.y+StageRowHeight();
+    const float cardHeight=contentHeight+style.WindowPadding.y*2.f+style.ChildBorderSize*2.f;
+    ImGui::PushID(id);if(view.id) Push(view.id);
+    const bool running=view.status==ProgressStatus::Running;
+    const bool animate=MotionAllowed(o);
+    const float time=static_cast<float>(std::fmod(std::max(0.0,ImGui::GetTime()),1000.0));
+    const bool visible=BeginCard("card",{0,cardHeight},o);
+    if(visible) {
+        auto* draw=ImGui::GetWindowDrawList();
+        const ImVec4 status=ProgressStatusColor(view.status,o);
+        // Title row: a live dot that pulses while running, the title, and the value large on the right.
+        const ImVec2 row=ImGui::GetCursorScreenPos();
+        const float dot=std::max(3.f,ImGui::GetFontSize()*.22f);
+        const float pulse=running&&animate?.5f+.5f*std::sin(time*4.5f):0.f;
+        const ImVec2 dotCenter{row.x+dot,row.y+titleHeight*.5f};
+        if(pulse>0.f) draw->AddCircleFilled(dotCenter,dot*(1.f+.9f*pulse),ImGui::GetColorU32(detail::WithAlpha(status,.35f*(1.f-pulse))),20);
+        draw->AddCircleFilled(dotCenter,dot,ImGui::GetColorU32(status),20);
+        const char* value=Safe(view.value);
+        ImFont* valueFont=o.theme&&o.theme->fonts.emphasis?o.theme->fonts.emphasis:ImGui::GetFont();
+        const ImVec2 valueExtent=*value?valueFont->CalcTextSizeA(valueSize,FLT_MAX,0.f,value):ImVec2{0,0};
+        const float titleX=row.x+dot*2.f+style.ItemSpacing.x;
+        const float titleRight=std::max(titleX,row.x+innerWidth-valueExtent.x-style.ItemSpacing.x);
+        const ImVec4 titleClip{titleX,row.y,titleRight,row.y+titleHeight};
+        draw->AddText(ImGui::GetFont(),ImGui::GetFontSize(),{titleX,row.y+(titleHeight-ImGui::GetFontSize())*.5f},
+                      ImGui::GetColorU32(TextColor(o)),Safe(view.title),nullptr,0.f,&titleClip);
+        if(*value) draw->AddText(valueFont,valueSize,{row.x+innerWidth-valueExtent.x,row.y+(titleHeight-valueExtent.y)*.5f},
+                                 ImGui::GetColorU32(TextColor(o)),value);
+        ImGui::Dummy({innerWidth,titleHeight});
+        ProgressTrack("track",track,o);
+        if(*Safe(view.meta)) {
+            ImGui::PushStyleColor(ImGuiCol_Text,SecondaryColor(o));
+            ImGui::TextWrapped("%s",view.meta);
+            ImGui::PopStyleColor();
+        }
+        if(!view.stages.empty()) StageProgress("stages",{view.stages,view.currentStage,view.stageMarks},o);
+    }
+    EndCard();
+    if(running) {
+        // The outline breathes slowly while the work runs; a still outline under reduced motion.
+        const float breathe=animate?.5f+.5f*std::sin(time*2.4f):.5f;
+        ImVec4 line=ProgressStatusColor(view.status,o);line.w=.25f+.45f*breathe;
+        ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(),ImGui::GetItemRectMax(),ImGui::GetColorU32(line),
+                                            style.ChildRounding,ImDrawFlags_None,1.5f);
+    }
+    if(view.id) Pop();
+    ImGui::PopID();
 }
 StableId TaskProgressCard(const char* id,const TaskProgressCardView& view,TaskProgressCardOptions layout,ComponentOptions o) {
     const auto& style=ImGui::GetStyle();

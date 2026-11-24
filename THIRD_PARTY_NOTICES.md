@@ -66,7 +66,7 @@ For any future source or asset reuse, review the exact file's license and preser
 - Commit: `367b2c24f399988ddafc0bb4628da0106bcc09be`
 - License: MIT
 - Used files: core sources, public headers, demo source, and the official GLFW/OpenGL3 backend
-- Modifications: none. ImKit uses Dear ImGui's public API only and does not use `imgui_internal.h`. The Gallery builds the upstream sources unmodified, and applications supply their own copy.
+- Modifications: none. ImKit's public headers use only Dear ImGui's public API; a small number of internal `.cpp` implementation files include `imgui_internal.h` at the pinned upstream `docking` commit (reading the active context via `GetCurrentContext()`). The Gallery builds the upstream sources unmodified, and applications supply their own copy.
 - Thanks to Omar Cornut and the Dear ImGui contributors and sponsors, whose work ImKit builds on.
 
 The MIT License (MIT)
@@ -133,6 +133,6 @@ The 42 additional design-system icons and the 32 LED and live-surface icons (Led
 `tools/design_icons.py`, distributed under the repository MIT license. No third-party
 icon shapes were imported. Seven raster levels (12–64px) are generated from the recorded sources.
 
-## ImKit 4.0 promotional film
+## ImKit 4.2 promotional film
 
-The motion graphics and Japanese and English captions are original project assets distributed under the repository MIT license. UI footage is recorded from the native ImKit Gallery and Node Editor companion. Rasterized Inter and Noto Sans JP typography retain the licenses listed above; the film does not redistribute font binaries. The film's music is **"Laserpack" by Kevin MacLeod ft. DarkNES** (incompetech.com, https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1800018), licensed under Creative Commons: By Attribution 4.0 License (https://creativecommons.org/licenses/by/4.0/). It is not covered by the repository's MIT license. The track is trimmed to the film's length from its first downbeat and faded out; it is not time-stretched. The credit appears on the film's end card. `tools/media/music.py` can synthesize an original replacement score (`film.py --synth`). Reproduction scripts: `tools/media/capture.py`, `tools/media/film.py`, `tools/media/music.py` and `tools/media/verify.py`.
+The motion graphics, Japanese and English captions, and the 96-bar original 128 BPM synthesized score (`tools/media/music.py`) are original project assets distributed under the repository MIT license. UI footage is recorded from the native ImKit Gallery and Node Editor companion. Rasterized Inter and Noto Sans JP typography retain the licenses listed above; the film does not redistribute font binaries. Japanese and English narration tracks were generated with Gemini Flash TTS (`Aoede` and `Charon`), and full media provenance is recorded in `website/public/media/provenance.json`. Reproduction scripts: `tools/media/capture.py`, `tools/media/film.py`, `tools/media/music.py`, `tools/media/generate_gemini_assets.py`, `tools/media/generate_studio_backdrops.py` and `tools/media/verify.py`. (Earlier 4.0 and 4.1 films used "Laserpack" under CC BY 4.0 and are superseded in 4.2.)

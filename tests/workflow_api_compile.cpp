@@ -2,7 +2,8 @@
 #include <imkit/editor_canvas.h>
 namespace {
 auto volatile grouped=&imkit::GroupedStepNavigator;
-auto volatile workspaceTabs=&imkit::WorkspaceTabs;
+imkit::StableId (*volatile workspaceTabs)(const char*,std::span<const imkit::WorkspaceTab>,imkit::StableId,const imkit::IconAtlas*,imkit::ComponentOptions)=&imkit::WorkspaceTabs;
+imkit::StableId (*volatile workspaceTabsStyled)(const char*,std::span<const imkit::WorkspaceTab>,imkit::StableId,imkit::WorkspaceTabsOptions,const imkit::IconAtlas*,imkit::ComponentOptions)=&imkit::WorkspaceTabs;
 imkit::StableId (*volatile choiceGroup)(const char*,const char*,std::span<const imkit::ChoiceItem>,imkit::StableId,imkit::ChoiceGroupOptions,imkit::ComponentOptions)=&imkit::ChoiceGroup;
 auto volatile hierarchyGroup=&imkit::HierarchyGroupHeader;
 auto volatile hierarchyRow=&imkit::HierarchyRow;
@@ -29,6 +30,7 @@ bool (*volatile progress)(const char*,const imkit::ProgressView&,imkit::Progress
 void (*volatile progressTrackView)(const char*,const imkit::ProgressTrackView&,imkit::ComponentOptions)=&imkit::ProgressTrack;
 void (*volatile progressTrackValue)(const char*,float,imkit::ProgressStatus,imkit::ComponentOptions)=&imkit::ProgressTrack;
 void (*volatile stageProgress)(const char*,const imkit::StageProgressView&,imkit::ComponentOptions)=&imkit::StageProgress;
+void (*volatile waitCard)(const char*,const imkit::WaitCardView&,imkit::ComponentOptions)=&imkit::WaitCard;
 imkit::StableId (*volatile taskProgressCard)(const char*,const imkit::TaskProgressCardView&,imkit::TaskProgressCardOptions,imkit::ComponentOptions)=&imkit::TaskProgressCard;
 void (*volatile circularProgress)(const char*,const imkit::CircularProgressView&,imkit::CircularProgressOptions,imkit::ComponentOptions)=&imkit::CircularProgress;
 auto volatile card=&imkit::BeginCard;auto volatile endCard=&imkit::EndCard;
@@ -48,9 +50,37 @@ auto volatile bottomActionBar=&imkit::BottomActionBar;auto volatile beginDiagnos
 auto volatile endDiagnostics=&imkit::EndDiagnosticsDrawer;auto volatile themePicker=&imkit::ThemePicker;
 auto volatile resolveRightPanel=&imkit::ResolveRightSidePanelLayout;
 auto volatile rightPanelHandle=&imkit::RightSidePanelHandle;
+auto volatile externalControlStyle=&imkit::MakeExternalControlStyle;
+auto volatile externalControl=&imkit::ExternalControlIndicator;
+void (*volatile plateMark)(ImDrawList*,ImVec2,float,const char*,imkit::StepMarkState,const imkit::PlateMarkDecor&,const imkit::PlateMarkStyle&,imkit::ComponentOptions)=&imkit::DrawPlateMark;
+imkit::StableId (*volatile stepBand)(const char*,std::span<const imkit::StepBandGroup>,std::span<const imkit::StepBandItem>,imkit::StableId,imkit::StepBandOptions,imkit::ComponentOptions)=&imkit::StepBand;
+auto volatile zoneColor=&imkit::SurfaceZoneColor;auto volatile pushZone=&imkit::PushSurfaceZone;auto volatile popZone=&imkit::PopSurfaceZone;
+auto volatile pushRole=&imkit::PushWindowRole;auto volatile popRole=&imkit::PopWindowRole;
+auto volatile dockTabBand=&imkit::DockTabBand;
+auto volatile pushFloating=&imkit::PushFloatingPanel;auto volatile popFloating=&imkit::PopFloatingPanel;
 }
 int main() {
+    imkit::StepNavigatorOptions stepLayout;stepLayout.badge=imkit::StepBadgeShape::RoundedSquare;stepLayout.badgeRounding=.3f;stepLayout.badgeBorder=2;
+    imkit::ProgressLane lanes[2]{{"PJ 0",1.f,imkit::ProgressStatus::Succeeded},{"PJ 1",.4f,imkit::ProgressStatus::Running}};
+    imkit::WaitCardView wait;wait.track.segments=3;wait.track.lanes=lanes;wait.track.barHeight=10.f;
+    imkit::ComponentOptions call;call.callToAction=true;
+    if(!call.callToAction||wait.track.lanes.size()!=2||!waitCard) return 1;
+    imkit::PlateMarkStyle plate;plate.gridLines=2;plate.rounding=.12f;wait.stageMarks=&plate;
+    imkit::StageProgressView stages;stages.marks=&plate;
+    imkit::StepBandGroup bandGroups[1]{{1,"Setup",0,2,{}}};
+    imkit::StepBandItem bandItems[2]{{1,"One","",imkit::StepMarkState::Completed},{2,"Two","",imkit::StepMarkState::Current,true}};
+    imkit::StepBandOptions band;band.marks=&plate;band.height=36.f;band.optionalScale=.72f;band.tintTrays=false;band.currentTrayContrast=1.4f;
+    bandItems[0].growth=imkit::PlateGrowth::Grown;bandItems[1].growth=imkit::PlateGrowth::Sprout;bandItems[1].optional=true;
+    imkit::PlateMarkDecor decor;decor.blocked=true;decor.growth=imkit::PlateGrowth::Sprout;
+    if(!decor.blocked||!bandItems[1].optional||*bandItems[0].growth!=imkit::PlateGrowth::Grown) return 1;
+    imkit::Theme theme=imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
+    imkit::WorkspaceTab accentTab;accentTab.accent={.2f,.6f,.9f,1};imkit::WorkspaceTabsOptions tabLook;tabLook.filledSelection=true;
+    theme.fonts.numeric=nullptr;const imkit::TextRole numericRole=imkit::TextRole::Numeric;
+    if(accentTab.accent.w<=0||!tabLook.filledSelection||numericRole!=imkit::TextRole::Numeric||theme.zones.roles[0].head.w<=0||
+       imkit::ContrastRatio(theme.zones.roles[0].head,theme.zones.roles[0].body)<1.25f||
+       !(workspaceTabs&&workspaceTabsStyled&&dockTabBand&&pushFloating&&popFloating)) return 1;
+    if(!stages.marks||sizeof(bandGroups)==0||!bandItems[1].blocked||band.height<=0||theme.zones.monitor.w<=0||theme.zones.inspector.w<=0||theme.zones.header.w<=0||theme.zones.chromeCanvas.w<=0||band.tintTrays||!(plateMark&&stepBand&&zoneColor&&pushZone&&popZone)) return 1;
     imkit::StableId ids[1];imkit::RequestBuffer requests{ids};
     imkit::editor::TileEvent events[1];imkit::editor::TileEventBuffer out{events};
-    return !(grouped&&workspaceTabs&&choiceGroup&&hierarchyGroup&&hierarchyRow&&inspectorCard&&endInspectorCard&&collapsibleInspectorCard&&endCollapsibleInspectorCard&&settingToggleRow&&iconToolbar&&labeledIconToolbar&&iconAction&&step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&progressTrackView&&progressTrackValue&&stageProgress&&taskProgressCard&&card&&endCard&&section&&multi&&help&&validation&&toolbar&&valid&&placement&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&appBar&&workspaceHeader&&inspectorSection&&advancedSection&&bottomActionBar&&beginDiagnostics&&endDiagnostics&&themePicker&&resolveRightPanel&&rightPanelHandle&&requests.Push(1)&&out.Push({}));
+    return !(grouped&&workspaceTabs&&choiceGroup&&hierarchyGroup&&hierarchyRow&&inspectorCard&&endInspectorCard&&collapsibleInspectorCard&&endCollapsibleInspectorCard&&settingToggleRow&&iconToolbar&&labeledIconToolbar&&iconAction&&step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&progressTrackView&&progressTrackValue&&stageProgress&&taskProgressCard&&card&&endCard&&section&&multi&&help&&validation&&toolbar&&valid&&placement&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&appBar&&workspaceHeader&&inspectorSection&&advancedSection&&bottomActionBar&&beginDiagnostics&&endDiagnostics&&themePicker&&resolveRightPanel&&rightPanelHandle&&externalControlStyle&&externalControl&&requests.Push(1)&&out.Push({}));
 }

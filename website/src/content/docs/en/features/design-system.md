@@ -31,7 +31,7 @@ theme.semantic.accent = ImVec4(0.2f, 0.6f, 1.0f, 1.0f); // change a token
 imkit::ResolveTheme(theme);                             // rebuild the rendering projections
 ```
 
-- `MakeTheme(ThemePreset)` builds one of the 13 presets. `MakeTheme(scheme, contrast, density)` builds a base theme. `MakePrecisionTheme` remains available.
+- `MakeTheme(ThemePreset)` builds one of the 14 presets. `MakeTheme(scheme, contrast, density)` builds a base theme. `MakePrecisionTheme` remains available.
 - `SetDensity` switches `Compact`, `Comfortable` and `Touch` (24, 30 and 44 px controls) without changing typography.
 - Edit `semantic`, `typography`, `radius`, `stroke`, `elevation` and `opacity`, then call `ResolveTheme`. The legacy `colors` and `metrics` are rendering projections for existing editor code; do not edit both sets independently.
 - Host font pointers are never loaded or freed by ImKit.

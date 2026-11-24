@@ -3,7 +3,7 @@ if(POLICY CMP0141)
     cmake_policy(SET CMP0141 NEW)
 endif()
 
-project(imgui-modern-kit VERSION 4.1.0 LANGUAGES CXX)
+project(imgui-modern-kit VERSION 4.2.0 LANGUAGES CXX)
 
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(IMKIT_IS_TOP_LEVEL ON)
@@ -27,6 +27,11 @@ endif()
 option(IMKIT_BUILD_WINDOW_FRAME_WIN32 "Build the borrowed HWND window-frame adapter" ${IMKIT_WINDOW_FRAME_WIN32_DEFAULT})
 option(IMKIT_BUILD_WINDOW_FRAME_MACOS "Build the borrowed NSWindow window-frame adapter" ${IMKIT_WINDOW_FRAME_MACOS_DEFAULT})
 option(IMKIT_BUILD_WINDOW_FRAME_DEMO_MACOS "Build the lightweight macOS window-frame demo" OFF)
+option(IMKIT_ENABLE_PCH "Use precompiled headers for faster local development builds" OFF)
+
+function(imkit_configure_target_build target is_executable)
+    set_property(TARGET "${target}" PROPERTY MSVC_DEBUG_INFORMATION_FORMAT Embedded)
+endfunction()
 
 set(IMKIT_FONT_ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets/fonts"
     CACHE INTERNAL "ImKit optional host font assets" FORCE)
@@ -58,7 +63,22 @@ if(NOT TARGET "${IMKIT_IMGUI_TARGET}")
         "Create the Dear ImGui target before adding imgui-modern-kit.")
 endif()
 
-add_library(imkit STATIC src/widgets.cpp src/theme.cpp src/theme_text.cpp src/decor.cpp src/components.cpp src/icons.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp src/toast.cpp src/charts.cpp src/range_slider.cpp src/ptz.cpp src/shell.cpp src/window_frame.cpp)
+# Easing and keyframe-track arithmetic with no Dear ImGui dependency (imkit/easing.h, imkit/motion_curve.h).
+add_library(imkit_motion STATIC src/easing.cpp src/motion_curve.cpp)
+add_library(imkit::motion ALIAS imkit_motion)
+target_compile_features(imkit_motion PUBLIC cxx_std_20)
+target_include_directories(imkit_motion
+    PUBLIC
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+        "$<INSTALL_INTERFACE:include>"
+)
+set_target_properties(imkit_motion PROPERTIES EXPORT_NAME motion DEBUG_POSTFIX d)
+imkit_configure_target_build(imkit_motion FALSE)
+target_compile_options(imkit_motion PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
+target_compile_options(imkit_motion PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/pathmap:${CMAKE_CURRENT_SOURCE_DIR}=imkit>")
+target_compile_options(imkit_motion PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/experimental:deterministic>)
+
+add_library(imkit STATIC src/part_style.cpp src/widgets.cpp src/widgets_controls.cpp src/widgets_containers.cpp src/theme.cpp src/theme_text.cpp src/decor.cpp src/motion.cpp src/components.cpp src/component_internal.cpp src/draw_internal.cpp src/icons.cpp src/icons_data.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp src/toast.cpp src/charts.cpp src/range_slider.cpp src/transfer_curve.cpp src/ptz.cpp src/shell.cpp src/window_frame.cpp)
 add_library(imkit::imkit ALIAS imkit)
 
 target_compile_features(imkit PUBLIC cxx_std_20)
@@ -67,9 +87,9 @@ target_include_directories(imkit
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
         "$<INSTALL_INTERFACE:include>"
 )
-target_link_libraries(imkit PUBLIC "$<BUILD_INTERFACE:${IMKIT_IMGUI_TARGET}>" "$<INSTALL_INTERFACE:imkit::host_imgui>")
+target_link_libraries(imkit PUBLIC imkit_motion "$<BUILD_INTERFACE:${IMKIT_IMGUI_TARGET}>" "$<INSTALL_INTERFACE:imkit::host_imgui>")
 set_target_properties(imkit PROPERTIES DEBUG_POSTFIX d)
-set_property(TARGET imkit PROPERTY MSVC_DEBUG_INFORMATION_FORMAT Embedded)
+imkit_configure_target_build(imkit FALSE)
 target_compile_options(imkit PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
 target_compile_options(imkit PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/pathmap:${CMAKE_CURRENT_SOURCE_DIR}=imkit>")
 target_compile_options(imkit PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/experimental:deterministic>)
@@ -94,6 +114,7 @@ if(IMKIT_BUILD_ACCESSIBILITY_WIN32)
     add_library(imkit_accessibility_win32 STATIC src/accessibility_win32.cpp)
     add_library(imkit::accessibility_win32 ALIAS imkit_accessibility_win32)
     set_target_properties(imkit_accessibility_win32 PROPERTIES EXPORT_NAME accessibility_win32 DEBUG_POSTFIX d)
+    imkit_configure_target_build(imkit_accessibility_win32 FALSE)
     target_link_libraries(imkit_accessibility_win32 PUBLIC imkit::imkit PRIVATE uiautomationcore oleaut32 user32)
     target_compile_definitions(imkit_accessibility_win32 PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
     install(TARGETS imkit_accessibility_win32 EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
@@ -118,6 +139,7 @@ if(IMKIT_BUILD_WINDOW_FRAME_WIN32)
     add_library(imkit_window_frame_win32 STATIC src/window_frame_win32.cpp)
     add_library(imkit::window_frame_win32 ALIAS imkit_window_frame_win32)
     set_target_properties(imkit_window_frame_win32 PROPERTIES EXPORT_NAME window_frame_win32 DEBUG_POSTFIX d)
+    imkit_configure_target_build(imkit_window_frame_win32 FALSE)
     target_link_libraries(imkit_window_frame_win32 PUBLIC imkit::imkit PRIVATE comctl32 dwmapi user32)
     target_compile_definitions(imkit_window_frame_win32 PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
     install(TARGETS imkit_window_frame_win32 EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
@@ -138,18 +160,21 @@ endif()
 add_library(imkit_editor_core STATIC src/editor_core.cpp src/editor_canvas.cpp)
 add_library(imkit::editor_core ALIAS imkit_editor_core)
 set_target_properties(imkit_editor_core PROPERTIES EXPORT_NAME editor_core DEBUG_POSTFIX d)
+imkit_configure_target_build(imkit_editor_core FALSE)
 target_link_libraries(imkit_editor_core PUBLIC imkit::imkit)
 target_compile_options(imkit_editor_core PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
 install(TARGETS imkit_editor_core EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-add_library(imkit_video STATIC src/video.cpp)
+add_library(imkit_video STATIC src/video.cpp src/video_edit.cpp src/video_monitors.cpp)
 add_library(imkit::video ALIAS imkit_video)
 set_target_properties(imkit_video PROPERTIES EXPORT_NAME video DEBUG_POSTFIX d)
+imkit_configure_target_build(imkit_video FALSE)
 target_link_libraries(imkit_video PUBLIC imkit::editor_core)
 target_compile_options(imkit_video PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
 install(TARGETS imkit_video EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 add_library(imkit_cg STATIC src/cg.cpp src/preview.cpp)
 add_library(imkit::cg ALIAS imkit_cg)
 set_target_properties(imkit_cg PROPERTIES EXPORT_NAME cg DEBUG_POSTFIX d)
+imkit_configure_target_build(imkit_cg FALSE)
 target_link_libraries(imkit_cg PUBLIC imkit::editor_core)
 target_compile_options(imkit_cg PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
 add_library(imkit_editor_suite INTERFACE)
@@ -161,13 +186,19 @@ install(TARGETS imkit_cg imkit_editor_suite EXPORT imkitTargets ARCHIVE DESTINAT
 add_library(imkit_show STATIC src/show/common.cpp src/show/controls.cpp src/show/live.cpp src/show/rules.cpp src/show/rules_ui.cpp src/show/schedule.cpp src/show/schedule_ui.cpp src/show/beat.cpp src/show/script.cpp src/show/image.cpp src/show/surface.cpp src/show/led_color.cpp src/show/led_view.cpp src/show/address.cpp)
 add_library(imkit::show ALIAS imkit_show)
 set_target_properties(imkit_show PROPERTIES EXPORT_NAME show DEBUG_POSTFIX d)
+imkit_configure_target_build(imkit_show FALSE)
 target_link_libraries(imkit_show PUBLIC imkit::editor_core)
 target_include_directories(imkit_show PRIVATE src)
 target_compile_options(imkit_show PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
+if(IMKIT_ENABLE_PCH AND IMKIT_IS_TOP_LEVEL AND NOT APPLE)
+    target_precompile_headers(imkit_show PRIVATE
+        <imgui.h> <imkit/theme.h> <imkit/components.h> <algorithm> <array> <cmath> <span>)
+endif()
 install(TARGETS imkit_show EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 add_library(imkit_preview_opengl3 STATIC src/preview_opengl3.cpp)
 add_library(imkit::preview_opengl3 ALIAS imkit_preview_opengl3)
 set_target_properties(imkit_preview_opengl3 PROPERTIES EXPORT_NAME preview_opengl3 DEBUG_POSTFIX d)
+imkit_configure_target_build(imkit_preview_opengl3 FALSE)
 target_link_libraries(imkit_preview_opengl3 PUBLIC imkit::cg)
 install(TARGETS imkit_preview_opengl3 EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 if(APPLE)
@@ -178,7 +209,7 @@ if(APPLE)
     target_link_libraries(imkit_preview_metal PUBLIC imkit::cg PRIVATE "-framework Metal" "-framework QuartzCore")
     install(TARGETS imkit_preview_metal EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
-install(TARGETS imkit EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS imkit imkit_motion EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(DIRECTORY include/imkit DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     PATTERN "window_frame_win32.h" EXCLUDE
     PATTERN "window_frame_macos.h" EXCLUDE
@@ -243,7 +274,12 @@ if(IMKIT_BUILD_GALLERY)
     if(APPLE)
         set(IMKIT_GALLERY_MAIN examples/gallery/main_macos.mm)
     else()
-        set(IMKIT_GALLERY_MAIN examples/gallery/main.cpp examples/design_gallery/capture.cpp)
+        set(IMKIT_GALLERY_MAIN
+            examples/gallery/main.cpp
+            examples/gallery/gallery_verify.cpp
+            examples/gallery/gallery_capture_motion.cpp
+            examples/gallery/gallery_verify_models.cpp
+            examples/design_gallery/capture.cpp)
     endif()
     add_executable(imkit_gallery
         ${IMKIT_GALLERY_MAIN}
@@ -251,6 +287,7 @@ if(IMKIT_BUILD_GALLERY)
         examples/gallery/design_pages.cpp
         examples/gallery/workflow_pages.cpp
         examples/gallery/toast_page.cpp
+        examples/gallery/glow_page.cpp
         examples/gallery/charts_page.cpp
         examples/gallery/ptz_page.cpp
         examples/gallery/show_pages.cpp
@@ -265,14 +302,22 @@ if(IMKIT_BUILD_GALLERY)
         examples/gallery/look_pages.cpp
         examples/gallery/start_page.cpp
         examples/gallery/editor_workspaces.cpp
+        examples/gallery/editor_workspaces_events.cpp
+        examples/gallery/editor_video_workspace.cpp
+        examples/gallery/editor_cg_workspace.cpp
         examples/gallery/allocation_probe.cpp
         examples/gallery/gallery.h
     )
     target_compile_features(imkit_gallery PRIVATE cxx_std_20)
+    imkit_configure_target_build(imkit_gallery TRUE)
     set_target_properties(imkit_gallery PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/catalog")
     target_compile_options(imkit_gallery PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
     target_compile_definitions(imkit_gallery PRIVATE $<$<BOOL:${WIN32}>:NOMINMAX;WIN32_LEAN_AND_MEAN>)
     target_include_directories(imkit_gallery PRIVATE examples/gallery)
+    if(IMKIT_ENABLE_PCH AND IMKIT_IS_TOP_LEVEL AND NOT APPLE)
+        target_precompile_headers(imkit_gallery PRIVATE
+            <imgui.h> <imkit/theme.h> <imkit/components.h> <algorithm> <array> <cmath> <cstdint> <span> <string> <string_view> <vector>)
+    endif()
     target_link_libraries(imkit_gallery
         PRIVATE
             imkit::imkit
@@ -321,6 +366,13 @@ endif()
 
 if(IMKIT_BUILD_TESTS)
     include(CTest)
+    if(IMKIT_ENABLE_PCH AND IMKIT_IS_TOP_LEVEL AND NOT APPLE)
+        add_library(imkit_test_pch STATIC tests/pch_anchor.cpp)
+        target_link_libraries(imkit_test_pch PRIVATE imkit::imkit)
+        imkit_configure_target_build(imkit_test_pch FALSE)
+        target_precompile_headers(imkit_test_pch PRIVATE
+            <imgui.h> <imkit/theme.h> <algorithm> <array> <cmath> <cstdio> <string_view>)
+    endif()
     add_executable(imkit_toast_test tests/toast.cpp)
     target_link_libraries(imkit_toast_test PRIVATE imkit::imkit)
     add_test(NAME imkit.toast COMMAND imkit_toast_test)
@@ -431,15 +483,73 @@ if(IMKIT_BUILD_TESTS)
     add_executable(imkit_theme_test tests/theme.cpp)
     target_link_libraries(imkit_theme_test PRIVATE imkit::imkit)
     add_test(NAME imkit.theme COMMAND imkit_theme_test)
+    add_executable(imkit_part_style_test tests/part_style.cpp)
+    target_link_libraries(imkit_part_style_test PRIVATE imkit::imkit)
+    add_test(NAME imkit.part_style COMMAND imkit_part_style_test)
+    add_executable(imkit_transfer_curve_test tests/transfer_curve.cpp)
+    target_link_libraries(imkit_transfer_curve_test PRIVATE imkit::imkit)
+    add_test(NAME imkit.transfer_curve COMMAND imkit_transfer_curve_test)
     add_executable(imkit_decor_test tests/decor.cpp)
     target_link_libraries(imkit_decor_test PRIVATE imkit::imkit)
     add_test(NAME imkit.decor COMMAND imkit_decor_test)
+    add_executable(imkit_motion_test tests/motion.cpp)
+    target_link_libraries(imkit_motion_test PRIVATE imkit::imkit)
+    add_test(NAME imkit.motion COMMAND imkit_motion_test)
+    # imkit::motion alone must build and link without Dear ImGui.
+    add_executable(imkit_motion_curve_api_compile tests/motion_curve_api_compile.cpp)
+    target_link_libraries(imkit_motion_curve_api_compile PRIVATE imkit::motion)
+    add_test(NAME imkit.motion_curve_api_compile COMMAND imkit_motion_curve_api_compile)
 
     add_executable(imkit_context_smoke tests/context_smoke.cpp)
     target_compile_features(imkit_context_smoke PRIVATE cxx_std_20)
     target_link_libraries(imkit_context_smoke PRIVATE imkit::imkit)
 
     add_test(NAME imkit.context_smoke COMMAND imkit_context_smoke)
+
+    set(_imkit_all_test_executables
+        imkit_toast_test imkit_toast_api_compile
+        imkit_charts_test imkit_charts_api_compile
+        imkit_ptz_test imkit_ptz_api_compile
+        imkit_show_controls_test imkit_show_live_test imkit_show_rules_test
+        imkit_show_schedule_test imkit_show_beat_test imkit_show_api_compile
+        imkit_show_script_test imkit_show_surface_test imkit_show_image_test imkit_show_led_test
+        imkit_workflow_test imkit_workflow_api_compile
+        imkit_design_system_test imkit_design_api_compile
+        imkit_editor_core_test imkit_video_test imkit_cg_test imkit_editor_api_compile
+        imkit_icons_test imkit_api_compile
+        imkit_window_frame_test imkit_window_frame_api_compile
+        imkit_theme_test imkit_part_style_test imkit_transfer_curve_test
+        imkit_decor_test imkit_motion_test imkit_motion_curve_api_compile
+        imkit_context_smoke
+    )
+    if(TARGET imkit_accessibility_win32_test)
+        list(APPEND _imkit_all_test_executables imkit_accessibility_win32_test)
+    endif()
+    if(TARGET imkit_accessibility_macos_test)
+        list(APPEND _imkit_all_test_executables imkit_accessibility_macos_test)
+    endif()
+    if(TARGET imkit_preview_metal_api_compile)
+        list(APPEND _imkit_all_test_executables imkit_preview_metal_api_compile)
+    endif()
+    foreach(_t IN LISTS _imkit_all_test_executables)
+        imkit_configure_target_build("${_t}" TRUE)
+    endforeach()
+
+    if(TARGET imkit_test_pch)
+        set(_imkit_pch_unit_tests
+            imkit_toast_test imkit_charts_test imkit_ptz_test
+            imkit_show_controls_test imkit_show_live_test imkit_show_rules_test
+            imkit_show_schedule_test imkit_show_beat_test imkit_show_script_test
+            imkit_show_surface_test imkit_show_image_test imkit_show_led_test
+            imkit_workflow_test imkit_design_system_test imkit_editor_core_test
+            imkit_video_test imkit_cg_test imkit_icons_test imkit_window_frame_test
+            imkit_theme_test imkit_part_style_test imkit_transfer_curve_test
+            imkit_decor_test imkit_motion_test imkit_context_smoke
+        )
+        foreach(_t IN LISTS _imkit_pch_unit_tests)
+            target_precompile_headers("${_t}" REUSE_FROM imkit_test_pch)
+        endforeach()
+    endif()
 
     configure_file(
         tests/consumer/run_consumer.cmake.in

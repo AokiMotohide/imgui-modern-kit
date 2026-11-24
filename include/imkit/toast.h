@@ -3,7 +3,7 @@
 #include <array>
 
 namespace imkit {
-enum class ToastPosition { TopLeft, TopCenter, TopRight, BottomLeft, BottomCenter, BottomRight };
+using ToastPosition = OverlayAnchor; // The 3.2 name, kept for source compatibility.
 enum class ToastPhase { Message, Loading };
 enum class ToastEventKind { Dismiss, Expired, Action };
 struct ToastView {
@@ -22,6 +22,10 @@ struct ToastView {
     const char* stage="";
     const char* progressText="";
     ProgressStatus status=ProgressStatus::Running;
+    // Folded detail under the description, such as job or attempt identifiers, drawn in the monospace text role. The
+    // card shows a "Details" toggle (locale key "details"); `detailOpen` is the state before the person toggles it.
+    const char* detail="";
+    bool detailOpen=false;
 };
 struct ToastEvent { StableId id=0; ToastEventKind kind=ToastEventKind::Dismiss; };
 struct ToastEventBuffer {
@@ -35,6 +39,9 @@ struct ToastViewportOptions {
     float width=0; // Zero uses font-relative width.
     float margin=-1, gap=-1; // Negative uses theme/style spacing.
     std::size_t maximum=4;
+    // The region the cards are placed in, in screen coordinates; a zero size uses the viewport's work area. Hosts pass
+    // the area below their own fixed bars (a menu, a step band), so cards never cover them and no host adds offsets.
+    ImVec2 areaPos{}, areaSize{};
 };
 // Host-owned, bounded storage; one instance per viewport/context. No strings,
 // ImGui context or application work are retained. Reset when reusing a context.

@@ -1,6 +1,9 @@
 #include <imkit/show/controls.h>
 #include "internal.h"
+#include <algorithm>
 #include <cfloat>
+#include <cmath>
+#include <cstdio>
 
 namespace imkit::show {
 using namespace impl;

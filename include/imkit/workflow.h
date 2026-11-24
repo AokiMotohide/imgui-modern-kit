@@ -1,6 +1,8 @@
 #pragma once
 #include <imkit/patterns.h>
 #include <imkit/icons.h>
+#include <cstdint>
+#include <optional>
 
 namespace imkit {
 enum class Orientation { Horizontal, Vertical };
@@ -14,12 +16,17 @@ struct StepItem {
     IconId icon=IconId::Count;
 };
 struct StepNavigatorState { StableId focused=0; bool focusPending=false; };
+// The mark in front of each step: a circle, or a rounded square (rounding is a share of the mark's half size).
+enum class StepBadgeShape { Circle, RoundedSquare };
 struct StepNavigatorOptions {
     Orientation orientation=Orientation::Horizontal;
     ImVec2 size{};
     float itemExtent=0;
     const IconAtlas* icons=nullptr;
     bool numbers=true;
+    StepBadgeShape badge=StepBadgeShape::Circle;
+    float badgeRounding=.35f; // RoundedSquare: 0 is square, 1 is a pill.
+    float badgeBorder=-1;     // Outline width of an open mark; negative uses stroke.border.
 };
 // Selection is a request; current and completion are never mutated.
 StableId StepNavigator(const char* id, std::span<const StepItem> items, StableId current,
@@ -36,6 +43,60 @@ struct StepGroup {
 };
 StableId GroupedStepNavigator(const char* id, std::span<const StepGroup> groups,
     std::span<const StepItem> items, StableId current, ComponentOptions options={});
+enum class StepMarkState : std::uint8_t { Pending, Current, Completed, Redo, Skipped };
+// A step mark drawn as a plate: a rounded square with faint grid lines and the step number. The state never relies on
+// colour alone: a pending plate is a dashed outline, the current one gets corner handles, a completed one grass on
+// top, one to redo a bent leaf, a skipped one fades, and a blocked step gets a dot at its top right corner.
+// Colours with alpha zero follow the theme.
+struct PlateMarkStyle {
+    ImVec4 fill{}, outline{}, ink{}, grid{}, handle{}, sprout{}, sproutOutline{}, redo{}, blocked{}, pending{};
+    float rounding=.12f; // Share of the plate size.
+    int gridLines=2;     // Lines in each direction; 0 draws none.
+};
+// How far a step has grown, decided by the host from its own data (not from whether the step was opened):
+// None draws no grass, Sprout one blade (started, or done for some of its targets), Grown three blades (done).
+enum class PlateGrowth : std::uint8_t { None, Sprout, Grown };
+// What a plate shows besides its state. Without a growth the state decides it: Completed is Grown, others None.
+struct PlateMarkDecor {
+    bool blocked=false;                 // Dot at the top right corner: something the step needs is missing.
+    std::optional<PlateGrowth> growth;  // Grass on top of the plate.
+};
+// Draws a mark whose plate is `size` pixels square, centred on `center`. Grass reaches size*.33 above the plate.
+void DrawPlateMark(ImDrawList* draw, ImVec2 center, float size, const char* number, StepMarkState state,
+                   const PlateMarkDecor& decor={}, const PlateMarkStyle& style={}, ComponentOptions options={});
+// A group of contiguous steps in a StepBand. Tint alpha zero uses the theme accent.
+struct StepBandGroup {
+    StableId id=0;
+    const char* label="";
+    std::size_t first=0, count=0;
+    ImVec4 tint{};
+};
+struct StepBandItem {
+    StableId id=0;
+    const char* label="";
+    const char* description=""; // Shown on hover under the label; may hold several lines.
+    StepMarkState state=StepMarkState::Pending;
+    bool blocked=false;  // Draws the blocked dot; the step stays selectable.
+    bool disabled=false;
+    std::optional<PlateGrowth> growth; // Grass on the plate; without it the state decides (see PlateMarkDecor).
+    bool optional=false; // A step that may be skipped: a smaller plate, a lighter label and dotted links to it.
+};
+struct StepBandOptions {
+    float height=0;          // Zero uses 2.5 text heights.
+    float labelScale=1;      // Step labels as a multiple of the font size.
+    const PlateMarkStyle* marks=nullptr; // Null draws plates in theme colours.
+    ImVec4 background{};     // Alpha zero uses the theme's chrome zone.
+    float optionalScale=.72f; // Plate size of an optional step relative to the others.
+    bool tintTrays=true;     // False draws every tray in the band's own colour; groups then differ by place and name only.
+    float currentTrayContrast=0; // Above 1.14, the tray holding the current step stands this far apart from the band.
+};
+// One row of steps sorted into groups. Each group is a tray tinted by its colour, with its name at the left; the tray
+// always stands apart from the band (1.14:1), even when its tint is the band's own colour. Steps in a group are joined
+// by a short bar that is solid once the earlier step is done, and dotted next to an optional step. When the row is narrow the group names
+// hide first, then step labels shorten with an ellipsis. The height never grows. Returns a requested step ID, or zero;
+// the host owns the current step.
+StableId StepBand(const char* id, std::span<const StepBandGroup> groups, std::span<const StepBandItem> items,
+                  StableId current, StepBandOptions layout={}, ComponentOptions options={});
 struct IconToolbarItem {
     StableId id=0;
     IconId icon=IconId::Count;
@@ -59,11 +120,22 @@ struct WorkspaceTab {
     const char* description="";
     IconId icon=IconId::Count;
     bool disabled=false;
+    // Label and selection mark colour of this tab, moved toward the text colour when it would not read (4.5:1) on the
+    // window background. Alpha zero keeps the theme's colours.
+    ImVec4 accent{};
+};
+struct WorkspaceTabsOptions {
+    // Draws the selected tab filled with its accent (the tab's, else the theme's) and its label in onAccent (black or
+    // white when onAccent does not read on a tab accent). False keeps the header fill and the underline mark.
+    bool filledSelection=false;
 };
 // Returns a selection request. The host owns the selected tab and its content.
 StableId WorkspaceTabs(const char* id, std::span<const WorkspaceTab> tabs,
                        StableId selected, const IconAtlas* icons=nullptr,
                        ComponentOptions options={});
+StableId WorkspaceTabs(const char* id, std::span<const WorkspaceTab> tabs,
+                       StableId selected, WorkspaceTabsOptions layout,
+                       const IconAtlas* icons=nullptr, ComponentOptions options={});
 
 struct ChoiceItem {
     StableId id=0;
@@ -177,6 +249,7 @@ struct StageProgressItem {
 struct StageProgressView {
     std::span<const StageProgressItem> stages{};
     StableId current=0;
+    const PlateMarkStyle* marks=nullptr; // Draws numbered plate marks instead of dots.
 };
 struct TaskProgressCardView {
     StableId id=0;
@@ -211,6 +284,21 @@ bool Progress(const char* id, const ProgressView& view, ProgressPresentation pre
               DialogState& state, ImVec2 size={}, ComponentOptions options={});
 // Draws status steps without changing the host's current stage.
 void StageProgress(const char* id, const StageProgressView& view, ComponentOptions options={});
+// A card for one piece of work the user is waiting for: what is running and its value on one line, the progress
+// track (segments and lanes included), one line of detail such as the time left, and the stage row. While the status
+// is Running the card's outline breathes and the live dot pulses, unless motion is reduced. Draw-only.
+struct WaitCardView {
+    StableId id=0;
+    const char* title="";   // What is running, for example "Scanning".
+    const char* value="";   // Shown large on the right, for example "40 / 102".
+    ProgressTrackView track{}; // Usually without label and valueText, which the card shows instead.
+    const char* meta="";    // One line under the track, for example "About 50 s left".
+    std::span<const StageProgressItem> stages{};
+    StableId currentStage=0;
+    ProgressStatus status=ProgressStatus::Running;
+    const PlateMarkStyle* stageMarks=nullptr; // Draws the stage row with numbered plate marks.
+};
+void WaitCard(const char* id, const WaitCardView& view, ComponentOptions options={});
 // Returns the requested operation ID, or zero. The host performs the operation.
 StableId TaskProgressCard(const char* id, const TaskProgressCardView& view,
                           TaskProgressCardOptions layout={}, ComponentOptions options={});

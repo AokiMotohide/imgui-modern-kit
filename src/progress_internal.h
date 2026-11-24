@@ -43,7 +43,7 @@ struct ProgressHeader {
 inline ProgressHeader MakeProgressHeader(const ProgressTrackView& view,ComponentOptions options) {
     ProgressHeader header;
     char valueBuffer[32]{};
-    const char* value=ProgressValueText(view,valueBuffer,sizeof(valueBuffer));
+    const char* value=view.hideValue?"":ProgressValueText(view,valueBuffer,sizeof(valueBuffer));
     const char* status=ProgressStatusLabel(view.status,options);
     const bool showStatus=view.status!=ProgressStatus::Running;
     const bool hasLabel=*SafeProgressText(view.label)!=0;
@@ -67,12 +67,27 @@ inline float ProgressHeaderHeight(const ProgressHeader& header,float width) {
     const float left=*header.left?ImGui::CalcTextSize(header.left,nullptr,false,ProgressHeaderLeftWidth(header,width)).y:0.f;
     return std::max(left,ImGui::GetTextLineHeight());
 }
+// The track height a view asks for, or the theme height.
+inline float ProgressTrackBarHeight(const ProgressTrackView& view) {
+    return view.barHeight>0.f?view.barHeight:ProgressTrackBarHeight();
+}
+// Height of one lane bar and of the row of lanes (bar, gap, one line of small text).
+inline float ProgressLaneBarHeight(const ProgressTrackView& view) {
+    return std::max(3.f,ProgressTrackBarHeight(view)*.5f);
+}
+inline float ProgressLaneLabelSize() { return ImGui::GetFontSize()*.85f; }
+inline float ProgressLaneRowHeight(const ProgressTrackView& view) {
+    if(view.lanes.empty()) return 0.f;
+    return ProgressHeaderGap()+ProgressLaneBarHeight(view)+ProgressHeaderGap()*.5f+ProgressLaneLabelSize();
+}
 inline float ProgressTrackContentHeight(const ProgressTrackView& view,float width,ComponentOptions options) {
     width=std::max(1.f,width);
     const auto header=MakeProgressHeader(view,options);
     float height=ProgressHeaderHeight(header,width);
     if(header.any) height+=ProgressHeaderGap();
-    height+=ProgressTrackBarHeight();
+    if(view.thumb&&view.thumbHeight>0.f) height+=view.thumbHeight;
+    height+=ProgressTrackBarHeight(view);
+    height+=ProgressLaneRowHeight(view);
     if(*SafeProgressText(view.supplemental))
         height+=ProgressHeaderGap()+ImGui::CalcTextSize(view.supplemental,nullptr,false,width).y;
     return height;

@@ -11,7 +11,7 @@ SOURCE = ROOT / "docs/images"
 DESTINATION = ROOT / "website/src/assets/captures"
 CAPTURES = (
     "v4-start", "v4-themes", "v4-compare", "v4-studio", "v4-workspace", "v4-timeline", "v4-show",
-    "v4-surface", "v4-charts", "v4-toasts", "v4-icons", "v4-progress", "v4-node-editor",
+    "v4-surface", "v4-charts", "v4-glow", "v4-toasts", "v4-icons", "v4-progress", "v4-node-editor",
 )
 # Frame numbers (20 fps, about 160 frames) that show the capture at its most telling moment.
 POSTER_FRAMES = {
@@ -24,6 +24,7 @@ POSTER_FRAMES = {
     "v4-show": 100,
     "v4-surface": 80,
     "v4-charts": 80,
+    "v4-glow": 90,
     "v4-toasts": 80,
     "v4-icons": 80,
     "v4-progress": 60,

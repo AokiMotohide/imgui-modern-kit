@@ -34,9 +34,14 @@ for (std::size_t i = 0; i < events.count; ++i) {
 - 文字列はUTF-8で借用します。描画中は、記憶領域を有効に保ちます。
 - IDは、0以外の一意な値にします。
 - 状態は、viewportとcontextごとに1つ持ちます。contextを再利用する前に `Reset()` します。
+- 自分の固定の帯（メニュー、工程の帯）より下の範囲を `ToastViewportOptions::areaPos` と `areaSize` で渡すと、カードが帯に重なりません。大きさが0なら viewport の作業範囲を使います。
 - 呼び出しはUIスレッドで行います。workerの結果は、ホストが受け渡します。
 - 通知と重なるホストウィンドウは、`ImGuiWindowFlags_NoBringToFrontOnFocus` を付けて作り、そのあとで通知を描画します。たとえば `ImGui::Begin("App", nullptr, ImGuiWindowFlags_NoBringToFrontOnFocus)` です。付けないと、ホストのクリックで、既存の通知より前面に出ることがあります。
 - 通知は、公開APIの通常のウィンドウです。内部APIで描画順を強制したり、フォーカスを奪ったりはしません。新しく作られる重なるウィンドウとモーダルダイアログは、Dear ImGuiの描画順と入力の規則に従います。
+
+## 折りたたんだ詳細
+
+`ToastView::detail` には、ジョブや試行の識別子のように、ふだんは要らない文を入れます。カードに「詳細」の切替（ロケールのキーは `details`）が出て、開くと等幅の文字の役割で描きます。`detailOpen` は、最初に切り替える前の状態です。
 
 ## 表示時間と待機
 
@@ -50,7 +55,7 @@ for (std::size_t i = 0; i < events.count; ++i) {
 
 描画は毎フレーム1回です。`UpdateToastViewport` は、描画せずに時間だけを進めます。同じ状態を、同じフレームで描画する場合は、併用しません。
 
-**進捗。** `phase=ToastPhase::Loading` にします。細い丸角のバーの外側に、工程名 `stage`、状態、割合または `progressText` を表示します。`progress` が負または非有限値なら不定表示になり、短い区間が動くのは、状態が `Running` のときだけです。`Paused` と終了状態では動きません。それ以外の値は、0〜1に制限します。
+**進捗。** `phase=ToastPhase::Loading` にします。細い丸角のバーの外側に、工程名 `stage`、状態、割合または `progressText` を表示します。`progress` が負または非有限値なら、バーは描きません。経過時間を `progressText` に入れてください。それ以外の値は、0〜1に制限します。
 
 **完了。** 同じIDを、`phase=Message`、`Succeeded` または `Failed`、成功かエラーの種類に更新します。phase、kind、durationを変えると、期限を開始し直しますが、挿入順は変わりません。本文と進捗の更新では、期限を再開しません。
 
@@ -59,7 +64,7 @@ for (std::size_t i = 0; i < events.count; ++i) {
 ```cpp
 toast.phase = imkit::ToastPhase::Loading;
 toast.stage = "内容を確認しています";
-toast.progress = fraction; // 負値・非有限値は不定表示
+toast.progress = fraction; // 負値・非有限値はバーなし
 toast.status = imkit::ProgressStatus::Running;
 toast.action = "詳細を表示"; // ToastEvent::Action と通知IDを返します
 // 完了後も同じIDを使い、phase=Message と Succeeded/Failed を設定します。
@@ -78,12 +83,12 @@ toast.action = "詳細を表示"; // ToastEvent::Action と通知IDを返しま�
 
 | 設定 | 動作 |
 | --- | --- |
-| `ToastPosition` | 上下と、左・中央・右の6位置。既定は `TopRight`、`maximum=4` |
+| `ToastPosition` | `OverlayAnchor` の別名。上下と、左・中央・右の6位置。既定は `TopRight`、`maximum=4` |
 | 幅が0 | フォント基準の幅 |
 | 余白・間隔が負 | テーマ適用後のstyleから導く |
 | 寸法の上限 | カードの寸法と表示件数をviewportの作業領域に収める。単独で高さを超えるカードは縦にスクロールする |
 
-**見た目。** カードは、持ち上げた面に、状態色のアクセントバーとアイコンを付けて表示します。状態色は、セマンティックトークンから作り、文字はテーマの文字コントラストを保ちます。下端の細い線が、残りの表示時間を示し、ホバーやフォーカスの間は止まります。角丸、出現時のスライドとフェード、動きを減らす設定は、テーマに従います。動きを減らす設定では、スライド、フェード、残り時間の補間、不定進捗の区間の移動、スピナーの回転を止めます。
+**見た目。** カードは、持ち上げた面に、状態色のアクセントバーとアイコンを付けて表示します。状態色は、セマンティックトークンから作り、文字はテーマの文字コントラストを保ちます。下端の細い線が、残りの表示時間を示し、ホバーやフォーカスの間は止まります。角丸、出現時のスライドとフェード、動きを減らす設定は、テーマに従います。動きを減らす設定では、スライド、フェード、残り時間の補間、スピナーの回転を止めます。
 
 **ホストからの入力。** テーマ、ロケール、セマンティックの公開は、`ComponentOptions` で渡します。閉じるボタンの読み上げ名には、`dismiss` キーを使います。見出し、説明、操作のラベルは、ホストが指定します。ボタンは標準のキーボード操作に対応し、グローバルなショートカットや自動のフォーカス移動は設けません。
 

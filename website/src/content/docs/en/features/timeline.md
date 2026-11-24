@@ -25,6 +25,12 @@ The `imkit::video` timeline shows tracks and clips and reports edits as events. 
 | Navigate | Fit, Fit selection, overview range handles | Explicit navigation |
 | Clipboard | Edit clips menu | Sends Copy, Cut and Paste requests. Paste uses the playhead and the active track and keeps relative time and track offsets. You implement Insert or Overwrite and reject incompatible destinations atomically |
 
+## Clip body
+
+`TimelineOptions::clipBody` chooses how a clip is painted. `ClipBody::Fill`, the default, fills the clip with its track colour and shows `ClipView::thumbnail` under the name. `ClipBody::Filmstrip` lays 16:9 frames edge to edge on a dark ground taken from the theme, with a 1 px gap, and cuts the last frame at the clip end. The track colour remains only as a 3 px top band and a 1.5 px border, a selected clip gets a 2 px accent outline, the name sits on a dark label at the top left, and the duration on a label at the bottom right. Edge handles and every gesture behave as with `Fill`.
+
+Each frame repeats `ClipView::thumbnail`. Set `TimelineProvider::thumbnailAt(user, track, clip, sourceSeconds)` to supply a picture per frame: it receives the clip's source time at the centre of the frame (`sourceIn` plus the timeline offset times `speed`). A null texture falls back to `thumbnail`. Only visible frames are drawn, and at most 64 calls are made per clip and frame; the frames in between repeat the earlier picture.
+
 ## Event contract
 
 | Event | Target and fields |

@@ -1,5 +1,6 @@
 #include "ptz_page.h"
-#include "gallery.h"
+#include "gallery_page_host.h"
+#include <imkit/widgets.h>
 #include <algorithm>
 #include <cctype>
 #include <cmath>
@@ -96,7 +97,7 @@ std::string ProbeName(std::string_view name) {
 } // namespace
 
 void PtzPage::Show(GalleryState& host) {
-    const float scale = host.scale;
+    const float scale = HostScale(host);
     if (!initialized) {
         stored[0] = {-60, 8, 1.f};
         stored[1] = {0, 0, 1.f};
@@ -110,7 +111,7 @@ void PtzPage::Show(GalleryState& host) {
     std::array<accessibility::SemanticNode, 256> nodes{};
     accessibility::AccessibilityFrame semantics{nodes};
     semantics.Begin(ImGui::GetFrameCount());
-    ComponentOptions o{&host.theme, &host.animation, &semantics, 0, &locale};
+    ComponentOptions o{&HostTheme(host), &HostAnimation(host), &semantics, 0, &locale};
 
     imkit::Checkbox("日本語", &japanese);
     ImGui::SameLine();
@@ -186,7 +187,7 @@ void PtzPage::Show(GalleryState& host) {
             const ImVec2 a = ImGui::GetCursorScreenPos();
             ImGui::Dummy({width, height});
             auto* draw = ImGui::GetWindowDrawList();
-            DrawCamera(draw, a, {a.x + width, a.y + height}, pose, connected, scale, host.theme);
+            DrawCamera(draw, a, {a.x + width, a.y + height}, pose, connected, scale, HostTheme(host));
             draw->AddRect(a, {a.x + width, a.y + height}, ImGui::GetColorU32(ImGuiCol_Border), 0.f, 0, 1.f);
         }
         EndSection(preview);
@@ -255,6 +256,6 @@ void PtzPage::Show(GalleryState& host) {
         if (n.role == accessibility::SemanticRole::Button && n.parent == 0 && !n.name.empty())
             frame.emplace(ProbeName(n.name), Probe{n.minimum, n.maximum});
     for (const auto& [name, probe] : frame)
-        host.probes[name] = probe;
+        RecordProbe(host, name.c_str(), probe.min, probe.max);
 }
 } // namespace imkit::gallery

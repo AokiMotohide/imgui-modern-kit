@@ -8,9 +8,34 @@
 #include <iomanip>
 #include <vector>
 namespace imkit::gallery {
+Theme &HostTheme(GalleryState &s) { return s.theme; }
+const Theme &HostTheme(const GalleryState &s) { return s.theme; }
+AnimationState &HostAnimation(GalleryState &s) { return s.animation; }
+float HostScale(const GalleryState &s) { return s.scale; }
+const IconAtlas &HostIcons(const GalleryState &s) { return s.icons; }
+ImTextureRef HostTexture(const GalleryState &s) { return s.texture; }
+std::span<const ImTextureRef> HostSampleImages(const GalleryState &s) { return s.sampleImages; }
+ImTextureRef HostSpriteSheet(const GalleryState &s) { return s.spriteSheet; }
+bool &HostDark(GalleryState &s) { return s.dark; }
+int &HostPresetIndex(GalleryState &s) { return s.presetIndex; }
+int &HostDesignDensity(GalleryState &s) { return s.design.density; }
+
 void Record(GalleryState &s, const char *name) {
     s.probes[name] = {GetItemRectMin(), GetItemRectMax()};
 }
+void RecordProbe(GalleryState &s, const char *name, ImVec2 min, ImVec2 max) {
+    s.probes[name] = {min, max};
+}
+DefaultStyleScope::DefaultStyleScope() : previous_(ImGui::GetStyle()) {
+    ImGui::GetStyle() = ImGuiStyle{};
+    ImGui::StyleColorsDark(&ImGui::GetStyle());
+    ImGui::GetStyle().FontSizeBase = previous_.FontSizeBase;
+    ImGui::GetStyle().FontScaleMain = previous_.FontScaleMain;
+    ImGui::GetStyle().FontScaleDpi = previous_.FontScaleDpi;
+    ImGui::GetStyle().ScaleAllSizes(ImGui::GetIO().DisplayFramebufferScale.x);
+    ImGui::GetStyle().Colors[ImGuiCol_ChildBg].w = 1.f;
+}
+DefaultStyleScope::~DefaultStyleScope() { ImGui::GetStyle() = previous_; }
 void SelectFramePreset(GalleryState& s, WindowFramePreset preset) {
     s.framePresetStyles[static_cast<std::size_t>(s.framePreset)]=s.frameStyle;
     s.framePreset=preset;
@@ -829,6 +854,7 @@ constexpr PageInfo kPages[] = {
     {PageReferenceComponents, "Rows and palette", 2, "Rows, toolbars, command palette, dialogs and a 100,000 row data table."},
     {PageFeedback, "Progress and states", 2, "Progress, stages, alerts and empty, error and retry states."},
     {PageToasts, "Toasts", 2, "Stacked notifications with progress, actions and timers."},
+    {PageGlowFrame, "Glow frame", 2, "A light along the edge of a window or panel, and the external control indicator built on it."},
     {PageCharts, "Charts", 3, "Donut, bar, gauge, sparkline and progress components."},
     {PagePtz, "PTZ camera", 3, "Pan, tilt and zoom control with presets, driven against a simulated camera."},
     {PageEditorCore, "Editor core", 4, "Timeline ruler, transport and curve editing."},
@@ -890,7 +916,7 @@ void Show(GalleryState &s) {
                           std::max(1.f,ImGui::GetIO().DisplaySize.y-s.windowFrameHeight)});
         windowFlags|=ImGuiWindowFlags_NoDecoration;
     }
-    if(s.page==PageToasts) windowFlags|=ImGuiWindowFlags_NoBringToFrontOnFocus;
+    if(s.page==PageToasts||s.page==PageGlowFrame) windowFlags|=ImGuiWindowFlags_NoBringToFrontOnFocus;
     const bool visible=Begin("ImKit Gallery - Precision Layers",nullptr,windowFlags);
     if(s.floatingComparison) {
         s.floatingCatalogPosition=GetWindowPos();
@@ -1000,6 +1026,7 @@ void Show(GalleryState &s) {
         case PageLookSkins: s.look.Skins(s); break;
         case PageWorkbench: s.workflow.Workbench(s); break;
         case PageToasts: s.toasts.Show(s); break;
+        case PageGlowFrame: s.glow.Show(s); break;
         case PageStart: s.start.Show(s); break;
         case PageFrameLab: FrameLab(s); break;
         case PageGenericWorkspace: case PageFeedback: case PagePreviewTiles: s.workflow.Show(s.page,s); break;

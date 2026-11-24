@@ -1,6 +1,7 @@
 #pragma once
 #include <imkit/components.h>
 #include <array>
+#include <span>
 
 namespace imkit {
 using StableId=accessibility::StableId;
@@ -18,6 +19,13 @@ struct ProgressThumbInfo {
     bool animate=true;  // False under reduced motion or when motion is disabled.
 };
 using ProgressThumbFn=void(*)(const ProgressThumbInfo&, void* user);
+// One thin bar under a ProgressTrack for work that runs beside the main value, such as analysing each item that the
+// main bar has already counted. Lanes sit side by side in the order given.
+struct ProgressLane {
+    const char* label="";
+    float fraction=0;  // Clamped to [0,1]; nonfinite draws empty.
+    ProgressStatus status=ProgressStatus::Queued;
+};
 struct ProgressTrackView {
     float fraction=-1; // Negative or nonfinite values are indeterminate.
     ProgressStatus status=ProgressStatus::Running;
@@ -30,6 +38,14 @@ struct ProgressTrackView {
     ProgressThumbFn thumb=nullptr;
     void* thumbUser=nullptr;
     float thumbHeight=0;
+    // Equal divisions drawn as thin gaps across the track, for example one per projector. 0 or 1 draws none.
+    int segments=0;
+    // Thin bars under the track, one per entry; empty draws none.
+    std::span<const ProgressLane> lanes{};
+    // Track height in pixels. 0 keeps the theme height.
+    float barHeight=0;
+    // True hides the value (percentage or valueText) above the track, for a host that shows the value elsewhere.
+    bool hideValue=false;
 };
 struct Command { StableId id; const char* label; const char* shortcut=""; bool disabled=false; const char* disabledReason=""; };
 struct CommandPaletteState { bool open=false; char search[256]{}; int focused=0; };

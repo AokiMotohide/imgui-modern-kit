@@ -1,7 +1,13 @@
 # Kept separate so ongoing Gallery / editor work does not share implementation files.
-add_library(imkit_node_editor STATIC src/node_editor.cpp src/node_layout.cpp)
+add_library(imkit_node_editor STATIC
+    src/node_editor.cpp
+    src/node_editor_nodes.cpp
+    src/node_editor_links.cpp
+    src/node_editor_panels.cpp
+    src/node_layout.cpp)
 add_library(imkit::node_editor ALIAS imkit_node_editor)
 set_target_properties(imkit_node_editor PROPERTIES EXPORT_NAME node_editor DEBUG_POSTFIX d)
+imkit_configure_target_build(imkit_node_editor FALSE)
 target_link_libraries(imkit_node_editor PUBLIC imkit::editor_core)
 target_compile_options(imkit_node_editor PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
 target_link_libraries(imkit_editor_suite INTERFACE imkit::node_editor)
@@ -10,9 +16,14 @@ install(TARGETS imkit_node_editor EXPORT imkitTargets ARCHIVE DESTINATION ${CMAK
 if(IMKIT_BUILD_TESTS)
     add_executable(imkit_node_editor_test tests/node_editor.cpp)
     target_link_libraries(imkit_node_editor_test PRIVATE imkit::node_editor)
+    imkit_configure_target_build(imkit_node_editor_test TRUE)
+    if(IMKIT_ENABLE_PCH AND IMKIT_IS_TOP_LEVEL AND NOT APPLE AND TARGET imkit_test_pch)
+        target_precompile_headers(imkit_node_editor_test REUSE_FROM imkit_test_pch)
+    endif()
     add_test(NAME imkit.node_editor COMMAND imkit_node_editor_test)
     add_executable(imkit_node_editor_api_compile tests/node_editor_api_compile.cpp)
     target_link_libraries(imkit_node_editor_api_compile PRIVATE imkit::node_editor)
+    imkit_configure_target_build(imkit_node_editor_api_compile TRUE)
     add_test(NAME imkit.node_editor_api_compile COMMAND imkit_node_editor_api_compile)
 endif()
 
@@ -23,6 +34,7 @@ if(IMKIT_BUILD_GALLERY)
         add_executable(imkit_node_editor_gallery examples/node_editor/main.cpp examples/design_gallery/capture.cpp)
     endif()
     target_compile_features(imkit_node_editor_gallery PRIVATE cxx_std_20)
+    imkit_configure_target_build(imkit_node_editor_gallery TRUE)
     target_compile_options(imkit_node_editor_gallery PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
     target_compile_definitions(imkit_node_editor_gallery PRIVATE $<$<BOOL:${WIN32}>:NOMINMAX;WIN32_LEAN_AND_MEAN>)
     target_link_libraries(imkit_node_editor_gallery PRIVATE imkit::node_editor "${IMKIT_GALLERY_BACKEND_TARGET}")
@@ -33,5 +45,4 @@ if(IMKIT_BUILD_GALLERY)
         set_target_properties(imkit_node_editor_gallery PROPERTIES MACOSX_BUNDLE TRUE)
     endif()
     set_target_properties(imkit_node_editor_gallery PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/catalog")
-    add_dependencies(imkit_gallery imkit_node_editor_gallery)
 endif()

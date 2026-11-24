@@ -7,11 +7,14 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <cfloat>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <string>
 #include <string_view>
+#include <iterator>
+#include <vector>
 
 namespace imkit {
 namespace {
@@ -32,7 +35,10 @@ ImVec4 Status(StatusKind kind, const Theme *t) {
     case StatusKind::Warning:
         return t->colors.warning;
     case StatusKind::Error:
+    case StatusKind::Live:
         return t->colors.destructive;
+    case StatusKind::Active:
+        return t->colors.accent;
     default:
         return t->colors.muted;
     }
@@ -67,7 +73,8 @@ ButtonPalette MakeButtonPalette(ActionVariant variant, const Theme *t, const ImG
     p.text = style.Colors[ImGuiCol_Text];
     if (variant == ActionVariant::Primary) {
         p.fill = Accent(t);
-        p.text = t ? t->colors.onAccent : ImVec4(1, 1, 1, 1);
+        // Without a theme the accent comes from the style, which may be light (a yellow brand): pick readable ink.
+        p.text = t ? t->colors.onAccent : detail::InkOn(p.fill);
     }
     if (variant == ActionVariant::Destructive) {
         p.fill = destructive;
@@ -88,35 +95,40 @@ ButtonPalette MakeButtonPalette(ActionVariant variant, const Theme *t, const ImG
         p.border.w *= .58f;
     // Solid and ghost buttons are drawn without a frame, unless the theme is outlined and every button carries it.
     const bool borderless = (p.solid || variant == ActionVariant::Ghost) && !detail::IsOutlined(style);
-    p.borderSize = borderless ? 0.f : p.subtleDestructive ? std::max(1.f, style.FrameBorderSize) : style.FrameBorderSize;
+    float frameBorder = style.FrameBorderSize;
+    // A theme may give buttons a heavier outline than other frames; keep it in step with the UI scale.
+    if (t && t->stroke.button > 0)
+        frameBorder = t->stroke.border > 0 && style.FrameBorderSize > 0 ? style.FrameBorderSize * t->stroke.button / t->stroke.border
+                                                                       : t->stroke.button;
+    p.borderSize = borderless ? 0.f : p.subtleDestructive ? std::max(1.f, frameBorder) : frameBorder;
+    // The primary action may carry an outline of its own, even in a theme whose other frames are hairlines.
+    if (variant == ActionVariant::Primary && t && t->stroke.primary > 0) {
+        p.border = t->stroke.primaryColor.w > 0 ? t->stroke.primaryColor : t->semantic.onAccent;
+        p.borderSize = t->stroke.border > 0 && style.FrameBorderSize > 0 ? style.FrameBorderSize * t->stroke.primary / t->stroke.border
+                                                                         : t->stroke.primary;
+    }
     p.focus = style.Colors[ImGuiCol_NavCursor];
     return p;
-}
-// ImKit paints the frame itself when the theme has a skin, or a hard shadow that must sit behind the button.
-bool PaintsOwnFrame(const Theme *t, const ButtonPalette &p) {
-    return t && ((t->skin && t->skin->drawFrame) || (t->elevation.hard && p.filled));
 }
 struct PushedButtonStyle {
     int colors = 0, vars = 0;
 };
-// `paintedByImKit` makes ImGui's own frame and focus ring invisible: PaintButtonFrame draws them instead.
-PushedButtonStyle PushButtonPalette(const ButtonPalette &p, bool paintedByImKit) {
+// ImKit always paints button frames itself (smooth corners, skins, hard shadows), so ImGui's own frame, border and
+// focus ring are made invisible; PaintButtonFrame draws them instead.
+PushedButtonStyle PushButtonPalette(const ButtonPalette &p) {
     const ImVec4 clear{0, 0, 0, 0};
-    ImGui::PushStyleColor(ImGuiCol_Button, paintedByImKit ? clear : p.fill);
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, paintedByImKit ? clear : p.hovered);
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, paintedByImKit ? clear : p.active);
+    ImGui::PushStyleColor(ImGuiCol_Button, clear);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, clear);
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, clear);
     ImGui::PushStyleColor(ImGuiCol_Text, p.text);
-    PushedButtonStyle pushed{4, 1};
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, paintedByImKit ? 0.f : p.borderSize);
-    if (p.subtleDestructive || paintedByImKit) {
-        ImGui::PushStyleColor(ImGuiCol_Border, paintedByImKit ? clear : p.border);
-        ++pushed.colors;
-    }
-    if (paintedByImKit) {
-        ImGui::PushStyleColor(ImGuiCol_NavCursor, clear);
-        ++pushed.colors;
-    }
-    return pushed;
+    ImGui::PushStyleColor(ImGuiCol_Border, clear);
+    ImGui::PushStyleColor(ImGuiCol_NavCursor, clear);
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
+    return {6, 1};
+}
+std::string_view VisibleLabel(const char *label) {
+    const std::string_view full = label ? label : "";
+    return full.substr(0, full.find("##"));
 }
 void PopButtonPalette(PushedButtonStyle pushed) {
     ImGui::PopStyleColor(pushed.colors);
@@ -154,13 +166,18 @@ ImVec2 PaintButtonFrame(const ButtonPalette &p, ActionVariant variant, const Com
     frame.disabled = (ImGui::GetItemFlags() & ImGuiItemFlags_Disabled) != 0;
     frame.hover = hover;
     if (!detail::TrySkin(t, frame)) {
-        draw->AddRectFilled(minimum, maximum, ImGui::GetColorU32(active ? p.active : hovered ? p.hovered : p.fill), rounding);
-        if (p.borderSize > 0)
-            draw->AddRect(minimum, maximum, ImGui::GetColorU32(p.border), rounding, ImDrawFlags_None, p.borderSize);
+        detail::AddSmoothRectFilled(draw, minimum, maximum, ImGui::GetColorU32(active ? p.active : hovered ? p.hovered : p.fill),
+                                    rounding);
+        if (frame.disabled && t && t->stroke.dashedDisabled) {
+            const float width = std::max(1.f, p.borderSize > 0 ? p.borderSize : style.FrameBorderSize);
+            detail::DrawDashedRect(draw, minimum, maximum, rounding, ImGui::GetColorU32(p.border), width, std::max(3.f, width * 2.5f));
+        } else if (p.borderSize > 0) {
+            detail::AddSmoothRect(draw, minimum, maximum, ImGui::GetColorU32(p.border), rounding, p.borderSize);
+        }
     }
     if (focused && ImGui::GetIO().NavVisible)
-        draw->AddRect({minimum.x - 2, minimum.y - 2}, {maximum.x + 2, maximum.y + 2}, ImGui::GetColorU32(p.focus), rounding + 2.f,
-                      ImDrawFlags_None, t ? t->stroke.focus : 2.f);
+        detail::AddSmoothRect(draw, {minimum.x - 2, minimum.y - 2}, {maximum.x + 2, maximum.y + 2}, ImGui::GetColorU32(p.focus),
+                              rounding + 2.f, t ? t->stroke.focus : 2.f);
     return shift;
 }
 // Draws the label of a button whose frame ImKit painted, placed and clipped the way ImGui::Button would.
@@ -179,37 +196,117 @@ void DrawButtonLabel(const char *label, ImVec4 color, ImVec2 shift) {
     ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(), ImGui::GetFontSize(), at, ImGui::GetColorU32(color), visible.data(),
                                         visible.data() + visible.size(), 0.f, &clip);
 }
+// The mark of the one action to press next: a chevron at the trailing edge, and a ring that spreads once when the button
+// starts being drawn with the mark. The start is remembered per item in ImGui storage, so no host state is needed.
+void DrawCallToAction(ImGuiID id, const ButtonPalette &palette, const ComponentOptions &o, ImVec2 shift) {
+    const auto &style = ImGui::GetStyle();
+    auto *draw = ImGui::GetWindowDrawList();
+    const ImVec2 a{ImGui::GetItemRectMin().x + shift.x, ImGui::GetItemRectMin().y + shift.y};
+    const ImVec2 b{ImGui::GetItemRectMax().x + shift.x, ImGui::GetItemRectMax().y + shift.y};
+    const bool rtl = o.locale && o.locale->direction == TextDirection::RTL;
+    const float size = ImGui::GetFontSize() * .32f;
+    const float cx = rtl ? a.x + style.FramePadding.x + size : b.x - style.FramePadding.x - size;
+    const float cy = (a.y + b.y) * .5f;
+    const float dir = rtl ? -1.f : 1.f;
+    const ImVec2 chevron[3] = {{cx - size * .5f * dir, cy - size}, {cx + size * .5f * dir, cy}, {cx - size * .5f * dir, cy + size}};
+    draw->AddPolyline(chevron, 3, ImGui::GetColorU32(palette.text), ImDrawFlags_None, std::max(1.5f, size * .35f));
+    if ((ImGui::GetItemFlags() & ImGuiItemFlags_Disabled) != 0)
+        return;
+    auto *storage = ImGui::GetStateStorage();
+    ImGui::PushID(static_cast<int>(id));
+    const ImGuiID seenKey = ImGui::GetID("imkit-cta-seen");
+    const ImGuiID startKey = ImGui::GetID("imkit-cta-start");
+    ImGui::PopID();
+    const int frame = ImGui::GetFrameCount();
+    const int lastSeen = storage->GetInt(seenKey, -10);
+    if (lastSeen < frame - 1)
+        storage->SetFloat(startKey, static_cast<float>(ImGui::GetTime()));
+    storage->SetInt(seenKey, frame);
+    const bool animate = !(o.theme && (!o.theme->motion.enabled || o.theme->motion.reducedMotion));
+    if (!animate)
+        return;
+    constexpr float kRingSeconds = .9f;
+    const float elapsed = static_cast<float>(ImGui::GetTime()) - storage->GetFloat(startKey, -100.f);
+    if (elapsed < 0.f || elapsed > kRingSeconds)
+        return;
+    const float t = elapsed / kRingSeconds;
+    const float eased = 1.f - (1.f - t) * (1.f - t);
+    const float grow = ImGui::GetFontSize() * .7f * eased;
+    ImVec4 ring = Accent(o.theme);
+    ring.w = .55f * (1.f - t);
+    detail::AddSmoothRect(draw, {a.x - grow, a.y - grow}, {b.x + grow, b.y + grow}, ImGui::GetColorU32(ring),
+                          style.FrameRounding + grow, 2.f);
+}
 } // namespace
+float ActionButtonMinimumWidth() { return ImGui::GetFontSize() * 4.f; }
+float ActionButtonWidth(const char *label) {
+    const auto visible = VisibleLabel(label);
+    const float text = ImGui::CalcTextSize(visible.data(), visible.data() + visible.size()).x;
+    return std::max(text + ImGui::GetStyle().FramePadding.x * 2.f, ActionButtonMinimumWidth());
+}
+float ActionRowWidth(std::span<const char *const> labels) {
+    float width = 0.f;
+    for (const char *label : labels)
+        width = std::max(width, ActionButtonWidth(label));
+    return width;
+}
 bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, ComponentOptions options) {
     const auto *t = options.theme;
     auto &style = ImGui::GetStyle();
     const ButtonPalette palette = MakeButtonPalette(variant, t, style);
-    const bool painted = PaintsOwnFrame(t, palette);
-    const auto pushed = PushButtonPalette(palette, painted);
+    const auto pushed = PushButtonPalette(palette);
     const auto id = ImGui::GetID(label);
-    if (painted)
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0, 0, 0, 0)); // The label is drawn after the frame.
-    bool pressed = ImGui::Button(label, size);
-    if (painted)
-        ImGui::PopStyleColor();
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0, 0, 0, 0)); // The label is drawn after the frame.
+    // A call to action reserves room for its trailing chevron when the width follows the label.
+    const float ctaSpace = options.callToAction ? ImGui::GetFontSize() * 1.2f : 0.f;
+    ImVec2 buttonSize = size;
+    // A width that follows the label never drops below four text heights, so short labels stay easy to hit.
+    if (size.x == 0.f)
+        buttonSize.x = ActionButtonWidth(label) + ctaSpace;
+    // With a chevron, the label starts at the padding and the chevron takes the room after it.
+    const bool ctaAutoWidth = ctaSpace > 0.f && size.x == 0.f;
+    if (ctaAutoWidth)
+        ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, style.ButtonTextAlign.y));
+    bool pressed = ImGui::Button(label, buttonSize);
+    ImGui::PopStyleColor();
     if(ImGui::IsItemFocused()) ImGui::SetNavCursorVisible(true);
+    // An empty reason means the host explains it itself; null keeps the generic word.
     if((ImGui::GetItemFlags()&ImGuiItemFlags_Disabled)!=0 &&
-       ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+       ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) &&
+       !(options.disabledReason && !*options.disabledReason))
         ImGui::SetTooltip("%s",options.disabledReason?options.disabledReason:"Unavailable");
     pressed = SemanticItem(options,label,accessibility::SemanticRole::Button,accessibility::SemanticAction::Press) || pressed;
     const float hover = detail::Ease(options, id, ImGui::IsItemHovered() ? 1.f : 0.f);
-    ImVec2 shift{0, 0};
-    if (painted) {
-        shift = PaintButtonFrame(palette, variant, options, hover);
-        DrawButtonLabel(label, palette.text, shift);
+    const ImVec2 shift = PaintButtonFrame(palette, variant, options, hover);
+    auto *draw = ImGui::GetWindowDrawList();
+    if (std::isfinite(options.progress) && options.progress >= 0.f) {
+        // The work the button started, as a fill from the leading edge under the label, clipped to the button's shape.
+        const ImVec2 a = ImGui::GetItemRectMin(), b = ImGui::GetItemRectMax();
+        const float inset = std::max(1.f, palette.borderSize);
+        const ImVec2 lo{a.x + shift.x + inset, a.y + shift.y + inset}, hi{b.x + shift.x - inset, b.y + shift.y - inset};
+        const float fraction = std::clamp(options.progress, 0.f, 1.f);
+        const bool rtl = options.locale && options.locale->direction == TextDirection::RTL;
+        const float width = (hi.x - lo.x) * fraction;
+        ImVec4 fill = palette.solid ? palette.text : Accent(t);
+        fill.w = palette.solid ? .22f : .28f;
+        if (width > 0) {
+            draw->PushClipRect(rtl ? ImVec2{hi.x - width, lo.y} : lo, rtl ? hi : ImVec2{lo.x + width, hi.y}, true);
+            detail::AddSmoothRectFilled(draw, lo, hi, ImGui::GetColorU32(fill), std::max(0.f, style.FrameRounding - inset));
+            draw->PopClipRect();
+        }
     }
+    DrawButtonLabel(label, palette.text, shift);
+    if (ctaAutoWidth)
+        ImGui::PopStyleVar();
+    if (options.callToAction)
+        DrawCallToAction(id, palette, options, shift);
     if (options.animation && hover > 0) {
         // Hover is a soft tonal wash that fades in; no outline.
         auto color = palette.solid ? ImVec4(1, 1, 1, 1) : Accent(t);
         color.w = (palette.solid ? .10f : .08f) * hover;
         const ImVec2 a = ImGui::GetItemRectMin(), b = ImGui::GetItemRectMax();
-        ImGui::GetWindowDrawList()->AddRectFilled({a.x + shift.x, a.y + shift.y}, {b.x + shift.x, b.y + shift.y},
-                                                  ImGui::GetColorU32(color), style.FrameRounding);
+        detail::AddSmoothRectFilled(draw, {a.x + shift.x, a.y + shift.y}, {b.x + shift.x, b.y + shift.y}, ImGui::GetColorU32(color),
+                                    style.FrameRounding);
     }
     PopButtonPalette(pushed);
     return pressed;
@@ -231,15 +328,15 @@ bool IconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
     const auto *t = options.theme;
     auto &style = ImGui::GetStyle();
     const ButtonPalette palette = MakeButtonPalette(variant, t, style);
-    const bool painted = PaintsOwnFrame(t, palette);
-    const auto pushed = PushButtonPalette(palette, painted);
+    const auto pushed = PushButtonPalette(palette);
     const float iconSize = std::max(12.f, ImGui::GetFontSize());
-    const std::string_view fullLabel=label?label:"";
-    const auto visibleLabel=fullLabel.substr(0,fullLabel.find("##"));
+    const auto visibleLabel=VisibleLabel(label);
     const auto labelSize=ImGui::CalcTextSize(visibleLabel.data(),visibleLabel.data()+visibleLabel.size());
     const float gap=visibleLabel.empty()?0.f:style.ItemInnerSpacing.x;
-    const ImVec2 extent{iconSize+gap+labelSize.x+2*style.FramePadding.x,
-                        std::max(iconSize,labelSize.y)+2*style.FramePadding.y};
+    const float height=std::max(iconSize,labelSize.y)+2*style.FramePadding.y;
+    // An icon alone is a square; with a label the width follows the label like ActionButton.
+    const ImVec2 extent{visibleLabel.empty()?height:std::max(iconSize+gap+labelSize.x+2*style.FramePadding.x,ActionButtonMinimumWidth()),
+                        height};
     std::array<char,1024> widgetLabel{};
     std::snprintf(widgetLabel.data(),widgetLabel.size(),"%.*s##%s",
                   static_cast<int>(std::min<std::size_t>(visibleLabel.size(),900)),
@@ -248,11 +345,11 @@ bool IconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
     const bool pressedByWidget=ImGui::Button(widgetLabel.data(),extent);
     ImGui::PopStyleColor();
     if(ImGui::IsItemFocused()) ImGui::SetNavCursorVisible(true);
-    ImVec2 shift{0, 0};
-    if (painted)
-        shift = PaintButtonFrame(palette, variant, options, detail::Ease(options, ImGui::GetItemID(), ImGui::IsItemHovered() ? 1.f : 0.f));
+    const ImVec2 shift = PaintButtonFrame(palette, variant, options,
+                                          detail::Ease(options, ImGui::GetItemID(), ImGui::IsItemHovered() ? 1.f : 0.f));
     const auto minimum=ImVec2{ImGui::GetItemRectMin().x+shift.x,ImGui::GetItemRectMin().y+shift.y};
-    DrawAtlasIcon(atlas,icon,{minimum.x+style.FramePadding.x,
+    const float iconX=visibleLabel.empty()?(extent.x-iconSize)*.5f:style.FramePadding.x;
+    DrawAtlasIcon(atlas,icon,{minimum.x+iconX,
                              minimum.y+(extent.y-iconSize)*.5f},iconSize);
     ImGui::GetWindowDrawList()->AddText(
         {minimum.x+style.FramePadding.x+iconSize+gap,
@@ -263,7 +360,9 @@ bool IconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) || ImGui::IsItemFocused()) {
         ImGui::BeginTooltip();
         ImGui::PushTextWrapPos(ImGui::GetFontSize() * 32.f);
-        ImGui::TextUnformatted(label ? label : "");
+        // An icon-only button has no label: its description is the name.
+        if (!visibleLabel.empty())
+            ImGui::TextUnformatted(visibleLabel.data(), visibleLabel.data() + visibleLabel.size());
         const bool disabled = (ImGui::GetItemFlags() & ImGuiItemFlags_Disabled) != 0;
         if (disabled && options.disabledReason && *options.disabledReason)
             ImGui::TextDisabled("%s", options.disabledReason);
@@ -369,9 +468,11 @@ bool Segmented(const char *id, int *selected, std::span<const char *const> label
     const ImVec2 after = ImGui::GetCursorScreenPos();
     auto *draw = ImGui::GetWindowDrawList();
     const float rounding = style.FrameRounding;
-    draw->AddRectFilled(origin, {origin.x + total + inset * 2, origin.y + height},
-                        ImGui::GetColorU32(detail::WithAlpha(style.Colors[ImGuiCol_Text], .08f)), rounding + 2.f);
-    detail::DrawOutline(draw, origin, {origin.x + total + inset * 2, origin.y + height}, rounding + 2.f);
+    const ImVec2 trackMax{origin.x + total + inset * 2, origin.y + height};
+    detail::AddSmoothRectFilled(draw, origin, trackMax, ImGui::GetColorU32(detail::WithAlpha(style.Colors[ImGuiCol_Text], .08f)),
+                                rounding + 2.f);
+    if (detail::IsOutlined(style))
+        detail::AddSmoothRect(draw, origin, trackMax, ImGui::GetColorU32(ImGuiCol_Border), rounding + 2.f, style.FrameBorderSize);
     // The raised thumb glides between segments (fractional index while animating).
     float index = static_cast<float>(std::clamp(*selected, 0, shown - 1));
     if (options.animation) {
@@ -387,8 +488,11 @@ bool Segmented(const char *id, int *selected, std::span<const char *const> label
     const float thumbWidth = widths[lower] + (widths[upper] - widths[lower]) * blend;
     const ImVec2 thumbMin{origin.x + inset + thumbLeft, origin.y + inset},
         thumbMax{origin.x + inset + thumbLeft + thumbWidth, origin.y + height - inset};
-    draw->AddRectFilled({thumbMin.x, thumbMin.y + 1}, {thumbMax.x, thumbMax.y + 1}, IM_COL32(0, 0, 0, 26), rounding);
-    draw->AddRectFilled(thumbMin, thumbMax, ImGui::GetColorU32(options.theme ? options.theme->colors.raised : style.Colors[ImGuiCol_PopupBg]), rounding);
+    // Only the chosen segment is filled, in the accent, so the choice reads at a glance without relying on a shadow.
+    const ImVec4 thumb = options.theme ? options.theme->colors.accent : style.Colors[ImGuiCol_CheckMark];
+    const ImVec4 onThumb = options.theme ? options.theme->colors.onAccent : detail::InkOn(thumb);
+    detail::AddSmoothRectFilled(draw, {thumbMin.x, thumbMin.y + 1}, {thumbMax.x, thumbMax.y + 1}, IM_COL32(0, 0, 0, 26), rounding);
+    detail::AddSmoothRectFilled(draw, thumbMin, thumbMax, ImGui::GetColorU32(thumb), rounding);
     ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0, 0, 0, 0));
     ImGui::PushStyleColor(ImGuiCol_HeaderHovered, detail::WithAlpha(style.Colors[ImGuiCol_Text], .06f));
     ImGui::PushStyleColor(ImGuiCol_HeaderActive, detail::WithAlpha(style.Colors[ImGuiCol_Text], .10f));
@@ -397,11 +501,9 @@ bool Segmented(const char *id, int *selected, std::span<const char *const> label
         ImGui::SetCursorScreenPos({origin.x + inset + lefts[i], origin.y + inset});
         ImGui::PushID(i);
         const bool active = *selected == i;
-        if (!active)
-            ImGui::PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]);
+        ImGui::PushStyleColor(ImGuiCol_Text, active ? onThumb : style.Colors[ImGuiCol_Text]);
         const bool hit = ImGui::Selectable(labels[i], false, 0, {widths[i], height - inset * 2});
-        if (!active)
-            ImGui::PopStyleColor();
+        ImGui::PopStyleColor();
         if (hit | SemanticItem(options, labels[i], accessibility::SemanticRole::Radio,
                                accessibility::SemanticAction::Select, active)) {
             changed = *selected != i;
@@ -621,6 +723,62 @@ bool AxisVector3Field(const char *id, const char *label, float *value, const cha
     ImGui::PopID();
     return changed;
 }
+bool SliderFloatWithInput(const char *label, float *value, float minimum, float maximum, const char *format,
+                          float step, SliderInputInteraction *interaction, ComponentOptions options) {
+    (void)options;
+    if (interaction) *interaction = {};
+    if (!value || !std::isfinite(minimum) || !std::isfinite(maximum)) return false;
+    if (maximum < minimum) std::swap(minimum, maximum);
+    format = detail::SafeFormat(format, "fge", "%.2f");
+    const auto normalize = [&](float v) {
+        if (!std::isfinite(v)) v = minimum;
+        if (step > 0.f) v = minimum + std::round((v - minimum) / step) * step;
+        return std::min(std::max(v, minimum), maximum);
+    };
+    // 外から来た値は、表示のために丸めても「変更」にしない（丸めは書き戻さない）。変更は利用者が動かしたときだけ。
+    bool changed = false;
+    const auto &style = ImGui::GetStyle();
+    const float total = ImGui::CalcItemWidth();
+    // The figures use the theme's numeric font when it has one; the label keeps the current font.
+    ImFont *numeric = options.theme ? options.theme->fonts.numeric : nullptr;
+    if (numeric) ImGui::PushFont(numeric, 0.f);
+    char sample[48];
+    std::snprintf(sample, sizeof sample, format, static_cast<double>(maximum));
+    const float inputWidth = std::max(48.f, ImGui::CalcTextSize(sample).x + style.FramePadding.x * 2.f + 8.f);
+    const bool stacked = total < 160.f;
+    const float gap = style.ItemInnerSpacing.x;
+    const char *hidden = std::strstr(label, "##");
+    ImGui::PushID(label);
+    ImGui::BeginGroup();
+    SliderInputInteraction result;
+    const auto track = [&](bool edited) {
+        result.activated |= ImGui::IsItemActivated();
+        result.committed |= ImGui::IsItemDeactivatedAfterEdit();
+        result.canceled |= ImGui::IsItemActive() && ImGui::IsKeyPressed(ImGuiKey_Escape, false);
+        changed |= edited;
+    };
+    ImGui::SetNextItemWidth(stacked ? total : std::max(40.f, total - inputWidth - gap));
+    float v = *value;
+    bool edited = ImGui::SliderFloat("##slider", &v, minimum, maximum, format, ImGuiSliderFlags_AlwaysClamp);
+    if (edited) *value = normalize(v);
+    track(edited);
+    if (!stacked) ImGui::SameLine(0.f, gap);
+    ImGui::SetNextItemWidth(stacked ? total : inputWidth);
+    v = *value;
+    edited = ImGui::InputFloat("##input", &v, 0.f, 0.f, format, ImGuiInputTextFlags_AutoSelectAll);
+    if (edited) *value = normalize(v);
+    track(edited);
+    if (numeric) ImGui::PopFont();
+    if (hidden != label) {
+        ImGui::SameLine(0.f, gap);
+        ImGui::TextUnformatted(label, hidden);
+    }
+    ImGui::EndGroup();
+    ImGui::PopID();
+    result.changed = changed;
+    if (interaction) *interaction = result;
+    return changed;
+}
 bool BeginSettingRow(const char *id, const char *label, float width) {
     if (!ImGui::BeginTable(id, 2, ImGuiTableFlags_SizingStretchProp))
         return false;
@@ -636,16 +794,21 @@ bool BeginSettingRow(const char *id, const char *label, float width) {
 void EndSettingRow() {
     ImGui::EndTable();
 }
-static ImVec2 StatusBadgeSize(const char *text) {
-    const float pad = ImGui::GetFontSize() * .75f;
-    return {ImGui::CalcTextSize(text).x + pad * 2 + ImGui::GetFontSize() * .55f, ImGui::GetFontSize() + detail::CurrentParts().badgeExtraHeight};
+ImVec2 StatusBadgeSize(const char *text, float fontSize) {
+    const float font = fontSize > 0.f ? fontSize : ImGui::GetFontSize();
+    const float pad = font * .75f;
+    const float textWidth = ImGui::GetFont()->CalcTextSizeA(font, FLT_MAX, 0.f, text).x;
+    const float extra = detail::CurrentParts().badgeExtraHeight * font / std::max(ImGui::GetFontSize(), 1.f);
+    return {textWidth + pad * 2 + font * .55f, font + extra};
 }
-void StatusBadge(const char *text, StatusKind kind, const Theme *theme) {
-    auto p = ImGui::GetCursorScreenPos();
-    const auto size = StatusBadgeSize(text);
-    ImGui::Dummy(size);
+ImVec2 DrawStatusBadge(ImDrawList *d, ImVec2 p, const char *text, StatusKind kind, float fontSize,
+                       ComponentOptions options) {
+    const Theme *theme = options.theme;
+    const float font = fontSize > 0.f ? fontSize : ImGui::GetFontSize();
+    const auto size = StatusBadgeSize(text, font);
+    if (!d)
+        return size;
     auto color = Status(kind, theme);
-    auto *d = ImGui::GetWindowDrawList();
     auto fill = color;
     fill.w = .14f;
     SkinFrame frame;
@@ -660,16 +823,27 @@ void StatusBadge(const char *text, StatusKind kind, const Theme *theme) {
         detail::DrawOutline(d, p, {p.x + size.x, p.y + size.y}, size.y * .5f);
     }
     // Marker shape and text carry meaning in addition to color.
-    const float u = ImGui::GetFontSize() * .3f;
+    const float u = font * .3f;
     const ImVec2 m{p.x + size.y * .5f + u * .4f, p.y + size.y * .5f};
     if (kind == StatusKind::Error)
         d->AddRectFilled({m.x - u * .8f, m.y - u * .8f}, {m.x + u * .8f, m.y + u * .8f}, ImGui::GetColorU32(color), 1.5f);
     else if (kind == StatusKind::Warning)
         d->AddTriangleFilled({m.x, m.y - u}, {m.x - u * 1.05f, m.y + u * .8f}, {m.x + u * 1.05f, m.y + u * .8f},
                              ImGui::GetColorU32(color));
-    else
+    else if (kind == StatusKind::Live) {
+        // A ring around the dot, so "on air" differs from an ordinary state by shape as well as colour.
+        d->AddCircle(m, u * 1.05f, ImGui::GetColorU32(color), 0, std::max(1.f, u * .3f));
+        d->AddCircleFilled(m, u * .55f, ImGui::GetColorU32(color));
+    } else
         d->AddCircleFilled(m, u * .8f, ImGui::GetColorU32(color));
-    d->AddText({m.x + u * 1.6f, p.y + (size.y - ImGui::GetTextLineHeight()) * .5f}, ImGui::GetColorU32(color), text);
+    d->AddText(ImGui::GetFont(), font, {m.x + u * 1.6f, p.y + (size.y - font) * .5f}, ImGui::GetColorU32(color), text);
+    return size;
+}
+void StatusBadge(const char *text, StatusKind kind, const Theme *theme) {
+    const auto p = ImGui::GetCursorScreenPos();
+    const auto size = StatusBadgeSize(text);
+    ImGui::Dummy(size);
+    DrawStatusBadge(ImGui::GetWindowDrawList(), p, text, kind, 0.f, ComponentOptions{theme});
 }
 CompactActionRowRequest CompactActionRow(const char *id,
                                          const CompactActionRowOptions &options) {
@@ -834,6 +1008,55 @@ void DrawShadow(const Theme &t, ImDrawList *draw, ImVec2 minimum, ImVec2 maximum
         detail::DrawSoftShadow(draw, minimum, maximum, rounding, extent, peak, hasColor ? t.semantic.shadow : ImVec4(0, 0, 0, 1));
     }
     draw->PopClipRect();
+}
+namespace {
+// Floating panels pushed and not yet popped, per context. Push and Pop sit around one Begin, so this stays tiny.
+struct FloatingPanelEntry { ImGuiContext *context; const Theme *theme; };
+std::vector<FloatingPanelEntry> &FloatingPanels() { static std::vector<FloatingPanelEntry> stack; return stack; }
+} // namespace
+void PushFloatingPanel(const Theme &t) {
+    FloatingPanels().push_back({ImGui::GetCurrentContext(), &t});
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, t.zones.header.w > 0 ? t.zones.header : ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
+    ImGui::PushStyleColor(ImGuiCol_Border, t.colors.border.w > 0 ? t.colors.border : ImGui::GetStyleColorVec4(ImGuiCol_Border));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.f);
+}
+void PopFloatingPanel() {
+    ImGui::PopStyleVar();
+    ImGui::PopStyleColor(2);
+    auto &stack = FloatingPanels();
+    const Theme *t = nullptr;
+    for (auto it = stack.rbegin(); it != stack.rend(); ++it)
+        if (it->context == ImGui::GetCurrentContext()) {
+            t = it->theme;
+            stack.erase(std::next(it).base());
+            break;
+        }
+    if (!t || ImGui::IsWindowDocked())
+        return;
+    ImDrawList *draw = ImGui::GetWindowDrawList();
+    const ImVec2 p = ImGui::GetWindowPos(), size = ImGui::GetWindowSize(), q{p.x + size.x, p.y + size.y};
+    const float rounding = ImGui::GetStyle().WindowRounding;
+    if (!t->elevation.hard) {
+        // The soft shadow lies outside the window, so drawing it after the background is safe.
+        DrawShadow(*t, draw, p, q, rounding, ElevationLevel::Raised);
+        return;
+    }
+    // The window's draw list is drawn over its background, so the solid copy is clipped to the parts outside it.
+    const float scale = ImGui::GetStyle().FontScaleMain;
+    const ImVec2 o{t->elevation.offset.x * scale, t->elevation.offset.y * scale};
+    const ImVec2 a{p.x + o.x, p.y + o.y}, b{q.x + o.x, q.y + o.y};
+    ImVec4 color = t->semantic.shadow.w > 0 ? t->semantic.shadow : ImVec4(0, 0, 0, .25f);
+    color.w *= ImGui::GetStyle().Alpha;
+    const ImU32 col = ImGui::GetColorU32(color);
+    const ImVec2 strips[4][2] = {{{a.x, a.y}, {b.x, p.y}}, {{a.x, q.y}, {b.x, b.y}},
+                                 {{a.x, p.y}, {p.x, q.y}}, {{q.x, p.y}, {b.x, q.y}}};
+    for (const auto &s : strips) {
+        if (s[1].x <= s[0].x || s[1].y <= s[0].y)
+            continue;
+        draw->PushClipRect(s[0], s[1], false);
+        draw->AddRectFilled(a, b, col, rounding);
+        draw->PopClipRect();
+    }
 }
 void StatusBadge(const char *text, StatusKind kind, ComponentOptions options) { StatusBadge(text, kind, options.theme); }
 bool NotificationCard(const Notification &n, double now, ComponentOptions options) { return NotificationCard(n, now, options.theme); }

@@ -32,7 +32,7 @@ jobs:
       - name: Configure
         run: cmake -S . -B build/ci -G "${{ matrix.generator }}" -A ${{ matrix.arch }} -DIMKIT_BUILD_GALLERY=ON -DIMKIT_BUILD_TESTS=ON -DIMKIT_BUILD_ACCESSIBILITY_WIN32=ON
       - name: Build
-        run: cmake --build build/ci --config Release --parallel
+        run: cmake --build build/ci --config Release --parallel -- /nr:false /p:UseMultiToolTask=true /p:EnforceProcessCountAcrossBuilds=true
       - name: Test
         run: ctest --test-dir build/ci -C Release --output-on-failure
       - name: Package

@@ -21,7 +21,7 @@ const { title = data.title, tagline, actions = [] } = data.hero ?? {};
             aria-label={english ? `ImKit ${edition} introduction film, about three minutes, with music.` : `ImKit ${edition}の紹介動画（約3分）。BGM付き。`}>
             <source src={`${base}/media/${film}?v=${revision}`} type="video/mp4" />
         </video>
-        <p>{english ? `ImKit ${edition} film · About 3 minutes · Recorded in the Gallery · Music: "Laserpack" by Kevin MacLeod ft. DarkNES (CC BY 4.0)` : `ImKit ${edition}の紹介動画 · 約3分 · Galleryを実際に操作して録画 · 音楽: Kevin MacLeod ft. DarkNES「Laserpack」（CC BY 4.0）`}</p>
+        <p>{english ? `ImKit ${edition} film · About 3 minutes · Recorded in the Gallery · Narration: Gemini TTS (Charon) · Original 96-bar score (MIT)` : `ImKit ${edition}の紹介動画 · 約3分 · Galleryを実際に操作して録画 · ナレーション: Gemini TTS（Aoede） · 96小節オリジナル楽曲（MIT）`}</p>
     </div>
 	<div class="imkit-hero-stack">
 		<div class="imkit-hero-copy">

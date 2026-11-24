@@ -44,7 +44,7 @@ Windows版のリリースアーカイブには、`imkit_gallery.exe`、`design-a
 | --- | --- | --- |
 | **Overview** | Start · Before / After · Workspace | まず変化を見る。Workspaceはタブ、階層の操作、設定、選択部品を1画面にまとめ、操作の要求はGalleryの状態が反映する。 |
 | **Look** | Theme Studio · Skins · Tokens · Icons · Window frame | 4色から見た目を作る、部品の枠を差し替える、321個のアイコンを7サイズで探す、ウィンドウ枠のプリセットを試す。 |
-| **Controls** | Basic · Numbers and units · Text, colour, media · Trees and tables · Popups and layout · Composites · Rows and palette · Progress and states · Toasts | 必要な部品を見つけて、呼び出しをコピーする。 |
+| **Controls** | Basic · Numbers and units · Text, colour, media · Trees and tables · Popups and layout · Composites · Rows and palette · Glow frame · Progress and states · Toasts | 必要な部品を見つけて、呼び出しをコピーする。 |
 | **Data** | Charts · PTZ camera | ドーナツ、棒、ゲージ、スパークライン。疑似カメラを操作するパン・チルト・ズームのパッド。 |
 | **Workspaces** | Editor core · Video · CG · Workspace shell · Preview tiles | 公開部品で組んだタイムライン、インスペクター、モニター、ギズモ。 |
 | **Show** | Controls · Live · Rules · Schedule · Beat · Script · Surface · LED · Images | メディアサーバー向けの操作部品（`imkit::show`）。 |
@@ -72,4 +72,4 @@ python tools/media/verify.py
 
 ## 素材の出所
 
-画像と動画は、GalleryまたはNode Editorの付属アプリから録画しています。既成の映像、第三者の製品画面、アイコン、フォント、UIコードは含みません。第三者の素材は、動画の音楽、Kevin MacLeod ft. DarkNES「Laserpack」（CC BY 4.0）だけです（通知を参照）。Dear ImGui、GLFW、任意のフォントは、それぞれのライセンスを保ちます（[THIRD_PARTY_NOTICES.md](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/THIRD_PARTY_NOTICES.md)）。検証の根拠と範囲外の項目は[検証記録](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/検証記録.md)、Frame Labのプラットフォーム境界は[ウィンドウフレーム](../../features/window-frame/)を参照してください。
+動画とGIF内のすべてのUI画面は、GalleryまたはNode Editor付属アプリを公開Dear ImGuiの入力で操作して録画しています。既成の映像、第三者の製品画面、アイコン、フォント、UIコードは含みません。動画の音楽はリポジトリ同梱スクリプトによるオリジナル96小節（128 BPM）スコア、日英ナレーションはGemini Flash TTS（`Aoede` / `Charon`）で、リポジトリのMITライセンスのもと配布されます（`website/public/media/provenance.json`）。Dear ImGui、GLFW、任意のフォントは、それぞれのライセンスを保ちます（[THIRD_PARTY_NOTICES.md](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/THIRD_PARTY_NOTICES.md)）。検証の根拠と範囲外の項目は[検証記録](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/検証記録.md)、Frame Labのプラットフォーム境界は[ウィンドウフレーム](../../features/window-frame/)を参照してください。

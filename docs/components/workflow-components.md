@@ -12,8 +12,10 @@ Every control returns a request. It never changes the value you pass in.
 
 | Group | Components | What they do |
 | --- | --- | --- |
-| Navigation | `StepNavigator`, `NavigationRail` | Step bar and vertical rail over a borrowed `StepItem` span; return a selection request |
-| | `WorkspaceTabs` | Icon and label tabs; collapse to a combo when narrow |
+| Navigation | `StepNavigator`, `NavigationRail` | Step bar and vertical rail over a borrowed `StepItem` span; return a selection request. `StepNavigatorOptions::badge` draws the number mark as a circle or a rounded square (`badgeRounding`, `badgeBorder`) |
+| | `StepBand` | One row of steps sorted into tinted group trays, the group name at the left of each tray. A tray always stands apart from the band (1.14:1), even when its tint is the band's colour. Steps are joined by a bar that turns solid once the earlier step is done, and dotted next to an optional step (`StepBandItem::optional`: smaller plate, lighter label). The default height is 2.5 text heights and the plate is the largest thing on it. When narrow, group names hide first, then step labels shorten; the height never grows. `StepBandOptions::tintTrays = false` draws every tray in the band's colour, and `currentTrayContrast` lifts the tray holding the current step (lighter on a dark band). Returns a selection request |
+| | `DrawPlateMark` | Draws one numbered plate mark. The state never relies on colour alone: dashed when pending, corner handles when current, grass when completed, a bent leaf to redo, faded when skipped. `PlateMarkDecor` adds a corner dot when blocked and the grass a host decides from its own data (`PlateGrowth`: none, one sprout, three blades), so a step grows as its work is done. `PlateMarkStyle` sets the colours, rounding and grid lines |
+| | `WorkspaceTabs` | Icon and label tabs; collapse to a combo when narrow. `WorkspaceTab::accent` colours a tab's label and mark; `WorkspaceTabsOptions::filledSelection` fills the selected tab with its accent and an onAccent label |
 | | `ChoiceGroup` | Bordered heading with one to three columns of radio choices; returns the chosen stable ID |
 | Hierarchy and settings | `HierarchyGroupHeader`, `HierarchyRow` | Scene-graph style rows with full-width selection, ellipsized labels and an optional `accentColor` stripe. Selection, visibility, lock and group actions are requests. An unavailable visibility or lock action can be omitted |
 | | `BeginInspectorCard` / `EndInspectorCard` | Groups related controls in an auto-height bordered card. Always pair them |
@@ -25,7 +27,7 @@ Every control returns a request. It never changes the value you pass in.
 | | `ToastRegion` | Host-owned queue and time; a stack clamped to the work area that never takes focus. For coloured cards see [Toasts](toasts.md) |
 | | `EmptyState`, `UnavailableState`, `RetryState` | Heading, description, optional icon and action; return a request |
 | | `MultiSelectionBar`, `HelpCallout`, `ValidationSummary` | Show a host count, commands or issues. There is no validation engine |
-| Progress | `Progress`, `ProgressTrack`, `StageProgress`, `TaskProgressCard`, `CircularProgress` | See [Progress](#progress) |
+| Progress | `Progress`, `ProgressTrack`, `StageProgress`, `TaskProgressCard`, `WaitCard`, `CircularProgress` | See [Progress](#progress) |
 | Layout | `BeginCard` / `EndCard` | Always pair them, even when Begin returns false |
 | | `ResponsiveToolbar` | Overflow menu, icon labels, disabled reasons and native keyboard focus |
 | | `ResolveRightSidePanelLayout`, `RightSidePanelHandle` | A collapsible side panel with an edge handle and mouse or keyboard resizing |
@@ -49,20 +51,24 @@ Every control returns a request. It never changes the value you pass in.
 
 ## Progress
 
+`ProgressTrackView::segments` divides the track into equal parts with thin gaps (for example one per projector), `lanes` adds thin side-by-side bars under it for work that runs beside the main value (a finished lane shows a check), `barHeight` overrides the theme height, and `hideValue` hides the value above the track when the host shows it elsewhere (`WaitCard` does this).
+
 `ProgressTrackView` is the shared source for the stage label, status text, percentage (or your `valueText`), the rounded bar and supplemental text. `Progress` and `TaskProgressCard` reuse it, so no card or toast builds a second percentage or status line.
 
 | Item | Behaviour |
 | --- | --- |
 | `ProgressStatus` | `Queued`, `Running`, `Paused`, `Succeeded`, `Failed`, `Cancelled` |
-| Indeterminate | A negative or non-finite fraction. Only a `Running` track moves a short segment, and `Theme.motion.enabled`, `reducedMotion` and your `AnimationState` control the motion |
+| Unknown fraction | A negative or non-finite fraction. No bar is drawn, because a moving segment does not say how far the work has come. A `Running` track still calls the thumb at the middle. Show the stage and the elapsed time beside it |
 | `Progress` | Inline, child overlay or modal, with a cancel request |
 | `StageProgress` | Displays the stages and the current ID you pass. When narrow, it shows the current stage and `n/total` |
+| `StageProgress` plate marks | Set `StageProgressView::marks` (or `WaitCardView::stageMarks`) to draw the stage row with numbered plate marks instead of dots |
+| `WaitCard` | One piece of work the user waits for: a live dot and title with the value large on the right, the track, one line of detail (for example the time left), and the stage row. While Running the outline breathes and the dot pulses; both stop under reduced motion. Draw-only |
 | `TaskProgressCard` | Regular or compact summary (`TaskProgressCardOptions::compact`). Returns the clicked `Command.id`, and 0 means no request. Strings and the operation span are borrowed for the frame |
 | `CircularProgress` | Borrowed fraction, value and label. A negative or non-finite fraction means unavailable. It has no threshold and owns no state |
 
 ```cpp
 imkit::ProgressTrackView progress;
-progress.fraction = fraction;     // negative or non-finite means indeterminate
+progress.fraction = fraction;     // negative or non-finite means unknown: no bar
 progress.status = imkit::ProgressStatus::Running;
 progress.label = "Inspecting files";
 progress.supplemental = "The host owns progress updates.";

@@ -1,106 +1,27 @@
 {
- "hook-1": {
-  "title": "いつもの Dear ImGui。",
-  "sub": "呼び出しの形も、値も、そのまま。"
- },
- "hook-2": {
-  "title": "テーマを足すだけで、こう変わる。",
-  "sub": "同じ呼び出しの形、同じ値。見た目と手触りだけが新しくなる。"
- },
- "hook-title": {
-  "title": "見た目は現代的に。",
-  "sub": "使い心地は、いつもどおり。"
- },
- "icons": {
-  "title": "アイコンは300個を超える。",
-  "sub": "検索して、C++ の呼び出しをそのままコピー。"
- },
- "toasts": {
-  "title": "処理の状況を、その場で。",
-  "sub": "Loading から Success へ。通知の状態は、アプリが持つ。"
- },
- "chapter-2": {
-  "title": "自分の世界観に。",
-  "sub": "色を選ぶだけで、画面ぜんぶが着替える。"
- },
- "worlds": {
-  "title": "テーマを選ぶと、全体が変わる。",
-  "sub": "テーマは13種。4色から自作することもできる。"
- },
- "studio-1": {
-  "title": "世界観ごと、取り込める。",
-  "sub": "テーマファイルを読み込めば、Gallery 全体が着替える。"
- },
- "studio-2": {
-  "title": "角・枠線・影まで自由に。",
-  "sub": "作ったテーマは、テキストでコピーして共有できる。"
- },
- "sprite": {
-  "title": "絵が動く。",
-  "sub": "スプライトシートの再生。進捗バーに乗せることもできる。"
- },
- "chapter-3": {
-  "title": "導入は、数行。",
-  "sub": "今のアプリの作りは、変えなくていい。"
- },
- "workspace": {
-  "title": "タブ・階層・設定を、ひとつの画面に。",
-  "sub": "操作の結果は要求として返る。反映するのは、アプリ。"
- },
- "timeline": {
-  "title": "タイムラインを、そのまま編集。",
-  "sub": "プレイヘッドの操作、クリップの移動、再生。"
- },
- "node-editor": {
-  "title": "読めるノードエディタ。",
-  "sub": "型で色分けした配線、記号つきのソケット、状態の表示。"
- },
- "chapter-4": {
-  "title": "本格的なツールを作る。",
-  "sub": "データも Undo も、アプリの手元に置いたまま。"
- },
- "show-live": {
-  "title": "ライブ演出を、GO で動かす。",
-  "sub": "キューリスト、クリップランチャー、ミキサー。"
- },
- "show-surface": {
-  "title": "コンソールを、自由に組む。",
-  "sub": "フェーダーやノブを置いて、編集モードで並べ替える。"
- },
- "tilemap": {
-  "title": "LEDウォールを、地図に。",
-  "sub": "ポートごとの色分けと、ケーブルの順序。"
- },
- "charts": {
-  "title": "グラフも、すぐに。",
-  "sub": "ドーナツ、棒、ゲージ、スパークライン。"
- },
- "chapter-5": {
-  "title": "その先の現場まで。",
-  "sub": "映像・演出・計測のツールにも。"
- },
- "code": {
-  "title": "CMake に3行。C++ に3行。",
-  "sub": "Context・描画・フォントは、今のまま使える。"
- },
- "keep": {
-  "title": "呼び出しは変えない。",
-  "sub": "見た目と部品だけを、足していく。"
- },
- "outro-1": {
-  "title": "ImKit 4.1",
-  "sub": "Dear ImGui のまま、現代的なツールを。"
- },
- "outro-2": {
-  "title": "Gallery で、今すぐ試せる。",
-  "sub": "aokimotohide.github.io/imgui-modern-kit"
- },
- "outro-3": {
-  "title": "オープンソース・MIT・C++20",
-  "sub": "音楽: Kevin MacLeod ft. DarkNES「Laserpack」（incompetech.com）· CC BY 4.0"
- },
- "compare": {
-  "title": "左右で、同じ値を編集。",
-  "sub": "素の Dear ImGui と ImKit を、並べて確かめられる。"
- }
+  "intro-tag": {"title": "DEAR IMGUI + MODERN UI", "sub": "呼び出しはそのまま。見た目と設計を次の段へ。"},
+  "hook-title": {"title": "ImKit 4.2", "sub": "4層カスタム基盤 · OKLCH サーフェス · AI時代対応"},
+  "ch-1": {"title": "同じ呼び出し、刷新された魂", "sub": "22部品を刷新し、4つの層で思い通りにカスタマイズ"},
+  "compare": {"title": "Before / After", "sub": "同じ値を編集する、素の Dear ImGui と ImKit 4.2"},
+  "layers": {"title": "4層カスタマイズ基盤", "sub": "L1 テーマテキスト · L2 型付きスタイル & StyleScope · L3 Skin · L4 Interact"},
+  "worlds": {"title": "14のテーマ × OKLCH サーフェス", "sub": "ワンコールでアプリ全体の世界観を着替える"},
+  "studio": {"title": "Theme Studio & Classic", "sub": "角丸・縁取り・影をリアルタイム調整。Classic へも切替可能"},
+  "ch-2": {"title": "クリエイティブツールのために", "sub": "編集スイート、タイムライン、ノードエディタ、曲線編集"},
+  "workspace": {"title": "役割色ドックタブ帯 & FloatingPanel", "sub": "WindowRole に沿った明快な視認性と階層インスペクター"},
+  "timeline": {"title": "Filmstrip & ズーム連動背景", "sub": "コマ並び表示で動画編集の視認性をさらに向上"},
+  "node-editor": {"title": "ひと目で読めるノードエディタ", "sub": "型別配線カラー · ピン記号 · 接続フィードバック"},
+  "charts-ptz": {"title": "Charts & PTZ 操作盤", "sub": "対話型グラフと、カメラの機能だけを描く PTZ UI"},
+  "ch-3": {"title": "ライブ演出と AI エージェント", "sub": "Show モジュール、グロー枠、外部制御の可視化"},
+  "stage-bridge": {"title": "Show & Automation", "sub": "ライブ現場の操作卓から自動化セッションまで"},
+  "show-mosaic": {"title": "Show モジュール統合ビュー", "sub": "Cue GO · コントロールサーフェス · LED TileMap"},
+  "glow-agent": {"title": "ExternalControlIndicator & DrawGlowFrame", "sub": "AI エージェントや遠隔操作の状態を光の枠とピルで伝達"},
+  "workflow-ui": {"title": "StepBand · WaitCard · Toasts", "sub": "工程の進行、待ち時間、折りたたみ詳細を美しく整理"},
+  "icons-sprite": {"title": "321 Icons & imkit::motion", "sub": "7サイズのアトラスと Dear ImGui 非依存モーション基盤"},
+  "ch-4": {"title": "ロックインなし。3行で導入。", "sub": "Context も Renderer も、データもアプリが所有する"},
+  "code": {"title": "CMake 3行 · C++ 3行", "sub": "必要なターゲットだけをリンクして即スタート"},
+  "ownership": {"title": "Your Context. Your Renderer. Your Data.", "sub": "主導権はつねにあなたのアプリケーションに"},
+  "wall": {"title": "すべての画面が、公開 API 製", "sub": "14 テーマ · 22 部品 · Editor Suite · Node Editor · Show"},
+  "outro-1": {"title": "ImKit 4.2", "sub": "Dear ImGui のまま、現代的なツールを。"},
+  "outro-2": {"title": "Gallery で、今すぐ試せる。", "sub": "aokimotohide.github.io/imgui-modern-kit"},
+  "outro-3": {"title": "オープンソース · MIT · C++20 · Windows & macOS", "sub": "音声: Gemini Flash TTS (Aoede) · 楽曲: 96小節オリジナル · 画面: 実機 Gallery 1080p60"}
 }

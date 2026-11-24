@@ -33,9 +33,14 @@ The example needs `<array>`, `<vector>` and `<algorithm>`. Rules for using it:
 - Strings are borrowed UTF-8; keep their storage valid while drawing.
 - Use unique nonzero IDs.
 - Keep one state per viewport and context, and call `Reset()` before reusing a context.
+- Pass the area below your own fixed bars (a menu, a step band) as `ToastViewportOptions::areaPos` and `areaSize`, so cards never cover them. A zero size uses the viewport's work area.
 - Call on the UI thread. The host passes worker results across.
 - Create covering host windows with `ImGuiWindowFlags_NoBringToFrontOnFocus`, for example `ImGui::Begin("App", nullptr, ImGuiWindowFlags_NoBringToFrontOnFocus)`, before drawing toasts. Otherwise a click on a host window can raise it above existing toasts.
 - Toasts are ordinary public ImGui windows. They do not force the display order through internal APIs or steal focus, and new overlapping windows and modal dialogs keep Dear ImGui's ordering and input rules.
+
+## Folded detail
+
+`ToastView::detail` holds text people rarely need, such as job or attempt identifiers. The card shows a Details toggle (locale key `details`) and draws the text in the monospace role when it is open; `detailOpen` is the state before the first toggle.
 
 ## Duration and queue
 
@@ -49,7 +54,7 @@ The example needs `<array>`, `<vector>` and `<algorithm>`. Rules for using it:
 
 Draw once per frame. `UpdateToastViewport` advances timing without drawing; do not call it for a state you also draw in the same frame.
 
-**Progress.** Set `phase=ToastPhase::Loading`. The toast uses the shared thin rounded track, with `stage`, the status, and a percentage or `progressText` outside the bar. A negative or nonfinite `progress` shows a short moving segment while the status is `Running`; paused and terminal unknown states stay still. Other values are clamped to 0–1.
+**Progress.** Set `phase=ToastPhase::Loading`. The toast uses the shared thin rounded track, with `stage`, the status, and a percentage or `progressText` outside the bar. A negative or nonfinite `progress` draws no bar; put the elapsed time in `progressText`. Other values are clamped to 0–1.
 
 **Completion.** Update the same ID to `phase=Message`, `Succeeded` or `Failed`, with a success or error kind. Changing the phase, kind or duration restarts the timer without changing the insertion order. Text and progress updates do not restart it.
 
@@ -58,7 +63,7 @@ The trailing `ToastView` fields `stage`, `progressText` and `status` have defaul
 ```cpp
 toast.phase = imkit::ToastPhase::Loading;
 toast.stage = "Inspecting files";
-toast.progress = fraction; // Negative or nonfinite means indeterminate.
+toast.progress = fraction; // Negative or nonfinite means unknown: no bar.
 toast.status = imkit::ProgressStatus::Running;
 toast.action = "View details"; // Returns an Action event for this toast ID.
 // On completion, update this same ID and set phase=Message, status=Succeeded/Failed.
@@ -77,7 +82,7 @@ toast.action = "View details"; // Returns an Action event for this toast ID.
 
 | Setting | Behavior |
 | --- | --- |
-| `ToastPosition` | Top or bottom, times left, center or right. Default `TopRight`, with `maximum=4` |
+| `ToastPosition` | An alias of `OverlayAnchor`: top or bottom, times left, center or right. Default `TopRight`, with `maximum=4` |
 | Width zero | Font-relative width |
 | Negative margin or gap | Uses the theme-derived current style spacing |
 | Size limits | Cards and the visible count stay within the viewport work area; an oversized card scrolls vertically |

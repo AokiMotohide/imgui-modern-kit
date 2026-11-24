@@ -4,7 +4,7 @@ description: "ImKitは、ツールや制作環境の外枠（クローム）を�
 ---
 
 ImKitは、ツールや制作環境の外枠（クローム）を構成するためのホスト主導型ビルディングブロックを提供します。
-`AppBar`、`WorkspaceHeader`、`InspectorSection`、`AdvancedSection`、`BottomActionBar`、`DiagnosticsDrawer`、`ThemePicker` などのシェル部品が含まれます。
+`AppBar`、`WorkspaceHeader`、`InspectorSection`、`AdvancedSection`、`BottomActionBar`、`DiagnosticsDrawer`、`ThemePicker`、`ExternalControlIndicator` などのシェル部品が含まれます。
 
 ## 概要
 
@@ -23,6 +23,7 @@ ImKitは、ツールや制作環境の外枠（クローム）を構成するた
 | `BottomActionBar` | 最下部のステータス行・実行ボタン群（OK/キャンセル/進行状況など） | 押下されたアクション |
 | `DiagnosticsDrawer` | ログや警告、エラー情報を表示する下部ドロワー | 開閉要求・ログ描画 |
 | `ThemePicker` | テーマプリセットを選択するUI | 選択されたテーマプリセット |
+| `ExternalControlIndicator` | ビューポートを囲むグロー枠と、操作中の相手を示すピル | 停止の要求、次のフレームの要否 |
 
 ## コード例
 
@@ -51,6 +52,50 @@ void RenderAppHeader(MyAppState& state, imkit::ToolbarState& toolbar) {
     }
 }
 ```
+
+## 外部制御インジケーター
+
+`ExternalControlIndicator` は、画面の前の人以外（自動化API、遠隔の操作者、エージェントなど）がアプリを操作していることを示します。ビューポートを囲むグロー枠で離れていても分かるようにし、ピルで、誰が操作しているか、何をしているかを示して、停止ボタンを出します。接続、状態、停止の意味はホストが管理します。
+
+| 状態 | 既定の見た目 |
+| --- | --- |
+| `Off` | 何も出さない。表示中の枠は、直前の状態の見た目のまま消えていく |
+| `Connected` | 控えめで一定のアクセント色の枠 |
+| `Active` | 呼吸するアクセント色の枠。`Pulse()` で波紋を出す |
+| `InputLocked` | 警告色の、強めで一定の枠。画面全体の薄い色かぶせと、ロック中の文言 |
+
+```cpp
+static imkit::ExternalControlState remote;
+static imkit::ExternalControlStyle look = imkit::MakeExternalControlStyle(theme);
+imkit::ExternalControlView view;
+view.phase = server.Locked()   ? imkit::ExternalControlPhase::InputLocked
+           : server.Busy()     ? imkit::ExternalControlPhase::Active
+           : server.Attached() ? imkit::ExternalControlPhase::Connected
+                               : imkit::ExternalControlPhase::Off;
+view.client = server.ClientName();
+view.activity = server.CurrentCommand();
+if (server.TakeNewCommand())
+    remote.Pulse();
+// 覆いたいウィンドウの後で呼ぶ
+const auto request = imkit::ExternalControlIndicator("remote", view, remote, ImGui::GetTime(), look, nullptr, {&theme});
+if (request.stopRequested)
+    server.Disconnect();
+```
+
+- `ExternalControlStyle` は、状態ごとの `GlowFrameStyle`（`connected`、`active`、`locked`）、`showPill` とピルの位置 `pill`（`OverlayAnchor`。四隅、上下の中央）、`pillMargin`、`lockedTint`、`pulseDot`、ピルの見た目（`pillFill` の `Solid` / `Surface`、`pillOutline`、`pillShadow`、`pillGlow`）と、表示を安定させる3つの値 `holdSeconds`（1.0 秒）、`pulseInterval`（0.5 秒）、`transitionSeconds`（0.3 秒）を持ちます。`MakeExternalControlStyle` の後で、どのフィールドも変更できます。
+- 枠はビューポートの前面の描画リストに描きます。ピルは小さなウィンドウなので、停止ボタンは他のボタンと同じようにクリックとキーボードフォーカスを受けます。停止は、状態が `Off` でない間だけ報告します。
+- 画面の前の人は、外部制御中もアプリを操作できます。枠は入力を受け取りません。`stopLabel` が空のピルは、クリックとホバーを下のウィンドウへ通します。
+- 状態をまとめて送ってくるホスト向けの安定化：
+
+| フィールド | 既定 | 効果 |
+| --- | --- | --- |
+| `holdSeconds` | 1.0 | 段階が下がっても、この時間は高い段階を表示します（`Off < Connected < Active < InputLocked`）。同じかより高い段階が来ると保持を延長します。reduced motion でも有効です。 |
+| `pulseInterval` | 0.5 | これより短い間隔の Pulse は1つの波紋にまとめます。 |
+| `transitionSeconds` | 0.3 | 段階の切替で、色、強さ、広がり、線を補間します。`Steady` は暗くならない `Breathe` として補間します。reduced motion では補間しません。 |
+
+- ピルは表示中に幅を縮めないので、`activity` が変わっても揺れません。非表示になると本来の幅に戻ります。
+- `needsFrame` は、時間とともに絵が変わっている間 true です。インジケーターは入力を止めません。`InputLocked` では、ホストがローカルの入力を止めてください。
+- 枠の設定項目は [縁の光（グロー枠）](../make-your-own-look/#縁の光グロー枠) にあります。
 
 ## テーマとフォント
 

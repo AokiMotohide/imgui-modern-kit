@@ -1,4 +1,4 @@
-#include <imkit/imkit.h>
+#include <imkit/charts.h>
 #include <array>
 #include <cmath>
 #include <cstdio>

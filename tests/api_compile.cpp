@@ -1174,9 +1174,37 @@ int main() {
     const auto theme = imkit::MakeTheme(imkit::ThemePreset::Slate);
     auto* dragVector = static_cast<bool (*)(const char*, float*, const char*, float, float, float,
                                            const char*, ImGuiSliderFlags)>(&imkit::DragVector3WithUnit);
+    auto* sliderInput = &imkit::SliderFloatWithInput;
+    auto* curveEditor = &imkit::TransferCurveEditor;
+    auto* curveSectionEditor = &imkit::TransferCurveSectionEditor;
+    (void)curveSectionEditor;
+    auto* curveClamp = &imkit::TransferCurveClampMonotone;
+    imkit::SliderInputInteraction sliderInteraction;
+    imkit::TransferCurveState curveState;
+    imkit::TransferCurveOptions curveOptions;
+    imkit::TransferCurveInteraction curveInteraction;
+    imkit::TransferCurveSeries curveSeries;
+    imkit::TransferCurveNode curveNode;
+    if (!sliderInput || !curveEditor || !curveClamp || sliderInteraction.changed || curveState.node != -1 ||
+        curveOptions.monotone || curveInteraction.changed || curveSeries.dashed || curveNode.pos.x != 0.f)
+        return 1;
     auto* axisVector = &imkit::AxisVector3Field;
     auto* compactAction = &imkit::CompactIconActionButton;
-    return presets.size() == 13 && theme.scheme == imkit::ColorScheme::Dark &&
+    float (*rowWidth)(std::span<const char *const>) = &imkit::ActionRowWidth;
+    float (*buttonWidth)(const char *) = &imkit::ActionButtonWidth;
+    float (*minimumWidth)() = &imkit::ActionButtonMinimumWidth;
+    if (!rowWidth || !buttonWidth || !minimumWidth)
+        return 1;
+    imkit::ComponentOptions busy;
+    busy.progress = .62f;
+    imkit::Theme styled = theme; styled.stroke.button = 3;
+    styled.stroke.dashedDisabled = true;
+    const float eased = imkit::ApplyEasing(imkit::Easing::OutBack, .5f, imkit::EasingShape{});
+    imkit::MotionKey keys[] = {{0, 0, imkit::MotionEase::Linear}, {1, 1, imkit::MotionEase::Spring}};
+    auto* drawLayers = &imkit::DrawLayeredMotion;
+    if (!(eased > .5f) || imkit::EvaluateMotionTrack(keys, 2) != 1 || drawLayers == nullptr || busy.progress < 0)
+        return 1;
+    return presets.size() == 14 && theme.scheme == imkit::ColorScheme::Dark &&
                    dragVector != nullptr && axisVector != nullptr && compactAction != nullptr &&
                    imkit::ThemeScaleMinimum == .5f &&
                    imkit::ThemeScaleDefault == 1.25f &&

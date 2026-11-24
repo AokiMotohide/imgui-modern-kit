@@ -1,13 +1,14 @@
 #include "charts_page.h"
-#include "gallery.h"
+#include "gallery_page_host.h"
+#include <imkit/widgets.h>
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
 
 namespace imkit::gallery {
 void ChartsPage::Show(GalleryState& host) {
-    auto& theme = host.theme;
-    ComponentOptions o{&theme, &host.animation};
+    auto& theme = HostTheme(host);
+    ComponentOptions o{&theme, &HostAnimation(host)};
     if (!initialized) {
         for (std::size_t i = 0; i < series.size(); ++i)
             series[i] = 40.f + 18.f * std::sin(static_cast<float>(i) * .55f) + 9.f * std::sin(static_cast<float>(i) * 1.7f);

@@ -303,7 +303,7 @@ void ProgressTrackImpl(const char* id,float fraction,ProgressStatus status,Compo
     const bool available=std::isfinite(fraction)&&fraction>=0.f;
     const float value=available?std::clamp(fraction,0.f,1.f):0.f;
     const float width=std::max(1.f,ImGui::GetContentRegionAvail().x);
-    const float height=detail::ProgressTrackBarHeight();
+    const float height=thumbView?detail::ProgressTrackBarHeight(*thumbView):detail::ProgressTrackBarHeight();
     const float radius=height*.5f;
     const ImVec2 position=ImGui::GetCursorScreenPos();
     ImGui::PushID(id);
@@ -313,7 +313,10 @@ void ProgressTrackImpl(const char* id,float fraction,ProgressStatus status,Compo
     const bool animate=MotionAllowed(o);
     const ImVec4 track=detail::WithAlpha(TextColor(o),.13f);
     const ImVec4 foreground=ProgressStatusColor(status,o);
-    draw->AddRectFilled(position,{position.x+width,position.y+height},ImGui::GetColorU32(track),radius,ImDrawFlags_RoundCornersAll);
+    // An unknown fraction draws no bar at all: a moving segment says nothing about how far the work
+    // has come, and an empty track reads as stuck at zero. The host shows the stage and elapsed time.
+    if(available)
+        draw->AddRectFilled(position,{position.x+width,position.y+height},ImGui::GetColorU32(track),radius,ImDrawFlags_RoundCornersAll);
     if(available) {
         float shown=value;
         // Values tween so that coarse host updates do not look like jumps.
@@ -334,26 +337,26 @@ void ProgressTrackImpl(const char* id,float fraction,ProgressStatus status,Compo
             info.fraction=shown;info.status=status;info.animate=animate;
             thumbView->thumb(info,thumbView->thumbUser);
         }
-    } else if(status==ProgressStatus::Running) {
-        const float segment=std::min(width,std::max(height*3.f,width*.28f));
-        // Ping-pong with easing at both ends so the segment never snaps back.
-        float phase=.5f;
-        if(animate) {
-            const float t=static_cast<float>(std::fmod(std::max(0.0,ImGui::GetTime()),2.2)/2.2);
-            const float triangle=t<.5f?t*2.f:2.f-t*2.f;
-            phase=triangle*triangle*(3.f-2.f*triangle);
-        }
-        const float left=position.x+phase*(width-segment);
-        draw->AddRectFilled({left,position.y},{left+segment,position.y+height},ImGui::GetColorU32(foreground),radius,ImDrawFlags_RoundCornersAll);
-        if(thumbView&&thumbView->thumb) {
-            ProgressThumbInfo info;
-            info.draw=draw;info.trackMin=position;info.trackMax={position.x+width,position.y+height};
-            info.head={left+segment*.5f,position.y+height*.5f};
-            info.fraction=-1.f;info.status=status;info.animate=animate;
-            thumbView->thumb(info,thumbView->thumbUser);
+    } else if(status==ProgressStatus::Running&&thumbView&&thumbView->thumb) {
+        // The thumb still shows that work is running, standing still at the middle.
+        ProgressThumbInfo info;
+        info.draw=draw;info.trackMin=position;info.trackMax={position.x+width,position.y+height};
+        info.head={position.x+width*.5f,position.y+height*.5f};
+        info.fraction=-1.f;info.status=status;info.animate=animate;
+        thumbView->thumb(info,thumbView->thumbUser);
+    }
+    if(available&&thumbView&&thumbView->segments>1) {
+        // Equal divisions as thin gaps in the window background, drawn over the fill.
+        ImVec4 gap=ImGui::GetStyleColorVec4(ImGuiCol_ChildBg);
+        if(gap.w<=0.f) gap=ImGui::GetStyleColorVec4(ImGuiCol_WindowBg);
+        gap.w=1.f;
+        const float gapWidth=std::max(2.f,height*.3f);
+        for(int i=1;i<thumbView->segments;++i) {
+            const float x=position.x+width*static_cast<float>(i)/static_cast<float>(thumbView->segments);
+            draw->AddRectFilled({x-gapWidth*.5f,position.y},{x+gapWidth*.5f,position.y+height},ImGui::GetColorU32(gap));
         }
     }
-    detail::DrawOutline(draw,position,{position.x+width,position.y+height},radius);
+    if(available) detail::DrawOutline(draw,position,{position.x+width,position.y+height},radius);
     if(o.accessibility) {
         accessibility::SemanticNode node;
         node.id=ImGui::GetID("progress-track");node.parent=o.parent;
@@ -402,6 +405,40 @@ void ProgressTrack(const char* id,const ProgressTrackView& view,ComponentOptions
         ImGui::SetCursorScreenPos({origin.x,origin.y+view.thumbHeight});
     }
     ProgressTrackImpl("track",view.fraction,view.status,trackOptions,&view);
+    if(!view.lanes.empty()) {
+        // Lanes: one thin bar per entry, side by side, with a short label under each. A finished lane shows a check.
+        const float laneGap=ImGui::GetStyle().ItemSpacing.x*.5f;
+        const float laneBar=detail::ProgressLaneBarHeight(view);
+        const float labelSize=detail::ProgressLaneLabelSize();
+        const float rowHeight=detail::ProgressLaneRowHeight(view);
+        const ImVec2 origin{top.x,ImGui::GetItemRectMax().y+detail::ProgressHeaderGap()};
+        ImGui::SetCursorScreenPos({top.x,ImGui::GetItemRectMax().y});
+        ImGui::Dummy({width,rowHeight});
+        auto* draw=ImGui::GetWindowDrawList();
+        const float count=static_cast<float>(view.lanes.size());
+        const float laneWidth=std::max(1.f,(width-laneGap*(count-1.f))/count);
+        const ImVec4 trackColor=detail::WithAlpha(TextColor(o),.13f);
+        for(std::size_t i=0;i<view.lanes.size();++i) {
+            const auto& lane=view.lanes[i];
+            const float x=origin.x+(laneWidth+laneGap)*static_cast<float>(i);
+            const float r=laneBar*.5f;
+            draw->AddRectFilled({x,origin.y},{x+laneWidth,origin.y+laneBar},ImGui::GetColorU32(trackColor),r);
+            const float f=std::isfinite(lane.fraction)?std::clamp(lane.fraction,0.f,1.f):0.f;
+            if(f>0.f)
+                draw->AddRectFilled({x,origin.y},{x+std::max(laneBar,laneWidth*f),origin.y+laneBar},
+                                    ImGui::GetColorU32(ProgressStatusColor(lane.status,o)),r);
+            const char* label=detail::SafeProgressText(lane.label);
+            const float labelY=origin.y+laneBar+detail::ProgressHeaderGap()*.5f;
+            float textX=x;
+            if(lane.status==ProgressStatus::Succeeded) {
+                detail::DrawCheck(draw,{x+labelSize*.45f,labelY+labelSize*.5f},labelSize*.75f,
+                                  ImGui::GetColorU32(ProgressStatusColor(lane.status,o)),1.5f);
+                textX+=labelSize;
+            }
+            const ImVec4 clip{x,labelY,x+laneWidth,labelY+labelSize*1.2f};
+            draw->AddText(ImGui::GetFont(),labelSize,{textX,labelY},ImGui::GetColorU32(SecondaryColor(o)),label,nullptr,0.f,&clip);
+        }
+    }
     if(*detail::SafeProgressText(view.supplemental)) {
         ImGui::SetCursorScreenPos({top.x,ImGui::GetItemRectMax().y+gap});
         ImGui::PushStyleColor(ImGuiCol_Text,SecondaryColor(o));
@@ -450,7 +487,10 @@ void Spinner(const char* id,ComponentOptions o) {
     const ImU32 color=ImGui::GetColorU32(o.theme?o.theme->semantic.accent:ImGui::GetStyleColorVec4(ImGuiCol_Text));
     const float stroke=std::max(2.f,size*.09f),radius=size*.3f;
     const ImVec2 center{p.x+size*.5f,p.y+size*.5f};
-    draw->AddCircle(center,radius,ImGui::GetColorU32(detail::WithAlpha(TextColor(o),.12f)),32,stroke);
+    // An outlined theme draws the ring in its outline colour, so the accent arc reads against it.
+    const ImU32 track=detail::IsOutlined(ImGui::GetStyle())?ImGui::GetColorU32(ImGuiCol_Border)
+                                                           :ImGui::GetColorU32(detail::WithAlpha(TextColor(o),.12f));
+    draw->AddCircle(center,radius,track,32,stroke);
     draw->PathArcTo(center,radius,start,start+sweep,24);
     draw->PathStroke(color,ImDrawFlags_None,stroke);
     for(float angle:{start,start+sweep})

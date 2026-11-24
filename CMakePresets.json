@@ -14,7 +14,8 @@
       "binaryDir": "${sourceDir}/build/windows-debug",
       "cacheVariables": {
         "IMKIT_BUILD_GALLERY": "ON",
-        "IMKIT_BUILD_TESTS": "ON"
+        "IMKIT_BUILD_TESTS": "ON",
+        "IMKIT_ENABLE_PCH": "ON"
       }
     },
     {

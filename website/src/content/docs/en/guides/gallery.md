@@ -44,7 +44,7 @@ Pages keep their numbers when the navigation changes. `--page N` and the capture
 | --- | --- | --- |
 | **Overview** | Start · Before / After · Workspace | See what changes first. Workspace combines tabs, hierarchy actions, settings and choices; every request is applied by Gallery-owned state. |
 | **Look** | Theme Studio · Skins · Tokens · Icons · Window frame | Build a look from four colours, replace component frames, browse 321 icons in seven sizes, try the window-frame presets. |
-| **Controls** | Basic · Numbers and units · Text, colour, media · Trees and tables · Popups and layout · Composites · Rows and palette · Progress and states · Toasts | Find the control you need and copy its call. |
+| **Controls** | Basic · Numbers and units · Text, colour, media · Trees and tables · Popups and layout · Composites · Rows and palette · Glow frame · Progress and states · Toasts | Find the control you need and copy its call. |
 | **Data** | Charts · PTZ camera | Donut, bar, gauge and sparkline charts; a pan, tilt and zoom pad against a simulated camera. |
 | **Workspaces** | Editor core · Video · CG · Workspace shell · Preview tiles | See timelines, inspectors, monitors and gizmos assembled from public components. |
 | **Show** | Controls · Live · Rules · Schedule · Beat · Script · Surface · LED · Images | Operate-a-show components for media servers (`imkit::show`). |
@@ -72,4 +72,4 @@ Run from the repository root with FFmpeg on PATH. The film needs Python with Pil
 
 ## Provenance
 
-Images and films are recorded from the Gallery or the Node Editor companion. They contain no stock footage, third-party product screens, icons, fonts or UI code. The only third-party media is the film's music, "Laserpack" by Kevin MacLeod ft. DarkNES, under CC BY 4.0 (see the notices). Dear ImGui, GLFW and optional fonts keep their licenses ([THIRD_PARTY_NOTICES.md](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/THIRD_PARTY_NOTICES.md)). See [validation](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/validation.md) for evidence and exclusions, and [window frame](../../features/window-frame/) for Frame Lab's platform boundary.
+Images, GIFs and UI screens in the films are recorded from the Gallery or the Node Editor companion through public Dear ImGui IO. They contain no stock footage, third-party product screens, icons or UI code. The film score is an original 96-bar synthesized 128 BPM track mixed with Gemini Flash TTS bilingual narration (`Aoede` / `Charon`) under repository MIT terms (`website/public/media/provenance.json`). Dear ImGui, GLFW and optional fonts keep their licenses ([THIRD_PARTY_NOTICES.md](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/THIRD_PARTY_NOTICES.md)). See [validation](https://github.com/AokiMotohide/imgui-modern-kit/blob/main/docs/reference/validation.md) for evidence and exclusions, and [window frame](../../features/window-frame/) for Frame Lab's platform boundary.

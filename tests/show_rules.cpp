@@ -1,5 +1,4 @@
-#include <imkit/imkit.h>
-#include <imkit/show.h>
+#include <imkit/show/rules.h>
 #include <algorithm>
 #include <array>
 #include <cmath>

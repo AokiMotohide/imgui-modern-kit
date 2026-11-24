@@ -11,7 +11,12 @@
 // the default look. Components the skin does not know are drawn by default.
 namespace imkit {
 // New parts are only ever appended; a skin must return false for a part it does not recognise.
-enum class SkinPart { Button, Badge, Card };
+enum class SkinPart {
+    Button, Badge, Card,
+    SmallButton, Checkbox, Toggle, Radio, Combo, Selectable, ColorEdit,
+    Slider, Drag, Input, Progress, Header, Tree, Tab, Separator,
+    Table, Scrollbar, Popup, Tooltip, Window, Modal
+};
 
 struct SkinFrame {
     ImDrawList* draw = nullptr;

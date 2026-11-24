@@ -1,7 +1,8 @@
 // Shows the legacy ToastRegion next to its replacement on purpose.
 #define IMKIT_DEPRECATED(message)
 #include "design_pages.h"
-#include "gallery.h"
+#include "gallery_page_host.h"
+#include <imkit/widgets.h>
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
@@ -19,11 +20,11 @@ void DesignPages::Reindex() {
     std::sort(order.begin(),order.end(),[this](int a,int b){int compare=std::strcmp(rows[a].name.data(),rows[b].name.data()); return descending?compare>0:compare<0;});
 }
 void DesignPages::Show(int section,GalleryState& host) {
-    auto& theme=host.theme;
+    auto& theme=HostTheme(host);
     Prepare(); queried=0; semantics.Begin(ImGui::GetFrameCount());
     locale.languageTag=language==1?"ja":language==2?"en-XA":"en";
     locale.direction=language==2?TextDirection::RTL:TextDirection::LTR;
-    ComponentOptions options{&theme,&host.animation,&semantics,0,&locale};
+    ComponentOptions options{&theme,&HostAnimation(host),&semantics,0,&locale};
     const bool ja=language==1;
     if(section==10) {
         if(BeginGrid(host,"foundations-grid")) {
@@ -72,7 +73,7 @@ void DesignPages::Show(int section,GalleryState& host) {
                 ImGui::PushStyleColor(ImGuiCol_ChildBg,theme.semantic.surfaceRaised);
                 ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,theme.radius.overlay);
                 if(ImGui::BeginChild("overlay-sample",{unit*4.f,unit*1.1f},ImGuiChildFlags_Borders)) {
-                    OverlayDecoration(theme,&host.animation);
+                    OverlayDecoration(theme,&HostAnimation(host));
                     ImGui::TextUnformatted("Overlay surface");
                     ImGui::TextDisabled("Shadow %.0f px",theme.elevation.overlay);
                 }
@@ -98,7 +99,7 @@ void DesignPages::Show(int section,GalleryState& host) {
             EndSection(controls);
             const bool tree=BeginSection(host,"Semantic tree","One row per published node");
             if(tree) {
-                ImGui::BeginChild("a11y-tree",{0,260*host.scale},ImGuiChildFlags_Borders);
+                ImGui::BeginChild("a11y-tree",{0,260*HostScale(host)},ImGuiChildFlags_Borders);
                 for(auto& n:semantics.Tree().nodes) ImGui::Text("%llu | role %d | %.*s | focus=%d disabled=%d actions=%u",n.id,int(n.role),int(n.name.size()),n.name.data(),n.state.focused,n.state.disabled,unsigned(n.actions));
                 ImGui::EndChild();
             }

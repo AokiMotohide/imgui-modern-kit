@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstring>
 
 namespace imkit {
 namespace {
@@ -29,6 +30,9 @@ bool HasProgress(const ToastView& view) {
 const char* CloseLabel(ComponentOptions o) {
     return o.locale?o.locale->Text("dismiss","Dismiss"):"Dismiss";
 }
+const char* DetailsLabel(ComponentOptions o) {
+    return o.locale?o.locale->Text("details","Details"):"Details";
+}
 float IconSize() { return ImGui::GetFontSize() * 1.25f; }
 float CloseSize() { return ImGui::GetFrameHeight() * .75f; }
 // Extra room on the leading edge for the accent bar.
@@ -40,7 +44,9 @@ void StatusIcon(FeedbackKind kind,ImVec4 accent,bool loading,bool animate) {
     if(loading) {
         const float t=animate?static_cast<float>(std::fmod(std::max(0.0,ImGui::GetTime()),1000.0)):0.f;
         const float start=t*5.2f,sweep=animate?1.1f+3.4f*(.5f+.5f*std::sin(t*3.1f)):4.2f,stroke=std::max(2.f,size*.12f),radius=r-stroke*.5f;
-        d->AddCircle(c,radius,ImGui::GetColorU32(detail::WithAlpha(accent,.2f)),32,stroke);
+        const ImU32 track=detail::IsOutlined(ImGui::GetStyle())?ImGui::GetColorU32(ImGuiCol_Border)
+                                                               :ImGui::GetColorU32(detail::WithAlpha(accent,.2f));
+        d->AddCircle(c,radius,track,32,stroke);
         d->PathArcTo(c,radius,start,start+sweep,24);d->PathStroke(ImGui::GetColorU32(accent),ImDrawFlags_None,stroke);
         return;
     }
@@ -114,18 +120,39 @@ void UpdateToastViewport(std::span<const ToastView> items,ToastViewportState& st
 void ToastViewport(const char* id,std::span<const ToastView> items,ToastViewportState& state,
                    double now,ToastEventBuffer& events,ToastViewportOptions layout,ComponentOptions o) {
     auto* viewport=ImGui::GetWindowViewport();
+    const bool hostArea=layout.areaSize.x>0.f&&layout.areaSize.y>0.f;
+    const ImVec2 areaPos=hostArea?layout.areaPos:viewport->WorkPos;
+    const ImVec2 areaSize=hostArea?layout.areaSize:viewport->WorkSize;
     const auto& style=ImGui::GetStyle();
     const float margin=Positive(layout.margin,style.WindowPadding.x);
     const float gap=Positive(layout.gap,style.ItemSpacing.y);
     const float width=std::min(Positive(layout.width,0)>0?layout.width:ImGui::GetFontSize()*25,
-                             std::max(1.f,viewport->WorkSize.x-std::min(margin*2,viewport->WorkSize.x-1)));
+                             std::max(1.f,areaSize.x-std::min(margin*2,areaSize.x-1)));
     const ImVec2 padding{style.WindowPadding.x,style.WindowPadding.y};
     const float textWidth=std::max(1.f,width-padding.x*2-Lead());
+    // Open state of folded details, kept in the host window so it survives the cards being rebuilt each frame.
+    ImGuiStorage* hostStorage=ImGui::GetStateStorage();
+    ImGui::PushID(Safe(id));
+    const ImGuiID detailScope=ImGui::GetID("toast-details");
+    ImGui::PopID();
+    auto detailKey=[&](StableId sid) {
+        char key[40];std::snprintf(key,sizeof(key),"%08x-%llu",detailScope,static_cast<unsigned long long>(sid));
+        return ImGui::GetID(key);
+    };
+    auto detailOpen=[&](const ToastView& v) { return hostStorage->GetBool(detailKey(v.id),v.detailOpen); };
     auto height=[&](const ToastView& v) {
         float h=padding.y*2+ImGui::CalcTextSize(Safe(v.title),nullptr,false,
                      std::max(1.f,textWidth-IconSize()-CloseSize()-style.ItemSpacing.x*2)).y;
         h=std::max(h,padding.y*2+std::max(IconSize(),CloseSize()));
         if(*Safe(v.description)) h+=style.ItemSpacing.y+ImGui::CalcTextSize(v.description,nullptr,false,textWidth).y;
+        if(*Safe(v.detail)) {
+            h+=style.ItemSpacing.y+ImGui::GetFontSize();
+            if(detailOpen(v)) {
+                if(o.theme) PushTextRole(*o.theme,TextRole::Mono);
+                h+=style.ItemSpacing.y+ImGui::CalcTextSize(v.detail,nullptr,false,textWidth).y;
+                if(o.theme) PopTextRole();
+            }
+        }
         if(HasProgress(v)) {
             ProgressTrackView progress;progress.fraction=v.progress;progress.status=v.status;
             progress.label=v.stage;progress.valueText=v.progressText;
@@ -141,12 +168,10 @@ void ToastViewport(const char* id,std::span<const ToastView> items,ToastViewport
     std::size_t count=0;
     for(auto& e:state.entries) if(e.id&&!e.retired) ordered[count++]=&e;
     std::sort(ordered.begin(),ordered.begin()+count,[](auto* a,auto* b){return a->order>b->order;});
-    const int position=static_cast<int>(layout.position);
-    const bool bottom=position>=3;const int column=position%3;
-    const float x=column==0?viewport->WorkPos.x+std::min(margin,viewport->WorkSize.x*.5f):
-        column==1?viewport->WorkPos.x+(viewport->WorkSize.x-width)*.5f:
-        viewport->WorkPos.x+viewport->WorkSize.x-width-std::min(margin,viewport->WorkSize.x*.5f);
-    const float available=std::max(1.f,viewport->WorkSize.y-std::min(margin*2,viewport->WorkSize.y-1));
+    const detail::OverlayPlacement place=detail::PlaceOverlay(layout.position,areaPos,areaSize,margin);
+    const bool bottom=place.bottom;
+    const float x=place.point.x-place.pivot.x*width;
+    const float available=std::max(1.f,areaSize.y-std::min(margin*2,areaSize.y-1));
     float used=0;std::size_t visible=0;
     std::array<float,ToastViewportState::Capacity> heights{};
     std::array<StableId,ToastViewportState::Capacity> paused{};std::size_t pauseCount=0;
@@ -160,8 +185,7 @@ void ToastViewport(const char* id,std::span<const ToastView> items,ToastViewport
     ImGui::PushID(Safe(id));const ImGuiID scope=ImGui::GetID("toast-viewport");ImGui::PopID();
     for(std::size_t i=0;i<visible;++i) {
         auto& e=*ordered[i];const auto& v=*Find(items,e.id);
-        const float y=bottom?viewport->WorkPos.y+viewport->WorkSize.y-std::min(margin,viewport->WorkSize.y*.5f)-offset-heights[i]:
-                              viewport->WorkPos.y+std::min(margin,viewport->WorkSize.y*.5f)+offset;
+        const float y=bottom?place.point.y-offset-heights[i]:place.point.y+offset;
         char name[80];std::snprintf(name,sizeof(name),"###imkit-toast-card-%08x-%llu",scope,static_cast<unsigned long long>(e.id));
         ImGui::SetNextWindowViewport(viewport->ID);ImGui::SetNextWindowSize({width,heights[i]});
         ImVec4 accent=o.theme?o.theme->semantic.accent:style.Colors[ImGuiCol_CheckMark];
@@ -218,6 +242,24 @@ void ToastViewport(const char* id,std::span<const ToastView> items,ToastViewport
             if(*Safe(v.description)) {
                 ImGui::PushStyleColor(ImGuiCol_Text,o.theme?o.theme->semantic.textSecondary:style.Colors[ImGuiCol_TextDisabled]);
                 ImGui::PushTextWrapPos(width-padding.x);ImGui::TextUnformatted(v.description);ImGui::PopTextWrapPos();ImGui::PopStyleColor();
+            }
+            if(*Safe(v.detail)) {
+                const bool open=detailOpen(v);
+                char toggle[160];std::snprintf(toggle,sizeof(toggle),"%s %s##detail",open?"â¾":"â¸",DetailsLabel(o));
+                ImGui::PushStyleColor(ImGuiCol_Text,o.theme?o.theme->semantic.textSecondary:style.Colors[ImGuiCol_TextDisabled]);
+                const ImVec2 size=ImGui::CalcTextSize(toggle,nullptr,true);
+                const bool clicked=ImGui::InvisibleButton("detail",{std::max(1.f,size.x),ImGui::GetFontSize()});
+                draw->AddText(ImGui::GetItemRectMin(),ImGui::GetColorU32(ImGui::IsItemHovered()?ImGuiCol_Text:ImGuiCol_TextDisabled),
+                              toggle,toggle+std::strcspn(toggle,"#"));
+                ImGui::PopStyleColor();
+                if(clicked) hostStorage->SetBool(detailKey(v.id),!open);
+                if(open) {
+                    if(o.theme) PushTextRole(*o.theme,TextRole::Mono);
+                    ImGui::PushStyleColor(ImGuiCol_Text,o.theme?o.theme->semantic.textSecondary:style.Colors[ImGuiCol_TextDisabled]);
+                    ImGui::PushTextWrapPos(width-padding.x);ImGui::TextUnformatted(v.detail);ImGui::PopTextWrapPos();
+                    ImGui::PopStyleColor();
+                    if(o.theme) PopTextRole();
+                }
             }
             if(HasProgress(v)) {
                 ProgressTrackView progress;progress.fraction=v.progress;progress.status=v.status;

@@ -11,8 +11,8 @@ ImKit would not exist without Dear ImGui. Thank you to Omar Cornut and to every 
 
 | Question | Answer |
 | --- | --- |
-| Does ImKit change Dear ImGui? | No. It uses only the public API, does not use `imgui_internal.h`, and ships no patch. |
-| Does ImKit compile Dear ImGui? | No. Your application supplies the Dear ImGui target. The Gallery builds the unmodified upstream sources. |
+| Does ImKit change Dear ImGui? | No. It ships no fork or patch. Public headers (`include/imkit/`) use only the public Dear ImGui API; internal `.cpp` sources include `imgui_internal.h` at the pinned revision below (resolving `GImGui` through `ImGui::GetCurrentContext()` for DLL hosts). |
+| Does ImKit compile Dear ImGui? | No. Your application supplies the Dear ImGui target (`imkit::motion` links no Dear ImGui at all). The Gallery builds the unmodified upstream sources. |
 | Which revision? | The `docking` branch at one pinned commit. `version.h` stops the build when the Dear ImGui version or its docking, viewport and dynamic-texture support does not match. |
 
 ## Pinned dependencies

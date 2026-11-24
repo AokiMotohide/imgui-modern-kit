@@ -1,5 +1,4 @@
 #pragma once
-#include <imkit/imkit.h>
 
 namespace imkit::gallery {
 struct GalleryState;

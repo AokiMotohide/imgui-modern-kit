@@ -2,6 +2,85 @@
 
 > Published release entries present English first, followed by equivalent Japanese notes. Unreleased remains a work-in-progress list.
 
+## Unreleased
+
+## 4.2.0 — 2026-11-23
+
+**ImKit 4.2 introduces the four-layer part customisation engine across 22 rebuilt controls, adds OKLCH surface zones and docked window roles, ships `DrawGlowFrame` and `ExternalControlIndicator`, extracts Dear ImGui-free `imkit::motion`, adds `TransferCurveEditor` and timeline filmstrips, and restores 4.1 shapes anytime through the new `Classic` preset (14 built-in themes).** Rebuild your application and every linked ImKit library with the 4.2 headers: public structures grew and two breaking signature/enum changes apply. See the [migration guide](docs/reference/migration-v4.md#upgrading-from-41-to-42) and [4.2 additions](docs/reference/v4.2-api.md).
+
+### Added
+
+| Header | Additions |
+| --- | --- |
+| `imkit/part_style.h`, `imkit/widgets.h` | Four-layer customisation (`Part`, `PartOverrides`, typed styles `ButtonStyle` through `ColorEditStyle`, `RegisterStyle`, `StyleScope`, `PushPartVar`/`Color`, `Interact()`, smooth drawing helpers `DrawSmoothRect`, `DrawFocusRing`, `ShowStyleEditor`) across 22 rebuilt parts (`Button`–`Modal`); `InputFloat`, `InputInt`, `SmallButton`, `CollapsingHeader`, `ColorEdit3/4`, `Selectable`, `SetItemTooltip` overloads |
+| `imkit/theme.h` | `ThemePreset::Classic` (14 built-in presets), `ThemeLook` (`Modern`, `Classic`), `Theme::look`, `Theme::partOverrides`; `SurfaceZone::Inspector`, `Header`, `ChromeCanvas`; `SurfaceZoneColors::inspector`, `header`, `chromeCanvas`, `roles`; `WindowRole`, `WindowRoleColors`, `PushWindowRole`, `PopWindowRole`, `DockTabBand`; `SemanticColors::crown`, `BrandPalette::crown`; `Stroke::button`, `dashedDisabled`, `primary`, `primaryColor`; `TextRole::Numeric`, `FontSet::numeric`; `OverlayAnchor`; `Easing::EaseIn`, `OutBack`, `InBack`, `Spring`, `EasingShape`, `ApplyEasing` |
+| `imkit/surface.h` / `imkit/theme.h` | `SurfaceZone`, `SurfaceZoneColors`, `Theme::zones`, `SurfaceZoneColor`, `PushSurfaceZone`, `PopSurfaceZone`, `Radius::controlShare` |
+| `imkit/decor.h` | `DrawGlowFrame`, `GlowFrameLevel`, `GlowFrameStyle`, `GlowFrameState`, `GlowMotion`, `GlowPlacement`; `BackdropStyle::phase`, `scale`, `DrawSpriteScatter`, `SpriteScatterStyle`; `IllustrationRef`, `DrawEmptyMessage`, `ResultCardView`, `BeginResultCard`, `EndResultCard` |
+| `imkit/shell.h` | `ExternalControlIndicator`, `MakeExternalControlStyle`, `ExternalControlView`, `ExternalControlStyle`, `ExternalControlState`, `ExternalControlRequest`, `ExternalControlPhase` |
+| `imkit/motion.h`, `imkit/easing.h`, `imkit/motion_curve.h` | Standalone Dear ImGui-free target `imkit::motion` (easing curves and keyframe-track evaluation); `imkit/motion.h` adds `MotionEase`, `ParseMotionEase`, `MotionEaseName`, `EvaluateMotionEase`, `MotionKey`, `EvaluateMotionTrack`, `WrapMotionTime`, `MotionLayer`, `LayerPose`, `PoseLayerQuad`, `DrawLayeredMotion` (`imkit::imkit` links `imkit::motion`) |
+| `imkit/components.h` | `PushFloatingPanel`, `PopFloatingPanel`, `SliderFloatWithInput`, `SliderInputInteraction`, `ComponentOptions::progress`, `ComponentOptions::callToAction`, `StatusKind::Live`, `StatusKind::Active`, `StatusBadgeSize`, `DrawStatusBadge`, `ActionButtonMinimumWidth`, `ActionButtonWidth`, `ActionRowWidth` |
+| `imkit/transfer_curve.h` | `TransferCurveEditor`, `TransferCurveSectionEditor`, `TransferCurveSeries`, `TransferCurveNode`, `TransferCurveState`, `TransferCurveOptions`, `TransferCurveInteraction`, `TransferCurveClampMonotone` |
+| `imkit/workflow.h` | `StepBand`, `StepBandGroup`, `StepBandItem`, `StepBandOptions`, `DrawPlateMark`, `PlateMarkStyle`, `StepMarkState`, `PlateGrowth`, `PlateMarkDecor`, `WaitCard`, `WaitCardView`, `StageProgressView::marks`, `WaitCardView::stageMarks`, `StepBadgeShape`, `StepNavigatorOptions::badge`, `badgeRounding`, `badgeBorder`, `WorkspaceTab::accent`, `WorkspaceTabsOptions::filledSelection`, `StepBandOptions::tintTrays`, `StepBandOptions::currentTrayContrast` |
+| `imkit/patterns.h` | `ProgressLane`, `ProgressTrackView::segments`, `lanes`, `barHeight`, `hideValue` |
+| `imkit/toast.h` | `ToastView::detail`, `ToastView::detailOpen`, `ToastViewportOptions::areaPos`, `areaSize` |
+| `imkit/video.h` | `ClipBody` (`Fill`, `Filmstrip`), `TimelineOptions::clipBody`, `TimelineProvider::thumbnailAt` |
+
+- Rebuilt 22 standard controls with continuous-curvature smooth corners (`DrawSmoothRect`) and four customisation layers (L1 theme text `partOverrides`, L2 typed/scoped styles `StyleScope`, L3 `Skin`, L4 `Interact()` + drawing helpers) plus `ShowStyleEditor`. Added `ThemePreset::Classic` (14 presets) so hosts can opt back into 4.1 Dear ImGui shapes per theme.
+- `StepBand` draws a one-row step bar sorted into tinted group trays, with numbered plate marks (`DrawPlateMark`) whose state shows in their shape. `StageProgress` and `WaitCard` can use the same marks.
+- Themes derive OKLCH-stepped surface zones (`Chrome`, `Panel`, `Workspace`, `Monitor`, `Inspector`, `Header`, `ChromeCanvas`) and `WindowRole` / `DockTabBand` colours so neighbouring docked windows read clearly as distinct roles. `PushFloatingPanel` / `PopFloatingPanel` style floating tool panels with a header ground and optional hard shadow.
+- `DrawGlowFrame` lights the edge of a rectangle: steady, breathing or orbiting, with ripples on `Pulse()` or at an interval, inside, outside or centred on the edge.
+- `ExternalControlIndicator` frames the viewport while an automation API, a remote operator or an agent drives the application, and shows a pill with the client, its activity and Stop (`pillFill = Surface` uses a 96% opaque raised surface at 4.5:1 contrast). `ToastPosition` is now an alias of `OverlayAnchor`.
+- `imkit::motion` evaluates keyframe tracks (`imkit/motion_curve.h`) and easing curves (`imkit/easing.h`) without linking Dear ImGui (proper `imkit::motion` CMake export added); `imkit/motion.h` draws layered pictures with CSS-like poses (`DrawLayeredMotion`).
+- `SliderFloatWithInput` edits one value with a slider and an aligned numeric readout (`fonts.numeric` / `TextRole::Numeric`) and reports edits only on user interaction; `TransferCurveEditor` and `TransferCurveSectionEditor` edit cubic Bezier transfer curves with optional horizontal/vertical cross-sections.
+- Gallery: added the Glow frame showcase page (6 looks, full live property editor, C++ snippet export, scripted remote session), interactive `ShowStyleEditor`, and updated captures. Internal `.cpp` sources route `GImGui` accesses via `ImGui::GetCurrentContext()` to support DLL-linked Dear ImGui hosts.
+
+### Changed
+
+- **Breaking:** `DrawPlateMark` takes a `PlateMarkDecor` (blocked dot and grass) in place of `bool blocked`. Plates grow grass in three steps (`PlateGrowth`), and a band can mark optional steps (smaller plate, dotted links).
+- **Breaking:** `CornerStyle::Pill` and the theme value `corner = pill` are removed. A capsule button reads as a tag and leaves less room for its label; use `Round`.
+- An unknown-fraction progress track (negative or non-finite) no longer moves a segment back and forth. It draws no bar; a running track still calls the thumb standing at the middle (`ProgressTrack`, `Progress`, `WaitCard`, `TaskProgressCard`, loading toasts).
+- Corners follow the control height (`Radius::controlShare = .25` by default) and every ImKit frame is drawn with smooth continuous-curvature corners; slider grabs share the button corner.
+- `ActionButton` and `IconActionButton` always paint their own frame (width >= 4 text heights when following the label; square icon button without a label), and can fill with `ComponentOptions::progress` or show a pulse ring with `callToAction`. `IconActionButton` without a label omits an empty first tooltip line.
+- `Segmented` fills only the chosen segment with the accent; `StepBand` defaults to 2.5 text heights with distinct group trays; typography defaults to caption 12 / body 14 / heading 15 / title 22; contrast rule `MixToContrast` unifies surface zones, brand themes, step bands, node editors and control pills at 4.5:1.
+
+### 日本語
+
+**ImKit 4.2 は、22部品の刷新と4層カスタマイズ基盤、OKLCH サーフェスゾーンとドッキングウィンドウの役割色、`DrawGlowFrame` と `ExternalControlIndicator`、Dear ImGui 非依存の `imkit::motion` ターゲット、`TransferCurveEditor`、タイムラインのコマ表示（Filmstrip）、そして 4.1 の形状へいつでも戻せる `Classic` プリセット（計14テーマ）を追加します。** 公開構造体の拡張と2件の破壊的変更を含むため、アプリとリンクするすべての ImKit ライブラリを 4.2 のヘッダーで再ビルドしてください。詳しくは[移行ガイド](docs/reference/v4移行ガイド.md#41から42へ)と[4.2追加API](docs/reference/4.2追加API.md)を参照してください。
+
+#### 追加
+
+| ヘッダー | 追加 |
+| --- | --- |
+| `imkit/part_style.h`、`imkit/widgets.h` | 4層カスタマイズ基盤（`Part`、`PartOverrides`、`ButtonStyle`〜`ColorEditStyle` の型付きスタイル、`RegisterStyle`、`StyleScope`、`PushPartVar`/`Color`、`Interact()`、滑らかな角の描画ヘルパー `DrawSmoothRect`、`DrawFocusRing`、`ShowStyleEditor`）と22部品（`Button`〜`Modal`）の刷新。`InputFloat`、`InputInt`、`SmallButton`、`CollapsingHeader`、`ColorEdit3/4`、`Selectable`、`SetItemTooltip` のオーバーロード追加 |
+| `imkit/theme.h` | `ThemePreset::Classic`（内蔵14テーマ）、`ThemeLook`（`Modern`、`Classic`）、`Theme::look`、`Theme::partOverrides`。`SurfaceZone::Inspector`、`Header`、`ChromeCanvas`。`SurfaceZoneColors::inspector`、`header`、`chromeCanvas`、`roles`。`WindowRole`、`WindowRoleColors`、`PushWindowRole`、`PopWindowRole`、`DockTabBand`。`SemanticColors::crown`、`BrandPalette::crown`。`Stroke::button`、`dashedDisabled`、`primary`、`primaryColor`。`TextRole::Numeric`、`FontSet::numeric`。`OverlayAnchor`。`Easing::EaseIn`、`OutBack`、`InBack`、`Spring`、`EasingShape`、`ApplyEasing` |
+| `imkit/surface.h` / `imkit/theme.h` | `SurfaceZone`、`SurfaceZoneColors`、`Theme::zones`、`SurfaceZoneColor`、`PushSurfaceZone`、`PopSurfaceZone`、`Radius::controlShare` |
+| `imkit/decor.h` | `DrawGlowFrame`、`GlowFrameLevel`、`GlowFrameStyle`、`GlowFrameState`、`GlowMotion`、`GlowPlacement`。`BackdropStyle::phase`、`scale`、`DrawSpriteScatter`、`SpriteScatterStyle`。`IllustrationRef`、`DrawEmptyMessage`、`ResultCardView`、`BeginResultCard`、`EndResultCard` |
+| `imkit/shell.h` | `ExternalControlIndicator`、`MakeExternalControlStyle`、`ExternalControlView`、`ExternalControlStyle`、`ExternalControlState`、`ExternalControlRequest`、`ExternalControlPhase` |
+| `imkit/motion.h`、`imkit/easing.h`、`imkit/motion_curve.h` | Dear ImGui 非依存の独立ターゲット `imkit::motion`（イージング曲線とキーフレーム評価）。`imkit/motion.h` に `MotionEase`、`ParseMotionEase`、`MotionEaseName`、`EvaluateMotionEase`、`MotionKey`、`EvaluateMotionTrack`、`WrapMotionTime`、`MotionLayer`、`LayerPose`、`PoseLayerQuad`、`DrawLayeredMotion`（`imkit::imkit` が `imkit::motion` をリンク） |
+| `imkit/components.h` | `PushFloatingPanel`、`PopFloatingPanel`、`SliderFloatWithInput`、`SliderInputInteraction`、`ComponentOptions::progress`、`ComponentOptions::callToAction`、`StatusKind::Live`、`StatusKind::Active`、`StatusBadgeSize`、`DrawStatusBadge`、`ActionButtonMinimumWidth`、`ActionButtonWidth`、`ActionRowWidth` |
+| `imkit/transfer_curve.h` | `TransferCurveEditor`、`TransferCurveSectionEditor`、`TransferCurveSeries`、`TransferCurveNode`、`TransferCurveState`、`TransferCurveOptions`、`TransferCurveInteraction`、`TransferCurveClampMonotone` |
+| `imkit/workflow.h` | `StepBand`、`StepBandGroup`、`StepBandItem`、`StepBandOptions`、`DrawPlateMark`、`PlateMarkStyle`、`StepMarkState`、`PlateGrowth`、`PlateMarkDecor`、`WaitCard`、`WaitCardView`、`StageProgressView::marks`、`WaitCardView::stageMarks`、`StepBadgeShape`、`StepNavigatorOptions::badge`、`badgeRounding`、`badgeBorder`、`WorkspaceTab::accent`、`WorkspaceTabsOptions::filledSelection`、`StepBandOptions::tintTrays`、`StepBandOptions::currentTrayContrast` |
+| `imkit/patterns.h` | `ProgressLane`、`ProgressTrackView::segments`、`lanes`、`barHeight`、`hideValue` |
+| `imkit/toast.h` | `ToastView::detail`、`ToastView::detailOpen`、`ToastViewportOptions::areaPos`、`areaSize` |
+| `imkit/video.h` | `ClipBody`（`Fill`、`Filmstrip`）、`TimelineOptions::clipBody`、`TimelineProvider::thumbnailAt` |
+
+- 22種類の基本部品を連続曲率の滑らかな角（`DrawSmoothRect`）で刷新し、4つの層（L1 テーマテキスト `partOverrides`、L2 型付き／名前付き `StyleScope`、L3 `Skin`、L4 `Interact()`＋描画ヘルパー）と `ShowStyleEditor` を追加しました。`ThemePreset::Classic`（14テーマ）により、4.1 の標準形状へもいつでも戻せます。
+- `StepBand` は工程を色つきの群トレイに分けて1行に並べ、番号付き板の印（`DrawPlateMark`）の形で状態を示します。`StageProgress` と `WaitCard` でも使えます。
+- OKLCH 明度差に基づく面の役割（`Chrome`、`Panel`、`Workspace`、`Monitor`、`Inspector`、`Header`、`ChromeCanvas`）と、ドッキング窓ごとの役割色（`WindowRole` / `DockTabBand`）、浮いた道具窓（`PushFloatingPanel` / `PopFloatingPanel`）を追加しました。
+- `DrawGlowFrame` は矩形の縁を光らせ（一定・呼吸・周回と波紋）、`ExternalControlIndicator` は自動化 API・遠隔操作者・エージェントの操作中にビューポート外周を囲んで操作相手と停止ボタンのピルを出します（`pillFill = Surface` は 96% 不透明・4.5:1 コントラスト）。`ToastPosition` は `OverlayAnchor` の別名になりました。
+- `imkit::motion` が Dear ImGui 非依存の独立 CMake ターゲットとして分離され（`EXPORT_NAME motion` 修正済み）、`DrawLayeredMotion` で CSS 準拠の層構造ロゴを再生できます。
+- `SliderFloatWithInput` はスライダーと `FontSet::numeric` 数値欄を1行に並べ、ユーザー操作時だけ変更を返します。`TransferCurveEditor` と `TransferCurveSectionEditor` は断面表示対応の 3 次ベジェ伝達曲線エディターを提供します。
+- Gallery に Glow frame ページ（6つの見た目、全フィールド編集、C++ コード出力、遠隔操作の再現）と `ShowStyleEditor` を追加しました。DLL 版 Dear ImGui 向けに内部 `.cpp` の `GImGui` 参照を `ImGui::GetCurrentContext()` 経由へ統一しました。
+
+#### 変更
+
+- **互換性のない変更:** `DrawPlateMark` は `bool blocked` の代わりに `PlateMarkDecor`（前提不足の点と芝生）を受け取ります。札の芝生は3段で育ち（`PlateGrowth`）、帯では寄り道の工程（小さい札、点線のつなぎ）を示せます。
+- **互換性のない変更:** `CornerStyle::Pill` とテーマの値 `corner = pill` をなくしました。カプセル形のボタンは札のように見え、ラベルの幅も狭くなるためです。`Round` を使ってください。
+- 割合が分からない（負または非有限の）進捗バーで区間を往復させるのをやめ、バーを描かず実行中ならサムネイルを中央に止めて呼びます（`ProgressTrack`、`Progress`、`WaitCard`、`TaskProgressCard`、読み込み中のトースト）。
+- 角はコントロールの高さに比例し（既定は `Radius::controlShare = .25`）、すべての枠とスライダーつまみを滑らかな角で描きます。
+- `ActionButton` と `IconActionButton` は常に自前の枠を描き（ラベル追従幅は文字高さ×4以上、ラベルなしアイコンは正方形）、`ComponentOptions::progress` で進捗塗り、`callToAction` で案内リングを出せます。ラベルなしアイコンボタンはツールチップ先頭の空行を省きます。
+- `Segmented` は選ばれた区切りだけを強調色で塗り、`StepBand` の既定高さは文字高さ×2.5、文字段は caption 12 / body 14 / heading 15 / title 22、統一ルール `MixToContrast` により各種面・帯・ピルで 4.5:1 のコントラストを保ちます。
+
 ## 4.1.0 — 2026-11-06
 
 **ImKit 4.1 redesigns the node editor, adds a tile map for tiled displays, and lets you tune control sizes, play sprite sheets and draw only the PTZ controls a camera has.** Rebuild your application and every linked ImKit library with the 4.1 headers: structures grew at their end. Only the node editor changes its default look. The Dear ImGui revision and the dependencies are unchanged. See the [migration guide](docs/reference/migration-v4.md#upgrading-from-40-to-41) and the [4.1 additions](docs/reference/v4.1-api.md).

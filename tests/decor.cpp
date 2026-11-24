@@ -1,6 +1,11 @@
-#include <imkit/imkit.h>
+#include <imkit/decor.h>
+#include <imkit/patterns.h>
+#include <imkit/shell.h>
+#include <imkit/skin.h>
+#include <imkit/toast.h>
 #include <cmath>
 #include <cstdio>
+#include <type_traits>
 #include <utility>
 
 namespace {
@@ -281,19 +286,182 @@ void TestSpriteWidget() {
     });
     Check(with > without + 29.f, "thumbHeight reserves layout height above the track");
 }
+void TestGlowLevel() {
+    imkit::GlowFrameStyle style;
+    style.motion = imkit::GlowMotion::Breathe;
+    style.period = 2.f;
+    style.minimumIntensity = .25f;
+    Check(Near(imkit::GlowFrameLevel(style, 0, true), 1.f), "a breath starts at its peak");
+    Check(Near(imkit::GlowFrameLevel(style, 1, true), .25f), "half a period reaches the low point");
+    Check(Near(imkit::GlowFrameLevel(style, 2, true), 1.f), "a full period returns to the peak");
+    Check(Near(imkit::GlowFrameLevel(style, 1, false), 1.f), "reduced motion holds the peak");
+    style.motion = imkit::GlowMotion::Orbit;
+    Check(Near(imkit::GlowFrameLevel(style, 1, true), 1.f), "orbit varies along the edge, not over time");
+    style.motion = imkit::GlowMotion::Breathe;
+    style.period = std::nanf("");
+    Check(std::isfinite(imkit::GlowFrameLevel(style, 1, true)), "a non-finite period stays finite");
+}
+
+void TestGlowState() {
+    imkit::GlowFrameStyle style;
+    style.motion = imkit::GlowMotion::Steady;
+    style.fadeSeconds = .2f;
+    imkit::GlowFrameState state;
+    Check(imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, state, 10.0, true), "fading in asks for frames");
+    imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, state, 10.1, true);
+    Check(Near(state.visibility, .5f), "visibility follows the fade time");
+    imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, state, 10.3, true);
+    Check(Near(state.visibility, 1.f), "visibility settles at one");
+    Check(!imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, state, 10.4, true), "a settled steady frame is still");
+
+    state.Pulse();
+    Check(imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, state, 10.5, true), "a ripple asks for frames");
+    Check(!imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, state, 10.5 + style.rippleSeconds, true),
+          "the ripple ends after its life");
+
+    style.motion = imkit::GlowMotion::Breathe;
+    Check(imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, state, 12.0, true), "breathing keeps asking for frames");
+    Check(!imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, state, 12.1, true, false), "reduced motion is still");
+
+    state.Pulse();
+    imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, state, 13.0, false, false);
+    Check(state.visibility == 0.f, "without motion the frame hides at once");
+    Check(state.ripples[0] < 0 && state.ripples[1] < 0, "a pulse while hidden starts no ripple");
+
+    imkit::GlowFrameState automatic;
+    style.rippleInterval = 1.f;
+    style.fadeSeconds = 0.f;
+    imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, automatic, 20.0, true);
+    imkit::DrawGlowFrame(nullptr, {}, {100, 100}, style, automatic, 21.0, true);
+    int live = 0;
+    for (double ripple : automatic.ripples)
+        live += ripple >= 0;
+    Check(live == 1, "the interval restarts a ripple once its life is over");
+}
+
+void TestGlowDrawing() {
+    imkit::GlowFrameStyle style;
+    style.fadeSeconds = 0.f;
+    auto draw = [&](imkit::GlowFrameStyle s, bool active) {
+        imkit::GlowFrameState state;
+        return Vertices([&] {
+            const ImVec2 at = ImGui::GetCursorScreenPos();
+            imkit::DrawGlowFrame(ImGui::GetWindowDrawList(), at, {at.x + 300, at.y + 150}, s, state, 1.0, active);
+        });
+    };
+    const int steady = draw(style, true);
+    Check(steady > 0, "an active frame draws");
+    Check(draw(style, false) == 0, "an inactive frame draws nothing");
+    auto orbit = style;
+    orbit.motion = imkit::GlowMotion::Orbit;
+    Check(draw(orbit, true) > steady, "orbit splits the edges for its moving heads");
+    auto bare = style;
+    bare.spread = 0.f;
+    bare.lineThickness = 0.f;
+    Check(draw(bare, true) == 0, "no spread and no line draw nothing");
+    for (auto placement : {imkit::GlowPlacement::Outside, imkit::GlowPlacement::Centered}) {
+        auto placed = style;
+        placed.placement = placement;
+        placed.rounding = 12.f;
+        Check(draw(placed, true) > 0, "every placement draws");
+    }
+}
+
+void TestExternalControl() {
+    static_assert(std::is_same_v<imkit::ToastPosition, imkit::OverlayAnchor>, "toasts and the pill share one anchor type");
+    const imkit::Theme theme = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
+    imkit::ExternalControlStyle style = imkit::MakeExternalControlStyle(theme);
+    Check(style.active.motion == imkit::GlowMotion::Breathe && style.locked.motion == imkit::GlowMotion::Steady,
+          "the default style breathes while active and holds while locked");
+    Check(style.pillFill == imkit::ExternalControlPillFill::Solid && style.pillOutline == 0.f && !style.pillShadow &&
+              style.pillGlow == 0.f,
+          "the pill keeps its solid look unless asked");
+    imkit::ExternalControlState state;
+    imkit::ExternalControlView view;
+    view.client = "automation";
+    view.activity = "Moving a fixture";
+    auto frame = [&](double now) {
+        ImGui::NewFrame();
+        const int before = ImGui::GetForegroundDrawList()->VtxBuffer.Size;
+        const auto request = imkit::ExternalControlIndicator("remote", view, state, now, style, nullptr, {&theme});
+        const int drawn = ImGui::GetForegroundDrawList()->VtxBuffer.Size - before;
+        ImGui::EndFrame();
+        return std::pair{request, drawn};
+    };
+    auto [idle, idleDrawn] = frame(1.0);
+    Check(!idle.needsFrame && idleDrawn == 0 && !idle.stopRequested, "an indicator that was never on is invisible and still");
+    view.phase = imkit::ExternalControlPhase::Active;
+    frame(2.0);
+    auto [active, activeDrawn] = frame(2.5);
+    Check(active.needsFrame && activeDrawn > 0, "an active indicator draws its frame and keeps animating");
+    view.phase = imkit::ExternalControlPhase::Off;
+    auto [fading, fadingDrawn] = frame(2.51);
+    Check(fading.needsFrame && fadingDrawn > 0 && state.shown == imkit::ExternalControlPhase::Active,
+          "turning off fades out in the last phase's look");
+
+    // The surface look with an outline, a shadow and a halo draws without disturbing the frame.
+    imkit::ExternalControlStyle quiet = style;
+    quiet.pillFill = imkit::ExternalControlPillFill::Surface;
+    quiet.pillOutline = 1.f; quiet.pillShadow = true; quiet.pillGlow = .5f;
+    imkit::ExternalControlState quietState;
+    view.phase = imkit::ExternalControlPhase::Active;
+    for (double t : {30.0, 30.1, 30.2}) {
+        ImGui::NewFrame();
+        imkit::ExternalControlIndicator("quiet", view, quietState, t, quiet, nullptr, {&theme});
+        ImGui::EndFrame();
+    }
+    Check(quietState.pillWidth > 0.f && quietState.glow.visibility > 0.f, "the surface pill is shown");
+
+    // A lowered phase is held for holdSeconds, then released.
+    imkit::ExternalControlState held;
+    auto draw = [&](imkit::ExternalControlState& s, double now) {
+        ImGui::NewFrame();
+        const auto request = imkit::ExternalControlIndicator("held", view, s, now, style, nullptr, {&theme});
+        ImGui::EndFrame();
+        return request;
+    };
+    view.phase = imkit::ExternalControlPhase::Active;
+    draw(held, 10.0);
+    view.phase = imkit::ExternalControlPhase::Connected;
+    const auto holding = draw(held, 10.4);
+    Check(held.shown == imkit::ExternalControlPhase::Active && holding.needsFrame,
+          "a phase lowered within holdSeconds stays and asks for another frame");
+    draw(held, 11.2);
+    Check(held.shown == imkit::ExternalControlPhase::Connected, "after holdSeconds the lower phase shows");
+
+    // Pulses closer than pulseInterval make one ripple.
+    imkit::ExternalControlState pulsed;
+    view.phase = imkit::ExternalControlPhase::Active;
+    draw(pulsed, 20.0);
+    auto ripples = [&] {
+        int count = 0;
+        for (double r : pulsed.glow.ripples) count += r >= 20.0 ? 1 : 0;
+        return count;
+    };
+    pulsed.Pulse(); draw(pulsed, 20.1);
+    pulsed.Pulse(); draw(pulsed, 20.3);
+    Check(ripples() == 1, "two pulses within pulseInterval make one ripple");
+    pulsed.Pulse(); draw(pulsed, 20.7);
+    Check(ripples() == 2, "a pulse after pulseInterval makes a new ripple");
+}
 } // namespace
 
 int main() {
     TestNineSlice();
     TestSpriteMath();
+    TestGlowLevel();
+    TestGlowState();
     auto *context = ImGui::CreateContext();
     ImGui::GetIO().DisplaySize = {1280, 720};
     ImGui::GetIO().DeltaTime = 1.f / 60.f;
     ImGui::GetIO().IniFilename = nullptr;
     TestSkin();
     TestSpriteWidget();
+    TestGlowDrawing();
+    TestExternalControl();
     ImGui::DestroyContext(context);
     if (failures == 0)
-        std::puts("nine-slice geometry, skin hooks, sprite playback and progress thumbs validated");
+        std::puts("nine-slice geometry, skin hooks, sprite playback, progress thumbs, glow frames and the external control "
+                  "indicator validated");
     return failures == 0 ? 0 : 1;
 }

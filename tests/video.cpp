@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <vector>
 #include <imkit/video.h>
+#include <imkit/widgets.h>
 #include <array>
 #include <cmath>
 #include <cstdio>
@@ -921,14 +922,22 @@ int main() {
     {
         video::MonitorOptions options;
         ImVec2 controlsOrigin{};
+        float checkboxRowStep = 0.f;
         auto controlsFrame=[&] {
             ImGui::NewFrame();ImGui::SetNextWindowPos({0,0});ImGui::SetNextWindowSize({450,350});
             ImGui::Begin("Monitor controls");controlsOrigin=ImGui::GetCursorScreenPos();
-            video::MonitorControls("display",options);ImGui::End();ImGui::Render();
+            video::MonitorControls("display",options);
+            ImGui::PushID("row-probe");
+            const float probeY = ImGui::GetCursorScreenPos().y;
+            bool probe = false;
+            imkit::Checkbox("##probe", &probe);
+            checkboxRowStep = ImGui::GetCursorScreenPos().y - probeY;
+            ImGui::PopID();
+            ImGui::End();ImGui::Render();
         };
         controlsFrame();controlsFrame();
         auto toggle=[&](int row) {
-            io.AddMousePosEvent(controlsOrigin.x+8,controlsOrigin.y+row*ImGui::GetFrameHeightWithSpacing()+8);
+            io.AddMousePosEvent(controlsOrigin.x+8,controlsOrigin.y+row*checkboxRowStep+checkboxRowStep*0.4f);
             controlsFrame();io.AddMouseButtonEvent(0,true);controlsFrame();io.AddMouseButtonEvent(0,false);controlsFrame();
         };
         toggle(0);check(!options.safeArea,"Monitor controls change host safe-area option");

@@ -9,8 +9,12 @@ enum class Tool { Select, Razor, Ripple, Roll, Slip, Slide, Hand };
 constexpr std::uint32_t TimelineToolBit(Tool tool) {
     return 1u << static_cast<unsigned>(tool);
 }
+// How a clip body is painted. Fill: the track colour, with the clip thumbnail under the name. Filmstrip: a dark
+// ground with 16:9 frames laid edge to edge; the track colour remains only as a 3 px top band and a 1.5 px border.
+enum class ClipBody { Fill, Filmstrip };
 struct TimelineOptions {
     std::uint32_t visibleTools = 0x7fu;
+    ClipBody clipBody = ClipBody::Fill;
     double minimumPixelsPerSecond = 8.0;
     double maximumPixelsPerSecond = 640.0;
     bool showOverview = true;
@@ -208,6 +212,10 @@ struct TimelineProvider {
     std::span<const TimelineExternalDropRoute> externalDrops;
     // Draw application-specific decoration without taking over clip interaction.
     void (*drawClipOverlay)(void *,StableId,const editor::Value &,ImVec2,ImVec2)=nullptr;
+    // Optional frame picture for ClipBody::Filmstrip: the clip's source time, in seconds, at the centre of a frame.
+    // A null texture falls back to ClipView::thumbnail. Called for at most 64 frames per clip and frame; the frames
+    // between two calls repeat the earlier picture. The texture must stay valid until the frame is rendered.
+    ImTextureRef (*thumbnailAt)(void *,StableId track,StableId clip,double sourceSeconds)=nullptr;
 };
 struct TrackLabels {
     // Borrowed UTF-8 strings. Array order follows Visible through Source in TrackControl.

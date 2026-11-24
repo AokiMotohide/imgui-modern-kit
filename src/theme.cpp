@@ -1,7 +1,11 @@
 #include <imkit/theme.h>
 #include "draw_internal.h"
+#include "part_style_internal.h"
+#include "imgui_internal_compat.h"
 #include <algorithm>
 #include <cmath>
+#include <initializer_list>
+#include <iterator>
 #include <vector>
 
 namespace imkit {
@@ -39,22 +43,23 @@ ImGuiStyle Style(const Theme &t, float scale) {
     s.ItemInnerSpacing = {m.spacing, m.spacingY};
     s.CellPadding = {m.spacing, m.cellPaddingY};
     const bool highContrast = t.contrast == ContrastMode::HighContrast;
-    // Windows, children and images are overlay-class surfaces: a pill control radius must not turn them into capsules.
+    const bool modern = t.look == ThemeLook::Modern;
+    // Windows, children and images are overlay-class surfaces: a large control radius must not turn them into capsules.
     const float surfaceRadius = std::min(t.radius.control, t.radius.overlay);
     s.WindowRounding = surfaceRadius;
     s.ChildRounding = surfaceRadius;
     s.PopupRounding = t.radius.overlay;
     s.FrameRounding = t.radius.control;
-    s.GrabRounding = 999.f; // Pill grabs follow the Toggle thumb.
-    s.ScrollbarRounding = 999.f;
+    s.GrabRounding = t.radius.control; // Slider grabs are pressed like buttons, so they share the button corner.
+    s.ScrollbarRounding = modern ? 999.f : 4.f;
     s.WindowBorderSize = border;
     s.ChildBorderSize = outline ? border : 0.f;
     s.PopupBorderSize = border;
     s.FrameBorderSize = border;
     s.IndentSpacing = m.indent;
-    s.ScrollbarSize = m.scrollbar;
+    s.ScrollbarSize = modern && !t.layout.scrollbar ? std::min(m.scrollbar, 8.f) : m.scrollbar;
     s.GrabMinSize = m.grabMin;
-    s.TabRounding = t.radius.control + 2;
+    s.TabRounding = modern ? t.radius.control + 2 : 4.f;
     s.TabBorderSize = outline ? border : 0.f;
     s.TabBarBorderSize = 1;
     s.TabBarOverlineSize = 0;
@@ -63,7 +68,9 @@ ImGuiStyle Style(const Theme &t, float scale) {
     s.SeparatorTextAlign = {0, .5f};
     s.ImageRounding = surfaceRadius;
     s.ImageBorderSize = border;
-    s.MenuItemRounding = t.radius.control - 2;
+    s.MenuItemRounding = modern ? std::max(4.f, t.radius.control - 2.f) : 0.f;
+    s.CellPadding = modern && !t.layout.cellPaddingY ? ImVec2{m.spacing * 1.25f, m.cellPaddingY * 1.25f}
+                                                     : ImVec2{m.spacing, m.cellPaddingY};
     s.TreeLinesSize = hairlineWidth;
     s.TreeLinesRounding = 2;
     s.TreeLinesFlags = ImGuiTreeNodeFlags_DrawLinesToNodes;
@@ -90,8 +97,8 @@ ImGuiStyle Style(const Theme &t, float scale) {
     c[ImGuiCol_TitleBgActive] = p.raised;
     c[ImGuiCol_TitleBgCollapsed] = p.surface;
     c[ImGuiCol_MenuBarBg] = Alpha(p.text, .04f);
-    c[ImGuiCol_ScrollbarBg] = {0, 0, 0, 0};
-    c[ImGuiCol_ScrollbarGrab] = highContrast ? p.border : Alpha(p.muted, .38f);
+    c[ImGuiCol_ScrollbarBg] = modern ? ImVec4{0, 0, 0, 0} : Alpha(p.surface, .5f);
+    c[ImGuiCol_ScrollbarGrab] = highContrast ? p.border : Alpha(p.muted, modern ? .35f : .38f);
     c[ImGuiCol_ScrollbarGrabHovered] = highContrast ? p.muted : Alpha(p.muted, .62f);
     c[ImGuiCol_ScrollbarGrabActive] = p.accent;
     c[ImGuiCol_CheckMark] = p.accent;
@@ -104,13 +111,16 @@ ImGuiStyle Style(const Theme &t, float scale) {
     c[ImGuiCol_ButtonHovered] = highContrast ? detail::MixColor(p.raised, p.accent, .15f) : detail::MixColor(button, p.text, .06f);
     c[ImGuiCol_ButtonActive] = detail::MixColor(button, p.accent, .25f);
     c[ImGuiCol_Header] = p.selection;
-    c[ImGuiCol_HeaderHovered] = detail::MixColor(p.surface, p.accent, .20f);
-    c[ImGuiCol_HeaderActive] = detail::MixColor(p.surface, p.accent, .30f);
-    c[ImGuiCol_Separator] = hairline;
-    c[ImGuiCol_SeparatorHovered] = p.focus;
+    c[ImGuiCol_HeaderHovered] = detail::MixColor(p.surface, p.accent, modern ? .16f : .20f);
+    c[ImGuiCol_HeaderActive] = detail::MixColor(p.surface, p.accent, modern ? .24f : .30f);
+    // Splitters and resize grips are things to grab: they use the divider, which ResolveTheme keeps visible against
+    // every surface zone, and turn to the accent under the pointer. A theme without zones keeps the hairline.
+    const ImVec4 divider = t.zones.divider.w > 0 ? t.zones.divider : hairline;
+    c[ImGuiCol_Separator] = modern ? Alpha(divider, .48f) : divider;
+    c[ImGuiCol_SeparatorHovered] = p.accent;
     c[ImGuiCol_SeparatorActive] = p.accent;
-    c[ImGuiCol_ResizeGrip] = p.border;
-    c[ImGuiCol_ResizeGripHovered] = p.focus;
+    c[ImGuiCol_ResizeGrip] = Alpha(divider, .85f);
+    c[ImGuiCol_ResizeGripHovered] = p.accent;
     c[ImGuiCol_ResizeGripActive] = p.accent;
     c[ImGuiCol_InputTextCursor] = p.focus;
     c[ImGuiCol_Tab] = {0, 0, 0, 0};
@@ -126,11 +136,11 @@ ImGuiStyle Style(const Theme &t, float scale) {
     c[ImGuiCol_PlotLinesHovered] = p.focus;
     c[ImGuiCol_PlotHistogram] = p.accent;
     c[ImGuiCol_PlotHistogramHovered] = p.focus;
-    c[ImGuiCol_TableHeaderBg] = p.input;
-    c[ImGuiCol_TableBorderStrong] = hairline;
-    c[ImGuiCol_TableBorderLight] = Alpha(hairline, .6f);
+    c[ImGuiCol_TableHeaderBg] = modern ? detail::MixColor(p.surface, p.text, .04f) : p.input;
+    c[ImGuiCol_TableBorderStrong] = modern ? Alpha(hairline, .55f) : hairline;
+    c[ImGuiCol_TableBorderLight] = modern ? Alpha(hairline, .25f) : Alpha(hairline, .6f);
     c[ImGuiCol_TableRowBg] = {0, 0, 0, 0};
-    c[ImGuiCol_TableRowBgAlt] = Alpha(p.muted, .045f);
+    c[ImGuiCol_TableRowBgAlt] = Alpha(p.muted, modern ? .035f : .045f);
     c[ImGuiCol_TextLink] = p.accent;
     c[ImGuiCol_TextSelectedBg] = p.selection;
     c[ImGuiCol_TreeLines] = hairline;
@@ -162,6 +172,7 @@ std::span<const ThemePresetInfo> ThemePresets() noexcept {
         ThemePresetInfo{ThemePreset::HighContrastLight, "high-contrast-light", "High Contrast Light", ColorScheme::Light},
         ThemePresetInfo{ThemePreset::HighContrastDark, "high-contrast-dark", "High Contrast Dark", ColorScheme::Dark},
         ThemePresetInfo{ThemePreset::Slate, "slate", "Slate", ColorScheme::Dark},
+        ThemePresetInfo{ThemePreset::Classic, "classic", "Classic", ColorScheme::Dark},
     };
     return presets;
 }
@@ -172,8 +183,17 @@ std::optional<ThemePreset> ThemePresetFromId(std::string_view id) noexcept {
     });
     return it == presets.end() ? std::nullopt : std::optional<ThemePreset>(it->preset);
 }
+namespace {
+void ResolveSurfaceZones(Theme& t);
+void ResolveWindowRoles(Theme& t);
+} // namespace
 Theme MakeTheme(ThemePreset preset) {
     const auto info = ThemePresets()[static_cast<std::size_t>(preset)];
+    if (preset == ThemePreset::Classic) {
+        auto theme = MakePrecisionTheme(ColorScheme::Dark);
+        theme.look = ThemeLook::Classic;
+        return theme;
+    }
     if (preset == ThemePreset::HighContrastLight || preset == ThemePreset::HighContrastDark)
         return MakeTheme(info.scheme, ContrastMode::HighContrast);
     if (preset == ThemePreset::Slate) {
@@ -191,7 +211,7 @@ Theme MakeTheme(ThemePreset preset) {
         c.control.hover = Hex(0x2b323d);
         c.control.pressed = Hex(0x384455);
         c.control.disabled = c.control.rest;
-        theme.radius = {6, 10, 14};
+        theme.radius = {6, 10, 14, .33f}; // Rounder than the default: a third of the control height.
         theme.stroke = {1, 2};
         ResolveTheme(theme);
         SetAccent(theme, Hex(0x78aaff));
@@ -256,6 +276,8 @@ Theme MakePrecisionTheme(ColorScheme scheme) {
        t.colors.muted,t.colors.border,t.colors.accent,t.colors.onAccent,t.colors.success,t.colors.warning,
        t.colors.destructive,{t.colors.input,detail::MixColor(t.colors.input,t.colors.accent,.10f),
        detail::MixColor(t.colors.input,t.colors.accent,.17f),t.colors.focus,t.colors.selection,t.colors.input}};
+    ResolveSurfaceZones(t);
+    ResolveWindowRoles(t);
     return t;
 }
 Theme MakeTheme(ColorScheme scheme, ContrastMode contrast, Density density) {
@@ -272,7 +294,107 @@ Theme MakeTheme(ColorScheme scheme, ContrastMode contrast, Density density) {
     SetDensity(t,density); return t;
 }
 void SetDensity(Theme& t,Density density) { t.density=density; ResolveTheme(t); }
+namespace {
+ImVec4 Desaturate(ImVec4 c,float amount) {
+    const float grey=c.x*.299f+c.y*.587f+c.z*.114f;
+    return {c.x+(grey-c.x)*amount,c.y+(grey-c.y)*amount,c.z+(grey-c.z)*amount,c.w};
+}
+ImVec4 ZoneSolid(ImVec4 c) { c.w=1.f; return c; }
+// Neighbouring zones stay at least this contrast apart, so every theme separates them without hand tuning.
+constexpr float kZoneStep=1.14f;
+// The side panels share the panel's lightness. The inspector turns at most this many degrees toward the accent's hue,
+// which separates the two roles by hue alone.
+constexpr float kInspectorTurn=26.f;
+void ResolveSurfaceZones(Theme& t) {
+    using detail::FromOklch; using detail::ToOklch;
+    const auto& c=t.semantic;
+    const ImVec4 black{0,0,0,1},white{1,1,1,1};
+    const bool dark=t.scheme==ColorScheme::Dark;
+    auto& z=t.zones;
+    z.panel=ZoneSolid(c.surface);
+    const detail::Oklch p=ToOklch(z.panel),accent=ToOklch(ZoneSolid(c.accent));
+    // A grey accent has no hue to turn toward; the inspector is then only calmer.
+    const float turn=accent.C>.03f?detail::HueToward(p.h,accent.h,kInspectorTurn):0.f;
+    z.inspector=FromOklch({p.L,p.C*.76f,p.h+turn});
+    if(dark) {
+        z.header=detail::MixToContrast(FromOklch({p.L+.045f,p.C*.9f,p.h+turn*.4f}),white,0.f,1.12f,{z.panel});
+        z.workspace=detail::MixToContrast(FromOklch({p.L-.07f,p.C*.55f,p.h}),black,0.f,kZoneStep,{z.panel,z.inspector});
+        // A panel already at black (high contrast) cannot have a darker gap; the gap then steps lighter instead.
+        if(ContrastRatio(z.workspace,z.panel)<kZoneStep)
+            z.workspace=detail::MixToContrast(z.panel,white,0.f,kZoneStep,{z.panel});
+        z.monitor=FromOklch({std::max(.12f,p.L-.11f),std::min(p.C,.006f),p.h});
+        z.monitor=detail::MixToContrast(z.monitor,black,0.f,kZoneStep*.95f,{z.workspace});
+        z.divider=detail::MixToContrast(z.workspace,black,.4f,1.3f,{z.panel,z.workspace});
+    } else {
+        z.header=detail::MixToContrast(FromOklch({p.L-.035f,p.C,p.h+turn*.4f}),ZoneSolid(c.text),0.f,1.1f,{z.panel});
+        z.workspace=detail::MixToContrast(Desaturate(ZoneSolid(c.canvas),.5f),ZoneSolid(c.text),.06f,kZoneStep,{z.panel,z.inspector});
+        // Monitor: a deep, quiet tone of the theme's ink, so a light theme keeps its colour without a bright frame.
+        z.monitor=detail::MixColor(Desaturate(ZoneSolid(c.text),.45f),ZoneSolid(c.canvas),.18f);
+        z.divider=detail::MixToContrast(ZoneSolid(c.border),ZoneSolid(c.text),.15f,1.6f,{z.panel,z.workspace});
+    }
+    if(c.crown.w>0) {
+        z.chrome=ZoneSolid(c.crown);
+    } else if(dark) {
+        // Chrome: the raised surface leaning to the accent, lighter than the panel.
+        const ImVec4 chrome=detail::MixColor(ZoneSolid(c.surfaceRaised),ZoneSolid(c.accent),.12f);
+        z.chrome=detail::MixToContrast(chrome,white,0.f,kZoneStep,{z.panel});
+    } else {
+        // Chrome: the canvas washed with the accent, darker than the white-ish panel.
+        z.chrome=detail::MixToContrast(detail::MixColor(ZoneSolid(c.canvas),ZoneSolid(c.accent),.16f),ZoneSolid(c.accent),0.f,kZoneStep*.95f,{z.panel});
+    }
+    const detail::Oklch crown=ToOklch(z.chrome);
+    z.chromeCanvas=FromOklch({std::max(.12f,crown.L-(dark?.12f:.10f)),crown.C*.85f,crown.h});
+    z.onMonitor=ContrastRatio(c.textSecondary,z.monitor)>=4.5f?ZoneSolid(c.textSecondary):
+                ContrastRatio(white,z.monitor)>=ContrastRatio(black,z.monitor)?ImVec4{.92f,.92f,.92f,1}:ImVec4{.08f,.08f,.08f,1};
+}
+// Inside one window, a header stands this far from the body; the 1.14 between zones is too close for a heading row.
+constexpr float kRoleStep=1.25f;
+// Each role reuses its zone, so the rule is the zones' own and serves every preset and brand theme alike.
+void ResolveWindowRoles(Theme& t) {
+    using detail::FromOklch; using detail::ToOklch;
+    auto& z=t.zones;
+    const bool dark=t.scheme==ColorScheme::Dark, high=t.contrast==ContrastMode::HighContrast;
+    const ImVec4 bodies[]={z.panel,z.inspector,z.workspace,z.chromeCanvas};
+    const detail::Oklch top=ToOklch(z.chrome);
+    for(std::size_t i=0;i<z.roles.size();++i) {
+        auto& r=z.roles[i];
+        r.body=ZoneSolid(bodies[i]);
+        const detail::Oklch b=ToOklch(r.body);
+        // Dark themes bring the emphasis forward by lightening, light themes by deepening; the deepest bodies
+        // (a picture strip, or a black high contrast panel) can only step lighter.
+        float step=dark||b.L<.4f?.045f:-.045f, L=b.L+step;
+        r.emphasis=FromOklch({L,b.C*1.1f,b.h});
+        for(int n=0;n<60&&ContrastRatio(r.emphasis,r.body)<kRoleStep&&L>0.f&&L<1.f;++n) { L+=step*.15f; r.emphasis=FromOklch({L,b.C*1.1f,b.h}); }
+        // The label is a line, not a surface: it needs colour more than lightness, so it borrows chroma.
+        const detail::Oklch hue=i==static_cast<std::size_t>(WindowRole::Monitor)?top:b;
+        r.label=FromOklch({dark?.72f:.52f,high?0.f:std::clamp(hue.C*2.2f,.012f,.11f),hue.h});
+        // The tab band sits behind the tabs, so it recedes: deeper than the body, unless the body is already too deep
+        // to step down (then lighter). High contrast keeps it neutral.
+        const float chroma=high?0.f:b.C;
+        const auto band=[&](float direction) {
+            float L2=b.L;ImVec4 c=r.body;
+            for(int n=0;n<40&&ContrastRatio(c,r.body)<kRoleStep;++n) {
+                L2+=direction*.02f;
+                if(L2<=0.f||L2>=1.f) return std::optional<ImVec4>{};
+                c=FromOklch({L2,chroma,b.h});
+            }
+            return ContrastRatio(c,r.body)>=kRoleStep?std::optional<ImVec4>{c}:std::optional<ImVec4>{};
+        };
+        const float down=b.L>.3f?-1.f:1.f;
+        if(auto c=band(down)) r.head=*c; else if(auto c2=band(-down)) r.head=*c2; else r.head=r.emphasis;
+    }
+}
+} // namespace
 void ResolveTheme(Theme& t) {
+    ResolveSurfaceZones(t);
+    ResolveWindowRoles(t);
+    {
+        // Secondary and disabled text are read as captions, so they keep 4.5:1 on the surfaces they sit on.
+        auto& s=t.semantic;
+        const ImVec4 panel=t.zones.panel.w>0?t.zones.panel:s.surface;
+        s.textSecondary=detail::MixToContrast(s.textSecondary,s.text,0.f,4.5f,{s.surface,panel});
+        s.textDisabled=detail::MixToContrast(s.textDisabled,s.text,0.f,4.5f,{s.surface,panel});
+    }
     const auto& c=t.semantic;
     t.colors={c.canvas,c.surface,c.control.rest,c.surfaceRaised,c.text,c.textSecondary,c.border,
         c.accent,c.onAccent,c.control.selected,c.control.focused,c.error,t.colors.onDestructive,
@@ -296,6 +418,13 @@ void ResolveTheme(Theme& t) {
         take(p.checkHeightScale,l.checkHeightScale); take(p.toggleHeightScale,l.toggleHeightScale);
         take(p.dialogPaddingScale,l.dialogPaddingScale); take(p.progressBarHeightScale,l.progressBarHeightScale);
         take(p.badgeExtraHeight,l.badgeExtraHeight); take(p.segmentedInset,l.segmentedInset);
+    }
+    if(t.radius.controlShare>0.f) {
+        // Corners in proportion to the control: the same smooth look at every density and control height.
+        const float share=std::clamp(t.radius.controlShare,0.f,.5f);
+        t.radius.control=std::round(t.metrics.controlHeight*share);
+        t.radius.subtle=std::round(t.radius.control*.5f);
+        t.radius.overlay=std::round(t.metrics.controlHeight*share*1.6f);
     }
     t.metrics.bodySize=t.typography.body; t.metrics.headingSize=t.typography.heading;
     t.metrics.radius=t.radius.control; t.metrics.border=t.stroke.border; t.metrics.focusWidth=t.stroke.focus;
@@ -327,16 +456,6 @@ void SetAccent(Theme &t, ImVec4 accent) {
     t.semantic.control.focused=accent; t.semantic.control.selected=t.colors.selection;
 }
 namespace {
-// The weakest mix of `from` toward `to`, starting at `start`, that reaches `ratio` against every background.
-ImVec4 MixForContrast(ImVec4 from, ImVec4 to, float start, float ratio, std::span<const ImVec4> backgrounds) {
-    for (float k = start; k < 1.f; k += .02f) {
-        const ImVec4 c = detail::MixColor(from, to, k);
-        if (std::all_of(backgrounds.begin(), backgrounds.end(),
-                        [&](ImVec4 background) { return ContrastRatio(c, background) >= ratio; }))
-            return c;
-    }
-    return to;
-}
 ImVec4 Opaque(ImVec4 c) {
     c.w = 1;
     return c;
@@ -356,16 +475,23 @@ Theme MakeBrandTheme(const BrandPalette &brand) {
     s.text = text;
     s.accent = accent;
     s.onAccent = OnColor(accent);
-    const ImVec4 input = detail::MixColor(canvas, surface, .35f);
+    // On a dark theme a field is a step lighter than the panel it sits on (a raised key, not a hole); on a light theme
+    // it is a step toward the canvas.
+    const detail::Oklch panel = detail::ToOklch(surface), tone = detail::ToOklch(accent);
+    const float turn = tone.C > .03f ? detail::HueToward(panel.h, tone.h, 26.f) * .55f : 0.f;
+    const ImVec4 input = dark ? detail::FromOklch({panel.L + .10f, panel.C * .9f, panel.h + turn})
+                              : detail::MixColor(canvas, surface, .35f);
     s.control = {input, detail::MixColor(input, accent, .10f), detail::MixColor(input, accent, .17f), accent,
-                 detail::MixColor(surface, accent, dark ? .16f : .09f), input};
+                 detail::MixColor(surface, accent, dark ? .24f : .09f), input};
+    if (given(brand.crown))
+        s.crown = Opaque(brand.crown);
     // Secondary text and the border are derived against the surfaces they sit on, so they stay legible.
-    const std::array backgrounds = {s.canvas, s.surface, s.surfaceRaised, s.control.rest, s.control.hover,
-                                    s.control.pressed, s.control.selected};
+    const std::initializer_list<ImVec4> backgrounds = {s.canvas, s.surface, s.surfaceRaised, s.control.rest, s.control.hover,
+                                                       s.control.pressed, s.control.selected};
     s.textSecondary = given(brand.textSecondary) ? Opaque(brand.textSecondary)
-                                                 : MixForContrast(canvas, text, .78f, 4.5f, backgrounds);
+                                                 : detail::MixToContrast(canvas, text, .78f, 4.5f, backgrounds);
     s.textDisabled = s.textSecondary;
-    s.border = given(brand.border) ? Opaque(brand.border) : MixForContrast(surface, text, .62f, 3.f, backgrounds);
+    s.border = given(brand.border) ? Opaque(brand.border) : detail::MixToContrast(surface, text, .62f, 3.f, backgrounds);
     if (given(brand.success))
         s.success = Opaque(brand.success);
     if (given(brand.warning))
@@ -379,11 +505,10 @@ Theme MakeBrandTheme(const BrandPalette &brand) {
 }
 void SetCornerStyle(Theme &t, CornerStyle style) {
     switch (style) {
-    case CornerStyle::Sharp: t.radius = {0, 2, 4}; break;
-    case CornerStyle::Soft: t.radius = {4, 8, 12}; break;
-    case CornerStyle::Round: t.radius = {8, 16, 22}; break;
-    // 22 is half the tallest control (Touch, 44 px): every control becomes a pill, while a tall input stays a rounded box.
-    case CornerStyle::Pill: t.radius = {12, 22, 26}; break;
+    // Soft and Round follow the control height; Sharp keeps fixed small corners.
+    case CornerStyle::Sharp: t.radius = {0, 2, 4, 0.f}; break;
+    case CornerStyle::Soft: t.radius = Radius{}; break;
+    case CornerStyle::Round: t.radius = {8, 16, 22, .36f}; break;
     }
     ResolveTheme(t);
 }
@@ -396,6 +521,8 @@ void PushTextRole(const Theme &t, TextRole role) {
                      : role == TextRole::Mono    ? y.monospace
                                                  : y.body;
     ImFont *font = t.fonts.regular;
+    if (role == TextRole::Numeric && t.fonts.numeric)
+        font = t.fonts.numeric;
     if (heading)
         font = t.fonts.display ? t.fonts.display : t.fonts.emphasis ? t.fonts.emphasis : t.fonts.regular;
     ImGui::PushFont(font, size);
@@ -425,6 +552,7 @@ void SetCurrentParts(const PartMetrics& parts) {
 } // namespace detail
 void ApplyTheme(const Theme &t, float scale) {
     detail::SetCurrentParts(t.metrics.parts);
+    detail::SetPartTheme(t, scale);
     auto next = Style(t, scale);
     // These are host/window multipliers, not design tokens. In particular a
     // temporary theme must not undo a surrounding BeginDisabled() alpha.
@@ -434,6 +562,7 @@ void ApplyTheme(const Theme &t, float scale) {
 }
 ThemeScope::ThemeScope(const Theme &t, float scale)
     : context_(ImGui::GetCurrentContext()), previous_(ImGui::GetStyle()), previousParts_(detail::CurrentParts()) {
+    detail::PushPartThemeSnapshot();
     ApplyTheme(t, scale);
     ImGui::PushFont(t.fonts.regular, t.metrics.bodySize);
 }
@@ -442,6 +571,7 @@ ThemeScope::~ThemeScope() {
     ImGui::PopFont();
     ImGui::GetStyle() = previous_;
     detail::SetCurrentParts(previousParts_);
+    detail::PopPartThemeSnapshot();
 }
 void AnimationState::Reset(std::uint64_t generation) {
     entries_ = {};
@@ -475,12 +605,76 @@ float AnimationState::Update(ImGuiID id, float target, float dt, float seconds, 
         if(slot->target!=target) { slot->from=slot->value; slot->target=target; slot->elapsed=0; }
         slot->elapsed+=std::max(0.f,dt);
         float step=seconds>0?std::clamp(slot->elapsed/seconds,0.f,1.f):1.f;
-        if(easing==Easing::EaseOut) step=1-(1-step)*(1-step);
-        if(easing==Easing::EaseInOut) step=step*step*(3-2*step);
+        step=ApplyEasing(easing,step);
         slot->value=!enabled || seconds<=0?target:slot->from+(target-slot->from)*step;
         slot->frame = frame;
     }
     if (!enabled) { slot->value=slot->from=slot->target=target; slot->elapsed=0; }
     return slot->value;
+}
+} // namespace imkit
+namespace imkit {
+ImVec4 SurfaceZoneColor(const Theme& theme,SurfaceZone zone) {
+    ImVec4 color=theme.zones.panel;
+    switch(zone) {
+    case SurfaceZone::Chrome:color=theme.zones.chrome;break;
+    case SurfaceZone::Workspace:color=theme.zones.workspace;break;
+    case SurfaceZone::Monitor:color=theme.zones.monitor;break;
+    case SurfaceZone::Inspector:color=theme.zones.inspector;break;
+    case SurfaceZone::Header:color=theme.zones.header;break;
+    case SurfaceZone::ChromeCanvas:color=theme.zones.chromeCanvas;break;
+    default:break;
+    }
+    // A theme that was never resolved has no zones yet; keep the surface.
+    return color.w>0?color:theme.semantic.surface;
+}
+void PushSurfaceZone(const Theme& theme,SurfaceZone zone) { ImGui::PushStyleColor(ImGuiCol_WindowBg,SurfaceZoneColor(theme,zone)); }
+void PopSurfaceZone() { ImGui::PopStyleColor(); }
+namespace {
+constexpr ImGuiCol kWindowRoleColors[]={ImGuiCol_WindowBg,ImGuiCol_ChildBg,ImGuiCol_Header,ImGuiCol_HeaderHovered,
+    ImGuiCol_HeaderActive,ImGuiCol_TabSelected,ImGuiCol_TabDimmedSelected,ImGuiCol_TabSelectedOverline,
+    ImGuiCol_TabDimmedSelectedOverline};
+} // namespace
+void PushWindowRole(const Theme& theme,WindowRole role) {
+    const auto& r=theme.zones.roles[static_cast<std::size_t>(role)];
+    if(r.body.w<=0) {
+        // Not resolved: push the current colours so the Pop count still matches.
+        for(ImGuiCol col:kWindowRoleColors) ImGui::PushStyleColor(col,ImGui::GetStyleColorVec4(col));
+        return;
+    }
+    const ImVec4 accent=theme.semantic.accent;
+    // Docked tabs keep the colours of the window's Begin (Dear ImGui stores them per window), so push before Begin.
+    const ImVec4 values[]={r.body,r.body,r.emphasis,detail::MixColor(r.emphasis,accent,.15f),
+        detail::MixColor(r.emphasis,accent,.25f),r.body,r.body,accent,r.label};
+    for(std::size_t i=0;i<std::size(kWindowRoleColors);++i) ImGui::PushStyleColor(kWindowRoleColors[i],values[i]);
+}
+void PopWindowRole() { ImGui::PopStyleColor(static_cast<int>(std::size(kWindowRoleColors))); }
+void DockTabBand(const Theme& theme,WindowRole role) {
+    const auto& r=theme.zones.roles[static_cast<std::size_t>(role)];
+    ImGuiWindow* window=ImGui::GetCurrentWindowRead();
+    if(r.head.w<=0||!window||!window->DockIsActive) return;
+    ImGuiDockNode* node=window->DockNode;
+    if(!node||!node->HostWindow||node->IsHiddenTabBar()||node->IsNoTabBar()) return;
+    // One band per node: the leftmost tab's window owns it, so the band does not flicker as tabs are selected.
+    ImGuiWindow* owner=node->TabBar&&node->TabBar->Tabs.Size>0?node->TabBar->Tabs[0].Window:
+                       node->Windows.Size>0?node->Windows[0]:nullptr;
+    if(owner!=window) return;
+    // Dear ImGui filled the band in DockNodeUpdate (before this Begin) with a title colour, then drew the tabs over
+    // it. Recolouring those vertices puts the head colour under the tabs without changing ImGuiStyle or Dear ImGui.
+    // Anti-aliased rounded corners add fringe vertices in the same colour with zero alpha; they are recoloured too.
+    const ImGuiStyle& style=ImGui::GetStyle();
+    const ImRect band(node->Pos,{node->Pos.x+node->Size.x,node->Pos.y+ImGui::GetFontSize()+style.FramePadding.y*2.f});
+    ImRect bounds=band;bounds.Expand(1.f);
+    const ImU32 from[]={ImGui::GetColorU32(ImGuiCol_TitleBg),ImGui::GetColorU32(ImGuiCol_TitleBgActive),
+                        ImGui::GetColorU32(ImGuiCol_TitleBgCollapsed)};
+    const ImU32 to=ImGui::GetColorU32(r.head);
+    ImDrawList* draw=node->HostWindow->DrawList;
+    for(ImDrawVert& v:draw->VtxBuffer) {
+        if(!bounds.Contains(v.pos)) continue;
+        for(ImU32 c:from) {
+            if(v.col==c) { v.col=to; break; }
+            if(v.col==(c&~IM_COL32_A_MASK)) { v.col=to&~IM_COL32_A_MASK; break; }
+        }
+    }
 }
 } // namespace imkit

@@ -14,7 +14,7 @@
 namespace imkit {
 namespace {
 // OptFloat: an optional number; an unset value is not written, and a written one is read back as set.
-enum class Kind { Color, Float, OptFloat, Bool, Vec2, Scheme, Contrast, Density, Easing, HeaderFill, LinkColor, LinkArrow };
+enum class Kind { Color, Float, OptFloat, Bool, Vec2, Scheme, Contrast, Density, Look, Easing, HeaderFill, LinkColor, LinkArrow };
 
 struct Field {
     std::string_view key;
@@ -32,6 +32,7 @@ const Field kFields[] = {
     IMKIT_FIELD("scheme", Scheme, scheme),
     IMKIT_FIELD("contrast", Contrast, contrast),
     IMKIT_FIELD("density", Density, density),
+    IMKIT_FIELD("look", Look, look),
     IMKIT_RANGED("layout.control-height", OptFloat, layout.controlHeight, 0, 400),
     IMKIT_RANGED("layout.spacing-x", OptFloat, layout.spacingX, 0, 100),
     IMKIT_RANGED("layout.spacing-y", OptFloat, layout.spacingY, 0, 100),
@@ -63,6 +64,7 @@ const Field kFields[] = {
     IMKIT_FIELD("semantic.warning", Color, semantic.warning),
     IMKIT_FIELD("semantic.error", Color, semantic.error),
     IMKIT_FIELD("semantic.shadow", Color, semantic.shadow),
+    IMKIT_FIELD("semantic.crown", Color, semantic.crown),
     IMKIT_FIELD("semantic.control.rest", Color, semantic.control.rest),
     IMKIT_FIELD("semantic.control.hover", Color, semantic.control.hover),
     IMKIT_FIELD("semantic.control.pressed", Color, semantic.control.pressed),
@@ -78,8 +80,13 @@ const Field kFields[] = {
     IMKIT_RANGED("radius.subtle", Float, radius.subtle, 0, 1000),
     IMKIT_RANGED("radius.control", Float, radius.control, 0, 1000),
     IMKIT_RANGED("radius.overlay", Float, radius.overlay, 0, 1000),
+    IMKIT_RANGED("radius.control-share", Float, radius.controlShare, 0, .5f),
     IMKIT_RANGED("stroke.border", Float, stroke.border, 0, 32),
     IMKIT_RANGED("stroke.focus", Float, stroke.focus, 0, 32),
+    IMKIT_RANGED("stroke.button", Float, stroke.button, 0, 32),
+    IMKIT_FIELD("stroke.dashed-disabled", Bool, stroke.dashedDisabled),
+    IMKIT_RANGED("stroke.primary", Float, stroke.primary, 0, 32),
+    IMKIT_FIELD("stroke.primary-color", Color, stroke.primaryColor),
     IMKIT_RANGED("elevation.surface", Float, elevation.surface, 0, 128),
     IMKIT_RANGED("elevation.raised", Float, elevation.raised, 0, 128),
     IMKIT_RANGED("elevation.overlay", Float, elevation.overlay, 0, 128),
@@ -116,9 +123,12 @@ template <class E> struct Name { std::string_view text; E value; };
 constexpr Name<ColorScheme> kSchemes[] = {{"light", ColorScheme::Light}, {"dark", ColorScheme::Dark}};
 constexpr Name<ContrastMode> kContrasts[] = {{"standard", ContrastMode::Standard}, {"high-contrast", ContrastMode::HighContrast}};
 constexpr Name<Density> kDensities[] = {{"compact", Density::Compact}, {"comfortable", Density::Comfortable}, {"touch", Density::Touch}};
-constexpr Name<Easing> kEasings[] = {{"linear", Easing::Linear}, {"ease-out", Easing::EaseOut}, {"ease-in-out", Easing::EaseInOut}};
+constexpr Name<ThemeLook> kLooks[] = {{"modern", ThemeLook::Modern}, {"classic", ThemeLook::Classic}};
+constexpr Name<Easing> kEasings[] = {{"linear", Easing::Linear}, {"ease-out", Easing::EaseOut}, {"ease-in-out", Easing::EaseInOut},
+                                     {"ease-in", Easing::EaseIn}, {"out-back", Easing::OutBack}, {"in-back", Easing::InBack},
+                                     {"spring", Easing::Spring}};
 constexpr Name<CornerStyle> kCorners[] = {{"sharp", CornerStyle::Sharp}, {"soft", CornerStyle::Soft},
-                                          {"round", CornerStyle::Round}, {"pill", CornerStyle::Pill}};
+                                          {"round", CornerStyle::Round}};
 constexpr Name<NodeHeaderFill> kHeaderFills[] = {{"strip", NodeHeaderFill::Strip}, {"tinted", NodeHeaderFill::Tinted},
                                                  {"flat", NodeHeaderFill::Flat}, {"gradient", NodeHeaderFill::Gradient},
                                                  {"none", NodeHeaderFill::None}};
@@ -220,6 +230,7 @@ bool ParseValue(const Field &field, Theme &theme, std::string_view value) {
     case Kind::Scheme: return ParseName(kSchemes, value, *static_cast<ColorScheme *>(target));
     case Kind::Contrast: return ParseName(kContrasts, value, *static_cast<ContrastMode *>(target));
     case Kind::Density: return ParseName(kDensities, value, *static_cast<Density *>(target));
+    case Kind::Look: return ParseName(kLooks, value, *static_cast<ThemeLook *>(target));
     case Kind::Easing: return ParseName(kEasings, value, *static_cast<Easing *>(target));
     case Kind::HeaderFill: return ParseName(kHeaderFills, value, *static_cast<NodeHeaderFill *>(target));
     case Kind::LinkColor: return ParseName(kLinkColors, value, *static_cast<NodeLinkColor *>(target));
@@ -258,6 +269,7 @@ void AppendValue(std::string &out, const Field &field, Theme &theme) {
     case Kind::Scheme: out += NameOf(kSchemes, *static_cast<ColorScheme *>(source)); break;
     case Kind::Contrast: out += NameOf(kContrasts, *static_cast<ContrastMode *>(source)); break;
     case Kind::Density: out += NameOf(kDensities, *static_cast<Density *>(source)); break;
+    case Kind::Look: out += NameOf(kLooks, *static_cast<ThemeLook *>(source)); break;
     case Kind::Easing: out += NameOf(kEasings, *static_cast<Easing *>(source)); break;
     case Kind::HeaderFill: out += NameOf(kHeaderFills, *static_cast<NodeHeaderFill *>(source)); break;
     case Kind::LinkColor: out += NameOf(kLinkColors, *static_cast<NodeLinkColor *>(source)); break;
@@ -282,6 +294,68 @@ struct Entry {
     int line;
     std::string_view key, value;
 };
+
+std::pair<float, float> PartVarBounds(PartVar var) {
+    switch (var) {
+    case PartVar::BorderWidth:
+    case PartVar::FocusRing:
+    case PartVar::MarkWidth:
+    case PartVar::PressDepth: return {0.f, 32.f};
+    case PartVar::FontSize: return {1.f, 200.f};
+    default: return {0.f, 400.f};
+    }
+}
+
+bool ParsePartColorValue(std::string_view text, const Theme &theme, ImVec4 &out) {
+    if (ParseColor(text, out))
+        return true;
+    if (text == "accent") { out = theme.semantic.accent; return true; }
+    if (text == "on-accent") { out = theme.semantic.onAccent; return true; }
+    if (text == "text") { out = theme.semantic.text; return true; }
+    if (text == "border") { out = theme.semantic.border; return true; }
+    if (text == "surface") { out = theme.semantic.surface; return true; }
+    if (text == "canvas") { out = theme.semantic.canvas; return true; }
+    return false;
+}
+
+// Handles `<part>.<var>` and `<part>.<state>.<color>`. Returns true if the key starts with a known part name.
+bool TryParsePartEntry(const Entry &e, Theme &theme, ThemeParseResult &result) {
+    const auto dot = e.key.find('.');
+    if (dot == std::string_view::npos)
+        return false;
+    const auto part = PartFromName(e.key.substr(0, dot));
+    if (!part)
+        return false;
+    const std::string_view rest = e.key.substr(dot + 1);
+    if (const auto var = PartVarFromName(rest)) {
+        const auto [low, high] = PartVarBounds(*var);
+        float number = 0;
+        if (!ParseFloat(e.value, low, high, number)) {
+            Warn(result, e.line, "invalid value `" + std::string(e.value) + "` for `" + std::string(e.key) + "`");
+            return true;
+        }
+        theme.partOverrides.SetVar(*part, *var, number);
+        ++result.applied;
+        return true;
+    }
+    const auto secondDot = rest.find('.');
+    if (secondDot != std::string_view::npos) {
+        const auto state = PartStateFromName(rest.substr(0, secondDot));
+        const auto color = PartColorFromName(rest.substr(secondDot + 1));
+        if (state && color) {
+            ImVec4 parsed{};
+            if (!ParsePartColorValue(e.value, theme, parsed)) {
+                Warn(result, e.line, "invalid colour `" + std::string(e.value) + "` for `" + std::string(e.key) + "`");
+                return true;
+            }
+            theme.partOverrides.SetColor(*part, *state, *color, parsed);
+            ++result.applied;
+            return true;
+        }
+    }
+    Warn(result, e.line, "unknown key `" + std::string(e.key) + "`");
+    return true;
+}
 } // namespace
 
 std::string SerializeTheme(const Theme &theme) {
@@ -294,6 +368,37 @@ std::string SerializeTheme(const Theme &theme) {
         out += " = ";
         AppendValue(out, field, copy);
         out += '\n';
+    }
+    for (std::size_t p = 0; p < PartCount; ++p) {
+        const auto part = static_cast<Part>(p);
+        const std::string_view partName = PartName(part);
+        for (std::size_t v = 0; v < PartVarCount; ++v) {
+            const auto var = static_cast<PartVar>(v);
+            if (const auto value = theme.partOverrides.Var(part, var)) {
+                out += partName;
+                out += '.';
+                out += PartVarName(var);
+                out += " = ";
+                AppendFloat(out, *value);
+                out += '\n';
+            }
+        }
+        for (std::size_t s = 0; s < PartStateCount; ++s) {
+            const auto state = static_cast<PartState>(s);
+            for (std::size_t c = 0; c < PartColorCount; ++c) {
+                const auto color = static_cast<PartColor>(c);
+                if (const auto value = theme.partOverrides.Color(part, state, color)) {
+                    out += partName;
+                    out += '.';
+                    out += PartStateName(state);
+                    out += '.';
+                    out += PartColorName(color);
+                    out += " = ";
+                    AppendColor(out, *value);
+                    out += '\n';
+                }
+            }
+        }
     }
     return out;
 }
@@ -341,7 +446,8 @@ ThemeParseResult ParseTheme(std::string_view text, Theme &theme) {
         {"brand.text", &BrandPalette::text, 2},     {"brand.accent", &BrandPalette::accent, 3},
         {"brand.raised", &BrandPalette::raised, -1}, {"brand.border", &BrandPalette::border, -1},
         {"brand.text-secondary", &BrandPalette::textSecondary, -1}, {"brand.success", &BrandPalette::success, -1},
-        {"brand.warning", &BrandPalette::warning, -1}, {"brand.error", &BrandPalette::error, -1}};
+        {"brand.warning", &BrandPalette::warning, -1}, {"brand.error", &BrandPalette::error, -1},
+        {"brand.crown", &BrandPalette::crown, -1}};
     for (const auto &e : entries)
         for (const auto &b : brandKeys) {
             if (e.key != b.key)
@@ -370,6 +476,7 @@ ThemeParseResult ParseTheme(std::string_view text, Theme &theme) {
     }
     // Step 3: every other key, top to bottom.
     bool accentSet = false, onAccentSet = false, focusedSet = false, selectedSet = false;
+    bool radiusPixelsSet = false, radiusShareSet = false;
     for (const auto &e : entries) {
         if (e.key == "preset")
             continue;
@@ -385,13 +492,14 @@ ThemeParseResult ParseTheme(std::string_view text, Theme &theme) {
                 SetCornerStyle(theme, style);
                 ++result.applied;
             } else {
-                Warn(result, e.line, "unknown corner style `" + std::string(e.value) + "`, expected sharp, soft, round or pill");
+                Warn(result, e.line, "unknown corner style `" + std::string(e.value) + "`, expected sharp, soft or round");
             }
             continue;
         }
         const auto field = std::find_if(std::begin(kFields), std::end(kFields), [&](const Field &f) { return f.key == e.key; });
         if (field == std::end(kFields)) {
-            Warn(result, e.line, "unknown key `" + std::string(e.key) + "`");
+            if (!TryParsePartEntry(e, theme, result))
+                Warn(result, e.line, "unknown key `" + std::string(e.key) + "`");
             continue;
         }
         if (ParseValue(*field, theme, e.value)) {
@@ -400,6 +508,8 @@ ThemeParseResult ParseTheme(std::string_view text, Theme &theme) {
             onAccentSet = onAccentSet || e.key == "semantic.on-accent";
             focusedSet = focusedSet || e.key == "semantic.control.focused";
             selectedSet = selectedSet || e.key == "semantic.control.selected";
+            radiusShareSet = radiusShareSet || e.key == "radius.control-share";
+            radiusPixelsSet = radiusPixelsSet || (e.key.starts_with("radius.") && e.key != "radius.control-share");
         } else
             Warn(result, e.line, "invalid value `" + std::string(e.value) + "` for `" + std::string(e.key) + "`");
     }
@@ -415,6 +525,9 @@ ThemeParseResult ParseTheme(std::string_view text, Theme &theme) {
         if (selectedSet)
             theme.semantic.control.selected = selected;
     }
+    // Radii given in pixels are meant as pixels: they switch off the proportional corner unless the file sets it too.
+    if (radiusPixelsSet && !radiusShareSet)
+        theme.radius.controlShare = 0.f;
     ResolveTheme(theme);
     return result;
 }

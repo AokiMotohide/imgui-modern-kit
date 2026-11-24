@@ -1,7 +1,11 @@
 #include <imkit/show/live.h>
 #include "internal.h"
 #include <imkit/workflow.h>
+#include <algorithm>
 #include <cfloat>
+#include <cmath>
+#include <cstdio>
+#include <cstring>
 #include <vector>
 
 namespace imkit::show {

@@ -1,9 +1,12 @@
 #include "workflow_pages.h"
-#include "gallery.h"
+#include "gallery_page_host.h"
+#include <imkit/widgets.h>
 #include <algorithm>
+#include <array>
+#include <cstdio>
 namespace imkit::gallery {
 void WorkflowPages::Show(int page,GalleryState& host) {
-    auto& theme=host.theme;semantics.Begin(ImGui::GetFrameCount());
+    auto& theme=HostTheme(host);semantics.Begin(ImGui::GetFrameCount());
     ComponentOptions o{&theme,nullptr,&semantics};
     imkit::Checkbox("日本語",&japanese);ImGui::SameLine();imkit::Checkbox("Disabled",&disabled);
     ImGui::SameLine();imkit::Checkbox("Vertical",&vertical);
@@ -20,8 +23,8 @@ void WorkflowPages::Show(int page,GalleryState& host) {
         const std::array<StepGroup,2> groups{{{101,japanese?"準備":"Prepare",0,2,{.25f,.60f,.95f,1.f}},{102,japanese?"仕上げ":"Deliver",2,2,{.85f,.45f,.70f,1.f}}}};
         if(auto request=GroupedStepNavigator("grouped",groups,items,selected,o))selected=request;
         const std::array<IconToolbarItem,3> iconActions{{{1,IconId::Play,japanese?"再生":"Play","Start playback",true},{2,IconId::Pause,japanese?"一時停止":"Pause","Mixed state",false,true},{3,IconId::Stop,japanese?"停止":"Stop","Unavailable",false,false,true}}};
-        IconToolbar("wrapping-icons",host.icons,iconActions,{true,true},o);
-        IconActionButton("labeled-action",host.icons,IconId::Reset,japanese?"表示リセット":"Reset view","Restore the default view",ActionVariant::Secondary,o);
+        IconToolbar("wrapping-icons",HostIcons(host),iconActions,{true,true},o);
+        IconActionButton("labeled-action",HostIcons(host),IconId::Reset,japanese?"表示リセット":"Reset view","Restore the default view",ActionVariant::Secondary,o);
         const std::array<ChoiceItem,7> sourceChoices{{
             {701,"USB / HDMI##choice-usb",japanese?"ローカル接続":"Direct capture input",IconId::Usb,{.22f,.53f,.91f,1.f}},
             {702,japanese?"ネットワーク##choice-network":"Network##choice-network",japanese?"LAN経由":"Camera over a network",IconId::Network,{.10f,.70f,.82f,1.f}},
@@ -30,7 +33,7 @@ void WorkflowPages::Show(int page,GalleryState& host) {
             {705,japanese?"スマートフォン##choice-mobile":"Mobile##choice-mobile",japanese?"モバイル入力":"Mobile input",IconId::Smartphone,{.18f,.67f,.52f,1.f}},
             {706,japanese?"テスト映像##choice-test":"Test pattern##choice-test",japanese?"テスト信号":"Test signal",IconId::TestPattern,{.52f,.57f,.64f,1.f}},
             {707,japanese?"利用不可##choice-disabled":"Unavailable##choice-disabled",japanese?"この例では選択できません":"Unavailable in this example",IconId::Close,{.62f,.62f,.62f,1.f},true,japanese?"この入力経路は無効です":"This input path is disabled"}}};
-        ChoiceGroupOptions choiceLayout;choiceLayout.icons=&host.icons;
+        ChoiceGroupOptions choiceLayout;choiceLayout.icons=&HostIcons(host);
         if(auto request=ChoiceGroup("connection-method",japanese?"接続方式を選択":"Choose a connection method",
                                     sourceChoices,choiceSource,choiceLayout,o)) choiceSource=request;
         Record(host,"workflow-choice-group");
@@ -38,7 +41,7 @@ void WorkflowPages::Show(int page,GalleryState& host) {
         if(auto id=StepNavigator("workflow",items,selected,steps,layout,o))selected=id;
         Record(host,"workflow-steps");
         for(const auto& node:semantics.Tree().nodes) if(node.name==items[2].label)
-            host.probes["workflow-review"]={node.minimum,node.maximum};
+            RecordProbe(host, "workflow-review", node.minimum,node.maximum);
         apply(ResponsiveToolbar("commands",toolbar,commands,ToolbarOptions{},o));
         if(FilterChip("filter",japanese?"選択のみ":"Selected only",chip,o))chip=!chip;Record(host,"workflow-chip");
         const bool workspaceWide=ImGui::GetContentRegionAvail().x>=650.f;
@@ -50,8 +53,8 @@ void WorkflowPages::Show(int page,GalleryState& host) {
             editor::ZoomToolbar("zoom",image,o);Record(host,"workflow-zoom");
             image.canvas.selectionPath=lassoScratch;
             imkit::Checkbox("Lasso",&lasso);
-            auto view=editor::BeginImageViewport("image",{host.texture,{512,288}},image,{0,360},theme,{true,true,disabled},o);
-            host.probes["workflow-canvas"]={view.min,view.max};
+            auto view=editor::BeginImageViewport("image",{HostTexture(host),{512,288}},image,{0,360},theme,{true,true,disabled},o);
+            RecordProbe(host, "workflow-canvas", view.min,view.max);
             editor::Point box[]={{50,50},{350,220}},dot[]={{180,120}},line[]={{50,240},{230,180},{420,240}};
             editor::DrawOverlay(view,image.canvas,{editor::OverlayShape::Rectangle,box,"",1,true},theme);
             editor::DrawOverlay(view,image.canvas,{editor::OverlayShape::Point,dot,"",1,true,true},theme);
@@ -79,7 +82,7 @@ void WorkflowPages::Show(int page,GalleryState& host) {
                 ImGui::TableNextColumn();ImGui::PushID(i);ImGui::TextUnformatted(comparisonNames[i]);
                 auto &state=imageComparisons[i];state.mode=comparisonModes[i];
                 if(i==3&&state.reset) {state.canvas.scale={.65,.65};state.canvas.origin={48,32};}
-                auto view=editor::BeginImageViewport("comparison",{host.texture,{512,288}},state,{0,120},theme,{true,true,disabled},o);
+                auto view=editor::BeginImageViewport("comparison",{HostTexture(host),{512,288}},state,{0,120},theme,{true,true,disabled},o);
                 const auto center=editor::NormalizedToPixel({.5,.5},{512,288});
                 editor::Point circle[]={center};
                 editor::DrawOverlay(view,state.canvas,{editor::OverlayShape::Circle,circle,"",48},theme);
@@ -90,8 +93,8 @@ void WorkflowPages::Show(int page,GalleryState& host) {
         }
         if(auto id=MultiSelectionBar("selection",selection.count,commands,toolbar,o))apply(id);
         apply(BottomActionBar("bottom",BottomActionBarView{japanese?"変更なし":"No pending changes",FeedbackKind::Info,commands},toolbar,o));
-        auto preset=static_cast<ThemePreset>(host.presetIndex);
-        if(ThemePicker("theme",&preset,themePicker,o)){host.presetIndex=static_cast<int>(preset);host.theme=MakeTheme(preset);}
+        auto preset=static_cast<ThemePreset>(HostPresetIndex(host));
+        if(ThemePicker("theme",&preset,themePicker,o)){HostPresetIndex(host)=static_cast<int>(preset);HostTheme(host)=MakeTheme(preset);}
         ImGui::SeparatorText(japanese?"開閉式の右インスペクター":"Collapsible right inspector");
         const ImVec2 panelAvailable{ImGui::GetContentRegionAvail().x,180};
         const bool panelShortcut=!ImGui::GetIO().WantTextInput&&ImGui::IsKeyPressed(ImGuiKey_N);
@@ -143,6 +146,27 @@ void WorkflowPages::Show(int page,GalleryState& host) {
                     taskFraction=taskFraction>=1.f?0.f:std::min(1.f,taskFraction+.18f);++taskUpdates;
                 }
                 Record(host,"progress-advance");
+                {
+                    // 待ちカード: 主のバーは件数で進み、PJごとの区切りと、並行して進む解析の細いバーを持つ。
+                    const int total=102,doneCount=static_cast<int>(taskFraction*total);
+                    const std::array<ProgressLane,3> lanes{{
+                        {"PJ 0",doneCount>=34?1.f:0.f,doneCount>=34?ProgressStatus::Succeeded:ProgressStatus::Queued},
+                        {"PJ 1",doneCount>=68?1.f:(doneCount>34?.4f:0.f),doneCount>=68?ProgressStatus::Succeeded:(doneCount>34?ProgressStatus::Running:ProgressStatus::Queued)},
+                        {"PJ 2",done?1.f:0.f,done?ProgressStatus::Succeeded:ProgressStatus::Queued}}};
+                    const std::array<StageProgressItem,3> waitStages{{
+                        {0x5401,japanese?"撮影":"Capture",done?ProgressStatus::Succeeded:ProgressStatus::Running},
+                        {0x5402,japanese?"解析":"Analyse",done?ProgressStatus::Running:ProgressStatus::Queued},
+                        {0x5403,japanese?"保存":"Save",ProgressStatus::Queued}}};
+                    char value[32];std::snprintf(value,sizeof(value),"%d / %d",doneCount,total);
+                    char meta[64];std::snprintf(meta,sizeof(meta),japanese?"残り 約%d秒":"About %d s left",(total-doneCount)/2);
+                    WaitCardView wait;wait.id=0x5400;
+                    wait.title=japanese?"スキャン中":"Scanning";wait.value=value;wait.meta=meta;
+                    wait.track.fraction=static_cast<float>(doneCount)/total;wait.track.segments=3;wait.track.lanes=lanes;
+                    wait.stages=waitStages;wait.status=done?ProgressStatus::Succeeded:ProgressStatus::Running;
+                    WaitCard("scan-wait",wait,o);
+                    ComponentOptions call=o;call.callToAction=true;
+                    ActionButton(japanese?"次の工程へ":"Next step",ActionVariant::Primary,{},call);
+                }
                 ImGui::TextDisabled(japanese?(done?"タスク 1/2: 完了":"タスク 1/2: 処理中"):(done?"Task 1/2: succeeded":"Task 1/2: running"));
                 const float narrowWidth=std::min(300.f,std::max(1.f,ImGui::GetContentRegionAvail().x));
                 ImGui::BeginChild("narrow-progress-demo",{narrowWidth,214},ImGuiChildFlags_Borders);
@@ -182,7 +206,7 @@ void WorkflowPages::Show(int page,GalleryState& host) {
                 ImGui::Spacing();
                 if(BeginCard("states",{0,300},o)) {
                     if(SectionHeader("section",japanese?"状態表示":"States",open,o)) {
-                        if(EmptyState("empty",StateView{"No items","Add the first item","Create",FeedbackKind::Info,IconId::Folder,&host.icons},o))++actions;
+                        if(EmptyState("empty",StateView{"No items","Add the first item","Create",FeedbackKind::Info,IconId::Folder,&HostIcons(host)},o))++actions;
                         ImGui::Spacing();
                         UnavailableState("offline",StateView{"Unavailable","The host is offline"},o);
                         ImGui::Spacing();
@@ -205,7 +229,7 @@ void WorkflowPages::Show(int page,GalleryState& host) {
             {101, japanese?"編集":"Edit", "Edit items", IconId::Cube},
             {102, japanese?"接続":"Connect", "Route sources", IconId::Connected},
             {103, japanese?"仕上げ":"Review", "Review settings", IconId::Settings}}};
-        if(auto request=WorkspaceTabs("workspace-tabs",workspaces,workspace,&host.icons,o))workspace=request;
+        if(auto request=WorkspaceTabs("workspace-tabs",workspaces,workspace,&HostIcons(host),o))workspace=request;
         ImGui::Spacing();
         const bool componentWide=ImGui::GetContentRegionAvail().x>=850.f;
         if(ImGui::BeginTable("component-layout",componentWide?2:1,ImGuiTableFlags_SizingStretchProp)) {
@@ -214,14 +238,14 @@ void WorkflowPages::Show(int page,GalleryState& host) {
                 ImGui::TableSetupColumn("Settings",ImGuiTableColumnFlags_WidthStretch,1.2f);
             }
             ImGui::TableNextRow();ImGui::TableNextColumn();
-            if(HierarchyGroupHeader("group",japanese?"項目":"Items",2,&hierarchyOpen,&host.icons,IconId::Layers,o)) {
-                HierarchyRow("first",{1,japanese?"項目 A":"Item A","Visible and editable",IconId::Cube,1,true},&host.icons,o);
-                HierarchyRow("second",{2,japanese?"項目 B":"Item B","Hidden and locked",IconId::Image,1,false,false,true},&host.icons,o);
+            if(HierarchyGroupHeader("group",japanese?"項目":"Items",2,&hierarchyOpen,&HostIcons(host),IconId::Layers,o)) {
+                HierarchyRow("first",{1,japanese?"項目 A":"Item A","Visible and editable",IconId::Cube,1,true},&HostIcons(host),o);
+                HierarchyRow("second",{2,japanese?"項目 B":"Item B","Hidden and locked",IconId::Image,1,false,false,true},&HostIcons(host),o);
             }
             ImGui::TableNextColumn();
             if(BeginInspectorCard("settings-card",japanese?"基本設定":"Basic settings",
                                   japanese?"関連する操作をまとめて表示":"Related controls stay together",
-                                  &host.icons,IconId::Settings,o)) {
+                                  &HostIcons(host),IconId::Settings,o)) {
                 if(SettingToggleRow("enabled",japanese?"有効":"Enabled",
                                     japanese?"現在の項目を使用":"Use this item",settingEnabled,false,"",o))
                     settingEnabled=!settingEnabled;
@@ -232,7 +256,7 @@ void WorkflowPages::Show(int page,GalleryState& host) {
         editor::PreviewTileView tiles[5];
         const char* names[]={"Preview A","Loading","Empty","Offline","Error"};
         for(int i=0;i<5;++i){tiles[i].id=i+1;tiles[i].title=names[i];tiles[i].detail="Host-owned texture and state";tiles[i].actions=commands;tiles[i].disabled=disabled;}
-        tiles[0].image={host.texture,{512,288}};tiles[1].status=editor::PreviewState::Loading;tiles[2].status=editor::PreviewState::Empty;
+        tiles[0].image={HostTexture(host),{512,288}};tiles[1].status=editor::PreviewState::Loading;tiles[2].status=editor::PreviewState::Empty;
         tiles[3].status=editor::PreviewState::Offline;tiles[4].status=editor::PreviewState::Error;
         std::array<editor::TileEvent,32> storage{};editor::TileEventBuffer events{storage};
         editor::ResizableTileStrip("strip",tiles,sizes,tileSelected,strip,events,{vertical?Orientation::Vertical:Orientation::Horizontal,180,{0,480}},o);
@@ -249,15 +273,15 @@ void WorkflowPages::Show(int page,GalleryState& host) {
     if(dismiss.count)notice=false;
 }
 void WorkflowPages::Workbench(GalleryState& host) {
-    ComponentOptions o{&host.theme,&host.animation};
+    ComponentOptions o{&HostTheme(host),&HostAnimation(host)};
     const WorkspaceTab tabs[]={{101,"Compose","Arrange your workspace",IconId::Layers},{102,"Inspect","Edit selected items",IconId::Settings},{103,"Deliver","Prepare output",IconId::Export}};
     std::array<accessibility::SemanticNode,16> tabNodes{};
     accessibility::AccessibilityFrame tabSemantics{tabNodes};tabSemantics.Begin(ImGui::GetFrameCount());
     auto tabOptions=o;tabOptions.accessibility=&tabSemantics;
-    if(auto request=WorkspaceTabs("workbench-tabs",tabs,workspace,&host.icons,tabOptions)) workspace=request;
+    if(auto request=WorkspaceTabs("workbench-tabs",tabs,workspace,&HostIcons(host),tabOptions)) workspace=request;
     Record(host,"workbench-tabs");
     for(const auto& node:tabSemantics.Tree().nodes) for(int i=0;i<3;++i)
-        if(node.name==tabs[i].label) host.probes["workbench-tab-"+std::to_string(i)]={node.minimum,node.maximum};
+        if(node.name==tabs[i].label) RecordProbe(host, ("workbench-tab-"+std::to_string(i)).c_str(), node.minimum,node.maximum);
     const bool wide=ImGui::GetContentRegionAvail().x>=850.f*std::max(1.f,ImGui::GetStyle().FontScaleDpi);
     if(ImGui::BeginTable("workbench",wide?3:1,ImGuiTableFlags_SizingStretchProp)) {
         if(wide) {
@@ -268,16 +292,16 @@ void WorkflowPages::Workbench(GalleryState& host) {
         ImGui::TableNextColumn();
         bool add=false;
         const auto hierarchyStart=ImGui::GetCursorScreenPos();
-        const bool openHierarchy=HierarchyGroupHeader("scene","Workspace",3,&hierarchyOpen,&host.icons,IconId::Layers,o,&add,"Add item");
-        host.probes["workbench-hierarchy"]={hierarchyStart,{hierarchyStart.x+ImGui::GetFrameHeight(),hierarchyStart.y+ImGui::GetFrameHeight()}};
+        const bool openHierarchy=HierarchyGroupHeader("scene","Workspace",3,&hierarchyOpen,&HostIcons(host),IconId::Layers,o,&add,"Add item");
+        RecordProbe(host, "workbench-hierarchy", hierarchyStart,{hierarchyStart.x+ImGui::GetFrameHeight(),hierarchyStart.y+ImGui::GetFrameHeight()});
         if(openHierarchy) {
             const char* names[]={"Main image","Overlay","Reference"};
             const IconId icons[]={IconId::Image,IconId::Layers,IconId::Camera};
             for(int i=0;i<3;++i) {
                 const auto rowStart=ImGui::GetCursorScreenPos();
                 const float rowWidth=ImGui::GetContentRegionAvail().x;
-                const auto request=HierarchyRow(names[i],{static_cast<StableId>(i+1),names[i],i==0?"1920 x 1080":"Host-owned item",icons[i],0,selected==static_cast<StableId>(i+1),visible[i],locked[i]},&host.icons,o);
-                host.probes[std::string("workbench-row-")+std::to_string(i)]={rowStart,{rowStart.x+std::max(20.f,rowWidth-ImGui::GetFrameHeight()*4),rowStart.y+ImGui::GetFrameHeight()}};
+                const auto request=HierarchyRow(names[i],{static_cast<StableId>(i+1),names[i],i==0?"1920 x 1080":"Host-owned item",icons[i],0,selected==static_cast<StableId>(i+1),visible[i],locked[i]},&HostIcons(host),o);
+                RecordProbe(host, (std::string("workbench-row-")+std::to_string(i)).c_str(), rowStart,{rowStart.x+std::max(20.f,rowWidth-ImGui::GetFrameHeight()*4),rowStart.y+ImGui::GetFrameHeight()});
                 switch(request) {
                 case HierarchyRowAction::Select:selected=i+1;break;
                 case HierarchyRowAction::ToggleVisibility:visible[i]=!visible[i];break;
@@ -290,12 +314,12 @@ void WorkflowPages::Workbench(GalleryState& host) {
         if(add) ++actions;
         ImGui::TextDisabled("Requests are applied by this app.");
         ImGui::TableNextColumn();
-        if(BeginInspectorCard("preview-card",workspace==103?"Delivery preview":"Live preview","A host texture in the shared workspace",&host.icons,IconId::Image,o)) {
+        if(BeginInspectorCard("preview-card",workspace==103?"Delivery preview":"Live preview","A host texture in the shared workspace",&HostIcons(host),IconId::Image,o)) {
             const float width=ImGui::GetContentRegionAvail().x;
-            const auto view=editor::BeginImageViewport("workbench-preview",{host.texture,{512,288}},image,{width,width*9.f/16.f},host.theme,{},o);
+            const auto view=editor::BeginImageViewport("workbench-preview",{HostTexture(host),{512,288}},image,{width,width*9.f/16.f},HostTheme(host),{},o);
             auto* draw=ImGui::GetWindowDrawList();
             draw->AddRectFilled(view.min,view.max,IM_COL32(22,35,41,255));
-            editor::DrawGrid(view,image.canvas,{32,32},host.theme);
+            editor::DrawGrid(view,image.canvas,{32,32},HostTheme(host));
             const ImVec2 center{(view.min.x+view.max.x)*.5f+position[0]*8.f,(view.min.y+view.max.y)*.5f-position[1]*8.f};
             const float radius=(view.max.y-view.min.y)*.30f;
             const ImVec2 shape[]={{center.x,center.y-radius},{center.x+radius,center.y-radius*.35f},{center.x+radius*.70f,center.y+radius},{center.x-radius*.65f,center.y+radius*.68f},{center.x-radius,center.y-radius*.30f}};
@@ -312,18 +336,18 @@ void WorkflowPages::Workbench(GalleryState& host) {
             const float primaryX=actionStart.x+ImGui::CalcTextSize(row.statusText).x+24+ImGui::GetStyle().ItemSpacing.x;
             const auto request=CompactActionRow("workbench-actions",row);
             Record(host,"workbench-actions");
-            host.probes["workbench-apply"]={{primaryX,actionStart.y},{primaryX+ImGui::CalcTextSize(row.primaryLabel).x+ImGui::GetStyle().FramePadding.x*2,actionStart.y+ImGui::GetFrameHeight()}};
+            RecordProbe(host, "workbench-apply", {primaryX,actionStart.y},{primaryX+ImGui::CalcTextSize(row.primaryLabel).x+ImGui::GetStyle().FramePadding.x*2,actionStart.y+ImGui::GetFrameHeight()});
             if(request==CompactActionRowRequest::Primary) ++actions;
             if(request==CompactActionRowRequest::Settings) workSettings=!workSettings;
             ImGui::Text("Applied: %d",actions);
         }
         EndInspectorCard();
         ImGui::TableNextColumn();
-        if(BeginInspectorCard("item-settings","Item settings","Changes update application values",&host.icons,IconId::Settings,o)) {
+        if(BeginInspectorCard("item-settings","Item settings","Changes update application values",&HostIcons(host),IconId::Settings,o)) {
             const auto toggleStart=ImGui::GetCursorScreenPos();
             const float toggleRight=toggleStart.x+ImGui::GetContentRegionAvail().x;
             if(SettingToggleRow("workbench-enabled","Enable item","Include this item in output",settingEnabled,false,"",o)) settingEnabled=!settingEnabled;
-            host.probes["workbench-enabled"]={{toggleRight-ImGui::GetFrameHeight()*2.4f,toggleStart.y},{toggleRight-ImGui::GetFrameHeight()*1.4f,toggleStart.y+ImGui::GetFrameHeight()}};
+            RecordProbe(host, "workbench-enabled", {toggleRight-ImGui::GetFrameHeight()*2.4f,toggleStart.y},{toggleRight-ImGui::GetFrameHeight()*1.4f,toggleStart.y+ImGui::GetFrameHeight()});
             ImGui::SetNextItemWidth(-1);
             DragVector3WithUnit("Position",position,"m",.05f,-10.f,10.f,"%.2f");
             Record(host,"workbench-position");
@@ -331,8 +355,8 @@ void WorkflowPages::Workbench(GalleryState& host) {
             std::array<accessibility::SemanticNode,16> choiceNodes{};
             accessibility::AccessibilityFrame choiceSemantics{choiceNodes};choiceSemantics.Begin(ImGui::GetFrameCount());
             auto choiceOptions=o;choiceOptions.accessibility=&choiceSemantics;
-            if(auto request=ChoiceGroup("workbench-source","Input source",choices,choiceSource,{2,&host.icons},choiceOptions)) choiceSource=request;
-            for(const auto& node:choiceSemantics.Tree().nodes) if(node.name=="Mobile") host.probes["workbench-mobile"]={node.minimum,node.maximum};
+            if(auto request=ChoiceGroup("workbench-source","Input source",choices,choiceSource,{2,&HostIcons(host)},choiceOptions)) choiceSource=request;
+            for(const auto& node:choiceSemantics.Tree().nodes) if(node.name=="Mobile") RecordProbe(host, "workbench-mobile", node.minimum,node.maximum);
             Record(host,"workbench-source");
             if(workSettings) ImGui::TextWrapped("Host settings opened. No global service or persistence is introduced.");
         }

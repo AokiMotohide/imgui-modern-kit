@@ -1,5 +1,5 @@
 {
-  "edition": "4.1",
+  "edition": "4.2",
   "license": "MIT; repository font and icon notices retained",
   "duration": 180,
   "fps": 60,
@@ -11,28 +11,40 @@
     "ja",
     "en"
   ],
-  "shots": 21,
+  "shots": 23,
   "music": {
-    "title": "Laserpack",
-    "artist": "Kevin MacLeod ft. DarkNES",
-    "source": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1800018",
-    "license": "CC BY 4.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "credit": "Laserpack Kevin MacLeod ft. DarkNES (incompetech.com). Licensed under Creative Commons: By Attribution 4.0 License. https://creativecommons.org/licenses/by/4.0/",
-    "use": "Trimmed to the film length from its first downbeat and faded out; not time-stretched. Cut whooshes and mouse-click sounds are mixed in softly.",
-    "fallback": "tools/media/music.py can synthesize an original score instead (`film.py --synth`)."
+    "title": "ImKit 4.2 Original Score",
+    "model": "procedural-numpy-96bar",
+    "bpm": 128,
+    "bars": 96,
+    "license": "Original repository instrumental score; MIT",
+    "use": "Synthesized 96-bar 128 BPM electronic score mixed with automated voice-ducking (-9 dB) and recorded click/cut/laser SFX."
+  },
+  "narration": {
+    "model": "gemini-3.8-flash-tts / gemini-3.8-flash-lite-tts / gemini-3.1-flash-tts-preview",
+    "voices": {
+      "ja": "Aoede",
+      "en": "Charon"
+    },
+    "lines_per_language": 19
+  },
+  "cinematic_backdrops": {
+    "video_model": "procedural-3d-parallax",
+    "image_model": "procedural-4k-supersampled-studio-art",
+    "review_model": "antigravity-multimodal-director"
   },
   "fonts": "Inter and Noto Sans JP (SIL OFL), rasterized only; no font binaries are redistributed",
-  "visuals": "Native Gallery and Node Editor OpenGL backbuffers recorded through public Dear ImGui IO, with a large synchronized cursor; captions and transitions are original.",
+  "visuals": "Every UI screen is recorded from the native Gallery and Node Editor OpenGL backbuffers through public Dear ImGui IO, composed with 3D perspective motion graphics and layered studio backdrops.",
   "scripts": [
     "tools/media/capture.py",
+    "tools/media/generate_gemini_assets.py",
     "tools/media/film.py",
     "tools/media/music.py",
     "examples/gallery/main.cpp (CaptureMotion)"
   ],
   "validate": "tools/media/verify.py",
   "sha256": {
-    "ja": "273e55cfcd6cedd183f6fd8cf70dca02541da1edca6407fa3ce60f4d0ca31924",
-    "en": "67008a9f6d3c4c7145a2488c2f6745dc0f9ea3faa2240d5dbdf8cbcd9370047f"
+    "ja": "5bdd04dc80e4c1e376ca1083f0b428bcc45173985a328007e80b5b9fbdba107e",
+    "en": "49c4d46edf00bfb5253c347db84f84929770cdb97f2988212997e57ed9979fc9"
   }
 }

@@ -1,6 +1,6 @@
 #pragma once
 #include <imgui.h>
-#define IMKIT_VERSION "4.1.0"
+#define IMKIT_VERSION "4.2.0"
 #define IMKIT_IMGUI_COMMIT "367b2c24f399988ddafc0bb4628da0106bcc09be"
 #if IMGUI_VERSION_NUM != 19297
 #error "ImKit 4 requires the pinned Dear ImGui 1.93.0 WIP docking revision."

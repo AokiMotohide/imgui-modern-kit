@@ -1,5 +1,7 @@
 #pragma once
 #include <imkit/version.h>
+#include <imkit/easing.h>
+#include <imkit/part_style.h>
 #include <array>
 #include <cstdint>
 #include <optional>
@@ -12,8 +14,12 @@ struct Skin;
 enum class ColorScheme { Light, Dark };
 enum class ThemePreset : std::uint8_t {
     PrecisionLight, PrecisionDark, Graphite, Midnight, Ocean, Forest,
-    WarmSand, Rose, Violet, Solar, HighContrastLight, HighContrastDark, Slate
+    WarmSand, Rose, Violet, Solar, HighContrastLight, HighContrastDark, Slate,
+    Classic // The Precision Dark colours with ThemeLook::Classic: the Dear ImGui shapes of ImKit 4.1.
 };
+// Modern is the default for every preset: thin scrollbars, faint dividers, rounded floating windows and popups,
+// calm tables and the redrawn ImKit parts. Classic keeps the Dear ImGui shapes for hosts that want the previous look.
+enum class ThemeLook : std::uint8_t { Modern, Classic };
 struct ThemePresetInfo {
     ThemePreset preset;
     std::string_view id;
@@ -22,25 +28,36 @@ struct ThemePresetInfo {
 };
 enum class ContrastMode { Standard, HighContrast };
 enum class Density { Compact, Comfortable, Touch };
-enum class Easing { Linear, EaseOut, EaseInOut };
-// Radius presets for SetCornerStyle. Soft matches the default radii.
-enum class CornerStyle { Sharp, Soft, Round, Pill };
-enum class TextRole { Caption, Body, Heading, Title, Mono };
+// Radius presets for SetCornerStyle. Soft matches the default radii: a smooth corner at a quarter of the control height.
+// There is no capsule preset: a fully round button reads as a tag and leaves less room for its label.
+enum class CornerStyle { Sharp, Soft, Round };
+// Numeric is the body size in fonts.numeric (regular when null), for figures that line up in fields and readouts.
+enum class TextRole { Caption, Body, Heading, Title, Mono, Numeric };
 enum class ElevationLevel { Raised, Overlay };
+// Where an overlay sits in a viewport's work area: toasts, the external control pill and similar floating parts.
+enum class OverlayAnchor { TopLeft, TopCenter, TopRight, BottomLeft, BottomCenter, BottomRight };
 // A frame border of this many design pixels or more is an outline: a deliberate stroke drawn at full strength on
 // windows, frames and every button variant. Thinner borders stay soft hairlines, as before.
 inline constexpr float OutlineMinimumWidth = 2.f;
 inline constexpr float ThemeScaleDefault = 1.25f;
 inline constexpr float ThemeScaleMinimum = 0.50f;
 inline constexpr float ThemeScaleMaximum = 2.50f;
+// Four steps a reader can tell apart at a glance: captions, body text, headings one step above the body, and titles.
 struct Typography {
-    float caption=12, body=14, label=14, heading=18, title=26, monospace=13;
+    float caption=12, body=14, label=14, heading=15, title=22, monospace=13;
 };
 struct SpacingTokens { std::array<float,8> steps{2,4,6,8,12,16,24,32}; };
 // subtle: tags and small marks, control: frames and buttons, overlay: cards, popups and dialogs.
-struct Radius { float subtle=4, control=8, overlay=12; };
+// controlShare > 0 derives all three from the control height when the theme resolves: control = height * share,
+// subtle = half of it and overlay = height * share * 1.6, rounded to whole pixels. The default .25 keeps the same
+// proportion at every density. Set it to 0 to use the pixel values as given.
+struct Radius { float subtle=4, control=8, overlay=12; float controlShare=.25f; };
 // border is a hairline up to 1 and an outline from OutlineMinimumWidth; dividers and table lines never exceed 1.
-struct Stroke { float border=1, focus=2; };
+// `button` is the outline of buttons when it differs from other frames (0 uses `border`); `dashedDisabled` draws the
+// outline of a disabled ImKit button as a dashed line, so it reads as "not now" without relying on colour alone.
+// `primary` gives the primary button an outline of its own width (0 keeps `button`), drawn in `primaryColor`
+// (alpha zero uses onAccent), so the one action to press stands out while other buttons keep a hairline.
+struct Stroke { float border=1, focus=2; float button=0; bool dashedDisabled=false; float primary=0; ImVec4 primaryColor{}; };
 // Shadow extent in pixels. OverlayDecoration draws overlay; raised is available to hosts through DrawShadow.
 // hard replaces the blurred shadow with a solid copy of the shape moved by offset (design pixels, scaled with the UI).
 struct Elevation { float surface=0, raised=4, overlay=14; ImVec2 offset{0,0}; bool hard=false; };
@@ -51,6 +68,7 @@ struct SemanticColors {
     ImVec4 border{}, accent{}, onAccent{}, success{}, warning{}, error{};
     StateColors control{};
     ImVec4 shadow{}; // Alpha <= 0 uses black. A soft shadow takes only its colour; a hard shadow uses it as is.
+    ImVec4 crown{};  // Optional colour of the top of the window (menu bar, step band). Alpha zero derives it.
 };
 // Derived from `Theme::semantic` by ResolveTheme; edit semantic tokens instead.
 struct Palette {
@@ -61,7 +79,7 @@ struct Palette {
 // Sizes that components read while drawing. Ratios are multiples of the font size, so they follow the UI scale; the two
 // pixel values are screen pixels, as the literals they replace were. Defaults draw exactly as before.
 struct PartMetrics {
-    float checkHeightScale = 1.45f;       // Checkbox and RadioButton height.
+    float checkHeightScale = 1.15f;       // Checkbox and RadioButton height; close to the text so the mark never outweighs it.
     float toggleHeightScale = 1.75f;      // Toggle and Switch height.
     float dialogPaddingScale = 1.3f;      // Dialog window padding.
     float progressBarHeightScale = .2f;   // Progress bar height as a share of the frame height (kept within 4..8).
@@ -71,7 +89,7 @@ struct PartMetrics {
 // Derived from the density, tokens and `Theme::layout` by ResolveTheme; edit those instead.
 struct Metrics {
     float controlHeight = 30, spacing = 6, radius = 8, border = 1;
-    float bodySize = 14, headingSize = 18, focusWidth = 1.5f, elevation = 14;
+    float bodySize = 14, headingSize = 15, focusWidth = 1.5f, elevation = 14;
     float horizontalPadding = 12;
     float spacingY = 6;                   // Vertical item spacing; `spacing` is the horizontal one.
     float windowPaddingX = 12, windowPaddingY = 12;
@@ -97,6 +115,7 @@ struct FontSet {
     ImFont *regular = nullptr;
     ImFont *emphasis = nullptr;
     ImFont *display = nullptr; // Headings and titles; PushTextRole falls back to emphasis, then regular.
+    ImFont *numeric = nullptr; // Figures in number fields (TextRole::Numeric); null uses regular.
 }; // Non-owning.
 struct EditorPalette {
     ImVec4 canvas{}, grid{}, ruler{}, trackHeader{}, videoClip{}, audioClip{}, captionClip{};
@@ -117,6 +136,36 @@ struct NodeTokens {
     std::optional<float> headerTint, rounding, headerHeight, pinRadius, linkWidth, gridSize, pinSeat, flowLinkWidth;
     bool hollowPins = false, highlightLinks = false;
 };
+// The large regions of an application window. Neighbouring regions differ in lightness, so the toolbar band, the side
+// panels, the work area and a strip of video previews read as separate places in every theme. Panel (lists) and
+// Inspector (settings) share a lightness and differ in hue, so two side panels read as two roles without either
+// standing out.
+enum class SurfaceZone : std::uint8_t { Chrome, Panel, Workspace, Monitor, Inspector, Header, ChromeCanvas };
+// The part a docked window plays. Each role takes the zone of that part as its background, so neighbouring windows read
+// as different places by colour as well as by position; the focused window's tab line takes the accent.
+enum class WindowRole : std::uint8_t { Browse, Edit, View, Monitor };
+// Colours of one window role, derived by ResolveTheme from the zones. The emphasis stays at least 1.25:1 from the body.
+struct WindowRoleColors {
+    ImVec4 body{};     // Window and child background: panel, inspector, workspace or chromeCanvas.
+    ImVec4 emphasis{}; // Section headers and the selected row: one step in front of the body, in its hue.
+    ImVec4 label{};    // Tab line while the window is not focused, in the body's hue (the chrome's for Monitor).
+    ImVec4 head{};     // The tab band of a dock node (DockTabBand): at least 1.25:1 from the body, so the selected
+                       // tab (the body colour) reads as part of the window below it.
+};
+// Derived from `Theme::semantic` by ResolveTheme in OKLCH, so the steps are even to the eye in every theme. To override
+// a value, assign it after ResolveTheme.
+struct SurfaceZoneColors {
+    ImVec4 chrome{};       // Menu bar and step band: semantic.crown when given, else the raised surface leaning to the accent.
+    ImVec4 panel{};        // Lists and step lists: the surface.
+    ImVec4 workspace{};    // Gaps between panels and around the main view: a step darker than the panel.
+    ImVec4 monitor{};      // Inside a picture: an almost neutral, deep tone, so pictures are judged on a quiet ground.
+    ImVec4 onMonitor{};    // Text drawn on the monitor zone.
+    ImVec4 divider{};      // The line between two zones.
+    ImVec4 inspector{};    // Settings panels: the panel's lightness, turned toward the accent's hue and calmer.
+    ImVec4 header{};       // The heading row of a panel and floating tool windows: a step from the panel.
+    ImVec4 chromeCanvas{}; // A canvas inside the chrome (a strip of previews): a deep tone of the chrome.
+    std::array<WindowRoleColors, 4> roles{}; // Indexed by WindowRole.
+};
 struct Theme {
     ColorScheme scheme = ColorScheme::Light;
     ContrastMode contrast = ContrastMode::Standard;
@@ -135,7 +184,12 @@ struct Theme {
     FontSet fonts{};
     EditorPalette editor{};
     NodeTokens node{};
+    ThemeLook look = ThemeLook::Modern;
+    // Per part and state values (L1, part_style.h): `button.height`, `checkbox.on.fill`, `slider.thumb.size`.
+    // Unset entries follow the tokens above. Lengths are design pixels.
+    PartOverrides partOverrides{};
     const Skin *skin = nullptr; // Non-owning, like fonts; see skin.h. Not part of the theme text.
+    SurfaceZoneColors zones{};  // Derived; see SurfaceZoneColors.
 };
 Theme MakePrecisionTheme(ColorScheme scheme = ColorScheme::Light);
 std::span<const ThemePresetInfo> ThemePresets() noexcept;
@@ -155,6 +209,7 @@ void SetAccent(Theme &theme, ImVec4 accent);
 struct BrandPalette {
     ImVec4 canvas{}, surface{}, text{}, accent{};
     ImVec4 raised{}, border{}, textSecondary{}, success{}, warning{}, error{};
+    ImVec4 crown{}; // The top of the window (semantic.crown).
 };
 // Builds a complete, resolved theme from a few colours: control states, selection, secondary text and a border are
 // derived so that text and border keep their contrast against every surface. The light or dark scheme follows the
@@ -181,6 +236,21 @@ struct ThemeParseResult {
 ThemeParseResult ParseTheme(std::string_view text, Theme& theme);
 // Call outside Begin/End windows, before NewFrame. Does not load or own fonts.
 void ApplyTheme(const Theme &theme, float scale = ThemeScaleDefault);
+ImVec4 SurfaceZoneColor(const Theme& theme, SurfaceZone zone);
+// Pushes the zone colour as the window background for the next Begin; call PopSurfaceZone right after that Begin.
+void PushSurfaceZone(const Theme& theme, SurfaceZone zone);
+void PopSurfaceZone();
+// Pushes the colours of a window role for the next Begin: background, child background, headers and the docked tab
+// (the focused tab line takes the accent, an unfocused one the role label). Call PopWindowRole after End, so the widgets
+// inside use the role colours too. Input fields keep the theme's own colour. An unresolved theme pushes the current
+// style colours. The tab line shows only when ImGuiStyle::TabBarOverlineSize is above zero.
+void PushWindowRole(const Theme& theme, WindowRole role);
+void PopWindowRole();
+// Paints the tab band of the current window's dock node with the role's head colour. Dear ImGui draws one band per dock
+// node, so the leftmost tab's window decides it: call this right after Begin in every docked window that has a role,
+// whatever Begin returned. It recolours the band Dear ImGui drew this frame (and the dimmed tabs that share its colour);
+// it does nothing for a window that is not docked, a node without a tab bar, or an unresolved theme.
+void DockTabBand(const Theme& theme, WindowRole role);
 // Use within a frame, before Begin or around a group of widgets. Restore on the
 // same live context; scopes must be destroyed before the host destroys it.
 class ThemeScope {

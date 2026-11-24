@@ -1,4 +1,5 @@
-#include <imkit/imkit.h>
+#include <imkit/ptz.h>
+#include <imkit/range_slider.h>
 #include <array>
 #include <cmath>
 #include <cstdio>
