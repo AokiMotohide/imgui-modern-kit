@@ -9,6 +9,9 @@ namespace imkit::detail {
 struct PartThemeState {
     bool applied = false;
     ThemeLook look = ThemeLook::Modern;
+    SurfaceStyle surfaceStyle = SurfaceStyle::Flat;
+    ColorScheme scheme = ColorScheme::Dark;
+    bool highContrast = false;
     float scale = 1.f;
     float buttonStroke = 0.f;  // Stroke::button, the legacy key for button.border.width.
     float focusWidth = 2.f;    // Stroke::focus.
@@ -25,6 +28,8 @@ const PartThemeState &CurrentPartTheme();
 // The editor changes the current context's theme values directly.
 PartThemeState &MutablePartTheme();
 inline bool ClassicLook() { return CurrentPartTheme().look == ThemeLook::Classic; }
+inline SurfaceStyle CurrentSurfaceStyle() { return CurrentPartTheme().surfaceStyle; }
+inline bool CurrentIsDark() { return CurrentPartTheme().scheme == ColorScheme::Dark; }
 
 // How a part maps onto Dear ImGui's style, for defaults, for detecting ImGui pushes and for projecting values.
 // -1 means "none"; a fill of -1 is transparent.

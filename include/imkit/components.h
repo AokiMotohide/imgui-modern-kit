@@ -158,4 +158,37 @@ void DrawShadow(const Theme &theme, ImDrawList *draw, ImVec2 minimum, ImVec2 max
 // must stay alive until PopFloatingPanel.
 void PushFloatingPanel(const Theme &theme);
 void PopFloatingPanel();
+
+// Label on top (with optional right-aligned unit/hint), slider and numeric input on the row below.
+// Prevents right-hand label overflow in narrow inspector panels.
+bool LabeledSliderFloat(const char *label, float *value, float minimum, float maximum,
+                        const char *unit = nullptr, const char *format = "%.2f", float step = 0.f,
+                        SliderInputInteraction *interaction = nullptr, ComponentOptions options = {});
+
+struct ChoiceCardOptions {
+    const char *subtitle = nullptr;      // Optional secondary line under the title.
+    const char *trailingText = nullptr;  // Optional right-aligned value or badge text (e.g. "1.80").
+    ImVec4 dotColor{};                   // Optional leading role/status dot when alpha > 0.
+    bool selected = false;
+    bool disabled = false;
+    float width = 0.f;                   // <= 0 fills available width.
+    ComponentOptions components{};
+};
+// Selectable flat/tactile card for 1..N column grids with optional leading dot, subtitle and trailing value.
+bool ChoiceCard(const char *id, const char *title, const ChoiceCardOptions &options = {});
+
+// Card container with optional title and description; avoids nested double borders in Modern/Flat look.
+// Call EndSectionCard() only when BeginSectionCard() returns true.
+bool BeginSectionCard(const char *id, const char *title = nullptr, const char *description = nullptr,
+                      ComponentOptions options = {});
+void EndSectionCard();
+
+struct ActionRowItem {
+    const char *label = "";
+    ActionVariant variant = ActionVariant::Secondary;
+    bool enabled = true;
+    const char *disabledReason = nullptr;
+};
+// Renders buttons split evenly across the available width. Returns the pressed button index, or -1.
+int ActionButtonRow(const char *id, std::span<const ActionRowItem> items, ComponentOptions options = {});
 } // namespace imkit

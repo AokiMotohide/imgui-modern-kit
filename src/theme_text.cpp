@@ -14,7 +14,7 @@
 namespace imkit {
 namespace {
 // OptFloat: an optional number; an unset value is not written, and a written one is read back as set.
-enum class Kind { Color, Float, OptFloat, Bool, Vec2, Scheme, Contrast, Density, Look, Easing, HeaderFill, LinkColor, LinkArrow };
+enum class Kind { Color, Float, OptFloat, Bool, Vec2, Scheme, Contrast, Density, Look, Surface, Easing, HeaderFill, LinkColor, LinkArrow };
 
 struct Field {
     std::string_view key;
@@ -33,6 +33,7 @@ const Field kFields[] = {
     IMKIT_FIELD("contrast", Contrast, contrast),
     IMKIT_FIELD("density", Density, density),
     IMKIT_FIELD("look", Look, look),
+    IMKIT_FIELD("surface.style", Surface, surfaceStyle),
     IMKIT_RANGED("layout.control-height", OptFloat, layout.controlHeight, 0, 400),
     IMKIT_RANGED("layout.spacing-x", OptFloat, layout.spacingX, 0, 100),
     IMKIT_RANGED("layout.spacing-y", OptFloat, layout.spacingY, 0, 100),
@@ -124,6 +125,7 @@ constexpr Name<ColorScheme> kSchemes[] = {{"light", ColorScheme::Light}, {"dark"
 constexpr Name<ContrastMode> kContrasts[] = {{"standard", ContrastMode::Standard}, {"high-contrast", ContrastMode::HighContrast}};
 constexpr Name<Density> kDensities[] = {{"compact", Density::Compact}, {"comfortable", Density::Comfortable}, {"touch", Density::Touch}};
 constexpr Name<ThemeLook> kLooks[] = {{"modern", ThemeLook::Modern}, {"classic", ThemeLook::Classic}};
+constexpr Name<SurfaceStyle> kSurfaceStyles[] = {{"flat", SurfaceStyle::Flat}, {"tactile", SurfaceStyle::Tactile}};
 constexpr Name<Easing> kEasings[] = {{"linear", Easing::Linear}, {"ease-out", Easing::EaseOut}, {"ease-in-out", Easing::EaseInOut},
                                      {"ease-in", Easing::EaseIn}, {"out-back", Easing::OutBack}, {"in-back", Easing::InBack},
                                      {"spring", Easing::Spring}};
@@ -231,6 +233,7 @@ bool ParseValue(const Field &field, Theme &theme, std::string_view value) {
     case Kind::Contrast: return ParseName(kContrasts, value, *static_cast<ContrastMode *>(target));
     case Kind::Density: return ParseName(kDensities, value, *static_cast<Density *>(target));
     case Kind::Look: return ParseName(kLooks, value, *static_cast<ThemeLook *>(target));
+    case Kind::Surface: return ParseName(kSurfaceStyles, value, *static_cast<SurfaceStyle *>(target));
     case Kind::Easing: return ParseName(kEasings, value, *static_cast<Easing *>(target));
     case Kind::HeaderFill: return ParseName(kHeaderFills, value, *static_cast<NodeHeaderFill *>(target));
     case Kind::LinkColor: return ParseName(kLinkColors, value, *static_cast<NodeLinkColor *>(target));
@@ -270,6 +273,7 @@ void AppendValue(std::string &out, const Field &field, Theme &theme) {
     case Kind::Contrast: out += NameOf(kContrasts, *static_cast<ContrastMode *>(source)); break;
     case Kind::Density: out += NameOf(kDensities, *static_cast<Density *>(source)); break;
     case Kind::Look: out += NameOf(kLooks, *static_cast<ThemeLook *>(source)); break;
+    case Kind::Surface: out += NameOf(kSurfaceStyles, *static_cast<SurfaceStyle *>(source)); break;
     case Kind::Easing: out += NameOf(kEasings, *static_cast<Easing *>(source)); break;
     case Kind::HeaderFill: out += NameOf(kHeaderFills, *static_cast<NodeHeaderFill *>(source)); break;
     case Kind::LinkColor: out += NameOf(kLinkColors, *static_cast<NodeLinkColor *>(source)); break;

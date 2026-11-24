@@ -111,14 +111,8 @@ bool DrawModernButton(Part part, const char *label, const ImVec2 &size, const Bu
 
     const ImVec2 drawMin{bb.Min.x, bb.Min.y + shiftY};
     const ImVec2 drawMax{bb.Max.x, bb.Max.y + shiftY};
-    DrawSmoothRect(draw, drawMin, drawMax, ImGui::GetColorU32(fill), radius);
-
-    if (!res.disabled && fill.w > .05f && (drawMax.x - drawMin.x) > radius * 1.4f + 4.f) {
-        const float inset = std::max(2.f, radius * .65f);
-        const float hiAlpha = .09f * fill.w * (1.f - res.active01 * .5f);
-        draw->AddLine({drawMin.x + inset, drawMin.y + 1.f}, {drawMax.x - inset, drawMin.y + 1.f},
-                      ImGui::GetColorU32(ImVec4(1.f, 1.f, 1.f, hiAlpha)), 1.f);
-    }
+    detail::DrawSurfaceRect(draw, drawMin, drawMax, fill, radius, detail::CurrentSurfaceStyle(),
+                            detail::CurrentIsDark(), !res.disabled && !res.held && pressDepth <= 0.f);
 
     if (res.disabled) {
         const float bw = std::max(1.f, borderW);
@@ -272,7 +266,11 @@ bool DrawModernSlider(const char *label, T *value, T minimum, T maximum, const c
             draw->AddCircleFilled(thumbCenter, thumbR + 4.f * std::max(active01, hover01 * .6f),
                                   ImGui::GetColorU32(detail::WithAlpha(markCol, ringAlpha)), 24);
         }
-        draw->AddCircleFilled(thumbCenter, thumbR, ImGui::GetColorU32(markCol), 24);
+        const ImVec4 thumbFill = disabled ? markCol : ImVec4(1.f, 1.f, 1.f, 1.f);
+        if (!disabled && detail::CurrentSurfaceStyle() == SurfaceStyle::Tactile)
+            draw->AddCircleFilled({thumbCenter.x, thumbCenter.y + 1.f}, thumbR + .5f, IM_COL32(0, 0, 0, 64), 24);
+        draw->AddCircleFilled(thumbCenter, thumbR, ImGui::GetColorU32(thumbFill), 24);
+        draw->AddCircle(thumbCenter, thumbR - .5f, ImGui::GetColorU32(markCol), 24, 1.5f);
     } else {
         const float cy = (trackAreaMin.y + trackAreaMax.y) * .5f;
         const ImVec2 tMin{trackAreaMin.x + thumbR, cy - trackH * .5f};
@@ -291,7 +289,11 @@ bool DrawModernSlider(const char *label, T *value, T minimum, T maximum, const c
             draw->AddCircleFilled(thumbCenter, thumbR + 4.f * std::max(active01, hover01 * .6f),
                                   ImGui::GetColorU32(detail::WithAlpha(markCol, ringAlpha)), 24);
         }
-        draw->AddCircleFilled(thumbCenter, thumbR, ImGui::GetColorU32(markCol), 24);
+        const ImVec4 thumbFill = disabled ? markCol : ImVec4(1.f, 1.f, 1.f, 1.f);
+        if (!disabled && detail::CurrentSurfaceStyle() == SurfaceStyle::Tactile)
+            draw->AddCircleFilled({thumbCenter.x, thumbCenter.y + 1.f}, thumbR + .5f, IM_COL32(0, 0, 0, 64), 24);
+        draw->AddCircleFilled(thumbCenter, thumbR, ImGui::GetColorU32(thumbFill), 24);
+        draw->AddCircle(thumbCenter, thumbR - .5f, ImGui::GetColorU32(markCol), 24, 1.5f);
     }
 
     if (focus01 > 0.f)
@@ -603,7 +605,8 @@ bool Checkbox(const char *label, bool *value, const CheckboxStyle &style) {
         offFill = detail::MixColor(offFill, r.Color(PartState::Hover, PartColor::Fill), res.hover01);
     const ImVec4 onFill = r.Color(res.disabled ? PartState::Disabled : PartState::On, PartColor::Fill);
     const ImVec4 boxFill = detail::MixColor(offFill, onFill, check01);
-    DrawSmoothRect(draw, boxMin, boxMax, ImGui::GetColorU32(boxFill), radius);
+    detail::DrawSurfaceRect(draw, boxMin, boxMax, boxFill, radius, detail::CurrentSurfaceStyle(),
+                            detail::CurrentIsDark(), false);
 
     if (res.disabled) {
         const float bw = std::max(1.f, borderW);

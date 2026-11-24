@@ -245,13 +245,19 @@ void ToastViewport(const char* id,std::span<const ToastView> items,ToastViewport
             }
             if(*Safe(v.detail)) {
                 const bool open=detailOpen(v);
-                char toggle[160];std::snprintf(toggle,sizeof(toggle),"%s %s##detail",open?"â¾":"â¸",DetailsLabel(o));
-                ImGui::PushStyleColor(ImGuiCol_Text,o.theme?o.theme->semantic.textSecondary:style.Colors[ImGuiCol_TextDisabled]);
-                const ImVec2 size=ImGui::CalcTextSize(toggle,nullptr,true);
-                const bool clicked=ImGui::InvisibleButton("detail",{std::max(1.f,size.x),ImGui::GetFontSize()});
-                draw->AddText(ImGui::GetItemRectMin(),ImGui::GetColorU32(ImGui::IsItemHovered()?ImGuiCol_Text:ImGuiCol_TextDisabled),
-                              toggle,toggle+std::strcspn(toggle,"#"));
-                ImGui::PopStyleColor();
+                const char* detailText=DetailsLabel(o);
+                const float fontSize=ImGui::GetFontSize();
+                const float chevBox=fontSize*.85f;
+                const ImVec2 labelSize=ImGui::CalcTextSize(detailText,nullptr,true);
+                const ImVec2 btnSize{std::max(1.f,chevBox+style.ItemInnerSpacing.x*.5f+labelSize.x),fontSize};
+                const bool clicked=ImGui::InvisibleButton("detail",btnSize);
+                const ImVec2 btnMin=ImGui::GetItemRectMin(),btnMax=ImGui::GetItemRectMax();
+                const ImVec4 col=ImGui::IsItemHovered()
+                    ?ImGui::GetStyleColorVec4(ImGuiCol_Text)
+                    :(o.theme?o.theme->semantic.textSecondary:style.Colors[ImGuiCol_TextDisabled]);
+                detail::DrawChevron(draw,{btnMin.x+chevBox*.45f,(btnMin.y+btnMax.y)*.5f},fontSize*.48f,
+                                    ImGui::GetColorU32(col),open?ImGuiDir_Down:ImGuiDir_Right,1.4f);
+                draw->AddText({btnMin.x+chevBox+style.ItemInnerSpacing.x*.5f,btnMin.y},ImGui::GetColorU32(col),detailText);
                 if(clicked) hostStorage->SetBool(detailKey(v.id),!open);
                 if(open) {
                     if(o.theme) PushTextRole(*o.theme,TextRole::Mono);

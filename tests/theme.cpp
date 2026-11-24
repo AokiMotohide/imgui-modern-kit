@@ -193,6 +193,7 @@ int TestBrandThemes() {
 int TestThemeText() {
     auto original = imkit::MakeBrandTheme(StickerPalette());
     original.stroke.border = 3.f;
+    original.surfaceStyle = imkit::SurfaceStyle::Tactile;
     original.elevation.hard = true;
     original.elevation.offset = {0.f, 3.f};
     original.semantic.shadow = Hex(0x4a2a18);
@@ -210,6 +211,7 @@ int TestThemeText() {
     if (imkit::SerializeTheme(restored) != text) // Reading what was written reproduces it exactly.
         return 41;
     if (restored.fonts.regular != fakeFont || restored.stroke.border != 3.f || !restored.elevation.hard ||
+        restored.surfaceStyle != imkit::SurfaceStyle::Tactile || !Contains(text, "surface.style = tactile") ||
         restored.elevation.offset.y != 3.f || restored.density != imkit::Density::Touch ||
         restored.radius.control != original.radius.control || restored.metrics.controlHeight != 44.f ||
         !Near(restored.semantic.canvas, original.semantic.canvas) || !Near(restored.colors.accent, original.semantic.accent))

@@ -137,6 +137,19 @@ void TestWidgetsAndPrimitivesSmoke() {
             Check(res.id != 0, "Interact allocates an item ID");
             const float anim = imkit::AnimatePart(res.id, 1.f);
             Check(anim >= 0.f && anim <= 1.f, "AnimatePart stays in 0..1");
+            if (imkit::BeginSectionCard("sec", "Section", "Description", imkit::ComponentOptions{&theme})) {
+                imkit::LabeledSliderFloat("Gamma", &sliderVal, 0.5f, 3.0f, "0.5 - 3.0");
+                imkit::ChoiceCardOptions cardOpts;
+                cardOpts.subtitle = "Direct capture";
+                cardOpts.trailingText = "1.80";
+                cardOpts.dotColor = {0.3f, 0.7f, 1.0f, 1.0f};
+                cardOpts.selected = true;
+                cardOpts.components = imkit::ComponentOptions{&theme};
+                imkit::ChoiceCard("pj0", "PJ0", cardOpts);
+                const imkit::ActionRowItem rowItems[] = {{"Back"}, {"Next", imkit::ActionVariant::Primary}};
+                imkit::ActionButtonRow("row", rowItems, imkit::ComponentOptions{&theme});
+                imkit::EndSectionCard();
+            }
         }
         imkit::End();
         auto mutableTheme = theme;

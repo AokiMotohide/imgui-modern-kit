@@ -20,6 +20,9 @@ enum class ThemePreset : std::uint8_t {
 // Modern is the default for every preset: thin scrollbars, faint dividers, rounded floating windows and popups,
 // calm tables and the redrawn ImKit parts. Classic keeps the Dear ImGui shapes for hosts that want the previous look.
 enum class ThemeLook : std::uint8_t { Modern, Classic };
+// Surface finish for Modern look. Flat is the default: clean flat fills and subtle hairlines.
+// Tactile adds subtle vertical gradients, top specular highlights and layered shadows.
+enum class SurfaceStyle : std::uint8_t { Flat, Tactile };
 struct ThemePresetInfo {
     ThemePreset preset;
     std::string_view id;
@@ -44,7 +47,7 @@ inline constexpr float ThemeScaleMinimum = 0.50f;
 inline constexpr float ThemeScaleMaximum = 2.50f;
 // Four steps a reader can tell apart at a glance: captions, body text, headings one step above the body, and titles.
 struct Typography {
-    float caption=12, body=14, label=14, heading=15, title=22, monospace=13;
+    float caption=12, body=14, label=14, heading=16, title=22, monospace=13;
 };
 struct SpacingTokens { std::array<float,8> steps{2,4,6,8,12,16,24,32}; };
 // subtle: tags and small marks, control: frames and buttons, overlay: cards, popups and dialogs.
@@ -185,6 +188,7 @@ struct Theme {
     EditorPalette editor{};
     NodeTokens node{};
     ThemeLook look = ThemeLook::Modern;
+    SurfaceStyle surfaceStyle = SurfaceStyle::Flat;
     // Per part and state values (L1, part_style.h): `button.height`, `checkbox.on.fill`, `slider.thumb.size`.
     // Unset entries follow the tokens above. Lengths are design pixels.
     PartOverrides partOverrides{};

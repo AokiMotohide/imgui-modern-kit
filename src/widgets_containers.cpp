@@ -304,9 +304,7 @@ bool CollapsingHeaderImpl(const char *label, bool *visible, ImGuiTreeNodeFlags f
             const float textX = min.x + padX * .5f + chevSize + r.Var(PartVar::Gap) + 4.f;
             const float textY = centerY - fontSize * .5f;
             const ImU32 textCol = ColorU32(r, res.disabled ? PartState::Disabled : PartState::Rest, PartColor::Text);
-            // Draw bold-weighted heading text when no dedicated display font is pushed.
             draw->AddText(ImGui::GetFont(), fontSize, {textX, textY}, textCol, label, textEnd);
-            draw->AddText(ImGui::GetFont(), fontSize, {textX + .45f, textY}, textCol, label, textEnd);
         }
 
         if (visible && closeRes.visible) {
@@ -548,7 +546,8 @@ bool BeginCombo(const char *label, const char *preview, ImGuiComboFlags flags, c
                                   : PartState::Rest;
     const float radius = r.Var(PartVar::Radius);
     const float borderW = r.Var(PartVar::BorderWidth);
-    DrawSmoothRect(draw, frameMin, frameMax, ColorU32(r, st, PartColor::Fill), radius);
+    detail::DrawSurfaceRect(draw, frameMin, frameMax, r.Color(st, PartColor::Fill), radius,
+                            detail::CurrentSurfaceStyle(), detail::CurrentIsDark(), false);
     DrawBoxBorder(draw, frameMin, frameMax, radius, ColorU32(r, st, PartColor::Border), borderW, disabled);
     if (focused)
         DrawFocusRing(draw, frameMin, frameMax, radius, 1.f, r.Var(PartVar::FocusRing));

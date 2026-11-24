@@ -4,6 +4,7 @@
 #include <imkit/widgets.h>
 #include "component_internal.h"
 #include "draw_internal.h"
+#include "part_style_internal.h"
 #include <algorithm>
 #include <array>
 #include <cctype>
@@ -166,8 +167,11 @@ ImVec2 PaintButtonFrame(const ButtonPalette &p, ActionVariant variant, const Com
     frame.disabled = (ImGui::GetItemFlags() & ImGuiItemFlags_Disabled) != 0;
     frame.hover = hover;
     if (!detail::TrySkin(t, frame)) {
-        detail::AddSmoothRectFilled(draw, minimum, maximum, ImGui::GetColorU32(active ? p.active : hovered ? p.hovered : p.fill),
-                                    rounding);
+        const SurfaceStyle surfaceStyle = t ? t->surfaceStyle : detail::CurrentSurfaceStyle();
+        const bool isDark = t ? (t->scheme == ColorScheme::Dark) : detail::CurrentIsDark();
+        const bool elevated = !frame.disabled && !active && p.filled && !(t && t->elevation.hard);
+        detail::DrawSurfaceRect(draw, minimum, maximum, active ? p.active : hovered ? p.hovered : p.fill, rounding,
+                                surfaceStyle, isDark, elevated);
         if (frame.disabled && t && t->stroke.dashedDisabled) {
             const float width = std::max(1.f, p.borderSize > 0 ? p.borderSize : style.FrameBorderSize);
             detail::DrawDashedRect(draw, minimum, maximum, rounding, ImGui::GetColorU32(p.border), width, std::max(3.f, width * 2.5f));
@@ -176,8 +180,7 @@ ImVec2 PaintButtonFrame(const ButtonPalette &p, ActionVariant variant, const Com
         }
     }
     if (focused && ImGui::GetIO().NavVisible)
-        detail::AddSmoothRect(draw, {minimum.x - 2, minimum.y - 2}, {maximum.x + 2, maximum.y + 2}, ImGui::GetColorU32(p.focus),
-                              rounding + 2.f, t ? t->stroke.focus : 2.f);
+        detail::DrawFocusGlow(draw, minimum, maximum, rounding, 1.f, p.focus, t ? t->stroke.focus : 2.f);
     return shift;
 }
 // Draws the label of a button whose frame ImKit painted, placed and clipped the way ImGui::Button would.
@@ -422,14 +425,19 @@ bool Toggle(const char *label, bool *value, ComponentOptions options) {
     const float inset = detail::IsOutlined(style) ? style.FrameBorderSize * .5f : 0.f;
     const float thumbRadius = std::max(2.f, trackHeight * .5f - 2.5f - inset);
     d->AddRectFilled({min.x, y}, {min.x + trackWidth, y + trackHeight}, ImGui::GetColorU32(fill), trackHeight * .5f);
-    detail::DrawOutline(d, {min.x, y}, {min.x + trackWidth, y + trackHeight}, trackHeight * .5f);
+    if (detail::IsOutlined(style))
+        detail::DrawOutline(d, {min.x, y}, {min.x + trackWidth, y + trackHeight}, trackHeight * .5f);
+    else if (position < .99f)
+        d->AddRect({min.x, y}, {min.x + trackWidth, y + trackHeight},
+                   ImGui::GetColorU32(detail::WithAlpha(style.Colors[ImGuiCol_Text], .16f * (1.f - position))),
+                   trackHeight * .5f, ImDrawFlags_None, 1.f);
     // The thumb overshoots slightly mid-travel, then settles.
     const float travel = position + std::sin(position * 3.14159265f) * .06f;
     const float left = min.x + trackHeight * .5f, right = min.x + trackWidth - trackHeight * .5f;
     d->AddCircleFilled({left + (right - left) * travel, y + trackHeight * .5f}, thumbRadius, ImGui::GetColorU32(thumb));
-    if (ImGui::IsItemFocused())
-        d->AddRect({min.x - 2, y - 2}, {min.x + trackWidth + 2, y + trackHeight + 2}, ImGui::GetColorU32(ImGuiCol_NavCursor),
-                   trackHeight * .5f + 2, ImDrawFlags_None, 1.5f);
+    if (ImGui::IsItemFocused() && ImGui::GetIO().NavVisible)
+        detail::DrawFocusGlow(d, {min.x, y}, {min.x + trackWidth, y + trackHeight}, trackHeight * .5f, 1.f,
+                              style.Colors[ImGuiCol_NavCursor], 1.5f);
     return changed;
 }
 bool IndeterminateCheckbox(const char *label, CheckState *value) {
@@ -491,8 +499,9 @@ bool Segmented(const char *id, int *selected, std::span<const char *const> label
     // Only the chosen segment is filled, in the accent, so the choice reads at a glance without relying on a shadow.
     const ImVec4 thumb = options.theme ? options.theme->colors.accent : style.Colors[ImGuiCol_CheckMark];
     const ImVec4 onThumb = options.theme ? options.theme->colors.onAccent : detail::InkOn(thumb);
-    detail::AddSmoothRectFilled(draw, {thumbMin.x, thumbMin.y + 1}, {thumbMax.x, thumbMax.y + 1}, IM_COL32(0, 0, 0, 26), rounding);
-    detail::AddSmoothRectFilled(draw, thumbMin, thumbMax, ImGui::GetColorU32(thumb), rounding);
+    const SurfaceStyle surfaceStyle = options.theme ? options.theme->surfaceStyle : detail::CurrentSurfaceStyle();
+    const bool isDark = options.theme ? (options.theme->scheme == ColorScheme::Dark) : detail::CurrentIsDark();
+    detail::DrawSurfaceRect(draw, thumbMin, thumbMax, thumb, rounding, surfaceStyle, isDark, true);
     ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0, 0, 0, 0));
     ImGui::PushStyleColor(ImGuiCol_HeaderHovered, detail::WithAlpha(style.Colors[ImGuiCol_Text], .06f));
     ImGui::PushStyleColor(ImGuiCol_HeaderActive, detail::WithAlpha(style.Colors[ImGuiCol_Text], .10f));
@@ -559,7 +568,7 @@ bool DragFloatWithUnit(const char *label, float *value, const char *unit, float 
                        float maximum, const char *format, ImGuiSliderFlags flags) {
     ImGui::PushID(label);
     ImGui::BeginGroup();
-    bool changed = ImGui::DragFloat("##value", value, speed, minimum, maximum, format, flags);
+    bool changed = imkit::DragFloat("##value", value, speed, minimum, maximum, format, flags);
     ImGui::SameLine();
     ImGui::TextDisabled("%s", unit);
     ImGui::SameLine();
@@ -593,7 +602,7 @@ bool InputVector3WithUnit(const char *label, float *value, const char *unit, con
         ImGui::TextColored(ImGui::GetStyleColorVec4(colors[i]), "%s", axes[i]);
         ImGui::SameLine(0, spacing * .5f);
         ImGui::SetNextItemWidth(std::max(45.f, width - ImGui::CalcTextSize(axes[i]).x - spacing * .5f));
-        changed |= ImGui::InputFloat("##value", value + i, 0, 0, format);
+        changed |= imkit::InputFloat("##value", value + i, 0, 0, format);
         ImGui::EndGroup();
         ImGui::PopID();
     }
@@ -627,7 +636,7 @@ bool DragVector3WithUnit(const char *label, float *value, const char *unit, floa
         ImGui::TextColored(ImGui::GetStyleColorVec4(colors[i]), "%s", axes[i]);
         ImGui::SameLine(0, spacing * .5f);
         ImGui::SetNextItemWidth(std::max(45.f, width - ImGui::CalcTextSize(axes[i]).x - spacing * .5f));
-        changed |= ImGui::DragFloat("##value", value + i, speed, minimum, maximum, format, flags);
+        changed |= imkit::DragFloat("##value", value + i, speed, minimum, maximum, format, flags);
         ImGui::EndGroup();
         ImGui::PopID();
     }
@@ -706,7 +715,7 @@ bool AxisVector3Field(const char *id, const char *label, float *value, const cha
         ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, Mix(base, axes[axis], .14f));
         ImGui::PushStyleColor(ImGuiCol_FrameBgActive, Mix(base, axes[axis], .19f));
         ImGui::PushStyleColor(ImGuiCol_Border, Mix(base, axes[axis], .42f));
-        changed |= ImGui::DragFloat("##value", value + axis, speed, minimum, maximum, format, flags);
+        changed |= imkit::DragFloat("##value", value + axis, speed, minimum, maximum, format, flags);
         if (interaction) {
             interaction->activated |= ImGui::IsItemActivated();
             interaction->committed |= ImGui::IsItemDeactivatedAfterEdit();
@@ -759,13 +768,13 @@ bool SliderFloatWithInput(const char *label, float *value, float minimum, float 
     };
     ImGui::SetNextItemWidth(stacked ? total : std::max(40.f, total - inputWidth - gap));
     float v = *value;
-    bool edited = ImGui::SliderFloat("##slider", &v, minimum, maximum, format, ImGuiSliderFlags_AlwaysClamp);
+    bool edited = imkit::SliderFloat("##slider", &v, minimum, maximum, format, ImGuiSliderFlags_AlwaysClamp);
     if (edited) *value = normalize(v);
     track(edited);
     if (!stacked) ImGui::SameLine(0.f, gap);
     ImGui::SetNextItemWidth(stacked ? total : inputWidth);
     v = *value;
-    edited = ImGui::InputFloat("##input", &v, 0.f, 0.f, format, ImGuiInputTextFlags_AutoSelectAll);
+    edited = imkit::InputFloat("##input", &v, 0.f, 0.f, format, ImGuiInputTextFlags_AutoSelectAll);
     if (edited) *value = normalize(v);
     track(edited);
     if (numeric) ImGui::PopFont();
@@ -820,7 +829,11 @@ ImVec2 DrawStatusBadge(ImDrawList *d, ImVec2 p, const char *text, StatusKind kin
     frame.status = kind;
     if (!detail::TrySkin(theme, frame)) {
         d->AddRectFilled(p, {p.x + size.x, p.y + size.y}, ImGui::GetColorU32(fill), size.y * .5f);
-        detail::DrawOutline(d, p, {p.x + size.x, p.y + size.y}, size.y * .5f);
+        if (detail::IsOutlined(ImGui::GetStyle()))
+            detail::DrawOutline(d, p, {p.x + size.x, p.y + size.y}, size.y * .5f);
+        else
+            d->AddRect(p, {p.x + size.x, p.y + size.y}, ImGui::GetColorU32(detail::WithAlpha(color, .28f)),
+                       size.y * .5f, ImDrawFlags_None, 1.f);
     }
     // Marker shape and text carry meaning in addition to color.
     const float u = font * .3f;
@@ -1005,7 +1018,7 @@ void DrawShadow(const Theme &t, ImDrawList *draw, ImVec2 minimum, ImVec2 maximum
                             ImGui::GetColorU32(color), rounding);
     } else {
         const float peak = (t.scheme == ColorScheme::Dark ? .34f : .16f) * alpha;
-        detail::DrawSoftShadow(draw, minimum, maximum, rounding, extent, peak, hasColor ? t.semantic.shadow : ImVec4(0, 0, 0, 1));
+        detail::DrawLayeredShadow(draw, minimum, maximum, rounding, extent, peak, hasColor ? t.semantic.shadow : ImVec4(0, 0, 0, 1));
     }
     draw->PopClipRect();
 }

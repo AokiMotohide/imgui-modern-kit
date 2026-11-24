@@ -285,6 +285,10 @@ ImVec4 DefaultColor(const PartContext &c, Part part, PartState state, PartColor 
             return focus;
         if (modern && part == Part::Checkbox && state == PartState::On)
             return accent;
+        if (modern && c.theme.applied && !c.theme.highContrast && !detail::IsOutlined(ImGui::GetStyle()) &&
+            state == PartState::Rest) {
+            return detail::WithAlpha(StyleColor(ImGuiCol_Text), c.theme.scheme == ColorScheme::Dark ? .12f : .14f);
+        }
         return StyleColor(map.border);
     case PartColor::Fill:
         switch (state) {
@@ -318,9 +322,18 @@ ImVec4 DeriveState(PartState state, PartColor color, ImVec4 rest) {
     if (color != PartColor::Fill)
         return rest;
     const ImVec4 text = ImGui::GetStyleColorVec4(ImGuiCol_Text);
+    if (rest.w < .05f) {
+        switch (state) {
+        case PartState::Hover: return ImVec4(text.x, text.y, text.z, .08f);
+        case PartState::Pressed: return ImVec4(text.x, text.y, text.z, .15f);
+        default: return rest;
+        }
+    }
+    const bool dark = detail::CurrentIsDark();
+    const detail::Oklch o = detail::ToOklch(rest);
     switch (state) {
-    case PartState::Hover: return detail::MixColor(rest, ImVec4(text.x, text.y, text.z, rest.w), .08f);
-    case PartState::Pressed: return detail::MixColor(rest, ImVec4(text.x, text.y, text.z, rest.w), .16f);
+    case PartState::Hover: return detail::FromOklch({o.L + (dark ? .035f : -.025f), o.C, o.h}, rest.w);
+    case PartState::Pressed: return detail::FromOklch({o.L + (dark ? .07f : -.055f), o.C, o.h}, rest.w);
     default: return rest;
     }
 }
@@ -730,6 +743,9 @@ void SetPartTheme(const Theme &theme, float scale) {
     auto &state = Ctx().theme;
     state.applied = true;
     state.look = theme.look;
+    state.surfaceStyle = theme.surfaceStyle;
+    state.scheme = theme.scheme;
+    state.highContrast = theme.contrast == ContrastMode::HighContrast;
     state.scale = scale;
     state.buttonStroke = theme.stroke.button;
     state.focusWidth = theme.stroke.focus;
@@ -879,21 +895,17 @@ void DrawSoftShadow(ImDrawList *draw, ImVec2 min, ImVec2 max, float radius, floa
     detail::DrawSoftShadow(draw, min, max, radius, extent, alpha, color);
 }
 void DrawFocusRing(ImDrawList *draw, ImVec2 min, ImVec2 max, float radius, float amount, float width, float gap) {
+    (void)gap;
     amount = std::clamp(amount, 0.f, 1.f);
     if (amount <= 0.f)
         return;
     const auto &c = Ctx();
     if (width < 0.f)
         width = (c.theme.applied ? c.theme.focusWidth : 2.f) * Scale(c);
-    if (gap < 0.f)
-        gap = std::max(1.f, width);
     if (width <= 0.f)
         return;
-    ImVec4 color = c.theme.applied ? c.theme.focus : ImGui::GetStyleColorVec4(ImGuiCol_NavCursor);
-    color.w *= amount;
-    const float out = gap + width;
-    detail::AddSmoothRect(draw, {min.x - out, min.y - out}, {max.x + out, max.y + out}, ImGui::GetColorU32(color),
-                          radius + out, width);
+    const ImVec4 color = c.theme.applied ? c.theme.focus : ImGui::GetStyleColorVec4(ImGuiCol_NavCursor);
+    detail::DrawFocusGlow(draw, min, max, radius, amount, color, width);
 }
 void DrawChevron(ImDrawList *draw, ImVec2 center, float size, ImU32 color, ImGuiDir direction, float thickness) {
     detail::DrawChevron(draw, center, size, color, direction, thickness);

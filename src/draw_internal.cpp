@@ -196,6 +196,78 @@ void AddSmoothRect(ImDrawList* draw, ImVec2 a, ImVec2 b, ImU32 color, float radi
     draw->PathStroke(color, ImDrawFlags_Closed, thickness);
 }
 
+void AddSmoothRectGradient(ImDrawList* draw, ImVec2 a, ImVec2 b, ImU32 colTop, ImU32 colBottom, float radius) {
+    if (((colTop | colBottom) & IM_COL32_A_MASK) == 0 || b.x <= a.x || b.y <= a.y)
+        return;
+    const int vtxStart = draw->VtxBuffer.Size;
+    AddSmoothRectFilled(draw, a, b, colTop, radius);
+    const float span = b.y - a.y;
+    if (span <= 0.f || colTop == colBottom)
+        return;
+    const ImVec4 top = ImGui::ColorConvertU32ToFloat4(colTop);
+    const ImVec4 bot = ImGui::ColorConvertU32ToFloat4(colBottom);
+    for (int i = vtxStart; i < draw->VtxBuffer.Size; ++i) {
+        ImDrawVert& v = draw->VtxBuffer[i];
+        const float t = std::clamp((v.pos.y - a.y) / span, 0.f, 1.f);
+        v.col = ImGui::ColorConvertFloat4ToU32(MixColor(top, bot, t));
+    }
+}
+
+void AddTopSpecular(ImDrawList* draw, ImVec2 a, ImVec2 b, float radius, float alpha) {
+    if (alpha <= 0.005f || (b.x - a.x) <= radius * 1.4f + 4.f)
+        return;
+    const float inset = std::max(2.f, radius * .65f);
+    draw->AddLine({a.x + inset, a.y + 1.f}, {b.x - inset, a.y + 1.f},
+                  ImGui::ColorConvertFloat4ToU32({1.f, 1.f, 1.f, std::clamp(alpha, 0.f, 1.f)}), 1.f);
+}
+
+void DrawLayeredShadow(ImDrawList* draw, ImVec2 minimum, ImVec2 maximum, float rounding, float extent,
+                       float peakAlpha, ImVec4 color) {
+    if (extent <= 0.f || peakAlpha <= 0.f)
+        return;
+    DrawSoftShadow(draw, {minimum.x, minimum.y + 1.f}, {maximum.x, maximum.y + 1.5f}, rounding,
+                   std::min(extent, 3.5f), peakAlpha * .75f, color);
+    if (extent > 3.5f) {
+        const float dy = std::min(extent * .28f, 6.f);
+        DrawSoftShadow(draw, {minimum.x, minimum.y + dy}, {maximum.x, maximum.y + dy}, rounding, extent,
+                       peakAlpha * .65f, color);
+    }
+}
+
+void DrawSurfaceRect(ImDrawList* draw, ImVec2 a, ImVec2 b, ImVec4 fill, float radius, SurfaceStyle style, bool isDark,
+                     bool elevated) {
+    if (fill.w <= 0.001f || b.x <= a.x || b.y <= a.y)
+        return;
+    if (style == SurfaceStyle::Flat) {
+        AddSmoothRectFilled(draw, a, b, ImGui::GetColorU32(fill), radius);
+        return;
+    }
+    if (elevated && fill.w > .2f) {
+        DrawSoftShadow(draw, {a.x, a.y + 1.f}, {b.x, b.y + 1.5f}, radius, 2.5f, (isDark ? .26f : .10f) * fill.w);
+    }
+    const Oklch o = ToOklch(fill);
+    const ImVec4 top = FromOklch({o.L + (isDark ? .025f : .018f), o.C, o.h}, fill.w);
+    const ImVec4 bot = FromOklch({o.L - (isDark ? .018f : .022f), o.C, o.h}, fill.w);
+    AddSmoothRectGradient(draw, a, b, ImGui::GetColorU32(top), ImGui::GetColorU32(bot), radius);
+    AddTopSpecular(draw, a, b, radius, (isDark ? .10f : .65f) * fill.w);
+}
+
+void DrawFocusGlow(ImDrawList* draw, ImVec2 a, ImVec2 b, float radius, float amount, ImVec4 accent, float width) {
+    amount = std::clamp(amount, 0.f, 1.f);
+    if (amount <= 0.f || width <= 0.f)
+        return;
+    ImVec4 halo = accent;
+    halo.w *= amount * .22f;
+    const float hOut = width + 2.f;
+    AddSmoothRect(draw, {a.x - hOut, a.y - hOut}, {b.x + hOut, b.y + hOut}, ImGui::GetColorU32(halo),
+                  radius + hOut, width * 1.8f);
+    ImVec4 ring = accent;
+    ring.w *= amount;
+    const float rOut = std::max(1.f, width * .75f);
+    AddSmoothRect(draw, {a.x - rOut, a.y - rOut}, {b.x + rOut, b.y + rOut}, ImGui::GetColorU32(ring),
+                  radius + rOut, std::max(1.25f, width * .85f));
+}
+
 void DrawDashedRect(ImDrawList* draw, ImVec2 a, ImVec2 b, float radius, ImU32 color, float thickness, float dash) {
     PathSmoothRect(draw, a, b, radius);
     ImVector<ImVec2> path;

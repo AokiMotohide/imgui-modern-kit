@@ -4,6 +4,7 @@
 #include <imkit/widgets.h>
 #include "progress_internal.h"
 #include "draw_internal.h"
+#include "part_style_internal.h"
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
@@ -77,8 +78,12 @@ bool LabeledButton(const char* label,const char* description,ImVec2 size,bool se
     const auto pad=style.FramePadding;
     auto* d=ImGui::GetWindowDrawList();
     const float rounding=style.FrameRounding;
-    detail::AddSmoothRectFilled(d,a,b,ImGui::GetColorU32(ImGui::IsItemActive()?held:ImGui::IsItemHovered()?hover:rest),rounding);
+    const SurfaceStyle surfaceStyle=o.theme?o.theme->surfaceStyle:detail::CurrentSurfaceStyle();
+    const bool isDark=o.theme?(o.theme->scheme==ColorScheme::Dark):detail::CurrentIsDark();
+    detail::DrawSurfaceRect(d,a,b,ImGui::IsItemActive()?held:ImGui::IsItemHovered()?hover:rest,rounding,surfaceStyle,isDark,!ImGui::IsItemActive());
     if(borderSize>0.f) detail::AddSmoothRect(d,a,b,ImGui::GetColorU32(border),rounding,borderSize);
+    if(ImGui::IsItemFocused()&&ImGui::GetIO().NavVisible)
+        detail::DrawFocusGlow(d,a,b,rounding,1.f,ImGui::GetStyleColorVec4(ImGuiCol_NavCursor),o.theme?o.theme->stroke.focus:2.f);
     d->PushClipRect({a.x+pad.x,a.y},{std::max(a.x+pad.x,b.x-pad.x),b.y},true);
     std::string_view text=Safe(label);if(auto suffix=text.find("##");suffix!=std::string_view::npos)text=text.substr(0,suffix);
     float room=std::max(0.f,b.x-a.x-pad.x*2);

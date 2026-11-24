@@ -1,4 +1,5 @@
 #include <imkit/decor.h>
+#include "draw_internal.h"
 #include <algorithm>
 #include <climits>
 #include <cmath>
@@ -214,8 +215,8 @@ void EndResultCard() {
     ImVec4 fill = accent, border = accent;
     fill.w = .12f;
     border.w = .55f;
-    draw->AddRectFilled(start, end, ImGui::GetColorU32(fill), style.FrameRounding);
-    draw->AddRect(start, end, ImGui::GetColorU32(border), style.FrameRounding, 0, std::max(1.f, style.FrameBorderSize));
+    detail::AddSmoothRectFilled(draw, start, end, ImGui::GetColorU32(fill), style.FrameRounding);
+    detail::AddSmoothRect(draw, start, end, ImGui::GetColorU32(border), style.FrameRounding, std::max(1.f, style.FrameBorderSize));
     draw->ChannelsMerge();
     ImGui::SetCursorScreenPos(start);
     ImGui::Dummy({width, bottom - start.y});

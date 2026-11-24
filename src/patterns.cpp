@@ -1,8 +1,10 @@
 // This file implements or exercises the deprecated spellings on purpose.
 #define IMKIT_DEPRECATED(message)
 #include <imkit/patterns.h>
+#include <imkit/widgets.h>
 #include "progress_internal.h"
 #include "draw_internal.h"
+#include "part_style_internal.h"
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -61,6 +63,7 @@ StableId CommandPalette(const char* id,CommandPaletteState& s,std::span<const Co
     ImGui::SetNextWindowSizeConstraints({1,1},{std::max(1.f,ImGui::GetMainViewport()->WorkSize.x),std::max(1.f,ImGui::GetMainViewport()->WorkSize.y)});
     StableId result=0;
     if(ImGui::BeginPopupModal(id,&s.open,ImGuiWindowFlags_AlwaysAutoResize)) {
+        if(o.theme) OverlayDecoration(*o.theme,o.animation);
         if(ImGui::IsWindowAppearing()) ImGui::SetKeyboardFocusHere();
         if(SearchField("search",s.search,sizeof(s.search),o)) s.focused=0;
         int count=0; for(auto& c:commands) if(Match(c.label,s.search)) ++count;
@@ -71,7 +74,21 @@ StableId CommandPalette(const char* id,CommandPaletteState& s,std::span<const Co
         for(auto& c:commands) if(Match(c.label,s.search)) {
             ImGui::PushID(static_cast<int>(c.id>>32)); ImGui::PushID(static_cast<int>(c.id));
             ImGui::BeginDisabled(c.disabled);
-            bool hit=ImGui::Selectable(c.label,index==s.focused);
+            bool hit=imkit::Selectable(c.label,index==s.focused);
+            if(c.shortcut&&*c.shortcut) {
+                const ImVec2 itemMin=ImGui::GetItemRectMin(),itemMax=ImGui::GetItemRectMax();
+                const ImVec2 kbdSize=ImGui::CalcTextSize(c.shortcut);
+                const float padX=6.f,padY=2.f;
+                const float pillW=kbdSize.x+padX*2.f,pillH=kbdSize.y+padY*2.f;
+                const float px=itemMax.x-pillW-6.f,py=itemMin.y+(itemMax.y-itemMin.y-pillH)*.5f;
+                if(px>itemMin.x+40.f) {
+                    auto* draw=ImGui::GetWindowDrawList();
+                    const ImVec4 txt=ImGui::GetStyleColorVec4(ImGuiCol_Text);
+                    detail::AddSmoothRectFilled(draw,{px,py},{px+pillW,py+pillH},ImGui::GetColorU32(detail::WithAlpha(txt,.07f)),4.f);
+                    detail::AddSmoothRect(draw,{px,py},{px+pillW,py+pillH},ImGui::GetColorU32(detail::WithAlpha(txt,.16f)),4.f,1.f);
+                    draw->AddText({px+padX,py+padY},ImGui::GetColorU32(ImGuiCol_TextDisabled),c.shortcut);
+                }
+            }
             if(o.accessibility) {
                 accessibility::SemanticNode node;node.id=ImGui::GetItemID();node.parent=o.parent;node.name=c.label;
                 node.description=c.disabled?c.disabledReason:c.shortcut;node.role=accessibility::SemanticRole::MenuItem;

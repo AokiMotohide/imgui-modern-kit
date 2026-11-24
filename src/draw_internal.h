@@ -1,10 +1,12 @@
 #pragma once
 #include <imgui.h>
+#include <cstdint>
 #include <initializer_list>
 
 namespace imkit {
 struct PartMetrics;
 enum class OverlayAnchor;
+enum class SurfaceStyle : std::uint8_t;
 } // namespace imkit
 
 // Small drawing helpers shared by the component implementations. Everything is
@@ -72,6 +74,13 @@ float SmoothCornerReach(ImVec2 a, ImVec2 b, float radius);
 void PathSmoothRect(ImDrawList* draw, ImVec2 a, ImVec2 b, float radius);
 void AddSmoothRectFilled(ImDrawList* draw, ImVec2 a, ImVec2 b, ImU32 color, float radius);
 void AddSmoothRect(ImDrawList* draw, ImVec2 a, ImVec2 b, ImU32 color, float radius, float thickness);
+void AddSmoothRectGradient(ImDrawList* draw, ImVec2 a, ImVec2 b, ImU32 colTop, ImU32 colBottom, float radius);
+void AddTopSpecular(ImDrawList* draw, ImVec2 a, ImVec2 b, float radius, float alpha);
+void DrawLayeredShadow(ImDrawList* draw, ImVec2 minimum, ImVec2 maximum, float rounding, float extent,
+                       float peakAlpha, ImVec4 color = {0, 0, 0, 1});
+void DrawSurfaceRect(ImDrawList* draw, ImVec2 a, ImVec2 b, ImVec4 fill, float radius, SurfaceStyle style, bool isDark,
+                     bool elevated = false);
+void DrawFocusGlow(ImDrawList* draw, ImVec2 a, ImVec2 b, float radius, float amount, ImVec4 accent, float width);
 // Dashes along a smooth-cornered rectangle, the dash phase running continuously around the shape.
 void DrawDashedRect(ImDrawList* draw, ImVec2 a, ImVec2 b, float radius, ImU32 color, float thickness, float dash);
 // A dotted line: round dots `gap` apart, for links that may be skipped.

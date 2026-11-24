@@ -65,6 +65,7 @@ StableId AppBar(const char* id,const AppBarView& view,ToolbarState& state,Compon
     const auto& style=ImGui::GetStyle();
     const float height=ImGui::GetFrameHeight()+style.WindowPadding.y*2.f;
     StableId action=0;
+    if(options.theme)ImGui::PushStyleColor(ImGuiCol_ChildBg,SurfaceZoneColor(*options.theme,SurfaceZone::Chrome));
     if(ImGui::BeginChild("app-bar",{0,height},ImGuiChildFlags_None,ImGuiWindowFlags_NoScrollbar)) {
         if(view.product&&*view.product)ImGui::TextUnformatted(view.product);
         if(view.document&&*view.document){ImGui::SameLine();ImGui::TextDisabled("/");ImGui::SameLine();ImGui::TextUnformatted(view.document);}
@@ -77,6 +78,7 @@ StableId AppBar(const char* id,const AppBarView& view,ToolbarState& state,Compon
         }
     }
     ImGui::EndChild();
+    if(options.theme)ImGui::PopStyleColor();
     ImGui::Separator();
     ImGui::PopID();
     return action;
@@ -85,8 +87,14 @@ StableId AppBar(const char* id,const AppBarView& view,ToolbarState& state,Compon
 StableId WorkspaceHeader(const char* id,const WorkspaceHeaderView& view,ToolbarState& state,ComponentOptions options) {
     ImGui::PushID(id);
     StableId action=0;
-    if(view.eyebrow&&*view.eyebrow)ImGui::TextDisabled("%s",view.eyebrow);
+    if(view.eyebrow&&*view.eyebrow){
+        if(options.theme)PushTextRole(*options.theme,TextRole::Caption);
+        ImGui::TextDisabled("%s",view.eyebrow);
+        if(options.theme)PopTextRole();
+    }
+    if(options.theme)PushTextRole(*options.theme,TextRole::Heading);
     ImGui::TextUnformatted(view.title&&*view.title?view.title:"Workspace");
+    if(options.theme)PopTextRole();
     if(view.status&&*view.status){ImGui::SameLine();DrawStatus(view.status,view.statusKind,options.theme);}
     if(!view.actions.empty()){
         ImGui::SameLine();
@@ -215,7 +223,7 @@ bool ThemePicker(const char* id,ThemePreset* selected,ThemePickerState& state,Co
             if(!Contains(presets[i].displayName.data(),state.search)&&!Contains(presets[i].id.data(),state.search))continue;
             const bool active=i==current;
             ImGui::PushID(static_cast<int>(i));
-            if(ImGui::Selectable(presets[i].displayName.data(),active)){
+            if(imkit::Selectable(presets[i].displayName.data(),active)){
                 *selected=presets[i].preset;state.focused=static_cast<int>(i);changed=!active;
             }
             if(active)ImGui::SetItemDefaultFocus();

@@ -78,7 +78,7 @@ target_compile_options(imkit_motion PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
 target_compile_options(imkit_motion PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/pathmap:${CMAKE_CURRENT_SOURCE_DIR}=imkit>")
 target_compile_options(imkit_motion PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/experimental:deterministic>)
 
-add_library(imkit STATIC src/part_style.cpp src/widgets.cpp src/widgets_controls.cpp src/widgets_containers.cpp src/theme.cpp src/theme_text.cpp src/decor.cpp src/motion.cpp src/components.cpp src/component_internal.cpp src/draw_internal.cpp src/icons.cpp src/icons_data.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp src/toast.cpp src/charts.cpp src/range_slider.cpp src/transfer_curve.cpp src/ptz.cpp src/shell.cpp src/window_frame.cpp)
+add_library(imkit STATIC src/part_style.cpp src/widgets.cpp src/widgets_controls.cpp src/widgets_containers.cpp src/theme.cpp src/theme_text.cpp src/decor.cpp src/motion.cpp src/components.cpp src/components_layout.cpp src/component_internal.cpp src/draw_internal.cpp src/icons.cpp src/icons_data.cpp src/accessibility.cpp src/patterns.cpp src/workflow.cpp src/toast.cpp src/charts.cpp src/range_slider.cpp src/transfer_curve.cpp src/ptz.cpp src/shell.cpp src/window_frame.cpp)
 add_library(imkit::imkit ALIAS imkit)
 
 target_compile_features(imkit PUBLIC cxx_std_20)
