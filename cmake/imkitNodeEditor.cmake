@@ -1,5 +1,10 @@
 # Kept separate so ongoing Gallery / editor work does not share implementation files.
-add_library(imkit_node_editor STATIC src/node_editor.cpp src/node_editor_panels.cpp src/node_layout.cpp)
+add_library(imkit_node_editor STATIC
+    src/node_editor.cpp
+    src/node_editor_nodes.cpp
+    src/node_editor_links.cpp
+    src/node_editor_panels.cpp
+    src/node_layout.cpp)
 add_library(imkit::node_editor ALIAS imkit_node_editor)
 set_target_properties(imkit_node_editor PROPERTIES EXPORT_NAME node_editor DEBUG_POSTFIX d)
 imkit_configure_target_build(imkit_node_editor FALSE)

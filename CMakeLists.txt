@@ -164,7 +164,7 @@ imkit_configure_target_build(imkit_editor_core FALSE)
 target_link_libraries(imkit_editor_core PUBLIC imkit::imkit)
 target_compile_options(imkit_editor_core PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
 install(TARGETS imkit_editor_core EXPORT imkitTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-add_library(imkit_video STATIC src/video.cpp src/video_monitors.cpp)
+add_library(imkit_video STATIC src/video.cpp src/video_edit.cpp src/video_monitors.cpp)
 add_library(imkit::video ALIAS imkit_video)
 set_target_properties(imkit_video PROPERTIES EXPORT_NAME video DEBUG_POSTFIX d)
 imkit_configure_target_build(imkit_video FALSE)
@@ -302,6 +302,7 @@ if(IMKIT_BUILD_GALLERY)
         examples/gallery/look_pages.cpp
         examples/gallery/start_page.cpp
         examples/gallery/editor_workspaces.cpp
+        examples/gallery/editor_workspaces_events.cpp
         examples/gallery/editor_video_workspace.cpp
         examples/gallery/editor_cg_workspace.cpp
         examples/gallery/allocation_probe.cpp
