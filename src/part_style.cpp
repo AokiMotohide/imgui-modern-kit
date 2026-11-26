@@ -231,7 +231,8 @@ float DefaultVar(const PartContext &c, Part part, PartVar var) {
     case PartVar::PaddingX: return read(map.paddingVar, 0);
     case PartVar::PaddingY: return part == Part::SmallButton ? 0.f : read(map.paddingVar, 1);
     case PartVar::FontSize: return font;
-    case PartVar::PressDepth: return modern && IsButtonLike(part) ? std::round(1.f * s) : 0.f;
+    case PartVar::PressDepth:
+        return (modern && c.theme.surfaceStyle == SurfaceStyle::Tactile && IsButtonLike(part)) ? std::round(1.f * s) : 0.f;
     case PartVar::BoxSize:
         if (part == Part::Checkbox || part == Part::Radio)
             return std::round(font * parts.checkHeightScale);
@@ -754,6 +755,14 @@ void SetPartTheme(const Theme &theme, float scale) {
     state.accent = theme.colors.accent;
     state.onAccent = theme.colors.onAccent;
     state.focus = theme.colors.focus;
+    state.text = theme.colors.text;
+    state.textSecondary = theme.semantic.textSecondary.w > 0 ? theme.semantic.textSecondary : theme.colors.muted;
+    state.textDisabled = theme.semantic.textDisabled.w > 0 ? theme.semantic.textDisabled : theme.colors.muted;
+    state.success = theme.colors.success;
+    state.warning = theme.colors.warning;
+    state.error = theme.colors.destructive;
+    state.typography = theme.typography;
+    state.fonts = theme.fonts;
     state.overrides = theme.partOverrides;
 }
 void PushPartThemeSnapshot() {

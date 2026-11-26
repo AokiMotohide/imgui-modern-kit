@@ -18,6 +18,10 @@ struct PartThemeState {
     float controlSeconds = .14f;
     bool motion = true;
     ImVec4 accent{}, onAccent{}, focus{};
+    ImVec4 text{}, textSecondary{}, textDisabled{};
+    ImVec4 success{}, warning{}, error{};
+    Typography typography{};
+    FontSet fonts{};
     PartOverrides overrides{};
 };
 void SetPartTheme(const Theme &theme, float scale);

@@ -238,6 +238,10 @@ bool DrawModernSlider(const char *label, T *value, T minimum, T maximum, const c
     if (!disabled) {
         markCol = detail::MixColor(markCol, r.Color(PartState::Hover, PartColor::Mark), hover01);
         markCol = detail::MixColor(markCol, r.Color(PartState::Active, PartColor::Mark), active01);
+        if (!detail::CurrentIsDark()) {
+            const ImVec4 textInk = r.Color(PartState::Rest, PartColor::Text);
+            markCol = detail::MixToContrast(markCol, textInk, 0.f, 3.0f, {trackFill, ImVec4(1.f, 1.f, 1.f, 1.f)});
+        }
     }
 
     const double span = static_cast<double>(maximum) - static_cast<double>(minimum);
@@ -704,7 +708,11 @@ bool RadioButton(const char *label, bool active, const RadioStyle &style) {
 
     if (dot01 > .01f) {
         const float dotR = std::clamp(r.Var(PartVar::MarkWidth) * .5f, 2.f, outerR - 2.f) * dot01;
-        const ImVec4 markCol = r.Color(res.disabled ? PartState::Disabled : PartState::On, PartColor::Mark);
+        ImVec4 markCol = r.Color(res.disabled ? PartState::Disabled : PartState::On, PartColor::Mark);
+        if (!res.disabled && !detail::CurrentIsDark()) {
+            const ImVec4 textInk = r.Color(PartState::Rest, PartColor::Text);
+            markCol = detail::MixToContrast(markCol, textInk, 0.f, 3.0f, {fill});
+        }
         draw->AddCircleFilled(center, dotR, ImGui::GetColorU32(markCol), 20);
     }
 

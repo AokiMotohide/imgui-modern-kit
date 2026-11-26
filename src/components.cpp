@@ -240,6 +240,44 @@ void DrawCallToAction(ImGuiID id, const ButtonPalette &palette, const ComponentO
     detail::AddSmoothRect(draw, {a.x - grow, a.y - grow}, {b.x + grow, b.y + grow}, ImGui::GetColorU32(ring),
                           style.FrameRounding + grow, 2.f);
 }
+float SizeScaleX(ControlSize size) {
+    return size == ControlSize::Sm ? .75f : size == ControlSize::Lg ? 1.25f : 1.f;
+}
+float TargetControlHeight(ControlSize size) {
+    const auto &style = ImGui::GetStyle();
+    if (size == ControlSize::Sm)
+        return std::round(ImGui::GetFontSize() + std::max(4.f, style.FramePadding.y));
+    if (size == ControlSize::Lg)
+        return std::round(ImGui::GetFrameHeight() * 1.25f);
+    return ImGui::GetFrameHeight();
+}
+struct ControlSizeScope {
+    bool pushedPadding = false;
+    bool pushedFont = false;
+    explicit ControlSizeScope(ControlSize size) {
+        if (size == ControlSize::Md)
+            return;
+        const auto &style = ImGui::GetStyle();
+        const float baseFont = ImGui::GetFontSize();
+        const float targetFont = size == ControlSize::Sm ? std::max(10.f, std::round(baseFont * .88f))
+                                                         : baseFont;
+        if (targetFont != baseFont) {
+            ImGui::PushFont(ImGui::GetFont(), targetFont);
+            pushedFont = true;
+        }
+        const float targetH = TargetControlHeight(size);
+        const float padX = std::max(4.f, std::round(style.FramePadding.x * SizeScaleX(size)));
+        const float padY = std::max(2.f, (targetH - ImGui::GetFontSize()) * .5f);
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {padX, padY});
+        pushedPadding = true;
+    }
+    ~ControlSizeScope() {
+        if (pushedPadding)
+            ImGui::PopStyleVar();
+        if (pushedFont)
+            ImGui::PopFont();
+    }
+};
 } // namespace
 float ActionButtonMinimumWidth() { return ImGui::GetFontSize() * 4.f; }
 float ActionButtonWidth(const char *label) {
@@ -254,6 +292,7 @@ float ActionRowWidth(std::span<const char *const> labels) {
     return width;
 }
 bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, ComponentOptions options) {
+    ControlSizeScope sizeScope(options.size);
     const auto *t = options.theme;
     auto &style = ImGui::GetStyle();
     const ButtonPalette palette = MakeButtonPalette(variant, t, style);
@@ -328,6 +367,7 @@ void DrawAtlasIcon(const IconAtlas& atlas,IconId icon,ImVec2 position,float size
 bool IconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
                       const char *label, const char *description, ActionVariant variant,
                       ComponentOptions options) {
+    ControlSizeScope sizeScope(options.size);
     const auto *t = options.theme;
     auto &style = ImGui::GetStyle();
     const ButtonPalette palette = MakeButtonPalette(variant, t, style);
@@ -1072,6 +1112,32 @@ void PopFloatingPanel() {
     }
 }
 void StatusBadge(const char *text, StatusKind kind, ComponentOptions options) { StatusBadge(text, kind, options.theme); }
+bool StatusPill(const char *id, const char *text, StatusKind kind, ComponentOptions options) {
+    const Theme *theme = options.theme;
+    const float font = options.size == ControlSize::Sm
+        ? std::max(10.f, std::round(ImGui::GetFontSize() * .86f))
+        : ImGui::GetFontSize();
+    const ImVec2 size = StatusBadgeSize(text, font);
+    ImGui::PushID(id ? id : "##status-pill");
+    const ImVec2 pos = ImGui::GetCursorScreenPos();
+    const bool pressed = ImGui::InvisibleButton("##pill", size);
+    const bool hovered = ImGui::IsItemHovered();
+    const bool focused = ImGui::IsItemFocused();
+    if (focused)
+        ImGui::SetNavCursorVisible(true);
+    ImDrawList *draw = ImGui::GetWindowDrawList();
+    if (hovered) {
+        const ImVec4 tint = Status(kind, theme);
+        draw->AddRectFilled(pos, {pos.x + size.x, pos.y + size.y},
+                            ImGui::GetColorU32(detail::WithAlpha(tint, .12f)), size.y * .5f);
+    }
+    DrawStatusBadge(draw, pos, text, kind, font, options);
+    if (focused && ImGui::GetIO().NavVisible)
+        detail::DrawFocusGlow(draw, pos, {pos.x + size.x, pos.y + size.y}, size.y * .5f, 1.f,
+                              Status(kind, theme), theme ? theme->stroke.focus : 2.f);
+    ImGui::PopID();
+    return pressed;
+}
 bool NotificationCard(const Notification &n, double now, ComponentOptions options) { return NotificationCard(n, now, options.theme); }
 void ValidationMessage(const char *message, bool invalid, ComponentOptions options) { ValidationMessage(message, invalid, options.theme); }
 } // namespace imkit

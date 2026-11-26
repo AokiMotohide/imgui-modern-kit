@@ -458,6 +458,25 @@ int main() {
         imkit::UnregisterStyle("toolbar");
         ImGui::DestroyContext();
     }
+    {
+        // Flat look keeps Button PressDepth at 0, while Tactile enables press depth.
+        ImGui::CreateContext();
+        auto flat = imkit::MakeTheme(imkit::ThemePreset::PrecisionDark);
+        flat.surfaceStyle = imkit::SurfaceStyle::Flat;
+        imkit::ApplyTheme(flat, 1.f);
+        if (imkit::ResolvePartVar(imkit::Part::Button, imkit::PartVar::PressDepth) != 0.f) {
+            ImGui::DestroyContext();
+            return 51;
+        }
+        auto tactile = flat;
+        tactile.surfaceStyle = imkit::SurfaceStyle::Tactile;
+        imkit::ApplyTheme(tactile, 1.f);
+        if (imkit::ResolvePartVar(imkit::Part::Button, imkit::PartVar::PressDepth) <= 0.f) {
+            ImGui::DestroyContext();
+            return 52;
+        }
+        ImGui::DestroyContext();
+    }
     std::puts("14 theme presets, stable IDs, scale bounds, legacy factories, brand themes, outlines, part styles and theme text validated");
     return 0;
 }

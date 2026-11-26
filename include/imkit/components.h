@@ -17,6 +17,7 @@ namespace imkit {
 // action such as a dialog's delete. SubtleDestructive: deleting or stopping inside a list, red text and outline only.
 // Choosing one of several values is not a button: use Segmented.
 enum class ActionVariant { Primary, Secondary, Ghost, Destructive, SubtleDestructive };
+enum class ControlSize : std::uint8_t { Sm, Md, Lg };
 enum class CheckState { Unchecked, Checked, Mixed };
 // Live: sending to an output right now, like a broadcast tally ("on air"). Active: a mode the user turned on, drawn
 // in the accent colour. New kinds are only ever appended.
@@ -37,6 +38,7 @@ struct ComponentOptions {
     // ActionButton only: marks the one action the user should press next. Adds a trailing arrow, and a ring that
     // spreads once when the button starts being drawn with this mark (not under reduced motion).
     bool callToAction = false;
+    ControlSize size = ControlSize::Md;
 };
 // A width of 0 follows the label and is never narrower than ActionButtonMinimumWidth. Frames have smooth corners.
 bool ActionButton(const char *label, ActionVariant variant = ActionVariant::Primary,
@@ -191,4 +193,25 @@ struct ActionRowItem {
 };
 // Renders buttons split evenly across the available width. Returns the pressed button index, or -1.
 int ActionButtonRow(const char *id, std::span<const ActionRowItem> items, ComponentOptions options = {});
+
+// Interactive status pill (with hover feedback and click return for tooltips/popovers).
+bool StatusPill(const char *id, const char *text, StatusKind kind = StatusKind::Neutral,
+                ComponentOptions options = {});
+
+// Declarative typography helpers that follow Theme::typography / Theme::fonts (falling back to the last applied theme).
+void TextTitle(const char *text, ComponentOptions options = {});
+void TextHeading(const char *text, ComponentOptions options = {});
+void TextLabel(const char *text, ComponentOptions options = {});
+void TextCaption(const char *text, ComponentOptions options = {});
+void KeyValueRow(const char *label, const char *value, bool numericValue = false,
+                 ComponentOptions options = {});
+
+// Web-style setting row: label (+ optional caption hint) on the left, Toggle switch aligned on the right.
+bool SettingToggleRow(const char *label, bool *value, const char *hint = nullptr,
+                      ComponentOptions options = {});
+// Label above a full-width combo box with optional muted hint below.
+bool LabeledCombo(const char *label, int *current, std::span<const char *const> items,
+                  const char *hint = nullptr, ComponentOptions options = {});
+// Heading + optional subtitle row for sections.
+void SectionHeader(const char *title, const char *subtitle = nullptr, ComponentOptions options = {});
 } // namespace imkit

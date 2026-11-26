@@ -148,6 +148,45 @@ void TestWidgetsAndPrimitivesSmoke() {
                 imkit::ChoiceCard("pj0", "PJ0", cardOpts);
                 const imkit::ActionRowItem rowItems[] = {{"Back"}, {"Next", imkit::ActionVariant::Primary}};
                 imkit::ActionButtonRow("row", rowItems, imkit::ComponentOptions{&theme});
+
+                // Nested SectionCard + BeginTable safety, typography helpers, ControlSize, and new form widgets.
+                imkit::SectionHeader("Header", "Subtitle");
+                imkit::TextTitle("Title");
+                imkit::TextHeading("Heading");
+                imkit::TextLabel("Label");
+                imkit::TextCaption("Caption");
+                imkit::KeyValueRow("Resolution", "1920 x 1080", true);
+                imkit::StatusPill("pill", "OK", imkit::StatusKind::Success);
+                imkit::SettingToggleRow("Enable", &flag, "Hint text");
+                imkit::LabeledCombo("Choice", &comboIdx, items, "Combo hint");
+
+                imkit::ComponentOptions smOpts{&theme};
+                smOpts.size = imkit::ControlSize::Sm;
+                imkit::ActionButton("SmBtn", imkit::ActionVariant::Secondary, {}, smOpts);
+                const float smH = ImGui::GetItemRectSize().y;
+
+                imkit::ComponentOptions mdOpts{&theme};
+                mdOpts.size = imkit::ControlSize::Md;
+                imkit::ActionButton("MdBtn", imkit::ActionVariant::Secondary, {}, mdOpts);
+                const float mdH = ImGui::GetItemRectSize().y;
+
+                imkit::ComponentOptions lgOpts{&theme};
+                lgOpts.size = imkit::ControlSize::Lg;
+                imkit::ActionButton("LgBtn", imkit::ActionVariant::Primary, {}, lgOpts);
+                const float lgH = ImGui::GetItemRectSize().y;
+                Check(smH < mdH && mdH < lgH, "ControlSize Sm < Md < Lg");
+
+                if (imkit::BeginSectionCard("nested-sec", "Nested", nullptr, imkit::ComponentOptions{&theme})) {
+                    if (ImGui::BeginTable("##nested-tbl", 2)) {
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        imkit::TextLabel("A");
+                        ImGui::TableSetColumnIndex(1);
+                        imkit::TextCaption("B");
+                        ImGui::EndTable();
+                    }
+                    imkit::EndSectionCard();
+                }
                 imkit::EndSectionCard();
             }
         }
