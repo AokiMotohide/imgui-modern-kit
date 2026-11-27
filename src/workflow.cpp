@@ -768,7 +768,7 @@ bool HierarchyGroupHeader(const char* id,const char* label,int count,bool* open,
                             local?ImGuiDir_Down:ImGuiDir_Right,1.5f);
         x+=chev+style.ItemInnerSpacing.x+4.f;
         if(icons&&icon!=IconId::Count) {
-            const float iconSz=ImGui::GetFontSize()*.92f;
+            const float iconSz=std::max(14.f,ImGui::GetFontSize());
             const ImVec2 saved=ImGui::GetCursorScreenPos();
             ImGui::SetCursorScreenPos({x,cy-iconSz*.5f});
             Icon(*icons,icon,{iconSz});
@@ -916,7 +916,7 @@ HierarchyRowAction HierarchyRow(const char* id,const HierarchyRowView& row,
     if(ellipsis)draw->AddText({textX+ImGui::CalcTextSize(visibleLabel.data(),visibleLabel.data()+visibleLabel.size()).x,textPos.y},
                              ImGui::GetColorU32(ImGuiCol_Text),"...");
     if(showInlineDetail) {
-        ImFont* capFont=o.theme&&o.theme->fonts.numeric?o.theme->fonts.numeric:ImGui::GetFont();
+        ImFont* capFont=o.theme&&o.theme->fonts.regular?o.theme->fonts.regular:ImGui::GetFont();
         const ImVec4 capCol=o.theme?o.theme->semantic.textSecondary:style.Colors[ImGuiCol_TextDisabled];
         const std::string detailFit=FitText(capFont,captionSize,Safe(row.detail),std::max(0.f,textEnd-textX));
         draw->AddText(capFont,captionSize,{textX,labelY+ImGui::GetTextLineHeight()+1.f},
