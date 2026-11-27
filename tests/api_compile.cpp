@@ -1190,6 +1190,17 @@ int main() {
         return 1;
     auto* axisVector = &imkit::AxisVector3Field;
     auto* compactAction = &imkit::CompactIconActionButton;
+    bool (*actionBtnIcon)(const char *, const imkit::IconAtlas *, imkit::IconId, imkit::ActionVariant, const ImVec2 &, imkit::ComponentOptions) = &imkit::ActionButton;
+    auto* compactIconBtn = &imkit::CompactIconButton;
+    auto* labeledDrag = &imkit::LabeledDragFloat;
+    auto* labeledInput = &imkit::LabeledInputText;
+    auto* labeledColor = &imkit::LabeledColorEdit4;
+    auto* labeledSearchCombo = &imkit::LabeledSearchableCombo;
+    auto* beginCollapsibleSec = &imkit::BeginCollapsibleSectionCard;
+    auto* endCollapsibleSec = &imkit::EndCollapsibleSectionCard;
+    auto* alertBanner = &imkit::AlertBanner;
+    (void)actionBtnIcon; (void)compactIconBtn; (void)labeledDrag; (void)labeledInput;
+    (void)labeledColor; (void)labeledSearchCombo; (void)beginCollapsibleSec; (void)endCollapsibleSec; (void)alertBanner;
     float (*rowWidth)(std::span<const char *const>) = &imkit::ActionRowWidth;
     float (*buttonWidth)(const char *) = &imkit::ActionButtonWidth;
     float (*minimumWidth)() = &imkit::ActionButtonMinimumWidth;

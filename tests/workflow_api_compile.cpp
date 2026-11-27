@@ -11,7 +11,8 @@ auto volatile inspectorCard=&imkit::BeginInspectorCard;
 auto volatile endInspectorCard=&imkit::EndInspectorCard;
 auto volatile collapsibleInspectorCard=&imkit::BeginCollapsibleInspectorCard;
 auto volatile endCollapsibleInspectorCard=&imkit::EndCollapsibleInspectorCard;
-auto volatile settingToggleRow=&imkit::SettingToggleRow;
+bool (*volatile settingToggleRow)(const char*,const char*,const char*,bool,bool,const char*,imkit::ComponentOptions)=&imkit::SettingToggleRow;
+bool (*volatile settingToggleRowSimple)(const char*,bool*,const char*,imkit::ComponentOptions)=&imkit::SettingToggleRow;
 imkit::StableId (*volatile iconToolbar)(const char*,const imkit::IconAtlas&,std::span<const imkit::IconToolbarItem>,imkit::ComponentOptions)=&imkit::IconToolbar;
 imkit::StableId (*volatile labeledIconToolbar)(const char*,const imkit::IconAtlas&,std::span<const imkit::IconToolbarItem>,imkit::IconToolbarOptions,imkit::ComponentOptions)=&imkit::IconToolbar;
 bool (*volatile iconAction)(const char*,const imkit::IconAtlas&,imkit::IconId,const char*,const char*,imkit::ActionVariant,imkit::ComponentOptions)=&imkit::IconActionButton;
@@ -34,7 +35,9 @@ void (*volatile waitCard)(const char*,const imkit::WaitCardView&,imkit::Componen
 imkit::StableId (*volatile taskProgressCard)(const char*,const imkit::TaskProgressCardView&,imkit::TaskProgressCardOptions,imkit::ComponentOptions)=&imkit::TaskProgressCard;
 void (*volatile circularProgress)(const char*,const imkit::CircularProgressView&,imkit::CircularProgressOptions,imkit::ComponentOptions)=&imkit::CircularProgress;
 auto volatile card=&imkit::BeginCard;auto volatile endCard=&imkit::EndCard;
-auto volatile section=&imkit::SectionHeader;auto volatile multi=&imkit::MultiSelectionBar;
+bool (*volatile section)(const char*,const char*,bool&,imkit::ComponentOptions)=&imkit::SectionHeader;
+void (*volatile sectionSimple)(const char*,const char*,imkit::ComponentOptions)=&imkit::SectionHeader;
+auto volatile multi=&imkit::MultiSelectionBar;
 auto volatile help=&imkit::HelpCallout;auto volatile validation=&imkit::ValidationSummary;
 imkit::StableId (*volatile toolbar)(const char*,imkit::ToolbarState&,std::span<const imkit::Command>,imkit::ToolbarOptions,imkit::ComponentOptions)=&imkit::ResponsiveToolbar;
 auto volatile valid=&imkit::editor::ImageGeometryValid;
@@ -82,5 +85,5 @@ int main() {
     if(!stages.marks||sizeof(bandGroups)==0||!bandItems[1].blocked||band.height<=0||theme.zones.monitor.w<=0||theme.zones.inspector.w<=0||theme.zones.header.w<=0||theme.zones.chromeCanvas.w<=0||band.tintTrays||!(plateMark&&stepBand&&zoneColor&&pushZone&&popZone)) return 1;
     imkit::StableId ids[1];imkit::RequestBuffer requests{ids};
     imkit::editor::TileEvent events[1];imkit::editor::TileEventBuffer out{events};
-    return !(grouped&&workspaceTabs&&choiceGroup&&hierarchyGroup&&hierarchyRow&&inspectorCard&&endInspectorCard&&collapsibleInspectorCard&&endCollapsibleInspectorCard&&settingToggleRow&&iconToolbar&&labeledIconToolbar&&iconAction&&step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&progressTrackView&&progressTrackValue&&stageProgress&&taskProgressCard&&card&&endCard&&section&&multi&&help&&validation&&toolbar&&valid&&placement&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&appBar&&workspaceHeader&&inspectorSection&&advancedSection&&bottomActionBar&&beginDiagnostics&&endDiagnostics&&themePicker&&resolveRightPanel&&rightPanelHandle&&externalControlStyle&&externalControl&&requests.Push(1)&&out.Push({}));
+    return !(grouped&&workspaceTabs&&choiceGroup&&hierarchyGroup&&hierarchyRow&&inspectorCard&&endInspectorCard&&collapsibleInspectorCard&&endCollapsibleInspectorCard&&settingToggleRow&&settingToggleRowSimple&&iconToolbar&&labeledIconToolbar&&iconAction&&step&&rail&&filter&&choose&&notification&&toast&&alert&&banner&&empty&&unavailable&&retry&&progress&&progressTrackView&&progressTrackValue&&stageProgress&&taskProgressCard&&card&&endCard&&section&&sectionSimple&&multi&&help&&validation&&toolbar&&valid&&placement&&fit&&clamp&&normalized&&pixel&&viewport&&endViewport&&zoom&&overlay&&tile&&strip&&appBar&&workspaceHeader&&inspectorSection&&advancedSection&&bottomActionBar&&beginDiagnostics&&endDiagnostics&&themePicker&&resolveRightPanel&&rightPanelHandle&&externalControlStyle&&externalControl&&requests.Push(1)&&out.Push({}));
 }

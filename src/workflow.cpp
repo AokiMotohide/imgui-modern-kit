@@ -546,13 +546,26 @@ StableId WorkspaceTabs(const char* id,std::span<const WorkspaceTab> tabs,
             const bool active=tab.id==selected;
             const bool filled=active&&layout.filledSelection;
             const ImVec4 accent=tab.accent.w>0?tab.accent:themeAccent;
+            const auto& st=ImGui::GetStyle();
+            const SurfaceStyle surfaceStyle=o.theme?o.theme->surfaceStyle:detail::CurrentSurfaceStyle();
+            const bool flatModern=!detail::ClassicLook()&&surfaceStyle==SurfaceStyle::Flat&&!detail::IsOutlined(st);
             int pushed=0;
+            bool pushedBorderVar=false;
             if(filled) {
                 ImGui::PushStyleColor(ImGuiCol_Button,accent);
                 ImGui::PushStyleColor(ImGuiCol_ButtonHovered,Mix(accent,onFill(accent),.12f));
                 ImGui::PushStyleColor(ImGuiCol_ButtonActive,Mix(accent,onFill(accent),.2f));
                 ImGui::PushStyleColor(ImGuiCol_Text,onFill(accent));
                 pushed=4;
+            } else if(flatModern) {
+                const ImVec4 textCol=st.Colors[ImGuiCol_Text];
+                ImGui::PushStyleColor(ImGuiCol_Button,active?detail::WithAlpha(textCol,.08f):ImVec4(0,0,0,0));
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered,detail::WithAlpha(textCol,.07f));
+                ImGui::PushStyleColor(ImGuiCol_ButtonActive,detail::WithAlpha(textCol,.12f));
+                ImGui::PushStyleColor(ImGuiCol_Border,ImVec4(0,0,0,0));
+                pushed=4;
+                ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize,0.f);
+                pushedBorderVar=true;
             } else if(active) {
                 ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_Header));
                 ImGui::PushStyleColor(ImGuiCol_ButtonHovered,ImGui::GetStyleColorVec4(ImGuiCol_HeaderHovered));
@@ -562,6 +575,7 @@ StableId WorkspaceTabs(const char* id,std::span<const WorkspaceTab> tabs,
             const bool hit=icons&&tab.icon!=IconId::Count
                 ?IconLabelButton("tab",*icons,tab.icon,Safe(tab.label),{ImGui::GetFontSize()})
                 :ImGui::Button(Safe(tab.label));
+            if(pushedBorderVar)ImGui::PopStyleVar();
             if(pushed)ImGui::PopStyleColor(pushed);
             if(Annotate(tab.label,tab.description,accessibility::SemanticRole::Tab,
                         accessibility::SemanticAction::Select,active,o)||hit)request=tab.id;
@@ -728,31 +742,89 @@ StableId ChoiceGroup(const char* id,const char* title,std::span<const ChoiceItem
     return request;
 }
 bool HierarchyGroupHeader(const char* id,const char* label,int count,bool* open,
-                          const IconAtlas* icons,IconId icon,ComponentOptions,
+                          const IconAtlas* icons,IconId icon,ComponentOptions o,
                           bool* actionRequested,const char* actionLabel) {
     ImGui::PushID(id);
     bool local=open?*open:true;
-    const auto padding=ImGui::GetStyle().FramePadding;
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,{padding.x*.65f,padding.y*.65f});
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize,0.f);
-    ImGui::PushStyleColor(ImGuiCol_Button,ImVec4(0,0,0,0));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered,ImGui::GetStyleColorVec4(ImGuiCol_HeaderHovered));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive,ImGui::GetStyleColorVec4(ImGuiCol_HeaderActive));
-    if(ImGui::ArrowButton("toggle",local?ImGuiDir_Down:ImGuiDir_Right))local=!local;
-    ImGui::SameLine();
-    if(icons&&icon!=IconId::Count) {Icon(*icons,icon,{ImGui::GetFontSize()});ImGui::SameLine();}
-    char caption[256];std::snprintf(caption,sizeof(caption),"%s (%d)",Safe(label),std::max(0,count));
-    const float actionWidth=actionRequested?ImGui::GetFrameHeight()+ImGui::GetStyle().ItemSpacing.x:0.f;
-    if(ImGui::Selectable(caption,false,0,
-                         {actionRequested?std::max(1.f,ImGui::GetContentRegionAvail().x-actionWidth):0.f,
-                          ImGui::GetFrameHeight()}))local=!local;
-    if(actionRequested) {
+    const auto& style=ImGui::GetStyle();
+    const SurfaceStyle surfaceStyle=o.theme?o.theme->surfaceStyle:detail::CurrentSurfaceStyle();
+    const bool flatModern=!detail::ClassicLook()&&surfaceStyle==SurfaceStyle::Flat&&!detail::IsOutlined(style);
+    if(flatModern) {
+        const float width=std::max(1.f,ImGui::GetContentRegionAvail().x);
+        const float height=std::max(ImGui::GetFrameHeight()*.88f,ImGui::GetTextLineHeight()+8.f);
+        const float actionWidth=actionRequested?height+style.ItemSpacing.x:0.f;
+        const float rowWidth=std::max(1.f,width-actionWidth);
+        const ImVec2 origin=ImGui::GetCursorScreenPos();
+        ImGui::PushStyleColor(ImGuiCol_Header,ImVec4(0,0,0,0));
+        ImGui::PushStyleColor(ImGuiCol_HeaderHovered,detail::WithAlpha(style.Colors[ImGuiCol_Text],.06f));
+        ImGui::PushStyleColor(ImGuiCol_HeaderActive,detail::WithAlpha(style.Colors[ImGuiCol_Text],.10f));
+        if(ImGui::Selectable("##group_toggle",false,0,{rowWidth,height}))local=!local;
+        ImGui::PopStyleColor(3);
+        ImDrawList* draw=ImGui::GetWindowDrawList();
+        const float cy=origin.y+height*.5f;
+        const float chev=ImGui::GetFontSize()*.52f;
+        float x=origin.x+6.f;
+        detail::DrawChevron(draw,{x+chev*.4f,cy},chev,ImGui::GetColorU32(ImGuiCol_TextDisabled),
+                            local?ImGuiDir_Down:ImGuiDir_Right,1.5f);
+        x+=chev+style.ItemInnerSpacing.x+4.f;
+        if(icons&&icon!=IconId::Count) {
+            const float iconSz=ImGui::GetFontSize()*.92f;
+            const ImVec2 saved=ImGui::GetCursorScreenPos();
+            ImGui::SetCursorScreenPos({x,cy-iconSz*.5f});
+            Icon(*icons,icon,{iconSz});
+            ImGui::SetCursorScreenPos(saved);
+            x+=iconSz+style.ItemInnerSpacing.x;
+        }
+        char countBuf[32];
+        std::snprintf(countBuf,sizeof(countBuf),"%d",std::max(0,count));
+        const float capSize=std::max(10.f,std::round(ImGui::GetFontSize()*.82f));
+        ImFont* capFont=o.theme&&o.theme->fonts.numeric?o.theme->fonts.numeric:ImGui::GetFont();
+        const ImVec2 countExt=capFont->CalcTextSizeA(capSize,FLT_MAX,0.f,countBuf);
+        const float pillPadX=6.f;
+        const float pillW=countExt.x+pillPadX*2.f;
+        const float pillH=capSize+4.f;
+        const float pillX=origin.x+rowWidth-pillW-4.f;
+        ImFont* labelFont=o.theme&&o.theme->fonts.emphasis?o.theme->fonts.emphasis:ImGui::GetFont();
+        const float labelSize=std::max(11.f,std::round(ImGui::GetFontSize()*.90f));
+        const ImVec4 clip{x,origin.y,std::max(x+1.f,pillX-6.f),origin.y+height};
+        const ImVec4 titleCol=o.theme?o.theme->semantic.textSecondary:style.Colors[ImGuiCol_TextDisabled];
+        draw->AddText(labelFont,labelSize,{x,cy-labelSize*.5f},ImGui::GetColorU32(titleCol),
+                      Safe(label),nullptr,0.f,&clip);
+        if(pillX>x+8.f) {
+            const ImVec2 pMin{pillX,cy-pillH*.5f},pMax{pillX+pillW,cy+pillH*.5f};
+            draw->AddRectFilled(pMin,pMax,ImGui::GetColorU32(detail::WithAlpha(style.Colors[ImGuiCol_Text],.08f)),pillH*.5f);
+            draw->AddText(capFont,capSize,{pillX+pillPadX,cy-countExt.y*.5f},
+                          ImGui::GetColorU32(style.Colors[ImGuiCol_TextDisabled]),countBuf);
+        }
+        if(actionRequested) {
+            ImGui::SameLine();
+            *actionRequested=icons?CompactIconButton("group_action",*icons,IconId::Add,Safe(actionLabel),
+                                                     ActionVariant::Ghost,o)
+                                  :ImGui::SmallButton(Safe(actionLabel));
+        }
+    } else {
+        const auto padding=style.FramePadding;
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,{padding.x*.65f,padding.y*.65f});
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize,0.f);
+        ImGui::PushStyleColor(ImGuiCol_Button,ImVec4(0,0,0,0));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered,ImGui::GetStyleColorVec4(ImGuiCol_HeaderHovered));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,ImGui::GetStyleColorVec4(ImGuiCol_HeaderActive));
+        if(ImGui::ArrowButton("toggle",local?ImGuiDir_Down:ImGuiDir_Right))local=!local;
         ImGui::SameLine();
-        *actionRequested=icons?IconButton("group_action",*icons,IconId::Add,Safe(actionLabel),{ImGui::GetFontSize()})
-                              :ImGui::SmallButton(Safe(actionLabel));
+        if(icons&&icon!=IconId::Count) {Icon(*icons,icon,{ImGui::GetFontSize()});ImGui::SameLine();}
+        char caption[256];std::snprintf(caption,sizeof(caption),"%s (%d)",Safe(label),std::max(0,count));
+        const float actionWidth=actionRequested?ImGui::GetFrameHeight()+style.ItemSpacing.x:0.f;
+        if(ImGui::Selectable(caption,false,0,
+                             {actionRequested?std::max(1.f,ImGui::GetContentRegionAvail().x-actionWidth):0.f,
+                              ImGui::GetFrameHeight()}))local=!local;
+        if(actionRequested) {
+            ImGui::SameLine();
+            *actionRequested=icons?IconButton("group_action",*icons,IconId::Add,Safe(actionLabel),{ImGui::GetFontSize()})
+                                  :ImGui::SmallButton(Safe(actionLabel));
+        }
+        ImGui::PopStyleColor(3);
+        ImGui::PopStyleVar(2);
     }
-    ImGui::PopStyleColor(3);
-    ImGui::PopStyleVar(2);
     if(open)*open=local;
     ImGui::PopID();return local;
 }
@@ -761,18 +833,34 @@ HierarchyRowAction HierarchyRow(const char* id,const HierarchyRowView& row,
     ImGui::PushID(id);Push(row.id);
     HierarchyRowAction result=HierarchyRowAction::None;
     ImGui::BeginDisabled(row.disabled||!row.id);
-    const auto padding=ImGui::GetStyle().FramePadding;
+    const auto& style=ImGui::GetStyle();
+    const auto padding=style.FramePadding;
+    const SurfaceStyle surfaceStyle=o.theme?o.theme->surfaceStyle:detail::CurrentSurfaceStyle();
+    const bool flatModern=!detail::ClassicLook()&&surfaceStyle==SurfaceStyle::Flat&&!detail::IsOutlined(style);
+    const bool isDark=o.theme?(o.theme->scheme==ColorScheme::Dark):detail::CurrentIsDark();
+    const bool showInlineDetail=row.showDetailInline&&*Safe(row.detail);
+    const float font=ImGui::GetFontSize();
+    const float captionSize=std::max(10.f,std::round(font*.82f));
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,{padding.x*.65f,padding.y*.55f});
     ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize,0.f);
     const ImVec2 origin=ImGui::GetCursorScreenPos();
     const float width=std::max(1.f,ImGui::GetContentRegionAvail().x);
-    const float height=ImGui::GetFrameHeight();
+    const float btnSize=ImGui::GetFrameHeight();
+    const float height=showInlineDetail
+        ?std::max(btnSize,ImGui::GetTextLineHeight()+captionSize+padding.y*1.2f)
+        :btnSize;
     const int actionCount=1+int(row.visibilityAvailable)+int(row.lockAvailable);
-    const float actionWidth=height*actionCount+
-        ImGui::GetStyle().ItemSpacing.x*(actionCount+1);
+    const float actionWidth=btnSize*actionCount+
+        style.ItemSpacing.x*(actionCount+1);
     ImGui::PushStyleColor(ImGuiCol_Text,ImVec4(0,0,0,0));
+    if(flatModern) {
+        ImGui::PushStyleColor(ImGuiCol_Header,ImVec4(0,0,0,0));
+        ImGui::PushStyleColor(ImGuiCol_HeaderHovered,ImVec4(0,0,0,0));
+        ImGui::PushStyleColor(ImGuiCol_HeaderActive,ImVec4(0,0,0,0));
+    }
     if(ImGui::Selectable(Safe(row.label),row.selected,ImGuiSelectableFlags_AllowOverlap,{width,height}))
         result=HierarchyRowAction::Select;
+    if(flatModern) ImGui::PopStyleColor(3);
     ImGui::PopStyleColor();
     const bool hovered=ImGui::IsItemHovered();
     const bool focused=ImGui::IsItemFocused();
@@ -781,19 +869,35 @@ HierarchyRowAction HierarchyRow(const char* id,const HierarchyRowView& row,
     if((hovered||focused)&&*Safe(row.detail))ImGui::SetTooltip("%s",row.detail);
     const ImVec2 afterRow=ImGui::GetCursorScreenPos();
     ImDrawList* draw=ImGui::GetWindowDrawList();
-    const float indent=std::max(0,row.depth)*ImGui::GetFontSize();
+    if(flatModern) {
+        const ImVec4 accent=o.theme?o.theme->colors.accent:style.Colors[ImGuiCol_CheckMark];
+        const float r=std::min(style.FrameRounding,6.f);
+        if(row.selected) {
+            detail::AddSmoothRectFilled(draw,origin,{origin.x+width,origin.y+height},
+                                        ImGui::GetColorU32(detail::WithAlpha(accent,isDark?.14f:.10f)),r);
+            detail::AddSmoothRect(draw,origin,{origin.x+width,origin.y+height},
+                                  ImGui::GetColorU32(detail::WithAlpha(accent,.40f)),r,1.f);
+        } else if(hovered) {
+            detail::AddSmoothRectFilled(draw,origin,{origin.x+width,origin.y+height},
+                                        ImGui::GetColorU32(detail::WithAlpha(style.Colors[ImGuiCol_Text],.05f)),r);
+        }
+    }
+    const float indent=std::max(0,row.depth)*font;
     if(row.accentColor.w>0.f)
-        draw->AddRectFilled({origin.x+indent,origin.y+3.f},
-                            {origin.x+indent+3.f,origin.y+height-3.f},
+        draw->AddRectFilled({origin.x+indent+2.f,origin.y+4.f},
+                            {origin.x+indent+5.f,origin.y+height-4.f},
                             ImGui::ColorConvertFloat4ToU32(row.accentColor),2.f);
-    float textX=origin.x+indent+9.f;
+    float textX=origin.x+indent+10.f;
     if(icons&&row.icon!=IconId::Count) {
-        ImGui::SetCursorScreenPos({textX,origin.y+(height-ImGui::GetFontSize())*.5f});
-        Icon(*icons,row.icon,{ImGui::GetFontSize()});
-        textX+=ImGui::GetFontSize()+ImGui::GetStyle().ItemInnerSpacing.x;
+        ImGui::SetCursorScreenPos({textX,origin.y+(height-font)*.5f});
+        Icon(*icons,row.icon,{font});
+        textX+=font+style.ItemInnerSpacing.x;
     }
     const float textEnd=std::max(textX+1.f,origin.x+width-actionWidth);
-    const ImVec2 textPos(textX,origin.y+(height-ImGui::GetTextLineHeight())*.5f);
+    const float labelY=showInlineDetail
+        ?origin.y+(height-(ImGui::GetTextLineHeight()+captionSize+2.f))*.5f
+        :origin.y+(height-ImGui::GetTextLineHeight())*.5f;
+    const ImVec2 textPos(textX,labelY);
     std::string_view visibleLabel=Safe(row.label);
     if(auto suffix=visibleLabel.find("##");suffix!=std::string_view::npos)
         visibleLabel=visibleLabel.substr(0,suffix);
@@ -811,15 +915,23 @@ HierarchyRowAction HierarchyRow(const char* id,const HierarchyRowView& row,
     draw->AddText(textPos,ImGui::GetColorU32(ImGuiCol_Text),visibleLabel.data(),visibleLabel.data()+visibleLabel.size());
     if(ellipsis)draw->AddText({textX+ImGui::CalcTextSize(visibleLabel.data(),visibleLabel.data()+visibleLabel.size()).x,textPos.y},
                              ImGui::GetColorU32(ImGuiCol_Text),"...");
+    if(showInlineDetail) {
+        ImFont* capFont=o.theme&&o.theme->fonts.numeric?o.theme->fonts.numeric:ImGui::GetFont();
+        const ImVec4 capCol=o.theme?o.theme->semantic.textSecondary:style.Colors[ImGuiCol_TextDisabled];
+        const std::string detailFit=FitText(capFont,captionSize,Safe(row.detail),std::max(0.f,textEnd-textX));
+        draw->AddText(capFont,captionSize,{textX,labelY+ImGui::GetTextLineHeight()+1.f},
+                      ImGui::GetColorU32(capCol),detailFit.c_str());
+    }
     draw->PopClipRect();
-    float actionX=origin.x+width-actionWidth+ImGui::GetStyle().ItemSpacing.x;
+    float actionX=origin.x+width-actionWidth+style.ItemSpacing.x;
+    const float actionY=origin.y+(height-btnSize)*.5f;
     const auto actionButton=[&](const char* key,IconId icon,const char* text) {
-        ImGui::SetCursorScreenPos({actionX,origin.y});
-        actionX+=height+ImGui::GetStyle().ItemSpacing.x;
+        ImGui::SetCursorScreenPos({actionX,actionY});
+        actionX+=btnSize+style.ItemSpacing.x;
         ImGui::PushStyleColor(ImGuiCol_Button,ImVec4(0,0,0,0));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered,ImGui::GetStyleColorVec4(ImGuiCol_HeaderHovered));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive,ImGui::GetStyleColorVec4(ImGuiCol_HeaderActive));
-        bool pressed=icons?IconButton(key,*icons,icon,text,{ImGui::GetFontSize()})
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered,detail::WithAlpha(style.Colors[ImGuiCol_Text],.09f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,detail::WithAlpha(style.Colors[ImGuiCol_Text],.16f));
+        bool pressed=icons?IconButton(key,*icons,icon,text,{font})
                           :ImGui::SmallButton(text);
         ImGui::PopStyleColor(3);
         if(ImGui::IsItemHovered()||ImGui::IsItemFocused())ImGui::SetTooltip("%s",text);
@@ -835,9 +947,46 @@ HierarchyRowAction HierarchyRow(const char* id,const HierarchyRowView& row,
     ImGui::PopStyleVar(2);
     ImGui::EndDisabled();Pop();ImGui::PopID();return result;
 }
+namespace {
+struct CollapsibleInspectorEntry { ImGuiContext* ctx=nullptr; bool usedFlatSection=false; };
+std::vector<CollapsibleInspectorEntry>& CollapsibleInspectorStack() {
+    static std::vector<CollapsibleInspectorEntry> stack;
+    return stack;
+}
+} // namespace
 bool BeginInspectorCard(const char* id,const char* title,const char* description,
-                        const IconAtlas* icons,IconId icon,ComponentOptions) {
+                        const IconAtlas* icons,IconId icon,ComponentOptions o) {
     const ImGuiStyle& style=ImGui::GetStyle();
+    const SurfaceStyle surfaceStyle=o.theme?o.theme->surfaceStyle:detail::CurrentSurfaceStyle();
+    const bool flatModern=!detail::ClassicLook()&&surfaceStyle==SurfaceStyle::Flat&&!detail::IsOutlined(style);
+    const bool isDark=o.theme?(o.theme->scheme==ColorScheme::Dark):detail::CurrentIsDark();
+    if(flatModern) {
+        ImVec4 surface=o.theme?o.theme->semantic.surface:Mix(style.Colors[ImGuiCol_WindowBg],style.Colors[ImGuiCol_FrameBg],.45f);
+        if(surface.w<=0.f) surface=style.Colors[ImGuiCol_WindowBg];
+        const ImVec4 border=detail::WithAlpha(style.Colors[ImGuiCol_Text],isDark?.09f:.10f);
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,style.ChildRounding>0.f?style.ChildRounding:style.FrameRounding);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,style.WindowPadding);
+        ImGui::PushStyleColor(ImGuiCol_ChildBg,surface);
+        ImGui::PushStyleColor(ImGuiCol_Border,border);
+        const bool visible=ImGui::BeginChild(id,{0,0},
+            ImGuiChildFlags_Borders|ImGuiChildFlags_AutoResizeY,ImGuiWindowFlags_NoScrollbar);
+        if(visible&&*Safe(title)) {
+            if(icons&&icon!=IconId::Count) {
+                const float iconSz=ImGui::GetFontSize();
+                ImGui::SetCursorPosY(ImGui::GetCursorPosY()+2.f);
+                Icon(*icons,icon,{iconSz});
+                ImGui::SameLine();
+            }
+            TextHeading(Safe(title),o);
+            if(*Safe(description)) TextCaption(description,o);
+            const ImVec2 lineStart=ImGui::GetCursorScreenPos();
+            const float avail=std::max(1.f,ImGui::GetContentRegionAvail().x);
+            ImGui::GetWindowDrawList()->AddLine(lineStart,{lineStart.x+avail,lineStart.y},
+                ImGui::GetColorU32(detail::WithAlpha(style.Colors[ImGuiCol_Text],isDark?.08f:.09f)),1.f);
+            ImGui::Dummy({0.f,4.f});
+        }
+        return visible;
+    }
     const ImVec4 surface=Mix(style.Colors[ImGuiCol_WindowBg],style.Colors[ImGuiCol_FrameBg],.68f);
     const ImVec4 border=Mix(surface,style.Colors[ImGuiCol_Text],.13f);
     ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding,std::max(8.f,style.FrameRounding));
@@ -868,15 +1017,41 @@ bool BeginInspectorCard(const char* id,const char* title,const char* description
 void EndInspectorCard() {ImGui::EndChild();ImGui::PopStyleColor(2);ImGui::PopStyleVar(2);}
 bool BeginCollapsibleInspectorCard(const char* id,const char* title,bool* open,
                                    const IconAtlas* icons,IconId icon,ComponentOptions o) {
+    const ImGuiStyle& style=ImGui::GetStyle();
+    const SurfaceStyle surfaceStyle=o.theme?o.theme->surfaceStyle:detail::CurrentSurfaceStyle();
+    const bool flatModern=!detail::ClassicLook()&&surfaceStyle==SurfaceStyle::Flat&&!detail::IsOutlined(style);
+    if(flatModern) {
+        if(!BeginCollapsibleSectionCard(id,title,open,nullptr,icons,icon,o))
+            return false;
+        CollapsibleInspectorStack().push_back({ImGui::GetCurrentContext(),true});
+        return true;
+    }
     ImGui::PushID(id);
     ImGui::SetNextItemOpen(open?*open:true,ImGuiCond_Always);
     const bool expanded=ImGui::CollapsingHeader(Safe(title),ImGuiTreeNodeFlags_SpanAvailWidth);
     if(open)*open=expanded;
     if(!expanded) {ImGui::PopID();return false;}
     BeginInspectorCard("##body","","",icons,icon,o);
+    CollapsibleInspectorStack().push_back({ImGui::GetCurrentContext(),false});
     return true;
 }
-void EndCollapsibleInspectorCard() {EndInspectorCard();ImGui::PopID();}
+void EndCollapsibleInspectorCard() {
+    auto& stack=CollapsibleInspectorStack();
+    bool usedFlat=false;
+    for(auto it=stack.rbegin();it!=stack.rend();++it) {
+        if(it->ctx==ImGui::GetCurrentContext()) {
+            usedFlat=it->usedFlatSection;
+            stack.erase(std::next(it).base());
+            break;
+        }
+    }
+    if(usedFlat) {
+        EndCollapsibleSectionCard();
+        return;
+    }
+    EndInspectorCard();
+    ImGui::PopID();
+}
 bool SettingToggleRow(const char* id,const char* label,const char* description,
                       bool current,bool disabled,const char* disabledReason,ComponentOptions o) {
     ImGui::PushID(id);
@@ -885,8 +1060,9 @@ bool SettingToggleRow(const char* id,const char* label,const char* description,
         ImGui::TableSetupColumn("label",ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableSetupColumn("toggle",ImGuiTableColumnFlags_WidthFixed,ImGui::GetFrameHeight()*2.4f);
         ImGui::TableNextRow();ImGui::TableNextColumn();
+        ImGui::AlignTextToFramePadding();
         ImGui::TextUnformatted(Safe(label));
-        if(*Safe(description))ImGui::TextDisabled("%s",description);
+        if(*Safe(description)) TextCaption(description,o);
         ImGui::TableNextColumn();
         ImGui::BeginDisabled(disabled);
         ComponentOptions toggleOptions=o;toggleOptions.accessibility=nullptr;

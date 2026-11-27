@@ -176,6 +176,42 @@ void TestWidgetsAndPrimitivesSmoke() {
                 const float lgH = ImGui::GetItemRectSize().y;
                 Check(smH < mdH && mdH < lgH, "ControlSize Sm < Md < Lg");
 
+                // New Flat form controls, Icon-integrated buttons, CollapsibleSectionCard, and AlertBanner
+                static float dragFloatVal = 1.35f;
+                static char inputBuf[64] = "Main";
+                static char searchBuf[32] = "";
+                imkit::LabeledDragFloat("Throw Ratio", &dragFloatVal, 0.01f, 0.5f, 4.0f, "x", "%.3f", "Optical range", imkit::ComponentOptions{&theme});
+                imkit::LabeledInputText("Name", inputBuf, sizeof(inputBuf), "Enter name", "Display label", 0, imkit::ComponentOptions{&theme});
+                imkit::LabeledColorEdit4("Tint", col, 0, nullptr, imkit::ComponentOptions{&theme});
+                imkit::LabeledSearchableCombo("Preset", &comboIdx, items, searchBuf, sizeof(searchBuf), "Filter presets", imkit::ComponentOptions{&theme});
+
+                imkit::IconAtlas btnIcons;
+                for (int px : imkit::IconPixelSizes)
+                    btnIcons.SetTexture(px, ImTextureRef(static_cast<ImTextureID>(1)));
+                imkit::ActionButton("IconSm", &btnIcons, imkit::IconId::Add, imkit::ActionVariant::Primary, {}, smOpts);
+                const float iconSmH = ImGui::GetItemRectSize().y;
+                imkit::ActionButton("IconMd", &btnIcons, imkit::IconId::Add, imkit::ActionVariant::Secondary, {}, mdOpts);
+                const float iconMdH = ImGui::GetItemRectSize().y;
+                imkit::ActionButton("IconLg", &btnIcons, imkit::IconId::Add, imkit::ActionVariant::Primary, {}, lgOpts);
+                const float iconLgH = ImGui::GetItemRectSize().y;
+                Check(iconSmH < iconMdH && iconMdH < iconLgH, "Icon ActionButton ControlSize Sm < Md < Lg");
+                imkit::CompactIconButton("compact-add", btnIcons, imkit::IconId::Add, "Add", imkit::ActionVariant::Ghost, smOpts);
+
+                static bool collOpenClosed = false;
+                if (imkit::BeginCollapsibleSectionCard("coll-closed", "Closed Card", &collOpenClosed, "Subtitle", &btnIcons, imkit::IconId::Settings, imkit::ComponentOptions{&theme})) {
+                    Check(false, "Closed CollapsibleSectionCard must return false");
+                    imkit::EndCollapsibleSectionCard();
+                }
+                static bool collOpenOpen = true;
+                if (imkit::BeginCollapsibleSectionCard("coll-open", "Open Card", &collOpenOpen, "Subtitle", &btnIcons, imkit::IconId::Settings, imkit::ComponentOptions{&theme})) {
+                    imkit::TextCaption("Inside collapsible card", imkit::ComponentOptions{&theme});
+                    imkit::EndCollapsibleSectionCard();
+                }
+
+                imkit::AlertBanner("alert-warn", "Out of range", imkit::StatusKind::Warning, "Warning", imkit::ComponentOptions{&theme});
+                imkit::AlertBanner("alert-err", "Failed", imkit::StatusKind::Error, nullptr, imkit::ComponentOptions{&theme});
+                imkit::AlertBanner("alert-ok", "Ready", imkit::StatusKind::Success, nullptr, imkit::ComponentOptions{&theme});
+
                 if (imkit::BeginSectionCard("nested-sec", "Nested", nullptr, imkit::ComponentOptions{&theme})) {
                     if (ImGui::BeginTable("##nested-tbl", 2)) {
                         ImGui::TableNextRow();

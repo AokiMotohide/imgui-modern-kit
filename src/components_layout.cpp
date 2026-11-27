@@ -432,4 +432,308 @@ void SectionHeader(const char *title, const char *subtitle, ComponentOptions opt
         TextCaption(subtitle, options);
     ImGui::EndGroup();
 }
+
+namespace {
+void RenderFieldTopRow(const char *label, const char *unit, ComponentOptions options) {
+    const std::string_view visible = VisibleText(label);
+    const float avail = std::max(1.f, ImGui::GetContentRegionAvail().x);
+    const float rowStartX = ImGui::GetCursorPosX();
+    if (!visible.empty()) {
+        std::string copy(visible);
+        TextLabel(copy.c_str(), options);
+    }
+    if (unit && *unit) {
+        const auto capSpec = ResolveTextSpec(TextRole::Caption, true, options);
+        ImGui::PushFont(capSpec.font, capSpec.size);
+        const float unitW = ImGui::CalcTextSize(unit).x;
+        ImGui::PopFont();
+        if (!visible.empty() && avail > unitW + 24.f) {
+            ImGui::SameLine();
+            ImGui::SetCursorPosX(rowStartX + std::max(0.f, avail - unitW));
+        }
+        ImGui::PushFont(capSpec.font, capSpec.size);
+        ImGui::PushStyleColor(ImGuiCol_Text, capSpec.color);
+        ImGui::TextUnformatted(unit);
+        ImGui::PopStyleColor();
+        ImGui::PopFont();
+    }
+}
+} // namespace
+
+bool LabeledDragFloat(const char *label, float *value, float speed, float minimum, float maximum,
+                      const char *unit, const char *format, const char *hint, ComponentOptions options) {
+    ImGui::PushID(label ? label : "##labeled-drag");
+    ImGui::BeginGroup();
+    RenderFieldTopRow(label, unit, options);
+    const auto numSpec = ResolveTextSpec(TextRole::Numeric, false, options);
+    const bool pushNum = numSpec.font != nullptr && numSpec.font != ImGui::GetFont();
+    if (pushNum)
+        ImGui::PushFont(numSpec.font, numSpec.size);
+    ImGui::SetNextItemWidth(-1.f);
+    const bool changed = DragFloat("##drag", value, speed, minimum, maximum, format ? format : "%.3f");
+    if (pushNum)
+        ImGui::PopFont();
+    if (hint && *hint)
+        TextCaption(hint, options);
+    ImGui::EndGroup();
+    ImGui::PopID();
+    return changed;
+}
+
+bool LabeledInputText(const char *label, char *buffer, std::size_t bufferSize,
+                      const char *placeholder, const char *hint, ImGuiInputTextFlags flags,
+                      ComponentOptions options) {
+    ImGui::PushID(label ? label : "##labeled-input");
+    ImGui::BeginGroup();
+    RenderFieldTopRow(label, nullptr, options);
+    ImGui::SetNextItemWidth(-1.f);
+    const bool changed = (placeholder && *placeholder)
+        ? ImGui::InputTextWithHint("##input", placeholder, buffer, bufferSize, flags)
+        : InputText("##input", buffer, bufferSize, flags);
+    if (hint && *hint)
+        TextCaption(hint, options);
+    ImGui::EndGroup();
+    ImGui::PopID();
+    return changed;
+}
+
+bool LabeledColorEdit4(const char *label, float col[4], ImGuiColorEditFlags flags,
+                       const char *hint, ComponentOptions options) {
+    ImGui::PushID(label ? label : "##labeled-color");
+    ImGui::BeginGroup();
+    RenderFieldTopRow(label, nullptr, options);
+    ImGui::SetNextItemWidth(-1.f);
+    const bool changed = ColorEdit4("##color", col, flags);
+    if (hint && *hint)
+        TextCaption(hint, options);
+    ImGui::EndGroup();
+    ImGui::PopID();
+    return changed;
+}
+
+bool LabeledSearchableCombo(const char *label, int *current, std::span<const char *const> items,
+                            char *searchBuffer, std::size_t searchBufferSize,
+                            const char *hint, ComponentOptions options) {
+    ImGui::PushID(label ? label : "##labeled-searchable-combo");
+    ImGui::BeginGroup();
+    RenderFieldTopRow(label, nullptr, options);
+    ImGui::SetNextItemWidth(-1.f);
+    const bool changed = SearchableCombo("##combo", current, items, searchBuffer, searchBufferSize, {}, options);
+    if (hint && *hint)
+        TextCaption(hint, options);
+    ImGui::EndGroup();
+    ImGui::PopID();
+    return changed;
+}
+
+bool BeginCollapsibleSectionCard(const char *id, const char *title, bool *open, const char *subtitle,
+                                 const IconAtlas *icons, IconId icon, ComponentOptions options) {
+    ImGuiWindow *window = ImGui::GetCurrentWindow();
+    if (window->SkipItems)
+        return false;
+
+    const auto &style = ImGui::GetStyle();
+    const Theme *t = options.theme;
+    const SurfaceStyle surfaceStyle = t ? t->surfaceStyle : detail::CurrentSurfaceStyle();
+    const bool isDark = t ? (t->scheme == ColorScheme::Dark) : detail::CurrentIsDark();
+    ImVec4 fill = t ? t->semantic.surface : style.Colors[ImGuiCol_ChildBg];
+    if (fill.w <= 0.f)
+        fill = style.Colors[ImGuiCol_WindowBg];
+    const float radius = style.ChildRounding > 0.f ? style.ChildRounding : style.FrameRounding;
+    const ImVec4 borderCol = detail::IsOutlined(style)
+        ? style.Colors[ImGuiCol_Border]
+        : detail::WithAlpha(style.Colors[ImGuiCol_Text], isDark ? .09f : .10f);
+
+    ImGui::PushID(id ? id : "##collapsible-section-card");
+    bool isOpen = open ? *open : true;
+
+    const ImVec2 start = ImGui::GetCursorScreenPos();
+    const float width = std::max(1.f, ImGui::GetContentRegionAvail().x);
+    const float padX = style.WindowPadding.x;
+    const float padY = style.WindowPadding.y;
+
+    auto state = std::make_unique<SectionCardState>();
+    state->context = ImGui::GetCurrentContext();
+    state->start = start;
+    state->width = width;
+    state->padX = padX;
+    state->padY = padY;
+    state->theme = options.theme;
+
+    ImDrawList *draw = window->DrawList;
+    state->splitter.Split(draw, 2);
+    state->splitter.SetCurrentChannel(draw, 1);
+
+    const float headerH = std::max(ImGui::GetFrameHeight(), ImGui::GetTextLineHeight() + padY);
+    ImGui::SetCursorScreenPos({start.x + padX, start.y + padY * .5f});
+    const float innerW = std::max(1.f, width - padX * 2.f);
+    if (ImGui::InvisibleButton("##header-toggle", {innerW, headerH})) {
+        isOpen = !isOpen;
+        if (open)
+            *open = isOpen;
+    }
+    const bool hdrHovered = ImGui::IsItemHovered();
+    const ImVec2 hMin = ImGui::GetItemRectMin();
+    const ImVec2 hMax = ImGui::GetItemRectMax();
+    if (hdrHovered) {
+        detail::AddSmoothRectFilled(draw, hMin, hMax,
+                                    ImGui::GetColorU32(detail::WithAlpha(style.Colors[ImGuiCol_Text], .05f)),
+                                    std::min(radius, 6.f));
+    }
+    const float chevSize = ImGui::GetFontSize() * .6f;
+    float cx = hMin.x + 6.f;
+    const float cy = (hMin.y + hMax.y) * .5f;
+    detail::DrawChevron(draw, {cx + chevSize * .4f, cy}, chevSize,
+                        ImGui::GetColorU32(style.Colors[ImGuiCol_TextDisabled]),
+                        isOpen ? ImGuiDir_Down : ImGuiDir_Right, 1.6f);
+    cx += chevSize + style.ItemInnerSpacing.x + 4.f;
+    if (icons && icon != IconId::Count && GetIconInfo(icon)) {
+        const float iconSz = ImGui::GetFontSize();
+        const auto fbScale = ImGui::GetIO().DisplayFramebufferScale;
+        const float px = iconSz * std::max({1.f, fbScale.x, fbScale.y});
+        std::size_t lv = IconPixelSizes.size() - 1;
+        for (std::size_t i = 0; i < IconPixelSizes.size(); ++i) {
+            if (static_cast<float>(IconPixelSizes[i]) >= px) {
+                lv = i;
+                break;
+            }
+        }
+        const auto tex = icons->textures[lv];
+        if (tex.GetTexID() != ImTextureID{}) {
+            const auto reg = GetIconRegion(icon, IconPixelSizes[lv]);
+            draw->AddImage(tex, {cx, cy - iconSz * .5f}, {cx + iconSz, cy + iconSz * .5f},
+                           reg.uv0, reg.uv1, ImGui::GetColorU32(style.Colors[ImGuiCol_Text]));
+            cx += iconSz + style.ItemInnerSpacing.x;
+        }
+    }
+    const auto headSpec = ResolveTextSpec(TextRole::Heading, false, options);
+    const std::string_view titleVis = VisibleText(title);
+    if (!titleVis.empty()) {
+        draw->AddText(headSpec.font, headSpec.size, {cx, cy - headSpec.size * .5f},
+                      ImGui::GetColorU32(headSpec.color), titleVis.data(), titleVis.data() + titleVis.size());
+    }
+    if (subtitle && *subtitle) {
+        const auto capSpec = ResolveTextSpec(TextRole::Caption, true, options);
+        const float subW = capSpec.font->CalcTextSizeA(capSpec.size, FLT_MAX, 0.f, subtitle).x;
+        const float titleRight = cx + headSpec.font->CalcTextSizeA(headSpec.size, FLT_MAX, 0.f,
+                                                                   titleVis.data(), titleVis.data() + titleVis.size()).x;
+        if (hMax.x - subW - 6.f > titleRight + 8.f) {
+            draw->AddText(capSpec.font, capSpec.size, {hMax.x - subW - 4.f, cy - capSpec.size * .5f},
+                          ImGui::GetColorU32(capSpec.color), subtitle);
+        }
+    }
+
+    if (!isOpen) {
+        const ImVec2 end{start.x + width, hMax.y + padY * .5f};
+        state->splitter.SetCurrentChannel(draw, 0);
+        detail::DrawSurfaceRect(draw, start, end, fill, radius, surfaceStyle, isDark, false);
+        detail::AddSmoothRect(draw, start, end, ImGui::GetColorU32(borderCol), radius,
+                              std::max(1.f, style.ChildBorderSize));
+        state->splitter.Merge(draw);
+        ImGui::SetCursorScreenPos(start);
+        ImGui::Dummy({width, end.y - start.y});
+        ImGui::PopID();
+        return false;
+    }
+
+    const float sepY = hMax.y + padY * .35f;
+    draw->AddLine({start.x + padX, sepY}, {start.x + width - padX, sepY},
+                  ImGui::GetColorU32(detail::WithAlpha(style.Colors[ImGuiCol_Text], isDark ? .08f : .09f)), 1.f);
+    ImGui::SetCursorScreenPos({start.x + padX, sepY + padY * .65f});
+    ImGui::BeginGroup();
+    ImGui::PushTextWrapPos(start.x + width - padX - ImGui::GetWindowPos().x + ImGui::GetScrollX());
+    ImGui::PushItemWidth(innerW);
+    SectionCardStack().push_back(std::move(state));
+    return true;
+}
+
+void EndCollapsibleSectionCard() {
+    EndSectionCard();
+}
+
+void AlertBanner(const char *id, const char *message, StatusKind kind, const char *title,
+                 ComponentOptions options) {
+    ImGuiWindow *window = ImGui::GetCurrentWindow();
+    if (window->SkipItems)
+        return;
+
+    const auto &style = ImGui::GetStyle();
+    const auto &pt = detail::CurrentPartTheme();
+    const Theme *t = options.theme;
+    const bool isDark = t ? (t->scheme == ColorScheme::Dark) : detail::CurrentIsDark();
+
+    ImVec4 tone = style.Colors[ImGuiCol_CheckMark];
+    switch (kind) {
+    case StatusKind::Success:
+        tone = t ? t->colors.success : (pt.applied ? pt.success : ImVec4(.30f, .78f, .48f, 1.f));
+        break;
+    case StatusKind::Warning:
+        tone = t ? t->colors.warning : (pt.applied ? pt.warning : ImVec4(.95f, .68f, .24f, 1.f));
+        break;
+    case StatusKind::Error:
+    case StatusKind::Live:
+        tone = t ? t->colors.destructive : (pt.applied ? pt.error : ImVec4(.92f, .36f, .34f, 1.f));
+        break;
+    case StatusKind::Active:
+        tone = t ? t->colors.accent : (pt.applied ? pt.accent : style.Colors[ImGuiCol_CheckMark]);
+        break;
+    case StatusKind::Neutral:
+    default:
+        tone = t ? t->semantic.textSecondary : style.Colors[ImGuiCol_TextDisabled];
+        break;
+    }
+
+    ImGui::PushID(id ? id : "##alert-banner");
+    const ImVec2 start = ImGui::GetCursorScreenPos();
+    const float width = std::max(1.f, ImGui::GetContentRegionAvail().x);
+    const float padX = std::max(10.f, style.FramePadding.x);
+    const float padY = std::max(7.f, style.FramePadding.y);
+    const float barW = 3.f;
+    const float textLeft = start.x + barW + padX;
+    const float textRight = start.x + width - padX;
+
+    ImDrawList *draw = window->DrawList;
+    ImDrawListSplitter splitter;
+    splitter.Split(draw, 2);
+    splitter.SetCurrentChannel(draw, 1);
+
+    ImGui::SetCursorScreenPos({textLeft, start.y + padY});
+    ImGui::BeginGroup();
+    ImGui::PushTextWrapPos(std::max(textLeft + 16.f, textRight) - ImGui::GetWindowPos().x + ImGui::GetScrollX());
+
+    const ImVec4 baseBg = (t && t->semantic.surface.w > 0.f) ? t->semantic.surface : style.Colors[ImGuiCol_WindowBg];
+    const ImVec4 bg = detail::MixColor(baseBg, tone, isDark ? .14f : .10f);
+    const ImVec4 textCol = detail::ReadableOn(tone, bg, style.Colors[ImGuiCol_Text]);
+    if (title && *title) {
+        const auto headSpec = ResolveTextSpec(TextRole::Body, true, options);
+        ImGui::PushFont(headSpec.font, headSpec.size);
+        ImGui::PushStyleColor(ImGuiCol_Text, textCol);
+        ImGui::TextWrapped("%s", title);
+        ImGui::PopStyleColor();
+        ImGui::PopFont();
+    }
+    if (message && *message) {
+        ImGui::PushStyleColor(ImGuiCol_Text, (title && *title) ? style.Colors[ImGuiCol_Text] : textCol);
+        ImGui::TextWrapped("%s", message);
+        ImGui::PopStyleColor();
+    }
+    ImGui::PopTextWrapPos();
+    ImGui::EndGroup();
+
+    const float bottom = std::max(start.y + padY * 2.f + ImGui::GetTextLineHeight(),
+                                  ImGui::GetItemRectMax().y + padY);
+    const ImVec2 end{start.x + width, bottom};
+    const float radius = std::max(4.f, style.FrameRounding);
+
+    splitter.SetCurrentChannel(draw, 0);
+    detail::AddSmoothRectFilled(draw, start, end, ImGui::GetColorU32(bg), radius);
+    detail::AddSmoothRect(draw, start, end, ImGui::GetColorU32(detail::WithAlpha(tone, .32f)), radius, 1.f);
+    draw->AddRectFilled({start.x + 2.f, start.y + 4.f}, {start.x + 2.f + barW, end.y - 4.f},
+                        ImGui::GetColorU32(tone), 1.5f);
+    splitter.Merge(draw);
+
+    ImGui::SetCursorScreenPos(start);
+    ImGui::Dummy({width, end.y - start.y});
+    ImGui::PopID();
+}
 } // namespace imkit

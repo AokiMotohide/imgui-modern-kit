@@ -43,6 +43,15 @@ struct ComponentOptions {
 // A width of 0 follows the label and is never narrower than ActionButtonMinimumWidth. Frames have smooth corners.
 bool ActionButton(const char *label, ActionVariant variant = ActionVariant::Primary,
                   const ImVec2 &size = ImVec2(0, 0), ComponentOptions options = {});
+// ActionButton with a leading atlas icon (proper alignment without space padding).
+// Falls back to ActionButton(label, ...) when icons is null or icon == IconId::Count.
+bool ActionButton(const char *label, const IconAtlas *icons, IconId icon,
+                  ActionVariant variant = ActionVariant::Primary,
+                  const ImVec2 &size = ImVec2(0, 0), ComponentOptions options = {});
+// Square icon-only button that follows ControlSize and ActionVariant (Ghost by default).
+bool CompactIconButton(const char *id, const IconAtlas &icons, IconId icon,
+                       const char *tooltip = nullptr, ActionVariant variant = ActionVariant::Ghost,
+                       ComponentOptions options = {});
 // Four text heights: the narrowest an action button gets, so "OK" or "x" stays easy to hit.
 float ActionButtonMinimumWidth();
 // The width ActionButton gives `label` when its width follows the label.
@@ -214,4 +223,30 @@ bool LabeledCombo(const char *label, int *current, std::span<const char *const> 
                   const char *hint = nullptr, ComponentOptions options = {});
 // Heading + optional subtitle row for sections.
 void SectionHeader(const char *title, const char *subtitle = nullptr, ComponentOptions options = {});
+
+// Web-style stacked form fields (label on top, optional unit on top-right, optional hint caption below).
+bool LabeledDragFloat(const char *label, float *value, float speed = 0.01f,
+                      float minimum = 0.f, float maximum = 0.f,
+                      const char *unit = nullptr, const char *format = "%.3f",
+                      const char *hint = nullptr, ComponentOptions options = {});
+bool LabeledInputText(const char *label, char *buffer, std::size_t bufferSize,
+                      const char *placeholder = nullptr, const char *hint = nullptr,
+                      ImGuiInputTextFlags flags = 0, ComponentOptions options = {});
+bool LabeledColorEdit4(const char *label, float col[4], ImGuiColorEditFlags flags = 0,
+                       const char *hint = nullptr, ComponentOptions options = {});
+bool LabeledSearchableCombo(const char *label, int *current, std::span<const char *const> items,
+                            char *searchBuffer, std::size_t searchBufferSize,
+                            const char *hint = nullptr, ComponentOptions options = {});
+
+// Single-bordered collapsible section card (avoids nested double borders).
+// Call EndCollapsibleSectionCard() only when BeginCollapsibleSectionCard() returns true.
+bool BeginCollapsibleSectionCard(const char *id, const char *title, bool *open,
+                                 const char *subtitle = nullptr,
+                                 const IconAtlas *icons = nullptr, IconId icon = IconId::Count,
+                                 ComponentOptions options = {});
+void EndCollapsibleSectionCard();
+
+// Flat semantic alert banner (Warning / Error / Success / Neutral / Active) readable on dark and light themes.
+void AlertBanner(const char *id, const char *message, StatusKind kind = StatusKind::Warning,
+                 const char *title = nullptr, ComponentOptions options = {});
 } // namespace imkit

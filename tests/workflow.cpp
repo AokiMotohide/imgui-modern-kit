@@ -105,8 +105,12 @@ int main(){
         auto drawWorkspace=[&]{
             const WorkspaceTab tabs[]={{101,"Edit","Edit items"},{102,"Connect","Connect items"},{103,"Review","Review items"}};
             workspaceRequest=WorkspaceTabs("workspace-tabs",tabs,101,nullptr,options);
-            if(HierarchyGroupHeader("items","Items",1,&groupOpen,nullptr,IconId::Count,options))
+            if(HierarchyGroupHeader("items","Items",1,&groupOpen,nullptr,IconId::Count,options)) {
                 HierarchyRow("row",{7,"Item A","Selectable item",IconId::Count,1,true},nullptr,options);
+                HierarchyRowView inlineRow{8,"Item B","PJ01 · TestPattern",IconId::Projector,1,false};
+                inlineRow.showDetailInline=true;
+                HierarchyRow("row-inline",inlineRow,nullptr,options);
+            }
             if(BeginInspectorCard("card","Settings","Related controls",nullptr,IconId::Count,options))
                 toggleRequest=SettingToggleRow("enabled","Enabled","Use this item",false,false,"",options);
             EndInspectorCard();

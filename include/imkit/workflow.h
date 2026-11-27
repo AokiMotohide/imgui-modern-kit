@@ -169,6 +169,7 @@ struct HierarchyRowView {
     const char* moreLabel="More actions";
     bool visibilityAvailable=true, lockAvailable=true;
     ImVec4 accentColor{};
+    bool showDetailInline=false; // When true, renders `detail` as a muted caption line inside the row.
 };
 enum class HierarchyRowAction { None, Select, ToggleVisibility, ToggleLock, More };
 // Header open state is host-owned; a row only returns a requested action.

@@ -353,7 +353,7 @@ bool ActionButton(const char *label, ActionVariant variant, const ImVec2 &size, 
     PopButtonPalette(pushed);
     return pressed;
 }
-void DrawAtlasIcon(const IconAtlas& atlas,IconId icon,ImVec2 position,float size) {
+void DrawAtlasIcon(const IconAtlas& atlas,IconId icon,ImVec2 position,float size,ImU32 tint=0) {
     const auto scale=ImGui::GetIO().DisplayFramebufferScale;
     const float pixels=size*std::max({1.f,scale.x,scale.y});
     int level=5;
@@ -362,7 +362,115 @@ void DrawAtlasIcon(const IconAtlas& atlas,IconId icon,ImVec2 position,float size
     if(!GetIconInfo(icon) || texture.GetTexID()==ImTextureID{}) return;
     const auto region=GetIconRegion(icon,IconPixelSizes[static_cast<std::size_t>(level)]);
     ImGui::GetWindowDrawList()->AddImage(texture,position,{position.x+size,position.y+size},
-                                         region.uv0,region.uv1,ImGui::GetColorU32(ImGuiCol_Text));
+                                         region.uv0,region.uv1,tint!=0?tint:ImGui::GetColorU32(ImGuiCol_Text));
+}
+bool ActionButton(const char *label, const IconAtlas *icons, IconId icon,
+                  ActionVariant variant, const ImVec2 &size, ComponentOptions options) {
+    if (!icons || icon == IconId::Count || !GetIconInfo(icon))
+        return ActionButton(label, variant, size, options);
+    ControlSizeScope sizeScope(options.size);
+    const auto *t = options.theme;
+    auto &style = ImGui::GetStyle();
+    const ButtonPalette palette = MakeButtonPalette(variant, t, style);
+    const auto pushed = PushButtonPalette(palette);
+    const auto id = ImGui::GetID(label);
+    const std::string_view visible = VisibleLabel(label);
+    const float iconSize = std::max(12.f, ImGui::GetFontSize());
+    const ImVec2 textSize = visible.empty()
+        ? ImVec2(0, 0)
+        : ImGui::CalcTextSize(visible.data(), visible.data() + visible.size());
+    const float gap = visible.empty() ? 0.f : style.ItemInnerSpacing.x;
+    const float contentWidth = iconSize + gap + textSize.x;
+    const float ctaSpace = options.callToAction ? ImGui::GetFontSize() * 1.2f : 0.f;
+    ImVec2 buttonSize = size;
+    if (buttonSize.x == 0.f) {
+        const float autoW = contentWidth + style.FramePadding.x * 2.f + ctaSpace;
+        buttonSize.x = std::max(autoW, visible.empty() ? ImGui::GetFrameHeight() : ActionButtonMinimumWidth());
+    }
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0, 0, 0, 0));
+    bool pressed = ImGui::Button(label, buttonSize);
+    ImGui::PopStyleColor();
+    if (ImGui::IsItemFocused())
+        ImGui::SetNavCursorVisible(true);
+    if ((ImGui::GetItemFlags() & ImGuiItemFlags_Disabled) != 0 &&
+        ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) &&
+        !(options.disabledReason && !*options.disabledReason))
+        ImGui::SetTooltip("%s", options.disabledReason ? options.disabledReason : "Unavailable");
+    pressed = SemanticItem(options, label, accessibility::SemanticRole::Button, accessibility::SemanticAction::Press) || pressed;
+    const float hover = detail::Ease(options, id, ImGui::IsItemHovered() ? 1.f : 0.f);
+    const ImVec2 shift = PaintButtonFrame(palette, variant, options, hover);
+    auto *draw = ImGui::GetWindowDrawList();
+    if (std::isfinite(options.progress) && options.progress >= 0.f) {
+        const ImVec2 a = ImGui::GetItemRectMin(), b = ImGui::GetItemRectMax();
+        const float inset = std::max(1.f, palette.borderSize);
+        const ImVec2 lo{a.x + shift.x + inset, a.y + shift.y + inset}, hi{b.x + shift.x - inset, b.y + shift.y - inset};
+        const float fraction = std::clamp(options.progress, 0.f, 1.f);
+        const bool rtl = options.locale && options.locale->direction == TextDirection::RTL;
+        const float width = (hi.x - lo.x) * fraction;
+        ImVec4 fill = palette.solid ? palette.text : Accent(t);
+        fill.w = palette.solid ? .22f : .28f;
+        if (width > 0) {
+            draw->PushClipRect(rtl ? ImVec2{hi.x - width, lo.y} : lo, rtl ? hi : ImVec2{lo.x + width, hi.y}, true);
+            detail::AddSmoothRectFilled(draw, lo, hi, ImGui::GetColorU32(fill), std::max(0.f, style.FrameRounding - inset));
+            draw->PopClipRect();
+        }
+    }
+    const ImVec2 a{ImGui::GetItemRectMin().x + shift.x, ImGui::GetItemRectMin().y + shift.y};
+    const ImVec2 b{ImGui::GetItemRectMax().x + shift.x, ImGui::GetItemRectMax().y + shift.y};
+    const float innerW = std::max(0.f, b.x - a.x - style.FramePadding.x * 2.f - ctaSpace);
+    const float alignX = (options.callToAction && size.x == 0.f) ? 0.f : style.ButtonTextAlign.x;
+    const float startX = a.x + style.FramePadding.x + std::max(0.f, innerW - contentWidth) * alignX;
+    const ImU32 ink = ImGui::GetColorU32(palette.text);
+    const ImVec4 clip{a.x, a.y, b.x, b.y};
+    draw->PushClipRect({a.x + 1.f, a.y}, {std::max(a.x + 1.f, b.x - 1.f), b.y}, true);
+    DrawAtlasIcon(*icons, icon, {startX, a.y + (b.y - a.y - iconSize) * .5f}, iconSize, ink);
+    if (!visible.empty()) {
+        const ImVec2 textAt{startX + iconSize + gap, a.y + (b.y - a.y - textSize.y) * .5f};
+        draw->AddText(ImGui::GetFont(), ImGui::GetFontSize(), textAt, ink,
+                      visible.data(), visible.data() + visible.size(), 0.f, &clip);
+    }
+    draw->PopClipRect();
+    if (options.callToAction)
+        DrawCallToAction(id, palette, options, shift);
+    if (options.animation && hover > 0) {
+        auto color = palette.solid ? ImVec4(1, 1, 1, 1) : Accent(t);
+        color.w = (palette.solid ? .10f : .08f) * hover;
+        detail::AddSmoothRectFilled(draw, a, b, ImGui::GetColorU32(color), style.FrameRounding);
+    }
+    PopButtonPalette(pushed);
+    return pressed;
+}
+bool CompactIconButton(const char *id, const IconAtlas &atlas, IconId icon,
+                       const char *tooltip, ActionVariant variant, ComponentOptions options) {
+    ControlSizeScope sizeScope(options.size);
+    const auto *t = options.theme;
+    auto &style = ImGui::GetStyle();
+    const ButtonPalette palette = MakeButtonPalette(variant, t, style);
+    const auto pushed = PushButtonPalette(palette);
+    const float h = ImGui::GetFrameHeight();
+    const float iconSize = std::max(12.f, ImGui::GetFontSize());
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0, 0, 0, 0));
+    bool pressed = ImGui::Button(id ? id : "##compact-icon-btn", ImVec2(h, h));
+    ImGui::PopStyleColor();
+    if (ImGui::IsItemFocused())
+        ImGui::SetNavCursorVisible(true);
+    pressed = SemanticItem(options, tooltip && *tooltip ? tooltip : (id ? id : ""),
+                           accessibility::SemanticRole::Button, accessibility::SemanticAction::Press) || pressed;
+    const float hover = detail::Ease(options, ImGui::GetItemID(), ImGui::IsItemHovered() ? 1.f : 0.f);
+    const ImVec2 shift = PaintButtonFrame(palette, variant, options, hover);
+    const ImVec2 a{ImGui::GetItemRectMin().x + shift.x, ImGui::GetItemRectMin().y + shift.y};
+    const ImVec2 b{ImGui::GetItemRectMax().x + shift.x, ImGui::GetItemRectMax().y + shift.y};
+    DrawAtlasIcon(atlas, icon, {a.x + (b.x - a.x - iconSize) * .5f, a.y + (b.y - a.y - iconSize) * .5f},
+                  iconSize, ImGui::GetColorU32(palette.text));
+    if ((ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) || ImGui::IsItemFocused())) {
+        const bool disabled = (ImGui::GetItemFlags() & ImGuiItemFlags_Disabled) != 0;
+        if (disabled && options.disabledReason && *options.disabledReason)
+            ImGui::SetTooltip("%s", options.disabledReason);
+        else if (tooltip && *tooltip)
+            ImGui::SetTooltip("%s", tooltip);
+    }
+    PopButtonPalette(pushed);
+    return pressed;
 }
 bool IconActionButton(const char *id, const IconAtlas &atlas, IconId icon,
                       const char *label, const char *description, ActionVariant variant,
@@ -688,8 +796,9 @@ bool CompactIconActionButton(const char *id, const IconAtlas &atlas, IconId icon
                              const char *label, bool selected, ImVec4 accent,
                              const ImVec2 &size, const char *description,
                              ComponentOptions options) {
+    ControlSizeScope sizeScope(options.size);
     const auto &style = ImGui::GetStyle();
-    const float iconSize = std::max(14.f, ImGui::GetFontSize());
+    const float iconSize = std::max(12.f, ImGui::GetFontSize());
     const ImVec2 textSize = ImGui::CalcTextSize(label);
     const float width = size.x > 0.f ? size.x : iconSize + textSize.x +
         style.ItemInnerSpacing.x + style.FramePadding.x * 2.f;
@@ -698,21 +807,62 @@ bool CompactIconActionButton(const char *id, const IconAtlas &atlas, IconId icon
     const bool pressedByWidget = ImGui::InvisibleButton(id, ImVec2(width, height));
     const ImVec2 min = ImGui::GetItemRectMin();
     const ImVec2 max = ImGui::GetItemRectMax();
+    const bool hovered = ImGui::IsItemHovered();
+    const bool active = ImGui::IsItemActive();
+    const bool focused = ImGui::IsItemFocused();
+    if (focused)
+        ImGui::SetNavCursorVisible(true);
     auto *draw = ImGui::GetWindowDrawList();
-    const ImVec4 base = style.Colors[ImGuiCol_Button];
-    const ImVec4 fill = Mix(base, accent, selected ? .27f : (ImGui::IsItemHovered() ? .13f : .04f));
-    draw->AddRectFilled(min, max, ImGui::GetColorU32(fill), style.FrameRounding);
-    draw->AddRect(min, max, ImGui::GetColorU32(selected ? accent : style.Colors[ImGuiCol_Border]),
-                  style.FrameRounding, 0, selected ? 1.5f : 1.f);
+    const Theme *t = options.theme;
+    const SurfaceStyle surfaceStyle = t ? t->surfaceStyle : detail::CurrentSurfaceStyle();
+    const bool isDark = t ? (t->scheme == ColorScheme::Dark) : detail::CurrentIsDark();
+    const bool flatModern = !detail::ClassicLook() && surfaceStyle == SurfaceStyle::Flat && !detail::IsOutlined(style);
+
+    ImVec4 iconColor = accent;
+    ImVec4 textColor = style.Colors[ImGuiCol_Text];
+    if (flatModern) {
+        if (selected) {
+            const ImVec4 base = t ? t->semantic.surface : style.Colors[ImGuiCol_Button];
+            const ImVec4 fill = Mix(base, accent, isDark ? .24f : .16f);
+            detail::AddSmoothRectFilled(draw, min, max, ImGui::GetColorU32(fill), style.FrameRounding);
+            detail::AddSmoothRect(draw, min, max, ImGui::GetColorU32(detail::WithAlpha(accent, .80f)),
+                                  style.FrameRounding, 1.25f);
+        } else {
+            if (active) {
+                detail::AddSmoothRectFilled(draw, min, max,
+                                            ImGui::GetColorU32(detail::WithAlpha(style.Colors[ImGuiCol_Text], .13f)),
+                                            style.FrameRounding);
+            } else if (hovered) {
+                detail::AddSmoothRectFilled(draw, min, max,
+                                            ImGui::GetColorU32(detail::WithAlpha(style.Colors[ImGuiCol_Text], .07f)),
+                                            style.FrameRounding);
+            }
+            if (hovered || active) {
+                detail::AddSmoothRect(draw, min, max,
+                                      ImGui::GetColorU32(detail::WithAlpha(style.Colors[ImGuiCol_Text], .14f)),
+                                      style.FrameRounding, 1.f);
+            }
+            const ImVec4 secondary = t ? t->semantic.textSecondary : style.Colors[ImGuiCol_TextDisabled];
+            iconColor = (hovered || active) ? style.Colors[ImGuiCol_Text] : secondary;
+            textColor = (hovered || active) ? style.Colors[ImGuiCol_Text] : secondary;
+        }
+    } else {
+        const ImVec4 base = style.Colors[ImGuiCol_Button];
+        const ImVec4 fill = Mix(base, accent, selected ? .27f : (hovered ? .13f : .04f));
+        detail::DrawSurfaceRect(draw, min, max, fill, style.FrameRounding, surfaceStyle, isDark, selected && !active);
+        detail::AddSmoothRect(draw, min, max, ImGui::GetColorU32(selected ? accent : style.Colors[ImGuiCol_Border]),
+                              style.FrameRounding, selected ? 1.5f : 1.f);
+    }
+    if (focused && ImGui::GetIO().NavVisible)
+        detail::DrawFocusGlow(draw, min, max, style.FrameRounding, 1.f, accent, t ? t->stroke.focus : 2.f);
+
     const float contentWidth = iconSize + style.ItemInnerSpacing.x + textSize.x;
     const float x = min.x + std::max(style.FramePadding.x, (width - contentWidth) * .5f);
-    ImGui::PushStyleColor(ImGuiCol_Text, accent);
-    DrawAtlasIcon(atlas, icon, ImVec2(x, min.y + (height - iconSize) * .5f), iconSize);
-    ImGui::PopStyleColor();
+    DrawAtlasIcon(atlas, icon, ImVec2(x, min.y + (height - iconSize) * .5f), iconSize, ImGui::GetColorU32(iconColor));
     draw->AddText(ImVec2(x + iconSize + style.ItemInnerSpacing.x,
                          min.y + (height - textSize.y) * .5f),
-                  ImGui::GetColorU32(ImGuiCol_Text), label);
-    if ((ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) || ImGui::IsItemFocused()) &&
+                  ImGui::GetColorU32(textColor), label);
+    if ((ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) || focused) &&
         description && *description) ImGui::SetTooltip("%s", description);
     return SemanticItem(options, label, accessibility::SemanticRole::Button,
                         accessibility::SemanticAction::Press, selected) || pressedByWidget;
